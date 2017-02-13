@@ -111,6 +111,87 @@ namespace MessagePack.Tests
             CreateUnpackedReference(bytes).AsBinary().Is(target);
         }
 
+        [Theory]
+        [InlineData(sbyte.MinValue, 2)]
+        [InlineData(-100, 2)]
+        [InlineData(-33, 2)]
+        [InlineData(-32, 1)]
+        [InlineData(-31, 1)]
+        [InlineData(-30, 1)]
+        [InlineData(-1, 1)]
+        [InlineData(0, 1)]
+        [InlineData(1, 1)]
+        [InlineData(126, 1)]
+        [InlineData(sbyte.MaxValue, 1)]
+        public void SByteTest(sbyte target, int length)
+        {
+            (var stream, var packer) = CreateReferencePacker();
 
+            byte[] bytes = null;
+            MessagePackBinary.WriteSByte(ref bytes, 0, target).Is(length);
+
+            packer.Pack(target).Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes);
+
+            int readSize;
+            MessagePackBinary.ReadSByte(bytes, 0, out readSize).Is(target);
+            readSize.Is(length);
+
+            CreateUnpackedReference(bytes).AsSByte().Is(target);
+        }
+
+        [Theory]
+        [InlineData(Single.MinValue, 5)]
+        [InlineData(0.0f, 5)]
+        [InlineData(12345.6789f, 5)]
+        [InlineData(-12345.6789f, 5)]
+        [InlineData(Single.MaxValue, 5)]
+        [InlineData(Single.NaN, 5)]
+        [InlineData(Single.PositiveInfinity, 5)]
+        [InlineData(Single.NegativeInfinity, 5)]
+        [InlineData(Single.Epsilon, 5)]
+        public void SingleTest(Single target, int length)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            MessagePackBinary.WriteSingle(ref bytes, 0, target).Is(length);
+
+            packer.Pack(target).Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes);
+
+            int readSize;
+            MessagePackBinary.ReadSingle(bytes, 0, out readSize).Is(target);
+            readSize.Is(length);
+
+            CreateUnpackedReference(bytes).AsSingle().Is(target);
+        }
+
+        [Theory]
+        [InlineData(Double.MinValue, 9)]
+        [InlineData(0.0, 9)]
+        [InlineData(12345.6789, 9)]
+        [InlineData(-12345.6789, 9)]
+        [InlineData(Double.MaxValue, 9)]
+        [InlineData(Double.NaN, 9)]
+        [InlineData(Double.PositiveInfinity, 9)]
+        [InlineData(Double.NegativeInfinity, 9)]
+        [InlineData(Double.Epsilon, 9)]
+        public void DoubleTest(Double target, int length)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            MessagePackBinary.WriteDouble(ref bytes, 0, target).Is(length);
+
+            packer.Pack(target).Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes);
+
+            int readSize;
+            MessagePackBinary.ReadDouble(bytes, 0, out readSize).Is(target);
+            readSize.Is(length);
+
+            CreateUnpackedReference(bytes).AsDouble().Is(target);
+        }
     }
 }

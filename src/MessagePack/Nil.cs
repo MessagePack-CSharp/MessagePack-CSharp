@@ -27,3 +27,33 @@ namespace MessagePack
         }
     }
 }
+
+namespace MessagePack.Formatters
+{
+    public class NilFormatter : IMessagePackFormatter<Nil>
+    {
+        public int Serialize(ref byte[] bytes, int offset, Nil value, IFormatterResolver typeResolver)
+        {
+            return MessagePackBinary.WriteNil(ref bytes, offset);
+        }
+
+        public Nil Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        {
+            return MessagePackBinary.ReadNil(bytes, offset, out readSize);
+        }
+    }
+
+    // NullableNil is same as Nil.
+    public class NullableNilFormatter : IMessagePackFormatter<Nil?>
+    {
+        public int Serialize(ref byte[] bytes, int offset, Nil? value, IFormatterResolver typeResolver)
+        {
+            return MessagePackBinary.WriteNil(ref bytes, offset);
+        }
+
+        public Nil? Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        {
+            return MessagePackBinary.ReadNil(bytes, offset, out readSize);
+        }
+    }
+}

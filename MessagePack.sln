@@ -9,13 +9,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack", "src\MessageP
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{19FE674A-AC94-4E7E-B24C-2285D1D04CDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Tests.NETCore", "tests\MessagePack.Tests.NETCore\MessagePack.Tests.NETCore.csproj", "{4F231E1B-2BE9-404D-ACCB-482709CE0ADE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Tests.NETCore", "tests\MessagePack.Tests.NETCore\MessagePack.Tests.NETCore.csproj", "{4F231E1B-2BE9-404D-ACCB-482709CE0ADE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Tests", "tests\MessagePack.Tests\MessagePack.Tests.csproj", "{9E1A55CA-711D-4F58-A332-735960E3434C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Interfaces", "src\MessagePack.Interfaces\MessagePack.Interfaces.csproj", "{7BEB73DC-9106-4507-A5CC-8CD850A24109}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "T4Templates", "src\T4Templates\T4Templates.csproj", "{74108F4E-91FA-4D00-9246-2B627F271458}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8761-4552-A70A-B34DC19F39C4}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

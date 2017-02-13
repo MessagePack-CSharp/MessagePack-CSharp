@@ -24,15 +24,17 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                //if (typeof(T) == typeof(NotMsgPackMarkedClass))
-                //{
-                //    formatter = (IMessagePackFormatter<T>)(object)new NotMsgPackMarkedClassFormatter();
-                //}
-                //else
-                //{
-                //    // fallback, use default formatter.
-                //    // formatter = 
-                //}
+                // Try Builtin
+                var f = BuiltinResolver.Instance.GetFormatter<T>();
+                if (f != null)
+                {
+                    formatter = f;
+                    return;
+                }
+
+                // Try Enum
+                // Try Dynamic
+                // Unknown
             }
         }
     }

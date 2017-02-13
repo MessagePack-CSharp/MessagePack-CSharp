@@ -27,14 +27,14 @@ namespace MessagePack
     /// </summary>
     public static class MessagePackCode
     {
-        public const byte MinFixInt = 0x00;
-        public const byte MaxFixInt = 0x7f;
-        public const byte MinFixMap = 0x80;
-        public const byte MaxFixMap = 0x8f;
-        public const byte MinFixArray = 0x90;
-        public const byte MaxFixArray = 0x9f;
-        public const byte MinFixStr = 0xa0;
-        public const byte MaxFixStr = 0xbf;
+        public const byte MinFixInt = 0x00; // 0
+        public const byte MaxFixInt = 0x7f; // 127
+        public const byte MinFixMap = 0x80; // 128
+        public const byte MaxFixMap = 0x8f; // 143
+        public const byte MinFixArray = 0x90; // 144
+        public const byte MaxFixArray = 0x9f; // 159
+        public const byte MinFixStr = 0xa0; // 160
+        public const byte MaxFixStr = 0xbf; // 191
         public const byte Nil = 0xc0;
         public const byte NeverUsed = 0xc1;
         public const byte False = 0xc2;
@@ -67,8 +67,8 @@ namespace MessagePack
         public const byte Array32 = 0xdd;
         public const byte Map16 = 0xde;
         public const byte Map32 = 0xdf;
-        public const byte MinNegativeFixInt = 0xe0;
-        public const byte MaxNegativeFixInt = 0xff;
+        public const byte MinNegativeFixInt = 0xe0; // 224
+        public const byte MaxNegativeFixInt = 0xff; // 255
 
         static readonly MessagePackType[] typeLookupTable = new MessagePackType[255];
 
@@ -133,5 +133,12 @@ namespace MessagePack
         {
             return typeLookupTable[code];
         }
+    }
+
+    public static class MessagePackIntegerRange
+    {
+        public const int MinFixNegativeInt = -32;
+        public const int MaxFixNegativeInt = -1;
+        public const int MaxFixPositiveInt = 127;
     }
 }

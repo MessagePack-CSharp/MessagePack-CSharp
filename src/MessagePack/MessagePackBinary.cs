@@ -11,13 +11,14 @@ namespace MessagePack
     /// </summary>
     public static class MessagePackBinary
     {
-        const int MaxSize = byte.MaxValue;
+        const int MaxSize = 256; // [0] ~ [255]
 
         static readonly IBooleanDecoder[] booleanDecoders = new IBooleanDecoder[MaxSize];
         static readonly IByteDecoder[] byteDecoders = new IByteDecoder[MaxSize];
         static readonly IBytesDecoder[] bytesDecoders = new IBytesDecoder[MaxSize];
-
-        // static readonly Func<byte[], int, int>[] IntegerDecoder = new Func<byte[], int, int>[255];
+        static readonly ISByteDecoder[] sbyteDecoders = new ISByteDecoder[MaxSize];
+        static readonly ISingleDecoder[] singleDecoders = new ISingleDecoder[MaxSize];
+        static readonly IDoubleDecoder[] doubleDecoders = new IDoubleDecoder[MaxSize];
 
         static MessagePackBinary()
         {
@@ -27,13 +28,16 @@ namespace MessagePack
                 booleanDecoders[i] = Decoders.InvalidBoolean.Instance;
                 byteDecoders[i] = Decoders.InvalidByte.Instance;
                 bytesDecoders[i] = Decoders.InvalidBytes.Instance;
+                sbyteDecoders[i] = Decoders.InvalidSByte.Instance;
+                singleDecoders[i] = Decoders.InvalidSingle.Instance;
+                doubleDecoders[i] = Decoders.InvalidDouble.Instance;
             }
 
             // Emit Codes.
             for (int i = MessagePackCode.MinFixInt; i <= MessagePackCode.MaxFixInt; i++)
             {
-                // IntegerDecoder[i] = DecodeFixInteger;
                 byteDecoders[i] = Decoders.FixByte.Instance;
+                sbyteDecoders[i] = Decoders.FixSByte.Instance;
             }
             for (int i = MessagePackCode.MinFixMap; i <= MessagePackCode.MaxFixMap; i++)
             {
@@ -59,8 +63,10 @@ namespace MessagePack
             //typeLookupTable[MessagePackCode.Ext8] = MessagePackType.Extension;
             //typeLookupTable[MessagePackCode.Ext16] = MessagePackType.Extension;
             //typeLookupTable[MessagePackCode.Ext32] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.Float32] = MessagePackType.Float;
-            //typeLookupTable[MessagePackCode.Float64] = MessagePackType.Float;
+
+            singleDecoders[MessagePackCode.Float32] = Decoders.Float32Single.Instance;
+            doubleDecoders[MessagePackCode.Float32] = Decoders.Float32Double.Instance;
+            doubleDecoders[MessagePackCode.Float64] = Decoders.Float64Double.Instance;
 
             byteDecoders[MessagePackCode.UInt8] = Decoders.UInt8Byte.Instance;
 
@@ -68,8 +74,7 @@ namespace MessagePack
             //typeLookupTable[MessagePackCode.UInt32] = MessagePackType.Integer;
             //typeLookupTable[MessagePackCode.UInt64] = MessagePackType.Integer;
 
-            // byteDecoders[MessagePackCode.Int8] = Decoders.UInt8Byte;
-
+            sbyteDecoders[MessagePackCode.Int8] = Decoders.Int8SByte.Instance;
 
             //typeLookupTable[MessagePackCode.Int16] = MessagePackType.Integer;
             //typeLookupTable[MessagePackCode.Int32] = MessagePackType.Integer;
@@ -89,7 +94,7 @@ namespace MessagePack
 
             for (int i = MessagePackCode.MinNegativeFixInt; i <= MessagePackCode.MaxNegativeFixInt; i++)
             {
-                //typeLookupTable[i] = MessagePackType.Integer;
+                sbyteDecoders[i] = Decoders.FixSByte.Instance;
             }
         }
 
@@ -147,6 +152,22 @@ namespace MessagePack
                 Buffer.BlockCopy(array2, 0, array3, 0, (array2.Length > newSize) ? newSize : array2.Length);
                 array = array3;
             }
+        }
+
+        public static byte[] FastResizeClone(byte[] array, int newSize)
+        {
+            if (newSize < 0) throw new ArgumentOutOfRangeException("newSize");
+
+            byte[] array2 = array;
+            if (array2 == null)
+            {
+                array = new byte[newSize];
+                return array;
+            }
+
+            byte[] array3 = new byte[newSize];
+            Buffer.BlockCopy(array2, 0, array3, 0, (array2.Length > newSize) ? newSize : array2.Length);
+            return array3;
         }
 
         public static int WriteNil(ref byte[] bytes, int offset)
@@ -267,9 +288,12 @@ namespace MessagePack
                 var size = value.Length + 3;
                 EnsureCapacity(ref bytes, offset, size);
 
-                bytes[offset] = MessagePackCode.Bin16;
-                bytes[offset + 1] = (byte)(len >> 8);
-                bytes[offset + 2] = (byte)(len);
+                unchecked
+                {
+                    bytes[offset] = MessagePackCode.Bin16;
+                    bytes[offset + 1] = (byte)(len >> 8);
+                    bytes[offset + 2] = (byte)(len);
+                }
 
                 Buffer.BlockCopy(value, 0, bytes, offset + 3, value.Length);
                 return size;
@@ -279,151 +303,137 @@ namespace MessagePack
                 var size = value.Length + 5;
                 EnsureCapacity(ref bytes, offset, size);
 
-                bytes[offset] = MessagePackCode.Bin32;
-                bytes[offset + 1] = (byte)(len >> 24);
-                bytes[offset + 2] = (byte)(len >> 16);
-                bytes[offset + 3] = (byte)(len >> 8);
-                bytes[offset + 4] = (byte)(len);
+                unchecked
+                {
+                    bytes[offset] = MessagePackCode.Bin32;
+                    bytes[offset + 1] = (byte)(len >> 24);
+                    bytes[offset + 2] = (byte)(len >> 16);
+                    bytes[offset + 3] = (byte)(len >> 8);
+                    bytes[offset + 4] = (byte)(len);
+                }
 
                 Buffer.BlockCopy(value, 0, bytes, offset + 5, value.Length);
                 return size;
             }
         }
-
         public static byte[] ReadBytes(byte[] bytes, int offset, out int readSize)
         {
             return bytesDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
-        // TODO:..................
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public static int WriteSByte(ref byte[] bytes, int offset, sbyte value)
         {
-            EnsureCapacity(ref bytes, offset, 1);
-
-            bytes[offset] = (byte)value;
-            return 1;
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static sbyte ReadSByte(ref byte[] bytes, int offset)
-        {
-            return (sbyte)bytes[offset];
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe int WriteSingle(ref byte[] bytes, int offset, float value)
-        {
-            EnsureCapacity(ref bytes, offset, 4);
-
-            if (offset % 4 == 0)
+            if (value < MessagePackIntegerRange.MinFixNegativeInt)
             {
-                fixed (byte* ptr = bytes)
-                {
-                    *(float*)(ptr + offset) = value;
-                }
+                EnsureCapacity(ref bytes, offset, 2);
+                bytes[offset] = MessagePackCode.Int8;
+                bytes[offset + 1] = unchecked((byte)(value));
+                return 2;
             }
             else
             {
-                uint num = *(uint*)(&value);
-                bytes[offset] = (byte)num;
-                bytes[offset + 1] = (byte)(num >> 8);
-                bytes[offset + 2] = (byte)(num >> 16);
-                bytes[offset + 3] = (byte)(num >> 24);
+                EnsureCapacity(ref bytes, offset, 1);
+                bytes[offset] = unchecked((byte)value);
+                return 1;
             }
-
-            return 4;
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe float ReadSingle(ref byte[] bytes, int offset)
+        public static sbyte ReadSByte(byte[] bytes, int offset, out int readSize)
         {
-            if (offset % 4 == 0)
+            return sbyteDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+        public static int WriteSingle(ref byte[] bytes, int offset, float value)
+        {
+            EnsureCapacity(ref bytes, offset, 5);
+
+            bytes[offset] = MessagePackCode.Float32;
+
+            var num = new Float32Bits(value);
+            if (BitConverter.IsLittleEndian)
             {
-                fixed (byte* ptr = bytes)
-                {
-                    return *(float*)(ptr + offset);
-                }
+                bytes[offset + 1] = num.Byte3;
+                bytes[offset + 2] = num.Byte2;
+                bytes[offset + 3] = num.Byte1;
+                bytes[offset + 4] = num.Byte0;
             }
             else
             {
-                uint num = (uint)((int)bytes[offset] | (int)bytes[offset + 1] << 8 | (int)bytes[offset + 2] << 16 | (int)bytes[offset + 3] << 24);
-                return *(float*)(&num);
+                bytes[offset + 1] = num.Byte0;
+                bytes[offset + 2] = num.Byte1;
+                bytes[offset + 3] = num.Byte2;
+                bytes[offset + 4] = num.Byte3;
             }
+
+            return 5;
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe int WriteDouble(ref byte[] bytes, int offset, double value)
+        public static float ReadSingle(byte[] bytes, int offset, out int readSize)
         {
-            EnsureCapacity(ref bytes, offset, 8);
+            return singleDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
 
-            if (offset % 8 == 0)
+        public static int WriteDouble(ref byte[] bytes, int offset, double value)
+        {
+            EnsureCapacity(ref bytes, offset, 9);
+
+            bytes[offset] = MessagePackCode.Float64;
+
+            var num = new Float64Bits(value);
+            if (BitConverter.IsLittleEndian)
             {
-                fixed (byte* ptr = bytes)
-                {
-                    *(double*)(ptr + offset) = value;
-                }
+                bytes[offset + 1] = num.Byte7;
+                bytes[offset + 2] = num.Byte6;
+                bytes[offset + 3] = num.Byte5;
+                bytes[offset + 4] = num.Byte4;
+                bytes[offset + 5] = num.Byte3;
+                bytes[offset + 6] = num.Byte2;
+                bytes[offset + 7] = num.Byte1;
+                bytes[offset + 8] = num.Byte0;
             }
             else
             {
-                ulong num = (ulong)(*(long*)(&value));
-                bytes[offset] = (byte)num;
-                bytes[offset + 1] = (byte)(num >> 8);
-                bytes[offset + 2] = (byte)(num >> 16);
-                bytes[offset + 3] = (byte)(num >> 24);
-                bytes[offset + 4] = (byte)(num >> 32);
-                bytes[offset + 5] = (byte)(num >> 40);
-                bytes[offset + 6] = (byte)(num >> 48);
-                bytes[offset + 7] = (byte)(num >> 56);
+                bytes[offset + 1] = num.Byte0;
+                bytes[offset + 2] = num.Byte1;
+                bytes[offset + 3] = num.Byte2;
+                bytes[offset + 4] = num.Byte3;
+                bytes[offset + 5] = num.Byte4;
+                bytes[offset + 6] = num.Byte5;
+                bytes[offset + 7] = num.Byte6;
+                bytes[offset + 8] = num.Byte7;
             }
 
-            return 8;
+            return 9;
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe double ReadDouble(ref byte[] bytes, int offset)
+        public static double ReadDouble(byte[] bytes, int offset, out int readSize)
         {
-            if (offset % 8 == 0)
+            return doubleDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+        public static int WriteInt16(ref byte[] bytes, int offset, short value)
+        {
+            if (MessagePackIntegerRange.MinFixNegativeInt <= value && value <= MessagePackIntegerRange.MaxFixPositiveInt)
             {
-                fixed (byte* ptr = bytes)
-                {
-                    return *(double*)(ptr + offset);
-                }
+                EnsureCapacity(ref bytes, offset, 1);
+                bytes[offset] = unchecked((byte)value);
+                return 1;
+            }
+            else if (sbyte.MinValue <= value && value <= sbyte.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 2);
+                bytes[offset] = MessagePackCode.Int8;
+                bytes[offset + 1] = unchecked((byte)value);
+                return 2;
             }
             else
             {
-                uint num = (uint)((int)bytes[offset] | (int)bytes[offset + 1] << 8 | (int)bytes[offset + 2] << 16 | (int)bytes[offset + 3] << 24);
-                ulong num2 = (ulong)((int)bytes[offset + 4] | (int)bytes[offset + 5] << 8 | (int)bytes[offset + 6] << 16 | (int)bytes[offset + 7] << 24) << 32 | (ulong)num;
-                return *(double*)(&num2);
+                EnsureCapacity(ref bytes, offset, 3);
+                bytes[offset] = MessagePackCode.Int16;
+                bytes[offset + 1] = unchecked((byte)(value << 8));
+                bytes[offset + 2] = unchecked((byte)value);
+                return 8;
             }
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe int WriteInt16(ref byte[] bytes, int offset, short value)
-        {
-            EnsureCapacity(ref bytes, offset, 2);
-
-            fixed (byte* ptr = bytes)
-            {
-                *(short*)(ptr + offset) = value;
-            }
-
-            return 2;
         }
 
 #if !UNITY
@@ -614,60 +624,6 @@ namespace MessagePack
         public static string ReadString(ref byte[] bytes, int offset, int count)
         {
             return StringEncoding.UTF8.GetString(bytes, offset, count);
-        }
-
-        // decimal underlying "flags, hi, lo, mid" fields are sequential and same layuout with .NET Framework and Mono(Unity)
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe int WriteDecimal(ref byte[] bytes, int offset, decimal value)
-        {
-            EnsureCapacity(ref bytes, offset, 16);
-
-            fixed (byte* ptr = bytes)
-            {
-                *(Decimal*)(ptr + offset) = value;
-            }
-
-            return 16;
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe decimal ReadDecimal(ref byte[] bytes, int offset)
-        {
-            fixed (byte* ptr = bytes)
-            {
-                return *(Decimal*)(ptr + offset);
-            }
-        }
-
-        // Guid's underlying _a,...,_k field is sequential and same layuout as .NET Framework and Mono(Unity)
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe int WriteGuid(ref byte[] bytes, int offset, Guid value)
-        {
-            EnsureCapacity(ref bytes, offset, 16);
-
-            fixed (byte* ptr = bytes)
-            {
-                *(Guid*)(ptr + offset) = value;
-            }
-
-            return 16;
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe Guid ReadGuid(ref byte[] bytes, int offset)
-        {
-            fixed (byte* ptr = bytes)
-            {
-                return *(Guid*)(ptr + offset);
-            }
         }
 
         #region Timestamp/Duration
@@ -973,6 +929,146 @@ namespace MessagePack.Decoders
         }
 
         public byte[] Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+        }
+    }
+
+    internal interface ISByteDecoder
+    {
+        sbyte Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixSByte : ISByteDecoder
+    {
+        internal static readonly ISByteDecoder Instance = new FixSByte();
+
+        FixSByte()
+        {
+
+        }
+
+        public sbyte Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return unchecked((sbyte)bytes[offset]);
+        }
+    }
+
+    internal class Int8SByte : ISByteDecoder
+    {
+        internal static readonly ISByteDecoder Instance = new Int8SByte();
+
+        Int8SByte()
+        {
+
+        }
+
+        public sbyte Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            return unchecked((sbyte)(bytes[offset + 1]));
+        }
+    }
+
+    internal class InvalidSByte : ISByteDecoder
+    {
+        internal static readonly ISByteDecoder Instance = new InvalidSByte();
+
+        InvalidSByte()
+        {
+
+        }
+
+        public sbyte Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+        }
+    }
+
+    internal interface ISingleDecoder
+    {
+        float Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class Float32Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new Float32Single();
+
+        Float32Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 5;
+            return new Float32Bits(bytes, offset + 1).Value;
+        }
+    }
+
+    internal class InvalidSingle : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new InvalidSingle();
+
+        InvalidSingle()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+        }
+    }
+
+    internal interface IDoubleDecoder
+    {
+        double Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class Float32Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new Float32Double();
+
+        Float32Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 5;
+            return new Float32Bits(bytes, offset + 1).Value;
+        }
+    }
+
+    internal class Float64Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new Float64Double();
+
+        Float64Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 9;
+            return new Float64Bits(bytes, offset + 1).Value;
+        }
+    }
+
+    internal class InvalidDouble : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new InvalidDouble();
+
+        InvalidDouble()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
         {
             throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
         }
