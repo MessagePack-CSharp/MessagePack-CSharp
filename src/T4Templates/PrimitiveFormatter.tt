@@ -63,7 +63,7 @@ namespace MessagePack.Formatters
 
         public <#= t.Name #>? Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
         {
-            if (bytes[offset] == MessagePackCode.Nil)
+            if (MessagePackBinary.IsNil(bytes, offset))
             {
                 readSize = 1;
                 return null;

@@ -31,7 +31,7 @@ namespace MessagePack.Formatters
 
         public Boolean? Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
         {
-            if (bytes[offset] == MessagePackCode.Nil)
+            if (MessagePackBinary.IsNil(bytes, offset))
             {
                 readSize = 1;
                 return null;
@@ -72,7 +72,7 @@ namespace MessagePack.Formatters
 
         public Byte? Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
         {
-            if (bytes[offset] == MessagePackCode.Nil)
+            if (MessagePackBinary.IsNil(bytes, offset))
             {
                 readSize = 1;
                 return null;

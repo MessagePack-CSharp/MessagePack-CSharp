@@ -178,6 +178,11 @@ namespace MessagePack
             }
         }
 
+        public static bool IsNil(byte[] bytes, int offset)
+        {
+            return bytes[offset] == MessagePackCode.Nil;
+        }
+
         public static int WriteBoolean(ref byte[] bytes, int offset, bool value)
         {
             EnsureCapacity(ref bytes, offset, 1);
