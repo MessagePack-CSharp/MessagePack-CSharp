@@ -1,0 +1,1 @@
+libz inject-dll --assembly src\ZeroFormatter.CodeGenerator\bin\Release\zfc.exe --include src\ZeroFormatter.CodeGenerator\bin\Release\*.dll --move

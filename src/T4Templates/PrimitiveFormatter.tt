@@ -1,0 +1,79 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+    var types = new[]
+    {
+        /*
+        Tuple.Create(typeof(Int16), 2),
+        Tuple.Create(typeof(Int32), 4),
+        Tuple.Create(typeof(Int64), 8),
+        Tuple.Create(typeof(UInt16), 2),
+        Tuple.Create(typeof(UInt32), 4),
+        Tuple.Create(typeof(UInt64), 8),
+        Tuple.Create(typeof(Single), 4),
+        Tuple.Create(typeof(Double), 8),
+        */
+        Tuple.Create(typeof(bool), 1),
+        Tuple.Create(typeof(byte), 1),
+        /*
+        Tuple.Create(typeof(sbyte), 1),
+        Tuple.Create(typeof(char), 2),
+        Tuple.Create(typeof(decimal), 16),
+        Tuple.Create(typeof(Guid), 16),
+        Tuple.Create(typeof(TimeSpan), 12),
+        Tuple.Create(typeof(DateTime), 12),
+        */
+    };
+#>
+using System;
+
+namespace MessagePack.Formatters
+{
+<# foreach(var tuple in types) { var t = tuple.Item1; #>
+    public class <#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver typeResolver)
+        {
+            return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value);
+        }
+
+        public <#= t.Name #> Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        {
+            return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+        }
+    }
+
+    public class Nullable<#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>?>
+    {
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver typeResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value.Value);
+            }
+        }
+
+        public <#= t.Name #>? Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        {
+            if (bytes[offset] == MessagePackCode.Nil)
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+            }
+        }
+    }
+
+<# } #>
+}
