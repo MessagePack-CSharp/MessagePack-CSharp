@@ -26,8 +26,7 @@ namespace MessagePack
         /// </summary>
         public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
         {
-            var formatter = resolver.GetFormatter<T>();
-            if (formatter == null) throw new InvalidOperationException("Formatter not found, " + typeof(T).Name);
+            var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.Buffer;
 
@@ -35,6 +34,29 @@ namespace MessagePack
 
             // do not return MemoryPool.Buffer.
             return MessagePackBinary.FastResizeClone(buffer, len);
+        }
+
+        /// <summary>
+        /// Serialize to binary. Get the raw memory pool byte[]. The result can not share across thread and can not hold, so use quickly.
+        /// </summary>
+        public static ArraySegment<byte> SerializeUnsafe<T>(T obj)
+        {
+            return SerializeUnsafe(obj, defaultResolver);
+        }
+
+        /// <summary>
+        /// Serialize to binary with specified resolver. Get the raw memory pool byte[]. The result can not share across thread and can not hold, so use quickly.
+        /// </summary>
+        public static ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver)
+        {
+            var formatter = resolver.GetFormatterWithVerify<T>();
+
+            var buffer = InternalMemoryPool.Buffer;
+
+            var len = formatter.Serialize(ref buffer, 0, obj, resolver);
+
+            // return raw memory pool, unsafe!
+            return new ArraySegment<byte>(buffer, 0, len);
         }
 
         /// <summary>
@@ -50,8 +72,7 @@ namespace MessagePack
         /// </summary>
         public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
         {
-            var formatter = resolver.GetFormatter<T>();
-            if (formatter == null) throw new InvalidOperationException("Formatter not found, " + typeof(T).Name);
+            var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.Buffer;
 
@@ -68,8 +89,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
         {
-            var formatter = resolver.GetFormatter<T>();
-            if (formatter == null) throw new InvalidOperationException("Formatter not found, " + typeof(T).Name);
+            var formatter = resolver.GetFormatterWithVerify<T>();
 
             int readSize;
             return formatter.Deserialize(bytes, 0, resolver, out readSize);
@@ -82,8 +102,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
         {
-            var formatter = resolver.GetFormatter<T>();
-            if (formatter == null) throw new InvalidOperationException("Formatter not found, " + typeof(T).Name);
+            var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.Buffer;
             var length = FillFromStream(stream, ref buffer);

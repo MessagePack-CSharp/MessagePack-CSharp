@@ -43,6 +43,14 @@ namespace MessagePack.Internal
             {
                 return new BooleanFormatter();
             }
+            else if (type == typeof(byte))
+            {
+                return new ByteFormatter();
+            }
+            else if (type == typeof(double))
+            {
+                return new DoubleFormatter();
+            }
 
             // nullable
             else if (type == typeof(bool?))

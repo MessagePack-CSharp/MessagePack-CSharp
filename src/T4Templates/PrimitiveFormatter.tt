@@ -14,9 +14,9 @@
         Tuple.Create(typeof(UInt16), 2),
         Tuple.Create(typeof(UInt32), 4),
         Tuple.Create(typeof(UInt64), 8),
+        */
         Tuple.Create(typeof(Single), 4),
         Tuple.Create(typeof(Double), 8),
-        */
         Tuple.Create(typeof(bool), 1),
         Tuple.Create(typeof(byte), 1),
         /*

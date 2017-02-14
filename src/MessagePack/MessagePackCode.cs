@@ -70,7 +70,7 @@ namespace MessagePack
         public const byte MinNegativeFixInt = 0xe0; // 224
         public const byte MaxNegativeFixInt = 0xff; // 255
 
-        static readonly MessagePackType[] typeLookupTable = new MessagePackType[255];
+        static readonly MessagePackType[] typeLookupTable = new MessagePackType[256];
 
         static MessagePackCode()
         {
@@ -135,10 +135,12 @@ namespace MessagePack
         }
     }
 
-    public static class MessagePackIntegerRange
+    public static class MessagePackRange
     {
         public const int MinFixNegativeInt = -32;
         public const int MaxFixNegativeInt = -1;
         public const int MaxFixPositiveInt = 127;
+        public const int MinFixStringLength = 0;
+        public const int MaxFixStringLength = 31;
     }
 }
