@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using MessagePack.Formatters;
 using MessagePack.Internal;
+using System.Reflection;
 
 namespace MessagePack.Resolvers
 {
@@ -39,6 +40,8 @@ namespace MessagePack.Internal
     {
         internal static object GetFormatter(Type type)
         {
+            var ti = type.GetTypeInfo();
+
             if (type == typeof(bool))
             {
                 return new BooleanFormatter();
@@ -47,16 +50,31 @@ namespace MessagePack.Internal
             {
                 return new ByteFormatter();
             }
+            else if (type == typeof(int))
+            {
+                return new Int32Formatter();
+            }
             else if (type == typeof(double))
             {
                 return new DoubleFormatter();
             }
 
             // nullable
-            else if (type == typeof(bool?))
-            {
-                return new NullableBooleanFormatter();
-            }
+
+            // don't use dynamic, builtin should resolve static.
+            //else if (ti.IsNullable())
+            //{
+            //    // build underlying type and use wrapped formatter.
+            //    var underlyhingType = ti.GenericTypeArguments[0];
+            //    var innerFormatter = GetFormatter(underlyhingType);
+            //    if (innerFormatter == null) return null;
+
+            //    return Activator.CreateInstance(typeof(NullableFormatter<>).MakeGenericType(type), new object[] { innerFormatter });
+                
+
+            //}
+
+            
 
             return null;
         }

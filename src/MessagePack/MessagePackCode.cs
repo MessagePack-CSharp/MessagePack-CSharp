@@ -9,17 +9,17 @@ namespace MessagePack
     /// </summary>
     public enum MessagePackType : byte
     {
-        Integer = 0,
-        Nil = 1,
-        Boolean = 2,
-        Float = 3,
-        String = 4,
-        Binary = 5,
-        Array = 6,
-        Map = 7,
-        Extension = 8,
+        Unknown = 0,
 
-        Unknown = 255
+        Integer = 1,
+        Nil = 2,
+        Boolean = 3,
+        Float = 4,
+        String = 5,
+        Binary = 6,
+        Array = 7,
+        Map = 8,
+        Extension = 9,
     }
 
     /// <summary>
@@ -71,6 +71,7 @@ namespace MessagePack
         public const byte MaxNegativeFixInt = 0xff; // 255
 
         static readonly MessagePackType[] typeLookupTable = new MessagePackType[256];
+        static readonly string[] formatNameTable = new string[256];
 
         static MessagePackCode()
         {
@@ -78,19 +79,24 @@ namespace MessagePack
             for (int i = MinFixInt; i <= MaxFixInt; i++)
             {
                 typeLookupTable[i] = MessagePackType.Integer;
+                formatNameTable[i] = "positive fixint";
             }
             for (int i = MinFixMap; i <= MaxFixMap; i++)
             {
                 typeLookupTable[i] = MessagePackType.Map;
+                formatNameTable[i] = "fixmap";
             }
             for (int i = MinFixArray; i <= MaxFixArray; i++)
             {
                 typeLookupTable[i] = MessagePackType.Array;
+                formatNameTable[i] = "fixarray";
             }
             for (int i = MinFixStr; i <= MaxFixStr; i++)
             {
                 typeLookupTable[i] = MessagePackType.String;
+                formatNameTable[i] = "fixstr";
             }
+
             typeLookupTable[Nil] = MessagePackType.Nil;
             typeLookupTable[NeverUsed] = MessagePackType.Unknown;
             typeLookupTable[False] = MessagePackType.Boolean;
@@ -123,15 +129,55 @@ namespace MessagePack
             typeLookupTable[Array32] = MessagePackType.Array;
             typeLookupTable[Map16] = MessagePackType.Map;
             typeLookupTable[Map32] = MessagePackType.Map;
+
+            formatNameTable[Nil] = "nil";
+            formatNameTable[NeverUsed] = "(never used)";
+            formatNameTable[False] = "false";
+            formatNameTable[True] = "true";
+            formatNameTable[Bin8] = "bin 8";
+            formatNameTable[Bin16] = "bin 16";
+            formatNameTable[Bin32] = "bin 32";
+            formatNameTable[Ext8] = "ext 8";
+            formatNameTable[Ext16] = "ext 16";
+            formatNameTable[Ext32] = "ext 32";
+            formatNameTable[Float32] = "float 32";
+            formatNameTable[Float64] = "float 64";
+            formatNameTable[UInt8] = "uint 7";
+            formatNameTable[UInt16] = "uint 16";
+            formatNameTable[UInt32] = "uint 32";
+            formatNameTable[UInt64] = "uint 64";
+            formatNameTable[Int8] = "int 8";
+            formatNameTable[Int16] = "int 16";
+            formatNameTable[Int32] = "int 32";
+            formatNameTable[Int64] = "int 64";
+            formatNameTable[FixExt1] = "fixext 1";
+            formatNameTable[FixExt2] = "fixext 2";
+            formatNameTable[FixExt4] = "fixext 4";
+            formatNameTable[FixExt8] = "fixext 8";
+            formatNameTable[FixExt16] = "fixext 16";
+            formatNameTable[Str8] = "str 8";
+            formatNameTable[Str16] = "str 16";
+            formatNameTable[Str32] = "str 32";
+            formatNameTable[Array16] = "array 16";
+            formatNameTable[Array32] = "array 32";
+            formatNameTable[Map16] = "map 16";
+            formatNameTable[Map32] = "map 32";
+
             for (int i = MinNegativeFixInt; i <= MaxNegativeFixInt; i++)
             {
                 typeLookupTable[i] = MessagePackType.Integer;
+                formatNameTable[i] = "negative fixint";
             }
         }
 
         public static MessagePackType ToMessagePackType(byte code)
         {
             return typeLookupTable[code];
+        }
+
+        public static string ToFormatName(byte code)
+        {
+            return formatNameTable[code];
         }
     }
 
@@ -142,5 +188,7 @@ namespace MessagePack
         public const int MaxFixPositiveInt = 127;
         public const int MinFixStringLength = 0;
         public const int MaxFixStringLength = 31;
+        public const int MaxFixMapCount = 15;
+        public const int MaxFixArrayCount = 15;
     }
 }

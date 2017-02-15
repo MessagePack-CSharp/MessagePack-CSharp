@@ -1,6 +1,7 @@
 ﻿
 using MessagePack.Formatters;
 using System;
+using System.Reflection;
 
 namespace MessagePack
 {
@@ -20,6 +21,14 @@ namespace MessagePack
                 throw new FormatterNotRegisteredException(typeof(T).FullName + " is not registered in this resolver. resolver:" + resolver.GetType().Name);
             }
 
+            return formatter;
+        }
+
+        public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
+        {
+            var methodInfo = typeof(IFormatterResolver).GetRuntimeMethod("GetFormatter", Type.EmptyTypes);
+
+            var formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
             return formatter;
         }
     }

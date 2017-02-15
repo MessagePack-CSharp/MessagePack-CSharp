@@ -7,18 +7,18 @@
 <#
     var types = new[]
     {
-        /*
-        Tuple.Create(typeof(Int16), 2),
-        Tuple.Create(typeof(Int32), 4),
-        Tuple.Create(typeof(Int64), 8),
+        typeof(Int16),
+        typeof(Int32),
+        typeof(Int64),
+		/*
         Tuple.Create(typeof(UInt16), 2),
         Tuple.Create(typeof(UInt32), 4),
         Tuple.Create(typeof(UInt64), 8),
         */
-        Tuple.Create(typeof(Single), 4),
-        Tuple.Create(typeof(Double), 8),
-        Tuple.Create(typeof(bool), 1),
-        Tuple.Create(typeof(byte), 1),
+       typeof(Single),
+       typeof(Double),
+       typeof(bool), 
+       typeof(byte), 
         /*
         Tuple.Create(typeof(sbyte), 1),
         Tuple.Create(typeof(char), 2),
@@ -33,7 +33,7 @@ using System;
 
 namespace MessagePack.Formatters
 {
-<# foreach(var tuple in types) { var t = tuple.Item1; #>
+<# foreach(var t in types) {  #>
     public class <#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>>
     {
         public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver typeResolver)

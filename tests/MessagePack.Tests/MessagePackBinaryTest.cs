@@ -304,5 +304,75 @@ namespace MessagePack.Tests
 
             CreateUnpackedReference(bytes).AsInt64().Is(target);
         }
+
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 1)]
+        [InlineData(14, 1)]
+        [InlineData(15, 1)]
+        [InlineData(16, 3)]
+        [InlineData(17, 3)]
+        [InlineData(18, 3)]
+        [InlineData(126, 3)]
+        [InlineData(byte.MaxValue, 3)]
+        [InlineData(20000, 3)]
+        [InlineData(ushort.MaxValue, 3)]
+        [InlineData(80000, 5)]
+        [InlineData(int.MaxValue, 5)]
+        public void MapHeaderTest(uint target, int length)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            MessagePackBinary.WriteMapHeader(ref bytes, 0, target).Is(length);
+
+            packer.PackMapHeader((int)target).Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes).IsTrue();
+
+            int readSize;
+            MessagePackBinary.ReadMapHeader(bytes, 0, out readSize).Is(target);
+            readSize.Is(length);
+
+            var ms = new MemoryStream(bytes);
+            var unpacker = MsgPack.Unpacker.Create(ms);
+            long len;
+            unpacker.ReadMapLength(out len).IsTrue();
+            len.Is(target);
+        }
+
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 1)]
+        [InlineData(14, 1)]
+        [InlineData(15, 1)]
+        [InlineData(16, 3)]
+        [InlineData(17, 3)]
+        [InlineData(18, 3)]
+        [InlineData(126, 3)]
+        [InlineData(byte.MaxValue, 3)]
+        [InlineData(20000, 3)]
+        [InlineData(ushort.MaxValue, 3)]
+        [InlineData(80000, 5)]
+        [InlineData(int.MaxValue, 5)]
+        public void ArrayHeaderTest(uint target, int length)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            MessagePackBinary.WriteArrayHeader(ref bytes, 0, target).Is(length);
+
+            packer.PackArrayHeader((int)target).Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes).IsTrue();
+
+            int readSize;
+            MessagePackBinary.ReadArraydHeader(bytes, 0, out readSize).Is(target);
+            readSize.Is(length);
+
+            var ms = new MemoryStream(bytes);
+            var unpacker = MsgPack.Unpacker.Create(ms);
+            long len;
+            unpacker.ReadArrayLength(out len).IsTrue();
+            len.Is(target);
+        }
     }
 }

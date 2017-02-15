@@ -33,6 +33,15 @@ namespace MessagePack.Resolvers
                 }
 
                 // Try Enum
+                f = EnumResolver.Instance.GetFormatter<T>();
+                if (f != null)
+                {
+                    formatter = f;
+                    return;
+                }
+
+                // Try Union
+
                 // Try Dynamic
                 // Unknown
             }

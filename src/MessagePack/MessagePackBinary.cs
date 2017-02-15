@@ -1,7 +1,5 @@
 ﻿using MessagePack.Decoders;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MessagePack
 {
@@ -13,6 +11,8 @@ namespace MessagePack
     {
         const int MaxSize = 256; // [0] ~ [255]
 
+        static readonly IMapHeaderDecoder[] mapHeaderDecoders = new IMapHeaderDecoder[MaxSize];
+        static readonly IArrayHeaderDecoder[] arrayHeaderDecoders = new IArrayHeaderDecoder[MaxSize];
         static readonly IBooleanDecoder[] booleanDecoders = new IBooleanDecoder[MaxSize];
         static readonly IByteDecoder[] byteDecoders = new IByteDecoder[MaxSize];
         static readonly IBytesDecoder[] bytesDecoders = new IBytesDecoder[MaxSize];
@@ -28,6 +28,8 @@ namespace MessagePack
             // Init LookupTable.
             for (int i = 0; i < MaxSize; i++)
             {
+                mapHeaderDecoders[i] = Decoders.InvalidMapHeader.Instance;
+                arrayHeaderDecoders[i] = Decoders.InvalidArrayHeader.Instance;
                 booleanDecoders[i] = Decoders.InvalidBoolean.Instance;
                 byteDecoders[i] = Decoders.InvalidByte.Instance;
                 bytesDecoders[i] = Decoders.InvalidBytes.Instance;
@@ -39,7 +41,14 @@ namespace MessagePack
                 int64Decoders[i] = Decoders.InvalidInt64.Instance;
             }
 
-            // Emit Codes.
+            // Number
+            for (int i = MessagePackCode.MinNegativeFixInt; i <= MessagePackCode.MaxNegativeFixInt; i++)
+            {
+                sbyteDecoders[i] = Decoders.FixSByte.Instance;
+                int16Decoders[i] = Decoders.FixNegativeInt16.Instance;
+                int32Decoders[i] = Decoders.FixNegativeInt32.Instance;
+                int64Decoders[i] = Decoders.FixNegativeInt64.Instance;
+            }
             for (int i = MessagePackCode.MinFixInt; i <= MessagePackCode.MaxFixInt; i++)
             {
                 byteDecoders[i] = Decoders.FixByte.Instance;
@@ -48,34 +57,6 @@ namespace MessagePack
                 int32Decoders[i] = Decoders.FixInt32.Instance;
                 int64Decoders[i] = Decoders.FixInt64.Instance;
             }
-            for (int i = MessagePackCode.MinFixMap; i <= MessagePackCode.MaxFixMap; i++)
-            {
-                // typeLookupTable[i] = MessagePackType.Map;
-            }
-            for (int i = MessagePackCode.MinFixArray; i <= MessagePackCode.MaxFixArray; i++)
-            {
-                //typeLookupTable[i] = MessagePackType.Array;
-            }
-            for (int i = MessagePackCode.MinFixStr; i <= MessagePackCode.MaxFixStr; i++)
-            {
-                //typeLookupTable[i] = MessagePackType.String;
-            }
-
-            bytesDecoders[MessagePackCode.Nil] = Decoders.NilBytes.Instance;
-
-            //typeLookupTable[MessagePackCode.NeverUsed] = MessagePackType.Unknown;
-            booleanDecoders[MessagePackCode.False] = Decoders.False.Instance;
-            booleanDecoders[MessagePackCode.True] = Decoders.True.Instance;
-            bytesDecoders[MessagePackCode.Bin8] = Decoders.Bin8Bytes.Instance;
-            bytesDecoders[MessagePackCode.Bin16] = Decoders.Bin16Bytes.Instance;
-            bytesDecoders[MessagePackCode.Bin32] = Decoders.Bin32Bytes.Instance;
-            //typeLookupTable[MessagePackCode.Ext8] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.Ext16] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.Ext32] = MessagePackType.Extension;
-
-            singleDecoders[MessagePackCode.Float32] = Decoders.Float32Single.Instance;
-            doubleDecoders[MessagePackCode.Float32] = Decoders.Float32Double.Instance;
-            doubleDecoders[MessagePackCode.Float64] = Decoders.Float64Double.Instance;
 
             byteDecoders[MessagePackCode.UInt8] = Decoders.UInt8Byte.Instance;
 
@@ -94,26 +75,55 @@ namespace MessagePack
             int64Decoders[MessagePackCode.Int32] = Decoders.Int32Int64.Instance;
             int64Decoders[MessagePackCode.Int64] = Decoders.Int64Int64.Instance;
 
+            singleDecoders[MessagePackCode.Float32] = Decoders.Float32Single.Instance;
+            doubleDecoders[MessagePackCode.Float32] = Decoders.Float32Double.Instance;
+            doubleDecoders[MessagePackCode.Float64] = Decoders.Float64Double.Instance;
+
+            // Map
+            for (int i = MessagePackCode.MinFixMap; i <= MessagePackCode.MaxFixMap; i++)
+            {
+                mapHeaderDecoders[i] = Decoders.FixMapHeader.Instance;
+            }
+            mapHeaderDecoders[MessagePackCode.Map16] = Decoders.Map16Header.Instance;
+            mapHeaderDecoders[MessagePackCode.Map32] = Decoders.Map32Header.Instance;
+
+            // Array
+            for (int i = MessagePackCode.MinFixArray; i <= MessagePackCode.MaxFixArray; i++)
+            {
+                arrayHeaderDecoders[i] = Decoders.FixArrayHeader.Instance;
+            }
+            arrayHeaderDecoders[MessagePackCode.Array16] = Decoders.Array16Header.Instance;
+            arrayHeaderDecoders[MessagePackCode.Array32] = Decoders.Array32Header.Instance;
+
+            // Str
+            for (int i = MessagePackCode.MinFixStr; i <= MessagePackCode.MaxFixStr; i++)
+            {
+                //typeLookupTable[i] = MessagePackType.String;
+            }
+            //typeLookupTable[MessagePackCode.Str8] = MessagePackType.String;
+            //typeLookupTable[MessagePackCode.Str16] = MessagePackType.String;
+            //typeLookupTable[MessagePackCode.Str32] = MessagePackType.String;
+
+            // Others
+            bytesDecoders[MessagePackCode.Nil] = Decoders.NilBytes.Instance;
+
+            booleanDecoders[MessagePackCode.False] = Decoders.False.Instance;
+            booleanDecoders[MessagePackCode.True] = Decoders.True.Instance;
+
+            bytesDecoders[MessagePackCode.Bin8] = Decoders.Bin8Bytes.Instance;
+            bytesDecoders[MessagePackCode.Bin16] = Decoders.Bin16Bytes.Instance;
+            bytesDecoders[MessagePackCode.Bin32] = Decoders.Bin32Bytes.Instance;
+
+            // Ext
+
             //typeLookupTable[MessagePackCode.FixExt1] = MessagePackType.Extension;
             //typeLookupTable[MessagePackCode.FixExt2] = MessagePackType.Extension;
             //typeLookupTable[MessagePackCode.FixExt4] = MessagePackType.Extension;
             //typeLookupTable[MessagePackCode.FixExt8] = MessagePackType.Extension;
             //typeLookupTable[MessagePackCode.FixExt16] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.Str8] = MessagePackType.String;
-            //typeLookupTable[MessagePackCode.Str16] = MessagePackType.String;
-            //typeLookupTable[MessagePackCode.Str32] = MessagePackType.String;
-            //typeLookupTable[MessagePackCode.Array16] = MessagePackType.Array;
-            //typeLookupTable[MessagePackCode.Array32] = MessagePackType.Array;
-            //typeLookupTable[MessagePackCode.Map16] = MessagePackType.Map;
-            //typeLookupTable[MessagePackCode.Map32] = MessagePackType.Map;
-
-            for (int i = MessagePackCode.MinNegativeFixInt; i <= MessagePackCode.MaxNegativeFixInt; i++)
-            {
-                sbyteDecoders[i] = Decoders.FixSByte.Instance;
-                int16Decoders[i] = Decoders.FixNegativeInt16.Instance;
-                int32Decoders[i] = Decoders.FixNegativeInt32.Instance;
-                int64Decoders[i] = Decoders.FixNegativeInt64.Instance;
-            }
+            //typeLookupTable[MessagePackCode.Ext8] = MessagePackType.Extension;
+            //typeLookupTable[MessagePackCode.Ext16] = MessagePackType.Extension;
+            //typeLookupTable[MessagePackCode.Ext32] = MessagePackType.Extension;
         }
 
         public static void EnsureCapacity(ref byte[] bytes, int offset, int appendLength)
@@ -196,14 +206,6 @@ namespace MessagePack
             return 1;
         }
 
-        /// <summary>
-        /// Unsafe! don't ensure capacity and don't return size(use 1 byte).
-        /// </summary>
-        public static void WriteNilUnsafe(ref byte[] bytes, int offset, bool value)
-        {
-            bytes[offset] = MessagePackCode.Nil;
-        }
-
         public static Nil ReadNil(byte[] bytes, int offset, out int readSize)
         {
             if (bytes[offset] == MessagePackCode.Nil)
@@ -213,7 +215,7 @@ namespace MessagePack
             }
             else
             {
-                throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+                throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
             }
         }
 
@@ -222,36 +224,114 @@ namespace MessagePack
             return bytes[offset] == MessagePackCode.Nil;
         }
 
+        /// <summary>
+        /// Unsafe. If value is guranteed 0 ~ MessagePackRange.MaxFixMapCount(15), can use this method.
+        /// </summary>
+        /// <returns></returns>
+        public static int WriteFixedMapHeaderUnsafe(ref byte[] bytes, int offset, int count)
+        {
+            EnsureCapacity(ref bytes, offset, 1);
+            bytes[offset] = (byte)(MessagePackCode.MinFixMap | count);
+            return 1;
+        }
+
+        /// <summary>
+        /// Write map count.
+        /// </summary>
+        public static int WriteMapHeader(ref byte[] bytes, int offset, uint count)
+        {
+            if (count <= MessagePackRange.MaxFixMapCount)
+            {
+                EnsureCapacity(ref bytes, offset, 1);
+                bytes[offset] = (byte)(MessagePackCode.MinFixMap | count);
+                return 1;
+            }
+            else if (count <= ushort.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 3);
+                unchecked
+                {
+                    bytes[offset] = MessagePackCode.Map16;
+                    bytes[offset + 1] = (byte)(count >> 8);
+                    bytes[offset + 2] = (byte)(count);
+                }
+                return 3;
+            }
+            else
+            {
+                EnsureCapacity(ref bytes, offset, 5);
+                unchecked
+                {
+                    bytes[offset] = MessagePackCode.Map32;
+                    bytes[offset + 1] = (byte)(count >> 24);
+                    bytes[offset + 2] = (byte)(count >> 16);
+                    bytes[offset + 3] = (byte)(count >> 8);
+                    bytes[offset + 4] = (byte)(count);
+                }
+                return 5;
+            }
+        }
+
+        /// <summary>
+        /// Return map count.
+        /// </summary>
+        public static uint ReadMapHeader(byte[] bytes, int offset, out int readSize)
+        {
+            return mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+        /// <summary>
+        /// Write array count.
+        /// </summary>
+        public static int WriteArrayHeader(ref byte[] bytes, int offset, uint count)
+        {
+            if (count <= MessagePackRange.MaxFixArrayCount)
+            {
+                EnsureCapacity(ref bytes, offset, 1);
+                bytes[offset] = (byte)(MessagePackCode.MinFixArray | count);
+                return 1;
+            }
+            else if (count <= ushort.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 3);
+                unchecked
+                {
+                    bytes[offset] = MessagePackCode.Array16;
+                    bytes[offset + 1] = (byte)(count >> 8);
+                    bytes[offset + 2] = (byte)(count);
+                }
+                return 3;
+            }
+            else
+            {
+                EnsureCapacity(ref bytes, offset, 5);
+                unchecked
+                {
+                    bytes[offset] = MessagePackCode.Array32;
+                    bytes[offset + 1] = (byte)(count >> 24);
+                    bytes[offset + 2] = (byte)(count >> 16);
+                    bytes[offset + 3] = (byte)(count >> 8);
+                    bytes[offset + 4] = (byte)(count);
+                }
+                return 5;
+            }
+        }
+
+        /// <summary>
+        /// Return array count.
+        /// </summary>
+        public static uint ReadArraydHeader(byte[] bytes, int offset, out int readSize)
+        {
+            return arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+
         public static int WriteBoolean(ref byte[] bytes, int offset, bool value)
         {
             EnsureCapacity(ref bytes, offset, 1);
 
             bytes[offset] = (value ? MessagePackCode.True : MessagePackCode.False);
             return 1;
-        }
-
-        /// <summary>
-        /// Unsafe! don't ensure capacity and don't return size(use 1 byte).
-        /// </summary>
-        public static void WriteBooleanUnsafe(ref byte[] bytes, int offset, bool value)
-        {
-            bytes[offset] = (value ? MessagePackCode.True : MessagePackCode.False);
-        }
-
-        /// <summary>
-        /// Unsafe! don't ensure capacity and don't return size(use 1 byte).
-        /// </summary>
-        public static void WriteBooleanTrueUnsafe(ref byte[] bytes, int offset)
-        {
-            bytes[offset] = MessagePackCode.True;
-        }
-
-        /// <summary>
-        /// Unsafe! don't ensure capacity and don't return size(use 1 byte).
-        /// </summary>
-        public static void WriteBooleanFalseUnsafe(ref byte[] bytes, int offset)
-        {
-            bytes[offset] = MessagePackCode.False;
         }
 
         public static bool ReadBoolean(byte[] bytes, int offset, out int readSize)
@@ -470,17 +550,6 @@ namespace MessagePack
             return 1;
         }
 
-        /// <summary>
-        /// Unsafe. If value is guranteed 128 ~ MessagePackCode.MaxFixInt(127), can use this method.
-        /// </summary>
-        /// <returns></returns>
-        public static int WriteSByteIntUnsafe(ref byte[] bytes, int offset, int value)
-        {
-            EnsureCapacity(ref bytes, offset, 1);
-            bytes[offset] = (byte)value;
-            return 1;
-        }
-
         public static int WriteInt32(ref byte[] bytes, int offset, int value)
         {
             if (MessagePackRange.MinFixNegativeInt <= value && value <= MessagePackRange.MaxFixPositiveInt)
@@ -669,10 +738,23 @@ namespace MessagePack
             return (char)ReadUInt16(ref bytes, offset);
         }
 
-        public static int WriteString(ref byte[] bytes, int offset, string value)
+        /// <summary>
+        /// Unsafe. If value is guranteed length is 0 ~ 31, can use this method.
+        /// </summary>
+        public static int WriteFixedStringUnsafe(ref byte[] bytes, int offset, string value, int byteCount)
         {
-            var byteCount = StringEncoding.UTF8.GetByteCount(value);
+            EnsureCapacity(ref bytes, offset, byteCount + 1);
+            bytes[offset] = (byte)(MessagePackCode.MinFixStr | byteCount);
+            StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, offset + 1);
 
+            return byteCount + 1;
+        }
+
+        /// <summary>
+        /// Unsafe. If pre-calculated byteCount of target string, can use this method.
+        /// </summary>
+        public static int WriteVariableStringUnsafe(ref byte[] bytes, int offset, string value, int byteCount)
+        {
             if (byteCount <= MessagePackRange.MaxFixStringLength)
             {
                 EnsureCapacity(ref bytes, offset, byteCount + 1);
@@ -682,6 +764,12 @@ namespace MessagePack
 
             // TODO:str8, str16, str32 format...
             throw new NotImplementedException();
+        }
+
+        public static int WriteString(ref byte[] bytes, int offset, string value)
+        {
+            var byteCount = StringEncoding.UTF8.GetByteCount(value);
+            return WriteVariableStringUnsafe(ref bytes, offset, value, byteCount);
         }
 
 #if !UNITY
@@ -811,6 +899,154 @@ namespace MessagePack
 
 namespace MessagePack.Decoders
 {
+    internal interface IMapHeaderDecoder
+    {
+        uint Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixMapHeader : IMapHeaderDecoder
+    {
+        internal static readonly IMapHeaderDecoder Instance = new FixMapHeader();
+
+        FixMapHeader()
+        {
+
+        }
+
+        public uint Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return (uint)(bytes[offset] & 0xF);
+        }
+    }
+
+    internal class Map16Header : IMapHeaderDecoder
+    {
+        internal static readonly IMapHeaderDecoder Instance = new Map16Header();
+
+        Map16Header()
+        {
+
+        }
+
+        public uint Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            unchecked
+            {
+                return (uint)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+            }
+        }
+    }
+
+    internal class Map32Header : IMapHeaderDecoder
+    {
+        internal static readonly IMapHeaderDecoder Instance = new Map32Header();
+
+        Map32Header()
+        {
+
+        }
+
+        public uint Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 5;
+            unchecked
+            {
+                return (uint)((bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + bytes[offset + 4]);
+            }
+        }
+    }
+
+    internal class InvalidMapHeader : IMapHeaderDecoder
+    {
+        internal static readonly IMapHeaderDecoder Instance = new InvalidMapHeader();
+
+        InvalidMapHeader()
+        {
+
+        }
+
+        public uint Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IArrayHeaderDecoder
+    {
+        uint Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixArrayHeader : IArrayHeaderDecoder
+    {
+        internal static readonly IArrayHeaderDecoder Instance = new FixArrayHeader();
+
+        FixArrayHeader()
+        {
+
+        }
+
+        public uint Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return (uint)(bytes[offset] & 0xF);
+        }
+    }
+
+    internal class Array16Header : IArrayHeaderDecoder
+    {
+        internal static readonly IArrayHeaderDecoder Instance = new Array16Header();
+
+        Array16Header()
+        {
+
+        }
+
+        public uint Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            unchecked
+            {
+                return (uint)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+            }
+        }
+    }
+
+    internal class Array32Header : IArrayHeaderDecoder
+    {
+        internal static readonly IArrayHeaderDecoder Instance = new Array32Header();
+
+        Array32Header()
+        {
+
+        }
+
+        public uint Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 5;
+            unchecked
+            {
+                return (uint)((bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + bytes[offset + 4]);
+            }
+        }
+    }
+
+    internal class InvalidArrayHeader : IArrayHeaderDecoder
+    {
+        internal static readonly IArrayHeaderDecoder Instance = new InvalidArrayHeader();
+
+        InvalidArrayHeader()
+        {
+
+        }
+
+        public uint Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
     internal interface IBooleanDecoder
     {
         bool Read();
@@ -900,7 +1136,7 @@ namespace MessagePack.Decoders
 
         public byte Read(byte[] bytes, int offset, out int readSize)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
     }
 
@@ -996,7 +1232,7 @@ namespace MessagePack.Decoders
 
         public byte[] Read(byte[] bytes, int offset, out int readSize)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
     }
 
@@ -1048,7 +1284,7 @@ namespace MessagePack.Decoders
 
         public sbyte Read(byte[] bytes, int offset, out int readSize)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
     }
 
@@ -1084,7 +1320,7 @@ namespace MessagePack.Decoders
 
         public Single Read(byte[] bytes, int offset, out int readSize)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
     }
 
@@ -1136,7 +1372,7 @@ namespace MessagePack.Decoders
 
         public Double Read(byte[] bytes, int offset, out int readSize)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
     }
 
@@ -1223,7 +1459,7 @@ namespace MessagePack.Decoders
 
         public Int16 Read(byte[] bytes, int offset, out int readSize)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
     }
 
@@ -1329,7 +1565,7 @@ namespace MessagePack.Decoders
 
         public Int32 Read(byte[] bytes, int offset, out int readSize)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
     }
 
@@ -1471,7 +1707,7 @@ namespace MessagePack.Decoders
 
         public Int64 Read(byte[] bytes, int offset, out int readSize)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} type:{1}", bytes[offset], MessagePackCode.ToMessagePackType(bytes[offset])));
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
     }
 }

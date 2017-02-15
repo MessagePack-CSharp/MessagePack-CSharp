@@ -2,29 +2,66 @@
 
 namespace MessagePack
 {
-    public class MessagePackKeyAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+    public class MessagePackObjectAttribute : Attribute
+    {
+        public bool KeyAsPropertyName { get; private set; }
+
+        public MessagePackObjectAttribute(bool keyAsPropertyName = false)
+        {
+            this.KeyAsPropertyName = keyAsPropertyName;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+    public class KeyAttribute : Attribute
     {
         public int? IntKey { get; private set; }
         public string StringKey { get; private set; }
 
-        public MessagePackKeyAttribute(int x)
+        public KeyAttribute(int x)
         {
             this.IntKey = x;
         }
 
-        public MessagePackKeyAttribute(string x)
+        public KeyAttribute(string x)
         {
             this.StringKey = x;
         }
     }
 
-    public class MessagePackContract : Attribute
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+    public class IgnoreAttribute : Attribute
     {
-        public bool KeyAsPropertyName { get; private set; }
+    }
 
-        public MessagePackContract(bool keyAsPropertyName = false)
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
+    public class UnionAttribute : Attribute
+    {
+        public Type[] SubTypes { get; private set; }
+        public Type FallbackType { get; private set; }
+
+        public UnionAttribute(params Type[] subTypes)
         {
-            this.KeyAsPropertyName = keyAsPropertyName;
+            this.SubTypes = subTypes;
         }
+
+        public UnionAttribute(Type[] subTypes, Type fallbackType)
+        {
+            this.SubTypes = subTypes;
+            this.FallbackType = fallbackType;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public class UnionKeyAttribute : Attribute
+    {
+
+    }
+
+    [AttributeUsage(AttributeTargets.Constructor, AllowMultiple = false, Inherited = true)]
+    public class SerializationConstructorAttribute : Attribute
+    {
+
     }
 }

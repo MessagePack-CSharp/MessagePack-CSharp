@@ -104,11 +104,26 @@ namespace MessagePack
         {
             var formatter = resolver.GetFormatterWithVerify<T>();
 
-            var buffer = InternalMemoryPool.Buffer;
-            var length = FillFromStream(stream, ref buffer);
+            var ms = stream as MemoryStream;
+            if (ms != null)
+            {
+                // optimize for MemoryStream
+                ArraySegment<byte> buffer;
+                if (ms.TryGetBuffer(out buffer))
+                {
+                    int readSize;
+                    return formatter.Deserialize(buffer.Array, buffer.Offset, resolver, out readSize);
+                }
+            }
 
-            int readSize;
-            return formatter.Deserialize(buffer, 0, resolver, out readSize);
+            // no else.
+            {
+                var buffer = InternalMemoryPool.Buffer;
+                var length = FillFromStream(stream, ref buffer);
+
+                int readSize;
+                return formatter.Deserialize(buffer, 0, resolver, out readSize);
+            }
         }
 
         static int FillFromStream(Stream input, ref byte[] buffer)
