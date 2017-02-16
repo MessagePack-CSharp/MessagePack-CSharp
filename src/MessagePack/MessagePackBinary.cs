@@ -22,6 +22,11 @@ namespace MessagePack
         static readonly IInt16Decoder[] int16Decoders = new IInt16Decoder[MaxSize];
         static readonly IInt32Decoder[] int32Decoders = new IInt32Decoder[MaxSize];
         static readonly IInt64Decoder[] int64Decoders = new IInt64Decoder[MaxSize];
+        static readonly IUInt16Decoder[] uint16Decoders = new IUInt16Decoder[MaxSize];
+        static readonly IUInt32Decoder[] uint32Decoders = new IUInt32Decoder[MaxSize];
+        static readonly IUInt64Decoder[] uint64Decoders = new IUInt64Decoder[MaxSize];
+        static readonly IStringDecoder[] stringDecoders = new IStringDecoder[MaxSize];
+        static readonly IExtDecoder[] extDecoders = new IExtDecoder[MaxSize];
 
         static MessagePackBinary()
         {
@@ -39,6 +44,11 @@ namespace MessagePack
                 int16Decoders[i] = Decoders.InvalidInt16.Instance;
                 int32Decoders[i] = Decoders.InvalidInt32.Instance;
                 int64Decoders[i] = Decoders.InvalidInt64.Instance;
+                uint16Decoders[i] = Decoders.InvalidUInt16.Instance;
+                uint32Decoders[i] = Decoders.InvalidUInt32.Instance;
+                uint64Decoders[i] = Decoders.InvalidUInt64.Instance;
+                stringDecoders[i] = Decoders.InvalidString.Instance;
+                extDecoders[i] = Decoders.InvalidExt.Instance;
             }
 
             // Number
@@ -56,14 +66,12 @@ namespace MessagePack
                 int16Decoders[i] = Decoders.FixInt16.Instance;
                 int32Decoders[i] = Decoders.FixInt32.Instance;
                 int64Decoders[i] = Decoders.FixInt64.Instance;
+                uint16Decoders[i] = Decoders.FixUInt16.Instance;
+                uint32Decoders[i] = Decoders.FixUInt32.Instance;
+                uint64Decoders[i] = Decoders.FixUInt64.Instance;
             }
 
             byteDecoders[MessagePackCode.UInt8] = Decoders.UInt8Byte.Instance;
-
-            //typeLookupTable[MessagePackCode.UInt16] = MessagePackType.Integer;
-            //typeLookupTable[MessagePackCode.UInt32] = MessagePackType.Integer;
-            //typeLookupTable[MessagePackCode.UInt64] = MessagePackType.Integer;
-
             sbyteDecoders[MessagePackCode.Int8] = Decoders.Int8SByte.Instance;
             int16Decoders[MessagePackCode.Int8] = Decoders.Int8Int16.Instance;
             int16Decoders[MessagePackCode.Int16] = Decoders.Int16Int16.Instance;
@@ -74,6 +82,16 @@ namespace MessagePack
             int64Decoders[MessagePackCode.Int16] = Decoders.Int16Int64.Instance;
             int64Decoders[MessagePackCode.Int32] = Decoders.Int32Int64.Instance;
             int64Decoders[MessagePackCode.Int64] = Decoders.Int64Int64.Instance;
+
+            uint16Decoders[MessagePackCode.UInt8] = Decoders.UInt8UInt16.Instance;
+            uint16Decoders[MessagePackCode.UInt16] = Decoders.UInt16UInt16.Instance;
+            uint32Decoders[MessagePackCode.UInt8] = Decoders.UInt8UInt32.Instance;
+            uint32Decoders[MessagePackCode.UInt16] = Decoders.UInt16UInt32.Instance;
+            uint32Decoders[MessagePackCode.UInt32] = Decoders.UInt32UInt32.Instance;
+            uint64Decoders[MessagePackCode.UInt8] = Decoders.UInt8UInt64.Instance;
+            uint64Decoders[MessagePackCode.UInt16] = Decoders.UInt16UInt64.Instance;
+            uint64Decoders[MessagePackCode.UInt32] = Decoders.UInt32UInt64.Instance;
+            uint64Decoders[MessagePackCode.UInt64] = Decoders.UInt64UInt64.Instance;
 
             singleDecoders[MessagePackCode.Float32] = Decoders.Float32Single.Instance;
             doubleDecoders[MessagePackCode.Float32] = Decoders.Float32Double.Instance;
@@ -98,11 +116,11 @@ namespace MessagePack
             // Str
             for (int i = MessagePackCode.MinFixStr; i <= MessagePackCode.MaxFixStr; i++)
             {
-                //typeLookupTable[i] = MessagePackType.String;
+                stringDecoders[i] = Decoders.FixString.Instance;
             }
-            //typeLookupTable[MessagePackCode.Str8] = MessagePackType.String;
-            //typeLookupTable[MessagePackCode.Str16] = MessagePackType.String;
-            //typeLookupTable[MessagePackCode.Str32] = MessagePackType.String;
+            stringDecoders[MessagePackCode.Str8] = Decoders.Str8String.Instance;
+            stringDecoders[MessagePackCode.Str16] = Decoders.Str16String.Instance;
+            stringDecoders[MessagePackCode.Str32] = Decoders.Str32String.Instance;
 
             // Others
             bytesDecoders[MessagePackCode.Nil] = Decoders.NilBytes.Instance;
@@ -115,15 +133,14 @@ namespace MessagePack
             bytesDecoders[MessagePackCode.Bin32] = Decoders.Bin32Bytes.Instance;
 
             // Ext
-
-            //typeLookupTable[MessagePackCode.FixExt1] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.FixExt2] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.FixExt4] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.FixExt8] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.FixExt16] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.Ext8] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.Ext16] = MessagePackType.Extension;
-            //typeLookupTable[MessagePackCode.Ext32] = MessagePackType.Extension;
+            extDecoders[MessagePackCode.FixExt1] = Decoders.FixExt1.Instance;
+            extDecoders[MessagePackCode.FixExt2] = Decoders.FixExt2.Instance;
+            extDecoders[MessagePackCode.FixExt4] = Decoders.FixExt4.Instance;
+            extDecoders[MessagePackCode.FixExt8] = Decoders.FixExt8.Instance;
+            extDecoders[MessagePackCode.FixExt16] = Decoders.FixExt16.Instance;
+            extDecoders[MessagePackCode.Ext8] = Decoders.Ext8.Instance;
+            extDecoders[MessagePackCode.Ext16] = Decoders.Ext16.Instance;
+            extDecoders[MessagePackCode.Ext32] = Decoders.Ext32.Instance;
         }
 
         public static void EnsureCapacity(ref byte[] bytes, int offset, int appendLength)
@@ -238,6 +255,17 @@ namespace MessagePack
         /// <summary>
         /// Write map count.
         /// </summary>
+        public static int WriteMapHeader(ref byte[] bytes, int offset, int count)
+        {
+            checked
+            {
+                return WriteMapHeader(ref bytes, offset, (uint)count);
+            }
+        }
+
+        /// <summary>
+        /// Write map count.
+        /// </summary>
         public static int WriteMapHeader(ref byte[] bytes, int offset, uint count)
         {
             if (count <= MessagePackRange.MaxFixMapCount)
@@ -275,9 +303,31 @@ namespace MessagePack
         /// <summary>
         /// Return map count.
         /// </summary>
-        public static uint ReadMapHeader(byte[] bytes, int offset, out int readSize)
+        public static int ReadMapHeader(byte[] bytes, int offset, out int readSize)
+        {
+            checked
+            {
+                return (int)mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+            }
+        }
+
+        /// <summary>
+        /// Return map count.
+        /// </summary>
+        public static uint ReadMapHeaderRaw(byte[] bytes, int offset, out int readSize)
         {
             return mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+        /// <summary>
+        /// Write array count.
+        /// </summary>
+        public static int WriteArrayHeader(ref byte[] bytes, int offset, int count)
+        {
+            checked
+            {
+                return WriteArrayHeader(ref bytes, offset, (uint)count);
+            }
         }
 
         /// <summary>
@@ -320,11 +370,21 @@ namespace MessagePack
         /// <summary>
         /// Return array count.
         /// </summary>
-        public static uint ReadArraydHeader(byte[] bytes, int offset, out int readSize)
+        public static int ReadArrayHeader(byte[] bytes, int offset, out int readSize)
+        {
+            checked
+            {
+                return (int)arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+            }
+        }
+
+        /// <summary>
+        /// Return array count.
+        /// </summary>
+        public static uint ReadArrayHeaderRaw(byte[] bytes, int offset, out int readSize)
         {
             return arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
-
 
         public static int WriteBoolean(ref byte[] bytes, int offset, bool value)
         {
@@ -644,98 +704,139 @@ namespace MessagePack
             return int64Decoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe int WriteUInt16(ref byte[] bytes, int offset, ushort value)
+        public static int WriteUInt16(ref byte[] bytes, int offset, ushort value)
         {
-            EnsureCapacity(ref bytes, offset, 2);
-
-            fixed (byte* ptr = bytes)
+            if (value <= MessagePackRange.MaxFixPositiveInt)
             {
-                *(ushort*)(ptr + offset) = value;
+                EnsureCapacity(ref bytes, offset, 1);
+                bytes[offset] = unchecked((byte)value);
+                return 1;
             }
-
-            return 2;
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe ushort ReadUInt16(ref byte[] bytes, int offset)
-        {
-            fixed (byte* ptr = bytes)
+            else if (value <= byte.MaxValue)
             {
-                return *(ushort*)(ptr + offset);
+                EnsureCapacity(ref bytes, offset, 2);
+                bytes[offset] = MessagePackCode.UInt8;
+                bytes[offset + 1] = unchecked((byte)value);
+                return 2;
             }
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe int WriteUInt32(ref byte[] bytes, int offset, uint value)
-        {
-            EnsureCapacity(ref bytes, offset, 4);
-
-            fixed (byte* ptr = bytes)
+            else
             {
-                *(uint*)(ptr + offset) = value;
-            }
-
-            return 4;
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe uint ReadUInt32(ref byte[] bytes, int offset)
-        {
-            fixed (byte* ptr = bytes)
-            {
-                return *(uint*)(ptr + offset);
+                EnsureCapacity(ref bytes, offset, 3);
+                bytes[offset] = MessagePackCode.UInt16;
+                bytes[offset + 1] = unchecked((byte)(value >> 8));
+                bytes[offset + 2] = unchecked((byte)value);
+                return 3;
             }
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe int WriteUInt64(ref byte[] bytes, int offset, ulong value)
+        public static ushort ReadUInt16(byte[] bytes, int offset, out int readSize)
         {
-            EnsureCapacity(ref bytes, offset, 8);
-
-            fixed (byte* ptr = bytes)
-            {
-                *(ulong*)(ptr + offset) = value;
-            }
-
-            return 8;
+            return uint16Decoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe ulong ReadUInt64(ref byte[] bytes, int offset)
+        public static int WriteUInt32(ref byte[] bytes, int offset, uint value)
         {
-            fixed (byte* ptr = bytes)
+            if (value <= MessagePackRange.MaxFixPositiveInt)
             {
-                return *(ulong*)(ptr + offset);
+                EnsureCapacity(ref bytes, offset, 1);
+                bytes[offset] = unchecked((byte)value);
+                return 1;
+            }
+            else if (value <= byte.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 2);
+                bytes[offset] = MessagePackCode.UInt8;
+                bytes[offset + 1] = unchecked((byte)value);
+                return 2;
+            }
+            else if (value <= ushort.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 3);
+                bytes[offset] = MessagePackCode.UInt16;
+                bytes[offset + 1] = unchecked((byte)(value >> 8));
+                bytes[offset + 2] = unchecked((byte)value);
+                return 3;
+            }
+            else
+            {
+                EnsureCapacity(ref bytes, offset, 5);
+                bytes[offset] = MessagePackCode.UInt32;
+                bytes[offset + 1] = unchecked((byte)(value >> 24));
+                bytes[offset + 2] = unchecked((byte)(value >> 16));
+                bytes[offset + 3] = unchecked((byte)(value >> 8));
+                bytes[offset + 4] = unchecked((byte)value);
+                return 5;
             }
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
+        public static uint ReadUInt32(byte[] bytes, int offset, out int readSize)
+        {
+            return uint32Decoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+        public static int WriteUInt64(ref byte[] bytes, int offset, ulong value)
+        {
+            if (value <= MessagePackRange.MaxFixPositiveInt)
+            {
+                EnsureCapacity(ref bytes, offset, 1);
+                bytes[offset] = unchecked((byte)value);
+                return 1;
+            }
+            else if (value <= byte.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 2);
+                bytes[offset] = MessagePackCode.UInt8;
+                bytes[offset + 1] = unchecked((byte)value);
+                return 2;
+            }
+            else if (value <= ushort.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 3);
+                bytes[offset] = MessagePackCode.UInt16;
+                bytes[offset + 1] = unchecked((byte)(value >> 8));
+                bytes[offset + 2] = unchecked((byte)value);
+                return 3;
+            }
+            else if (value <= uint.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 5);
+                bytes[offset] = MessagePackCode.UInt32;
+                bytes[offset + 1] = unchecked((byte)(value >> 24));
+                bytes[offset + 2] = unchecked((byte)(value >> 16));
+                bytes[offset + 3] = unchecked((byte)(value >> 8));
+                bytes[offset + 4] = unchecked((byte)value);
+                return 5;
+            }
+            else
+            {
+
+                EnsureCapacity(ref bytes, offset, 9);
+                bytes[offset] = MessagePackCode.UInt64;
+                bytes[offset + 1] = unchecked((byte)(value >> 56));
+                bytes[offset + 2] = unchecked((byte)(value >> 48));
+                bytes[offset + 3] = unchecked((byte)(value >> 40));
+                bytes[offset + 4] = unchecked((byte)(value >> 32));
+                bytes[offset + 5] = unchecked((byte)(value >> 24));
+                bytes[offset + 6] = unchecked((byte)(value >> 16));
+                bytes[offset + 7] = unchecked((byte)(value >> 8));
+                bytes[offset + 8] = unchecked((byte)value);
+                return 9;
+            }
+        }
+
+        public static ulong ReadUInt64(byte[] bytes, int offset, out int readSize)
+        {
+            return uint64Decoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
         public static int WriteChar(ref byte[] bytes, int offset, char value)
         {
             return WriteUInt16(ref bytes, offset, (ushort)value);
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static char ReadChar(ref byte[] bytes, int offset)
+        public static char ReadChar(byte[] bytes, int offset, out int readSize)
         {
-            return (char)ReadUInt16(ref bytes, offset);
+            return (char)ReadUInt16(bytes, offset, out readSize);
         }
 
         /// <summary>
@@ -753,104 +854,237 @@ namespace MessagePack
         /// <summary>
         /// Unsafe. If pre-calculated byteCount of target string, can use this method.
         /// </summary>
-        public static int WriteVariableStringUnsafe(ref byte[] bytes, int offset, string value, int byteCount)
+        public static int WriteStringUnsafe(ref byte[] bytes, int offset, string value, int byteCount)
         {
             if (byteCount <= MessagePackRange.MaxFixStringLength)
             {
                 EnsureCapacity(ref bytes, offset, byteCount + 1);
                 bytes[offset] = (byte)(MessagePackCode.MinFixStr | byteCount);
                 StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, offset + 1);
+                return byteCount + 1;
             }
-
-            // TODO:str8, str16, str32 format...
-            throw new NotImplementedException();
+            else if (byteCount <= byte.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, byteCount + 2);
+                bytes[offset] = MessagePackCode.Str8;
+                bytes[offset + 1] = unchecked((byte)byteCount);
+                StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, offset + 2);
+                return byteCount + 2;
+            }
+            else if (byteCount <= ushort.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, byteCount + 3);
+                bytes[offset] = MessagePackCode.Str16;
+                bytes[offset + 1] = unchecked((byte)(byteCount >> 8));
+                bytes[offset + 2] = unchecked((byte)byteCount);
+                StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, offset + 3);
+                return byteCount + 3;
+            }
+            else
+            {
+                EnsureCapacity(ref bytes, offset, byteCount + 5);
+                bytes[offset] = MessagePackCode.Str32;
+                bytes[offset + 1] = unchecked((byte)(byteCount >> 24));
+                bytes[offset + 2] = unchecked((byte)(byteCount >> 16));
+                bytes[offset + 3] = unchecked((byte)(byteCount >> 8));
+                bytes[offset + 4] = unchecked((byte)byteCount);
+                StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, offset + 5);
+                return byteCount + 5;
+            }
         }
 
         public static int WriteString(ref byte[] bytes, int offset, string value)
         {
             var byteCount = StringEncoding.UTF8.GetByteCount(value);
-            return WriteVariableStringUnsafe(ref bytes, offset, value, byteCount);
+            return WriteStringUnsafe(ref bytes, offset, value, byteCount);
         }
 
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static string ReadString(ref byte[] bytes, int offset, int count)
+        public static string ReadString(byte[] bytes, int offset, out int readSize)
         {
-            return StringEncoding.UTF8.GetString(bytes, offset, count);
+            return stringDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
-        #region Timestamp/Duration
-
-        public static unsafe int WriteTimeSpan(ref byte[] bytes, int offset, TimeSpan timeSpan)
+        public static int WriteExtensionFormat(ref byte[] bytes, int offset, sbyte typeCode, byte[] data)
         {
-            checked
+            var length = data.Length;
+            switch (length)
             {
-                long ticks = timeSpan.Ticks;
-                long seconds = ticks / TimeSpan.TicksPerSecond;
-                int nanos = (int)(ticks % TimeSpan.TicksPerSecond) * Duration.NanosecondsPerTick;
-
-                EnsureCapacity(ref bytes, offset, 12);
-                fixed (byte* ptr = bytes)
-                {
-                    *(long*)(ptr + offset) = seconds;
-                    *(int*)(ptr + offset + 8) = nanos;
-                }
-
-                return 12;
-            }
-        }
-
-        public static unsafe TimeSpan ReadTimeSpan(ref byte[] bytes, int offset)
-        {
-            checked
-            {
-                fixed (byte* ptr = bytes)
-                {
-                    var seconds = *(long*)(ptr + offset);
-                    var nanos = *(int*)(ptr + offset + 8);
-
-                    if (!Duration.IsNormalized(seconds, nanos))
+                case 1:
+                    EnsureCapacity(ref bytes, offset, 3);
+                    bytes[offset] = MessagePackCode.FixExt1;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    bytes[offset + 2] = data[0];
+                    return 3;
+                case 2:
+                    EnsureCapacity(ref bytes, offset, 4);
+                    bytes[offset] = MessagePackCode.FixExt2;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    bytes[offset + 2] = data[0];
+                    bytes[offset + 3] = data[1];
+                    return 4;
+                case 4:
+                    EnsureCapacity(ref bytes, offset, 6);
+                    bytes[offset] = MessagePackCode.FixExt4;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    bytes[offset + 2] = data[0];
+                    bytes[offset + 3] = data[1];
+                    bytes[offset + 4] = data[2];
+                    bytes[offset + 5] = data[3];
+                    return 6;
+                case 8:
+                    EnsureCapacity(ref bytes, offset, 10);
+                    bytes[offset] = MessagePackCode.FixExt8;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    bytes[offset + 2] = data[0];
+                    bytes[offset + 3] = data[1];
+                    bytes[offset + 4] = data[2];
+                    bytes[offset + 5] = data[3];
+                    bytes[offset + 6] = data[4];
+                    bytes[offset + 7] = data[5];
+                    bytes[offset + 8] = data[6];
+                    bytes[offset + 9] = data[7];
+                    return 10;
+                case 16:
+                    EnsureCapacity(ref bytes, offset, 18);
+                    bytes[offset] = MessagePackCode.FixExt16;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    bytes[offset + 2] = data[0];
+                    bytes[offset + 3] = data[1];
+                    bytes[offset + 4] = data[2];
+                    bytes[offset + 5] = data[3];
+                    bytes[offset + 6] = data[4];
+                    bytes[offset + 7] = data[5];
+                    bytes[offset + 8] = data[6];
+                    bytes[offset + 9] = data[7];
+                    bytes[offset + 10] = data[8];
+                    bytes[offset + 11] = data[9];
+                    bytes[offset + 12] = data[10];
+                    bytes[offset + 13] = data[11];
+                    bytes[offset + 14] = data[12];
+                    bytes[offset + 15] = data[13];
+                    bytes[offset + 16] = data[14];
+                    bytes[offset + 17] = data[15];
+                    return 18;
+                default:
+                    unchecked
                     {
-                        throw new InvalidOperationException("Duration was not a valid normalized duration");
+                        if (data.Length <= byte.MaxValue)
+                        {
+                            bytes[offset] = MessagePackCode.Ext8;
+                            bytes[offset + 1] = unchecked((byte)typeCode);
+                            bytes[offset + 2] = unchecked((byte)(length));
+                            Buffer.BlockCopy(data, 0, bytes, offset + 3, length);
+                            return length + 3;
+                        }
+                        else if (data.Length <= UInt16.MaxValue)
+                        {
+                            bytes[offset] = MessagePackCode.Ext16;
+                            bytes[offset + 1] = unchecked((byte)typeCode);
+                            bytes[offset + 2] = unchecked((byte)(length >> 8));
+                            bytes[offset + 3] = unchecked((byte)(length));
+                            Buffer.BlockCopy(data, 0, bytes, offset + 4, length);
+                            return length + 4;
+                        }
+                        else
+                        {
+                            bytes[offset] = MessagePackCode.Ext32;
+                            bytes[offset + 1] = unchecked((byte)typeCode);
+                            bytes[offset + 2] = unchecked((byte)(length >> 24));
+                            bytes[offset + 3] = unchecked((byte)(length >> 16));
+                            bytes[offset + 4] = unchecked((byte)(length >> 8));
+                            bytes[offset + 5] = unchecked((byte)length);
+                            Buffer.BlockCopy(data, 0, bytes, offset + 6, length);
+                            return length + 6;
+                        }
                     }
-                    long ticks = seconds * TimeSpan.TicksPerSecond + nanos / Duration.NanosecondsPerTick;
-                    return TimeSpan.FromTicks(ticks);
-                }
             }
         }
 
-        public static unsafe int WriteDateTime(ref byte[] bytes, int offset, DateTime dateTime)
+        public static ExtensionResult ReadExtensionFormat(byte[] bytes, int offset, out int readSize)
+        {
+            return extDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+        // Timestamp spec
+        // https://github.com/msgpack/msgpack/pull/209
+        // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
+        // FixExt8(-1) => nanoseconds + seconds | [1970-01-01 00:00:00.000000000 UTC, 2514-05-30 01:53:04.000000000 UTC) range
+        // Ext8(12,-1) => nanoseconds + seconds | [-584554047284-02-23 16:59:44 UTC, 584554051223-11-09 07:00:16.000000000 UTC) range
+
+        public static int WriteDateTime(ref byte[] bytes, int offset, DateTime dateTime)
         {
             dateTime = dateTime.ToUniversalTime();
 
-            // Do the arithmetic using DateTime.Ticks, which is always non-negative, making things simpler.
-            long secondsSinceBclEpoch = dateTime.Ticks / TimeSpan.TicksPerSecond;
-            int nanoseconds = (int)(dateTime.Ticks % TimeSpan.TicksPerSecond) * Duration.NanosecondsPerTick;
+            var secondsSinceBclEpoch = dateTime.Ticks / TimeSpan.TicksPerSecond;
+            var seconds = secondsSinceBclEpoch - Timestamp.BclSecondsAtUnixEpoch;
+            var nanoseconds = (dateTime.Ticks % TimeSpan.TicksPerSecond) * Duration.NanosecondsPerTick;
 
-            EnsureCapacity(ref bytes, offset, 12);
-            fixed (byte* ptr = bytes)
+            // reference pseudo code.
+            /*
+            struct timespec {
+                long tv_sec;  // seconds
+                long tv_nsec; // nanoseconds
+            } time;
+            if ((time.tv_sec >> 34) == 0)
             {
-                *(long*)(ptr + offset) = (secondsSinceBclEpoch - Timestamp.BclSecondsAtUnixEpoch);
-                *(int*)(ptr + offset + 8) = nanoseconds;
+                uint64_t data64 = (time.tv_nsec << 34) | time.tv_sec;
+                if (data & 0xffffffff00000000L == 0)
+                {
+                    // timestamp 32
+                    uint32_t data32 = data64;
+                    serialize(0xd6, -1, data32)
+                }
+                else
+                {
+                    // timestamp 64
+                    serialize(0xd7, -1, data64)
+                }
+            }
+            else
+            {
+                // timestamp 96
+                serialize(0xc7, 12, -1, time.tv_nsec, time.tv_sec)
+            }
+            */
+
+            if ((seconds >> 34) == 0)
+            {
+                var data64 = (ulong)((nanoseconds << 34) | seconds);
+                if ((data64 & 0xffffffff00000000L) == 0)
+                {
+                    // timestamp 32
+                    var data32 = (UInt32)data64;
+                    // serialize(0xd6, -1, data32)
+                }
+                else
+                {
+                    // timestamp 64
+                    // serialize(0xd7, -1, data64)
+                }
+            }
+            else
+            {
+                // timestamp 96
+                // serialize(0xc7, 12, -1, time.tv_nsec, time.tv_sec)
             }
 
-            return 12;
+            throw new NotImplementedException();
         }
 
-        public static unsafe DateTime ReadDateTime(ref byte[] bytes, int offset)
+        public static DateTime ReadDateTime(byte[] bytes, int offset, out int readSize)
         {
-            fixed (byte* ptr = bytes)
-            {
-                var seconds = *(long*)(ptr + offset);
-                var nanos = *(int*)(ptr + offset + 8);
+            throw new NotImplementedException();
+            //fixed (byte* ptr = bytes)
+            //{
+            //    var seconds = *(long*)(ptr + offset);
+            //    var nanos = *(int*)(ptr + offset + 8);
 
-                if (!Timestamp.IsNormalized(seconds, nanos))
-                {
-                    throw new InvalidOperationException(string.Format(@"Timestamp contains invalid values: Seconds={0}; Nanos={1}", seconds, nanos));
-                }
-                return Timestamp.UnixEpoch.AddSeconds(seconds).AddTicks(nanos / Duration.NanosecondsPerTick);
-            }
+            //    if (!Timestamp.IsNormalized(seconds, nanos))
+            //    {
+            //        throw new InvalidOperationException(string.Format(@"Timestamp contains invalid values: Seconds={0}; Nanos={1}", seconds, nanos));
+            //    }
+            //    return Timestamp.UnixEpoch.AddSeconds(seconds).AddTicks(nanos / Duration.NanosecondsPerTick);
+            //}
         }
 
         internal static class Timestamp
@@ -892,8 +1126,18 @@ namespace MessagePack
                 return Math.Sign(seconds) * Math.Sign(nanoseconds) != -1;
             }
         }
+    }
 
-        #endregion
+    public struct ExtensionResult
+    {
+        public sbyte TypeCode { get; private set; }
+        public byte[] Data { get; private set; }
+
+        public ExtensionResult(sbyte typeCode, byte[] data)
+        {
+            TypeCode = typeCode;
+            Data = data;
+        }
     }
 }
 
@@ -1569,22 +1813,6 @@ namespace MessagePack.Decoders
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     internal interface IInt64Decoder
     {
         Int64 Read(byte[] bytes, int offset, out int readSize);
@@ -1706,6 +1934,594 @@ namespace MessagePack.Decoders
         }
 
         public Int64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IUInt16Decoder
+    {
+        UInt16 Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixUInt16 : IUInt16Decoder
+    {
+        internal static readonly IUInt16Decoder Instance = new FixUInt16();
+
+        FixUInt16()
+        {
+
+        }
+
+        public UInt16 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return unchecked((UInt16)bytes[offset]);
+        }
+    }
+
+    internal class UInt8UInt16 : IUInt16Decoder
+    {
+        internal static readonly IUInt16Decoder Instance = new UInt8UInt16();
+
+        UInt8UInt16()
+        {
+
+        }
+
+        public UInt16 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            return unchecked((UInt16)(bytes[offset + 1]));
+        }
+    }
+
+    internal class UInt16UInt16 : IUInt16Decoder
+    {
+        internal static readonly IUInt16Decoder Instance = new UInt16UInt16();
+
+        UInt16UInt16()
+        {
+
+        }
+
+        public UInt16 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            unchecked
+            {
+                return (UInt16)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+            }
+        }
+    }
+
+    internal class InvalidUInt16 : IUInt16Decoder
+    {
+        internal static readonly IUInt16Decoder Instance = new InvalidUInt16();
+
+        InvalidUInt16()
+        {
+
+        }
+
+        public UInt16 Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IUInt32Decoder
+    {
+        UInt32 Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixUInt32 : IUInt32Decoder
+    {
+        internal static readonly IUInt32Decoder Instance = new FixUInt32();
+
+        FixUInt32()
+        {
+
+        }
+
+        public UInt32 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return unchecked((UInt32)bytes[offset]);
+        }
+    }
+
+    internal class UInt8UInt32 : IUInt32Decoder
+    {
+        internal static readonly IUInt32Decoder Instance = new UInt8UInt32();
+
+        UInt8UInt32()
+        {
+
+        }
+
+        public UInt32 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            return unchecked((UInt32)(bytes[offset + 1]));
+        }
+    }
+
+    internal class UInt16UInt32 : IUInt32Decoder
+    {
+        internal static readonly IUInt32Decoder Instance = new UInt16UInt32();
+
+        UInt16UInt32()
+        {
+
+        }
+
+        public UInt32 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            unchecked
+            {
+                return (UInt32)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+            }
+        }
+    }
+
+    internal class UInt32UInt32 : IUInt32Decoder
+    {
+        internal static readonly IUInt32Decoder Instance = new UInt32UInt32();
+
+        UInt32UInt32()
+        {
+
+        }
+
+        public UInt32 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 5;
+            unchecked
+            {
+                return (UInt32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+            }
+        }
+    }
+
+    internal class InvalidUInt32 : IUInt32Decoder
+    {
+        internal static readonly IUInt32Decoder Instance = new InvalidUInt32();
+
+        InvalidUInt32()
+        {
+
+        }
+
+        public UInt32 Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IUInt64Decoder
+    {
+        UInt64 Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixUInt64 : IUInt64Decoder
+    {
+        internal static readonly IUInt64Decoder Instance = new FixUInt64();
+
+        FixUInt64()
+        {
+
+        }
+
+        public UInt64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return unchecked((UInt64)bytes[offset]);
+        }
+    }
+
+    internal class UInt8UInt64 : IUInt64Decoder
+    {
+        internal static readonly IUInt64Decoder Instance = new UInt8UInt64();
+
+        UInt8UInt64()
+        {
+
+        }
+
+        public UInt64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            return unchecked((UInt64)(bytes[offset + 1]));
+        }
+    }
+
+    internal class UInt16UInt64 : IUInt64Decoder
+    {
+        internal static readonly IUInt64Decoder Instance = new UInt16UInt64();
+
+        UInt16UInt64()
+        {
+
+        }
+
+        public UInt64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            unchecked
+            {
+                return (UInt64)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+            }
+        }
+    }
+
+    internal class UInt32UInt64 : IUInt64Decoder
+    {
+        internal static readonly IUInt64Decoder Instance = new UInt32UInt64();
+
+        UInt32UInt64()
+        {
+
+        }
+
+        public UInt64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 5;
+            unchecked
+            {
+                return (UInt64)(((UInt64)bytes[offset + 1] << 24) + (UInt64)(bytes[offset + 2] << 16) + (UInt64)(bytes[offset + 3] << 8) + (UInt64)bytes[offset + 4]);
+            }
+        }
+    }
+
+    internal class UInt64UInt64 : IUInt64Decoder
+    {
+        internal static readonly IUInt64Decoder Instance = new UInt64UInt64();
+
+        UInt64UInt64()
+        {
+
+        }
+
+        public UInt64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 9;
+            unchecked
+            {
+                return (UInt64)bytes[offset + 1] << 56 | (UInt64)bytes[offset + 2] << 48 | (UInt64)bytes[offset + 3] << 40 | (UInt64)bytes[offset + 4] << 32
+                     | (UInt64)bytes[offset + 5] << 24 | (UInt64)bytes[offset + 6] << 16 | (UInt64)bytes[offset + 7] << 8 | (UInt64)bytes[offset + 8];
+            }
+        }
+    }
+
+    internal class InvalidUInt64 : IUInt64Decoder
+    {
+        internal static readonly IUInt64Decoder Instance = new InvalidUInt64();
+
+        InvalidUInt64()
+        {
+
+        }
+
+        public UInt64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IStringDecoder
+    {
+        String Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixString : IStringDecoder
+    {
+        internal static readonly IStringDecoder Instance = new FixString();
+
+        FixString()
+        {
+
+        }
+
+        public String Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = bytes[offset] & 0x1F;
+            readSize = length + 1;
+            return StringEncoding.UTF8.GetString(bytes, offset + 1, length);
+        }
+    }
+
+    internal class Str8String : IStringDecoder
+    {
+        internal static readonly IStringDecoder Instance = new Str8String();
+
+        Str8String()
+        {
+
+        }
+
+        public String Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = (int)bytes[offset + 1];
+            readSize = length + 2;
+            return StringEncoding.UTF8.GetString(bytes, offset + 2, length);
+        }
+    }
+
+    internal class Str16String : IStringDecoder
+    {
+        internal static readonly IStringDecoder Instance = new Str16String();
+
+        Str16String()
+        {
+
+        }
+
+        public String Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+                readSize = length + 3;
+                return StringEncoding.UTF8.GetString(bytes, offset + 3, length);
+            }
+        }
+    }
+
+    internal class Str32String : IStringDecoder
+    {
+        internal static readonly IStringDecoder Instance = new Str32String();
+
+        Str32String()
+        {
+
+        }
+
+        public String Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var length = (int)((uint)(bytes[offset + 1] << 24) + (uint)(bytes[offset + 2] << 16) + (uint)(bytes[offset + 3] << 8) + (uint)bytes[offset + 4]);
+                readSize = length + 5;
+                return StringEncoding.UTF8.GetString(bytes, offset + 5, length);
+            }
+        }
+    }
+
+    internal class InvalidString : IStringDecoder
+    {
+        internal static readonly IStringDecoder Instance = new InvalidString();
+
+        InvalidString()
+        {
+
+        }
+
+        public String Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IExtDecoder
+    {
+        ExtensionResult Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixExt1 : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new FixExt1();
+
+        FixExt1()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            var body = new byte[1] { bytes[offset + 2] }; // make new bytes is overhead?
+            return new ExtensionResult(typeCode, body);
+        }
+    }
+
+    internal class FixExt2 : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new FixExt2();
+
+        FixExt2()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 4;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            var body = new byte[2]
+            {
+                bytes[offset + 2],
+                bytes[offset + 3],
+            };
+            return new ExtensionResult(typeCode, body);
+        }
+    }
+
+    internal class FixExt4 : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new FixExt4();
+
+        FixExt4()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 6;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            var body = new byte[4]
+            {
+                bytes[offset + 2],
+                bytes[offset + 3],
+                bytes[offset + 4],
+                bytes[offset + 5],
+            };
+            return new ExtensionResult(typeCode, body);
+        }
+    }
+
+    internal class FixExt8 : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new FixExt8();
+
+        FixExt8()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 10;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            var body = new byte[8]
+            {
+                bytes[offset + 2],
+                bytes[offset + 3],
+                bytes[offset + 4],
+                bytes[offset + 5],
+                bytes[offset + 6],
+                bytes[offset + 7],
+                bytes[offset + 8],
+                bytes[offset + 9],
+            };
+            return new ExtensionResult(typeCode, body);
+        }
+    }
+
+    internal class FixExt16 : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new FixExt16();
+
+        FixExt16()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 18;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            var body = new byte[16]
+            {
+                bytes[offset + 2],
+                bytes[offset + 3],
+                bytes[offset + 4],
+                bytes[offset + 5],
+                bytes[offset + 6],
+                bytes[offset + 7],
+                bytes[offset + 8],
+                bytes[offset + 9],
+                bytes[offset + 10],
+                bytes[offset + 11],
+                bytes[offset + 12],
+                bytes[offset + 13],
+                bytes[offset + 14],
+                bytes[offset + 15],
+                bytes[offset + 16],
+                bytes[offset + 17]
+            };
+            return new ExtensionResult(typeCode, body);
+        }
+    }
+
+    internal class Ext8 : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new Ext8();
+
+        Ext8()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var typeCode = unchecked((sbyte)bytes[offset + 1]);
+                var length = bytes[offset + 2];
+
+                var body = new byte[length];
+                readSize = (int)length + 3;
+                Buffer.BlockCopy(bytes, offset + 3, body, 0, (int)length);
+                return new ExtensionResult(typeCode, body);
+            }
+        }
+    }
+
+    internal class Ext16 : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new Ext16();
+
+        Ext16()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var typeCode = unchecked((sbyte)bytes[offset + 1]);
+                var length = (int)((UInt16)(bytes[offset + 2] << 8) + (UInt16)bytes[offset + 3]);
+
+                var body = new byte[length];
+                readSize = length + 4;
+                Buffer.BlockCopy(bytes, offset + 4, body, 0, (int)length);
+                return new ExtensionResult(typeCode, body);
+            }
+        }
+    }
+
+    internal class Ext32 : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new Ext32();
+
+        Ext32()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var typeCode = unchecked((sbyte)bytes[offset + 1]);
+                var length = (UInt32)((UInt32)(bytes[offset + 2] << 24) + (UInt32)(bytes[offset + 3] << 16) + (UInt32)(bytes[offset + 4] << 8) + (UInt32)bytes[offset + 5]);
+
+                var body = new byte[length];
+                checked
+                {
+                    readSize = (int)length + 6;
+                    Buffer.BlockCopy(bytes, offset + 5, body, 0, (int)length);
+                }
+                return new ExtensionResult(typeCode, body);
+            }
+        }
+    }
+
+    internal class InvalidExt : IExtDecoder
+    {
+        internal static readonly IExtDecoder Instance = new InvalidExt();
+
+        InvalidExt()
+        {
+
+        }
+
+        public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
         {
             throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }

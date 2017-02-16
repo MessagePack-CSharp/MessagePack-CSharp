@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using System.Linq;
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using System;
@@ -29,22 +30,26 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
-            MessagePack.MessagePackSerializer.SetDefaultResolver(HandWriteResolver.Instance);
+            //MessagePack.MessagePackSerializer.SetDefaultResolver(HandWriteResolver.Instance);
 
-            Benchmark();
+            //var bin = MessagePackSerializer.Serialize(new MyClass() { MyProperty = 100, MyProperty2 = 999 });
+            //var json = MessagePackSerializer.ToJson(bin);
+
+            // var target = new MyClass() { MyProperty = 9, MyProperty2 = 100 };
+
+            var bytes = Enumerable.Repeat(1, 30000).Select(x => (byte)x).ToArray();
+            Benchmark(bytes);
         }
 
-        static void Benchmark()
+        static void Benchmark<T>(T target)
         {
-            var target = new MyClass() { MyProperty = 9, MyProperty2 = 100 };
-
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
-            msgpack.GetSerializer<MyClass>().PackSingleObject(target);
+            msgpack.GetSerializer<T>().PackSingleObject(target);
             MessagePack.MessagePackSerializer.Serialize(target);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
 
-            Console.WriteLine("small object serialization test");
+            Console.WriteLine(typeof(T).Name + " serialization test");
             Console.WriteLine();
 
             Console.WriteLine("Serialize::");
@@ -56,7 +61,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < 100000; i++)
                 {
-                    data = msgpack.GetSerializer<MyClass>().PackSingleObject(target);
+                    data = msgpack.GetSerializer<T>().PackSingleObject(target);
                 }
             }
 
@@ -86,10 +91,10 @@ namespace Sandbox
                 }
             }
 
-            msgpack.GetSerializer<MyClass>().UnpackSingleObject(data);
-            MessagePack.MessagePackSerializer.Deserialize<MyClass>(data0);
-            ZeroFormatterSerializer.Deserialize<MyClass>(data1);
-            ProtoBuf.Serializer.Deserialize<MyClass>(new MemoryStream(data2));
+            msgpack.GetSerializer<T>().UnpackSingleObject(data);
+            MessagePack.MessagePackSerializer.Deserialize<T>(data0);
+            ZeroFormatterSerializer.Deserialize<T>(data1);
+            ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
 
             Console.WriteLine();
             Console.WriteLine("Deserialize::");
@@ -98,7 +103,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < 100000; i++)
                 {
-                    msgpack.GetSerializer<MyClass>().UnpackSingleObject(data);
+                    msgpack.GetSerializer<T>().UnpackSingleObject(data);
                 }
             }
 
@@ -106,7 +111,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < 100000; i++)
                 {
-                    MessagePack.MessagePackSerializer.Deserialize<MyClass>(data0);
+                    MessagePack.MessagePackSerializer.Deserialize<T>(data0);
                 }
             }
 
@@ -114,7 +119,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < 100000; i++)
                 {
-                    ZeroFormatterSerializer.Deserialize<MyClass>(data1);
+                    ZeroFormatterSerializer.Deserialize<T>(data1);
                 }
             }
 
@@ -124,7 +129,7 @@ namespace Sandbox
                 {
                     using (var ms = new MemoryStream(data2))
                     {
-                        ProtoBuf.Serializer.Deserialize<MyClass>(ms);
+                        ProtoBuf.Serializer.Deserialize<T>(ms);
                     }
                 }
             }
@@ -170,7 +175,7 @@ namespace Sandbox
         {
             var startOffset = offset;
             var intKeyFormatter = formatterResolver.GetFormatterWithVerify<int>();
-            var length = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            var length = MessagePackBinary.ReadMapHeaderRaw(bytes, offset, out readSize);
             offset += readSize;
 
             int __MyProperty1__ = default(int);

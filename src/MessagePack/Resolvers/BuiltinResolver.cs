@@ -59,6 +59,11 @@ namespace MessagePack.Internal
                 return new DoubleFormatter();
             }
 
+            else if (type == typeof(byte[]))
+            {
+                return new ByteArrayFormatter();
+            }
+
             // nullable
 
             // don't use dynamic, builtin should resolve static.

@@ -4,6 +4,21 @@ using System.Text;
 
 namespace MessagePack.Formatters
 {
+    // TODO:TimespanFormatter...
+
+    public class ByteArrayFormatter : IMessagePackFormatter<byte[]>
+    {
+        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
+        {
+            return MessagePackBinary.WriteBytes(ref bytes, offset, value);
+        }
+
+        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
+        }
+    }
+
     public class ArrayFormatter<T> : IMessagePackFormatter<T[]>
     {
         public int Serialize(ref byte[] bytes, int offset, T[] value, IFormatterResolver formatterResolver)
@@ -11,8 +26,8 @@ namespace MessagePack.Formatters
             var startOffset = offset;
             var formatter = formatterResolver.GetFormatterWithVerify<T>();
 
-            // TODO:
-            // MessagePackBinary.WriteArrayHeader(value.Length);
+            offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+
             foreach (var item in value)
             {
                 offset += formatter.Serialize(ref bytes, offset, item, formatterResolver);
@@ -23,17 +38,18 @@ namespace MessagePack.Formatters
 
         public T[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
+            var startOffset = offset;
             var formatter = formatterResolver.GetFormatterWithVerify<T>();
 
-            // TODO:
-            // var len = MessagePackBinary.ReadArrayHeader();
-            var length = 5;
-            var array = new T[length];
+            var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+            var array = new T[len];
             for (int i = 0; i < array.Length; i++)
             {
                 array[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
             }
-            readSize = 0;
+            readSize = offset - startOffset;
             return array;
         }
     }

@@ -330,7 +330,7 @@ namespace MessagePack.Tests
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
-            MessagePackBinary.ReadMapHeader(bytes, 0, out readSize).Is(target);
+            MessagePackBinary.ReadMapHeaderRaw(bytes, 0, out readSize).Is(target);
             readSize.Is(length);
 
             var ms = new MemoryStream(bytes);
@@ -365,7 +365,7 @@ namespace MessagePack.Tests
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
-            MessagePackBinary.ReadArraydHeader(bytes, 0, out readSize).Is(target);
+            MessagePackBinary.ReadArrayHeaderRaw(bytes, 0, out readSize).Is(target);
             readSize.Is(length);
 
             var ms = new MemoryStream(bytes);
@@ -373,6 +373,165 @@ namespace MessagePack.Tests
             long len;
             unpacker.ReadArrayLength(out len).IsTrue();
             len.Is(target);
+        }
+
+
+
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 1)]
+        [InlineData(126, 1)]
+        [InlineData((short)sbyte.MaxValue, 1)]
+        [InlineData(20000, 3)]
+        [InlineData(short.MaxValue, 3)]
+        [InlineData(50000, 3)]
+        [InlineData(ushort.MaxValue, 3)]
+        public void UInt16Test(ushort target, int length)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            MessagePackBinary.WriteUInt16(ref bytes, 0, target).Is(length);
+
+            packer.Pack(target).Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes).IsTrue();
+
+            int readSize;
+            MessagePackBinary.ReadUInt16(bytes, 0, out readSize).Is(target);
+            readSize.Is(length);
+
+            CreateUnpackedReference(bytes).AsUInt16().Is(target);
+        }
+
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 1)]
+        [InlineData(126, 1)]
+        [InlineData((short)sbyte.MaxValue, 1)]
+        [InlineData(20000, 3)]
+        [InlineData(short.MaxValue, 3)]
+        [InlineData(50000, 3)]
+        [InlineData(ushort.MaxValue, 3)]
+        [InlineData(int.MaxValue, 5)]
+        [InlineData(3294967295, 5)]
+        [InlineData(uint.MaxValue, 5)]
+        public void UInt32Test(uint target, int length)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            MessagePackBinary.WriteUInt32(ref bytes, 0, target).Is(length);
+
+            packer.Pack(target).Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes).IsTrue();
+
+            int readSize;
+            MessagePackBinary.ReadUInt32(bytes, 0, out readSize).Is(target);
+            readSize.Is(length);
+
+            CreateUnpackedReference(bytes).AsUInt32().Is(target);
+        }
+
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 1)]
+        [InlineData(126, 1)]
+        [InlineData((short)sbyte.MaxValue, 1)]
+        [InlineData(20000, 3)]
+        [InlineData(short.MaxValue, 3)]
+        [InlineData(50000, 3)]
+        [InlineData(ushort.MaxValue, 3)]
+        [InlineData(int.MaxValue, 5)]
+        [InlineData(3294967295, 5)]
+        [InlineData(uint.MaxValue, 5)]
+        [InlineData(3372036854775807, 9)]
+        [InlineData(long.MaxValue, 9)]
+        [InlineData(12446744073709551615, 9)]
+        [InlineData(ulong.MaxValue, 9)]
+        public void UInt64Test(ulong target, int length)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            MessagePackBinary.WriteUInt64(ref bytes, 0, target).Is(length);
+
+            packer.Pack(target).Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes).IsTrue();
+
+            int readSize;
+            MessagePackBinary.ReadUInt64(bytes, 0, out readSize).Is(target);
+            readSize.Is(length);
+
+            CreateUnpackedReference(bytes).AsUInt64().Is(target);
+        }
+
+
+        public static object[] stringTestData = new object[]
+        {
+            new object[]{ "a"},
+            new object[]{ "abc" },
+            new object[]{ "012345678901234567890123456789"}, // 30
+            new object[]{ "0123456789012345678901234567890"}, // 31
+            new object[]{ "01234567890123456789012345678901"}, // 32
+            new object[]{ "012345678901234567890123456789012"}, // 33
+            new object[]{ "0123456789012345678901234567890123"}, // 33
+            new object[]{ new string('a', sbyte.MaxValue - 1) },
+            new object[]{ new string('a', sbyte.MaxValue) },
+            new object[]{ new string('a', sbyte.MaxValue + 1) },
+            new object[]{ new string('a', byte.MaxValue - 1) },
+            new object[]{ new string('a', byte.MaxValue) },
+            new object[]{ new string('a', byte.MaxValue + 1) },
+            new object[]{ new string('a', ushort.MaxValue - 1) },
+            new object[]{ new string('a', short.MaxValue -1 ) },
+            new object[]{ new string('a', short.MaxValue  ) },
+            new object[]{ new string('a', short.MaxValue + 1) },
+            new object[]{ new string('a', ushort.MaxValue ) },
+            new object[]{ new string('a', ushort.MaxValue+1 ) },
+            new object[]{ "あいうえおかきくけこさしすせおたちつてとなにぬねのわをん"}, // Japanese
+        };
+
+        [Theory]
+        [MemberData(nameof(stringTestData))]
+        public void StringTest(string target)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            var returnLength = MessagePackBinary.WriteString(ref bytes, 0, target);
+
+            var referencePacked = packer.PackString(target);
+            referencePacked.Position.Is(returnLength);
+            referencePacked.Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes).IsTrue();
+
+            int readSize;
+            MessagePackBinary.ReadString(bytes, 0, out readSize).Is(target);
+            readSize.Is(returnLength);
+            CreateUnpackedReference(bytes).AsStringUtf8().Is(target);
+        }
+
+        [Theory]
+        [InlineData(char.MinValue)]
+        [InlineData('a')]
+        [InlineData('あ')]
+        [InlineData('c')]
+        [InlineData(char.MaxValue)]
+        public void CharTest(char target)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            var returnLength = MessagePackBinary.WriteChar(ref bytes, 0, target);
+            
+            var referencePacked = packer.Pack(target);
+            referencePacked.Position.Is(returnLength);
+            referencePacked.Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            
+            int readSize;
+            MessagePackBinary.ReadChar(bytes, 0, out readSize).Is(target);
+            readSize.Is(returnLength);
+            ((char)CreateUnpackedReference(bytes).AsUInt16()).Is(target);
         }
     }
 }

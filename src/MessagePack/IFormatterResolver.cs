@@ -17,7 +17,6 @@ namespace MessagePack
             var formatter = resolver.GetFormatter<T>();
             if (formatter == null)
             {
-                // TODO:more message.
                 throw new FormatterNotRegisteredException(typeof(T).FullName + " is not registered in this resolver. resolver:" + resolver.GetType().Name);
             }
 
