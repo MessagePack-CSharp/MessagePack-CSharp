@@ -142,7 +142,7 @@ namespace MessagePack
             formatNameTable[Ext32] = "ext 32";
             formatNameTable[Float32] = "float 32";
             formatNameTable[Float64] = "float 64";
-            formatNameTable[UInt8] = "uint 7";
+            formatNameTable[UInt8] = "uint 8";
             formatNameTable[UInt16] = "uint 16";
             formatNameTable[UInt32] = "uint 32";
             formatNameTable[UInt64] = "uint 64";
@@ -179,6 +179,11 @@ namespace MessagePack
         {
             return formatNameTable[code];
         }
+    }
+
+    public static class ReservedMessagePackExtensionTypeCode
+    {
+        public const sbyte DateTime = -1;
     }
 
     public static class MessagePackRange

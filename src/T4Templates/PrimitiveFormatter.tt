@@ -10,23 +10,16 @@
         typeof(Int16),
         typeof(Int32),
         typeof(Int64),
-		/*
-        Tuple.Create(typeof(UInt16), 2),
-        Tuple.Create(typeof(UInt32), 4),
-        Tuple.Create(typeof(UInt64), 8),
-        */
-       typeof(Single),
-       typeof(Double),
-       typeof(bool), 
-       typeof(byte), 
-        /*
-        Tuple.Create(typeof(sbyte), 1),
-        Tuple.Create(typeof(char), 2),
-        Tuple.Create(typeof(decimal), 16),
-        Tuple.Create(typeof(Guid), 16),
-        Tuple.Create(typeof(TimeSpan), 12),
-        Tuple.Create(typeof(DateTime), 12),
-        */
+        typeof(UInt16),
+        typeof(UInt32),
+        typeof(UInt64),
+        typeof(Single),
+        typeof(Double),
+        typeof(bool), 
+        typeof(byte), 
+        typeof(sbyte),
+        typeof(char),
+        typeof(DateTime)
     };
 #>
 using System;

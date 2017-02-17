@@ -1,4 +1,5 @@
 ﻿using MessagePack.Decoders;
+using MessagePack.Internal;
 using System;
 
 namespace MessagePack
@@ -27,6 +28,7 @@ namespace MessagePack
         static readonly IUInt64Decoder[] uint64Decoders = new IUInt64Decoder[MaxSize];
         static readonly IStringDecoder[] stringDecoders = new IStringDecoder[MaxSize];
         static readonly IExtDecoder[] extDecoders = new IExtDecoder[MaxSize];
+        static readonly IDateTimeDecoder[] dateTimeDecoders = new IDateTimeDecoder[MaxSize];
 
         static MessagePackBinary()
         {
@@ -49,6 +51,7 @@ namespace MessagePack
                 uint64Decoders[i] = Decoders.InvalidUInt64.Instance;
                 stringDecoders[i] = Decoders.InvalidString.Instance;
                 extDecoders[i] = Decoders.InvalidExt.Instance;
+                dateTimeDecoders[i] = Decoders.InvalidDateTime.Instance;
             }
 
             // Number
@@ -73,16 +76,21 @@ namespace MessagePack
 
             byteDecoders[MessagePackCode.UInt8] = Decoders.UInt8Byte.Instance;
             sbyteDecoders[MessagePackCode.Int8] = Decoders.Int8SByte.Instance;
+            int16Decoders[MessagePackCode.UInt8] = Decoders.UInt8Int16.Instance;
             int16Decoders[MessagePackCode.Int8] = Decoders.Int8Int16.Instance;
             int16Decoders[MessagePackCode.Int16] = Decoders.Int16Int16.Instance;
+            int32Decoders[MessagePackCode.UInt8] = Decoders.UInt8Int32.Instance;
+            int32Decoders[MessagePackCode.UInt16] = Decoders.UInt16Int32.Instance;
             int32Decoders[MessagePackCode.Int8] = Decoders.Int8Int32.Instance;
             int32Decoders[MessagePackCode.Int16] = Decoders.Int16Int32.Instance;
             int32Decoders[MessagePackCode.Int32] = Decoders.Int32Int32.Instance;
+            int64Decoders[MessagePackCode.UInt8] = Decoders.UInt8Int64.Instance;
+            int64Decoders[MessagePackCode.UInt16] = Decoders.UInt16Int64.Instance;
+            int64Decoders[MessagePackCode.UInt32] = Decoders.UInt32Int64.Instance;
             int64Decoders[MessagePackCode.Int8] = Decoders.Int8Int64.Instance;
             int64Decoders[MessagePackCode.Int16] = Decoders.Int16Int64.Instance;
             int64Decoders[MessagePackCode.Int32] = Decoders.Int32Int64.Instance;
             int64Decoders[MessagePackCode.Int64] = Decoders.Int64Int64.Instance;
-
             uint16Decoders[MessagePackCode.UInt8] = Decoders.UInt8UInt16.Instance;
             uint16Decoders[MessagePackCode.UInt16] = Decoders.UInt16UInt16.Instance;
             uint32Decoders[MessagePackCode.UInt8] = Decoders.UInt8UInt32.Instance;
@@ -92,7 +100,6 @@ namespace MessagePack
             uint64Decoders[MessagePackCode.UInt16] = Decoders.UInt16UInt64.Instance;
             uint64Decoders[MessagePackCode.UInt32] = Decoders.UInt32UInt64.Instance;
             uint64Decoders[MessagePackCode.UInt64] = Decoders.UInt64UInt64.Instance;
-
             singleDecoders[MessagePackCode.Float32] = Decoders.Float32Single.Instance;
             doubleDecoders[MessagePackCode.Float32] = Decoders.Float32Double.Instance;
             doubleDecoders[MessagePackCode.Float64] = Decoders.Float64Double.Instance;
@@ -141,6 +148,11 @@ namespace MessagePack
             extDecoders[MessagePackCode.Ext8] = Decoders.Ext8.Instance;
             extDecoders[MessagePackCode.Ext16] = Decoders.Ext16.Instance;
             extDecoders[MessagePackCode.Ext32] = Decoders.Ext32.Instance;
+
+            // DateTime
+            dateTimeDecoders[MessagePackCode.FixExt4] = Decoders.FixExt4DateTime.Instance;
+            dateTimeDecoders[MessagePackCode.FixExt8] = Decoders.FixExt8DateTime.Instance;
+            dateTimeDecoders[MessagePackCode.Ext8] = Decoders.Ext8DateTime.Instance;
         }
 
         public static void EnsureCapacity(ref byte[] bytes, int offset, int appendLength)
@@ -584,6 +596,13 @@ namespace MessagePack
                 bytes[offset + 1] = unchecked((byte)value);
                 return 2;
             }
+            else if (0 <= value && value <= byte.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 2);
+                bytes[offset] = MessagePackCode.UInt8;
+                bytes[offset + 1] = unchecked((byte)value);
+                return 2;
+            }
             else
             {
                 EnsureCapacity(ref bytes, offset, 3);
@@ -625,10 +644,25 @@ namespace MessagePack
                 bytes[offset + 1] = unchecked((byte)value);
                 return 2;
             }
+            else if (0 <= value && value <= byte.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 2);
+                bytes[offset] = MessagePackCode.UInt8;
+                bytes[offset + 1] = unchecked((byte)value);
+                return 2;
+            }
             else if (short.MinValue <= value && value <= short.MaxValue)
             {
                 EnsureCapacity(ref bytes, offset, 3);
                 bytes[offset] = MessagePackCode.Int16;
+                bytes[offset + 1] = unchecked((byte)(value >> 8));
+                bytes[offset + 2] = unchecked((byte)value);
+                return 3;
+            }
+            else if (0 <= value && value <= ushort.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 3);
+                bytes[offset] = MessagePackCode.UInt16;
                 bytes[offset + 1] = unchecked((byte)(value >> 8));
                 bytes[offset + 2] = unchecked((byte)value);
                 return 3;
@@ -665,6 +699,13 @@ namespace MessagePack
                 bytes[offset + 1] = unchecked((byte)value);
                 return 2;
             }
+            else if (0 <= value && value <= byte.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 2);
+                bytes[offset] = MessagePackCode.UInt8;
+                bytes[offset + 1] = unchecked((byte)value);
+                return 2;
+            }
             else if (short.MinValue <= value && value <= short.MaxValue)
             {
                 EnsureCapacity(ref bytes, offset, 3);
@@ -673,10 +714,28 @@ namespace MessagePack
                 bytes[offset + 2] = unchecked((byte)value);
                 return 3;
             }
+            else if (0 <= value && value <= ushort.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 3);
+                bytes[offset] = MessagePackCode.UInt16;
+                bytes[offset + 1] = unchecked((byte)(value >> 8));
+                bytes[offset + 2] = unchecked((byte)value);
+                return 3;
+            }
             else if (int.MinValue <= value && value <= int.MaxValue)
             {
                 EnsureCapacity(ref bytes, offset, 5);
                 bytes[offset] = MessagePackCode.Int32;
+                bytes[offset + 1] = unchecked((byte)(value >> 24));
+                bytes[offset + 2] = unchecked((byte)(value >> 16));
+                bytes[offset + 3] = unchecked((byte)(value >> 8));
+                bytes[offset + 4] = unchecked((byte)value);
+                return 5;
+            }
+            else if (0 <= value && value <= uint.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, 5);
+                bytes[offset] = MessagePackCode.UInt32;
                 bytes[offset + 1] = unchecked((byte)(value >> 24));
                 bytes[offset + 2] = unchecked((byte)(value >> 16));
                 bytes[offset + 3] = unchecked((byte)(value >> 8));
@@ -809,7 +868,6 @@ namespace MessagePack
             }
             else
             {
-
                 EnsureCapacity(ref bytes, offset, 9);
                 bytes[offset] = MessagePackCode.UInt64;
                 bytes[offset + 1] = unchecked((byte)(value >> 56));
@@ -970,29 +1028,32 @@ namespace MessagePack
                     {
                         if (data.Length <= byte.MaxValue)
                         {
+                            EnsureCapacity(ref bytes, offset, length + 3);
                             bytes[offset] = MessagePackCode.Ext8;
-                            bytes[offset + 1] = unchecked((byte)typeCode);
-                            bytes[offset + 2] = unchecked((byte)(length));
+                            bytes[offset + 1] = unchecked((byte)(length));
+                            bytes[offset + 2] = unchecked((byte)typeCode);
                             Buffer.BlockCopy(data, 0, bytes, offset + 3, length);
                             return length + 3;
                         }
                         else if (data.Length <= UInt16.MaxValue)
                         {
+                            EnsureCapacity(ref bytes, offset, length + 4);
                             bytes[offset] = MessagePackCode.Ext16;
-                            bytes[offset + 1] = unchecked((byte)typeCode);
-                            bytes[offset + 2] = unchecked((byte)(length >> 8));
-                            bytes[offset + 3] = unchecked((byte)(length));
+                            bytes[offset + 1] = unchecked((byte)(length >> 8));
+                            bytes[offset + 2] = unchecked((byte)(length));
+                            bytes[offset + 3] = unchecked((byte)typeCode);
                             Buffer.BlockCopy(data, 0, bytes, offset + 4, length);
                             return length + 4;
                         }
                         else
                         {
+                            EnsureCapacity(ref bytes, offset, length + 6);
                             bytes[offset] = MessagePackCode.Ext32;
-                            bytes[offset + 1] = unchecked((byte)typeCode);
-                            bytes[offset + 2] = unchecked((byte)(length >> 24));
-                            bytes[offset + 3] = unchecked((byte)(length >> 16));
-                            bytes[offset + 4] = unchecked((byte)(length >> 8));
-                            bytes[offset + 5] = unchecked((byte)length);
+                            bytes[offset + 1] = unchecked((byte)(length >> 24));
+                            bytes[offset + 2] = unchecked((byte)(length >> 16));
+                            bytes[offset + 3] = unchecked((byte)(length >> 8));
+                            bytes[offset + 4] = unchecked((byte)length);
+                            bytes[offset + 5] = unchecked((byte)typeCode);
                             Buffer.BlockCopy(data, 0, bytes, offset + 6, length);
                             return length + 6;
                         }
@@ -1016,8 +1077,8 @@ namespace MessagePack
             dateTime = dateTime.ToUniversalTime();
 
             var secondsSinceBclEpoch = dateTime.Ticks / TimeSpan.TicksPerSecond;
-            var seconds = secondsSinceBclEpoch - Timestamp.BclSecondsAtUnixEpoch;
-            var nanoseconds = (dateTime.Ticks % TimeSpan.TicksPerSecond) * Duration.NanosecondsPerTick;
+            var seconds = secondsSinceBclEpoch - DateTimeConstants.BclSecondsAtUnixEpoch;
+            var nanoseconds = (dateTime.Ticks % TimeSpan.TicksPerSecond) * DateTimeConstants.NanosecondsPerTick;
 
             // reference pseudo code.
             /*
@@ -1049,83 +1110,65 @@ namespace MessagePack
 
             if ((seconds >> 34) == 0)
             {
-                var data64 = (ulong)((nanoseconds << 34) | seconds);
+                var data64 = unchecked((ulong)((nanoseconds << 34) | seconds));
                 if ((data64 & 0xffffffff00000000L) == 0)
                 {
-                    // timestamp 32
+                    // timestamp 32(seconds in 32-bit unsigned int)
                     var data32 = (UInt32)data64;
-                    // serialize(0xd6, -1, data32)
+                    EnsureCapacity(ref bytes, offset, 6);
+                    bytes[offset] = MessagePackCode.FixExt4;
+                    bytes[offset + 1] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
+                    bytes[offset + 2] = unchecked((byte)(data32 >> 24));
+                    bytes[offset + 3] = unchecked((byte)(data32 >> 16));
+                    bytes[offset + 4] = unchecked((byte)(data32 >> 8));
+                    bytes[offset + 5] = unchecked((byte)data32);
+                    return 6;
                 }
                 else
                 {
-                    // timestamp 64
-                    // serialize(0xd7, -1, data64)
+                    // timestamp 64(nanoseconds in 30-bit unsigned int | seconds in 34-bit unsigned int)
+                    EnsureCapacity(ref bytes, offset, 10);
+                    bytes[offset] = MessagePackCode.FixExt8;
+                    bytes[offset + 1] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
+                    bytes[offset + 2] = unchecked((byte)(data64 >> 56));
+                    bytes[offset + 3] = unchecked((byte)(data64 >> 48));
+                    bytes[offset + 4] = unchecked((byte)(data64 >> 40));
+                    bytes[offset + 5] = unchecked((byte)(data64 >> 32));
+                    bytes[offset + 6] = unchecked((byte)(data64 >> 24));
+                    bytes[offset + 7] = unchecked((byte)(data64 >> 16));
+                    bytes[offset + 8] = unchecked((byte)(data64 >> 8));
+                    bytes[offset + 9] = unchecked((byte)data64);
+                    return 10;
                 }
             }
             else
             {
-                // timestamp 96
-                // serialize(0xc7, 12, -1, time.tv_nsec, time.tv_sec)
+                // timestamp 96( nanoseconds in 32-bit unsigned int | seconds in 64-bit signed int )
+                EnsureCapacity(ref bytes, offset, 15);
+                bytes[offset] = MessagePackCode.Ext8;
+                bytes[offset + 1] = (byte)12;
+                bytes[offset + 2] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTime);
+                bytes[offset + 3] = unchecked((byte)(nanoseconds >> 24));
+                bytes[offset + 4] = unchecked((byte)(nanoseconds >> 16));
+                bytes[offset + 5] = unchecked((byte)(nanoseconds >> 8));
+                bytes[offset + 6] = unchecked((byte)nanoseconds);
+                bytes[offset + 7] = unchecked((byte)(seconds >> 56));
+                bytes[offset + 8] = unchecked((byte)(seconds >> 48));
+                bytes[offset + 9] = unchecked((byte)(seconds >> 40));
+                bytes[offset + 10] = unchecked((byte)(seconds >> 32));
+                bytes[offset + 11] = unchecked((byte)(seconds >> 24));
+                bytes[offset + 12] = unchecked((byte)(seconds >> 16));
+                bytes[offset + 13] = unchecked((byte)(seconds >> 8));
+                bytes[offset + 14] = unchecked((byte)seconds);
+                return 15;
             }
-
-            throw new NotImplementedException();
         }
 
         public static DateTime ReadDateTime(byte[] bytes, int offset, out int readSize)
         {
-            throw new NotImplementedException();
-            //fixed (byte* ptr = bytes)
-            //{
-            //    var seconds = *(long*)(ptr + offset);
-            //    var nanos = *(int*)(ptr + offset + 8);
-
-            //    if (!Timestamp.IsNormalized(seconds, nanos))
-            //    {
-            //        throw new InvalidOperationException(string.Format(@"Timestamp contains invalid values: Seconds={0}; Nanos={1}", seconds, nanos));
-            //    }
-            //    return Timestamp.UnixEpoch.AddSeconds(seconds).AddTicks(nanos / Duration.NanosecondsPerTick);
-            //}
+            return dateTimeDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
-        internal static class Timestamp
-        {
-            internal static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            internal const long BclSecondsAtUnixEpoch = 62135596800;
-            internal const long UnixSecondsAtBclMaxValue = 253402300799;
-            internal const long UnixSecondsAtBclMinValue = -BclSecondsAtUnixEpoch;
-            internal const int MaxNanos = Duration.NanosecondsPerSecond - 1;
-
-            internal static bool IsNormalized(long seconds, int nanoseconds)
-            {
-                return nanoseconds >= 0 &&
-                    nanoseconds <= MaxNanos &&
-                    seconds >= UnixSecondsAtBclMinValue &&
-                    seconds <= UnixSecondsAtBclMaxValue;
-            }
-        }
-
-        internal static class Duration
-        {
-            public const int NanosecondsPerSecond = 1000000000;
-            public const int NanosecondsPerTick = 100;
-            public const long MaxSeconds = 315576000000L;
-            public const long MinSeconds = -315576000000L;
-            internal const int MaxNanoseconds = NanosecondsPerSecond - 1;
-            internal const int MinNanoseconds = -NanosecondsPerSecond + 1;
-
-            internal static bool IsNormalized(long seconds, int nanoseconds)
-            {
-                // Simple boundaries
-                if (seconds < MinSeconds || seconds > MaxSeconds ||
-                    nanoseconds < MinNanoseconds || nanoseconds > MaxNanoseconds)
-                {
-                    return false;
-                }
-                // We only have a problem is one is strictly negative and the other is
-                // strictly positive.
-                return Math.Sign(seconds) * Math.Sign(nanoseconds) != -1;
-            }
-        }
     }
 
     public struct ExtensionResult
@@ -1138,6 +1181,16 @@ namespace MessagePack
             TypeCode = typeCode;
             Data = data;
         }
+    }
+}
+
+namespace MessagePack.Internal
+{
+    internal static class DateTimeConstants
+    {
+        internal static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        internal const long BclSecondsAtUnixEpoch = 62135596800;
+        internal const int NanosecondsPerTick = 100;
     }
 }
 
@@ -1657,6 +1710,22 @@ namespace MessagePack.Decoders
         }
     }
 
+    internal class UInt8Int16 : IInt16Decoder
+    {
+        internal static readonly IInt16Decoder Instance = new UInt8Int16();
+
+        UInt8Int16()
+        {
+
+        }
+
+        public Int16 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            return unchecked((short)(byte)(bytes[offset + 1]));
+        }
+    }
+
     internal class Int8Int16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new Int8Int16();
@@ -1741,6 +1810,37 @@ namespace MessagePack.Decoders
         {
             readSize = 1;
             return unchecked((int)bytes[offset]);
+        }
+    }
+
+    internal class UInt8Int32 : IInt32Decoder
+    {
+        internal static readonly IInt32Decoder Instance = new UInt8Int32();
+
+        UInt8Int32()
+        {
+
+        }
+
+        public Int32 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            return unchecked((int)(byte)(bytes[offset + 1]));
+        }
+    }
+    internal class UInt16Int32 : IInt32Decoder
+    {
+        internal static readonly IInt32Decoder Instance = new UInt16Int32();
+
+        UInt16Int32()
+        {
+
+        }
+
+        public Int32 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            return (Int32)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
         }
     }
 
@@ -1847,6 +1947,53 @@ namespace MessagePack.Decoders
         {
             readSize = 1;
             return unchecked((long)bytes[offset]);
+        }
+    }
+
+    internal class UInt8Int64 : IInt64Decoder
+    {
+        internal static readonly IInt64Decoder Instance = new UInt8Int64();
+
+        UInt8Int64()
+        {
+
+        }
+
+        public Int64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            return unchecked((int)(byte)(bytes[offset + 1]));
+        }
+    }
+    internal class UInt16Int64 : IInt64Decoder
+    {
+        internal static readonly IInt64Decoder Instance = new UInt16Int64();
+
+        UInt16Int64()
+        {
+
+        }
+
+        public Int64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            return (Int64)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+        }
+    }
+
+    internal class UInt32Int64 : IInt64Decoder
+    {
+        internal static readonly IInt64Decoder Instance = new UInt32Int64();
+
+        UInt32Int64()
+        {
+
+        }
+
+        public Int64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 5;
+            return unchecked((Int64)((uint)(bytes[offset + 1] << 24) + ((uint)bytes[offset + 2] << 16) + ((uint)bytes[offset + 3] << 8) + (uint)bytes[offset + 4]));
         }
     }
 
@@ -2450,8 +2597,8 @@ namespace MessagePack.Decoders
         {
             unchecked
             {
-                var typeCode = unchecked((sbyte)bytes[offset + 1]);
-                var length = bytes[offset + 2];
+                var length = bytes[offset + 1];
+                var typeCode = unchecked((sbyte)bytes[offset + 2]);
 
                 var body = new byte[length];
                 readSize = (int)length + 3;
@@ -2474,8 +2621,8 @@ namespace MessagePack.Decoders
         {
             unchecked
             {
-                var typeCode = unchecked((sbyte)bytes[offset + 1]);
-                var length = (int)((UInt16)(bytes[offset + 2] << 8) + (UInt16)bytes[offset + 3]);
+                var length = (int)((UInt16)(bytes[offset + 1] << 8) + (UInt16)bytes[offset + 2]);
+                var typeCode = unchecked((sbyte)bytes[offset + 3]);
 
                 var body = new byte[length];
                 readSize = length + 4;
@@ -2498,14 +2645,14 @@ namespace MessagePack.Decoders
         {
             unchecked
             {
-                var typeCode = unchecked((sbyte)bytes[offset + 1]);
-                var length = (UInt32)((UInt32)(bytes[offset + 2] << 24) + (UInt32)(bytes[offset + 3] << 16) + (UInt32)(bytes[offset + 4] << 8) + (UInt32)bytes[offset + 5]);
+                var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+                var typeCode = unchecked((sbyte)bytes[offset + 5]);
 
                 var body = new byte[length];
                 checked
                 {
                     readSize = (int)length + 6;
-                    Buffer.BlockCopy(bytes, offset + 5, body, 0, (int)length);
+                    Buffer.BlockCopy(bytes, offset + 6, body, 0, (int)length);
                 }
                 return new ExtensionResult(typeCode, body);
             }
@@ -2522,6 +2669,111 @@ namespace MessagePack.Decoders
         }
 
         public ExtensionResult Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IDateTimeDecoder
+    {
+        DateTime Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixExt4DateTime : IDateTimeDecoder
+    {
+        internal static readonly IDateTimeDecoder Instance = new FixExt4DateTime();
+
+        FixExt4DateTime()
+        {
+
+        }
+
+        public DateTime Read(byte[] bytes, int offset, out int readSize)
+        {
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            if (typeCode != ReservedMessagePackExtensionTypeCode.DateTime)
+            {
+                throw new InvalidOperationException(string.Format("typeCode is invalid. typeCode:{0}", typeCode));
+            }
+
+            unchecked
+            {
+                var seconds = (UInt32)((UInt32)(bytes[offset + 2] << 24) + (UInt32)(bytes[offset + 3] << 16) + (UInt32)(bytes[offset + 4] << 8) + (UInt32)bytes[offset + 5]);
+
+                readSize = 6;
+                return DateTimeConstants.UnixEpoch.AddSeconds(seconds);
+            }
+        }
+    }
+
+    internal class FixExt8DateTime : IDateTimeDecoder
+    {
+        internal static readonly IDateTimeDecoder Instance = new FixExt8DateTime();
+
+        FixExt8DateTime()
+        {
+
+        }
+
+        public DateTime Read(byte[] bytes, int offset, out int readSize)
+        {
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            if (typeCode != ReservedMessagePackExtensionTypeCode.DateTime)
+            {
+                throw new InvalidOperationException(string.Format("typeCode is invalid. typeCode:{0}", typeCode));
+            }
+
+            var data64 = (UInt64)bytes[offset + 2] << 56 | (UInt64)bytes[offset + 3] << 48 | (UInt64)bytes[offset + 4] << 40 | (UInt64)bytes[offset + 5] << 32
+                       | (UInt64)bytes[offset + 6] << 24 | (UInt64)bytes[offset + 7] << 16 | (UInt64)bytes[offset + 8] << 8 | (UInt64)bytes[offset + 9];
+
+            var nanoseconds = (long)(data64 >> 34);
+            var seconds = data64 & 0x00000003ffffffffL;
+
+            readSize = 10;
+            return DateTimeConstants.UnixEpoch.AddSeconds(seconds).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
+        }
+    }
+
+    internal class Ext8DateTime : IDateTimeDecoder
+    {
+        internal static readonly IDateTimeDecoder Instance = new Ext8DateTime();
+
+        Ext8DateTime()
+        {
+
+        }
+
+        public DateTime Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = checked((byte)bytes[offset + 1]);
+            var typeCode = unchecked((sbyte)bytes[offset + 2]);
+            if (length != 12 || typeCode != ReservedMessagePackExtensionTypeCode.DateTime)
+            {
+                throw new InvalidOperationException(string.Format("typeCode is invalid. typeCode:{0}", typeCode));
+            }
+
+            var nanoseconds = (UInt32)((UInt32)(bytes[offset + 3] << 24) + (UInt32)(bytes[offset + 4] << 16) + (UInt32)(bytes[offset + 5] << 8) + (UInt32)bytes[offset + 6]);
+            unchecked
+            {
+                var seconds = (long)bytes[offset + 7] << 56 | (long)bytes[offset + 8] << 48 | (long)bytes[offset + 9] << 40 | (long)bytes[offset + 10] << 32
+                            | (long)bytes[offset + 11] << 24 | (long)bytes[offset + 12] << 16 | (long)bytes[offset + 13] << 8 | (long)bytes[offset + 14];
+
+                readSize = 15;
+                return DateTimeConstants.UnixEpoch.AddSeconds(seconds).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
+            }
+        }
+    }
+
+    internal class InvalidDateTime : IDateTimeDecoder
+    {
+        internal static readonly IDateTimeDecoder Instance = new InvalidDateTime();
+
+        InvalidDateTime()
+        {
+
+        }
+
+        public DateTime Read(byte[] bytes, int offset, out int readSize)
         {
             throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }

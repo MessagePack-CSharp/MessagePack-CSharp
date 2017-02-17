@@ -37,8 +37,12 @@ namespace Sandbox
 
             // var target = new MyClass() { MyProperty = 9, MyProperty2 = 100 };
 
-            var bytes = Enumerable.Repeat(1, 30000).Select(x => (byte)x).ToArray();
-            Benchmark(bytes);
+            //var bytes = Enumerable.Repeat(1, 30000).Select(x => (byte)x).ToArray();
+            //Benchmark(bytes);
+
+            var dt = new DateTime(2030, 2, 7, 6, 28, 17, 0, DateTimeKind.Utc);
+            byte[] bytes = null;
+            MessagePackBinary.WriteDateTime(ref bytes, 0, dt);
         }
 
         static void Benchmark<T>(T target)

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MessagePack.Formatters
 {
-    // TODO:TimespanFormatter...
+    // TODO:ArraySegment, other collections
 
     public class ByteArrayFormatter : IMessagePackFormatter<byte[]>
     {

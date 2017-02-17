@@ -9,6 +9,14 @@ namespace MessagePack.Resolvers
     {
         public static IFormatterResolver Instance = new DefaultResolver();
 
+        static readonly IFormatterResolver[] resolvers = new[]
+        {
+            BuiltinResolver.Instance, // Try Builtin
+            EnumResolver.Instance     // Try Enum
+            // Try Union
+            // Try Dynamic
+        };
+
         DefaultResolver()
         {
         }
@@ -24,26 +32,15 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                // Try Builtin
-                var f = BuiltinResolver.Instance.GetFormatter<T>();
-                if (f != null)
+                foreach (var item in resolvers)
                 {
-                    formatter = f;
-                    return;
+                    var f = item.GetFormatter<T>();
+                    if (f != null)
+                    {
+                        formatter = f;
+                        return;
+                    }
                 }
-
-                // Try Enum
-                f = EnumResolver.Instance.GetFormatter<T>();
-                if (f != null)
-                {
-                    formatter = f;
-                    return;
-                }
-
-                // Try Union
-
-                // Try Dynamic
-                // Unknown
             }
         }
     }

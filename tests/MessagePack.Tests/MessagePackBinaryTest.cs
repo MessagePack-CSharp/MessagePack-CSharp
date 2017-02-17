@@ -242,10 +242,11 @@ namespace MessagePack.Tests
         [InlineData(0, 1)]
         [InlineData(1, 1)]
         [InlineData(126, 1)]
-        [InlineData((short)sbyte.MaxValue, 1)]
+        [InlineData(sbyte.MaxValue, 1)]
+        [InlineData(byte.MaxValue, 2)]
         [InlineData(20000, 3)]
         [InlineData(short.MaxValue, 3)]
-        [InlineData(50000, 5)]
+        [InlineData(50000, 3)]
         [InlineData(int.MaxValue, 5)]
         public void Int32Test(int target, int length)
         {
@@ -254,7 +255,19 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteInt32(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+            // bug of msgpack-cli
+            if (target == 255)
+            {
+                packer.Pack((byte)255).Position.Is(bytes.Length);
+            }
+            else if (target == 50000)
+            {
+                packer.Pack((ushort)50000).Position.Is(bytes.Length);
+            }
+            else
+            {
+                packer.Pack(target).Position.Is(bytes.Length);
+            }
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -281,11 +294,13 @@ namespace MessagePack.Tests
         [InlineData(0, 1)]
         [InlineData(1, 1)]
         [InlineData(126, 1)]
-        [InlineData((short)sbyte.MaxValue, 1)]
+        [InlineData(sbyte.MaxValue, 1)]
+        [InlineData(byte.MaxValue, 2)]
         [InlineData(20000, 3)]
         [InlineData(short.MaxValue, 3)]
-        [InlineData(50000, 5)]
+        [InlineData(50000, 3)]
         [InlineData(int.MaxValue, 5)]
+        [InlineData(uint.MaxValue, 5)]
         [InlineData(3372036854775807, 9)]
         [InlineData(long.MaxValue, 9)]
         public void Int64Test(long target, int length)
@@ -295,7 +310,23 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteInt64(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+            // bug of msgpack-cli
+            if (target == 255)
+            {
+                packer.Pack((byte)255).Position.Is(bytes.Length);
+            }
+            else if (target == 50000)
+            {
+                packer.Pack((ushort)50000).Position.Is(bytes.Length);
+            }
+            else if (target == uint.MaxValue)
+            {
+                packer.Pack(uint.MaxValue).Position.Is(bytes.Length);
+            }
+            else
+            {
+                packer.Pack(target).Position.Is(bytes.Length);
+            }
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -522,16 +553,166 @@ namespace MessagePack.Tests
 
             byte[] bytes = null;
             var returnLength = MessagePackBinary.WriteChar(ref bytes, 0, target);
-            
+
             var referencePacked = packer.Pack(target);
             referencePacked.Position.Is(returnLength);
             referencePacked.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
-            
+
             int readSize;
             MessagePackBinary.ReadChar(bytes, 0, out readSize).Is(target);
             readSize.Is(returnLength);
             ((char)CreateUnpackedReference(bytes).AsUInt16()).Is(target);
+        }
+
+
+        public static object[] extTestData = new object[]
+        {
+            new object[]{ 0,  Enumerable.Repeat((byte)1, 0).ToArray() },
+            new object[]{ 1,  Enumerable.Repeat((byte)1, 1).ToArray() },
+            new object[]{ 2,  Enumerable.Repeat((byte)1, 2).ToArray() },
+            new object[]{ 3,  Enumerable.Repeat((byte)1, 3).ToArray() },
+            new object[]{ 4,  Enumerable.Repeat((byte)1, 4).ToArray() },
+            new object[]{ 5,  Enumerable.Repeat((byte)1, 5).ToArray() },
+            new object[]{ 6,  Enumerable.Repeat((byte)1, 6).ToArray() },
+            new object[]{ 7,  Enumerable.Repeat((byte)1, 7).ToArray() },
+            new object[]{ 8,  Enumerable.Repeat((byte)1, 8).ToArray() },
+            new object[]{ 9,  Enumerable.Repeat((byte)1, 9).ToArray() },
+            new object[]{ 10, Enumerable.Repeat((byte)1, 10).ToArray() },
+            new object[]{ 11, Enumerable.Repeat((byte)1, 11).ToArray() },
+            new object[]{ 12, Enumerable.Repeat((byte)1, 12).ToArray() },
+            new object[]{ 13, Enumerable.Repeat((byte)1, 13).ToArray() },
+            new object[]{ 14, Enumerable.Repeat((byte)1, 14).ToArray() },
+            new object[]{ 15, Enumerable.Repeat((byte)1, 15).ToArray() },
+            new object[]{ 16, Enumerable.Repeat((byte)1, 16).ToArray() },
+            new object[]{ 17, Enumerable.Repeat((byte)1, 17).ToArray() },
+            new object[]{ 29, Enumerable.Repeat((byte)1, sbyte.MaxValue - 1).ToArray() },
+            new object[]{ 39, Enumerable.Repeat((byte)1, sbyte.MaxValue).ToArray() },
+            new object[]{ 49, Enumerable.Repeat((byte)1, sbyte.MaxValue + 1).ToArray() },
+            new object[]{ 59, Enumerable.Repeat((byte)1, byte.MaxValue - 1).ToArray() },
+            new object[]{ 69, Enumerable.Repeat((byte)1, byte.MaxValue).ToArray() },
+            new object[]{ 79, Enumerable.Repeat((byte)1, byte.MaxValue + 1).ToArray() },
+            new object[]{ 89, Enumerable.Repeat((byte)1, short.MaxValue - 1).ToArray() },
+            new object[]{ 99, Enumerable.Repeat((byte)1, short.MaxValue).ToArray() },
+            new object[]{ 100, Enumerable.Repeat((byte)1, short.MaxValue + 1).ToArray() },
+            new object[]{ 101, Enumerable.Repeat((byte)1, ushort.MaxValue - 1).ToArray() },
+            new object[]{ 102, Enumerable.Repeat((byte)1, ushort.MaxValue).ToArray() },
+            new object[]{ 103, Enumerable.Repeat((byte)1, ushort.MaxValue + 1).ToArray() },
+        };
+
+        [Theory]
+        [MemberData(nameof(extTestData))]
+        public void ExtTest(sbyte typeCode, byte[] target)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            var returnLength = MessagePackBinary.WriteExtensionFormat(ref bytes, 0, typeCode, target);
+
+            var referencePacked = packer.PackExtendedTypeValue((byte)typeCode, target);
+            referencePacked.Position.Is(returnLength);
+            referencePacked.Position.Is(bytes.Length);
+            stream.ToArray().SequenceEqual(bytes).IsTrue();
+
+            int readSize;
+            var ext = MessagePackBinary.ReadExtensionFormat(bytes, 0, out readSize);
+            ext.TypeCode.Is(typeCode);
+            ext.Data.SequenceEqual(target).IsTrue();
+            readSize.Is(returnLength);
+
+            var ext2 = CreateUnpackedReference(bytes).AsMessagePackExtendedTypeObject();
+            ext2.TypeCode.Is((byte)ext.TypeCode);
+            ext2.GetBody().SequenceEqual(ext.Data).IsTrue();
+        }
+
+        // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
+        // FixExt8(-1) => nanoseconds + seconds | [1970-01-01 00:00:00.000000000 UTC, 2514-05-30 01:53:04.000000000 UTC) range
+        // Ext8(12,-1) => nanoseconds + seconds | [-584554047284-02-23 16:59:44 UTC, 584554051223-11-09 07:00:16.000000000 UTC) range
+        public static object[] dateTimeTestData = new object[]
+        {
+            new object[]{ new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 6},
+            new object[]{ new DateTime(2010, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 6},
+            new object[]{ new DateTime(2106, 2, 7, 6, 28, 15, 0, DateTimeKind.Utc), 6},
+            new object[]{ new DateTime(2106, 2, 7, 6, 28, 16, 0, DateTimeKind.Utc), 10},
+            new object[]{ new DateTime(2106, 2, 7, 6, 28, 17, 0, DateTimeKind.Utc), 10},
+            new object[]{ new DateTime(2106, 2, 7, 6, 28, 16, 1, DateTimeKind.Utc), 10},
+            new object[]{ new DateTime(2010, 12, 1, 3, 4, 57, 123, DateTimeKind.Utc), 10},
+            new object[]{ new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc).AddMilliseconds(-1), 10},
+            new object[]{ new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc), 15},
+            new object[]{ new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc).AddMilliseconds(1), 15 },
+            new object[]{ new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(-1), 15},
+            new object[]{ new DateTime(111, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 15},
+            new object[]{ new DateTime(111, 12, 1, 3, 4, 57, 123, DateTimeKind.Utc), 15},
+            new object[]{  new DateTime(DateTime.MinValue.Ticks, DateTimeKind.Utc), 15},
+            new object[]{ new DateTime(DateTime.MaxValue.Ticks, DateTimeKind.Utc), 15},
+        };
+
+        [Theory]
+        [MemberData(nameof(dateTimeTestData))]
+        public void DateTimeTest(DateTime target, int expectedLength)
+        {
+            byte[] bytes = null;
+            var returnLength = MessagePackBinary.WriteDateTime(ref bytes, 0, target);
+            returnLength.Is(expectedLength);
+
+            int readSize;
+            var result = MessagePackBinary.ReadDateTime(bytes, 0, out readSize);
+            readSize.Is(returnLength);
+
+            result.Is(target);
+        }
+
+        [Fact]
+        public void IntegerRangeTest()
+        {
+            // Int16 can accepts UInt8
+            // Int32 can accepts UInt16
+            // Int64 can accepts UInt32
+            {
+                int readSize;
+                byte[] small = null;
+                byte[] target = null;
+                MessagePackBinary.WriteByte(ref small, 0, byte.MaxValue);
+                MessagePackBinary.ReadInt16(small, 0, out readSize).Is(byte.MaxValue);
+                MessagePackBinary.WriteInt16(ref target, 0, byte.MaxValue);
+                target.SequenceEqual(small).IsTrue();
+            }
+            {
+                int readSize;
+                byte[] small = null;
+                byte[] target = null;
+                MessagePackBinary.WriteByte(ref small, 0, byte.MaxValue);
+                MessagePackBinary.ReadInt32(small, 0, out readSize).Is(byte.MaxValue);
+                MessagePackBinary.WriteInt32(ref target, 0, byte.MaxValue);
+                target.SequenceEqual(small).IsTrue();
+
+                small = target = null;
+                MessagePackBinary.WriteUInt16(ref small, 0, ushort.MaxValue);
+                MessagePackBinary.ReadInt32(small, 0, out readSize).Is(ushort.MaxValue);
+                MessagePackBinary.WriteInt32(ref target, 0, ushort.MaxValue);
+                target.SequenceEqual(small).IsTrue();
+            }
+            {
+                int readSize;
+                byte[] small = null;
+                byte[] target = null;
+                MessagePackBinary.WriteByte(ref small, 0, byte.MaxValue);
+                MessagePackBinary.ReadInt64(small, 0, out readSize).Is(byte.MaxValue);
+                MessagePackBinary.WriteInt64(ref target, 0, byte.MaxValue);
+                target.SequenceEqual(small).IsTrue();
+
+                small = target = null;
+                MessagePackBinary.WriteUInt16(ref small, 0, ushort.MaxValue);
+                MessagePackBinary.ReadInt64(small, 0, out readSize).Is(ushort.MaxValue);
+                MessagePackBinary.WriteInt64(ref target, 0, ushort.MaxValue);
+                target.SequenceEqual(small).IsTrue();
+
+                small = target = null;
+                MessagePackBinary.WriteUInt32(ref small, 0, uint.MaxValue);
+                MessagePackBinary.ReadInt64(small, 0, out readSize).Is(uint.MaxValue);
+                MessagePackBinary.WriteInt64(ref target, 0, uint.MaxValue);
+                target.SequenceEqual(small).IsTrue();
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MessagePack.Formatters;
+﻿using MessagePack.Formatters;
 using MessagePack.Internal;
+using MessagePack.Resolvers;
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace MessagePack.Resolvers
@@ -27,7 +27,6 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                // Reduce IL2CPP code generate size.
                 formatter = (IMessagePackFormatter<T>)BuiltinResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
@@ -38,48 +37,229 @@ namespace MessagePack.Internal
 {
     internal static class BuiltinResolverGetFormatterHelper
     {
-        internal static object GetFormatter(Type type)
+        // Reduce IL2CPP code generate size(don't write long code in <T>)
+        internal static object GetFormatter(Type t)
         {
-            var ti = type.GetTypeInfo();
+            var ti = t.GetTypeInfo();
 
-            if (type == typeof(bool))
+            // Primitive
+            if (t == typeof(Int16))
             {
-                return new BooleanFormatter();
+                return new Int16Formatter();
             }
-            else if (type == typeof(byte))
-            {
-                return new ByteFormatter();
-            }
-            else if (type == typeof(int))
+            else if (t == typeof(Int32))
             {
                 return new Int32Formatter();
             }
-            else if (type == typeof(double))
+            else if (t == typeof(Int64))
+            {
+                return new Int64Formatter();
+            }
+            else if (t == typeof(UInt16))
+            {
+                return new UInt16Formatter();
+            }
+            else if (t == typeof(UInt32))
+            {
+                return new UInt32Formatter();
+            }
+            else if (t == typeof(UInt64))
+            {
+                return new UInt64Formatter();
+            }
+            else if (t == typeof(Single))
+            {
+                return new SingleFormatter();
+            }
+            else if (t == typeof(Double))
             {
                 return new DoubleFormatter();
             }
-
-            else if (type == typeof(byte[]))
+            else if (t == typeof(bool))
             {
-                return new ByteArrayFormatter();
+                return new BooleanFormatter();
+            }
+            else if (t == typeof(byte))
+            {
+                return new ByteFormatter();
+            }
+            else if (t == typeof(sbyte))
+            {
+                return new SByteFormatter();
+            }
+            else if (t == typeof(DateTime))
+            {
+                return new DateTimeFormatter();
+            }
+            else if (t == typeof(char))
+            {
+                return new CharFormatter();
+            }
+            // Nulllable Primitive
+            else if (t == typeof(Nullable<Int16>))
+            {
+                return new NullableInt16Formatter();
+            }
+            else if (t == typeof(Nullable<Int32>))
+            {
+                return new NullableInt32Formatter();
+            }
+            else if (t == typeof(Nullable<Int64>))
+            {
+                return new NullableInt64Formatter();
+            }
+            else if (t == typeof(Nullable<UInt16>))
+            {
+                return new NullableUInt16Formatter();
+            }
+            else if (t == typeof(Nullable<UInt32>))
+            {
+                return new NullableUInt32Formatter();
+            }
+            else if (t == typeof(Nullable<UInt64>))
+            {
+                return new NullableUInt64Formatter();
+            }
+            else if (t == typeof(Nullable<Single>))
+            {
+                return new NullableSingleFormatter();
+            }
+            else if (t == typeof(Nullable<Double>))
+            {
+                return new NullableDoubleFormatter();
+            }
+            else if (t == typeof(Nullable<bool>))
+            {
+                return new NullableBooleanFormatter();
+            }
+            else if (t == typeof(Nullable<byte>))
+            {
+                return new NullableByteFormatter();
+            }
+            else if (t == typeof(Nullable<sbyte>))
+            {
+                return new NullableSByteFormatter();
+            }
+            else if (t == typeof(Nullable<DateTime>))
+            {
+                return new NullableDateTimeFormatter();
+            }
+            else if (t == typeof(Nullable<char>))
+            {
+                return new NullableCharFormatter();
             }
 
-            // nullable
+            // StandardClassLibraryFormatter
+            else if (t == typeof(string))
+            {
+                return new NullableStringFormatter();
+            }
+            else if (t == typeof(decimal))
+            {
+                return new DecimalFormatter();
+            }
+            else if (t == typeof(decimal?))
+            {
+                return new StaticNullableFormatter<decimal>(BuiltinResolver.Instance.GetFormatter<decimal>());
+            }
+            else if (t == typeof(TimeSpan))
+            {
+                return new TimeSpanFormatter();
+            }
+            else if (t == typeof(TimeSpan?))
+            {
+                return new StaticNullableFormatter<TimeSpan>(BuiltinResolver.Instance.GetFormatter<TimeSpan>());
+            }
+            else if (t == typeof(DateTimeOffset))
+            {
+                return new DateTimeOffsetFormatter();
+            }
+            else if (t == typeof(DateTimeOffset?))
+            {
+                return new StaticNullableFormatter<DateTimeOffset>(BuiltinResolver.Instance.GetFormatter<DateTimeOffset>());
+            }
+            else if (t == typeof(Guid))
+            {
+                return new GuidFormatter();
+            }
+            else if (t == typeof(Guid?))
+            {
+                return new StaticNullableFormatter<Guid>(BuiltinResolver.Instance.GetFormatter<Guid>());
+            }
+            else if (t == typeof(Uri))
+            {
+                return new UriFormatter();
+            }
+            else if (t == typeof(Version))
+            {
+                return new VersionFormatter();
+            }
 
-            // don't use dynamic, builtin should resolve static.
-            //else if (ti.IsNullable())
-            //{
-            //    // build underlying type and use wrapped formatter.
-            //    var underlyhingType = ti.GenericTypeArguments[0];
-            //    var innerFormatter = GetFormatter(underlyhingType);
-            //    if (innerFormatter == null) return null;
+            // Nil
+            else if (t == typeof(Nil))
+            {
+                return new NilFormatter();
+            }
+            else if (t == typeof(Nil?))
+            {
+                return new NullableNilFormatter();
+            }
 
-            //    return Activator.CreateInstance(typeof(NullableFormatter<>).MakeGenericType(type), new object[] { innerFormatter });
-                
+            // NET40
+            else if (t == typeof(System.Numerics.BigInteger))
+            {
+                return new BigIntegerFormatter();
+            }
+            else if (t == typeof(System.Numerics.BigInteger?))
+            {
+                return new StaticNullableFormatter<System.Numerics.BigInteger>(BuiltinResolver.Instance.GetFormatter<System.Numerics.BigInteger>());
+            }
+            else if (t == typeof(System.Numerics.Complex))
+            {
+                return new ComplexFormatter();
+            }
+            else if (t == typeof(System.Numerics.Complex?))
+            {
+                return new StaticNullableFormatter<System.Numerics.Complex>(BuiltinResolver.Instance.GetFormatter<System.Numerics.Complex>());
+            }
 
-            //}
+            // IList...
+            // List...
 
-            
+
+            else if (t.IsArray)
+            {
+
+                // if byte => ByteArrayFormatter
+                // Array<T>
+            }
+
+
+            // TODO:Dynamic Code Generation
+            else if (ti.IsGenericType)
+            {
+                var genericType = ti.GetGenericTypeDefinition();
+
+
+
+                // TODO:Nullable?
+
+
+                //TODO:KeyValuePair...
+
+                if (genericType == typeof(KeyValuePair<,>))
+                {
+                    return Activator.CreateInstance(typeof(KeyValuePairFormatter<,>).MakeGenericType(ti.GenericTypeArguments));
+                }
+                //else if (t == typeof(KeyValuePair?))
+                //{
+                //    return new StaticNullableFormatter<KeyValuePair>(BuiltinResolver.Instance.GetFormatter<KeyValuePair>());
+                //}
+
+            }
+
+
+
 
             return null;
         }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Xunit;
 
-namespace ZeroFormatter.DotNetCore.Tests
+namespace MessagePack.Tests
 {
     public static partial class AssertEx
     {
