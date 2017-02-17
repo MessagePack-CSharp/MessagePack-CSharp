@@ -29,12 +29,12 @@ namespace MessagePack.Formatters
 <# foreach(var t in types) {  #>
     public class <#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>>
     {
-        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver typeResolver)
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value);
         }
 
-        public <#= t.Name #> Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        public <#= t.Name #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
         }
@@ -42,7 +42,7 @@ namespace MessagePack.Formatters
 
     public class Nullable<#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>?>
     {
-        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver typeResolver)
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
             {
@@ -54,7 +54,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t.Name #>? Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        public <#= t.Name #>? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {

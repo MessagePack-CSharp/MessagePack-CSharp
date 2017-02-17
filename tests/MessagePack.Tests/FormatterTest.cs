@@ -88,5 +88,42 @@ namespace MessagePack.Tests
             Convert(Nil.Default).Is(Nil.Default);
             Convert((Nil?)null).Is(Nil.Default);
         }
+
+        public static object[] standardStructFormatterTestData = new object[]
+        {
+            new object[] { decimal.MaxValue, decimal.MinValue, null },
+            new object[] { TimeSpan.MaxValue, TimeSpan.MinValue, null },
+            new object[] { DateTimeOffset.MaxValue, DateTimeOffset.MinValue, null },
+            new object[] { Guid.NewGuid(), Guid.Empty, null },
+            new object[] { new KeyValuePair<int,string>(10, "hoge"), default(KeyValuePair<int, string>), null },
+            new object[] { System.Numerics.BigInteger.Zero, System.Numerics.BigInteger.One, null },
+            new object[] { System.Numerics.Complex.Zero, System.Numerics.Complex.One, null },
+        };
+
+        [Theory]
+        [MemberData(nameof(standardStructFormatterTestData))]
+        public void StandardClassLibraryStructFormatterTest<T>(T x, T? y, T? z)
+            where T : struct
+        {
+            Convert(x).Is(x);
+            Convert(y).Is(y);
+            Convert(z).Is(z);
+        }
+
+        public static object[] standardClassFormatterTestData = new object[]
+        {
+            new object[] { "aaa", "", null },
+            new object[] { new Uri("Http://hogehoge.com"), new Uri("Https://hugahuga.com"), null },
+            new object[] { new Version(1,2), new Version(100,200,300,400), null },
+        };
+
+        [Theory]
+        [MemberData(nameof(standardClassFormatterTestData))]
+        public void StandardClassLibraryFormatterTest<T>(T x, T y, T z)
+        {
+            Convert(x).Is(x);
+            Convert(y).Is(y);
+            Convert(z).Is(z);
+        }
     }
 }

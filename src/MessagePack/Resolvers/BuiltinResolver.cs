@@ -223,43 +223,78 @@ namespace MessagePack.Internal
                 return new StaticNullableFormatter<System.Numerics.Complex>(BuiltinResolver.Instance.GetFormatter<System.Numerics.Complex>());
             }
 
-            // IList...
-            // List...
-
+            // TODO:Dynamic Code Generation
 
             else if (t.IsArray)
             {
-
-                // if byte => ByteArrayFormatter
-                // Array<T>
+                return Activator.CreateInstance(typeof(ArrayFormatter<>).MakeGenericType(t.GetElementType()));
             }
-
 
             // TODO:Dynamic Code Generation
             else if (ti.IsGenericType)
             {
                 var genericType = ti.GetGenericTypeDefinition();
+                var genericTypeInfo = genericType.GetTypeInfo();
+                var isNullable = genericTypeInfo.IsNullable();
+                var nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
 
 
+                // IList...
+                // List...
 
                 // TODO:Nullable?
 
-
-                //TODO:KeyValuePair...
 
                 if (genericType == typeof(KeyValuePair<,>))
                 {
                     return Activator.CreateInstance(typeof(KeyValuePairFormatter<,>).MakeGenericType(ti.GenericTypeArguments));
                 }
-                //else if (t == typeof(KeyValuePair?))
-                //{
-                //    return new StaticNullableFormatter<KeyValuePair>(BuiltinResolver.Instance.GetFormatter<KeyValuePair>());
-                //}
+                else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+                {
+                    return Activator.CreateInstance(typeof(NullableFormatter<>).MakeGenericType(nullableElementType));
+                }
+
+
+
+                // Tuple
+                else if (ti.FullName.StartsWith("System.Tuple"))
+                {
+                    Type tupleFormatterType = null;
+                    switch (ti.GenericTypeArguments.Length)
+                    {
+                        case 1:
+                            tupleFormatterType = typeof(TupleFormatter<>);
+                            break;
+                        case 2:
+                            tupleFormatterType = typeof(TupleFormatter<,>);
+                            break;
+                        case 3:
+                            tupleFormatterType = typeof(TupleFormatter<,,>);
+                            break;
+                        case 4:
+                            tupleFormatterType = typeof(TupleFormatter<,,,>);
+                            break;
+                        case 5:
+                            tupleFormatterType = typeof(TupleFormatter<,,,,>);
+                            break;
+                        case 6:
+                            tupleFormatterType = typeof(TupleFormatter<,,,,,>);
+                            break;
+                        case 7:
+                            tupleFormatterType = typeof(TupleFormatter<,,,,,,>);
+                            break;
+                        case 8:
+                            tupleFormatterType = typeof(TupleFormatter<,,,,,,,>);
+                            break;
+                        default:
+                            break;
+                    }
+
+                    return Activator.CreateInstance(tupleFormatterType.MakeGenericType(t));
+                }
+
 
             }
-
-
-
 
             return null;
         }

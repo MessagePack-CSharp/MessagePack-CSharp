@@ -68,8 +68,8 @@ namespace MessagePack.Formatters
         {
             var startOffset = offset;
             offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
-            MessagePackBinary.WriteDateTime(ref bytes, offset, value.UtcDateTime);
-            MessagePackBinary.WriteInt64(ref bytes, offset, value.Offset.Ticks);
+            offset += MessagePackBinary.WriteDateTime(ref bytes, offset, value.UtcDateTime);
+            offset += MessagePackBinary.WriteInt64(ref bytes, offset, value.Offset.Ticks);
             return offset - startOffset;
         }
 

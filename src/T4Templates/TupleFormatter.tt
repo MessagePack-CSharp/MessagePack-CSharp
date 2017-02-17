@@ -1,0 +1,65 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+using System;
+
+namespace MessagePack.Formatters
+{
+<# for(var i = 1; i <= 8; i++) { 
+    Func<int, string> toT = x => "T" + ((x == 8) ? "Rest" : x.ToString());
+    Func<int, string> toItem = x => ((x == 8) ? "Rest" : "Item" + x);
+    var ts = string.Join(", ", Enumerable.Range(1, i).Select(x => toT(x))); 
+    var t = "Tuple<" + ts + ">"; 
+#>
+
+	public class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+				var startOffset = offset;
+				offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= i #>);
+
+<# for(var j = 1; j <= i; j++) { #>
+				offset += formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref bytes, offset, value.<#= toItem(j) #>, formatterResolver);
+<# } #>
+
+				return offset - startOffset;
+			}
+        }
+
+        public <#= t #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+				var startOffset = offset;
+				var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+				if (count != <#= i #>) throw new InvalidOperationException("Invalid Tuple count");
+				offset += readSize;
+
+<# for(var j = 1; j <= i; j++) { #>
+				var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+				offset += readSize;
+<# } #>
+			
+				readSize = offset - startOffset;
+				return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+			}
+        }
+    }
+
+<# } #>
+}
