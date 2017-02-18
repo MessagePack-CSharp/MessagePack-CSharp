@@ -44,6 +44,11 @@ namespace MessagePack.Internal
             }
         }
 
+        public static void EmitLdloc(this ILGenerator il, LocalBuilder local)
+        {
+            il.Emit(OpCodes.Ldloc, local);
+        }
+
         /// <summary>
         /// Pops the current value from the top of the evaluation stack and stores it in a the local variable list at a specified index.
         /// </summary>
@@ -74,6 +79,11 @@ namespace MessagePack.Internal
                     }
                     break;
             }
+        }
+
+        public static void EmitStloc(this ILGenerator il, LocalBuilder local)
+        {
+            il.Emit(OpCodes.Stloc, local);
         }
 
         /// <summary>
@@ -158,9 +168,9 @@ namespace MessagePack.Internal
                     il.Emit(OpCodes.Ldarg_3);
                     break;
                 default:
-                    if (index <= 127)
+                    if (index <= 255)
                     {
-                        il.Emit(OpCodes.Ldarg_S, (sbyte)index);
+                        il.Emit(OpCodes.Ldarg_S, (byte)index);
                     }
                     else
                     {
@@ -172,13 +182,25 @@ namespace MessagePack.Internal
 
         public static void EmitLdarga(this ILGenerator il, int index)
         {
-            if (index <= 127)
+            if (index <= 255)
             {
-                il.Emit(OpCodes.Ldarga, (sbyte)index);
+                il.Emit(OpCodes.Ldarga_S, (byte)index);
             }
             else
             {
-                il.Emit(OpCodes.Ldarga_S, index);
+                il.Emit(OpCodes.Ldarga, index);
+            }
+        }
+
+        public static void EmitStarg(this ILGenerator il, int index)
+        {
+            if (index <= 255)
+            {
+                il.Emit(OpCodes.Starg_S, (byte)index);
+            }
+            else
+            {
+                il.Emit(OpCodes.Starg, index);
             }
         }
 
@@ -191,6 +213,31 @@ namespace MessagePack.Internal
             {
                 il.Emit(OpCodes.Pop);
             }
+        }
+
+        public static void EmitCall(this ILGenerator il, MethodInfo methodInfo)
+        {
+            il.Emit(OpCodes.Call, methodInfo);
+        }
+
+        public static void EmitCallvirt(this ILGenerator il, MethodInfo methodInfo)
+        {
+            il.Emit(OpCodes.Callvirt, methodInfo);
+        }
+
+        public static void EmitLdfld(this ILGenerator il, FieldInfo fieldInfo)
+        {
+            il.Emit(OpCodes.Ldfld, fieldInfo);
+        }
+
+        public static void EmitLdsfld(this ILGenerator il, FieldInfo fieldInfo)
+        {
+            il.Emit(OpCodes.Ldsfld, fieldInfo);
+        }
+
+        public static void EmitRet(this ILGenerator il)
+        {
+            il.Emit(OpCodes.Ret);
         }
 
         public static void EmitIntZeroReturn(this ILGenerator il)
@@ -209,6 +256,33 @@ namespace MessagePack.Internal
         {
             il.Emit(OpCodes.Newobj, typeof(System.NotImplementedException).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0));
             il.Emit(OpCodes.Throw);
+        }
+
+        /// <summary>for(var i = 0; i < ***; i++)</summary>
+        public static void EmitIncrementFor(this ILGenerator il, LocalBuilder conditionGreater, Action<LocalBuilder> emitBody)
+        {
+            var loopBegin = il.DefineLabel();
+            var condtionLabel = il.DefineLabel();
+
+            // var i = 0
+            var forI = il.DeclareLocal(typeof(int));
+            il.EmitLdc_I4(0);
+            il.EmitStloc(forI);
+
+            il.MarkLabel(loopBegin);
+            emitBody(forI);
+
+            // i++
+            il.EmitLdloc(forI);
+            il.EmitLdc_I4(1);
+            il.Emit(OpCodes.Add);
+            il.EmitStloc(forI);
+
+            //// i < ***
+            il.MarkLabel(condtionLabel);
+            il.EmitLdloc(forI);
+            il.EmitLdloc(conditionGreater);
+            il.Emit(OpCodes.Blt, loopBegin);
         }
     }
 }

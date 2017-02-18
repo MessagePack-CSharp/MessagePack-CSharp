@@ -31,29 +31,6 @@ namespace Sandbox
         public virtual int MyProperty2 { get; set; }
     }
 
-    public class BassTest
-    {
-        public BassTest(int x, int y)
-        {
-
-        }
-    }
-
-    [MessagePackObject]
-    public class UnBase : BassTest
-    {
-        [Key(0)]
-        public int X { get; set; }
-        [Key(1)]
-        public int Y { get; set; }
-
-        public UnBase(int x, int y) : base(10, 20)
-        {
-
-        }
-    }
-
-
     class Program
     {
         static void Main(string[] args)
@@ -64,16 +41,18 @@ namespace Sandbox
             //var json = MessagePackSerializer.ToJson(bin);
             //Console.WriteLine(json);
 
-            //var target = new SmallSingleObject() { MyProperty = 9, MyProperty2 = 100 };
+            var target = new SmallSingleObject() { MyProperty = 9, MyProperty2 = 100 };
 
 
 
             //var bytes = Enumerable.Repeat(1, 30000).Select(x => (byte)x).ToArray();
-            // Benchmark(target);
+             Benchmark(target);
 
 
-            var  b = MessagePack.MessagePackSerializer.Serialize(new SmallSingleObject() { MyProperty = 100, MyProperty2 = 999 });
-            MessagePack.MessagePackSerializer.Deserialize<SmallSingleObject>(b);
+            //var testV = new SmallSingleObject() { MyProperty = 100, MyProperty2 = 999 };
+            //var  b = MessagePack.MessagePackSerializer.Serialize(testV);
+
+            //var hoge = MessagePack.MessagePackSerializer.Serialize(testV, HandWriteResolver.Instance);
 
         }
 

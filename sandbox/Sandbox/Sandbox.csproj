@@ -5,6 +5,10 @@
     <TargetFramework>netcoreapp1.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Prefer32Bit>False</Prefer32Bit>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="MsgPack.Cli" Version="0.9.0-beta2" />
     <PackageReference Include="protobuf-net" Version="2.1.0" />

@@ -85,48 +85,251 @@ namespace MessagePack.Resolvers
         // int Serialize([arg:1]ref byte[] bytes, [arg:2]int offset, [arg:3]T value, [arg:4]IFormatterResolver formatterResolver);
         static void BuildSerialize(Type type, ObjectSerializationInfo info, MethodBuilder method, ILGenerator il)
         {
+            var writeCount = info.Members.Count(x => x.IsReadable);
+
             // var startOffset = offset;
             var startOffsetLocal = il.DeclareLocal(typeof(int)); // [loc:0]
             il.EmitLdarg(2);
-            il.EmitStloc(0);
+            il.EmitStloc(startOffsetLocal);
 
             // offset += writeHeader
+            EmitOffsetPlusEqual(il, null, () =>
+             {
+                 il.EmitLdc_I4(writeCount);
+                 if (writeCount <= MessagePackRange.MaxFixMapCount)
+                 {
+                     il.EmitCall(MessagePackBinaryMethodInfo.WriteFixedMapHeaderUnsafe);
+                 }
+                 else
+                 {
+                     il.EmitCall(MessagePackBinaryMethodInfo.WriteMapHeader);
+                 }
+             });
 
-
-
-            // offset += writekey
-            // offset += serialzeValue
-            foreach (var item in info.Memebers)
+            foreach (var item in info.Members)
             {
+                // offset += writekey
+                EmitOffsetPlusEqual(il, null, () =>
+                 {
+                     if (info.IsIntKey)
+                     {
+                         il.EmitLdc_I4(item.IntKey);
+                         if (0 <= item.IntKey && item.IntKey <= MessagePackRange.MaxFixPositiveInt)
+                         {
+                             il.EmitCall(MessagePackBinaryMethodInfo.WritePositiveFixedIntUnsafe);
+                         }
+                         else
+                         {
+                             il.EmitCall(MessagePackBinaryMethodInfo.WriteInt32);
+                         }
+                     }
+                     else
+                     {
+                         // TODO:string key
+                     }
+                 });
 
+                // offset += serializeValue
+                EmitSerializeValue(il, item);
             }
 
             // return startOffset- offset;
             il.EmitLdarg(2);
-            il.EmitLdloc(0);
+            il.EmitLdloc(startOffsetLocal);
             il.Emit(OpCodes.Sub);
             il.Emit(OpCodes.Ret);
+        }
+
+        // offset += ***(ref bytes, offset....
+        static void EmitOffsetPlusEqual(ILGenerator il, Action loadEmit, Action emit)
+        {
+            il.EmitLdarg(2);
+
+            if (loadEmit != null) loadEmit();
+
+            il.EmitLdarg(1);
+            il.EmitLdarg(2);
+
+            emit();
+
+            il.Emit(OpCodes.Add);
+            il.EmitStarg(2);
+        }
+
+        static void EmitSerializeValue(ILGenerator il, ObjectSerializationInfo.EmittableMember member)
+        {
+            var t = member.Type;
+            if (t == typeof(Int32))
+            {
+                EmitOffsetPlusEqual(il, () => il.EmitLdsfld(StaticFormatterTypeInfo.Int32), () =>
+                {
+                    il.EmitLdarg(3);
+                    member.EmitLoadValue(il);
+                    il.EmitCall(StaticFormatterTypeInfo.Int32Serialize);
+                });
+            }
+
+            // TODO:others...
         }
 
         // T Deserialize([arg:1]byte[] bytes, [arg:2]int offset, [arg:3]IFormatterResolver formatterResolver, [arg:4]out int readSize);
         static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, ILGenerator il)
         {
-            // getMap
-            // getLength
-            // for(...){
+            // var startOffset = offset;
+            var startOffsetLocal = il.DeclareLocal(typeof(int)); // [loc:0]
+            il.EmitLdarg(2);
+            il.EmitStloc(startOffsetLocal);
 
-            // var type = TryReadType();
-            // if(type.IsInteger() -> ReadInt -> switch() case... field = getValue...;
-            // else if(type == string) -> ReadString -> switch() case... field = getValue...;
-
-            // constructor matching
-            // new()... set...
-            // return...
-
+            // var length = ReadMapHeader
+            var length = il.DeclareLocal(typeof(int)); // [loc:1]
+            il.EmitLdarg(1);
+            il.EmitLdarg(2);
             il.EmitLdarg(4);
-            il.EmitLdc_I4(0);
+            il.EmitCall(MessagePackBinaryMethodInfo.ReadMapHeader);
+            il.EmitStloc(length);
+            EmitOffsetPlusReadSize(il);
+
+            // make local fields
+            var intDictionary = new Dictionary<int, DeserializeInfo>();
+            foreach (var item in info.Members.Where(x => x.IsWritable))
+            {
+                // TODO:string key?
+                intDictionary.Add(item.IntKey, new DeserializeInfo
+                {
+                    MemberInfo = item,
+                    LocalField = il.DeclareLocal(item.Type),
+                    SwitchLabel = il.DefineLabel()
+                });
+            }
+
+            // Read Loop(for var i = 0; i< length; i++)
+            if (info.IsIntKey)
+            {
+                var key = il.DeclareLocal(typeof(int));
+                var switchEnd = il.DefineLabel();
+                il.EmitIncrementFor(length, forILocal =>
+                {
+                    // key = Deserialize, offset += readSize;
+                    il.EmitLdsfld(StaticFormatterTypeInfo.Int32);
+                    il.EmitLdarg(1);
+                    il.EmitLdarg(2);
+                    il.EmitLdarg(4);
+                    il.EmitCall(StaticFormatterTypeInfo.Int32Deserialize);
+                    il.EmitStloc(key);
+                    EmitOffsetPlusReadSize(il);
+
+                    // switch... local = Deserialize
+                    var defaultLabel = il.DefineLabel();
+                    il.EmitLdloc(key);
+                    il.Emit(OpCodes.Switch, intDictionary.Values.Select(x => x.SwitchLabel).ToArray());
+                    foreach (var item in intDictionary)
+                    {
+                        il.MarkLabel(item.Value.SwitchLabel);
+                        EmitDeserializeValue(il, item.Value);
+                        il.Emit(OpCodes.Br, switchEnd);
+                    }
+                    il.MarkLabel(defaultLabel);
+                    il.Emit(OpCodes.Br, switchEnd);
+
+                    // offset += readSize
+                    il.MarkLabel(switchEnd);
+                    EmitOffsetPlusReadSize(il);
+                });
+            }
+            else
+            {
+                // TODO:string key
+            }
+
+            // finish readSize: readSize = offset - startOffset;
+            il.EmitLdarg(4);
+            il.EmitLdarg(2);
+            il.EmitLdloc(startOffsetLocal);
+            il.Emit(OpCodes.Sub);
             il.Emit(OpCodes.Stind_I4);
-            il.EmitNullReturn();
+
+            // create result object
+            // TODO:string values
+            EmitNewObject(il, info, intDictionary.Values.ToArray());
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        static void EmitOffsetPlusReadSize(ILGenerator il)
+        {
+            il.EmitLdarg(2);
+            il.EmitLdarg(4);
+            il.Emit(OpCodes.Ldind_I4);
+            il.Emit(OpCodes.Add);
+            il.EmitStarg(2);
+        }
+
+        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info)
+        {
+            var member = info.MemberInfo;
+            var t = member.Type;
+            if (t == typeof(Int32))
+            {
+                il.EmitLdsfld(StaticFormatterTypeInfo.Int32);
+                il.EmitLdarg(1);
+                il.EmitLdarg(2);
+                il.EmitLdarg(4);
+                il.EmitCall(StaticFormatterTypeInfo.Int32Deserialize);
+            }
+
+            // TODO:others...
+
+            il.EmitStloc(info.LocalField);
+        }
+
+        static void EmitNewObject(ILGenerator il, ObjectSerializationInfo info, DeserializeInfo[] members)
+        {
+            // TODO:with argument?
+            il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
+
+            foreach (var item in members)
+            {
+                il.Emit(OpCodes.Dup);
+                if (item.MemberInfo.IsWritable)
+                {
+                    il.EmitLdloc(item.LocalField);
+                    item.MemberInfo.EmitStoreValue(il);
+                }
+            }
+        }
+
+        // EmitInfos...
+
+        static Type refByte = typeof(byte[]).MakeByRefType();
+        static Type refInt = typeof(int).MakeByRefType();
+
+        static class MessagePackBinaryMethodInfo
+        {
+            public static MethodInfo WriteFixedMapHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedMapHeaderUnsafe", new[] { refByte, typeof(int), typeof(int) });
+            public static MethodInfo WriteMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("WriteMapHeader", new[] { refByte, typeof(int), typeof(int) });
+            public static MethodInfo WritePositiveFixedIntUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WritePositiveFixedIntUnsafe", new[] { refByte, typeof(int), typeof(int) });
+            public static MethodInfo WriteInt32 = typeof(MessagePackBinary).GetRuntimeMethod("WriteInt32", new[] { refByte, typeof(int), typeof(int) });
+
+            public static MethodInfo ReadMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadMapHeader", new[] { typeof(byte[]), typeof(int), refInt });
+
+            static MessagePackBinaryMethodInfo()
+            {
+
+            }
+        }
+
+        static class StaticFormatterTypeInfo
+        {
+            public static FieldInfo Int32 = typeof(Int32Formatter).GetRuntimeField("Instance");
+            public static MethodInfo Int32Serialize = typeof(Int32Formatter).GetRuntimeMethod("Serialize", new[] { refByte, typeof(int), typeof(int) });
+            public static MethodInfo Int32Deserialize = typeof(Int32Formatter).GetRuntimeMethod("Deserialize", new[] { typeof(byte[]), typeof(int), typeof(int).MakeByRefType() });
+        }
+
+        class DeserializeInfo
+        {
+            public ObjectSerializationInfo.EmittableMember MemberInfo { get; set; }
+            public LocalBuilder LocalField { get; set; }
+            public Label SwitchLabel { get; set; }
         }
     }
 }
@@ -141,7 +344,7 @@ namespace MessagePack.Internal
         public bool IsStruct { get { return !IsClass; } }
         public ConstructorInfo BestmatchConstructor { get; set; }
         public EmittableMember[] ConstructorParameters { get; set; }
-        public EmittableMember[] Memebers { get; set; }
+        public EmittableMember[] Members { get; set; }
 
         ObjectSerializationInfo()
         {
@@ -356,7 +559,7 @@ namespace MessagePack.Internal
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Memebers = (isIntKey) ? intMemebrs.Values.ToArray() : stringMembers.Values.ToArray()
+                Members = (isIntKey) ? intMemebrs.Values.ToArray() : stringMembers.Values.ToArray()
             };
         }
 
@@ -371,6 +574,30 @@ namespace MessagePack.Internal
             public Type Type { get { return IsField ? FieldInfo.FieldType : PropertyInfo.PropertyType; } }
             public FieldInfo FieldInfo { get; set; }
             public PropertyInfo PropertyInfo { get; set; }
+
+            public void EmitLoadValue(ILGenerator il)
+            {
+                if (IsProperty)
+                {
+                    il.EmitCallvirt(PropertyInfo.GetMethod);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldfld, FieldInfo);
+                }
+            }
+
+            public void EmitStoreValue(ILGenerator il)
+            {
+                if (IsProperty)
+                {
+                    il.EmitCallvirt(PropertyInfo.SetMethod);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Stfld, FieldInfo);
+                }
+            }
         }
     }
 
