@@ -17,7 +17,7 @@ namespace Sandbox
 
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
-    public class MyClass
+    public class SmallSingleObject
     {
         [Index(0)]
         [ProtoBuf.ProtoMember(1)]
@@ -37,7 +37,7 @@ namespace Sandbox
             //var json = MessagePackSerializer.ToJson(bin);
             //Console.WriteLine(json);
 
-            var target = new MyClass() { MyProperty = 9, MyProperty2 = 100 };
+            var target = new SmallSingleObject() { MyProperty = 9, MyProperty2 = 100 };
 
             
 
@@ -161,9 +161,9 @@ namespace Sandbox
         }
     }
 
-    public class HandwriteMyClassFormatter : IMessagePackFormatter<MyClass>
+    public class HandwriteMyClassFormatter : IMessagePackFormatter<SmallSingleObject>
     {
-        public int Serialize(ref byte[] bytes, int offset, MyClass value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, SmallSingleObject value, IFormatterResolver formatterResolver)
         {
             var startOffset = offset;
             offset += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 2); // optimize 0~15 count
@@ -175,7 +175,7 @@ namespace Sandbox
             return offset - startOffset;
         }
 
-        public MyClass Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public SmallSingleObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             var startOffset = offset;
             var length = MessagePackBinary.ReadMapHeaderRaw(bytes, offset, out readSize);
@@ -211,7 +211,7 @@ namespace Sandbox
             // finish readSize
             readSize = offset - startOffset;
 
-            var __result__ = new MyClass(); // use constructor(with argument?)
+            var __result__ = new SmallSingleObject(); // use constructor(with argument?)
             __result__.MyProperty = __MyProperty1__;
             __result__.MyProperty2 = __MyProperty2__;
             return __result__;
@@ -238,7 +238,7 @@ namespace Sandbox
 
             static FormatterCache()
             {
-                if (typeof(T) == typeof(MyClass))
+                if (typeof(T) == typeof(SmallSingleObject))
                 {
                     formatter = (IMessagePackFormatter<T>)(object)new HandwriteMyClassFormatter();
                     return;
