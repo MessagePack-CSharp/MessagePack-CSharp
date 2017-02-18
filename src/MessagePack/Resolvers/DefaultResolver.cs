@@ -11,11 +11,13 @@ namespace MessagePack.Resolvers
 
         static readonly IFormatterResolver[] resolvers = new[]
         {
-            BuiltinResolver.Instance,  // Try Builtin
-            EnumResolver.Instance,     // Try Enum
-            GenericResolver.Instance,  // Try Array, Tuple, Collection
+            BuiltinResolver.Instance, // Try Builtin
+            DynamicEnumResolver.Instance, // Try Enum
+            DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
             // Try Union
-            // Try Object
+            
+
+            DynamicObjectResolver.Instance // Try Object
         };
 
         DefaultResolver()

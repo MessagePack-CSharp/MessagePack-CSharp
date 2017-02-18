@@ -8,11 +8,11 @@ using System.Collections.ObjectModel;
 
 namespace MessagePack.Resolvers
 {
-    public class GenericResolver : IFormatterResolver
+    public class DynamicGenericResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new GenericResolver();
+        public static IFormatterResolver Instance = new DynamicGenericResolver();
 
-        GenericResolver()
+        DynamicGenericResolver()
         {
 
         }
@@ -28,7 +28,7 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                formatter = (IMessagePackFormatter<T>)GenericResolverGetFormatterHelper.GetFormatter(typeof(T));
+                formatter = (IMessagePackFormatter<T>)DynamicGenericResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -36,7 +36,7 @@ namespace MessagePack.Resolvers
 
 namespace MessagePack.Internal
 {
-    internal static class GenericResolverGetFormatterHelper
+    internal static class DynamicGenericResolverGetFormatterHelper
     {
         // Reduce IL2CPP code generate size(don't write long code in <T>)
         internal static object GetFormatter(Type t)

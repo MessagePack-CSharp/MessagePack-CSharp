@@ -9,20 +9,20 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// EnumResolver by dynamic code generation, serialized underlying type.
     /// </summary>
-    public class EnumResolver : IFormatterResolver
+    public class DynamicEnumResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new EnumResolver();
+        public static IFormatterResolver Instance = new DynamicEnumResolver();
 
-        const string ModuleName = "MessagePack.Resolvers.EnumResolver";
+        const string ModuleName = "MessagePack.Resolvers.DynamicEnumResolver";
 
         static readonly DynamicAssembly assembly;
 
-        EnumResolver()
+        DynamicEnumResolver()
         {
 
         }
 
-        static EnumResolver()
+        static DynamicEnumResolver()
         {
             assembly = new DynamicAssembly(ModuleName);
         }
@@ -48,7 +48,7 @@ namespace MessagePack.Resolvers
                         return;
                     }
 
-                    var innerFormatter = EnumResolver.Instance.GetFormatterDynamic(ti.AsType());
+                    var innerFormatter = DynamicEnumResolver.Instance.GetFormatterDynamic(ti.AsType());
                     if (innerFormatter == null)
                     {
                         return;

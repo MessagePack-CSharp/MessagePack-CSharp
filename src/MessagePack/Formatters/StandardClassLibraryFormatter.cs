@@ -11,11 +11,36 @@ namespace MessagePack.Formatters
     // byte[] is special. represents bin type.
     public class ByteArrayFormatter : IMessagePackFormatter<byte[]>
     {
-        public static readonly IMessagePackFormatter<byte[]> Instance = new ByteArrayFormatter();
+        public static readonly ByteArrayFormatter Instance = new ByteArrayFormatter();
 
         ByteArrayFormatter()
         {
 
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, byte[] value)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                return MessagePackBinary.WriteBytes(ref bytes, offset, value);
+            }
+        }
+
+        public byte[] Deserialize(byte[] bytes, int offset, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
+            }
         }
 
         public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
@@ -46,11 +71,36 @@ namespace MessagePack.Formatters
 
     public class NullableStringFormatter : IMessagePackFormatter<String>
     {
-        public static readonly IMessagePackFormatter<String> Instance = new NullableStringFormatter();
+        public static readonly NullableStringFormatter Instance = new NullableStringFormatter();
 
         NullableStringFormatter()
         {
 
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, String value)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                return MessagePackBinary.WriteString(ref bytes, offset, value);
+            }
+        }
+
+        public String Deserialize(byte[] bytes, int offset, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                return MessagePackBinary.ReadString(bytes, offset, out readSize);
+            }
         }
 
         public int Serialize(ref byte[] bytes, int offset, String value, IFormatterResolver typeResolver)
@@ -81,12 +131,22 @@ namespace MessagePack.Formatters
 
     public class DecimalFormatter : IMessagePackFormatter<Decimal>
     {
-        public static readonly IMessagePackFormatter<Decimal> Instance = new DecimalFormatter();
+        public static readonly DecimalFormatter Instance = new DecimalFormatter();
 
 
         DecimalFormatter()
         {
 
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, decimal value)
+        {
+            return MessagePackBinary.WriteString(ref bytes, offset, value.ToString(CultureInfo.InvariantCulture));
+        }
+
+        public decimal Deserialize(byte[] bytes, int offset, out int readSize)
+        {
+            return decimal.Parse(MessagePackBinary.ReadString(bytes, offset, out readSize));
         }
 
         public int Serialize(ref byte[] bytes, int offset, decimal value, IFormatterResolver formatterResolver)
@@ -103,7 +163,6 @@ namespace MessagePack.Formatters
     public class TimeSpanFormatter : IMessagePackFormatter<TimeSpan>
     {
         public static readonly IMessagePackFormatter<TimeSpan> Instance = new TimeSpanFormatter();
-
 
         TimeSpanFormatter()
         {

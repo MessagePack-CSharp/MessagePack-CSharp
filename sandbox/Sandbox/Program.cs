@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using ZeroFormatter;
 using System.Collections.Generic;
+using MessagePack.Internal;
 
 namespace Sandbox
 {
@@ -17,32 +18,63 @@ namespace Sandbox
 
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
+    [MessagePackObject]
     public class SmallSingleObject
     {
         [Index(0)]
         [ProtoBuf.ProtoMember(1)]
+        [Key(0)]
         public virtual int MyProperty { get; set; }
         [Index(1)]
         [ProtoBuf.ProtoMember(2)]
+        [Key(1)]
         public virtual int MyProperty2 { get; set; }
     }
+
+    public class BassTest
+    {
+        public BassTest(int x, int y)
+        {
+
+        }
+    }
+
+    [MessagePackObject]
+    public class UnBase : BassTest
+    {
+        [Key(0)]
+        public int X { get; set; }
+        [Key(1)]
+        public int Y { get; set; }
+
+        public UnBase(int x, int y) : base(10, 20)
+        {
+
+        }
+    }
+
 
     class Program
     {
         static void Main(string[] args)
         {
-            MessagePack.MessagePackSerializer.SetDefaultResolver(HandWriteResolver.Instance);
+            //MessagePack.MessagePackSerializer.SetDefaultResolver(HandWriteResolver.Instance);
 
             //var bin = MessagePackSerializer.Serialize(new MyClass() { MyProperty = 100, MyProperty2 = 999 });
             //var json = MessagePackSerializer.ToJson(bin);
             //Console.WriteLine(json);
 
-            var target = new SmallSingleObject() { MyProperty = 9, MyProperty2 = 100 };
+            //var target = new SmallSingleObject() { MyProperty = 9, MyProperty2 = 100 };
 
-            
+
 
             //var bytes = Enumerable.Repeat(1, 30000).Select(x => (byte)x).ToArray();
-            Benchmark(target);
+            // Benchmark(target);
+
+
+            var  b = MessagePack.MessagePackSerializer.Serialize(new SmallSingleObject() { MyProperty = 100, MyProperty2 = 999 });
+            MessagePack.MessagePackSerializer.Deserialize<SmallSingleObject>(b);
+
         }
 
         static void Benchmark<T>(T target)
@@ -166,11 +198,12 @@ namespace Sandbox
         public int Serialize(ref byte[] bytes, int offset, SmallSingleObject value, IFormatterResolver formatterResolver)
         {
             var startOffset = offset;
+
             offset += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 2); // optimize 0~15 count
             offset += MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, 0); // optimize 0~127 key.
-            offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty, formatterResolver);
+            offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty);
             offset += MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, 1); // optimize 0~127 key.
-            offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty2, formatterResolver);
+            offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty2);
 
             return offset - startOffset;
         }
@@ -178,7 +211,7 @@ namespace Sandbox
         public SmallSingleObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             var startOffset = offset;
-            var length = MessagePackBinary.ReadMapHeaderRaw(bytes, offset, out readSize);
+            var length = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
             int __MyProperty1__ = default(int);
@@ -187,16 +220,16 @@ namespace Sandbox
             // pattern of integer key.
             for (int i = 0; i < length; i++)
             {
-                var key = Int32Formatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
+                var key = Int32Formatter.Instance.Deserialize(bytes, offset, out readSize);
                 offset += readSize;
 
                 switch (key)
                 {
                     case 0:
-                        __MyProperty1__ =  Int32Formatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        __MyProperty1__ = Int32Formatter.Instance.Deserialize(bytes, offset, out readSize);
                         break;
                     case 1:
-                        __MyProperty2__ = Int32Formatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        __MyProperty2__ = Int32Formatter.Instance.Deserialize(bytes, offset, out readSize);
                         break;
                     default:
                         break;
