@@ -331,6 +331,22 @@ namespace MessagePack
             return mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+        public static int GetArrayHeaderLength(int count)
+        {
+            if (count <= MessagePackRange.MaxFixArrayCount)
+            {
+                return 1;
+            }
+            else if (count <= ushort.MaxValue)
+            {
+                return 3;
+            }
+            else
+            {
+                return 5;
+            }
+        }
+
         /// <summary>
         /// Write array count.
         /// </summary>
@@ -436,53 +452,57 @@ namespace MessagePack
 
         public static int WriteBytes(ref byte[] bytes, int offset, byte[] value)
         {
-            if (value == null)
+            return WriteBytes(ref bytes, offset, value, 0, value.Length);
+        }
+
+        public static int WriteBytes(ref byte[] dest, int dstOffset, byte[] src, int srcOffset, int count)
+        {
+            if (src == null)
             {
-                return WriteNil(ref bytes, offset);
+                return WriteNil(ref dest, dstOffset);
             }
 
-            var len = value.Length;
-            if (len <= byte.MaxValue)
+            if (count <= byte.MaxValue)
             {
-                var size = value.Length + 2;
-                EnsureCapacity(ref bytes, offset, size);
+                var size = src.Length + 2;
+                EnsureCapacity(ref dest, dstOffset, size);
 
-                bytes[offset] = MessagePackCode.Bin8;
-                bytes[offset + 1] = (byte)len;
+                dest[dstOffset] = MessagePackCode.Bin8;
+                dest[dstOffset + 1] = (byte)count;
 
-                Buffer.BlockCopy(value, 0, bytes, offset + 2, value.Length);
+                Buffer.BlockCopy(src, srcOffset, dest, dstOffset + 2, count);
                 return size;
             }
-            else if (len <= UInt16.MaxValue)
+            else if (count <= UInt16.MaxValue)
             {
-                var size = value.Length + 3;
-                EnsureCapacity(ref bytes, offset, size);
+                var size = src.Length + 3;
+                EnsureCapacity(ref dest, dstOffset, size);
 
                 unchecked
                 {
-                    bytes[offset] = MessagePackCode.Bin16;
-                    bytes[offset + 1] = (byte)(len >> 8);
-                    bytes[offset + 2] = (byte)(len);
+                    dest[dstOffset] = MessagePackCode.Bin16;
+                    dest[dstOffset + 1] = (byte)(count >> 8);
+                    dest[dstOffset + 2] = (byte)(count);
                 }
 
-                Buffer.BlockCopy(value, 0, bytes, offset + 3, value.Length);
+                Buffer.BlockCopy(src, srcOffset, dest, dstOffset + 3, count);
                 return size;
             }
             else
             {
-                var size = value.Length + 5;
-                EnsureCapacity(ref bytes, offset, size);
+                var size = src.Length + 5;
+                EnsureCapacity(ref dest, dstOffset, size);
 
                 unchecked
                 {
-                    bytes[offset] = MessagePackCode.Bin32;
-                    bytes[offset + 1] = (byte)(len >> 24);
-                    bytes[offset + 2] = (byte)(len >> 16);
-                    bytes[offset + 3] = (byte)(len >> 8);
-                    bytes[offset + 4] = (byte)(len);
+                    dest[dstOffset] = MessagePackCode.Bin32;
+                    dest[dstOffset + 1] = (byte)(count >> 24);
+                    dest[dstOffset + 2] = (byte)(count >> 16);
+                    dest[dstOffset + 3] = (byte)(count >> 8);
+                    dest[dstOffset + 4] = (byte)(count);
                 }
 
-                Buffer.BlockCopy(value, 0, bytes, offset + 5, value.Length);
+                Buffer.BlockCopy(src, srcOffset, dest, dstOffset + 5, count);
                 return size;
             }
         }

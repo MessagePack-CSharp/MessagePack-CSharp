@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using ZeroFormatter;
+using System.Collections.Generic;
 
 namespace Sandbox
 {
@@ -30,19 +31,18 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
-            //MessagePack.MessagePackSerializer.SetDefaultResolver(HandWriteResolver.Instance);
+            MessagePack.MessagePackSerializer.SetDefaultResolver(HandWriteResolver.Instance);
 
             //var bin = MessagePackSerializer.Serialize(new MyClass() { MyProperty = 100, MyProperty2 = 999 });
             //var json = MessagePackSerializer.ToJson(bin);
+            //Console.WriteLine(json);
 
-            // var target = new MyClass() { MyProperty = 9, MyProperty2 = 100 };
+            var target = new MyClass() { MyProperty = 9, MyProperty2 = 100 };
+
+            
 
             //var bytes = Enumerable.Repeat(1, 30000).Select(x => (byte)x).ToArray();
-            //Benchmark(bytes);
-
-            var dt = new DateTime(2030, 2, 7, 6, 28, 17, 0, DateTimeKind.Utc);
-            byte[] bytes = null;
-            MessagePackBinary.WriteDateTime(ref bytes, 0, dt);
+            Benchmark(target);
         }
 
         static void Benchmark<T>(T target)
@@ -168,9 +168,9 @@ namespace Sandbox
             var startOffset = offset;
             offset += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 2); // optimize 0~15 count
             offset += MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, 0); // optimize 0~127 key.
-            offset += formatterResolver.GetFormatterWithVerify<int>().Serialize(ref bytes, offset, value.MyProperty, formatterResolver);
+            offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty, formatterResolver);
             offset += MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, 1); // optimize 0~127 key.
-            offset += formatterResolver.GetFormatterWithVerify<int>().Serialize(ref bytes, offset, value.MyProperty2, formatterResolver);
+            offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty2, formatterResolver);
 
             return offset - startOffset;
         }
@@ -178,7 +178,6 @@ namespace Sandbox
         public MyClass Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             var startOffset = offset;
-            var intKeyFormatter = formatterResolver.GetFormatterWithVerify<int>();
             var length = MessagePackBinary.ReadMapHeaderRaw(bytes, offset, out readSize);
             offset += readSize;
 
@@ -188,16 +187,16 @@ namespace Sandbox
             // pattern of integer key.
             for (int i = 0; i < length; i++)
             {
-                var key = intKeyFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                var key = Int32Formatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
                 offset += readSize;
 
                 switch (key)
                 {
                     case 0:
-                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<int>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        __MyProperty1__ =  Int32Formatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 1:
-                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<int>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        __MyProperty2__ = Int32Formatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     default:
                         break;
@@ -239,31 +238,14 @@ namespace Sandbox
 
             static FormatterCache()
             {
-                // Try Builtin
-                var f = BuiltinResolver.Instance.GetFormatter<T>();
-                if (f != null)
-                {
-                    formatter = f;
-                    return;
-                }
-
-                // Try Enum
-                f = EnumResolver.Instance.GetFormatter<T>();
-                if (f != null)
-                {
-                    formatter = f;
-                    return;
-                }
-
                 if (typeof(T) == typeof(MyClass))
                 {
                     formatter = (IMessagePackFormatter<T>)(object)new HandwriteMyClassFormatter();
+                    return;
                 }
 
-                // Try Union
-
-                // Try Dynamic
-                // Unknown
+                // fallback default.
+                formatter = DefaultResolver.Instance.GetFormatter<T>();
             }
         }
     }

@@ -4,6 +4,12 @@ namespace MessagePack.Formatters
 {
     public class Int16Formatter : IMessagePackFormatter<Int16>
     {
+		public static readonly IMessagePackFormatter<Int16> Instance = new Int16Formatter();
+
+		Int16Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Int16 value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteInt16(ref bytes, offset, value);
@@ -17,6 +23,12 @@ namespace MessagePack.Formatters
 
     public class NullableInt16Formatter : IMessagePackFormatter<Int16?>
     {
+		public static readonly IMessagePackFormatter<Int16?> Instance = new NullableInt16Formatter();
+
+		NullableInt16Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Int16? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -45,6 +57,12 @@ namespace MessagePack.Formatters
 
     public class Int32Formatter : IMessagePackFormatter<Int32>
     {
+		public static readonly IMessagePackFormatter<Int32> Instance = new Int32Formatter();
+
+		Int32Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Int32 value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteInt32(ref bytes, offset, value);
@@ -58,6 +76,12 @@ namespace MessagePack.Formatters
 
     public class NullableInt32Formatter : IMessagePackFormatter<Int32?>
     {
+		public static readonly IMessagePackFormatter<Int32?> Instance = new NullableInt32Formatter();
+
+		NullableInt32Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Int32? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -86,6 +110,12 @@ namespace MessagePack.Formatters
 
     public class Int64Formatter : IMessagePackFormatter<Int64>
     {
+		public static readonly IMessagePackFormatter<Int64> Instance = new Int64Formatter();
+
+		Int64Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Int64 value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteInt64(ref bytes, offset, value);
@@ -99,6 +129,12 @@ namespace MessagePack.Formatters
 
     public class NullableInt64Formatter : IMessagePackFormatter<Int64?>
     {
+		public static readonly IMessagePackFormatter<Int64?> Instance = new NullableInt64Formatter();
+
+		NullableInt64Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Int64? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -127,6 +163,12 @@ namespace MessagePack.Formatters
 
     public class UInt16Formatter : IMessagePackFormatter<UInt16>
     {
+		public static readonly IMessagePackFormatter<UInt16> Instance = new UInt16Formatter();
+
+		UInt16Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, UInt16 value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteUInt16(ref bytes, offset, value);
@@ -140,6 +182,12 @@ namespace MessagePack.Formatters
 
     public class NullableUInt16Formatter : IMessagePackFormatter<UInt16?>
     {
+		public static readonly IMessagePackFormatter<UInt16?> Instance = new NullableUInt16Formatter();
+
+		NullableUInt16Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, UInt16? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -168,6 +216,12 @@ namespace MessagePack.Formatters
 
     public class UInt32Formatter : IMessagePackFormatter<UInt32>
     {
+		public static readonly IMessagePackFormatter<UInt32> Instance = new UInt32Formatter();
+
+		UInt32Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, UInt32 value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteUInt32(ref bytes, offset, value);
@@ -181,6 +235,12 @@ namespace MessagePack.Formatters
 
     public class NullableUInt32Formatter : IMessagePackFormatter<UInt32?>
     {
+		public static readonly IMessagePackFormatter<UInt32?> Instance = new NullableUInt32Formatter();
+
+		NullableUInt32Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, UInt32? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -209,6 +269,12 @@ namespace MessagePack.Formatters
 
     public class UInt64Formatter : IMessagePackFormatter<UInt64>
     {
+		public static readonly IMessagePackFormatter<UInt64> Instance = new UInt64Formatter();
+
+		UInt64Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, UInt64 value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteUInt64(ref bytes, offset, value);
@@ -222,6 +288,12 @@ namespace MessagePack.Formatters
 
     public class NullableUInt64Formatter : IMessagePackFormatter<UInt64?>
     {
+		public static readonly IMessagePackFormatter<UInt64?> Instance = new NullableUInt64Formatter();
+
+		NullableUInt64Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, UInt64? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -250,6 +322,12 @@ namespace MessagePack.Formatters
 
     public class SingleFormatter : IMessagePackFormatter<Single>
     {
+		public static readonly IMessagePackFormatter<Single> Instance = new SingleFormatter();
+
+		SingleFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Single value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteSingle(ref bytes, offset, value);
@@ -263,6 +341,12 @@ namespace MessagePack.Formatters
 
     public class NullableSingleFormatter : IMessagePackFormatter<Single?>
     {
+		public static readonly IMessagePackFormatter<Single?> Instance = new NullableSingleFormatter();
+
+		NullableSingleFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Single? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -291,6 +375,12 @@ namespace MessagePack.Formatters
 
     public class DoubleFormatter : IMessagePackFormatter<Double>
     {
+		public static readonly IMessagePackFormatter<Double> Instance = new DoubleFormatter();
+
+		DoubleFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Double value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteDouble(ref bytes, offset, value);
@@ -304,6 +394,12 @@ namespace MessagePack.Formatters
 
     public class NullableDoubleFormatter : IMessagePackFormatter<Double?>
     {
+		public static readonly IMessagePackFormatter<Double?> Instance = new NullableDoubleFormatter();
+
+		NullableDoubleFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Double? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -332,6 +428,12 @@ namespace MessagePack.Formatters
 
     public class BooleanFormatter : IMessagePackFormatter<Boolean>
     {
+		public static readonly IMessagePackFormatter<Boolean> Instance = new BooleanFormatter();
+
+		BooleanFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Boolean value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteBoolean(ref bytes, offset, value);
@@ -345,6 +447,12 @@ namespace MessagePack.Formatters
 
     public class NullableBooleanFormatter : IMessagePackFormatter<Boolean?>
     {
+		public static readonly IMessagePackFormatter<Boolean?> Instance = new NullableBooleanFormatter();
+
+		NullableBooleanFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Boolean? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -373,6 +481,12 @@ namespace MessagePack.Formatters
 
     public class ByteFormatter : IMessagePackFormatter<Byte>
     {
+		public static readonly IMessagePackFormatter<Byte> Instance = new ByteFormatter();
+
+		ByteFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Byte value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteByte(ref bytes, offset, value);
@@ -386,6 +500,12 @@ namespace MessagePack.Formatters
 
     public class NullableByteFormatter : IMessagePackFormatter<Byte?>
     {
+		public static readonly IMessagePackFormatter<Byte?> Instance = new NullableByteFormatter();
+
+		NullableByteFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Byte? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -414,6 +534,12 @@ namespace MessagePack.Formatters
 
     public class SByteFormatter : IMessagePackFormatter<SByte>
     {
+		public static readonly IMessagePackFormatter<SByte> Instance = new SByteFormatter();
+
+		SByteFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, SByte value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteSByte(ref bytes, offset, value);
@@ -427,6 +553,12 @@ namespace MessagePack.Formatters
 
     public class NullableSByteFormatter : IMessagePackFormatter<SByte?>
     {
+		public static readonly IMessagePackFormatter<SByte?> Instance = new NullableSByteFormatter();
+
+		NullableSByteFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, SByte? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -455,6 +587,12 @@ namespace MessagePack.Formatters
 
     public class CharFormatter : IMessagePackFormatter<Char>
     {
+		public static readonly IMessagePackFormatter<Char> Instance = new CharFormatter();
+
+		CharFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Char value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteChar(ref bytes, offset, value);
@@ -468,6 +606,12 @@ namespace MessagePack.Formatters
 
     public class NullableCharFormatter : IMessagePackFormatter<Char?>
     {
+		public static readonly IMessagePackFormatter<Char?> Instance = new NullableCharFormatter();
+
+		NullableCharFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, Char? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -496,6 +640,12 @@ namespace MessagePack.Formatters
 
     public class DateTimeFormatter : IMessagePackFormatter<DateTime>
     {
+		public static readonly IMessagePackFormatter<DateTime> Instance = new DateTimeFormatter();
+
+		DateTimeFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, DateTime value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteDateTime(ref bytes, offset, value);
@@ -509,6 +659,12 @@ namespace MessagePack.Formatters
 
     public class NullableDateTimeFormatter : IMessagePackFormatter<DateTime?>
     {
+		public static readonly IMessagePackFormatter<DateTime?> Instance = new NullableDateTimeFormatter();
+
+		NullableDateTimeFormatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, DateTime? value, IFormatterResolver formatterResolver)
         {
             if (value == null)

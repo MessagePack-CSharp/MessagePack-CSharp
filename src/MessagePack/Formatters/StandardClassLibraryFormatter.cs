@@ -5,11 +5,54 @@ using System.Text;
 
 namespace MessagePack.Formatters
 {
-    // string, decimal, TimeSpan, DateTimeOffset, Guid, Uri, Version, KeyValuePair
+    // byte[], string, decimal, TimeSpan, DateTimeOffset, Guid, Uri, Version, KeyValuePair
     // NET40 -> BigInteger, Complex, Tuple
+
+    // byte[] is special. represents bin type.
+    public class ByteArrayFormatter : IMessagePackFormatter<byte[]>
+    {
+        public static readonly IMessagePackFormatter<byte[]> Instance = new ByteArrayFormatter();
+
+        ByteArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                return MessagePackBinary.WriteBytes(ref bytes, offset, value);
+            }
+        }
+
+        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
+            }
+        }
+    }
 
     public class NullableStringFormatter : IMessagePackFormatter<String>
     {
+        public static readonly IMessagePackFormatter<String> Instance = new NullableStringFormatter();
+
+        NullableStringFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, String value, IFormatterResolver typeResolver)
         {
             if (value == null)
@@ -38,6 +81,14 @@ namespace MessagePack.Formatters
 
     public class DecimalFormatter : IMessagePackFormatter<Decimal>
     {
+        public static readonly IMessagePackFormatter<Decimal> Instance = new DecimalFormatter();
+
+
+        DecimalFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, decimal value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteString(ref bytes, offset, value.ToString(CultureInfo.InvariantCulture));
@@ -51,6 +102,14 @@ namespace MessagePack.Formatters
 
     public class TimeSpanFormatter : IMessagePackFormatter<TimeSpan>
     {
+        public static readonly IMessagePackFormatter<TimeSpan> Instance = new TimeSpanFormatter();
+
+
+        TimeSpanFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, TimeSpan value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteInt64(ref bytes, offset, value.Ticks);
@@ -64,6 +123,14 @@ namespace MessagePack.Formatters
 
     public class DateTimeOffsetFormatter : IMessagePackFormatter<DateTimeOffset>
     {
+        public static readonly IMessagePackFormatter<DateTimeOffset> Instance = new DateTimeOffsetFormatter();
+
+
+        DateTimeOffsetFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, DateTimeOffset value, IFormatterResolver formatterResolver)
         {
             var startOffset = offset;
@@ -95,6 +162,14 @@ namespace MessagePack.Formatters
 
     public class GuidFormatter : IMessagePackFormatter<Guid>
     {
+        public static readonly IMessagePackFormatter<Guid> Instance = new GuidFormatter();
+
+
+        GuidFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, Guid value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteString(ref bytes, offset, value.ToString());
@@ -108,6 +183,14 @@ namespace MessagePack.Formatters
 
     public class UriFormatter : IMessagePackFormatter<Uri>
     {
+        public static readonly IMessagePackFormatter<Uri> Instance = new UriFormatter();
+
+
+        UriFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, Uri value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -136,6 +219,13 @@ namespace MessagePack.Formatters
 
     public class VersionFormatter : IMessagePackFormatter<Version>
     {
+        public static readonly IMessagePackFormatter<Version> Instance = new VersionFormatter();
+
+        VersionFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, Version value, IFormatterResolver formatterResolver)
         {
             if (value == null)
@@ -194,6 +284,13 @@ namespace MessagePack.Formatters
 
     public class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
     {
+        public static readonly IMessagePackFormatter<System.Numerics.BigInteger> Instance = new BigIntegerFormatter();
+
+        BigIntegerFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, System.Numerics.BigInteger value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.WriteBytes(ref bytes, offset, value.ToByteArray());
@@ -207,6 +304,13 @@ namespace MessagePack.Formatters
 
     public class ComplexFormatter : IMessagePackFormatter<System.Numerics.Complex>
     {
+        public static readonly IMessagePackFormatter<System.Numerics.Complex> Instance = new ComplexFormatter();
+
+        ComplexFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, System.Numerics.Complex value, IFormatterResolver formatterResolver)
         {
             var startOffset = offset;

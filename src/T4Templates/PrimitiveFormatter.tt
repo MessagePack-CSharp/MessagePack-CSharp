@@ -29,6 +29,12 @@ namespace MessagePack.Formatters
 <# foreach(var t in types) {  #>
     public class <#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>>
     {
+		public static readonly IMessagePackFormatter<<#= t.Name #>> Instance = new <#= t.Name #>Formatter();
+
+		<#= t.Name #>Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value);
@@ -42,6 +48,12 @@ namespace MessagePack.Formatters
 
     public class Nullable<#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>?>
     {
+		public static readonly IMessagePackFormatter<<#= t.Name #>?> Instance = new Nullable<#= t.Name #>Formatter();
+
+		Nullable<#= t.Name #>Formatter()
+		{
+		}
+
         public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
