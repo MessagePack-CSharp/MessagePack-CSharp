@@ -297,14 +297,7 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("            ");
-            
-            #line 79 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.Type));
-            
-            #line default
-            #line hidden
-            this.Write(" __");
+            this.Write("            var __");
             
             #line 79 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));

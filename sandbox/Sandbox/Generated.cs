@@ -42,9 +42,9 @@ namespace SharedData
             var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            int __Prop1__ = default(int);
-            string __Prop2__ = default(string);
-            int __Prop3__ = default(int);
+            var __Prop1__ = default(int);
+            var __Prop2__ = default(string);
+            var __Prop3__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
@@ -114,9 +114,9 @@ namespace SharedData
             var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            int __MyProperty1__ = default(int);
-            int __MyProperty2__ = default(int);
-            int __MyProperty3__ = default(int);
+            var __MyProperty1__ = default(int);
+            var __MyProperty2__ = default(int);
+            var __MyProperty3__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
@@ -190,11 +190,11 @@ namespace SharedData
             var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            int __MyProperty1__ = default(int);
-            int __MyProperty2__ = default(int);
-            int __MyProperty3__ = default(int);
-            int __MyProperty4__ = default(int);
-            int __MyProperty5__ = default(int);
+            var __MyProperty1__ = default(int);
+            var __MyProperty2__ = default(int);
+            var __MyProperty3__ = default(int);
+            var __MyProperty4__ = default(int);
+            var __MyProperty5__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
@@ -267,7 +267,7 @@ namespace SharedData
             var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            int __MyProperty1__ = default(int);
+            var __MyProperty1__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
@@ -328,8 +328,8 @@ namespace SharedData
             var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            global::SharedData.Version1 __MyProperty1__ = default(global::SharedData.Version1);
-            int __After__ = default(int);
+            var __MyProperty1__ = default(global::SharedData.Version1);
+            var __After__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
@@ -394,8 +394,8 @@ namespace SharedData
             var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            global::SharedData.Version2 __MyProperty1__ = default(global::SharedData.Version2);
-            int __After__ = default(int);
+            var __MyProperty1__ = default(global::SharedData.Version2);
+            var __After__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
@@ -460,8 +460,8 @@ namespace SharedData
             var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            global::SharedData.Version0 __MyProperty1__ = default(global::SharedData.Version0);
-            int __After__ = default(int);
+            var __MyProperty1__ = default(global::SharedData.Version0);
+            var __After__ = default(int);
 
             for (int i = 0; i < length; i++)
             {

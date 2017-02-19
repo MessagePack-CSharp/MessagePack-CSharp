@@ -76,7 +76,7 @@ namespace <#= Namespace #>
             offset += readSize;
 
 <# foreach(var x in objInfo.Members) { #>
-            <#= x.Type #> __<#= x.Name #>__ = default(<#= x.Type #>);
+            var __<#= x.Name #>__ = default(<#= x.Type #>);
 <# } #>
 
             for (int i = 0; i < length; i++)
