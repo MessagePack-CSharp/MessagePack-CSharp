@@ -13,11 +13,13 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile></CompilerResponseFile>
+    <CompilerResponseFile>
+    </CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows:5</UnityBuildTarget>
     <UnityVersion>5.3.7p2</UnityVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
     <LangVersion Condition=" '$(VisualStudioVersion)' != '10.0' ">4</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -75,6 +77,29 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\MessagePack\FloatBits.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\DictionaryFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\IMessagePackFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\NullableFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\SequenceFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\StandardClassLibraryFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\IFormatterResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\ReflectionExtensions.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\MessagePackBinary.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\MessagePackCode.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\MessagePackSerializer.Json.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\MessagePackSerializer.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Nil.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\BuiltinResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\DefaultResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicEnumResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicGenericResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicObjectResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\StringEncoding.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\UnityFake\Reflection.cs" />
     <Compile Include="Assets\Scripts\RuntimeUnitTestToolkit\Assert.cs" />
     <Compile Include="Assets\Scripts\RuntimeUnitTestToolkit\ChainingAssertion.Unity.cs" />
     <Compile Include="Assets\Scripts\RuntimeUnitTestToolkit\UnitTestRunner.cs" />

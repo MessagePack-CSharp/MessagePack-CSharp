@@ -11,7 +11,8 @@ namespace MessagePack.UnityClient.Tests
     {
         public void Hello()
         {
-            "OK".Is("OK");
+            var bytes = MessagePackSerializer.Serialize("test");
+            MessagePackSerializer.Deserialize<string>(bytes).Is("test");
         }
     }
 }
