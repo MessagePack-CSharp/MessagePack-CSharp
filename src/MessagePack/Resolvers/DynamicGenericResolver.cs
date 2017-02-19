@@ -144,23 +144,23 @@ namespace MessagePack.Internal
                     return CreateInstance(typeof(ReadOnlyObservableCollectionFormatter<>), ti.GenericTypeArguments);
                 }
 
-
-
-
                 // Interface Collection
                 else if (genericType == typeof(IList<>))
                 {
-
-
-
-                    // ArrayWrappedCollectionFormatter
-                    // typeof(ArrayWrappedCollectionFormatter<,>).
+                    return CreateInstance(typeof(InterfaceListFormatter<>), ti.GenericTypeArguments);
                 }
+
                 // TODO:other genericcollection...(ICollection and new)
 
                 // TODO:Dictionary
-
-
+                else if (genericType == typeof(Dictionary<,>))
+                {
+                    return CreateInstance(typeof(DictionaryFormatter<,>), ti.GenericTypeArguments);
+                }
+                else if (genericType == typeof(IDictionary<,>))
+                {
+                    return CreateInstance(typeof(InterfaceDictionaryFormatter<,>), ti.GenericTypeArguments);
+                }
             }
 
             return null;

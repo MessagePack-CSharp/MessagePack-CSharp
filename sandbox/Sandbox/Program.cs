@@ -29,9 +29,6 @@ namespace Sandbox
 
     }
 
-
-
-
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
     [MessagePackObject(true)]
@@ -142,23 +139,14 @@ namespace Sandbox
             //Benchmark(l);
 
 
-            var bytes = MessagePack.MessagePackSerializer.Serialize(new EmptyClass());
+            var bytes = MessagePack.MessagePackSerializer.Serialize(new Dictionary<int, string> { { 100, "hogehoge" }, { 2000, "hugahuga" } });
+            Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(bytes));
 
-            var json = MessagePack.MessagePackSerializer.ToJson(new EmptyClass());
-
-            int readSize;
-            var length = MessagePackBinary.ReadMapHeader(bytes, 0, out readSize);
-
-            //Console.WriteLine(readSize);
-            ///Console.WriteLine(length);
-
-            //Console.WriteLine(json);
-            for (int i = 0; i < length; i++)
+            var dt = MessagePack.MessagePackSerializer.Deserialize<Dictionary<int, string>>(bytes);
+            foreach (var item in dt)
             {
-                Console.WriteLine("no");
+                Console.WriteLine(item.Key + ":" + item.Value);
             }
-
-            var hoge = MessagePack.MessagePackSerializer.Deserialize<EmptyClass>(bytes);
         }
 
         static void Benchmark<T>(T target)

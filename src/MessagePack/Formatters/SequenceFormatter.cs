@@ -380,4 +380,24 @@ namespace MessagePack.Formatters
             return new ReadOnlyObservableCollection<T>(intermediateCollection);
         }
     }
+
+    public class InterfaceListFormatter<T> : SequneceFormatterBase<T, T[], IList<T>>
+    {
+        protected override void Add(T[] collection, int index, T value)
+        {
+            collection[index] = value;
+        }
+
+        protected override T[] Constructor(int count)
+        {
+            return new T[count];
+        }
+
+        protected override IList<T> Finalize(T[] intermediateCollection)
+        {
+            return intermediateCollection;
+        }
+    }
+
+    // TODO:more interface collections....
 }
