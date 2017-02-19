@@ -18,17 +18,40 @@ namespace Sandbox
 
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
-    [MessagePackObject]
+    [MessagePackObject(true)]
     public class SmallSingleObject
     {
         [Index(0)]
-        [ProtoBuf.ProtoMember(1)]
         [Key(0)]
+        [ProtoBuf.ProtoMember(1)]
         public virtual int MyProperty { get; set; }
         [Index(1)]
-        [ProtoBuf.ProtoMember(2)]
         [Key(1)]
+        [ProtoBuf.ProtoMember(2)]
         public virtual int MyProperty2 { get; set; }
+        [Index(2)]
+        [Key(2)]
+        [ProtoBuf.ProtoMember(3)]
+        public virtual MyEnum MyProperty3 { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct MyStruct
+    {
+        [Key(0)]
+        public byte[] MyProperty { get; set; }
+    }
+
+
+    [MessagePackObject(true)]
+    public class NewObj
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+        public NewObj(int myProperty)
+        {
+            this.MyProperty = myProperty;
+        }
     }
 
     class Program
@@ -41,18 +64,31 @@ namespace Sandbox
             //var json = MessagePackSerializer.ToJson(bin);
             //Console.WriteLine(json);
 
-            var target = new SmallSingleObject() { MyProperty = 9, MyProperty2 = 100 };
-
-
+            //var target = new SmallSingleObject() { MyProperty = 9, MyProperty2 = 100 };
+            var target = new NewObj(100);
+            //var f = DefaultResolver.Instance.GetFormatter<SmallSingleObject>();
 
             //var bytes = Enumerable.Repeat(1, 30000).Select(x => (byte)x).ToArray();
-             Benchmark(target);
+            //Benchmark(target);
 
-
+            var b = MessagePack.MessagePackSerializer.Serialize(target);
+            Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(b));
             //var testV = new SmallSingleObject() { MyProperty = 100, MyProperty2 = 999 };
             //var  b = MessagePack.MessagePackSerializer.Serialize(testV);
 
-            //var hoge = MessagePack.MessagePackSerializer.Serialize(testV, HandWriteResolver.Instance);
+            //var hoge = MessagePack.MessagePackSerializer.Deserialize<SmallSingleObject>(b);
+
+            //var bytes = MessagePack.MessagePackSerializer.Serialize(new byte[] { 1, 100, 3 });
+            //MessagePack.MessagePackSerializer.Deserialize<byte[]>(bytes);
+            //Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(bytes));
+
+
+            //var b = MessagePack.MessagePackSerializer.Serialize(new MyStruct { MyProperty = new byte[] { 1, 100, 3 } });
+
+            //Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(b));
+            //var huga = MessagePack.MessagePackSerializer.Deserialize<MyStruct>(b);
+
+            //Console.WriteLine(huga.MyProperty);
 
         }
 
@@ -174,13 +210,27 @@ namespace Sandbox
 
     public class HandwriteMyClassFormatter : IMessagePackFormatter<SmallSingleObject>
     {
+        readonly Dictionary<string, int> keyMapping;
+
+        public HandwriteMyClassFormatter()
+        {
+            keyMapping = new Dictionary<string, int>(5);
+            keyMapping.Add("hoge", 100);
+        }
+
         public int Serialize(ref byte[] bytes, int offset, SmallSingleObject value, IFormatterResolver formatterResolver)
         {
             var startOffset = offset;
 
+            bytes[offset] = 0;
+            bytes[offset + 1] = 1;
+            bytes[offset + 2] = 2;
+            offset += 3;
+
+
             offset += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 2); // optimize 0~15 count
             offset += MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, 0); // optimize 0~127 key.
-            offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty);
+            offset += formatterResolver.GetFormatterWithVerify<int>().Serialize(ref bytes, offset, value.MyProperty, formatterResolver);
             offset += MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, 1); // optimize 0~127 key.
             offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty2);
 
@@ -199,6 +249,15 @@ namespace Sandbox
             // pattern of integer key.
             for (int i = 0; i < length; i++)
             {
+                // 
+                //var stringKey = "hogehoge";
+                //int key;
+                //if (keyMapping.TryGetValue(stringKey, out key))
+                //{
+                //    offset += readSize;
+                //}
+
+
                 var key = Int32Formatter.Instance.Deserialize(bytes, offset, out readSize);
                 offset += readSize;
 
@@ -211,14 +270,12 @@ namespace Sandbox
                         __MyProperty2__ = Int32Formatter.Instance.Deserialize(bytes, offset, out readSize);
                         break;
                     default:
+                        readSize = MessagePackBinary.ReadNext(bytes, offset);
                         break;
                 }
 
                 offset += readSize;
             }
-
-            // pattern of string key
-            // TODO:Dictionary Switch... Dictionary<string, int> and use same above code...
 
             // finish readSize
             readSize = offset - startOffset;

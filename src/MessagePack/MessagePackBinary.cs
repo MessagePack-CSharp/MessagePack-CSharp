@@ -29,6 +29,7 @@ namespace MessagePack
         static readonly IStringDecoder[] stringDecoders = new IStringDecoder[MaxSize];
         static readonly IExtDecoder[] extDecoders = new IExtDecoder[MaxSize];
         static readonly IDateTimeDecoder[] dateTimeDecoders = new IDateTimeDecoder[MaxSize];
+        static readonly IReadNextDecoder[] readNextDecoders = new IReadNextDecoder[MaxSize];
 
         static MessagePackBinary()
         {
@@ -61,6 +62,7 @@ namespace MessagePack
                 int16Decoders[i] = Decoders.FixNegativeInt16.Instance;
                 int32Decoders[i] = Decoders.FixNegativeInt32.Instance;
                 int64Decoders[i] = Decoders.FixNegativeInt64.Instance;
+                readNextDecoders[i] = Decoders.ReadNext1.Instance;
             }
             for (int i = MessagePackCode.MinFixInt; i <= MessagePackCode.MaxFixInt; i++)
             {
@@ -72,6 +74,7 @@ namespace MessagePack
                 uint16Decoders[i] = Decoders.FixUInt16.Instance;
                 uint32Decoders[i] = Decoders.FixUInt32.Instance;
                 uint64Decoders[i] = Decoders.FixUInt64.Instance;
+                readNextDecoders[i] = Decoders.ReadNext1.Instance;
             }
 
             byteDecoders[MessagePackCode.UInt8] = Decoders.UInt8Byte.Instance;
@@ -104,40 +107,67 @@ namespace MessagePack
             doubleDecoders[MessagePackCode.Float32] = Decoders.Float32Double.Instance;
             doubleDecoders[MessagePackCode.Float64] = Decoders.Float64Double.Instance;
 
+            readNextDecoders[MessagePackCode.Int8] = Decoders.ReadNext2.Instance;
+            readNextDecoders[MessagePackCode.Int16] = Decoders.ReadNext3.Instance;
+            readNextDecoders[MessagePackCode.Int32] = Decoders.ReadNext5.Instance;
+            readNextDecoders[MessagePackCode.Int64] = Decoders.ReadNext9.Instance;
+            readNextDecoders[MessagePackCode.UInt8] = Decoders.ReadNext2.Instance;
+            readNextDecoders[MessagePackCode.UInt16] = Decoders.ReadNext3.Instance;
+            readNextDecoders[MessagePackCode.UInt32] = Decoders.ReadNext5.Instance;
+            readNextDecoders[MessagePackCode.UInt64] = Decoders.ReadNext9.Instance;
+            readNextDecoders[MessagePackCode.Float32] = Decoders.ReadNext5.Instance;
+            readNextDecoders[MessagePackCode.Float64] = Decoders.ReadNext9.Instance;
+
             // Map
             for (int i = MessagePackCode.MinFixMap; i <= MessagePackCode.MaxFixMap; i++)
             {
                 mapHeaderDecoders[i] = Decoders.FixMapHeader.Instance;
+                readNextDecoders[i] = Decoders.ReadNext1.Instance;
             }
             mapHeaderDecoders[MessagePackCode.Map16] = Decoders.Map16Header.Instance;
             mapHeaderDecoders[MessagePackCode.Map32] = Decoders.Map32Header.Instance;
+            readNextDecoders[MessagePackCode.Map16] = Decoders.ReadNextMap.Instance;
+            readNextDecoders[MessagePackCode.Map32] = Decoders.ReadNextMap.Instance;
 
             // Array
             for (int i = MessagePackCode.MinFixArray; i <= MessagePackCode.MaxFixArray; i++)
             {
                 arrayHeaderDecoders[i] = Decoders.FixArrayHeader.Instance;
+                readNextDecoders[i] = Decoders.ReadNext1.Instance;
             }
             arrayHeaderDecoders[MessagePackCode.Array16] = Decoders.Array16Header.Instance;
             arrayHeaderDecoders[MessagePackCode.Array32] = Decoders.Array32Header.Instance;
+            readNextDecoders[MessagePackCode.Array16] = Decoders.ReadNextArray.Instance;
+            readNextDecoders[MessagePackCode.Array32] = Decoders.ReadNextArray.Instance;
 
             // Str
             for (int i = MessagePackCode.MinFixStr; i <= MessagePackCode.MaxFixStr; i++)
             {
                 stringDecoders[i] = Decoders.FixString.Instance;
+                readNextDecoders[i] = Decoders.ReadNextFixStr.Instance;
             }
             stringDecoders[MessagePackCode.Str8] = Decoders.Str8String.Instance;
             stringDecoders[MessagePackCode.Str16] = Decoders.Str16String.Instance;
             stringDecoders[MessagePackCode.Str32] = Decoders.Str32String.Instance;
+            readNextDecoders[MessagePackCode.Str8] = Decoders.ReadNextStr8.Instance;
+            readNextDecoders[MessagePackCode.Str16] = Decoders.ReadNextStr16.Instance;
+            readNextDecoders[MessagePackCode.Str32] = Decoders.ReadNextStr32.Instance;
 
             // Others
             bytesDecoders[MessagePackCode.Nil] = Decoders.NilBytes.Instance;
+            readNextDecoders[MessagePackCode.Nil] = Decoders.ReadNext1.Instance;
 
             booleanDecoders[MessagePackCode.False] = Decoders.False.Instance;
             booleanDecoders[MessagePackCode.True] = Decoders.True.Instance;
+            readNextDecoders[MessagePackCode.False] = Decoders.ReadNext1.Instance;
+            readNextDecoders[MessagePackCode.True] = Decoders.ReadNext1.Instance;
 
             bytesDecoders[MessagePackCode.Bin8] = Decoders.Bin8Bytes.Instance;
             bytesDecoders[MessagePackCode.Bin16] = Decoders.Bin16Bytes.Instance;
             bytesDecoders[MessagePackCode.Bin32] = Decoders.Bin32Bytes.Instance;
+            readNextDecoders[MessagePackCode.Bin8] = Decoders.ReadNextBin8.Instance;
+            readNextDecoders[MessagePackCode.Bin16] = Decoders.ReadNextBin16.Instance;
+            readNextDecoders[MessagePackCode.Bin32] = Decoders.ReadNextBin32.Instance;
 
             // Ext
             extDecoders[MessagePackCode.FixExt1] = Decoders.FixExt1.Instance;
@@ -148,6 +178,15 @@ namespace MessagePack
             extDecoders[MessagePackCode.Ext8] = Decoders.Ext8.Instance;
             extDecoders[MessagePackCode.Ext16] = Decoders.Ext16.Instance;
             extDecoders[MessagePackCode.Ext32] = Decoders.Ext32.Instance;
+
+            readNextDecoders[MessagePackCode.FixExt1] = Decoders.ReadNext3.Instance;
+            readNextDecoders[MessagePackCode.FixExt2] = Decoders.ReadNext4.Instance;
+            readNextDecoders[MessagePackCode.FixExt4] = Decoders.ReadNext6.Instance;
+            readNextDecoders[MessagePackCode.FixExt8] = Decoders.ReadNext10.Instance;
+            readNextDecoders[MessagePackCode.FixExt16] = Decoders.ReadNext18.Instance;
+            readNextDecoders[MessagePackCode.Ext8] = Decoders.ReadNextExt8.Instance;
+            readNextDecoders[MessagePackCode.Ext16] = Decoders.ReadNextExt16.Instance;
+            readNextDecoders[MessagePackCode.Ext32] = Decoders.ReadNextExt32.Instance;
 
             // DateTime
             dateTimeDecoders[MessagePackCode.FixExt4] = Decoders.FixExt4DateTime.Instance;
@@ -225,6 +264,34 @@ namespace MessagePack
         public static MessagePackType GetMessagePackType(byte[] bytes, int offset)
         {
             return MessagePackCode.ToMessagePackType(bytes[offset]);
+        }
+
+        public static bool IsMessagePackPrimitive(Type type)
+        {
+            if (type == typeof(Int16)
+             || type == typeof(Int32)
+             || type == typeof(Int64)
+             || type == typeof(UInt16)
+             || type == typeof(UInt32)
+             || type == typeof(UInt64)
+             || type == typeof(Single)
+             || type == typeof(Double)
+             || type == typeof(bool)
+             || type == typeof(byte)
+             || type == typeof(sbyte)
+             || type == typeof(DateTime)
+             || type == typeof(char)
+             || type == typeof(byte[])
+             )
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static int ReadNext(byte[] bytes, int offset)
+        {
+            return readNextDecoders[bytes[offset]].Read(bytes, offset);
         }
 
         public static int WriteNil(ref byte[] bytes, int offset)
@@ -2796,6 +2863,281 @@ namespace MessagePack.Decoders
         public DateTime Read(byte[] bytes, int offset, out int readSize)
         {
             throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IReadNextDecoder
+    {
+        int Read(byte[] bytes, int offset);
+    }
+
+    internal class ReadNext1 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext1();
+        ReadNext1()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 1; }
+    }
+
+    internal class ReadNext2 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext2();
+        ReadNext2()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 2; }
+    }
+    internal class ReadNext3 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext3();
+        ReadNext3()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 3; }
+    }
+    internal class ReadNext4 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext4();
+        ReadNext4()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 4; }
+    }
+    internal class ReadNext5 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext5();
+        ReadNext5()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 5; }
+    }
+    internal class ReadNext6 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext6();
+        ReadNext6()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 6; }
+    }
+
+    internal class ReadNext9 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext9();
+        ReadNext9()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 9; }
+    }
+    internal class ReadNext10 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext10();
+        ReadNext10()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 10; }
+    }
+    internal class ReadNext18 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNext18();
+        ReadNext18()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset) { return 18; }
+    }
+
+    internal class ReadNextMap : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextMap();
+        ReadNextMap()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var startOffset = offset;
+            int readSize;
+            var length = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+            for (int i = 0; i < length; i++)
+            {
+                offset += MessagePackBinary.ReadNext(bytes, offset); // key
+                offset += MessagePackBinary.ReadNext(bytes, offset); // value
+            }
+            return offset - startOffset;
+        }
+    }
+
+    internal class ReadNextArray : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextArray();
+        ReadNextArray()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var startOffset = offset;
+            int readSize;
+            var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+            for (int i = 0; i < length; i++)
+            {
+                offset += MessagePackBinary.ReadNext(bytes, offset);
+            }
+            return offset - startOffset;
+        }
+    }
+
+    internal class ReadNextFixStr : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextFixStr();
+        ReadNextFixStr()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var length = bytes[offset] & 0x1F;
+            return length + 1;
+        }
+    }
+
+    internal class ReadNextStr8 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextStr8();
+        ReadNextStr8()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var length = (int)bytes[offset + 1];
+            return length + 2;
+        }
+    }
+
+    internal class ReadNextStr16 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextStr16();
+        ReadNextStr16()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+
+            var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+            return length + 3;
+        }
+    }
+
+    internal class ReadNextStr32 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextStr32();
+        ReadNextStr32()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var length = (int)((uint)(bytes[offset + 1] << 24) + (uint)(bytes[offset + 2] << 16) + (uint)(bytes[offset + 3] << 8) + (uint)bytes[offset + 4]);
+            return length + 5;
+        }
+    }
+
+    internal class ReadNextBin8 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextBin8();
+        ReadNextBin8()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var length = bytes[offset + 1];
+            return length + 2;
+        }
+    }
+
+    internal class ReadNextBin16 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextBin16();
+        ReadNextBin16()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+
+            var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+            return length + 3;
+        }
+    }
+
+    internal class ReadNextBin32 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextBin32();
+        ReadNextBin32()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var length = (bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + (bytes[offset + 4]);
+            return length + 5;
+        }
+    }
+
+
+    internal class ReadNextExt8 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextExt8();
+        ReadNextExt8()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var length = bytes[offset + 1];
+            return (int)length + 3;
+        }
+    }
+
+    internal class ReadNextExt16 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextExt16();
+        ReadNextExt16()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var length = (int)((UInt16)(bytes[offset + 1] << 8) + (UInt16)bytes[offset + 2]);
+            return length + 4;
+        }
+    }
+
+    internal class ReadNextExt32 : IReadNextDecoder
+    {
+        internal static readonly IReadNextDecoder Instance = new ReadNextExt32();
+        ReadNextExt32()
+        {
+
+        }
+        public int Read(byte[] bytes, int offset)
+        {
+            var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+            return (int)length + 6;
         }
     }
 }

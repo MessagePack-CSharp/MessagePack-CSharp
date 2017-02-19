@@ -101,6 +101,11 @@ namespace MessagePack.Internal
             }
         }
 
+        public static void EmitLdloca(this ILGenerator il, LocalBuilder local)
+        {
+            il.Emit(OpCodes.Ldloca, local);
+        }
+
         /// <summary>
         /// Pushes a supplied value of type int32 onto the evaluation stack as an int32.
         /// </summary>
@@ -189,6 +194,18 @@ namespace MessagePack.Internal
             else
             {
                 il.Emit(OpCodes.Ldarga, index);
+            }
+        }
+
+        public static void EmitLoadArg(this ILGenerator il, TypeInfo info, int index)
+        {
+            if (info.IsClass)
+            {
+                EmitLdarg(il, index);
+            }
+            else
+            {
+                EmitLdarga(il, index);
             }
         }
 

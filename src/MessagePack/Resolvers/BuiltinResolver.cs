@@ -195,6 +195,12 @@ namespace MessagePack.Internal
                 return VersionFormatter.Instance;
             }
 
+            // special primitive
+            else if (t == typeof(byte[]))
+            {
+                return ByteArrayFormatter.Instance;
+            }
+
             // Nil
             else if (t == typeof(Nil))
             {
@@ -221,10 +227,6 @@ namespace MessagePack.Internal
             else if (t == typeof(System.Numerics.Complex?))
             {
                 return new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance);
-            }
-            else if (t == typeof(byte[]))
-            {
-                return ByteArrayFormatter.Instance;
             }
 
             return null;
