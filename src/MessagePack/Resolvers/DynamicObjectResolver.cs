@@ -40,7 +40,19 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                // TODO:Nullable Struct
+                var ti = typeof(T).GetTypeInfo();
+                if (ti.IsNullable())
+                {
+                    ti = ti.GenericTypeArguments[0].GetTypeInfo();
+
+                    var innerFormatter = DynamicObjectResolver.Instance.GetFormatterDynamic(ti.AsType());
+                    if (innerFormatter == null)
+                    {
+                        return;
+                    }
+                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
+                    return;
+                }
 
                 var formatterTypeInfo = BuildType(typeof(T));
                 if (formatterTypeInfo == null) return;
@@ -112,6 +124,21 @@ namespace MessagePack.Resolvers
         // int Serialize([arg:1]ref byte[] bytes, [arg:2]int offset, [arg:3]T value, [arg:4]IFormatterResolver formatterResolver);
         static void BuildSerialize(Type type, ObjectSerializationInfo info, MethodBuilder method, ILGenerator il)
         {
+            // if(value == null) return WriteNil
+            if (type.GetTypeInfo().IsClass)
+            {
+                var elseBody = il.DefineLabel();
+
+                il.EmitLdarg(3);
+                il.Emit(OpCodes.Brtrue_S, elseBody);
+                il.EmitLdarg(1);
+                il.EmitLdarg(2);
+                il.EmitCall(MessagePackBinaryTypeInfo.WriteNil);
+                il.Emit(OpCodes.Ret);
+
+                il.MarkLabel(elseBody);
+            }
+
             var writeCount = info.Members.Count(x => x.IsReadable);
 
             // var startOffset = offset;
@@ -224,7 +251,31 @@ namespace MessagePack.Resolvers
         // T Deserialize([arg:1]byte[] bytes, [arg:2]int offset, [arg:3]IFormatterResolver formatterResolver, [arg:4]out int readSize);
         static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, FieldBuilder dictionaryField, ILGenerator il)
         {
+            // if(value == null) readSize = 1, return null;
+            var falseLabel = il.DefineLabel();
+            il.EmitLdarg(1);
+            il.EmitLdarg(2);
+            il.EmitCall(MessagePackBinaryTypeInfo.IsNil);
+            il.Emit(OpCodes.Brfalse_S, falseLabel);
+            if (type.GetTypeInfo().IsClass)
+            {
+                il.EmitLdarg(4);
+                il.EmitLdc_I4(1);
+                il.Emit(OpCodes.Stind_I4);
+                il.Emit(OpCodes.Ldnull);
+                il.Emit(OpCodes.Ret);
+            }
+            else
+            {
+                typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(string); });
+
+                il.Emit(OpCodes.Ldstr, "typecode is null, struct not supported");
+                il.Emit(OpCodes.Newobj, invalidOperationExceptionConstructor);
+                il.Emit(OpCodes.Throw);
+            }
+
             // var startOffset = offset;
+            il.MarkLabel(falseLabel);
             var startOffsetLocal = il.DeclareLocal(typeof(int)); // [loc:0]
             il.EmitLdarg(2);
             il.EmitStloc(startOffsetLocal);
@@ -241,7 +292,7 @@ namespace MessagePack.Resolvers
             // make local fields
             DeserializeInfo[] intList = null;
             var temp = new List<DeserializeInfo>();
-            foreach (var item in info.Members.Where(x => x.IsWritable))
+            foreach (var item in info.Members)
             {
                 temp.Add(new DeserializeInfo
                 {
@@ -374,41 +425,46 @@ namespace MessagePack.Resolvers
 
         static void EmitNewObject(ILGenerator il, Type type, ObjectSerializationInfo info, DeserializeInfo[] members)
         {
-            // TODO:with argument
-
             if (info.IsClass)
             {
+                foreach (var item in info.ConstructorParameters)
+                {
+                    var local = members.First(x => x.MemberInfo == item);
+                    il.EmitLdloc(local.LocalField);
+                }
                 il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
-                foreach (var item in members)
+
+                foreach (var item in members.Where(x => x.MemberInfo.IsWritable))
                 {
                     il.Emit(OpCodes.Dup);
-                    if (item.MemberInfo.IsWritable)
-                    {
-                        il.EmitLdloc(item.LocalField);
-                        item.MemberInfo.EmitStoreValue(il);
-                    }
+                    il.EmitLdloc(item.LocalField);
+                    item.MemberInfo.EmitStoreValue(il);
                 }
             }
             else
             {
                 var result = il.DeclareLocal(type);
-                il.Emit(OpCodes.Ldloca, result);
-                il.Emit(OpCodes.Initobj, type);
-
-                if (info.BestmatchConstructor != null)
+                if (info.BestmatchConstructor == null)
                 {
-                    // TODO:put args...
-                    il.Emit(OpCodes.Call, info.BestmatchConstructor);
+                    il.Emit(OpCodes.Ldloca, result);
+                    il.Emit(OpCodes.Initobj, type);
+                }
+                else
+                {
+                    foreach (var item in info.ConstructorParameters)
+                    {
+                        var local = members.First(x => x.MemberInfo == item);
+                        il.EmitLdloc(local.LocalField);
+                    }
+                    il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
+                    il.Emit(OpCodes.Stloc, result);
                 }
 
-                foreach (var item in members)
+                foreach (var item in members.Where(x => x.MemberInfo.IsWritable))
                 {
-                    if (item.MemberInfo.IsWritable)
-                    {
-                        il.EmitLdloca(result);
-                        il.EmitLdloc(item.LocalField);
-                        item.MemberInfo.EmitStoreValue(il);
-                    }
+                    il.EmitLdloca(result);
+                    il.EmitLdloc(item.LocalField);
+                    item.MemberInfo.EmitStoreValue(il);
                 }
 
                 il.Emit(OpCodes.Ldloc, result);
@@ -425,6 +481,7 @@ namespace MessagePack.Resolvers
         static readonly ConstructorInfo dictionaryConstructor = typeof(Dictionary<string, int>).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
         static readonly MethodInfo dictionaryAdd = typeof(Dictionary<string, int>).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
         static readonly MethodInfo dictionaryTryGetValue = typeof(Dictionary<string, int>).GetRuntimeMethod("TryGetValue", new[] { typeof(string), refInt });
+        static readonly ConstructorInfo invalidOperationExceptionConstructor = typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(string); });
 
         static class MessagePackBinaryTypeInfo
         {
@@ -435,9 +492,11 @@ namespace MessagePack.Resolvers
             public static MethodInfo WritePositiveFixedIntUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WritePositiveFixedIntUnsafe", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteInt32 = typeof(MessagePackBinary).GetRuntimeMethod("WriteInt32", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteBytes = typeof(MessagePackBinary).GetRuntimeMethod("WriteBytes", new[] { refByte, typeof(int), typeof(byte[]) });
+            public static MethodInfo WriteNil = typeof(MessagePackBinary).GetRuntimeMethod("WriteNil", new[] { refByte, typeof(int) });
             public static MethodInfo ReadBytes = typeof(MessagePackBinary).GetRuntimeMethod("ReadBytes", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo ReadInt32 = typeof(MessagePackBinary).GetRuntimeMethod("ReadInt32", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo ReadString = typeof(MessagePackBinary).GetRuntimeMethod("ReadString", new[] { typeof(byte[]), typeof(int), refInt });
+            public static MethodInfo IsNil = typeof(MessagePackBinary).GetRuntimeMethod("IsNil", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo ReadNext = typeof(MessagePackBinary).GetRuntimeMethod("ReadNext", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo WriteStringUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringUnsafe", new[] { refByte, typeof(int), typeof(string), typeof(int) });
 
@@ -445,7 +504,6 @@ namespace MessagePack.Resolvers
 
             static MessagePackBinaryTypeInfo()
             {
-
             }
         }
 
@@ -595,6 +653,7 @@ namespace MessagePack.Internal
 
                     if (searchFirst)
                     {
+                        searchFirst = false;
                         isIntKey = key.IntKey != null;
                     }
                     else

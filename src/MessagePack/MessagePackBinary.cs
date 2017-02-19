@@ -519,7 +519,14 @@ namespace MessagePack
 
         public static int WriteBytes(ref byte[] bytes, int offset, byte[] value)
         {
-            return WriteBytes(ref bytes, offset, value, 0, value.Length);
+            if (value == null)
+            {
+                return WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                return WriteBytes(ref bytes, offset, value, 0, value.Length);
+            }
         }
 
         public static int WriteBytes(ref byte[] dest, int dstOffset, byte[] src, int srcOffset, int count)

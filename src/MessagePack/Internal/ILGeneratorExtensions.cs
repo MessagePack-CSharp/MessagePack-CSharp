@@ -5,8 +5,6 @@ using System.Reflection.Emit;
 
 namespace MessagePack.Internal
 {
-    // full list of can create optimize helper -> https://github.com/kevin-montrose/Sigil#automated-opcode-choice
-
     /// <summary>
     /// Provides optimized generation code and helpers.
     /// </summary>
@@ -185,6 +183,11 @@ namespace MessagePack.Internal
             }
         }
 
+        public static void EmitLoadThis(this ILGenerator il)
+        {
+            EmitLdarg(il, 0);
+        }
+
         public static void EmitLdarga(this ILGenerator il, int index)
         {
             if (index <= 255)
@@ -285,6 +288,7 @@ namespace MessagePack.Internal
             var forI = il.DeclareLocal(typeof(int));
             il.EmitLdc_I4(0);
             il.EmitStloc(forI);
+            il.Emit(OpCodes.Br, condtionLabel);
 
             il.MarkLabel(loopBegin);
             emitBody(forI);

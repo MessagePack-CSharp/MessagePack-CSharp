@@ -8,6 +8,8 @@ using System.IO;
 using ZeroFormatter;
 using System.Collections.Generic;
 using MessagePack.Internal;
+using MsgPack.Serialization;
+using ProtoBuf;
 
 namespace Sandbox
 {
@@ -15,6 +17,20 @@ namespace Sandbox
     {
         Apple, Orange, Pineapple
     }
+    [MessagePackObject]
+    public class EmptyClass
+    {
+
+    }
+
+    [MessagePackObject]
+    public struct EmptyStruct
+    {
+
+    }
+
+
+
 
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
@@ -47,49 +63,102 @@ namespace Sandbox
     public class NewObj
     {
         [Key(0)]
-        public int MyProperty { get; set; }
+        public int MyProperty { get; private set; }
         public NewObj(int myProperty)
         {
             this.MyProperty = myProperty;
         }
     }
 
+    [MessagePackObject(true)]
+    public struct Vector2
+    {
+        [Key(0)]
+        public readonly float X;
+        [Key(1)]
+        public readonly float Y;
+
+        public Vector2(float x, float y)
+        {
+            X = x;
+            Y = y;
+        }
+    }
+
+
+    [ZeroFormattable]
+    [ProtoBuf.ProtoContract]
+    [MessagePackObject]
+    public class Person : IEquatable<Person>
+    {
+        [Index(0)]
+        [Key(0)]
+        [MessagePackMember(0)]
+        [ProtoMember(1)]
+        public virtual int Age { get; set; }
+        [Index(1)]
+        [Key(1)]
+        [MessagePackMember(1)]
+        [ProtoMember(2)]
+        public virtual string FirstName { get; set; }
+        [Index(2)]
+        [Key(2)]
+        [MessagePackMember(2)]
+        [ProtoMember(3)]
+        public virtual string LastName { get; set; }
+        [Index(3)]
+        [MessagePackMember(3)]
+        [Key(3)]
+        [ProtoMember(4)]
+        public virtual Sex Sex { get; set; }
+
+        public bool Equals(Person other)
+        {
+            return Age == other.Age && FirstName == other.FirstName && LastName == other.LastName && Sex == other.Sex;
+        }
+    }
+
+    public enum Sex : sbyte
+    {
+        Unknown, Male, Female,
+    }
+
+
     class Program
     {
         static void Main(string[] args)
         {
-            //MessagePack.MessagePackSerializer.SetDefaultResolver(HandWriteResolver.Instance);
+            var p = new Person
+            {
+                Age = 99999,
+                FirstName = "Windows",
+                LastName = "Server",
+                Sex = Sex.Male,
+            };
+            Person[] l = Enumerable.Range(1, 100).Select(x => new Person { Age = x, FirstName = "Windows", LastName = "Server", Sex = Sex.Female }).ToArray();
 
-            //var bin = MessagePackSerializer.Serialize(new MyClass() { MyProperty = 100, MyProperty2 = 999 });
-            //var json = MessagePackSerializer.ToJson(bin);
+            //Benchmark(p);
+            //Console.WriteLine();
+            //Benchmark(l);
+
+
+            var bytes = MessagePack.MessagePackSerializer.Serialize(new EmptyClass());
+
+            var json = MessagePack.MessagePackSerializer.ToJson(new EmptyClass());
+
+            int readSize;
+            var length = MessagePackBinary.ReadMapHeader(bytes, 0, out readSize);
+
+            //Console.WriteLine(readSize);
+            ///Console.WriteLine(length);
+
             //Console.WriteLine(json);
+            for (int i = 0; i < length; i++)
+            {
+                Console.WriteLine("no");
+            }
 
-            //var target = new SmallSingleObject() { MyProperty = 9, MyProperty2 = 100 };
-            var target = new NewObj(100);
-            //var f = DefaultResolver.Instance.GetFormatter<SmallSingleObject>();
-
-            //var bytes = Enumerable.Repeat(1, 30000).Select(x => (byte)x).ToArray();
-            //Benchmark(target);
-
-            var b = MessagePack.MessagePackSerializer.Serialize(target);
-            Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(b));
-            //var testV = new SmallSingleObject() { MyProperty = 100, MyProperty2 = 999 };
-            //var  b = MessagePack.MessagePackSerializer.Serialize(testV);
-
-            //var hoge = MessagePack.MessagePackSerializer.Deserialize<SmallSingleObject>(b);
-
-            //var bytes = MessagePack.MessagePackSerializer.Serialize(new byte[] { 1, 100, 3 });
-            //MessagePack.MessagePackSerializer.Deserialize<byte[]>(bytes);
-            //Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(bytes));
-
-
-            //var b = MessagePack.MessagePackSerializer.Serialize(new MyStruct { MyProperty = new byte[] { 1, 100, 3 } });
-
-            //Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(b));
-            //var huga = MessagePack.MessagePackSerializer.Deserialize<MyStruct>(b);
-
-            //Console.WriteLine(huga.MyProperty);
-
+            var hoge = MessagePack.MessagePackSerializer.Deserialize<EmptyClass>(bytes);
         }
 
         static void Benchmark<T>(T target)
