@@ -160,7 +160,7 @@ namespace MessagePack.Resolvers
                  }
              });
 
-            foreach (var item in info.Members)
+            foreach (var item in info.Members.Where(x => x.IsReadable))
             {
                 // offset += writekey
                 EmitOffsetPlusEqual(il, null, () =>
@@ -251,7 +251,7 @@ namespace MessagePack.Resolvers
         // T Deserialize([arg:1]byte[] bytes, [arg:2]int offset, [arg:3]IFormatterResolver formatterResolver, [arg:4]out int readSize);
         static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, FieldBuilder dictionaryField, ILGenerator il)
         {
-            // if(value == null) readSize = 1, return null;
+            // if(MessagePackBinary.IsNil) readSize = 1, return null;
             var falseLabel = il.DefineLabel();
             il.EmitLdarg(1);
             il.EmitLdarg(2);

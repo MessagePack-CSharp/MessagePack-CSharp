@@ -8,8 +8,8 @@ using System.IO;
 using ZeroFormatter;
 using System.Collections.Generic;
 using MessagePack.Internal;
-using MsgPack.Serialization;
 using ProtoBuf;
+using SharedData;
 
 namespace Sandbox
 {
@@ -90,21 +90,21 @@ namespace Sandbox
     {
         [Index(0)]
         [Key(0)]
-        [MessagePackMember(0)]
+        [MsgPack.Serialization.MessagePackMember(0)]
         [ProtoMember(1)]
         public virtual int Age { get; set; }
         [Index(1)]
         [Key(1)]
-        [MessagePackMember(1)]
+        [MsgPack.Serialization.MessagePackMember(1)]
         [ProtoMember(2)]
         public virtual string FirstName { get; set; }
         [Index(2)]
         [Key(2)]
-        [MessagePackMember(2)]
+        [MsgPack.Serialization.MessagePackMember(2)]
         [ProtoMember(3)]
         public virtual string LastName { get; set; }
         [Index(3)]
-        [MessagePackMember(3)]
+        [MsgPack.Serialization.MessagePackMember(3)]
         [Key(3)]
         [ProtoMember(4)]
         public virtual Sex Sex { get; set; }
@@ -120,6 +120,24 @@ namespace Sandbox
         Unknown, Male, Female,
     }
 
+
+    class SlowCustomResolver : IFormatterResolver
+    {
+        Dictionary<Type, object> formatters = new Dictionary<Type, object>
+        {
+            { typeof(FirstSimpleData), new FirstSimpleDataFormatter() },
+            { typeof(Version0), new Version0Formatter() },
+            { typeof(Version1), new Version1Formatter() },
+            { typeof(Version2), new Version2Formatter() },
+        };
+
+        public IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            var f = BuiltinResolver.Instance.GetFormatter<T>();
+            if (f != null) return f;
+            return (IMessagePackFormatter<T>)formatters[typeof(T)];
+        }
+    }
 
     class Program
     {
@@ -139,14 +157,62 @@ namespace Sandbox
             //Benchmark(l);
 
 
-            var bytes = MessagePack.MessagePackSerializer.Serialize(new Dictionary<int, string> { { 100, "hogehoge" }, { 2000, "hugahuga" } });
-            Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(bytes));
+            var test = MessagePack.MessagePackSerializer.Serialize(new FirstSimpleData { Prop1 = 9, Prop3 = 300, Prop2 = "fdasfa" }, new SlowCustomResolver());
+            Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(test));
 
-            var dt = MessagePack.MessagePackSerializer.Deserialize<Dictionary<int, string>>(bytes);
-            foreach (var item in dt)
+
+
+            var resolver = new SlowCustomResolver();
+            MessagePackSerializer.SetDefaultResolver(resolver);
+
+            var v1 = new Version1
             {
-                Console.WriteLine(item.Key + ":" + item.Value);
-            }
+                MyProperty1 = 100,
+                MyProperty2 = 200,
+                MyProperty3 = 300
+            };
+
+            var v2 = new Version2
+            {
+                MyProperty1 = 100,
+                MyProperty2 = 200,
+                MyProperty3 = 300,
+                MyProperty4 = 400,
+                MyProperty5 = 500,
+            };
+
+            var v0 = new Version0
+            {
+                MyProperty1 = 100,
+            };
+
+            var v1Bytes = MessagePackSerializer.Serialize(v1);
+            var v2Bytes = MessagePackSerializer.Serialize(v2);
+            var v0Bytes = MessagePackSerializer.Serialize(v0);
+
+            var a = MessagePackSerializer.ToJson(v1Bytes);
+            var b = MessagePackSerializer.ToJson(v2Bytes);
+            var c = MessagePackSerializer.ToJson(v0Bytes);
+
+
+            // smaller than schema
+            var v2_ = MessagePackSerializer.Deserialize<Version2>(v1Bytes);
+ 
+
+            // larger than schema
+
+            var v0_ = MessagePackSerializer.Deserialize<Version0>(v1Bytes);
+
+
+
+            // smaller than schema
+            var v2_default = MessagePackSerializer.Deserialize<Version2>(v1Bytes, DefaultResolver.Instance);
+
+
+            // larger than schema
+
+            var v0_default = MessagePackSerializer.Deserialize<Version0>(v1Bytes, DefaultResolver.Instance);
+
         }
 
         static void Benchmark<T>(T target)
