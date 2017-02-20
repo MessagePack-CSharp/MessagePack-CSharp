@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using MessagePack.Internal;
 using ProtoBuf;
 using SharedData;
+using Test;
 
 namespace Sandbox
 {
@@ -121,24 +122,6 @@ namespace Sandbox
     }
 
 
-    class SlowCustomResolver : IFormatterResolver
-    {
-        Dictionary<Type, object> formatters = new Dictionary<Type, object>
-        {
-            { typeof(FirstSimpleData), new FirstSimpleDataFormatter() },
-            { typeof(Version0), new Version0Formatter() },
-            { typeof(Version1), new Version1Formatter() },
-            { typeof(Version2), new Version2Formatter() },
-        };
-
-        public IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            var f = BuiltinResolver.Instance.GetFormatter<T>();
-            if (f != null) return f;
-            return (IMessagePackFormatter<T>)formatters[typeof(T)];
-        }
-    }
-
     class Program
     {
         static void Main(string[] args)
@@ -157,13 +140,11 @@ namespace Sandbox
             //Benchmark(l);
 
 
-            var test = MessagePack.MessagePackSerializer.Serialize(new FirstSimpleData { Prop1 = 9, Prop3 = 300, Prop2 = "fdasfa" }, new SlowCustomResolver());
+            var test = MessagePack.MessagePackSerializer.Serialize(new FirstSimpleData { Prop1 = 9, Prop3 = 300, Prop2 = "fdasfa" });
             Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(test));
 
 
-
-            var resolver = new SlowCustomResolver();
-            MessagePackSerializer.SetDefaultResolver(resolver);
+            MessagePackSerializer.SetDefaultResolver(ComposittedResolver.Instance);
 
             var v1 = new Version1
             {

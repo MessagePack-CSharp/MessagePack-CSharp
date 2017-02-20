@@ -148,7 +148,13 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>FormatterTemplate.tt</DependentUpon>
     </Compile>
+    <Compile Include="Generator\ResolverTemplate.Partial.cs" />
     <Compile Include="Generator\FormatterTemplate.Partial.cs" />
+    <Compile Include="Generator\ResolverTemplate.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ResolverTemplate.tt</DependentUpon>
+    </Compile>
     <Compile Include="Mono.Options\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -169,6 +175,10 @@
     <Content Include="Generator\FormatterTemplate.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
       <LastGenOutput>FormatterTemplate.cs</LastGenOutput>
+    </Content>
+    <Content Include="Generator\ResolverTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>ResolverTemplate.cs</LastGenOutput>
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,4 +1,86 @@
 
+namespace Test
+{
+    using System;
+    using MessagePack;
+
+    public class ComposittedResolver : global::MessagePack.IFormatterResolver
+    {
+        public static IFormatterResolver Instance = new ComposittedResolver();
+
+        ComposittedResolver()
+        {
+
+        }
+
+        public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            return FormatterCache<T>.formatter;
+        }
+
+        static class FormatterCache<T>
+        {
+            public static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> formatter;
+
+            static FormatterCache()
+            {
+                var f = GeneratedResolver.Instance.GetFormatter<T>();
+                if (f != null)
+                {
+                    formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
+					return;
+                }
+                formatter = MessagePack.Resolvers.DefaultResolver.Instance.GetFormatter<T>();
+            }
+        }
+    }
+
+    public class GeneratedResolver : global::MessagePack.IFormatterResolver
+    {
+        public static IFormatterResolver Instance = new GeneratedResolver();
+
+        GeneratedResolver()
+        {
+
+        }
+
+        public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            return FormatterCache<T>.formatter;
+        }
+
+        static class FormatterCache<T>
+        {
+            public static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> formatter;
+
+            static FormatterCache()
+            {
+                var f = GeneratedResolverGetFormatterHelper.GetFormatter(typeof(T));
+                if (f != null)
+                {
+                    formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
+                }
+            }
+        }
+    }
+
+    internal static class GeneratedResolverGetFormatterHelper
+    {
+        internal static object GetFormatter(Type t)
+        {
+            if (t == typeof(global::SharedData.FirstSimpleData)) return new global::SharedData.FirstSimpleDataFormatter();
+            if (t == typeof(global::SharedData.Version1)) return new global::SharedData.Version1Formatter();
+            if (t == typeof(global::SharedData.Version2)) return new global::SharedData.Version2Formatter();
+            if (t == typeof(global::SharedData.Version0)) return new global::SharedData.Version0Formatter();
+            if (t == typeof(global::SharedData.HolderV1)) return new global::SharedData.HolderV1Formatter();
+            if (t == typeof(global::SharedData.HolderV2)) return new global::SharedData.HolderV2Formatter();
+            if (t == typeof(global::SharedData.HolderV0)) return new global::SharedData.HolderV0Formatter();
+            return null;
+        }
+    }
+}
+
+
 
 namespace SharedData
 {

@@ -107,14 +107,24 @@ namespace MessagePack.CodeGenerator
                 })
                 .ToArray();
 
+            var resolverTemplate = new ResolverTemplate()
+            {
+                Namespace = "Test",
+                ObjectTypes = objectFormatterInfo
+            };
+
             // TODO:
 
+            var sb = new StringBuilder();
+            sb.AppendLine(resolverTemplate.TransformText());
+            sb.AppendLine();
             foreach (var item in objectFormatterTemplates)
             {
                 var text = item.TransformText();
-                Output(cmdArgs.OutputPath, text);
+                sb.AppendLine(text);
             }
 
+            Output(cmdArgs.OutputPath, sb.ToString());
 
             //var registerTemplate = new RegisterTemplate
             //{
