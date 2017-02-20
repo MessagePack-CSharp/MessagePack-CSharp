@@ -33,7 +33,7 @@ namespace <#= Namespace #>
                 if (f != null)
                 {
                     formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
-					return;
+                    return;
                 }
                 formatter = MessagePack.Resolvers.DefaultResolver.Instance.GetFormatter<T>();
             }
@@ -71,12 +71,30 @@ namespace <#= Namespace #>
 
     internal static class GeneratedResolverGetFormatterHelper
     {
+        static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
+
+        static GeneratedResolverGetFormatterHelper()
+        {
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(<#= ObjectTypes.Length #>)
+            {
+<# for(var i = 0; i < ObjectTypes.Length; i++) { var x = ObjectTypes[i]; #>
+                {typeof(<#= x.FullName #>), <#= i #> },
+<# } #>
+            };
+        }
+
         internal static object GetFormatter(Type t)
         {
-<# foreach(var item in ObjectTypes) { #>
-            if (t == typeof(<#= item.FullName #>)) return new <#= item.FullName#>Formatter();
+            int key;
+            if (!lookup.TryGetValue(t, out key)) return null;
+
+            switch (key)
+            {
+<# for(var i = 0; i < ObjectTypes.Length; i++) { var x = ObjectTypes[i]; #>
+                case <#= i #>: return new <#= x.FullName#>Formatter();
 <# } #>
-            return null;
+                default: return null;
+            }
         }
     }
 }

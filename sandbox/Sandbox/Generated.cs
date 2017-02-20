@@ -28,7 +28,7 @@ namespace Test
                 if (f != null)
                 {
                     formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
-					return;
+                    return;
                 }
                 formatter = MessagePack.Resolvers.DefaultResolver.Instance.GetFormatter<T>();
             }
@@ -66,16 +66,38 @@ namespace Test
 
     internal static class GeneratedResolverGetFormatterHelper
     {
+        static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
+
+        static GeneratedResolverGetFormatterHelper()
+        {
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(7)
+            {
+                {typeof(global::SharedData.FirstSimpleData), 0 },
+                {typeof(global::SharedData.Version1), 1 },
+                {typeof(global::SharedData.Version2), 2 },
+                {typeof(global::SharedData.Version0), 3 },
+                {typeof(global::SharedData.HolderV1), 4 },
+                {typeof(global::SharedData.HolderV2), 5 },
+                {typeof(global::SharedData.HolderV0), 6 },
+            };
+        }
+
         internal static object GetFormatter(Type t)
         {
-            if (t == typeof(global::SharedData.FirstSimpleData)) return new global::SharedData.FirstSimpleDataFormatter();
-            if (t == typeof(global::SharedData.Version1)) return new global::SharedData.Version1Formatter();
-            if (t == typeof(global::SharedData.Version2)) return new global::SharedData.Version2Formatter();
-            if (t == typeof(global::SharedData.Version0)) return new global::SharedData.Version0Formatter();
-            if (t == typeof(global::SharedData.HolderV1)) return new global::SharedData.HolderV1Formatter();
-            if (t == typeof(global::SharedData.HolderV2)) return new global::SharedData.HolderV2Formatter();
-            if (t == typeof(global::SharedData.HolderV0)) return new global::SharedData.HolderV0Formatter();
-            return null;
+            int key;
+            if (!lookup.TryGetValue(t, out key)) return null;
+
+            switch (key)
+            {
+                case 0: return new global::SharedData.FirstSimpleDataFormatter();
+                case 1: return new global::SharedData.Version1Formatter();
+                case 2: return new global::SharedData.Version2Formatter();
+                case 3: return new global::SharedData.Version0Formatter();
+                case 4: return new global::SharedData.HolderV1Formatter();
+                case 5: return new global::SharedData.HolderV2Formatter();
+                case 6: return new global::SharedData.HolderV0Formatter();
+                default: return null;
+            }
         }
     }
 }

@@ -347,6 +347,8 @@ namespace MessagePack.Resolvers
 
                     // switch... local = Deserialize
                     il.EmitLdloc(key);
+
+                    // TODO:Jump-Table only supports sequential IntKey, currently buggy, should fix.
                     il.Emit(OpCodes.Switch, intList.Select(x => x.SwitchLabel).ToArray());
                     foreach (var item in intList)
                     {
