@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 
 namespace MessagePack.Formatters
 {
+    // unfortunately, can't use IDictionary<KVP> because supports IReadOnlyDictionary.
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TDictionary> : IMessagePackFormatter<TDictionary>
-        where TDictionary : IDictionary<TKey, TValue>
+        where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
     {
         public int Serialize(ref byte[] bytes, int offset, TDictionary value, IFormatterResolver formatterResolver)
         {
@@ -19,7 +22,28 @@ namespace MessagePack.Formatters
                 var keyFormatter = formatterResolver.GetFormatterWithVerify<TKey>();
                 var valueFormatter = formatterResolver.GetFormatterWithVerify<TValue>();
 
-                offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, value.Count);
+                int count;
+                {
+                    var col = value as ICollection<KeyValuePair<TKey, TValue>>;
+                    if (col != null)
+                    {
+                        count = col.Count;
+                    }
+                    else
+                    {
+                        var col2 = value as IReadOnlyCollection<KeyValuePair<TKey, TValue>>;
+                        if (col2 != null)
+                        {
+                            count = col2.Count;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("DictionaryFormatterBase's TDictionary supports only ICollection<KVP> or IReadOnlyCollection<KVP>");
+                        }
+                    }
+                }
+
+                offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, count);
 
                 var dict = value as Dictionary<TKey, TValue>;
                 if (dict != null)
@@ -72,20 +96,20 @@ namespace MessagePack.Formatters
                 }
                 readSize = offset - startOffset;
 
-                return Finalize(dict);
+                return Complete(dict);
             }
         }
 
         // abstraction for deserialize
         protected abstract TIntermediate Constructor(int count);
         protected abstract void Add(TIntermediate collection, int index, TKey key, TValue value);
-        protected abstract TDictionary Finalize(TIntermediate intermediateCollection);
+        protected abstract TDictionary Complete(TIntermediate intermediateCollection);
     }
 
     public abstract class DictionaryFormatterBase<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary, TDictionary>
         where TDictionary : IDictionary<TKey, TValue>
     {
-        protected override TDictionary Finalize(TDictionary intermediateCollection)
+        protected override TDictionary Complete(TDictionary intermediateCollection)
         {
             return intermediateCollection;
         }
@@ -104,6 +128,20 @@ namespace MessagePack.Formatters
         }
     }
 
+    public class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
+        where TDictionary : IDictionary<TKey, TValue>, new()
+    {
+        protected override void Add(TDictionary collection, int index, TKey key, TValue value)
+        {
+            collection.Add(key, value);
+        }
+
+        protected override TDictionary Constructor(int count)
+        {
+            return new TDictionary();
+        }
+    }
+
     public class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
@@ -116,9 +154,59 @@ namespace MessagePack.Formatters
             return new Dictionary<TKey, TValue>(count);
         }
 
-        protected override IDictionary<TKey, TValue> Finalize(Dictionary<TKey, TValue> intermediateCollection)
+        protected override IDictionary<TKey, TValue> Complete(Dictionary<TKey, TValue> intermediateCollection)
         {
             return intermediateCollection;
+        }
+    }
+
+    public class ReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, ReadOnlyDictionary<TKey, TValue>>
+    {
+        protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
+        {
+            collection.Add(key, value);
+        }
+
+        protected override ReadOnlyDictionary<TKey, TValue> Complete(Dictionary<TKey, TValue> intermediateCollection)
+        {
+            return new ReadOnlyDictionary<TKey, TValue>(intermediateCollection);
+        }
+
+        protected override Dictionary<TKey, TValue> Constructor(int count)
+        {
+            return new Dictionary<TKey, TValue>(count);
+        }
+    }
+
+    public class InterfaceReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>>
+    {
+        protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
+        {
+            collection.Add(key, value);
+        }
+
+        protected override IReadOnlyDictionary<TKey, TValue> Complete(Dictionary<TKey, TValue> intermediateCollection)
+        {
+            return intermediateCollection;
+        }
+
+        protected override Dictionary<TKey, TValue> Constructor(int count)
+        {
+            return new Dictionary<TKey, TValue>(count);
+        }
+    }
+
+    public class ConcurrentDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, System.Collections.Concurrent.ConcurrentDictionary<TKey, TValue>>
+    {
+        protected override void Add(ConcurrentDictionary<TKey, TValue> collection, int index, TKey key, TValue value)
+        {
+            collection.TryAdd(key, value);
+        }
+
+        protected override ConcurrentDictionary<TKey, TValue> Constructor(int count)
+        {
+            // concurrent dictionary can't access defaultConcurrecyLevel so does not use count overload.
+            return new ConcurrentDictionary<TKey, TValue>();
         }
     }
 }

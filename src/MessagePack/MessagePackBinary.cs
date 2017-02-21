@@ -549,7 +549,7 @@ namespace MessagePack
 
             if (count <= byte.MaxValue)
             {
-                var size = src.Length + 2;
+                var size = count + 2;
                 EnsureCapacity(ref dest, dstOffset, size);
 
                 dest[dstOffset] = MessagePackCode.Bin8;
@@ -560,7 +560,7 @@ namespace MessagePack
             }
             else if (count <= UInt16.MaxValue)
             {
-                var size = src.Length + 3;
+                var size = count + 3;
                 EnsureCapacity(ref dest, dstOffset, size);
 
                 unchecked
@@ -575,7 +575,7 @@ namespace MessagePack
             }
             else
             {
-                var size = src.Length + 5;
+                var size = count + 5;
                 EnsureCapacity(ref dest, dstOffset, size);
 
                 unchecked
@@ -2151,7 +2151,7 @@ namespace MessagePack.Decoders
             readSize = 5;
             unchecked
             {
-                return (long)(int)((bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + bytes[offset + 4]);
+                return (long)((long)(bytes[offset + 1] << 24) + (long)(bytes[offset + 2] << 16) + (long)(bytes[offset + 3] << 8) + (long)bytes[offset + 4]);
             }
         }
     }

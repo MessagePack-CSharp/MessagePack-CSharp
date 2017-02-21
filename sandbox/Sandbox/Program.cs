@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using MessagePack.Internal;
 using ProtoBuf;
 using SharedData;
+using System.Collections;
 
 namespace Sandbox
 {
@@ -120,6 +121,50 @@ namespace Sandbox
         Unknown, Male, Female,
     }
 
+    public class TestCollection<T> : ICollection<T>
+    {
+        public List<T> internalCollection = new List<T>();
+
+        public int Count => internalCollection.Count;
+
+        public bool IsReadOnly => throw new NotImplementedException();
+
+        public void Add(T item)
+        {
+            internalCollection.Add(item);
+        }
+
+        public void Clear()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(T item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return internalCollection.GetEnumerator();
+        }
+
+        public bool Remove(T item)
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
 
     class Program
     {
@@ -138,30 +183,22 @@ namespace Sandbox
             //Console.WriteLine();
             //Benchmark(l);
 
-            {
-                var c1 = new Callback1(0);
-                var d = MessagePackSerializer.Serialize(c1);
-                MessagePackSerializer.Deserialize<Callback1>(d);
-            }
-            {
-                var before = false;
-                var after = false;
-                var c1 = new Callback2(0, () => before = true, () => after = true);
-                var d = MessagePackSerializer.Serialize(c1);
-                MessagePackSerializer.Deserialize<Callback2>(d);
-            }
-            {
-                var c1 = new Callback1_2(0);
-                var d = MessagePackSerializer.Serialize(c1);
-                //MessagePackSerializer.Deserialize<Callback1_2>(d);
-            }
-            {
-                var before = false;
-                var after = false;
-                var c1 = new Callback2(0, () => before = true, () => after = true);
-                var d = MessagePackSerializer.Serialize(c1);
-            //    MessagePackSerializer.Deserialize<Callback2_2>(d);
-            }
+            //var json = MessagePackSerializer.ToJson(MessagePackSerializer.NonGeneric.Serialize(typeof(Person), p));
+            //Console.WriteLine(json);
+
+            //var huga = MessagePackSerializer.Serialize(ushort.MaxValue);
+
+
+
+            //var huga = MessagePackSerializer.Serialize(a);
+
+            IList<int> seq = new int[] { 1, 2, 3 };
+            var bytes = MessagePackSerializer.Serialize(seq);
+            Console.WriteLine(string.Join(",", bytes));
+            Console.WriteLine(MessagePackSerializer.ToJson(seq));
+
+
+
         }
 
         static void Benchmark<T>(T target)
@@ -277,117 +314,6 @@ namespace Sandbox
             Console.WriteLine($"{ label,20}   {sw.Elapsed.TotalMilliseconds} ms");
 
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
-        }
-    }
-
-    public class HandwriteMyClassFormatter : IMessagePackFormatter<SmallSingleObject>
-    {
-        readonly Dictionary<string, int> keyMapping;
-
-        public HandwriteMyClassFormatter()
-        {
-            keyMapping = new Dictionary<string, int>(5);
-            keyMapping.Add("hoge", 100);
-        }
-
-        public int Serialize(ref byte[] bytes, int offset, SmallSingleObject value, IFormatterResolver formatterResolver)
-        {
-            var startOffset = offset;
-
-            bytes[offset] = 0;
-            bytes[offset + 1] = 1;
-            bytes[offset + 2] = 2;
-            offset += 3;
-
-
-            offset += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 2); // optimize 0~15 count
-            offset += MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, 0); // optimize 0~127 key.
-            offset += formatterResolver.GetFormatterWithVerify<int>().Serialize(ref bytes, offset, value.MyProperty, formatterResolver);
-            offset += MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, 1); // optimize 0~127 key.
-            offset += Int32Formatter.Instance.Serialize(ref bytes, offset, value.MyProperty2);
-
-            return offset - startOffset;
-        }
-
-        public SmallSingleObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
-        {
-            var startOffset = offset;
-            var length = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-            offset += readSize;
-
-            int __MyProperty1__ = default(int);
-            int __MyProperty2__ = default(int);
-
-            // pattern of integer key.
-            for (int i = 0; i < length; i++)
-            {
-                // 
-                //var stringKey = "hogehoge";
-                //int key;
-                //if (keyMapping.TryGetValue(stringKey, out key))
-                //{
-                //    offset += readSize;
-                //}
-
-
-                var key = Int32Formatter.Instance.Deserialize(bytes, offset, out readSize);
-                offset += readSize;
-
-                switch (key)
-                {
-                    case 0:
-                        __MyProperty1__ = Int32Formatter.Instance.Deserialize(bytes, offset, out readSize);
-                        break;
-                    case 1:
-                        __MyProperty2__ = Int32Formatter.Instance.Deserialize(bytes, offset, out readSize);
-                        break;
-                    default:
-                        readSize = MessagePackBinary.ReadNext(bytes, offset);
-                        break;
-                }
-
-                offset += readSize;
-            }
-
-            // finish readSize
-            readSize = offset - startOffset;
-
-            var __result__ = new SmallSingleObject(); // use constructor(with argument?)
-            __result__.MyProperty = __MyProperty1__;
-            __result__.MyProperty2 = __MyProperty2__;
-            return __result__;
-        }
-    }
-
-
-    public class HandWriteResolver : IFormatterResolver
-    {
-        public static IFormatterResolver Instance = new HandWriteResolver();
-
-        HandWriteResolver()
-        {
-        }
-
-        public IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.formatter;
-        }
-
-        static class FormatterCache<T>
-        {
-            public static readonly IMessagePackFormatter<T> formatter;
-
-            static FormatterCache()
-            {
-                if (typeof(T) == typeof(SmallSingleObject))
-                {
-                    formatter = (IMessagePackFormatter<T>)(object)new HandwriteMyClassFormatter();
-                    return;
-                }
-
-                // fallback default.
-                formatter = DefaultResolver.Instance.GetFormatter<T>();
-            }
         }
     }
 }
