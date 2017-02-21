@@ -83,6 +83,9 @@
     <Compile Include="..\..\src\MessagePack\Resolvers\DynamicObjectResolver.cs">
       <Link>Code\DynamicObjectResolver.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Resolvers\DynamicUnionResolver.cs">
+      <Link>Code\DynamicUnionResolver.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\StringEncoding.cs">
       <Link>Code\StringEncoding.cs</Link>
     </Compile>

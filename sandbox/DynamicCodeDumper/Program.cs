@@ -1,4 +1,5 @@
-﻿using MessagePack.Resolvers;
+﻿using MessagePack;
+using MessagePack.Resolvers;
 using SharedData;
 using System;
 using System.Collections.Generic;
@@ -23,8 +24,27 @@ namespace DynamicCodeDumper
             DynamicObjectResolver.Instance.GetFormatter<Callback2>();
             DynamicObjectResolver.Instance.GetFormatter<Callback2_2>();
 
+            DynamicUnionResolver.Instance.GetFormatter<IHogeMoge>();
+            
+
             DynamicObjectResolver.Instance.Save();
+            DynamicUnionResolver.Instance.Save();
             Console.WriteLine("Saved");
         }
     }
+
+    [Union(0, typeof(HogeMoge1))]
+    [Union(1, typeof(HogeMoge2))]
+    public interface IHogeMoge
+    {
+    }
+
+    public class HogeMoge1
+    {
+    }
+
+    public class HogeMoge2
+    {
+    }
+
 }

@@ -358,7 +358,7 @@ namespace Sandbox
             var startOffset = offset;
 
             KeyValuePair<int, int> key;
-            if (value != null && map.TryGetValue(value.GetType(), out key))
+            if (map.TryGetValue(value.GetType(), out key))
             {
                 var headerLen = MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
                 offset += headerLen;

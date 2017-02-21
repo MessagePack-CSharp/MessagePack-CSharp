@@ -106,23 +106,4 @@ namespace MessagePack.Resolvers
             return typeBuilder.CreateTypeInfo();
         }
     }
-
-    // ImageCode of EnumFormatter
-
-    //public enum MyEnum { Apple, Orange }
-
-    //public class EnumFormatter : IMessagePackFormatter<MyEnum>
-    //{
-    //    public int Serialize(ref byte[] bytes, int offset, MyEnum value, IFormatterResolver formatterResolver)
-    //    {
-    //        // use Write*** method and cast underlying enum value.
-    //        return MessagePackBinary.WriteInt32(ref bytes, offset, (int)value);
-    //    }
-
-    //    public MyEnum Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
-    //    {
-    //        // use Read*** method and cast underlying enum value.
-    //        return (MyEnum)MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-    //    }
-    //}
 }
