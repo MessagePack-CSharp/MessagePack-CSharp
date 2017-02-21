@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using MessagePack.Internal;
 using ProtoBuf;
 using SharedData;
-using Test;
 
 namespace Sandbox
 {
@@ -68,7 +67,7 @@ namespace Sandbox
         }
     }
 
-    [MessagePackObject(true)]
+    [MessagePackObject]
     public struct Vector2
     {
         [Key(0)]
@@ -139,61 +138,30 @@ namespace Sandbox
             //Console.WriteLine();
             //Benchmark(l);
 
-
-            var test = MessagePack.MessagePackSerializer.Serialize(new FirstSimpleData { Prop1 = 9, Prop3 = 300, Prop2 = "fdasfa" });
-            Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(test));
-
-
-            MessagePackSerializer.SetDefaultResolver(ComposittedResolver.Instance);
-
-            var v1 = new Version1
             {
-                MyProperty1 = 100,
-                MyProperty2 = 200,
-                MyProperty3 = 300
-            };
-
-            var v2 = new Version2
+                var c1 = new Callback1(0);
+                var d = MessagePackSerializer.Serialize(c1);
+                MessagePackSerializer.Deserialize<Callback1>(d);
+            }
             {
-                MyProperty1 = 100,
-                MyProperty2 = 200,
-                MyProperty3 = 300,
-                MyProperty4 = 400,
-                MyProperty5 = 500,
-            };
-
-            var v0 = new Version0
+                var before = false;
+                var after = false;
+                var c1 = new Callback2(0, () => before = true, () => after = true);
+                var d = MessagePackSerializer.Serialize(c1);
+                MessagePackSerializer.Deserialize<Callback2>(d);
+            }
             {
-                MyProperty1 = 100,
-            };
-
-            var v1Bytes = MessagePackSerializer.Serialize(v1);
-            var v2Bytes = MessagePackSerializer.Serialize(v2);
-            var v0Bytes = MessagePackSerializer.Serialize(v0);
-
-            var a = MessagePackSerializer.ToJson(v1Bytes);
-            var b = MessagePackSerializer.ToJson(v2Bytes);
-            var c = MessagePackSerializer.ToJson(v0Bytes);
-
-
-            // smaller than schema
-            var v2_ = MessagePackSerializer.Deserialize<Version2>(v1Bytes);
- 
-
-            // larger than schema
-
-            var v0_ = MessagePackSerializer.Deserialize<Version0>(v1Bytes);
-
-
-
-            // smaller than schema
-            var v2_default = MessagePackSerializer.Deserialize<Version2>(v1Bytes, DefaultResolver.Instance);
-
-
-            // larger than schema
-
-            var v0_default = MessagePackSerializer.Deserialize<Version0>(v1Bytes, DefaultResolver.Instance);
-
+                var c1 = new Callback1_2(0);
+                var d = MessagePackSerializer.Serialize(c1);
+                //MessagePackSerializer.Deserialize<Callback1_2>(d);
+            }
+            {
+                var before = false;
+                var after = false;
+                var c1 = new Callback2(0, () => before = true, () => after = true);
+                var d = MessagePackSerializer.Serialize(c1);
+            //    MessagePackSerializer.Deserialize<Callback2_2>(d);
+            }
         }
 
         static void Benchmark<T>(T target)

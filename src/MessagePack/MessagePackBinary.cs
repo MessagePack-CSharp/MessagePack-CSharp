@@ -415,6 +415,17 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Unsafe. If value is guranteed 0 ~ MessagePackRange.MaxFixArrayCount(15), can use this method.
+        /// </summary>
+        /// <returns></returns>
+        public static int WriteFixedArrayHeaderUnsafe(ref byte[] bytes, int offset, int count)
+        {
+            EnsureCapacity(ref bytes, offset, 1);
+            bytes[offset] = (byte)(MessagePackCode.MinFixArray | count);
+            return 1;
+        }
+
+        /// <summary>
         /// Write array count.
         /// </summary>
         public static int WriteArrayHeader(ref byte[] bytes, int offset, int count)

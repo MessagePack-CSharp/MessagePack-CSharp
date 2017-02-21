@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SharedData;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -111,7 +112,6 @@ namespace MessagePack.Tests
                 MyProperty1 = 100,
                 MyProperty2 = 200,
                 MyProperty3 = 300,
-                MyProperty4 = 400,
                 MyProperty5 = 500,
             };
 
@@ -136,7 +136,6 @@ namespace MessagePack.Tests
             v2_.MyProperty1.Is(v1.MyProperty1);
             v2_.MyProperty2.Is(v1.MyProperty2);
             v2_.MyProperty3.Is(v1.MyProperty3);
-            v2_.MyProperty4.Is(0);
             v2_.MyProperty5.Is(0);
 
             // larger than schema
@@ -166,7 +165,6 @@ namespace MessagePack.Tests
                     MyProperty1 = 100,
                     MyProperty2 = 200,
                     MyProperty3 = 300,
-                    MyProperty4 = 400,
                     MyProperty5 = 500
                 },
                 After = 99999999
@@ -190,14 +188,52 @@ namespace MessagePack.Tests
             v2_.MyProperty1.MyProperty1.Is(v1.MyProperty1.MyProperty1);
             v2_.MyProperty1.MyProperty2.Is(v1.MyProperty1.MyProperty2);
             v2_.MyProperty1.MyProperty3.Is(v1.MyProperty1.MyProperty3);
-            v2_.MyProperty1.MyProperty4.Is(0);
             v2_.MyProperty1.MyProperty5.Is(0);
             v2_.After.Is(9999);
 
             // larger than schema
+            var v1Json = MessagePackSerializer.ToJson(v1Bytes);
             var v0_ = MessagePackSerializer.Deserialize<HolderV0>(v1Bytes);
             v0_.MyProperty1.MyProperty1.Is(v1.MyProperty1.MyProperty1);
-            v0.After.Is(9999);
+            v0_.After.Is(9999);
+        }
+
+        [Fact]
+        public void SerializationCallback()
+        {
+            {
+                var c1 = new Callback1(0);
+                var d = MessagePackSerializer.Serialize(c1);
+                c1.CalledBefore.IsTrue();
+                MessagePackSerializer.Deserialize<Callback1>(d).CalledAfter.IsTrue();
+            }
+            {
+                var before = false;
+                
+                var c1 = new Callback2(0, () => before = true, () => { });
+                var d = MessagePackSerializer.Serialize(c1);
+                before.IsTrue();
+                Callback2.CalledAfter.IsFalse();
+                MessagePackSerializer.Deserialize<Callback2>(d);
+                Callback2.CalledAfter.IsTrue();
+            }
+            {
+                var c1 = new Callback1_2(0);
+                var d = MessagePackSerializer.Serialize(c1);
+                c1.CalledBefore.IsTrue();
+                MessagePackSerializer.Deserialize<Callback1_2>(d).CalledAfter.IsTrue();
+            }
+            {
+                var before = false;
+                
+                var c1 = new Callback2_2(0, () => before = true, () => { });
+                var d = MessagePackSerializer.Serialize(c1);
+                before.IsTrue();
+
+                Callback2_2.CalledAfter.IsFalse();
+                MessagePackSerializer.Deserialize<Callback2_2>(d);
+                Callback2_2.CalledAfter.IsTrue();
+            }
         }
     }
 }

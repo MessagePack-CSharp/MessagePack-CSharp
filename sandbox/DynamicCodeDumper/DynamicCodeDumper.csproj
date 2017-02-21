@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{8E511130-F838-4B47-842B-0FB27AD175B5}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DynamicCodeDumper</RootNamespace>
+    <AssemblyName>DynamicCodeDumper</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NET_35</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;NET_35</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\MessagePack\FloatBits.cs">
+      <Link>Code\FloatBits.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Formatters\IMessagePackFormatter.cs">
+      <Link>Code\IMessagePackFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Formatters\NullableFormatter.cs">
+      <Link>Code\NullableFormatter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\IFormatterResolver.cs">
+      <Link>Code\IFormatterResolver.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\DynamicAssembly.cs">
+      <Link>Code\DynamicAssembly.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\ILGeneratorExtensions.cs">
+      <Link>Code\ILGeneratorExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\ReflectionExtensions.cs">
+      <Link>Code\ReflectionExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackBinary.cs">
+      <Link>Code\MessagePackBinary.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackCode.cs">
+      <Link>Code\MessagePackCode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Nil.cs">
+      <Link>Code\Nil.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Resolvers\DynamicObjectResolver.cs">
+      <Link>Code\DynamicObjectResolver.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\StringEncoding.cs">
+      <Link>Code\StringEncoding.cs</Link>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SharedData\SharedData.csproj">
+      <Project>{3abc5c4c-2ce4-459e-8666-f2b181c3def3}</Project>
+      <Name>SharedData</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MessagePack.Interfaces\MessagePack.Interfaces.csproj">
+      <Project>{7beb73dc-9106-4507-a5cc-8cd850a24109}</Project>
+      <Name>MessagePack.Interfaces</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

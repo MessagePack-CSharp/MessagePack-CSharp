@@ -65,6 +65,11 @@ namespace MessagePack
                             readSize = ToJsonCore(bytes, offset, builder);
                             offset += readSize;
                             totalReadSize += readSize;
+
+                            if (i != length - 1)
+                            {
+                                builder.Append(",");
+                            }
                         }
                         builder.Append("]");
 

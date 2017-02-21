@@ -15,8 +15,22 @@ namespace MessagePack.Internal
         public DynamicAssembly(string moduleName)
         {
             this.moduleName = moduleName;
+#if NET_35
+            this.assemblyBuilder = System.AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(moduleName), AssemblyBuilderAccess.RunAndSave);
+            this.moduleBuilder = assemblyBuilder.DefineDynamicModule(moduleName, moduleName + ".dll");
+#else
             this.assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(moduleName), AssemblyBuilderAccess.Run);
             this.moduleBuilder = assemblyBuilder.DefineDynamicModule(moduleName);
+#endif
         }
+
+#if NET_35
+
+        public void Save()
+        {
+            assemblyBuilder.Save(moduleName + ".dll");
+        }
+
+#endif
     }
 }

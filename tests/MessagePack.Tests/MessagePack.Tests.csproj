@@ -68,12 +68,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\ChainingAssertion.Ext.cs" />
     <Compile Include="Utils\ChainingAssertion.Xunit.cs" />
-    <Compile Include="_Data.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\SharedData\SharedData.csproj">
+      <Project>{3abc5c4c-2ce4-459e-8666-f2b181c3def3}</Project>
+      <Name>SharedData</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\MessagePack.Interfaces\MessagePack.Interfaces.csproj">
       <Project>{7beb73dc-9106-4507-a5cc-8cd850a24109}</Project>
       <Name>MessagePack.Interfaces</Name>

@@ -13,7 +13,7 @@ namespace MessagePack.Resolvers
     /// </summary>
     public class DynamicObjectResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new DynamicObjectResolver();
+        public static DynamicObjectResolver Instance = new DynamicObjectResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
 
@@ -29,7 +29,14 @@ namespace MessagePack.Resolvers
             assembly = new DynamicAssembly(ModuleName);
         }
 
-        IMessagePackFormatter<T> IFormatterResolver.GetFormatter<T>()
+#if NET_35
+        public void Save()
+        {
+            assembly.Save();
+        }
+#endif
+
+        public IMessagePackFormatter<T> GetFormatter<T>()
         {
             return FormatterCache<T>.formatter;
         }
@@ -139,55 +146,112 @@ namespace MessagePack.Resolvers
                 il.MarkLabel(elseBody);
             }
 
-            var writeCount = info.Members.Count(x => x.IsReadable);
+            // IMessagePackSerializationCallbackReceiver.OnBeforeSerialize()
+            if (type.GetTypeInfo().ImplementedInterfaces.Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
+            {
+                // call directly
+                var runtimeMethods = type.GetRuntimeMethods().Where(x => x.Name == "OnBeforeSerialize").ToArray();
+                if (runtimeMethods.Length == 1)
+                {
+                    if (info.IsStruct)
+                    {
+                        il.EmitLdarga(3);
+                    }
+                    else
+                    {
+                        il.EmitLdarg(3);
+                    }
+                    il.EmitCall(runtimeMethods[0]);
+                }
+                else
+                {
+                    il.EmitLdarg(3);
+                    if (info.IsStruct)
+                    {
+                        il.Emit(OpCodes.Box, type);
+                    }
+                    il.EmitCallvirt(onBeforeSerialize);
+                }
+            }
 
             // var startOffset = offset;
             var startOffsetLocal = il.DeclareLocal(typeof(int)); // [loc:0]
             il.EmitLdarg(2);
             il.EmitStloc(startOffsetLocal);
 
-            // offset += writeHeader
-            EmitOffsetPlusEqual(il, null, () =>
-             {
-                 il.EmitLdc_I4(writeCount);
-                 if (writeCount <= MessagePackRange.MaxFixMapCount)
-                 {
-                     il.EmitCall(MessagePackBinaryTypeInfo.WriteFixedMapHeaderUnsafe);
-                 }
-                 else
-                 {
-                     il.EmitCall(MessagePackBinaryTypeInfo.WriteMapHeader);
-                 }
-             });
-
-            foreach (var item in info.Members.Where(x => x.IsReadable))
+            if (info.IsIntKey)
             {
-                // offset += writekey
-                EmitOffsetPlusEqual(il, null, () =>
-                 {
-                     if (info.IsIntKey)
-                     {
-                         il.EmitLdc_I4(item.IntKey);
-                         if (0 <= item.IntKey && item.IntKey <= MessagePackRange.MaxFixPositiveInt)
-                         {
-                             il.EmitCall(MessagePackBinaryTypeInfo.WritePositiveFixedIntUnsafe);
-                         }
-                         else
-                         {
-                             il.EmitCall(MessagePackBinaryTypeInfo.WriteInt32);
-                         }
-                     }
-                     else
-                     {
-                         // embed string and bytesize
-                         il.Emit(OpCodes.Ldstr, item.StringKey);
-                         il.EmitLdc_I4(StringEncoding.UTF8.GetByteCount(item.StringKey));
-                         il.EmitCall(MessagePackBinaryTypeInfo.WriteStringUnsafe);
-                     }
-                 });
+                // use Array
+                var maxKey = info.Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(0).Max();
+                var intKeyMap = info.Members.Where(x => x.IsReadable).ToDictionary(x => x.IntKey);
 
-                // offset += serializeValue
-                EmitSerializeValue(il, type.GetTypeInfo(), item);
+                EmitOffsetPlusEqual(il, null, () =>
+                {
+                    var len = maxKey + 1;
+                    il.EmitLdc_I4(len);
+                    if (len <= MessagePackRange.MaxFixArrayCount)
+                    {
+                        il.EmitCall(MessagePackBinaryTypeInfo.WriteFixedArrayHeaderUnsafe);
+                    }
+                    else
+                    {
+                        il.EmitCall(MessagePackBinaryTypeInfo.WriteArrayHeader);
+                    }
+                });
+
+                for (int i = 0; i <= maxKey; i++)
+                {
+                    ObjectSerializationInfo.EmittableMember member;
+                    if (intKeyMap.TryGetValue(i, out member))
+                    {
+                        // offset += serialzie
+                        EmitSerializeValue(il, type.GetTypeInfo(), member);
+                    }
+                    else
+                    {
+                        // Write Nil as Blanc
+                        EmitOffsetPlusEqual(il, null, () =>
+                        {
+                            il.EmitCall(MessagePackBinaryTypeInfo.WriteNil);
+                        });
+                    }
+                }
+            }
+            else
+            {
+                // use Map
+                var writeCount = info.Members.Count(x => x.IsReadable);
+
+                EmitOffsetPlusEqual(il, null, () =>
+                {
+                    il.EmitLdc_I4(writeCount);
+                    if (writeCount <= MessagePackRange.MaxFixMapCount)
+                    {
+                        il.EmitCall(MessagePackBinaryTypeInfo.WriteFixedMapHeaderUnsafe);
+                    }
+                    else
+                    {
+                        il.EmitCall(MessagePackBinaryTypeInfo.WriteMapHeader);
+                    }
+                });
+
+                foreach (var item in info.Members.Where(x => x.IsReadable))
+                {
+                    // offset += writekey
+                    if (info.IsStringKey)
+                    {
+                        EmitOffsetPlusEqual(il, null, () =>
+                        {
+                            // embed string and bytesize
+                            il.Emit(OpCodes.Ldstr, item.StringKey);
+                            il.EmitLdc_I4(StringEncoding.UTF8.GetByteCount(item.StringKey));
+                            il.EmitCall(MessagePackBinaryTypeInfo.WriteStringUnsafe);
+                        });
+                    }
+
+                    // offset += serialzie
+                    EmitSerializeValue(il, type.GetTypeInfo(), item);
+                }
             }
 
             // return startOffset- offset;
@@ -267,8 +331,6 @@ namespace MessagePack.Resolvers
             }
             else
             {
-                typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(string); });
-
                 il.Emit(OpCodes.Ldstr, "typecode is null, struct not supported");
                 il.Emit(OpCodes.Newobj, invalidOperationExceptionConstructor);
                 il.Emit(OpCodes.Throw);
@@ -285,43 +347,79 @@ namespace MessagePack.Resolvers
             il.EmitLdarg(1);
             il.EmitLdarg(2);
             il.EmitLdarg(4);
-            il.EmitCall(MessagePackBinaryTypeInfo.ReadMapHeader);
+
+            if (info.IsIntKey)
+            {
+                il.EmitCall(MessagePackBinaryTypeInfo.ReadArrayHeader);
+            }
+            else
+            {
+                il.EmitCall(MessagePackBinaryTypeInfo.ReadMapHeader);
+            }
             il.EmitStloc(length);
             EmitOffsetPlusReadSize(il);
 
             // make local fields
-            DeserializeInfo[] intList = null;
-            var temp = new List<DeserializeInfo>();
-            foreach (var item in info.Members)
+            Label? gotoDefault = null;
+            DeserializeInfo[] infoList;
+            if (info.IsIntKey)
             {
-                temp.Add(new DeserializeInfo
-                {
-                    MemberInfo = item,
-                    LocalField = il.DeclareLocal(item.Type),
-                    SwitchLabel = il.DefineLabel()
-                });
+                var maxKey = info.Members.Select(x => x.IntKey).DefaultIfEmpty(0).Max();
+                var len = maxKey + 1;
+                var intKeyMap = info.Members.ToDictionary(x => x.IntKey);
+
+                infoList = Enumerable.Range(0, len)
+                    .Select(x =>
+                    {
+                        ObjectSerializationInfo.EmittableMember member;
+                        if (intKeyMap.TryGetValue(x, out member))
+                        {
+                            return new DeserializeInfo
+                            {
+                                MemberInfo = member,
+                                LocalField = il.DeclareLocal(member.Type),
+                                SwitchLabel = il.DefineLabel()
+                            };
+                        }
+                        else
+                        {
+                            // return null MemberInfo, should filter null
+                            if (gotoDefault == null)
+                            {
+                                gotoDefault = il.DefineLabel();
+                            }
+                            return new DeserializeInfo
+                            {
+                                MemberInfo = null,
+                                LocalField = null,
+                                SwitchLabel = gotoDefault.Value,
+                            };
+                        }
+                    })
+                    .ToArray();
             }
-            intList = temp.ToArray();
+            else
+            {
+                infoList = info.Members
+                    .Select(item => new DeserializeInfo
+                    {
+                        MemberInfo = item,
+                        LocalField = il.DeclareLocal(item.Type),
+                        SwitchLabel = il.DefineLabel()
+                    })
+                    .ToArray();
+            }
+
 
             // Read Loop(for var i = 0; i< length; i++)
             {
                 var key = il.DeclareLocal(typeof(int));
-                var loopEnd = il.DefineLabel();
                 var switchDefault = il.DefineLabel();
+                var loopEnd = il.DefineLabel();
                 var stringKeyTrue = il.DefineLabel();
                 il.EmitIncrementFor(length, forILocal =>
                 {
-                    if (info.IsIntKey)
-                    {
-                        // key = Deserialize, offset += readSize;
-                        il.EmitLdarg(1);
-                        il.EmitLdarg(2);
-                        il.EmitLdarg(4);
-                        il.EmitCall(MessagePackBinaryTypeInfo.ReadInt32);
-                        il.EmitStloc(key);
-                        EmitOffsetPlusReadSize(il);
-                    }
-                    else
+                    if (info.IsStringKey)
                     {
                         // get string key -> dictionary lookup
                         il.EmitLdarg(0);
@@ -344,18 +442,17 @@ namespace MessagePack.Resolvers
 
                         il.MarkLabel(stringKeyTrue);
                     }
+                    else
+                    {
+                        il.EmitLdloc(forILocal);
+                        il.EmitStloc(key);
+                    }
 
                     // switch... local = Deserialize
                     il.EmitLdloc(key);
 
-                    // TODO:Jump-Table only supports sequential IntKey, currently buggy, should fix.
-                    il.Emit(OpCodes.Switch, intList.Select(x => x.SwitchLabel).ToArray());
-                    foreach (var item in intList)
-                    {
-                        il.MarkLabel(item.SwitchLabel);
-                        EmitDeserializeValue(il, item);
-                        il.Emit(OpCodes.Br, loopEnd);
-                    }
+                    il.Emit(OpCodes.Switch, infoList.Select(x => x.SwitchLabel).ToArray());
+
                     il.MarkLabel(switchDefault);
                     // default, only read. readSize = MessagePackBinary.ReadNext(bytes, offset);
                     il.EmitLdarg(4);
@@ -364,6 +461,22 @@ namespace MessagePack.Resolvers
                     il.EmitCall(MessagePackBinaryTypeInfo.ReadNext);
                     il.Emit(OpCodes.Stind_I4);
                     il.Emit(OpCodes.Br, loopEnd);
+
+                    if (gotoDefault != null)
+                    {
+                        il.MarkLabel(gotoDefault.Value);
+                        il.Emit(OpCodes.Br, switchDefault);
+                    }
+
+                    foreach (var item in infoList)
+                    {
+                        if (item.MemberInfo != null)
+                        {
+                            il.MarkLabel(item.SwitchLabel);
+                            EmitDeserializeValue(il, item);
+                            il.Emit(OpCodes.Br, loopEnd);
+                        }
+                    }
 
                     // offset += readSize
                     il.MarkLabel(loopEnd);
@@ -379,7 +492,45 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Stind_I4);
 
             // create result object
-            EmitNewObject(il, type, info, intList);
+            var structLocal = EmitNewObject(il, type, info, infoList);
+
+            // IMessagePackSerializationCallbackReceiver.OnAfterDeserialize()
+            if (type.GetTypeInfo().ImplementedInterfaces.Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
+            {
+                // call directly
+                var runtimeMethods = type.GetRuntimeMethods().Where(x => x.Name == "OnAfterDeserialize").ToArray();
+                if (runtimeMethods.Length == 1)
+                {
+                    if (info.IsClass)
+                    {
+                        il.Emit(OpCodes.Dup);
+                    }
+                    else
+                    {
+                        il.EmitLdloca(structLocal);
+                    }
+                    il.EmitCall(runtimeMethods[0]);
+                }
+                else
+                {
+                    if (info.IsStruct)
+                    {
+                        il.EmitLdloc(structLocal);
+                        il.Emit(OpCodes.Box, type);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Dup);
+                    }
+                    il.EmitCallvirt(onAfterDeserialize);
+                }
+            }
+
+            if (info.IsStruct)
+            {
+                il.Emit(OpCodes.Ldloc, structLocal);
+            }
+
 
             il.Emit(OpCodes.Ret);
         }
@@ -425,7 +576,7 @@ namespace MessagePack.Resolvers
             il.EmitStloc(info.LocalField);
         }
 
-        static void EmitNewObject(ILGenerator il, Type type, ObjectSerializationInfo info, DeserializeInfo[] members)
+        static LocalBuilder EmitNewObject(ILGenerator il, Type type, ObjectSerializationInfo info, DeserializeInfo[] members)
         {
             if (info.IsClass)
             {
@@ -436,12 +587,14 @@ namespace MessagePack.Resolvers
                 }
                 il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
 
-                foreach (var item in members.Where(x => x.MemberInfo.IsWritable))
+                foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
                 {
                     il.Emit(OpCodes.Dup);
                     il.EmitLdloc(item.LocalField);
                     item.MemberInfo.EmitStoreValue(il);
                 }
+
+                return null;
             }
             else
             {
@@ -462,14 +615,14 @@ namespace MessagePack.Resolvers
                     il.Emit(OpCodes.Stloc, result);
                 }
 
-                foreach (var item in members.Where(x => x.MemberInfo.IsWritable))
+                foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
                 {
                     il.EmitLdloca(result);
                     il.EmitLdloc(item.LocalField);
                     item.MemberInfo.EmitStoreValue(il);
                 }
 
-                il.Emit(OpCodes.Ldloc, result);
+                return result; // struct returns local result field
             }
         }
 
@@ -485,12 +638,17 @@ namespace MessagePack.Resolvers
         static readonly MethodInfo dictionaryTryGetValue = typeof(Dictionary<string, int>).GetRuntimeMethod("TryGetValue", new[] { typeof(string), refInt });
         static readonly ConstructorInfo invalidOperationExceptionConstructor = typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(string); });
 
+        static readonly MethodInfo onBeforeSerialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnBeforeSerialize", Type.EmptyTypes);
+        static readonly MethodInfo onAfterDeserialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnAfterDeserialize", Type.EmptyTypes);
+
         static class MessagePackBinaryTypeInfo
         {
             public static TypeInfo TypeInfo = typeof(MessagePackBinary).GetTypeInfo();
 
             public static MethodInfo WriteFixedMapHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedMapHeaderUnsafe", new[] { refByte, typeof(int), typeof(int) });
+            public static MethodInfo WriteFixedArrayHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedArrayHeaderUnsafe", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("WriteMapHeader", new[] { refByte, typeof(int), typeof(int) });
+            public static MethodInfo WriteArrayHeader = typeof(MessagePackBinary).GetRuntimeMethod("WriteArrayHeader", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WritePositiveFixedIntUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WritePositiveFixedIntUnsafe", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteInt32 = typeof(MessagePackBinary).GetRuntimeMethod("WriteInt32", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteBytes = typeof(MessagePackBinary).GetRuntimeMethod("WriteBytes", new[] { refByte, typeof(int), typeof(byte[]) });
@@ -502,6 +660,7 @@ namespace MessagePack.Resolvers
             public static MethodInfo ReadNext = typeof(MessagePackBinary).GetRuntimeMethod("ReadNext", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo WriteStringUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringUnsafe", new[] { refByte, typeof(int), typeof(string), typeof(int) });
 
+            public static MethodInfo ReadArrayHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadArrayHeader", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo ReadMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadMapHeader", new[] { typeof(byte[]), typeof(int), refInt });
 
             static MessagePackBinaryTypeInfo()
