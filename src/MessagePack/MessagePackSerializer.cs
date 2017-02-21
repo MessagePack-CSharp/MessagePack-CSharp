@@ -145,8 +145,6 @@ namespace MessagePack
 
             return length;
         }
-
-        // TODO:NonGeneric API
     }
 }
 

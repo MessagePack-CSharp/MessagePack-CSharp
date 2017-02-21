@@ -315,4 +315,103 @@ namespace Sandbox
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
         }
     }
+
+
+
+
+
+    // design concept sketch of Union.
+
+    [MessagePack.Union(0, typeof(HogeMoge1))]
+    [MessagePack.Union(1, typeof(HogeMoge2))]
+    public interface IHogeMoge
+    {
+    }
+
+    public class HogeMoge1
+    {
+    }
+
+    public class HogeMoge2
+    {
+    }
+
+
+    public class HogeMogeFormatter : IMessagePackFormatter<IHogeMoge>
+    {
+        // Type to Key...
+        static readonly Dictionary<Type, KeyValuePair<int, int>> map = new Dictionary<Type, KeyValuePair<int, int>>
+        {
+            {typeof(HogeMoge1), new KeyValuePair<int,int>(0,0) },
+            {typeof(HogeMoge2), new KeyValuePair<int,int>(1,1) },
+        };
+
+        // If 0~10 don't need it.
+        static readonly Dictionary<int, int> keyToJumpTable = new Dictionary<int, int>
+        {
+            {0, 0 },
+            {1, 1 },
+        };
+
+        public int Serialize(ref byte[] bytes, int offset, IHogeMoge value, IFormatterResolver formatterResolver)
+        {
+            var startOffset = offset;
+
+            KeyValuePair<int, int> key;
+            if (value != null && map.TryGetValue(value.GetType(), out key))
+            {
+                var headerLen = MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += headerLen;
+                var keyLength = MessagePackBinary.WriteInt32(ref bytes, offset, key.Key);
+                headerLen += keyLength;
+
+                switch (key.Value)
+                {
+                    case 0:
+                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref bytes, offset, (HogeMoge1)value, formatterResolver);
+                        break;
+                    case 1:
+                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref bytes, offset, (HogeMoge2)value, formatterResolver);
+                        break;
+                    default:
+                        break;
+                }
+
+                return offset - startOffset;
+            }
+
+            return MessagePackBinary.WriteNil(ref bytes, offset);
+        }
+
+        public IHogeMoge Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            // TODO:array header...
+
+            int keySize;
+            int valueSize;
+            var key = MessagePackBinary.ReadInt32(bytes, offset, out keySize);
+
+            switch (key)
+            {
+                case 0:
+                    {
+                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge1>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize);
+                        readSize = keySize + valueSize;
+                        return (IHogeMoge)result;
+                    }
+                case 1:
+                    {
+                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge2>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize);
+                        readSize = keySize + valueSize;
+                        return (IHogeMoge)result;
+                    }
+                default:
+                    {
+
+                        throw new NotImplementedException();
+                    }
+            }
+
+        }
+    }
 }

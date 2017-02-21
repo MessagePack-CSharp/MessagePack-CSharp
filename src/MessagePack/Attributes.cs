@@ -35,28 +35,17 @@ namespace MessagePack
     {
     }
 
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true, Inherited = false)]
     public class UnionAttribute : Attribute
     {
-        public Type[] SubTypes { get; private set; }
-        public Type FallbackType { get; private set; }
+        public int Key { get; private set; }
+        public Type SubType { get; private set; }
 
-        public UnionAttribute(params Type[] subTypes)
+        public UnionAttribute(int key, Type subType)
         {
-            this.SubTypes = subTypes;
+            this.Key = key;
+            this.SubType = subType;
         }
-
-        public UnionAttribute(Type[] subTypes, Type fallbackType)
-        {
-            this.SubTypes = subTypes;
-            this.FallbackType = fallbackType;
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class UnionKeyAttribute : Attribute
-    {
-
     }
 
     [AttributeUsage(AttributeTargets.Constructor, AllowMultiple = false, Inherited = true)]
