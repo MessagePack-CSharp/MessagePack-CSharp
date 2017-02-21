@@ -62,6 +62,8 @@ namespace MessagePack.Internal
               {typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryFormatter<,>)},
               {typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>)},
               {typeof(System.Collections.Concurrent.ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>)},
+              {typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>)},
+              {typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>)},
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)

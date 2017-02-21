@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace MessagePack.Formatters
 {
@@ -136,7 +138,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                // Optimize iteration(array is fastest, Unity's forach List<T>.Enumerator is slow)
+                // Optimize iteration(array is fastest)
                 var array = value as TElement[];
                 if (array != null && typeof(TElement) != typeof(byte)) // ByteArrayFormatter is special, should not use
                 {
@@ -153,6 +155,7 @@ namespace MessagePack.Formatters
                     {
                         offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, seqCount.Value);
 
+                        // Unity's foreach List<T>.Enumerator is slow, avoid use iterator.
                         var list = value as List<TElement>;
                         if (list != null)
                         {
@@ -163,6 +166,7 @@ namespace MessagePack.Formatters
                         }
                         else
                         {
+                            // Some collections can use struct iterator, more chance for optimization?
                             foreach (var item in value)
                             {
                                 offset += formatter.Serialize(ref bytes, offset, item, formatterResolver);
@@ -550,6 +554,141 @@ namespace MessagePack.Formatters
         protected override ConcurrentStack<T> Constructor(int count)
         {
             return new ConcurrentStack<T>();
+        }
+    }
+
+    // [Key, [Array]]
+    public class InterfaceGroupingFormatter<TKey, TElement> : IMessagePackFormatter<IGrouping<TKey, TElement>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, IGrouping<TKey, TElement> value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
+                offset += formatterResolver.GetFormatterWithVerify<TKey>().Serialize(ref bytes, offset, value.Key, formatterResolver);
+                offset += formatterResolver.GetFormatterWithVerify<IEnumerable<TElement>>().Serialize(ref bytes, offset, value, formatterResolver);
+                return offset - startOffset;
+            }
+        }
+
+        public IGrouping<TKey, TElement> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+                var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+
+                if (count != 2) throw new InvalidOperationException("Invalid Grouping format.");
+
+                var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
+
+                var value = formatterResolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
+
+                readSize = offset - startOffset;
+                return new Grouping<TKey, TElement>(key, value);
+            }
+        }
+    }
+
+    public class InterfaceLookupFormatter<TKey, TElement> : SequneceFormatterBase<IGrouping<TKey, TElement>, Dictionary<TKey, IGrouping<TKey, TElement>>, ILookup<TKey, TElement>>
+    {
+        protected override void Add(Dictionary<TKey, IGrouping<TKey, TElement>> collection, int index, IGrouping<TKey, TElement> value)
+        {
+            collection.Add(value.Key, value);
+        }
+
+        protected override ILookup<TKey, TElement> Complete(Dictionary<TKey, IGrouping<TKey, TElement>> intermediateCollection)
+        {
+            return new Lookup<TKey, TElement>(intermediateCollection);
+        }
+
+        protected override Dictionary<TKey, IGrouping<TKey, TElement>> Constructor(int count)
+        {
+            return new Dictionary<TKey, IGrouping<TKey, TElement>>(count);
+        }
+    }
+
+    class Grouping<TKey, TElement> : IGrouping<TKey, TElement>
+    {
+        readonly TKey key;
+        readonly IEnumerable<TElement> elements;
+
+        public Grouping(TKey key, IEnumerable<TElement> elements)
+        {
+            this.key = key;
+            this.elements = elements;
+        }
+
+        public TKey Key
+        {
+            get
+            {
+                return key;
+            }
+        }
+
+        public IEnumerator<TElement> GetEnumerator()
+        {
+            return elements.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return elements.GetEnumerator();
+        }
+    }
+
+    class Lookup<TKey, TElement> : ILookup<TKey, TElement>
+    {
+        readonly Dictionary<TKey, IGrouping<TKey, TElement>> groupings;
+
+        public Lookup(Dictionary<TKey, IGrouping<TKey, TElement>> groupings)
+        {
+            this.groupings = groupings;
+        }
+
+        public IEnumerable<TElement> this[TKey key]
+        {
+            get
+            {
+                return groupings[key];
+            }
+        }
+
+        public int Count
+        {
+            get
+            {
+                return groupings.Count;
+            }
+        }
+
+        public bool Contains(TKey key)
+        {
+            return groupings.ContainsKey(key);
+        }
+
+        public IEnumerator<IGrouping<TKey, TElement>> GetEnumerator()
+        {
+            return groupings.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return groupings.Values.GetEnumerator();
         }
     }
 }

@@ -45,11 +45,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\MessagePack.Interfaces\MessagePack.Interfaces.csproj">
-      <Project>{7beb73dc-9106-4507-a5cc-8cd850a24109}</Project>
-      <Name>MessagePack.Interfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\src\MessagePack\MessagePack.csproj">
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">
       <Project>{7abb33ee-a2f1-492b-8daf-5df89f0f0b79}</Project>
       <Name>MessagePack</Name>
     </ProjectReference>

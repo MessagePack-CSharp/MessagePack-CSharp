@@ -27,6 +27,7 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
+                // Reduce IL2CPP code generate size(don't write long code in <T>)
                 formatter = (IMessagePackFormatter<T>)BuiltinResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
@@ -37,196 +38,71 @@ namespace MessagePack.Internal
 {
     internal static class BuiltinResolverGetFormatterHelper
     {
-        // Reduce IL2CPP code generate size(don't write long code in <T>)
+        static readonly Dictionary<Type, object> formatterMap = new Dictionary<Type, object>()
+        {
+            // Primitive
+            {typeof(Int16), Int16Formatter.Instance},
+            {typeof(Int32), Int32Formatter.Instance},
+            {typeof(Int64), Int64Formatter.Instance},
+            {typeof(UInt16), UInt16Formatter.Instance},
+            {typeof(UInt32), UInt32Formatter.Instance},
+            {typeof(UInt64), UInt64Formatter.Instance},
+            {typeof(Single), SingleFormatter.Instance},
+            {typeof(Double), DoubleFormatter.Instance},
+            {typeof(bool), BooleanFormatter.Instance},
+            {typeof(byte), ByteFormatter.Instance},
+            {typeof(sbyte), SByteFormatter.Instance},
+            {typeof(DateTime), DateTimeFormatter.Instance},
+            {typeof(char), CharFormatter.Instance},
+            
+            // Nulllable Primitive
+            {typeof(Nullable<Int16>), NullableInt16Formatter.Instance},
+            {typeof(Nullable<Int32>), NullableInt32Formatter.Instance},
+            {typeof(Nullable<Int64>), NullableInt64Formatter.Instance},
+            {typeof(Nullable<UInt16>), NullableUInt16Formatter.Instance},
+            {typeof(Nullable<UInt32>), NullableUInt32Formatter.Instance},
+            {typeof(Nullable<UInt64>), NullableUInt64Formatter.Instance},
+            {typeof(Nullable<Single>), NullableSingleFormatter.Instance},
+            {typeof(Nullable<Double>), NullableDoubleFormatter.Instance},
+            {typeof(Nullable<bool>), NullableBooleanFormatter.Instance},
+            {typeof(Nullable<byte>), NullableByteFormatter.Instance},
+            {typeof(Nullable<sbyte>), NullableSByteFormatter.Instance},
+            {typeof(Nullable<DateTime>), NullableDateTimeFormatter.Instance},
+            {typeof(Nullable<char>), NullableCharFormatter.Instance},
+            
+            // StandardClassLibraryFormatter
+            {typeof(string), NullableStringFormatter.Instance},
+            {typeof(decimal), DecimalFormatter.Instance},
+            {typeof(decimal?), new StaticNullableFormatter<decimal>(DecimalFormatter.Instance)},
+            {typeof(TimeSpan), TimeSpanFormatter.Instance},
+            {typeof(TimeSpan?), new StaticNullableFormatter<TimeSpan>(TimeSpanFormatter.Instance)},
+            {typeof(DateTimeOffset), DateTimeOffsetFormatter.Instance},
+            {typeof(DateTimeOffset?), new StaticNullableFormatter<DateTimeOffset>(DateTimeOffsetFormatter.Instance)},
+            {typeof(Guid), GuidFormatter.Instance},
+            {typeof(Guid?), new StaticNullableFormatter<Guid>(GuidFormatter.Instance)},
+            {typeof(Uri), UriFormatter.Instance},
+            {typeof(Version), VersionFormatter.Instance},
+            
+            // special primitive
+            {typeof(byte[]), ByteArrayFormatter.Instance},
+            
+            // Nil
+            {typeof(Nil), NilFormatter.Instance},
+            {typeof(Nil?), NullableNilFormatter.Instance},
+            
+            // NET40
+            {typeof(System.Numerics.BigInteger), BigIntegerFormatter.Instance},
+            {typeof(System.Numerics.BigInteger?), new StaticNullableFormatter<System.Numerics.BigInteger>(BigIntegerFormatter.Instance)},
+            {typeof(System.Numerics.Complex), ComplexFormatter.Instance},
+            {typeof(System.Numerics.Complex?), new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance)},
+        };
+
         internal static object GetFormatter(Type t)
         {
-            var ti = t.GetTypeInfo();
-
-            // Primitive
-            if (t == typeof(Int16))
+            object formatter;
+            if (formatterMap.TryGetValue(t, out formatter))
             {
-                return Int16Formatter.Instance;
-            }
-            else if (t == typeof(Int32))
-            {
-                return Int32Formatter.Instance;
-            }
-            else if (t == typeof(Int64))
-            {
-                return Int64Formatter.Instance;
-            }
-            else if (t == typeof(UInt16))
-            {
-                return UInt16Formatter.Instance;
-            }
-            else if (t == typeof(UInt32))
-            {
-                return UInt32Formatter.Instance;
-            }
-            else if (t == typeof(UInt64))
-            {
-                return UInt64Formatter.Instance;
-            }
-            else if (t == typeof(Single))
-            {
-                return SingleFormatter.Instance;
-            }
-            else if (t == typeof(Double))
-            {
-                return DoubleFormatter.Instance;
-            }
-            else if (t == typeof(bool))
-            {
-                return BooleanFormatter.Instance;
-            }
-            else if (t == typeof(byte))
-            {
-                return ByteFormatter.Instance;
-            }
-            else if (t == typeof(sbyte))
-            {
-                return SByteFormatter.Instance;
-            }
-            else if (t == typeof(DateTime))
-            {
-                return DateTimeFormatter.Instance;
-            }
-            else if (t == typeof(char))
-            {
-                return CharFormatter.Instance;
-            }
-            // Nulllable Primitive
-            else if (t == typeof(Nullable<Int16>))
-            {
-                return NullableInt16Formatter.Instance;
-            }
-            else if (t == typeof(Nullable<Int32>))
-            {
-                return NullableInt32Formatter.Instance;
-            }
-            else if (t == typeof(Nullable<Int64>))
-            {
-                return NullableInt64Formatter.Instance;
-            }
-            else if (t == typeof(Nullable<UInt16>))
-            {
-                return NullableUInt16Formatter.Instance;
-            }
-            else if (t == typeof(Nullable<UInt32>))
-            {
-                return NullableUInt32Formatter.Instance;
-            }
-            else if (t == typeof(Nullable<UInt64>))
-            {
-                return NullableUInt64Formatter.Instance;
-            }
-            else if (t == typeof(Nullable<Single>))
-            {
-                return NullableSingleFormatter.Instance;
-            }
-            else if (t == typeof(Nullable<Double>))
-            {
-                return NullableDoubleFormatter.Instance;
-            }
-            else if (t == typeof(Nullable<bool>))
-            {
-                return NullableBooleanFormatter.Instance;
-            }
-            else if (t == typeof(Nullable<byte>))
-            {
-                return NullableByteFormatter.Instance;
-            }
-            else if (t == typeof(Nullable<sbyte>))
-            {
-                return NullableSByteFormatter.Instance;
-            }
-            else if (t == typeof(Nullable<DateTime>))
-            {
-                return NullableDateTimeFormatter.Instance;
-            }
-            else if (t == typeof(Nullable<char>))
-            {
-                return NullableCharFormatter.Instance;
-            }
-
-            // StandardClassLibraryFormatter
-            else if (t == typeof(string))
-            {
-                return NullableStringFormatter.Instance;
-            }
-            else if (t == typeof(decimal))
-            {
-                return DecimalFormatter.Instance;
-            }
-            else if (t == typeof(decimal?))
-            {
-                return new StaticNullableFormatter<decimal>(DecimalFormatter.Instance);
-            }
-            else if (t == typeof(TimeSpan))
-            {
-                return TimeSpanFormatter.Instance;
-            }
-            else if (t == typeof(TimeSpan?))
-            {
-                return new StaticNullableFormatter<TimeSpan>(TimeSpanFormatter.Instance);
-            }
-            else if (t == typeof(DateTimeOffset))
-            {
-                return DateTimeOffsetFormatter.Instance;
-            }
-            else if (t == typeof(DateTimeOffset?))
-            {
-                return new StaticNullableFormatter<DateTimeOffset>(DateTimeOffsetFormatter.Instance);
-            }
-            else if (t == typeof(Guid))
-            {
-                return GuidFormatter.Instance;
-            }
-            else if (t == typeof(Guid?))
-            {
-                return new StaticNullableFormatter<Guid>(GuidFormatter.Instance);
-            }
-            else if (t == typeof(Uri))
-            {
-                return UriFormatter.Instance;
-            }
-            else if (t == typeof(Version))
-            {
-                return VersionFormatter.Instance;
-            }
-
-            // special primitive
-            else if (t == typeof(byte[]))
-            {
-                return ByteArrayFormatter.Instance;
-            }
-
-            // Nil
-            else if (t == typeof(Nil))
-            {
-                return NilFormatter.Instance;
-            }
-            else if (t == typeof(Nil?))
-            {
-                return NullableNilFormatter.Instance;
-            }
-
-            // NET40
-            else if (t == typeof(System.Numerics.BigInteger))
-            {
-                return BigIntegerFormatter.Instance;
-            }
-            else if (t == typeof(System.Numerics.BigInteger?))
-            {
-                return new StaticNullableFormatter<System.Numerics.BigInteger>(BigIntegerFormatter.Instance);
-            }
-            else if (t == typeof(System.Numerics.Complex))
-            {
-                return ComplexFormatter.Instance;
-            }
-            else if (t == typeof(System.Numerics.Complex?))
-            {
-                return new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance);
+                return formatter;
             }
 
             return null;

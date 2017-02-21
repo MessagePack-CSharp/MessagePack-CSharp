@@ -179,9 +179,9 @@ namespace Sandbox
             };
             Person[] l = Enumerable.Range(1, 100).Select(x => new Person { Age = x, FirstName = "Windows", LastName = "Server", Sex = Sex.Female }).ToArray();
 
-            //Benchmark(p);
-            //Console.WriteLine();
-            //Benchmark(l);
+            Benchmark(p);
+            Console.WriteLine();
+            Benchmark(l);
 
             //var json = MessagePackSerializer.ToJson(MessagePackSerializer.NonGeneric.Serialize(typeof(Person), p));
             //Console.WriteLine(json);
@@ -191,14 +191,13 @@ namespace Sandbox
 
 
             //var huga = MessagePackSerializer.Serialize(a);
+            //var l2 = Enumerable.Range(1, 10).ToLookup(x => x % 2 == 0);
+            //var b = MessagePackSerializer.Serialize(l2);
+            //MessagePackSerializer.Deserialize<ILookup<bool, int>>(b);
+            //Console.WriteLine(MessagePackSerializer.ToJson(b));
 
-            IList<int> seq = new int[] { 1, 2, 3 };
-            var bytes = MessagePackSerializer.Serialize(seq);
-            Console.WriteLine(string.Join(",", bytes));
-            Console.WriteLine(MessagePackSerializer.ToJson(seq));
-
-
-
+            Console.WriteLine("Press key to exit.");
+            Console.ReadLine();
         }
 
         static void Benchmark<T>(T target)

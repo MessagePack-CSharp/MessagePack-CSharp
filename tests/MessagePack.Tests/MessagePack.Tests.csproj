@@ -75,13 +75,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\SharedData\SharedData.csproj">
+    <ProjectReference Include="..\..\sandbox\SharedData\SharedData.csproj">
       <Project>{3abc5c4c-2ce4-459e-8666-f2b181c3def3}</Project>
       <Name>SharedData</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\src\MessagePack.Interfaces\MessagePack.Interfaces.csproj">
-      <Project>{7beb73dc-9106-4507-a5cc-8cd850a24109}</Project>
-      <Name>MessagePack.Interfaces</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">
       <Project>{7abb33ee-a2f1-492b-8daf-5df89f0f0b79}</Project>

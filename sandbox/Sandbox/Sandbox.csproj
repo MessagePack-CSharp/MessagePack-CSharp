@@ -17,9 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\SharedData\SharedData.csproj" />
-    <ProjectReference Include="..\..\src\MessagePack.Interfaces\MessagePack.Interfaces.csproj" />
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\SharedData\SharedData.csproj" />
   </ItemGroup>
 
 </Project>
