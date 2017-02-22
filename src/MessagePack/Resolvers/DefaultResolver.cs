@@ -14,9 +14,7 @@ namespace MessagePack.Resolvers
             BuiltinResolver.Instance, // Try Builtin
             DynamicEnumResolver.Instance, // Try Enum
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
-            // Try Union
-            
-
+            DynamicUnionResolver.Instance,
             DynamicObjectResolver.Instance // Try Object
         };
 

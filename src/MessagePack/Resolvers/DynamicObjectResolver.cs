@@ -301,7 +301,7 @@ namespace MessagePack.Resolvers
                 EmitOffsetPlusEqual(il, () =>
                 {
                     il.EmitLdarg(4);
-                    il.EmitCallvirt(rawGetFormatter.MakeGenericMethod(t));
+                    il.Emit(OpCodes.Call, getFormatterWithVerify.MakeGenericMethod(t));
                 }, () =>
                 {
                     il.EmitLoadArg(type, 3);
@@ -565,7 +565,7 @@ namespace MessagePack.Resolvers
             else
             {
                 il.EmitLdarg(3);
-                il.EmitCallvirt(rawGetFormatter.MakeGenericMethod(t));
+                il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
                 il.EmitLdarg(1);
                 il.EmitLdarg(2);
                 il.EmitLdarg(3);
@@ -630,7 +630,7 @@ namespace MessagePack.Resolvers
 
         static readonly Type refByte = typeof(byte[]).MakeByRefType();
         static readonly Type refInt = typeof(int).MakeByRefType();
-        static readonly MethodInfo rawGetFormatter = typeof(IFormatterResolver).GetRuntimeMethod("GetFormatter", Type.EmptyTypes);
+        static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == "GetFormatterWithVerify");
         static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Serialize", new[] { refByte, typeof(int), t, typeof(IFormatterResolver) });
         static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Deserialize", new[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), refInt });
         static readonly ConstructorInfo dictionaryConstructor = typeof(Dictionary<string, int>).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });

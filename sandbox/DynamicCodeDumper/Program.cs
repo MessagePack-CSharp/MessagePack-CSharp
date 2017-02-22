@@ -20,16 +20,24 @@ namespace DynamicCodeDumper
             DynamicObjectResolver.Instance.GetFormatter<Vector2>();
             // DynamicObjectResolver.Instance.GetFormatter<Vector2_String>();
             DynamicObjectResolver.Instance.GetFormatter<Callback1>();
-            DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
+            var f1 = DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
             DynamicObjectResolver.Instance.GetFormatter<Callback2>();
             DynamicObjectResolver.Instance.GetFormatter<Callback2_2>();
 
             DynamicUnionResolver.Instance.GetFormatter<IHogeMoge>();
+            var f = DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
+            DynamicUnionResolver.Instance.GetFormatter<IUnionChecker2>();
             
 
             DynamicObjectResolver.Instance.Save();
             DynamicUnionResolver.Instance.Save();
             Console.WriteLine("Saved");
+
+            var mii =f.GetType().GetMethods();
+
+            byte[] xs = null;
+            var huga = f.Serialize(ref xs, 0,new MySubUnion1(), DynamicUnionResolver.Instance);
+            Console.WriteLine(huga);
         }
     }
 
@@ -39,11 +47,11 @@ namespace DynamicCodeDumper
     {
     }
 
-    public class HogeMoge1
+    public class HogeMoge1 : IHogeMoge
     {
     }
 
-    public class HogeMoge2
+    public class HogeMoge2: IHogeMoge
     {
     }
 

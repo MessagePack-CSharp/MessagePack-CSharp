@@ -179,16 +179,20 @@ namespace Sandbox
             };
             Person[] l = Enumerable.Range(1, 100).Select(x => new Person { Age = x, FirstName = "Windows", LastName = "Server", Sex = Sex.Female }).ToArray();
 
-            Benchmark(p);
-            Console.WriteLine();
-            Benchmark(l);
+            //Benchmark(p);
+            //Console.WriteLine();
+            //Benchmark(l);
 
             //var json = MessagePackSerializer.ToJson(MessagePackSerializer.NonGeneric.Serialize(typeof(Person), p));
             //Console.WriteLine(json);
 
             //var huga = MessagePackSerializer.Serialize(ushort.MaxValue);
 
+            var f = DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
 
+            byte[] xs = null;
+            var huga = f.Serialize(ref xs, 0, new MySubUnion1(), DefaultResolver.Instance);
+            Console.WriteLine(huga);
 
             //var huga = MessagePackSerializer.Serialize(a);
             //var l2 = Enumerable.Range(1, 10).ToLookup(x => x % 2 == 0);

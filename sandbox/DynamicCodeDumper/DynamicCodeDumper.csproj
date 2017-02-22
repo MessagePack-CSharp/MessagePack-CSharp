@@ -89,14 +89,11 @@
     <Compile Include="..\..\src\MessagePack\StringEncoding.cs">
       <Link>Code\StringEncoding.cs</Link>
     </Compile>
+    <Compile Include="..\SharedData\Class1.cs">
+      <Link>Class1.cs</Link>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SharedData\SharedData.csproj">
-      <Project>{3abc5c4c-2ce4-459e-8666-f2b181c3def3}</Project>
-      <Name>SharedData</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

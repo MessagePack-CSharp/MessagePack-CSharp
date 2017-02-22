@@ -68,6 +68,7 @@
     <Compile Include="MessagePackSerializerTest.cs" />
     <Compile Include="ObjectResolverTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UnionResolverTest.cs" />
     <Compile Include="Utils\ChainingAssertion.Ext.cs" />
     <Compile Include="Utils\ChainingAssertion.Xunit.cs" />
   </ItemGroup>

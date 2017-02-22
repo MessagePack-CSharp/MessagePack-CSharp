@@ -28,6 +28,7 @@ namespace MessagePack
         static readonly IUInt64Decoder[] uint64Decoders = new IUInt64Decoder[MaxSize];
         static readonly IStringDecoder[] stringDecoders = new IStringDecoder[MaxSize];
         static readonly IExtDecoder[] extDecoders = new IExtDecoder[MaxSize];
+        static readonly IExtHeaderDecoder[] extHeaderDecoders = new IExtHeaderDecoder[MaxSize];
         static readonly IDateTimeDecoder[] dateTimeDecoders = new IDateTimeDecoder[MaxSize];
         static readonly IReadNextDecoder[] readNextDecoders = new IReadNextDecoder[MaxSize];
 
@@ -52,6 +53,7 @@ namespace MessagePack
                 uint64Decoders[i] = Decoders.InvalidUInt64.Instance;
                 stringDecoders[i] = Decoders.InvalidString.Instance;
                 extDecoders[i] = Decoders.InvalidExt.Instance;
+                extHeaderDecoders[i] = Decoders.InvalidExtHeader.Instance;
                 dateTimeDecoders[i] = Decoders.InvalidDateTime.Instance;
             }
 
@@ -179,6 +181,16 @@ namespace MessagePack
             extDecoders[MessagePackCode.Ext16] = Decoders.Ext16.Instance;
             extDecoders[MessagePackCode.Ext32] = Decoders.Ext32.Instance;
 
+            extHeaderDecoders[MessagePackCode.FixExt1] = Decoders.FixExt1Header.Instance;
+            extHeaderDecoders[MessagePackCode.FixExt2] = Decoders.FixExt2Header.Instance;
+            extHeaderDecoders[MessagePackCode.FixExt4] = Decoders.FixExt4Header.Instance;
+            extHeaderDecoders[MessagePackCode.FixExt8] = Decoders.FixExt8Header.Instance;
+            extHeaderDecoders[MessagePackCode.FixExt16] = Decoders.FixExt16Header.Instance;
+            extHeaderDecoders[MessagePackCode.Ext8] = Decoders.Ext8Header.Instance;
+            extHeaderDecoders[MessagePackCode.Ext16] = Decoders.Ext16Header.Instance;
+            extHeaderDecoders[MessagePackCode.Ext32] = Decoders.Ext32Header.Instance;
+
+
             readNextDecoders[MessagePackCode.FixExt1] = Decoders.ReadNext3.Instance;
             readNextDecoders[MessagePackCode.FixExt2] = Decoders.ReadNext4.Instance;
             readNextDecoders[MessagePackCode.FixExt4] = Decoders.ReadNext6.Instance;
@@ -282,6 +294,7 @@ namespace MessagePack
              || type == typeof(DateTime)
              || type == typeof(char)
              || type == typeof(byte[])
+             || type == typeof(string)
              )
             {
                 return true;
@@ -1067,6 +1080,70 @@ namespace MessagePack
             return stringDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+        public static int WriteExtensionFormatHeader(ref byte[] bytes, int offset, sbyte typeCode, int dataLength)
+        {
+            switch (dataLength)
+            {
+                case 1:
+                    EnsureCapacity(ref bytes, offset, 3);
+                    bytes[offset] = MessagePackCode.FixExt1;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    return 2;
+                case 2:
+                    EnsureCapacity(ref bytes, offset, 4);
+                    bytes[offset] = MessagePackCode.FixExt2;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    return 2;
+                case 4:
+                    EnsureCapacity(ref bytes, offset, 6);
+                    bytes[offset] = MessagePackCode.FixExt4;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    return 2;
+                case 8:
+                    EnsureCapacity(ref bytes, offset, 10);
+                    bytes[offset] = MessagePackCode.FixExt8;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    return 2;
+                case 16:
+                    EnsureCapacity(ref bytes, offset, 18);
+                    bytes[offset] = MessagePackCode.FixExt16;
+                    bytes[offset + 1] = unchecked((byte)typeCode);
+                    return 2;
+                default:
+                    unchecked
+                    {
+                        if (dataLength <= byte.MaxValue)
+                        {
+                            EnsureCapacity(ref bytes, offset, dataLength + 3);
+                            bytes[offset] = MessagePackCode.Ext8;
+                            bytes[offset + 1] = unchecked((byte)(dataLength));
+                            bytes[offset + 2] = unchecked((byte)typeCode);
+                            return dataLength + 3;
+                        }
+                        else if (dataLength <= UInt16.MaxValue)
+                        {
+                            EnsureCapacity(ref bytes, offset, dataLength + 4);
+                            bytes[offset] = MessagePackCode.Ext16;
+                            bytes[offset + 1] = unchecked((byte)(dataLength >> 8));
+                            bytes[offset + 2] = unchecked((byte)(dataLength));
+                            bytes[offset + 3] = unchecked((byte)typeCode);
+                            return dataLength + 4;
+                        }
+                        else
+                        {
+                            EnsureCapacity(ref bytes, offset, dataLength + 6);
+                            bytes[offset] = MessagePackCode.Ext32;
+                            bytes[offset + 1] = unchecked((byte)(dataLength >> 24));
+                            bytes[offset + 2] = unchecked((byte)(dataLength >> 16));
+                            bytes[offset + 3] = unchecked((byte)(dataLength >> 8));
+                            bytes[offset + 4] = unchecked((byte)dataLength);
+                            bytes[offset + 5] = unchecked((byte)typeCode);
+                            return dataLength + 6;
+                        }
+                    }
+            }
+        }
+
         public static int WriteExtensionFormat(ref byte[] bytes, int offset, sbyte typeCode, byte[] data)
         {
             var length = data.Length;
@@ -1171,6 +1248,14 @@ namespace MessagePack
             return extDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+        /// <summary>
+        /// return byte length of ExtensionFormat.
+        /// </summary>
+        public static ExtensionHeader ReadExtensionFormatHeader(byte[] bytes, int offset, out int readSize)
+        {
+            return extHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
         // Timestamp spec
         // https://github.com/msgpack/msgpack/pull/209
         // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
@@ -1273,7 +1358,6 @@ namespace MessagePack
         {
             return dateTimeDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
-
     }
 
     public struct ExtensionResult
@@ -1285,6 +1369,18 @@ namespace MessagePack
         {
             TypeCode = typeCode;
             Data = data;
+        }
+    }
+
+    public struct ExtensionHeader
+    {
+        public sbyte TypeCode { get; private set; }
+        public uint Length { get; private set; }
+
+        public ExtensionHeader(sbyte typeCode, uint length)
+        {
+            TypeCode = typeCode;
+            Length = length;
         }
     }
 }
@@ -2779,6 +2875,182 @@ namespace MessagePack.Decoders
         }
     }
 
+
+
+
+
+
+    internal interface IExtHeaderDecoder
+    {
+        ExtensionHeader Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixExt1Header : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new FixExt1Header();
+
+        FixExt1Header()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            return new ExtensionHeader(typeCode, 1);
+        }
+    }
+
+    internal class FixExt2Header : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new FixExt2Header();
+
+        FixExt2Header()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            return new ExtensionHeader(typeCode, 2);
+        }
+    }
+
+    internal class FixExt4Header : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new FixExt4Header();
+
+        FixExt4Header()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            return new ExtensionHeader(typeCode, 4);
+        }
+    }
+
+    internal class FixExt8Header : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new FixExt8Header();
+
+        FixExt8Header()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            return new ExtensionHeader(typeCode, 8);
+        }
+    }
+
+    internal class FixExt16Header : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new FixExt16Header();
+
+        FixExt16Header()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 2;
+            var typeCode = unchecked((sbyte)bytes[offset + 1]);
+            return new ExtensionHeader(typeCode, 16);
+        }
+    }
+
+    internal class Ext8Header : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new Ext8Header();
+
+        Ext8Header()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var length = bytes[offset + 1];
+                var typeCode = unchecked((sbyte)bytes[offset + 2]);
+
+                readSize = 3;
+                return new ExtensionHeader(typeCode, length);
+            }
+        }
+    }
+
+    internal class Ext16Header : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new Ext16Header();
+
+        Ext16Header()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var length = (UInt32)((UInt16)(bytes[offset + 1] << 8) + (UInt16)bytes[offset + 2]);
+                var typeCode = unchecked((sbyte)bytes[offset + 3]);
+
+                readSize = 4;
+                return new ExtensionHeader(typeCode, length);
+            }
+        }
+    }
+
+    internal class Ext32Header : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new Ext32Header();
+
+        Ext32Header()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+                var typeCode = unchecked((sbyte)bytes[offset + 5]);
+
+                readSize = 6;
+                return new ExtensionHeader(typeCode, length);
+            }
+        }
+    }
+
+    internal class InvalidExtHeader : IExtHeaderDecoder
+    {
+        internal static readonly IExtHeaderDecoder Instance = new InvalidExtHeader();
+
+        InvalidExtHeader()
+        {
+
+        }
+
+        public ExtensionHeader Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
     internal interface IDateTimeDecoder
     {
         DateTime Read(byte[] bytes, int offset, out int readSize);
@@ -3115,7 +3387,6 @@ namespace MessagePack.Decoders
             return length + 5;
         }
     }
-
 
     internal class ReadNextExt8 : IReadNextDecoder
     {

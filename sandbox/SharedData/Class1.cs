@@ -285,4 +285,67 @@ namespace SharedData
             CalledAfter = true;
         }
     }
+
+
+    [Union(0, typeof(MySubUnion1))]
+    [Union(1, typeof(MySubUnion2))]
+    [Union(2, typeof(MySubUnion3))]
+    [Union(3, typeof(MySubUnion4))]
+    public interface IUnionChecker
+    {
+
+    }
+
+    [Union(120, typeof(MySubUnion1))]
+    [Union(31, typeof(MySubUnion2))]
+    [Union(42, typeof(MySubUnion3))]
+    [Union(63, typeof(MySubUnion4))]
+    public interface IUnionChecker2
+    {
+
+    }
+
+    [Union(0, typeof(MySubUnion1))]
+    [Union(1, typeof(MySubUnion2))]
+    [Union(2, typeof(MySubUnion3))]
+    [Union(3, typeof(MySubUnion4))]
+    [Union(4, typeof(VersioningUnion))]
+    public interface IIVersioningUnion
+    {
+
+    }
+
+    [MessagePackObject]
+    public class MySubUnion1 : IUnionChecker, IUnionChecker2
+    {
+        [Key(3)]
+        public int One { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct MySubUnion2 : IUnionChecker, IUnionChecker2
+    {
+        [Key(5)]
+        public int Two { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MySubUnion3 : IUnionChecker, IUnionChecker2
+    {
+        [Key(2)]
+        public int Three { get; set; }
+    }
+    [MessagePackObject]
+    public struct MySubUnion4 : IUnionChecker, IUnionChecker2
+    {
+        [Key(7)]
+        public int Four { get; set; }
+    }
+
+    [MessagePackObject]
+    public class VersioningUnion : IUnionChecker, IIVersioningUnion
+    {
+        [Key(7)]
+        public int FV { get; set; }
+    }
 }
