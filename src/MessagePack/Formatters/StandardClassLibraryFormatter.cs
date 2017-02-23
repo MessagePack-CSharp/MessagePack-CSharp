@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
 namespace MessagePack.Formatters
 {
-    // byte[], string, decimal, TimeSpan, DateTimeOffset, Guid, Uri, Version, KeyValuePair
     // NET40 -> BigInteger, Complex, Tuple
 
     // byte[] is special. represents bin type.
@@ -395,6 +395,97 @@ namespace MessagePack.Formatters
 
             readSize = offset - startOffset;
             return new System.Numerics.Complex(real, imaginary);
+        }
+    }
+
+    public class StringBuilderFormatter : IMessagePackFormatter<StringBuilder>
+    {
+        public static readonly IMessagePackFormatter<StringBuilder> Instance = new StringBuilderFormatter();
+
+        StringBuilderFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, StringBuilder value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                return MessagePackBinary.WriteString(ref bytes, offset, value.ToString());
+            }
+        }
+
+        public StringBuilder Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                return new StringBuilder(MessagePackBinary.ReadString(bytes, offset, out readSize));
+            }
+        }
+    }
+
+    public class BitArrayFormatter : IMessagePackFormatter<BitArray>
+    {
+        public static readonly IMessagePackFormatter<BitArray> Instance = new BitArrayFormatter();
+
+        BitArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, BitArray value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                var len = value.Length;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, len);
+                for (int i = 0; i < len; i++)
+                {
+                    offset += MessagePackBinary.WriteBoolean(ref bytes, offset, value.Get(i));
+                }
+
+                return startOffset - offset;
+            }
+        }
+
+        public BitArray Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+
+                var array = new BitArray(len);
+                for (int i = 0; i < len; i++)
+                {
+                    array[i] = MessagePackBinary.ReadBoolean(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+
+                readSize = offset - startOffset;
+                return array;
+            }
         }
     }
 }

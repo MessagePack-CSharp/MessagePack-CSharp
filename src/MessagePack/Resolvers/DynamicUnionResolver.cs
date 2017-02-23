@@ -477,7 +477,7 @@ namespace MessagePack.Internal
         }
     }
 
-    public class MessagePackDynamicUnionResolverException : Exception
+    internal class MessagePackDynamicUnionResolverException : Exception
     {
         public MessagePackDynamicUnionResolverException(string message)
             : base(message)

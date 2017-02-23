@@ -2,6 +2,7 @@
 using MessagePack.Internal;
 using MessagePack.Resolvers;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -82,9 +83,21 @@ namespace MessagePack.Internal
             {typeof(Guid?), new StaticNullableFormatter<Guid>(GuidFormatter.Instance)},
             {typeof(Uri), UriFormatter.Instance},
             {typeof(Version), VersionFormatter.Instance},
+            {typeof(StringBuilderFormatter), StringBuilderFormatter.Instance},
+            {typeof(BitArray), BitArrayFormatter.Instance},
             
             // special primitive
             {typeof(byte[]), ByteArrayFormatter.Instance},
+
+            // well-known reserved
+            {typeof(int[]), new ArrayFormatter<int>()},
+            {typeof(List<int>), new ListFormatter<int>()},
+            {typeof(float[]), new ArrayFormatter<float>()},
+            {typeof(List<float>), new ListFormatter<float>()},
+            {typeof(double[]), new ArrayFormatter<double>()},
+            {typeof(List<double>), new ListFormatter<double>()},
+            {typeof(string[]), new ArrayFormatter<string>()},
+            {typeof(List<string>), new ListFormatter<string>()},
             
             // Nil
             {typeof(Nil), NilFormatter.Instance},

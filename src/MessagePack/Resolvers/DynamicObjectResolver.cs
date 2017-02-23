@@ -61,16 +61,83 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                var formatterTypeInfo = BuildType(typeof(T));
+                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), false);
                 if (formatterTypeInfo == null) return;
 
                 formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
             }
         }
+    }
 
-        static TypeInfo BuildType(Type type)
+    /// <summary>
+    /// ObjectResolver by dynamic code generation, no needs MessagePackObject attribute and serialized key as string.
+    /// </summary>
+    public class DynamicContractlessObjectResolver : IFormatterResolver
+    {
+        public static DynamicContractlessObjectResolver Instance = new DynamicContractlessObjectResolver();
+
+        const string ModuleName = "MessagePack.Resolvers.DynamicContractlessObjectResolver";
+
+        static readonly DynamicAssembly assembly;
+
+        DynamicContractlessObjectResolver()
         {
-            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type);
+
+        }
+
+        static DynamicContractlessObjectResolver()
+        {
+            assembly = new DynamicAssembly(ModuleName);
+        }
+
+#if NET_35
+        public void Save()
+        {
+            assembly.Save();
+        }
+#endif
+
+        public IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            return FormatterCache<T>.formatter;
+        }
+
+        static class FormatterCache<T>
+        {
+            public static readonly IMessagePackFormatter<T> formatter;
+
+            static FormatterCache()
+            {
+                var ti = typeof(T).GetTypeInfo();
+                if (ti.IsNullable())
+                {
+                    ti = ti.GenericTypeArguments[0].GetTypeInfo();
+
+                    var innerFormatter = DynamicObjectResolver.Instance.GetFormatterDynamic(ti.AsType());
+                    if (innerFormatter == null)
+                    {
+                        return;
+                    }
+                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
+                    return;
+                }
+
+                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), true); // true.
+                if (formatterTypeInfo == null) return;
+
+                formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
+            }
+        }
+    }
+}
+
+namespace MessagePack.Internal
+{
+    internal static class DynamicObjectTypeBuilder
+    {
+        public static TypeInfo BuildType(DynamicAssembly assembly, Type type, bool forceStringKey)
+        {
+            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey);
             if (serializationInfo == null) return null;
 
             var ti = type.GetTypeInfo();
@@ -675,11 +742,8 @@ namespace MessagePack.Resolvers
             public Label SwitchLabel { get; set; }
         }
     }
-}
 
-namespace MessagePack.Internal
-{
-    public class ObjectSerializationInfo
+    internal class ObjectSerializationInfo
     {
         public bool IsIntKey { get; set; }
         public bool IsStringKey { get { return !IsIntKey; } }
@@ -694,13 +758,13 @@ namespace MessagePack.Internal
 
         }
 
-        public static ObjectSerializationInfo CreateOrNull(Type type)
+        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey)
         {
             var ti = type.GetTypeInfo();
             var isClass = ti.IsClass;
 
             var contractAttr = ti.GetCustomAttribute<MessagePackObjectAttribute>();
-            if (contractAttr == null)
+            if (contractAttr == null && !forceStringKey)
             {
                 return null;
             }
@@ -709,7 +773,7 @@ namespace MessagePack.Internal
             var intMemebrs = new Dictionary<int, EmittableMember>();
             var stringMembers = new Dictionary<string, EmittableMember>();
 
-            if (contractAttr.KeyAsPropertyName)
+            if (forceStringKey || contractAttr.KeyAsPropertyName)
             {
                 // Opt-out: All public members are serialize target except [Ignore] member.
                 isIntKey = false;
@@ -965,7 +1029,7 @@ namespace MessagePack.Internal
         }
     }
 
-    public class MessagePackDynamicObjectResolverException : Exception
+    internal class MessagePackDynamicObjectResolverException : Exception
     {
         public MessagePackDynamicObjectResolverException(string message)
             : base(message)

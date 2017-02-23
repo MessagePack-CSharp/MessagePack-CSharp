@@ -186,22 +186,21 @@ namespace Sandbox
             //var json = MessagePackSerializer.ToJson(MessagePackSerializer.NonGeneric.Serialize(typeof(Person), p));
             //Console.WriteLine(json);
 
-            //var huga = MessagePackSerializer.Serialize(ushort.MaxValue);
+            var t = new Tuple<int, int, int>[3, 4, 5];
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    for (int k = 0; k < 5; k++)
+                    {
+                        t[i, j, k] = Tuple.Create(i, j, k);
+                    }
+                }
+            }
+            var hoge = MessagePackSerializer.Deserialize<Tuple<int, int, int>[,,]>(MessagePackSerializer.Serialize(t));
 
-            var f = DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
+            Console.WriteLine(hoge);
 
-            byte[] xs = null;
-            var huga = f.Serialize(ref xs, 0, new MySubUnion1(), DefaultResolver.Instance);
-            Console.WriteLine(huga);
-
-            //var huga = MessagePackSerializer.Serialize(a);
-            //var l2 = Enumerable.Range(1, 10).ToLookup(x => x % 2 == 0);
-            //var b = MessagePackSerializer.Serialize(l2);
-            //MessagePackSerializer.Deserialize<ILookup<bool, int>>(b);
-            //Console.WriteLine(MessagePackSerializer.ToJson(b));
-
-            Console.WriteLine("Press key to exit.");
-            Console.ReadLine();
         }
 
         static void Benchmark<T>(T target)

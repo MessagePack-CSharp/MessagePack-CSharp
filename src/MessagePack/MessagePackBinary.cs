@@ -1118,7 +1118,7 @@ namespace MessagePack
                             bytes[offset] = MessagePackCode.Ext8;
                             bytes[offset + 1] = unchecked((byte)(dataLength));
                             bytes[offset + 2] = unchecked((byte)typeCode);
-                            return dataLength + 3;
+                            return 3;
                         }
                         else if (dataLength <= UInt16.MaxValue)
                         {
@@ -1127,7 +1127,7 @@ namespace MessagePack
                             bytes[offset + 1] = unchecked((byte)(dataLength >> 8));
                             bytes[offset + 2] = unchecked((byte)(dataLength));
                             bytes[offset + 3] = unchecked((byte)typeCode);
-                            return dataLength + 4;
+                            return 4;
                         }
                         else
                         {
@@ -1138,7 +1138,7 @@ namespace MessagePack
                             bytes[offset + 3] = unchecked((byte)(dataLength >> 8));
                             bytes[offset + 4] = unchecked((byte)dataLength);
                             bytes[offset + 5] = unchecked((byte)typeCode);
-                            return dataLength + 6;
+                            return 6;
                         }
                     }
             }

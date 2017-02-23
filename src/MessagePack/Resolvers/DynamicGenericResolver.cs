@@ -73,8 +73,32 @@ namespace MessagePack.Internal
 
             if (t.IsArray)
             {
-                // byte[] is including BuitinResolver
-                return Activator.CreateInstance(typeof(ArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                var rank = t.GetArrayRank();
+                if (rank == 1)
+                {
+                    if (t.GetElementType() == typeof(byte[])) // byte[] is also supported in builtin formatter.
+                    {
+                        return ByteArrayFormatter.Instance;
+                    }
+
+                    return Activator.CreateInstance(typeof(ArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                }
+                else if (rank == 2)
+                {
+                    return Activator.CreateInstance(typeof(TwoDimentionalArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                }
+                else if (rank == 3)
+                {
+                    return Activator.CreateInstance(typeof(ThreeDimentionalArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                }
+                else if (rank == 4)
+                {
+                    return Activator.CreateInstance(typeof(FourDimentionalArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                }
+                else
+                {
+                    return null; // not supported built-in
+                }
             }
             else if (ti.IsGenericType)
             {
