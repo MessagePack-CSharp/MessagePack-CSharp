@@ -349,9 +349,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    // TODO:QEnumerator...
-
-    public class QeueueFormatter<T> : SequneceFormatterBase<T, Queue<T>>
+    public class QeueueFormatter<T> : SequneceFormatterBase<T, Queue<T>, Queue<T>.Enumerator, Queue<T>>
     {
         protected override int? GetCount(Queue<T> sequence)
         {
@@ -367,9 +365,19 @@ namespace MessagePack.Formatters
         {
             return new Queue<T>(count);
         }
+
+        protected override Queue<T>.Enumerator GetSourceEnumerator(Queue<T> source)
+        {
+            return source.GetEnumerator();
+        }
+
+        protected override Queue<T> Complete(Queue<T> intermediateCollection)
+        {
+            return intermediateCollection;
+        }
     }
 
-    public class StackFormatter<T> : SequneceFormatterBase<T, Stack<T>>
+    public class StackFormatter<T> : SequneceFormatterBase<T, Stack<T>, Stack<T>.Enumerator, Stack<T>>
     {
         protected override int? GetCount(Stack<T> sequence)
         {
@@ -385,18 +393,43 @@ namespace MessagePack.Formatters
         {
             return new Stack<T>(count);
         }
+
+        protected override Stack<T>.Enumerator GetSourceEnumerator(Stack<T> source)
+        {
+            return source.GetEnumerator();
+        }
+
+        protected override Stack<T> Complete(Stack<T> intermediateCollection)
+        {
+            return intermediateCollection;
+        }
     }
 
-    public class HashSetFormatter<T> : SequneceFormatterBase<T, HashSet<T>>
+    public class HashSetFormatter<T> : SequneceFormatterBase<T, HashSet<T>, HashSet<T>.Enumerator, HashSet<T>>
     {
+        protected override int? GetCount(HashSet<T> sequence)
+        {
+            return sequence.Count;
+        }
+
         protected override void Add(HashSet<T> collection, int index, T value)
         {
             collection.Add(value);
         }
 
+        protected override HashSet<T> Complete(HashSet<T> intermediateCollection)
+        {
+            return intermediateCollection;
+        }
+
         protected override HashSet<T> Create(int count)
         {
             return new HashSet<T>();
+        }
+
+        protected override HashSet<T>.Enumerator GetSourceEnumerator(HashSet<T> source)
+        {
+            return source.GetEnumerator();
         }
     }
 
@@ -559,6 +592,11 @@ namespace MessagePack.Formatters
 
     public class ConcurrentBagFormatter<T> : SequneceFormatterBase<T, System.Collections.Concurrent.ConcurrentBag<T>>
     {
+        protected override int? GetCount(ConcurrentBag<T> sequence)
+        {
+            return sequence.Count;
+        }
+
         protected override void Add(ConcurrentBag<T> collection, int index, T value)
         {
             collection.Add(value);
@@ -572,6 +610,11 @@ namespace MessagePack.Formatters
 
     public class ConcurrentQueueFormatter<T> : SequneceFormatterBase<T, System.Collections.Concurrent.ConcurrentQueue<T>>
     {
+        protected override int? GetCount(ConcurrentQueue<T> sequence)
+        {
+            return sequence.Count;
+        }
+
         protected override void Add(ConcurrentQueue<T> collection, int index, T value)
         {
             collection.Enqueue(value);
@@ -585,6 +628,11 @@ namespace MessagePack.Formatters
 
     public class ConcurrentStackFormatter<T> : SequneceFormatterBase<T, System.Collections.Concurrent.ConcurrentStack<T>>
     {
+        protected override int? GetCount(ConcurrentStack<T> sequence)
+        {
+            return sequence.Count;
+        }
+
         protected override void Add(ConcurrentStack<T> collection, int index, T value)
         {
             collection.Push(value);

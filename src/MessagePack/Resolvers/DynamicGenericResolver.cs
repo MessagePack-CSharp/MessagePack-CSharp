@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 namespace MessagePack.Resolvers
 {
@@ -59,11 +60,15 @@ namespace MessagePack.Internal
               {typeof(System.Collections.Concurrent.ConcurrentStack<>), typeof(ConcurrentStackFormatter<>)},
               {typeof(Dictionary<,>), typeof(DictionaryFormatter<,>)},
               {typeof(IDictionary<,>), typeof(InterfaceDictionaryFormatter<,>)},
+              {typeof(SortedDictionary<,>), typeof(SortedDictionaryFormatter<,>)},
+              {typeof(SortedList<,>), typeof(SortedListFormatter<,>)},
               {typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryFormatter<,>)},
               {typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>)},
               {typeof(System.Collections.Concurrent.ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>)},
               {typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>)},
               {typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>)},
+              {typeof(Lazy<>), typeof(LazyFormatter<>)},
+              {typeof(Task<>), typeof(TaskValueFormatter<>)},
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
@@ -177,7 +182,7 @@ namespace MessagePack.Internal
                     }
                 }
 
-                // Collection
+                // Mapped formatter
                 else
                 {
                     Type formatterType;

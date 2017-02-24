@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack.UnityShims\MessagePack.UnityShims.csproj" />
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\SharedData\SharedData.csproj" />
   </ItemGroup>

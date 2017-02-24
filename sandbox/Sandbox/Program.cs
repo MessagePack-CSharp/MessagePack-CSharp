@@ -11,6 +11,7 @@ using MessagePack.Internal;
 using ProtoBuf;
 using SharedData;
 using System.Collections;
+using UnityEngine;
 
 namespace Sandbox
 {
@@ -186,20 +187,16 @@ namespace Sandbox
             //var json = MessagePackSerializer.ToJson(MessagePackSerializer.NonGeneric.Serialize(typeof(Person), p));
             //Console.WriteLine(json);
 
-            var t = new Tuple<int, int, int>[3, 4, 5];
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    for (int k = 0; k < 5; k++)
-                    {
-                        t[i, j, k] = Tuple.Create(i, j, k);
-                    }
-                }
-            }
-            var hoge = MessagePackSerializer.Deserialize<Tuple<int, int, int>[,,]>(MessagePackSerializer.Serialize(t));
+            var src = Enumerable.Range(1, 100).Select(x => new Vector3(x, x, x)).ToArray();
+            var f = new MessagePack.Unity.Extension.Vector3ArrayBlitFormatter();
+            //var f = new ArrayFormatter<Vector3>();
 
-            Console.WriteLine(hoge);
+                byte[] b = null;
+                var tst = f.Serialize(ref b, 0, src, DefaultResolver.Instance);
+                int xx;
+                var r = f.Deserialize(b, 0, DefaultResolver.Instance, out xx);
+
+            Console.WriteLine(MessagePackSerializer.ToJson(b));
 
         }
 

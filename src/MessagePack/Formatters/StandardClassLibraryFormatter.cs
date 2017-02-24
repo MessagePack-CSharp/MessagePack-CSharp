@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MessagePack.Formatters
 {
@@ -485,6 +486,102 @@ namespace MessagePack.Formatters
 
                 readSize = offset - startOffset;
                 return array;
+            }
+        }
+    }
+
+    public class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, Lazy<T> value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
+            }
+        }
+
+        public Lazy<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                // deserialize immediately(no delay, because capture byte[] causes memory leak)
+                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                return new Lazy<T>(() => v);
+            }
+        }
+    }
+
+    public class TaskUnitFormatter : IMessagePackFormatter<Task>
+    {
+        public static readonly IMessagePackFormatter<Task> Instance = new TaskUnitFormatter();
+
+        TaskUnitFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Task value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                value.Wait(); // wait...!
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+        }
+
+        public Task Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (!MessagePackBinary.IsNil(bytes, offset))
+            {
+                throw new InvalidOperationException("Invalid input");
+            }
+            else
+            {
+                readSize = 1;
+                return Task.CompletedTask;
+            }
+        }
+    }
+
+    public class TaskValueFormatter<T> : IMessagePackFormatter<Task<T>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, Task<T> value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                // value.Result -> wait...!
+                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Result, formatterResolver);
+            }
+        }
+
+        public Task<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                return Task.FromResult(v);
             }
         }
     }
