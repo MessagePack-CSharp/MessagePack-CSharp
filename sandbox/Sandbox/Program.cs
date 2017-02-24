@@ -187,16 +187,8 @@ namespace Sandbox
             //var json = MessagePackSerializer.ToJson(MessagePackSerializer.NonGeneric.Serialize(typeof(Person), p));
             //Console.WriteLine(json);
 
-            var src = Enumerable.Range(1, 100).Select(x => new Vector3(x, x, x)).ToArray();
-            var f = new MessagePack.Unity.Extension.Vector3ArrayBlitFormatter();
-            //var f = new ArrayFormatter<Vector3>();
-
-                byte[] b = null;
-                var tst = f.Serialize(ref b, 0, src, DefaultResolver.Instance);
-                int xx;
-                var r = f.Deserialize(b, 0, DefaultResolver.Instance, out xx);
-
-            Console.WriteLine(MessagePackSerializer.ToJson(b));
+            var a = MessagePackSerializer.ToJson(new GenericClass<int, string>() { MyProperty0 = 99, MyProperty1 = "hoge" });
+            Console.WriteLine(a);
 
         }
 

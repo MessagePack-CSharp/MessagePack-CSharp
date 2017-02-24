@@ -1,51 +1,11 @@
 ﻿using MessagePack.Formatters;
-using System.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using MessagePack.Resolvers;
+using System.Reflection;
 
 namespace MessagePack.ImmutableCollections
 {
-    public class DefaultWithImmutableCollectionResolver : IFormatterResolver
-    {
-        public static IFormatterResolver Instance = new DefaultWithImmutableCollectionResolver();
-
-        static readonly IFormatterResolver[] resolvers = new[]
-        {
-            ImmutableCollectionResolver.Instance, // add supports ImmutableCollection
-            DefaultResolver.Instance,             // use default
-        };
-
-        DefaultWithImmutableCollectionResolver()
-        {
-
-        }
-
-        public IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.formatter;
-        }
-
-        static class FormatterCache<T>
-        {
-            public static readonly IMessagePackFormatter<T> formatter;
-
-            static FormatterCache()
-            {
-                foreach (var item in resolvers)
-                {
-                    var f = item.GetFormatter<T>();
-                    if (f != null)
-                    {
-                        formatter = f;
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
     public class ImmutableCollectionResolver : IFormatterResolver
     {
         public static IFormatterResolver Instance = new ImmutableCollectionResolver();
@@ -75,6 +35,7 @@ namespace MessagePack.ImmutableCollections
     {
         static readonly Dictionary<Type, Type> formatterMap = new Dictionary<Type, Type>()
         {
+              // TODO: register all.
               {typeof(ImmutableList<>), typeof(ImmutableListFormatter<>)},
         };
 

@@ -348,4 +348,14 @@ namespace SharedData
         [Key(7)]
         public int FV { get; set; }
     }
+
+
+    [MessagePackObject]
+    public class GenericClass<T1, T2>
+    {
+        [Key(0)]
+        public T1 MyProperty0 { get; set; }
+        [Key(1)]
+        public T2 MyProperty1 { get; set; }
+    }
 }

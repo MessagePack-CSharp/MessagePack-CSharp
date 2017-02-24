@@ -16,10 +16,13 @@
   <ItemGroup>
     <Compile Include="..\T4Templates\PrimitiveFormatter.cs" Link="Formatters\PrimitiveFormatter.cs" />
     <Compile Include="..\T4Templates\TupleFormatter.cs" Link="Formatters\TupleFormatter.cs" />
+    <Compile Include="..\T4Templates\ValueTupleFormatter.cs" Link="Formatters\ValueTupleFormatter.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.3.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.3.0" />
   </ItemGroup>
 
 </Project>

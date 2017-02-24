@@ -27,16 +27,16 @@ namespace DynamicCodeDumper
             DynamicUnionResolver.Instance.GetFormatter<IHogeMoge>();
             var f = DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
             DynamicUnionResolver.Instance.GetFormatter<IUnionChecker2>();
-            
+
 
             DynamicObjectResolver.Instance.Save();
             DynamicUnionResolver.Instance.Save();
             Console.WriteLine("Saved");
 
-            var mii =f.GetType().GetMethods();
+            var mii = f.GetType().GetMethods();
 
             byte[] xs = null;
-            var huga = f.Serialize(ref xs, 0,new MySubUnion1(), DynamicUnionResolver.Instance);
+            var huga = f.Serialize(ref xs, 0, new MySubUnion1(), DynamicUnionResolver.Instance);
             Console.WriteLine(huga);
         }
     }
@@ -51,7 +51,7 @@ namespace DynamicCodeDumper
     {
     }
 
-    public class HogeMoge2: IHogeMoge
+    public class HogeMoge2 : IHogeMoge
     {
     }
 

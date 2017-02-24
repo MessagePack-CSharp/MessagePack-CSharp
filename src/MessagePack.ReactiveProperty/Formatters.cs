@@ -114,4 +114,8 @@ namespace MessagePack.ReactiveProperty
 
         }
     }
+
+    // TODO:IReactiveProperty
+
+    // TODO:ReactiveCollection?
 }

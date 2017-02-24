@@ -69,6 +69,7 @@ namespace MessagePack.Internal
               {typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>)},
               {typeof(Lazy<>), typeof(LazyFormatter<>)},
               {typeof(Task<>), typeof(TaskValueFormatter<>)},
+              {typeof(ValueTask<>), typeof(ValueTaskFormatter<>)},
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
@@ -150,6 +151,43 @@ namespace MessagePack.Internal
                             break;
                         case 8:
                             tupleFormatterType = typeof(TupleFormatter<,,,,,,,>);
+                            break;
+                        default:
+                            break;
+                    }
+
+                    return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
+                }
+
+                // ValueTuple
+                else if (ti.FullName.StartsWith("System.ValueTuple"))
+                {
+                    Type tupleFormatterType = null;
+                    switch (ti.GenericTypeArguments.Length)
+                    {
+                        case 1:
+                            tupleFormatterType = typeof(ValueTupleFormatter<>);
+                            break;
+                        case 2:
+                            tupleFormatterType = typeof(ValueTupleFormatter<,>);
+                            break;
+                        case 3:
+                            tupleFormatterType = typeof(ValueTupleFormatter<,,>);
+                            break;
+                        case 4:
+                            tupleFormatterType = typeof(ValueTupleFormatter<,,,>);
+                            break;
+                        case 5:
+                            tupleFormatterType = typeof(ValueTupleFormatter<,,,,>);
+                            break;
+                        case 6:
+                            tupleFormatterType = typeof(ValueTupleFormatter<,,,,,>);
+                            break;
+                        case 7:
+                            tupleFormatterType = typeof(ValueTupleFormatter<,,,,,,>);
+                            break;
+                        case 8:
+                            tupleFormatterType = typeof(ValueTupleFormatter<,,,,,,,>);
                             break;
                         default:
                             break;
