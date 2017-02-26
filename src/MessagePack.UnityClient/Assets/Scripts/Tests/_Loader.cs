@@ -20,6 +20,9 @@ namespace MessagePack.UnityClient.Tests
             UnitTest.RegisterAllMethods<MultiDimentionalArrayTest>();
             UnitTest.RegisterAllMethods<CollectionFormatterTest>();
             UnitTest.RegisterAllMethods<UnityBlitTest>();
+
+
+            UnitTest.RegisterAllMethods<PerformanceTest>();
         }
     }
 }

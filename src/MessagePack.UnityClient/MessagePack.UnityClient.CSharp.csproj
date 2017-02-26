@@ -67,6 +67,9 @@
     <Reference Include="UnityEditor.iOS.Extensions.Common">
       <HintPath>Library\UnityAssemblies\UnityEditor.iOS.Extensions.Common.dll</HintPath>
     </Reference>
+    <Reference Include="MsgPack">
+      <HintPath>Assets\Scripts\Tests\MsgPack\MsgPack.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\MessagePack\Attributes.cs" />
@@ -106,8 +109,13 @@
     <Compile Include="Assets\Scripts\Tests\Class1.cs" />
     <Compile Include="Assets\Scripts\Tests\CollectionFormatterTest.cs" />
     <Compile Include="Assets\Scripts\Tests\FormatterTest.cs" />
+    <Compile Include="Assets\Scripts\Tests\MsgPack\PersonSerializer.cs" />
+    <Compile Include="Assets\Scripts\Tests\MsgPack\SexSerializer.cs" />
+    <Compile Include="Assets\Scripts\Tests\MsgPack\System_Nullable_1_Sex_Serializer.cs" />
+    <Compile Include="Assets\Scripts\Tests\MsgPack\System_Nullable_1_System_Int32_Serializer.cs" />
     <Compile Include="Assets\Scripts\Tests\MultiDimentionalArrayTest.cs" />
     <Compile Include="Assets\Scripts\Tests\ObjectResolverTest.cs" />
+    <Compile Include="Assets\Scripts\Tests\PerformanceTest.cs" />
     <Compile Include="Assets\Scripts\Tests\SimpleTest.cs" />
     <Compile Include="Assets\Scripts\Tests\UnionTest.cs" />
     <Compile Include="Assets\Scripts\Tests\UnityBlitTest.cs" />
