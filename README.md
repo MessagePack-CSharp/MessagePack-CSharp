@@ -12,13 +12,13 @@ Beta is relased(please enable include pre-release package).
 Standard library.
 
 ```
-Install-Package MessagePack
+Install-Package MessagePack -Pre
 ```
 
 Extension supports.
 
 ```
-Install-Package MessagePack.ImmutableCollections
-Install-Package MessagePack.ReactiveProperty
-Install-Package MessagePack.Unity
+Install-Package MessagePack.ImmutableCollections -Pre
+Install-Package MessagePack.ReactiveProperty -Pre
+Install-Package MessagePack.Unity -Pre
 ```
