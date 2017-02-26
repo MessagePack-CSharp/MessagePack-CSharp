@@ -9,10 +9,12 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <DocumentationFile>bin\Release\netstandard1.4\MessagePack.UnityShims.xml</DocumentationFile>
     <NoWarn>1701;1702;1705;1591</NoWarn>
+    <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;UNSAFE</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;UNSAFE</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

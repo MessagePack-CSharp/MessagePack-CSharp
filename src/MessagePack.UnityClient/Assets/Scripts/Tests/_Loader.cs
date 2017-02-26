@@ -14,6 +14,12 @@ namespace MessagePack.UnityClient.Tests
         {
             // Register Tests
             UnitTest.RegisterAllMethods<SimpleTest>();
+            UnitTest.RegisterAllMethods<FormatterTest>();
+            UnitTest.RegisterAllMethods<UnionTest>();
+            UnitTest.RegisterAllMethods<ObjectResolverTest>();
+            UnitTest.RegisterAllMethods<MultiDimentionalArrayTest>();
+            UnitTest.RegisterAllMethods<CollectionFormatterTest>();
+            UnitTest.RegisterAllMethods<UnityBlitTest>();
         }
     }
 }

@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SharedData
 {
@@ -367,4 +366,5 @@ namespace SharedData
         [Key(1)]
         public T2 MyProperty1 { get; set; }
     }
+
 }

@@ -227,7 +227,14 @@ namespace MessagePack.Resolvers
                 }, () =>
                 {
                     il.EmitLdarg(3);
-                    il.Emit(OpCodes.Castclass, item.Attr.SubType);
+                    if (item.Attr.SubType.GetTypeInfo().IsValueType)
+                    {
+                        il.Emit(OpCodes.Unbox_Any, item.Attr.SubType);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Castclass, item.Attr.SubType);
+                    }
                     il.EmitLdarg(4);
                     il.Emit(OpCodes.Callvirt, getSerialize(item.Attr.SubType));
                 });
@@ -356,7 +363,10 @@ namespace MessagePack.Resolvers
                 il.EmitLdarg(3);
                 il.EmitLdarg(4);
                 il.EmitCallvirt(getDeserialize(item.Attr.SubType));
-                il.Emit(OpCodes.Castclass, item.Attr.SubType);
+                if (item.Attr.SubType.GetTypeInfo().IsValueType)
+                {
+                    il.Emit(OpCodes.Box, item.Attr.SubType);
+                }
                 il.Emit(OpCodes.Stloc, result);
                 EmitOffsetPlusReadSize(il);
                 il.Emit(OpCodes.Br, loopEnd);
@@ -397,7 +407,6 @@ namespace MessagePack.Resolvers
         static readonly Type refByte = typeof(byte[]).MakeByRefType();
         static readonly Type refInt = typeof(int).MakeByRefType();
         static readonly Type refKvp = typeof(KeyValuePair<int, int>).MakeByRefType();
-        static readonly MethodInfo rawGetFormatter = typeof(IFormatterResolver).GetRuntimeMethod("GetFormatter", Type.EmptyTypes);
         static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == "GetFormatterWithVerify");
 
         static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Serialize", new[] { refByte, typeof(int), t, typeof(IFormatterResolver) });
@@ -414,15 +423,13 @@ namespace MessagePack.Resolvers
         static readonly MethodInfo keyMapDictionaryTryGetValue = typeof(Dictionary<int, int>).GetRuntimeMethod("TryGetValue", new[] { typeof(int), refInt });
 
         static readonly MethodInfo objectGetType = typeof(object).GetRuntimeMethod("GetType", Type.EmptyTypes);
-        static readonly MethodInfo getTypeHandle = typeof(Type).GetRuntimeProperty("TypeHandle").GetMethod;
+        static readonly MethodInfo getTypeHandle = typeof(Type).GetRuntimeProperty("TypeHandle").GetGetMethod();
 
-        static readonly MethodInfo intIntKeyValuePairGetKey = typeof(KeyValuePair<int, int>).GetRuntimeProperty("Key").GetMethod;
-        static readonly MethodInfo intIntKeyValuePairGetValue = typeof(KeyValuePair<int, int>).GetRuntimeProperty("Value").GetMethod;
+        static readonly MethodInfo intIntKeyValuePairGetKey = typeof(KeyValuePair<int, int>).GetRuntimeProperty("Key").GetGetMethod();
+        static readonly MethodInfo intIntKeyValuePairGetValue = typeof(KeyValuePair<int, int>).GetRuntimeProperty("Value").GetGetMethod();
 
         static readonly ConstructorInfo invalidOperationExceptionConstructor = typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(string); });
 
-        static readonly MethodInfo onBeforeSerialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnBeforeSerialize", Type.EmptyTypes);
-        static readonly MethodInfo onAfterDeserialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnAfterDeserialize", Type.EmptyTypes);
 
         static class MessagePackBinaryTypeInfo
         {

@@ -17,7 +17,7 @@ namespace MessagePack.Resolvers
 
         const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
 
-        static readonly DynamicAssembly assembly;
+        internal static readonly DynamicAssembly assembly;
 
         DynamicObjectResolver()
         {
@@ -139,8 +139,6 @@ namespace MessagePack.Internal
         {
             var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey);
             if (serializationInfo == null) return null;
-
-            var ti = type.GetTypeInfo();
 
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
             var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + type.FullName.Replace(".", "_") + "Formatter", TypeAttributes.Public, null, new[] { formatterType });
@@ -786,8 +784,8 @@ namespace MessagePack.Internal
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,
-                        IsReadable = (item.GetMethod != null) && item.GetMethod.IsPublic,
-                        IsWritable = (item.SetMethod != null) && item.SetMethod.IsPublic,
+                        IsReadable = (item.GetGetMethod() != null) && item.GetGetMethod().IsPublic,
+                        IsWritable = (item.GetSetMethod()!= null) && item.GetSetMethod().IsPublic,
                         StringKey = item.Name
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
@@ -842,8 +840,8 @@ namespace MessagePack.Internal
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,
-                        IsReadable = (item.GetMethod != null) && item.GetMethod.IsPublic,
-                        IsWritable = (item.SetMethod != null) && item.SetMethod.IsPublic,
+                        IsReadable = (item.GetGetMethod() != null) && item.GetGetMethod().IsPublic,
+                        IsWritable = (item.GetSetMethod() != null) && item.GetSetMethod().IsPublic,
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
@@ -1007,7 +1005,7 @@ namespace MessagePack.Internal
             {
                 if (IsProperty)
                 {
-                    il.EmitCallvirt(PropertyInfo.GetMethod);
+                    il.EmitCallvirt(PropertyInfo.GetGetMethod());
                 }
                 else
                 {
@@ -1019,7 +1017,7 @@ namespace MessagePack.Internal
             {
                 if (IsProperty)
                 {
-                    il.EmitCallvirt(PropertyInfo.SetMethod);
+                    il.EmitCallvirt(PropertyInfo.GetSetMethod());
                 }
                 else
                 {

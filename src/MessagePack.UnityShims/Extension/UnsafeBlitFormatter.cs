@@ -1,4 +1,6 @@
-﻿using MessagePack.Formatters;
+﻿#if UNSAFE
+
+using MessagePack.Formatters;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -412,3 +414,5 @@ namespace MessagePack.Unity.Extension
         }
     }
 }
+
+#endif

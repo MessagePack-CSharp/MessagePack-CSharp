@@ -103,13 +103,14 @@ namespace MessagePack.Internal
             // Nil
             {typeof(Nil), NilFormatter.Instance},
             {typeof(Nil?), NullableNilFormatter.Instance},
-            
-            // NET40
+
+#if NETSTANDARD1_4
             {typeof(System.Numerics.BigInteger), BigIntegerFormatter.Instance},
             {typeof(System.Numerics.BigInteger?), new StaticNullableFormatter<System.Numerics.BigInteger>(BigIntegerFormatter.Instance)},
             {typeof(System.Numerics.Complex), ComplexFormatter.Instance},
             {typeof(System.Numerics.Complex?), new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance)},
             {typeof(System.Threading.Tasks.Task), TaskUnitFormatter.Instance},
+#endif
         };
 
         internal static object GetFormatter(Type t)

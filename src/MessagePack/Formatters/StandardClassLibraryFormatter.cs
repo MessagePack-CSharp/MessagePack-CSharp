@@ -3,7 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+
+#if NETSTANDARD1_4
 using System.Threading.Tasks;
+#endif
 
 namespace MessagePack.Formatters
 {
@@ -16,7 +19,7 @@ namespace MessagePack.Formatters
 
         ByteArrayFormatter()
         {
-
+            
         }
 
         public int Serialize(ref byte[] bytes, int offset, byte[] value)
@@ -237,7 +240,7 @@ namespace MessagePack.Formatters
 
         public Guid Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
-            return Guid.Parse(MessagePackBinary.ReadString(bytes, offset, out readSize));
+            return new Guid(MessagePackBinary.ReadString(bytes, offset, out readSize));
         }
     }
 
@@ -342,63 +345,6 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
-    {
-        public static readonly IMessagePackFormatter<System.Numerics.BigInteger> Instance = new BigIntegerFormatter();
-
-        BigIntegerFormatter()
-        {
-
-        }
-
-        public int Serialize(ref byte[] bytes, int offset, System.Numerics.BigInteger value, IFormatterResolver formatterResolver)
-        {
-            return MessagePackBinary.WriteBytes(ref bytes, offset, value.ToByteArray());
-        }
-
-        public System.Numerics.BigInteger Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
-        {
-            return new System.Numerics.BigInteger(MessagePackBinary.ReadBytes(bytes, offset, out readSize));
-        }
-    }
-
-    public class ComplexFormatter : IMessagePackFormatter<System.Numerics.Complex>
-    {
-        public static readonly IMessagePackFormatter<System.Numerics.Complex> Instance = new ComplexFormatter();
-
-        ComplexFormatter()
-        {
-
-        }
-
-        public int Serialize(ref byte[] bytes, int offset, System.Numerics.Complex value, IFormatterResolver formatterResolver)
-        {
-            var startOffset = offset;
-            offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
-            offset += MessagePackBinary.WriteDouble(ref bytes, offset, value.Real);
-            offset += MessagePackBinary.WriteDouble(ref bytes, offset, value.Imaginary);
-            return offset - startOffset;
-        }
-
-        public System.Numerics.Complex Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
-        {
-            var startOffset = offset;
-            var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-            offset += readSize;
-
-            if (count != 2) throw new InvalidOperationException("Invalid Complex format.");
-
-            var real = MessagePackBinary.ReadDouble(bytes, offset, out readSize);
-            offset += readSize;
-
-            var imaginary = MessagePackBinary.ReadDouble(bytes, offset, out readSize);
-            offset += readSize;
-
-            readSize = offset - startOffset;
-            return new System.Numerics.Complex(real, imaginary);
-        }
-    }
-
     public class StringBuilderFormatter : IMessagePackFormatter<StringBuilder>
     {
         public static readonly IMessagePackFormatter<StringBuilder> Instance = new StringBuilderFormatter();
@@ -487,6 +433,65 @@ namespace MessagePack.Formatters
                 readSize = offset - startOffset;
                 return array;
             }
+        }
+    }
+
+#if NETSTANDARD1_4
+
+    public class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
+    {
+        public static readonly IMessagePackFormatter<System.Numerics.BigInteger> Instance = new BigIntegerFormatter();
+
+        BigIntegerFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, System.Numerics.BigInteger value, IFormatterResolver formatterResolver)
+        {
+            return MessagePackBinary.WriteBytes(ref bytes, offset, value.ToByteArray());
+        }
+
+        public System.Numerics.BigInteger Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            return new System.Numerics.BigInteger(MessagePackBinary.ReadBytes(bytes, offset, out readSize));
+        }
+    }
+
+    public class ComplexFormatter : IMessagePackFormatter<System.Numerics.Complex>
+    {
+        public static readonly IMessagePackFormatter<System.Numerics.Complex> Instance = new ComplexFormatter();
+
+        ComplexFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, System.Numerics.Complex value, IFormatterResolver formatterResolver)
+        {
+            var startOffset = offset;
+            offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
+            offset += MessagePackBinary.WriteDouble(ref bytes, offset, value.Real);
+            offset += MessagePackBinary.WriteDouble(ref bytes, offset, value.Imaginary);
+            return offset - startOffset;
+        }
+
+        public System.Numerics.Complex Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            var startOffset = offset;
+            var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (count != 2) throw new InvalidOperationException("Invalid Complex format.");
+
+            var real = MessagePackBinary.ReadDouble(bytes, offset, out readSize);
+            offset += readSize;
+
+            var imaginary = MessagePackBinary.ReadDouble(bytes, offset, out readSize);
+            offset += readSize;
+
+            readSize = offset - startOffset;
+            return new System.Numerics.Complex(real, imaginary);
         }
     }
 
@@ -599,4 +604,6 @@ namespace MessagePack.Formatters
             return new ValueTask<T>(v);
         }
     }
+
+#endif
 }

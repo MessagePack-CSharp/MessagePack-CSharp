@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if NETSTANDARD1_4
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -209,3 +211,5 @@ namespace MessagePack
         }
     }
 }
+
+#endif

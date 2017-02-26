@@ -68,8 +68,6 @@ namespace MessagePack.Resolvers
 
         static TypeInfo BuildType(Type enumType)
         {
-            var ti = enumType.GetTypeInfo();
-
             var underlyingType = Enum.GetUnderlyingType(enumType);
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(enumType);
 

@@ -5,7 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Collections.ObjectModel;
+
+#if NETSTANDARD1_4
 using System.Threading.Tasks;
+#endif
 
 namespace MessagePack.Resolvers
 {
@@ -47,28 +50,30 @@ namespace MessagePack.Internal
               {typeof(Stack<>), typeof(StackFormatter<>)},
               {typeof(HashSet<>), typeof(HashSetFormatter<>)},
               {typeof(ReadOnlyCollection<>), typeof(ReadOnlyCollectionFormatter<>)},
-              {typeof(ObservableCollection<>), typeof(ObservableCollectionFormatter<>)},
-              {typeof(ReadOnlyObservableCollection<>),(typeof(ReadOnlyObservableCollectionFormatter<>))},
               {typeof(IList<>), typeof(InterfaceListFormatter<>)},
               {typeof(ICollection<>), typeof(InterfaceCollectionFormatter<>)},
               {typeof(IEnumerable<>), typeof(InterfaceEnumerableFormatter<>)},
+              {typeof(Dictionary<,>), typeof(DictionaryFormatter<,>)},
+              {typeof(IDictionary<,>), typeof(InterfaceDictionaryFormatter<,>)},
+              {typeof(SortedDictionary<,>), typeof(SortedDictionaryFormatter<,>)},
+              {typeof(SortedList<,>), typeof(SortedListFormatter<,>)},
+              {typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>)},
+              {typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>)},
+#if NETSTANDARD1_4
+              {typeof(ObservableCollection<>), typeof(ObservableCollectionFormatter<>)},
+              {typeof(ReadOnlyObservableCollection<>),(typeof(ReadOnlyObservableCollectionFormatter<>))},
               {typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>)},
               {typeof(IReadOnlyCollection<>), typeof(InterfaceReadOnlyCollectionFormatter<>)},
               {typeof(ISet<>), typeof(InterfaceSetFormatter<>)},
               {typeof(System.Collections.Concurrent.ConcurrentBag<>), typeof(ConcurrentBagFormatter<>)},
               {typeof(System.Collections.Concurrent.ConcurrentQueue<>), typeof(ConcurrentQueueFormatter<>)},
               {typeof(System.Collections.Concurrent.ConcurrentStack<>), typeof(ConcurrentStackFormatter<>)},
-              {typeof(Dictionary<,>), typeof(DictionaryFormatter<,>)},
-              {typeof(IDictionary<,>), typeof(InterfaceDictionaryFormatter<,>)},
-              {typeof(SortedDictionary<,>), typeof(SortedDictionaryFormatter<,>)},
-              {typeof(SortedList<,>), typeof(SortedListFormatter<,>)},
               {typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryFormatter<,>)},
               {typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>)},
               {typeof(System.Collections.Concurrent.ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>)},
-              {typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>)},
-              {typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>)},
               {typeof(Lazy<>), typeof(LazyFormatter<>)},
               {typeof(Task<>), typeof(TaskValueFormatter<>)},
+#endif
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
@@ -116,10 +121,12 @@ namespace MessagePack.Internal
                 {
                     return CreateInstance(typeof(KeyValuePairFormatter<,>), ti.GenericTypeArguments);
                 }
-                else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+                else if (isNullable && nullableElementType.GetTypeInfo().IsConstructedGenericType() && nullableElementType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
                 }
+
+#if NETSTANDARD1_4
 
                 // ValueTask
                 else if (genericType == typeof(ValueTask<>))
@@ -205,6 +212,8 @@ namespace MessagePack.Internal
                     return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
                 }
 
+#endif
+
                 // ArraySegement
                 else if (genericType == typeof(ArraySegment<>))
                 {
@@ -217,7 +226,7 @@ namespace MessagePack.Internal
                         return CreateInstance(typeof(ArraySegmentFormatter<>), ti.GenericTypeArguments);
                     }
                 }
-                else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ArraySegment<>))
+                else if (isNullable && nullableElementType.GetTypeInfo().IsConstructedGenericType() && nullableElementType.GetGenericTypeDefinition() == typeof(ArraySegment<>))
                 {
                     if (nullableElementType == typeof(ArraySegment<byte>))
                     {
@@ -240,7 +249,7 @@ namespace MessagePack.Internal
 
                     // generic collection
                     else if (ti.GenericTypeArguments.Length == 1
-                          && ti.ImplementedInterfaces.Any(x => x.IsConstructedGenericType && x.GetGenericTypeDefinition() == typeof(ICollection<>))
+                          && ti.ImplementedInterfaces.Any(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(ICollection<>))
                           && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
                     {
                         var elemType = ti.GenericTypeArguments[0];
@@ -248,7 +257,7 @@ namespace MessagePack.Internal
                     }
                     // generic dictionary
                     else if (ti.GenericTypeArguments.Length == 2
-                          && ti.ImplementedInterfaces.Any(x => x.IsConstructedGenericType && x.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                          && ti.ImplementedInterfaces.Any(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(IDictionary<,>))
                           && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
                     {
                         var keyType = ti.GenericTypeArguments[0];

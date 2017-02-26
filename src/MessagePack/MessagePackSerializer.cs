@@ -108,6 +108,8 @@ namespace MessagePack
         {
             var formatter = resolver.GetFormatterWithVerify<T>();
 
+#if NETSTANDARD1_4
+
             var ms = stream as MemoryStream;
             if (ms != null)
             {
@@ -119,11 +121,12 @@ namespace MessagePack
                     return formatter.Deserialize(buffer.Array, buffer.Offset, resolver, out readSize);
                 }
             }
+#endif
 
             // no else.
             {
                 var buffer = InternalMemoryPool.Buffer;
-                var length = FillFromStream(stream, ref buffer);
+                FillFromStream(stream, ref buffer);
 
                 int readSize;
                 return formatter.Deserialize(buffer, 0, resolver, out readSize);
