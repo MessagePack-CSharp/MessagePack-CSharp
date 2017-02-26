@@ -97,6 +97,7 @@ namespace RuntimeUnitTestToolkit
             catch (Exception ex)
             {
                 Debug.LogException(ex);
+                throw;
             }
         }
     }
@@ -121,6 +122,9 @@ namespace RuntimeUnitTestToolkit
 
         void Start()
         {
+            // TODO:load directly?
+            MessagePack.UnityClient.Tests.UnitTestLoader.Register();
+
             UnityEngine.Application.logMessageReceived += (a, b, c) =>
             {
                 logText.text += "[" + c + "]" + a + "\n";
