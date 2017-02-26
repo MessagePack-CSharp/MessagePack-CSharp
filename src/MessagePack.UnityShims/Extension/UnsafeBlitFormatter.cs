@@ -374,7 +374,7 @@ namespace MessagePack.Unity.Extension
 
         protected override void CopySerializeUnsafe(ref int[] src, ref byte[] dest, int destOffset, int byteLength)
         {
-            Buffer.BlockCopy(src, 9, dest, destOffset, byteLength);
+            Buffer.BlockCopy(src, 0, dest, destOffset, byteLength);
         }
     }
 
@@ -391,7 +391,7 @@ namespace MessagePack.Unity.Extension
 
         protected override void CopySerializeUnsafe(ref float[] src, ref byte[] dest, int destOffset, int byteLength)
         {
-            Buffer.BlockCopy(src, 9, dest, destOffset, byteLength);
+            Buffer.BlockCopy(src, 0, dest, destOffset, byteLength);
         }
     }
 
@@ -399,7 +399,7 @@ namespace MessagePack.Unity.Extension
     {
         protected override sbyte TypeCode { get { return ReservedUnityExtensionTypeCode.Double; } }
 
-        protected override int StructLength { get { return 4; } }
+        protected override int StructLength { get { return 8; } }
 
         protected override void CopyDeserializeUnsafe(ref byte[] src, int srcOffset, ref double[] dest, int byteLength)
         {
@@ -408,7 +408,7 @@ namespace MessagePack.Unity.Extension
 
         protected override void CopySerializeUnsafe(ref double[] src, ref byte[] dest, int destOffset, int byteLength)
         {
-            Buffer.BlockCopy(src, 9, dest, destOffset, byteLength);
+            Buffer.BlockCopy(src, 0, dest, destOffset, byteLength);
         }
     }
 }

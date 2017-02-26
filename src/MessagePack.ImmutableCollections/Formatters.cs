@@ -210,20 +210,95 @@ namespace MessagePack.ImmutableCollections
         }
     }
 
-    //public class IImmutableDictionaryFormatter<TKey
-    //{
+    public class InterfaceImmutableListFormatter<T> : SequneceFormatterBase<T, ImmutableList<T>.Builder, IImmutableList<T>>
+    {
+        protected override void Add(ImmutableList<T>.Builder collection, int index, T value)
+        {
+            collection.Add(value);
+        }
 
-    //}
+        protected override IImmutableList<T> Complete(ImmutableList<T>.Builder intermediateCollection)
+        {
+            return intermediateCollection.ToImmutable();
+        }
 
-    // interfaces
+        protected override ImmutableList<T>.Builder Create(int count)
+        {
+            return ImmutableList.CreateBuilder<T>();
+        }
+    }
 
+    public class InterfaceImmutableDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, ImmutableDictionary<TKey, TValue>.Builder, IImmutableDictionary<TKey, TValue>>
+    {
+        protected override void Add(ImmutableDictionary<TKey, TValue>.Builder collection, int index, TKey key, TValue value)
+        {
+            collection.Add(key, value);
+        }
 
-    // IDict
-    // IList
-    // ISet
-    // IQueue
-    // IStack
+        protected override IImmutableDictionary<TKey, TValue> Complete(ImmutableDictionary<TKey, TValue>.Builder intermediateCollection)
+        {
+            return intermediateCollection.ToImmutable();
+        }
 
+        protected override ImmutableDictionary<TKey, TValue>.Builder Create(int count)
+        {
+            return ImmutableDictionary.CreateBuilder<TKey, TValue>();
+        }
+    }
+
+    public class InterfaceImmutableSetFormatter<T> : SequneceFormatterBase<T, ImmutableHashSet<T>.Builder, IImmutableSet<T>>
+    {
+        protected override void Add(ImmutableHashSet<T>.Builder collection, int index, T value)
+        {
+            collection.Add(value);
+        }
+
+        protected override IImmutableSet<T> Complete(ImmutableHashSet<T>.Builder intermediateCollection)
+        {
+            return intermediateCollection.ToImmutable();
+        }
+
+        protected override ImmutableHashSet<T>.Builder Create(int count)
+        {
+            return ImmutableHashSet.CreateBuilder<T>();
+        }
+    }
+
+    public class InterfaceImmutableQueueFormatter<T> : SequneceFormatterBase<T, ImmutableQueueBuilder<T>, IImmutableQueue<T>>
+    {
+        protected override void Add(ImmutableQueueBuilder<T> collection, int index, T value)
+        {
+            collection.Add(value);
+        }
+
+        protected override IImmutableQueue<T> Complete(ImmutableQueueBuilder<T> intermediateCollection)
+        {
+            return intermediateCollection.q;
+        }
+
+        protected override ImmutableQueueBuilder<T> Create(int count)
+        {
+            return new ImmutableQueueBuilder<T>();
+        }
+    }
+
+    public class InterfaceImmutableStackFormatter<T> : SequneceFormatterBase<T, ImmutableStackBuilder<T>, IImmutableStack<T>>
+    {
+        protected override void Add(ImmutableStackBuilder<T> collection, int index, T value)
+        {
+            collection.Add(value);
+        }
+
+        protected override IImmutableStack<T> Complete(ImmutableStackBuilder<T> intermediateCollection)
+        {
+            return intermediateCollection.stack;
+        }
+
+        protected override ImmutableStackBuilder<T> Create(int count)
+        {
+            return new ImmutableStackBuilder<T>();
+        }
+    }
 
     // pseudo builders
 
