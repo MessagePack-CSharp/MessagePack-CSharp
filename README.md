@@ -13,15 +13,19 @@ Beta is relased(please enable include pre-release package).
 
 Standard library for .NET, .NET Core
 
-* Install-Package [MessagePack](https://www.nuget.org/packages/MessagePack) -Pre
+```
+Install-Package MessagePack -Pre
+```
 
 for Unity, download from releases page(not yet).
 
 Extension Packages(info is see detail section).
 
-* MessagePack.ImmutableCollections -Pre
-* MessagePack.ReactiveProperty -Pre
-* MessagePack.Unity -Pre
+```
+Install-Package MessagePack.ImmutableCollections -Pre
+Install-Package MessagePack.ReactiveProperty -Pre
+Install-Package MessagePack.Unity -Pre
+```
 
 Quick Start
 ---
@@ -68,7 +72,7 @@ class Program
 }
 ---
 
-Union
+ Union
 ---
 
 
