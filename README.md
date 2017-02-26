@@ -38,19 +38,16 @@ public class MyClass
 {
     // Key is serialization index, it is important for versioning.
     [Key(0)]
-    public virtual int Age { get; set; }
+    public int Age { get; set; }
 
     [Key(1)]
-    public virtual string FirstName { get; set; }
+    public string FirstName { get; set; }
 
     [Key(2)]
-    public virtual string LastName { get; set; }
+    public string LastName { get; set; }
 
     // If does not mark KeyAttribute, the property don't serialize/deserialize it.
     public string FullName { get { return FirstName + LastName; } }
-
-    [Key(3)]
-    public virtual IList<int> List { get; set; }
 }
 
 class Program
@@ -62,7 +59,6 @@ class Program
             Age = 99,
             FirstName = "hoge",
             LastName = "huga",
-            List = new List<int> { 1, 10, 100 }
         };
 
 		// call Serialize/Deserialize, that's all.
