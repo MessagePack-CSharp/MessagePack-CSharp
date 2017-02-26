@@ -35,8 +35,19 @@ namespace MessagePack.ImmutableCollections
     {
         static readonly Dictionary<Type, Type> formatterMap = new Dictionary<Type, Type>()
         {
-              // TODO: register all.
+              {typeof(ImmutableArray<>), typeof(ImmutableArrayFormatter<>)},
               {typeof(ImmutableList<>), typeof(ImmutableListFormatter<>)},
+              {typeof(ImmutableDictionary<,>), typeof(ImmutableDictionaryFormatter<,>)},
+              {typeof(ImmutableHashSet<>), typeof(ImmutableHashSetFormatter<>)},
+              {typeof(ImmutableSortedDictionary<,>), typeof(ImmutableSortedDictionaryFormatter<,>)},
+              {typeof(ImmutableSortedSet<>), typeof(ImmutableSortedSetFormatter<>)},
+              {typeof(ImmutableQueue<>), typeof(ImmutableQueueFormatter<>)},
+              {typeof(ImmutableStack<>), typeof(ImmutableStackFormatter<>)},
+              {typeof(IImmutableList<>), typeof(InterfaceImmutableListFormatter<>)},
+              {typeof(IImmutableDictionary<,>), typeof(InterfaceImmutableDictionaryFormatter<,>)},
+              {typeof(IImmutableQueue<>), typeof(InterfaceImmutableQueueFormatter<>)},
+              {typeof(IImmutableSet<>), typeof(InterfaceImmutableSetFormatter<>)},
+              {typeof(IImmutableStack<>), typeof(InterfaceImmutableStackFormatter<>)},
         };
 
         internal static object GetFormatter(Type t)

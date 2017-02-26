@@ -2,20 +2,24 @@
 using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
+using System.Reactive;
 using System.Reactive.Concurrency;
 
-namespace MessagePack.ReactiveProperty
+namespace MessagePack.ReactivePropertyExtension
 {
     public static class ReactivePropertySchedulerMapper
     {
+#pragma warning disable CS0618
+
         // default map
         static Dictionary<int, IScheduler> mapTo = new Dictionary<int, IScheduler>
         {
             {-1, UIDispatcherScheduler.Default },
             {-2, CurrentThreadScheduler.Instance },
             {-3, ImmediateScheduler.Instance },
-            // more schedulers...
-            // {-4,  ThreadPoolScheduler.Instance },
+            {-4, TaskPoolScheduler.Default },
+            {-5, System.Reactive.Concurrency.NewThreadScheduler.Default },
+            {-6, Scheduler.ThreadPool },
         };
 
         static Dictionary<IScheduler, int> mapFrom = new Dictionary<IScheduler, int>
@@ -23,7 +27,12 @@ namespace MessagePack.ReactiveProperty
             {UIDispatcherScheduler.Default,-1 },
             {CurrentThreadScheduler.Instance,-2 },
             {ImmediateScheduler.Instance,-3 },
+            {TaskPoolScheduler.Default, -4 },
+            {System.Reactive.Concurrency.NewThreadScheduler.Default, -5},
+            {Scheduler.ThreadPool, -6 }
         };
+
+#pragma warning restore CS0618
 
         public static IScheduler GetScheduler(int id)
         {
@@ -34,7 +43,7 @@ namespace MessagePack.ReactiveProperty
             }
             else
             {
-                throw new ArgumentException("Can't find registered scheduler. Id:" + id);
+                throw new ArgumentException("Can't find registered scheduler. Id:" + id + ". Please call ReactivePropertySchedulerMapper.RegisterScheudler on application startup.");
             }
         }
 
@@ -47,7 +56,7 @@ namespace MessagePack.ReactiveProperty
             }
             else
             {
-                throw new ArgumentException("Can't find registered id. Scheduler:" + scheduler.GetType().Name);
+                throw new ArgumentException("Can't find registered id. Scheduler:" + scheduler.GetType().Name + ". . Please call ReactivePropertySchedulerMapper.RegisterScheudler on application startup.");
             }
         }
 
@@ -59,9 +68,9 @@ namespace MessagePack.ReactiveProperty
     }
 
     // [Mode, SchedulerId, Value] : length should be three.
-    public class ReactivePropertyFormatter<T> : IMessagePackFormatter<IReactiveProperty<T>>
+    public class ReactivePropertyFormatter<T> : IMessagePackFormatter<ReactiveProperty<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, IReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, ReactiveProperty<T> value, IFormatterResolver formatterResolver)
         {
             if (value == null)
             {
@@ -69,19 +78,19 @@ namespace MessagePack.ReactiveProperty
             }
             else
             {
-
                 var startOffset = offset;
 
                 offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
-                offset += MessagePackBinary.WriteInt32(ref bytes, offset, 1); // TODO:Write Mode
-                offset += MessagePackBinary.WriteInt32(ref bytes, offset, 1); // TODO:ReactivePropertySchedulerMapper.GetSchedulerId(
+
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, (int)(ReactivePropertyMode.DistinctUntilChanged | ReactivePropertyMode.RaiseLatestValueOnSubscribe)); // TODO:Write Mode
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, (int)-1); // TODO:ReactivePropertySchedulerMapper.GetSchedulerId
                 offset += formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
 
                 return offset - startOffset;
             }
         }
 
-        public IReactiveProperty<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public ReactiveProperty<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
@@ -115,7 +124,124 @@ namespace MessagePack.ReactiveProperty
         }
     }
 
-    // TODO:IReactiveProperty
+    public class InterfaceReactivePropertyFormatter<T> : IMessagePackFormatter<IReactiveProperty<T>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, IReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        {
+            var rxProp = value as ReactiveProperty<T>;
+            if (rxProp != null)
+            {
+                return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref bytes, offset, rxProp, formatterResolver);
+            }
 
-    // TODO:ReactiveCollection?
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                throw new InvalidOperationException("Serializer only supports ReactiveProperty<T>. If serialize is ReadOnlyReactiveProperty, should mark [Ignore] and restore on IMessagePackSerializationCallbackReceiver.OnAfterDeserialize. Type:" + value.GetType().Name);
+            }
+        }
+
+        public IReactiveProperty<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+        }
+    }
+
+    public class InterfaceReadOnlyReactivePropertyFormatter<T> : IMessagePackFormatter<IReadOnlyReactiveProperty<T>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, IReadOnlyReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        {
+            var rxProp = value as ReactiveProperty<T>;
+            if (rxProp != null)
+            {
+                return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref bytes, offset, rxProp, formatterResolver);
+            }
+
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                throw new InvalidOperationException("Serializer only supports ReactiveProperty<T>. If serialize is ReadOnlyReactiveProperty, should mark [Ignore] and restore on IMessagePackSerializationCallbackReceiver.OnAfterDeserialize. Type:" + value.GetType().Name);
+            }
+        }
+
+        public IReadOnlyReactiveProperty<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+        }
+    }
+
+    public class ReactiveCollectionFormatter<T> : SequneceFormatterBase<T, ReactiveCollection<T>>
+    {
+        protected override void Add(ReactiveCollection<T> collection, int index, T value)
+        {
+            collection.Add(value);
+        }
+
+        protected override ReactiveCollection<T> Create(int count)
+        {
+            return new ReactiveCollection<T>();
+        }
+    }
+
+    public class UnitFormatter : IMessagePackFormatter<Unit>
+    {
+        public static IMessagePackFormatter<Unit> Instance = new UnitFormatter();
+
+        UnitFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Unit value, IFormatterResolver formatterResolver)
+        {
+            return MessagePackBinary.WriteNil(ref bytes, offset);
+        }
+
+        public Unit Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return Unit.Default;
+            }
+            else
+            {
+                throw new InvalidOperationException("Invalid Data type. Code:" + MessagePackCode.ToFormatName(bytes[offset]));
+            }
+        }
+    }
+
+    public class NullableUnitFormatter : IMessagePackFormatter<Unit?>
+    {
+        public static IMessagePackFormatter<Unit?> Instance = new NullableUnitFormatter();
+
+        NullableUnitFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Unit? value, IFormatterResolver formatterResolver)
+        {
+            return MessagePackBinary.WriteNil(ref bytes, offset);
+        }
+
+        public Unit? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return Unit.Default;
+            }
+            else
+            {
+                throw new InvalidOperationException("Invalid Data type. Code:" + MessagePackCode.ToFormatName(bytes[offset]));
+            }
+        }
+    }
 }
