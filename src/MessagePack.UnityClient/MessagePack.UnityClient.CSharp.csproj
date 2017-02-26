@@ -71,11 +71,11 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\MessagePack\Attributes.cs" />
     <Compile Include="Assets\Scripts\MessagePack\FloatBits.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\CollectionFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\DictionaryFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\IMessagePackFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\MultiDimentionalArrayFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\NullableFormatter.cs" />
-    <Compile Include="Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.cs" />
-    <Compile Include="Assets\Scripts\MessagePack\Formatters\SequenceFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\StandardClassLibraryFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\IFormatterResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\IMessagePackSerializationCallbackReceiver.cs" />
@@ -89,10 +89,12 @@
     <Compile Include="Assets\Scripts\MessagePack\MessagePackSerializer.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Nil.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\BuiltinResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\CompositeResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DefaultResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicEnumResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicGenericResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicObjectResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicUnionResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Shims\Reflection.cs" />
     <Compile Include="Assets\Scripts\MessagePack\StringEncoding.cs" />
     <Compile Include="Assets\Scripts\MessagePack\T4Formatters\PrimitiveFormatter.cs" />

@@ -1,0 +1,1 @@
+../../../../MessagePack/IFormatterResolver.cs

@@ -1,0 +1,1 @@
+../../../../../MessagePack.UnityShims/Extension/UnityBlitResolver.cs
