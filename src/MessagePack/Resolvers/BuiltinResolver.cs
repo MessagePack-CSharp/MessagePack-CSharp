@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 
 namespace MessagePack.Resolvers
 {
@@ -83,7 +84,7 @@ namespace MessagePack.Internal
             {typeof(Guid?), new StaticNullableFormatter<Guid>(GuidFormatter.Instance)},
             {typeof(Uri), UriFormatter.Instance},
             {typeof(Version), VersionFormatter.Instance},
-            {typeof(StringBuilderFormatter), StringBuilderFormatter.Instance},
+            {typeof(StringBuilder), StringBuilderFormatter.Instance},
             {typeof(BitArray), BitArrayFormatter.Instance},
             
             // special primitive

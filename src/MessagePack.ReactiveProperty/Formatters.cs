@@ -11,26 +11,30 @@ namespace MessagePack.ReactivePropertyExtension
     {
 #pragma warning disable CS0618
 
-        // default map
-        static Dictionary<int, IScheduler> mapTo = new Dictionary<int, IScheduler>
-        {
-            {-1, UIDispatcherScheduler.Default },
-            {-2, CurrentThreadScheduler.Instance },
-            {-3, ImmediateScheduler.Instance },
-            {-4, TaskPoolScheduler.Default },
-            {-5, System.Reactive.Concurrency.NewThreadScheduler.Default },
-            {-6, Scheduler.ThreadPool },
-        };
+        static Dictionary<int, IScheduler> mapTo = new Dictionary<int, IScheduler>();
+        static Dictionary<IScheduler, int> mapFrom = new Dictionary<IScheduler, int>();
 
-        static Dictionary<IScheduler, int> mapFrom = new Dictionary<IScheduler, int>
+        static ReactivePropertySchedulerMapper()
         {
-            {UIDispatcherScheduler.Default,-1 },
-            {CurrentThreadScheduler.Instance,-2 },
-            {ImmediateScheduler.Instance,-3 },
-            {TaskPoolScheduler.Default, -4 },
-            {System.Reactive.Concurrency.NewThreadScheduler.Default, -5},
-            {Scheduler.ThreadPool, -6 }
-        };
+            // default map
+            var mappings = new[]
+            {
+               (-2, CurrentThreadScheduler.Instance ),
+               (-3, ImmediateScheduler.Instance ),
+               (-4, TaskPoolScheduler.Default ),
+               (-5, System.Reactive.Concurrency.NewThreadScheduler.Default ),
+               (-6, Scheduler.ThreadPool ),
+               (-7, System.Reactive.Concurrency.DefaultScheduler.Instance),
+
+               (-1, UIDispatcherScheduler.Default ), // override
+            };
+
+            foreach (var item in mappings)
+            {
+                ReactivePropertySchedulerMapper.mapTo[item.Item1] = item.Item2;
+                ReactivePropertySchedulerMapper.mapFrom[item.Item2] = item.Item1;
+            }
+        }
 
 #pragma warning restore CS0618
 
@@ -176,7 +180,7 @@ namespace MessagePack.ReactivePropertyExtension
         }
     }
 
-    public class ReactiveCollectionFormatter<T> : SequneceFormatterBase<T, ReactiveCollection<T>>
+    public class ReactiveCollectionFormatter<T> : CollectionFormatterBase<T, ReactiveCollection<T>>
     {
         protected override void Add(ReactiveCollection<T> collection, int index, T value)
         {

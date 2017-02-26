@@ -263,7 +263,7 @@ namespace MessagePack.Formatters
                     {
                         l++;
                     }
-                    if (k < kLength - 1)
+                    else if (k < kLength - 1)
                     {
                         l = 0;
                         k++;

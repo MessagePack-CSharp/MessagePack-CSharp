@@ -37,9 +37,9 @@ namespace MessagePack.ReactivePropertyExtension
         static readonly Dictionary<Type, Type> formatterMap = new Dictionary<Type, Type>()
         {
               {typeof(ReactiveProperty<>), typeof(ReactivePropertyFormatter<>)},
-              {typeof(ReactiveProperty<>), typeof(InterfaceReactivePropertyFormatter<>)},
-              {typeof(ReactiveProperty<>), typeof(InterfaceReadOnlyReactivePropertyFormatter<>)},
-              {typeof(ReactiveProperty<>), typeof(ReactiveCollectionFormatter<>)},
+              {typeof(IReactiveProperty<>), typeof(InterfaceReactivePropertyFormatter<>)},
+              {typeof(IReadOnlyReactiveProperty<>), typeof(InterfaceReadOnlyReactivePropertyFormatter<>)},
+              {typeof(ReactiveCollection<>), typeof(ReactiveCollectionFormatter<>)},
         };
 
         internal static object GetFormatter(Type t)
@@ -55,10 +55,14 @@ namespace MessagePack.ReactivePropertyExtension
 
             var ti = t.GetTypeInfo();
 
-            Type formatterType;
-            if (formatterMap.TryGetValue(t, out formatterType))
+            if (ti.IsGenericType)
             {
-                return CreateInstance(formatterType, ti.GenericTypeArguments);
+                var genericType = ti.GetGenericTypeDefinition();
+                Type formatterType;
+                if (formatterMap.TryGetValue(genericType, out formatterType))
+                {
+                    return CreateInstance(formatterType, ti.GenericTypeArguments);
+                }
             }
 
             return null;

@@ -37,7 +37,7 @@ namespace MessagePack
             var len = formatter.Serialize(ref buffer, 0, obj, resolver);
 
             // do not return MemoryPool.Buffer.
-            return MessagePackBinary.FastResizeClone(buffer, len);
+            return MessagePackBinary.FastCloneWithResize(buffer, len);
         }
 
         /// <summary>

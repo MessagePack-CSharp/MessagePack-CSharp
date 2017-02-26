@@ -1,5 +1,6 @@
 ﻿using SharedData;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -113,9 +114,11 @@ namespace MessagePack.Tests
 
         public static object[] standardClassFormatterTestData = new object[]
         {
+            new object[] { new byte[] { 1, 10, 100 }, new byte[0] { }, null },
             new object[] { "aaa", "", null },
             new object[] { new Uri("Http://hogehoge.com"), new Uri("Https://hugahuga.com"), null },
             new object[] { new Version(1,2), new Version(100,200,300,400), null },
+            new object[] { new BitArray(new[] { true, false, true }), new BitArray(1), null },
         };
 
         [Theory]
@@ -125,6 +128,51 @@ namespace MessagePack.Tests
             Convert(x).Is(x);
             Convert(y).Is(y);
             Convert(z).Is(z);
+        }
+
+        [Fact]
+        public void StringBuilderTest()
+        {
+            var sb = new StringBuilder("aaa");
+            Convert(sb).ToString().Is("aaa");
+
+            StringBuilder nullSb = null;
+            Convert(nullSb).IsNull();
+        }
+
+        [Fact]
+        public void LazyTest()
+        {
+            var lz = new Lazy<int>(() => 100);
+            Convert(lz).Value.Is(100);
+
+            Lazy<int> nullLz = null;
+            Convert(nullLz).IsNull();
+        }
+
+        [Fact]
+        public void TaskTest()
+        {
+            var intTask = Task.Run(() => 100);
+            Convert(intTask).Result.Is(100);
+
+            Task<int> nullTask = null;
+            Convert(nullTask).IsNull();
+
+            Task unitTask = Task.Run(() => 100);
+            Convert(unitTask).Status.Is(TaskStatus.RanToCompletion);
+
+            Task nullUnitTask = null;
+            Convert(nullUnitTask).Status.Is(TaskStatus.RanToCompletion); // write to nil
+
+            ValueTask<int> valueTask = new ValueTask<int>(100);
+            Convert(valueTask).Result.Is(100);
+
+            ValueTask<int>? nullValueTask = new ValueTask<int>(100);
+            Convert(nullValueTask).Value.Result.Is(100);
+
+            ValueTask<int>? nullValueTask2 = null;
+            Convert(nullValueTask2).IsNull();
         }
     }
 }

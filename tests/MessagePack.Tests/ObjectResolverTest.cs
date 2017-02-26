@@ -209,7 +209,7 @@ namespace MessagePack.Tests
             }
             {
                 var before = false;
-                
+
                 var c1 = new Callback2(0, () => before = true, () => { });
                 var d = MessagePackSerializer.Serialize(c1);
                 before.IsTrue();
@@ -225,7 +225,7 @@ namespace MessagePack.Tests
             }
             {
                 var before = false;
-                
+
                 var c1 = new Callback2_2(0, () => before = true, () => { });
                 var d = MessagePackSerializer.Serialize(c1);
                 before.IsTrue();
@@ -234,6 +234,24 @@ namespace MessagePack.Tests
                 MessagePackSerializer.Deserialize<Callback2_2>(d);
                 Callback2_2.CalledAfter.IsTrue();
             }
+        }
+
+        [Fact]
+        public void GenericClassTest()
+        {
+            var t = new GenericClass<int, string> { MyProperty0 = 100, MyProperty1 = "aaa" };
+            var v = Convert(t);
+            v.MyProperty0.Is(100);
+            v.MyProperty1.Is("aaa");
+        }
+
+        [Fact]
+        public void GenericStructTest()
+        {
+            var t = new GenericStruct<int, string> { MyProperty0 = 100, MyProperty1 = "aaa" };
+            var v = Convert(t);
+            v.MyProperty0.Is(100);
+            v.MyProperty1.Is("aaa");
         }
     }
 }

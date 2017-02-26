@@ -459,7 +459,7 @@ namespace MessagePack.Formatters
                     offset += MessagePackBinary.WriteBoolean(ref bytes, offset, value.Get(i));
                 }
 
-                return startOffset - offset;
+                return offset - startOffset;
             }
         }
 

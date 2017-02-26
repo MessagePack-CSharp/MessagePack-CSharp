@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace MessagePack.Unity.Extension
 {
+    /// <summary>
+    /// Special Resolver for Vector2[], Vector3[], Vector4[], Quaternion[], Color[], Bounds[], Rect[]
+    /// </summary>
     public class UnityBlitResolver : IFormatterResolver
     {
         public static IFormatterResolver Instance = new UnityBlitResolver();
@@ -29,7 +32,9 @@ namespace MessagePack.Unity.Extension
             }
         }
     }
-
+    /// <summary>
+    /// Special Resolver for Vector2[], Vector3[], Vector4[], Quaternion[], Color[], Bounds[], Rect[] + int[], float[], double[]
+    /// </summary>
     public class UnityBlitWithPrimitiveArrayResolver : IFormatterResolver
     {
         public static IFormatterResolver Instance = new UnityBlitWithPrimitiveArrayResolver();

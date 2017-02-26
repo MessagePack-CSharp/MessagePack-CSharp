@@ -95,7 +95,7 @@ namespace MessagePack.Unity.Extension
 
             var result = new T[byteLength / StructLength];
             CopyDeserializeUnsafe(ref bytes, offset, ref result, byteLength);
-            offset += readSize;
+            offset += byteLength;
 
             readSize = offset - startOffset;
             return result;

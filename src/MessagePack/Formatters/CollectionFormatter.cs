@@ -127,11 +127,11 @@ namespace MessagePack.Formatters
         }
     }
 
-    public abstract class SequneceFormatterBase<TElement, TIntermediate, TEnumerator, TSequence> : IMessagePackFormatter<TSequence>
-        where TSequence : IEnumerable<TElement>
+    public abstract class CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection> : IMessagePackFormatter<TCollection>
+        where TCollection : IEnumerable<TElement>
         where TEnumerator : IEnumerator<TElement>
     {
-        public int Serialize(ref byte[] bytes, int offset, TSequence value, IFormatterResolver formatterResolver)
+        public int Serialize(ref byte[] bytes, int offset, TCollection value, IFormatterResolver formatterResolver)
         {
             if (value == null)
             {
@@ -216,12 +216,12 @@ namespace MessagePack.Formatters
             }
         }
 
-        public TSequence Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public TCollection Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
             {
                 readSize = 1;
-                return default(TSequence);
+                return default(TCollection);
             }
             else
             {
@@ -244,7 +244,7 @@ namespace MessagePack.Formatters
         }
 
         // abstraction for serialize
-        protected virtual int? GetCount(TSequence sequence)
+        protected virtual int? GetCount(TCollection sequence)
         {
             var collection = sequence as ICollection<TElement>;
             if (collection != null)
@@ -263,33 +263,33 @@ namespace MessagePack.Formatters
         }
 
         // Some collections can use struct iterator, this is optimization path
-        protected abstract TEnumerator GetSourceEnumerator(TSequence source);
+        protected abstract TEnumerator GetSourceEnumerator(TCollection source);
 
         // abstraction for deserialize
         protected abstract TIntermediate Create(int count);
         protected abstract void Add(TIntermediate collection, int index, TElement value);
-        protected abstract TSequence Complete(TIntermediate intermediateCollection);
+        protected abstract TCollection Complete(TIntermediate intermediateCollection);
     }
 
-    public abstract class SequneceFormatterBase<TElement, TIntermediate, TSequence> : SequneceFormatterBase<TElement, TIntermediate, IEnumerator<TElement>, TSequence>
-        where TSequence : IEnumerable<TElement>
+    public abstract class CollectionFormatterBase<TElement, TIntermediate, TCollection> : CollectionFormatterBase<TElement, TIntermediate, IEnumerator<TElement>, TCollection>
+        where TCollection : IEnumerable<TElement>
     {
-        protected override IEnumerator<TElement> GetSourceEnumerator(TSequence source)
+        protected override IEnumerator<TElement> GetSourceEnumerator(TCollection source)
         {
             return source.GetEnumerator();
         }
     }
 
-    public abstract class SequneceFormatterBase<TElement, TSequence> : SequneceFormatterBase<TElement, TSequence, TSequence>
-        where TSequence : IEnumerable<TElement>
+    public abstract class CollectionFormatterBase<TElement, TCollection> : CollectionFormatterBase<TElement, TCollection, TCollection>
+        where TCollection : IEnumerable<TElement>
     {
-        protected sealed override TSequence Complete(TSequence intermediateCollection)
+        protected sealed override TCollection Complete(TCollection intermediateCollection)
         {
             return intermediateCollection;
         }
     }
 
-    public class GenericCollectionFormatter<TElement, TCollection> : SequneceFormatterBase<TElement, TCollection>
+    public class GenericCollectionFormatter<TElement, TCollection> : CollectionFormatterBase<TElement, TCollection>
          where TCollection : ICollection<TElement>, new()
     {
         protected override TCollection Create(int count)
@@ -303,7 +303,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ListFormatter<T> : SequneceFormatterBase<T, List<T>, List<T>.Enumerator, List<T>>
+    public class ListFormatter<T> : CollectionFormatterBase<T, List<T>, List<T>.Enumerator, List<T>>
     {
         protected override void Add(List<T> collection, int index, T value)
         {
@@ -326,7 +326,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class LinkedListFormatter<T> : SequneceFormatterBase<T, LinkedList<T>, LinkedList<T>.Enumerator, LinkedList<T>>
+    public class LinkedListFormatter<T> : CollectionFormatterBase<T, LinkedList<T>, LinkedList<T>.Enumerator, LinkedList<T>>
     {
         protected override void Add(LinkedList<T> collection, int index, T value)
         {
@@ -349,7 +349,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class QeueueFormatter<T> : SequneceFormatterBase<T, Queue<T>, Queue<T>.Enumerator, Queue<T>>
+    public class QeueueFormatter<T> : CollectionFormatterBase<T, Queue<T>, Queue<T>.Enumerator, Queue<T>>
     {
         protected override int? GetCount(Queue<T> sequence)
         {
@@ -377,21 +377,23 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class StackFormatter<T> : SequneceFormatterBase<T, Stack<T>, Stack<T>.Enumerator, Stack<T>>
+    // should deserialize reverse order.
+    public class StackFormatter<T> : CollectionFormatterBase<T, T[], Stack<T>.Enumerator, Stack<T>>
     {
         protected override int? GetCount(Stack<T> sequence)
         {
             return sequence.Count;
         }
 
-        protected override void Add(Stack<T> collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value)
         {
-            collection.Push(value);
+            // add reverse
+            collection[collection.Length - 1 - index] = value;
         }
 
-        protected override Stack<T> Create(int count)
+        protected override T[] Create(int count)
         {
-            return new Stack<T>(count);
+            return new T[count];
         }
 
         protected override Stack<T>.Enumerator GetSourceEnumerator(Stack<T> source)
@@ -399,13 +401,13 @@ namespace MessagePack.Formatters
             return source.GetEnumerator();
         }
 
-        protected override Stack<T> Complete(Stack<T> intermediateCollection)
+        protected override Stack<T> Complete(T[] intermediateCollection)
         {
-            return intermediateCollection;
+            return new Stack<T>(intermediateCollection);
         }
     }
 
-    public class HashSetFormatter<T> : SequneceFormatterBase<T, HashSet<T>, HashSet<T>.Enumerator, HashSet<T>>
+    public class HashSetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, HashSet<T>.Enumerator, HashSet<T>>
     {
         protected override int? GetCount(HashSet<T> sequence)
         {
@@ -433,7 +435,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ReadOnlyCollectionFormatter<T> : SequneceFormatterBase<T, T[], ReadOnlyCollection<T>>
+    public class ReadOnlyCollectionFormatter<T> : CollectionFormatterBase<T, T[], ReadOnlyCollection<T>>
     {
         protected override void Add(T[] collection, int index, T value)
         {
@@ -451,7 +453,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ObservableCollectionFormatter<T> : SequneceFormatterBase<T, ObservableCollection<T>>
+    public class ObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>>
     {
         protected override void Add(ObservableCollection<T> collection, int index, T value)
         {
@@ -464,7 +466,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ReadOnlyObservableCollectionFormatter<T> : SequneceFormatterBase<T, ObservableCollection<T>, ReadOnlyObservableCollection<T>>
+    public class ReadOnlyObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>, ReadOnlyObservableCollection<T>>
     {
         protected override void Add(ObservableCollection<T> collection, int index, T value)
         {
@@ -482,7 +484,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceListFormatter<T> : SequneceFormatterBase<T, T[], IList<T>>
+    public class InterfaceListFormatter<T> : CollectionFormatterBase<T, T[], IList<T>>
     {
         protected override void Add(T[] collection, int index, T value)
         {
@@ -500,7 +502,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceCollectionFormatter<T> : SequneceFormatterBase<T, T[], ICollection<T>>
+    public class InterfaceCollectionFormatter<T> : CollectionFormatterBase<T, T[], ICollection<T>>
     {
         protected override void Add(T[] collection, int index, T value)
         {
@@ -518,7 +520,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceEnumerableFormatter<T> : SequneceFormatterBase<T, T[], IEnumerable<T>>
+    public class InterfaceEnumerableFormatter<T> : CollectionFormatterBase<T, T[], IEnumerable<T>>
     {
         protected override void Add(T[] collection, int index, T value)
         {
@@ -536,7 +538,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceReadOnlyListFormatter<T> : SequneceFormatterBase<T, T[], IReadOnlyList<T>>
+    public class InterfaceReadOnlyListFormatter<T> : CollectionFormatterBase<T, T[], IReadOnlyList<T>>
     {
         protected override void Add(T[] collection, int index, T value)
         {
@@ -554,7 +556,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceReadOnlyCollectionFormatter<T> : SequneceFormatterBase<T, T[], IReadOnlyCollection<T>>
+    public class InterfaceReadOnlyCollectionFormatter<T> : CollectionFormatterBase<T, T[], IReadOnlyCollection<T>>
     {
         protected override void Add(T[] collection, int index, T value)
         {
@@ -572,7 +574,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceSetFormatter<T> : SequneceFormatterBase<T, HashSet<T>, ISet<T>>
+    public class InterfaceSetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, ISet<T>>
     {
         protected override void Add(HashSet<T> collection, int index, T value)
         {
@@ -590,7 +592,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ConcurrentBagFormatter<T> : SequneceFormatterBase<T, System.Collections.Concurrent.ConcurrentBag<T>>
+    public class ConcurrentBagFormatter<T> : CollectionFormatterBase<T, System.Collections.Concurrent.ConcurrentBag<T>>
     {
         protected override int? GetCount(ConcurrentBag<T> sequence)
         {
@@ -608,7 +610,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ConcurrentQueueFormatter<T> : SequneceFormatterBase<T, System.Collections.Concurrent.ConcurrentQueue<T>>
+    public class ConcurrentQueueFormatter<T> : CollectionFormatterBase<T, System.Collections.Concurrent.ConcurrentQueue<T>>
     {
         protected override int? GetCount(ConcurrentQueue<T> sequence)
         {
@@ -626,21 +628,27 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ConcurrentStackFormatter<T> : SequneceFormatterBase<T, System.Collections.Concurrent.ConcurrentStack<T>>
+    public class ConcurrentStackFormatter<T> : CollectionFormatterBase<T, T[],  ConcurrentStack<T>>
     {
         protected override int? GetCount(ConcurrentStack<T> sequence)
         {
             return sequence.Count;
         }
 
-        protected override void Add(ConcurrentStack<T> collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value)
         {
-            collection.Push(value);
+            // add reverse
+            collection[collection.Length - 1 - index] = value;
         }
 
-        protected override ConcurrentStack<T> Create(int count)
+        protected override T[] Create(int count)
         {
-            return new ConcurrentStack<T>();
+            return new T[count];
+        }
+        
+        protected override ConcurrentStack<T> Complete(T[] intermediateCollection)
+        {
+            return new ConcurrentStack<T>(intermediateCollection);
         }
     }
 
@@ -690,7 +698,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceLookupFormatter<TKey, TElement> : SequneceFormatterBase<IGrouping<TKey, TElement>, Dictionary<TKey, IGrouping<TKey, TElement>>, ILookup<TKey, TElement>>
+    public class InterfaceLookupFormatter<TKey, TElement> : CollectionFormatterBase<IGrouping<TKey, TElement>, Dictionary<TKey, IGrouping<TKey, TElement>>, ILookup<TKey, TElement>>
     {
         protected override void Add(Dictionary<TKey, IGrouping<TKey, TElement>> collection, int index, IGrouping<TKey, TElement> value)
         {

@@ -69,7 +69,6 @@ namespace MessagePack.Internal
               {typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>)},
               {typeof(Lazy<>), typeof(LazyFormatter<>)},
               {typeof(Task<>), typeof(TaskValueFormatter<>)},
-              {typeof(ValueTask<>), typeof(ValueTaskFormatter<>)},
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
@@ -118,6 +117,16 @@ namespace MessagePack.Internal
                     return CreateInstance(typeof(KeyValuePairFormatter<,>), ti.GenericTypeArguments);
                 }
                 else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+                {
+                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
+                }
+
+                // ValueTask
+                else if (genericType == typeof(ValueTask<>))
+                {
+                    return CreateInstance(typeof(ValueTaskFormatter<>), ti.GenericTypeArguments);
+                }
+                else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
                 }

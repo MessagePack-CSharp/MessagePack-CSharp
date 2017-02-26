@@ -278,7 +278,7 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Throw);
         }
 
-        /// <summary>for(var i = 0; i < ***; i++)</summary>
+        /// <summary>for  var i = 0, i ..., i++ </summary>
         public static void EmitIncrementFor(this ILGenerator il, LocalBuilder conditionGreater, Action<LocalBuilder> emitBody)
         {
             var loopBegin = il.DefineLabel();

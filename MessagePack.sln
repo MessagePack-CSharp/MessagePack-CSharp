@@ -15,6 +15,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "T4Templates", "src\T4Templa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8761-4552-A70A-B34DC19F39C4}"
 	ProjectSection(SolutionItems) = preProject
+		nuget\MessagePack.ImmutableCollections.nuspec = nuget\MessagePack.ImmutableCollections.nuspec
+		nuget\MessagePack.nuspec = nuget\MessagePack.nuspec
+		nuget\MessagePack.ReactiveProperty.nuspec = nuget\MessagePack.ReactiveProperty.nuspec
+		nuget\MessagePack.UnityShims.nuspec = nuget\MessagePack.UnityShims.nuspec
+		nuget\pack.bat = nuget\pack.bat
+		nuget\push.bat = nuget\push.bat
 		README.md = README.md
 	EndProjectSection
 EndProject

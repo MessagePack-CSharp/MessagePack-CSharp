@@ -180,15 +180,14 @@ namespace Sandbox
             };
             Person[] l = Enumerable.Range(1, 100).Select(x => new Person { Age = x, FirstName = "Windows", LastName = "Server", Sex = Sex.Female }).ToArray();
 
-            //Benchmark(p);
-            //Console.WriteLine();
-            //Benchmark(l);
+            Benchmark(p);
+            Console.WriteLine();
+            Benchmark(l);
 
             //var json = MessagePackSerializer.ToJson(MessagePackSerializer.NonGeneric.Serialize(typeof(Person), p));
             //Console.WriteLine(json);
 
-            var a = MessagePackSerializer.ToJson(new GenericClass<int, string>() { MyProperty0 = 99, MyProperty1 = "hoge" });
-            Console.WriteLine(a);
+
 
         }
 
@@ -237,9 +236,14 @@ namespace Sandbox
                     using (var ms = new MemoryStream())
                     {
                         ProtoBuf.Serializer.Serialize(ms, target);
-                        data2 = ms.ToArray();
                     }
                 }
+            }
+
+            using (var ms = new MemoryStream())
+            {
+                ProtoBuf.Serializer.Serialize(ms, target);
+                data2 = ms.ToArray();
             }
 
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
@@ -284,6 +288,53 @@ namespace Sandbox
                     }
                 }
             }
+
+            Console.WriteLine();
+            Console.WriteLine("FileSize::");
+            var label = "";
+            label = "MsgPack-Cli"; Console.WriteLine($"{label,20}   {data.Length} Byte");
+            label = "MessagePack-CSharp"; Console.WriteLine($"{label,20}   {data0.Length} Byte");
+            label = "ZeroFormatter"; Console.WriteLine($"{label,20}   {data1.Length} Byte");
+            label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
+
+            Console.WriteLine();
+            Console.WriteLine();
+        }
+
+
+        static string ToHumanReadableSize(long size)
+        {
+            return ToHumanReadableSize(new Nullable<long>(size));
+        }
+
+        static string ToHumanReadableSize(long? size)
+        {
+            if (size == null) return "NULL";
+
+            double bytes = size.Value;
+
+            if (bytes <= 1024) return bytes.ToString("f2") + " B";
+
+            bytes = bytes / 1024;
+            if (bytes <= 1024) return bytes.ToString("f2") + " KB";
+
+            bytes = bytes / 1024;
+            if (bytes <= 1024) return bytes.ToString("f2") + " MB";
+
+            bytes = bytes / 1024;
+            if (bytes <= 1024) return bytes.ToString("f2") + " GB";
+
+            bytes = bytes / 1024;
+            if (bytes <= 1024) return bytes.ToString("f2") + " TB";
+
+            bytes = bytes / 1024;
+            if (bytes <= 1024) return bytes.ToString("f2") + " PB";
+
+            bytes = bytes / 1024;
+            if (bytes <= 1024) return bytes.ToString("f2") + " EB";
+
+            bytes = bytes / 1024;
+            return bytes + " ZB";
         }
     }
 
@@ -307,7 +358,6 @@ namespace Sandbox
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
         }
     }
-
 
 
 

@@ -257,7 +257,7 @@ namespace MessagePack
             }
         }
 
-        public static byte[] FastResizeClone(byte[] array, int newSize)
+        public static byte[] FastCloneWithResize(byte[] array, int newSize)
         {
             if (newSize < 0) throw new ArgumentOutOfRangeException("newSize");
 

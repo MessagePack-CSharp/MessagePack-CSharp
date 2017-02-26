@@ -33,6 +33,27 @@ namespace MessagePack.Tests
             Convert(data).IsStructuralEqual(data);
         }
 
+        public static object[] valueTupleTestData = new object[]
+        {
+            new object[] { ValueTuple.Create(1),null },
+            new object[] { ValueTuple.Create(1,2),null },
+            new object[] { ValueTuple.Create(1,2,3),null },
+            new object[] { ValueTuple.Create(1,2,3,4),null },
+            new object[] { ValueTuple.Create(1,2,3,4,5) ,null},
+            new object[] { ValueTuple.Create(1,2,3,4,5,6) ,null},
+            new object[] { ValueTuple.Create(1,2,3,4,5,6,7) ,null},
+            new object[] { ValueTuple.Create(1,2,3,4,5,6,7,8) ,null},
+        };
+
+        [Theory]
+        [MemberData(nameof(tupleTestData))]
+        public void TupleTest<T>(T data, T? @null)
+            where T : struct
+        {
+            Convert(data).IsStructuralEqual(data);
+            Convert(@null).IsNull();
+        }
+
         public static object[] keyValuePairData = new object[]
         {
             new object[] { new KeyValuePair<int, int>(1,2), null },

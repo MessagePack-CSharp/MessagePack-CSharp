@@ -16,6 +16,14 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Dump to JSON string.
+        /// </summary>
+        public static string ToJson<T>(T obj, IFormatterResolver resolver)
+        {
+            return ToJson(Serialize(obj, resolver));
+        }
+
+        /// <summary>
         /// Dump message-pack binary to JSON string.
         /// </summary>
         public static string ToJson(byte[] bytes)

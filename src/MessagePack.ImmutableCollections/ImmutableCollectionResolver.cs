@@ -54,10 +54,22 @@ namespace MessagePack.ImmutableCollections
         {
             var ti = t.GetTypeInfo();
 
-            Type formatterType;
-            if (formatterMap.TryGetValue(t, out formatterType))
+            if (ti.IsGenericType)
             {
-                return CreateInstance(formatterType, ti.GenericTypeArguments);
+                var genericType = ti.GetGenericTypeDefinition();
+                var genericTypeInfo = genericType.GetTypeInfo();
+                var isNullable = genericTypeInfo.IsNullable();
+                var nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
+
+                Type formatterType;
+                if (formatterMap.TryGetValue(genericType, out formatterType))
+                {
+                    return CreateInstance(formatterType, ti.GenericTypeArguments);
+                }
+                else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ImmutableArray<>))
+                {
+                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
+                }
             }
 
             return null;
@@ -66,6 +78,14 @@ namespace MessagePack.ImmutableCollections
         static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);
+        }
+    }
+
+    internal static class ReflectionExtensions
+    {
+        public static bool IsNullable(this System.Reflection.TypeInfo type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>);
         }
     }
 }

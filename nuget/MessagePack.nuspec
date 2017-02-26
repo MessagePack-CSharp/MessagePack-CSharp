@@ -1,0 +1,37 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>MessagePack</id>
+    <version>0.1.0-beta</version>
+    <title>MessagePack for C#</title>
+    <authors>neuecc</authors>
+    <owners>neuecc</owners>
+    <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity).</description>
+    <releaseNotes>initial alpha.</releaseNotes>
+    <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.5" />
+    </frameworkAssemblies>
+    <dependencies>
+      <group targetFramework=".NETFramework4.5">
+        <dependency id="System.Reflection.Emit" version="4.3.0" />
+        <dependency id="System.ValueTuple" version="4.3.0" />
+        <dependency id="System.Threading.Tasks.Extensions" version="4.3.0" />
+      </group>
+      <group targetFramework=".NETStandard1.4">
+        <dependency id="System.Reflection.Emit" version="4.3.0" />
+        <dependency id="System.ValueTuple" version="4.3.0" />
+        <dependency id="System.Threading.Tasks.Extensions" version="4.3.0" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\net45" />
+    <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\net45" />
+    <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\netstandard1.4" />
+    <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\netstandard1.4" />
+  </files>
+</package>

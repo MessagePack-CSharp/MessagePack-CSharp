@@ -4,6 +4,11 @@
     <TargetFramework>netstandard1.4</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml</DocumentationFile>
+    <NoWarn>1701;1702;1705;1591</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="ReactiveProperty" Version="3.5.0" />
     <PackageReference Include="System.Reactive.PlatformServices" Version="3.1.1" />

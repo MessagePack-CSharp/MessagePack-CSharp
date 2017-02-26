@@ -57,7 +57,7 @@ namespace MessagePack.ImmutableCollections
         }
     }
 
-    public class ImmutableListFormatter<T> : SequneceFormatterBase<T, ImmutableList<T>.Builder, ImmutableList<T>.Enumerator, ImmutableList<T>>
+    public class ImmutableListFormatter<T> : CollectionFormatterBase<T, ImmutableList<T>.Builder, ImmutableList<T>.Enumerator, ImmutableList<T>>
     {
         protected override void Add(ImmutableList<T>.Builder collection, int index, T value)
         {
@@ -103,7 +103,7 @@ namespace MessagePack.ImmutableCollections
         }
     }
 
-    public class ImmutableHashSetFormatter<T> : SequneceFormatterBase<T, ImmutableHashSet<T>.Builder, ImmutableHashSet<T>.Enumerator, ImmutableHashSet<T>>
+    public class ImmutableHashSetFormatter<T> : CollectionFormatterBase<T, ImmutableHashSet<T>.Builder, ImmutableHashSet<T>.Enumerator, ImmutableHashSet<T>>
     {
         protected override void Add(ImmutableHashSet<T>.Builder collection, int index, T value)
         {
@@ -149,31 +149,31 @@ namespace MessagePack.ImmutableCollections
         }
     }
 
-    public class ImmutableSortedSetFormatter<T> : SequneceFormatterBase<T, ImmutableSortedSet<T>.Builder, ImmutableSortedSet<T>.Enumerator, ImmutableSortedSet<T>>
+    public class ImmutableSortedSetFormatter<T> : CollectionFormatterBase<T, ImmutableSortedSet<T>.Builder, ImmutableSortedSet<T>.Enumerator, ImmutableSortedSet<T>>
     {
         protected override void Add(ImmutableSortedSet<T>.Builder collection, int index, T value)
         {
-            throw new NotImplementedException();
+            collection.Add(value);
         }
 
         protected override ImmutableSortedSet<T> Complete(ImmutableSortedSet<T>.Builder intermediateCollection)
         {
-            throw new NotImplementedException();
+            return intermediateCollection.ToImmutable();
         }
 
         protected override ImmutableSortedSet<T>.Builder Create(int count)
         {
-            throw new NotImplementedException();
+            return ImmutableSortedSet.CreateBuilder<T>();
         }
 
         protected override ImmutableSortedSet<T>.Enumerator GetSourceEnumerator(ImmutableSortedSet<T> source)
         {
-            throw new NotImplementedException();
+            return source.GetEnumerator();
         }
     }
 
     // not best for performance(does not use ImmutableQueue<T>.Enumerator)
-    public class ImmutableQueueFormatter<T> : SequneceFormatterBase<T, ImmutableQueueBuilder<T>, ImmutableQueue<T>>
+    public class ImmutableQueueFormatter<T> : CollectionFormatterBase<T, ImmutableQueueBuilder<T>, ImmutableQueue<T>>
     {
         protected override void Add(ImmutableQueueBuilder<T> collection, int index, T value)
         {
@@ -192,25 +192,25 @@ namespace MessagePack.ImmutableCollections
     }
 
     // not best for performance(does not use ImmutableQueue<T>.Enumerator)
-    public class ImmutableStackFormatter<T> : SequneceFormatterBase<T, ImmutableStackBuilder<T>, ImmutableStack<T>>
+    public class ImmutableStackFormatter<T> : CollectionFormatterBase<T, T[], ImmutableStack<T>>
     {
-        protected override void Add(ImmutableStackBuilder<T> collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value)
         {
-            collection.Add(value);
+            collection[collection.Length - 1 - index] = value;
         }
 
-        protected override ImmutableStack<T> Complete(ImmutableStackBuilder<T> intermediateCollection)
+        protected override ImmutableStack<T> Complete(T[] intermediateCollection)
         {
-            return intermediateCollection.stack;
+            return ImmutableStack.CreateRange(intermediateCollection);
         }
 
-        protected override ImmutableStackBuilder<T> Create(int count)
+        protected override T[] Create(int count)
         {
-            return new ImmutableStackBuilder<T>();
+            return new T[count];
         }
     }
 
-    public class InterfaceImmutableListFormatter<T> : SequneceFormatterBase<T, ImmutableList<T>.Builder, IImmutableList<T>>
+    public class InterfaceImmutableListFormatter<T> : CollectionFormatterBase<T, ImmutableList<T>.Builder, IImmutableList<T>>
     {
         protected override void Add(ImmutableList<T>.Builder collection, int index, T value)
         {
@@ -246,7 +246,7 @@ namespace MessagePack.ImmutableCollections
         }
     }
 
-    public class InterfaceImmutableSetFormatter<T> : SequneceFormatterBase<T, ImmutableHashSet<T>.Builder, IImmutableSet<T>>
+    public class InterfaceImmutableSetFormatter<T> : CollectionFormatterBase<T, ImmutableHashSet<T>.Builder, IImmutableSet<T>>
     {
         protected override void Add(ImmutableHashSet<T>.Builder collection, int index, T value)
         {
@@ -264,7 +264,7 @@ namespace MessagePack.ImmutableCollections
         }
     }
 
-    public class InterfaceImmutableQueueFormatter<T> : SequneceFormatterBase<T, ImmutableQueueBuilder<T>, IImmutableQueue<T>>
+    public class InterfaceImmutableQueueFormatter<T> : CollectionFormatterBase<T, ImmutableQueueBuilder<T>, IImmutableQueue<T>>
     {
         protected override void Add(ImmutableQueueBuilder<T> collection, int index, T value)
         {
@@ -282,23 +282,24 @@ namespace MessagePack.ImmutableCollections
         }
     }
 
-    public class InterfaceImmutableStackFormatter<T> : SequneceFormatterBase<T, ImmutableStackBuilder<T>, IImmutableStack<T>>
+    public class InterfaceImmutableStackFormatter<T> : CollectionFormatterBase<T, T[], IImmutableStack<T>>
     {
-        protected override void Add(ImmutableStackBuilder<T> collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value)
         {
-            collection.Add(value);
+            collection[collection.Length - 1 - index] = value;
         }
 
-        protected override IImmutableStack<T> Complete(ImmutableStackBuilder<T> intermediateCollection)
+        protected override IImmutableStack<T> Complete(T[] intermediateCollection)
         {
-            return intermediateCollection.stack;
+            return ImmutableStack.CreateRange(intermediateCollection);
         }
 
-        protected override ImmutableStackBuilder<T> Create(int count)
+        protected override T[] Create(int count)
         {
-            return new ImmutableStackBuilder<T>();
+            return new T[count];
         }
     }
+
 
     // pseudo builders
 
@@ -309,16 +310,6 @@ namespace MessagePack.ImmutableCollections
         public void Add(T value)
         {
             q = q.Enqueue(value);
-        }
-    }
-
-    public class ImmutableStackBuilder<T>
-    {
-        public ImmutableStack<T> stack = ImmutableStack<T>.Empty;
-
-        public void Add(T value)
-        {
-            stack = stack.Push(value);
         }
     }
 }
