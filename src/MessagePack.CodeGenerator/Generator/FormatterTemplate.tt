@@ -3,8 +3,6 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ output extension=".txt" #>
-
 
 namespace <#= Namespace #>
 {
@@ -13,7 +11,7 @@ namespace <#= Namespace #>
 
 <# foreach(var objInfo in objectSerializationInfos) { #>
 
-    public class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+    public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
     {
 <# if( objInfo.IsStringKey) { #>
 
@@ -39,23 +37,32 @@ namespace <#= Namespace #>
                 return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             }
 <# } #>            
+<#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
+            ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
+<# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+            value.OnBeforeSerialize();
+<# } #>
             var startOffset = offset;
-<# if( objInfo.WriteCount <= 15) { #>
+<# if( objInfo.IsIntKey) { if( objInfo.WriteCount <= 15) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= objInfo.WriteCount #>);
+<# } else { #>
+            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= objInfo.WriteCount #>);
+<# } } else if( objInfo.WriteCount <= 15) { #>
             offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, <#= objInfo.WriteCount #>);
 <# } else { #>
             offset += global::MessagePack.MessagePackBinary.WriteMapHeader(ref bytes, offset, <#= objInfo.WriteCount #>);
 <# } #>
-<# foreach(var x in objInfo.Members) { #>
 <# if(objInfo.IsIntKey) { #>
-<# if(0 <= x.IntKey && x.IntKey <= 127) { #> 
-            offset += global::MessagePack.MessagePackBinary.WritePositiveFixedIntUnsafe(ref bytes, offset, <#= x.IntKey #>);
+<# for(var i =0; i<= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); #>
+<# if( member == null) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
 <# } else { #>
-            offset += global::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, <#= x.IntKey #>);
-<# } } else { #>
+            offset += <#= member.GetSerializeMethodString() #>;
+<# } } } else { #>
+<# foreach(var x in objInfo.Members) { #>
             offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "<#= x.StringKey #>", <#= Encoding.UTF8.GetByteCount(x.StringKey) #>);
-<# } #>
             offset += <#= x.GetSerializeMethodString() #>;
-<# } #>
+<# } } #>
             return offset - startOffset;
         }
 
@@ -72,7 +79,11 @@ namespace <#= Namespace #>
             }
 
             var startOffset = offset;
+<# if(objInfo.IsStringKey) { #>
             var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+<# } else { #>
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+<# } #>
             offset += readSize;
 
 <# foreach(var x in objInfo.Members) { #>
@@ -82,7 +93,7 @@ namespace <#= Namespace #>
             for (int i = 0; i < length; i++)
             {
 <# if(objInfo.IsStringKey) { #>
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (____keyMapping.TryGetValue(stringKey, out key))
@@ -91,8 +102,7 @@ namespace <#= Namespace #>
                     goto NEXT_LOOP;
                 }
 <# } else { #>
-                var key = global::MessagePack.MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
+                var key = i;
 <# } #>
 
                 switch (key)
@@ -117,6 +127,11 @@ namespace <#= Namespace #>
             var ____result = new <#= objInfo.GetConstructorString()  #>;
 <# foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { #>
             ____result.<#= x.Name #> = __<#= x.Name #>__;
+<# } #>
+<#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAfter) { #>
+            ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+<# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+			____result.OnAfterDeserialize();
 <# } #>
             return ____result;
         }

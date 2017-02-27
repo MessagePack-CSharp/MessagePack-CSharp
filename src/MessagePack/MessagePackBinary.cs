@@ -82,16 +82,19 @@ namespace MessagePack
             byteDecoders[MessagePackCode.UInt8] = Decoders.UInt8Byte.Instance;
             sbyteDecoders[MessagePackCode.Int8] = Decoders.Int8SByte.Instance;
             int16Decoders[MessagePackCode.UInt8] = Decoders.UInt8Int16.Instance;
+            int16Decoders[MessagePackCode.UInt16] = Decoders.UInt16Int16.Instance;
             int16Decoders[MessagePackCode.Int8] = Decoders.Int8Int16.Instance;
             int16Decoders[MessagePackCode.Int16] = Decoders.Int16Int16.Instance;
             int32Decoders[MessagePackCode.UInt8] = Decoders.UInt8Int32.Instance;
             int32Decoders[MessagePackCode.UInt16] = Decoders.UInt16Int32.Instance;
+            int32Decoders[MessagePackCode.UInt32] = Decoders.UInt32Int32.Instance;
             int32Decoders[MessagePackCode.Int8] = Decoders.Int8Int32.Instance;
             int32Decoders[MessagePackCode.Int16] = Decoders.Int16Int32.Instance;
             int32Decoders[MessagePackCode.Int32] = Decoders.Int32Int32.Instance;
             int64Decoders[MessagePackCode.UInt8] = Decoders.UInt8Int64.Instance;
             int64Decoders[MessagePackCode.UInt16] = Decoders.UInt16Int64.Instance;
             int64Decoders[MessagePackCode.UInt32] = Decoders.UInt32Int64.Instance;
+            int64Decoders[MessagePackCode.UInt64] = Decoders.UInt64Int64.Instance;
             int64Decoders[MessagePackCode.Int8] = Decoders.Int8Int64.Instance;
             int64Decoders[MessagePackCode.Int16] = Decoders.Int16Int64.Instance;
             int64Decoders[MessagePackCode.Int32] = Decoders.Int32Int64.Instance;
@@ -701,33 +704,55 @@ namespace MessagePack
 
         public static int WriteInt16(ref byte[] bytes, int offset, short value)
         {
-            if (MessagePackRange.MinFixNegativeInt <= value && value <= MessagePackRange.MaxFixPositiveInt)
+            if (value >= 0)
             {
-                EnsureCapacity(ref bytes, offset, 1);
-                bytes[offset] = unchecked((byte)value);
-                return 1;
-            }
-            else if (sbyte.MinValue <= value && value <= sbyte.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 2);
-                bytes[offset] = MessagePackCode.Int8;
-                bytes[offset + 1] = unchecked((byte)value);
-                return 2;
-            }
-            else if (0 <= value && value <= byte.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 2);
-                bytes[offset] = MessagePackCode.UInt8;
-                bytes[offset + 1] = unchecked((byte)value);
-                return 2;
+                // positive int(use uint)
+                if (value <= MessagePackRange.MaxFixPositiveInt)
+                {
+                    EnsureCapacity(ref bytes, offset, 1);
+                    bytes[offset] = unchecked((byte)value);
+                    return 1;
+                }
+                else if (value <= byte.MaxValue)
+                {
+                    EnsureCapacity(ref bytes, offset, 2);
+                    bytes[offset] = MessagePackCode.UInt8;
+                    bytes[offset + 1] = unchecked((byte)value);
+                    return 2;
+                }
+                else
+                {
+                    EnsureCapacity(ref bytes, offset, 3);
+                    bytes[offset] = MessagePackCode.UInt16;
+                    bytes[offset + 1] = unchecked((byte)(value >> 8));
+                    bytes[offset + 2] = unchecked((byte)value);
+                    return 3;
+                }
             }
             else
             {
-                EnsureCapacity(ref bytes, offset, 3);
-                bytes[offset] = MessagePackCode.Int16;
-                bytes[offset + 1] = unchecked((byte)(value >> 8));
-                bytes[offset + 2] = unchecked((byte)value);
-                return 3;
+                // negative int(use int)
+                if (MessagePackRange.MinFixNegativeInt <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 1);
+                    bytes[offset] = unchecked((byte)value);
+                    return 1;
+                }
+                else if (sbyte.MinValue <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 2);
+                    bytes[offset] = MessagePackCode.Int8;
+                    bytes[offset + 1] = unchecked((byte)value);
+                    return 2;
+                }
+                else
+                {
+                    EnsureCapacity(ref bytes, offset, 3);
+                    bytes[offset] = MessagePackCode.Int16;
+                    bytes[offset + 1] = unchecked((byte)(value >> 8));
+                    bytes[offset + 2] = unchecked((byte)value);
+                    return 3;
+                }
             }
         }
 
@@ -749,51 +774,75 @@ namespace MessagePack
 
         public static int WriteInt32(ref byte[] bytes, int offset, int value)
         {
-            if (MessagePackRange.MinFixNegativeInt <= value && value <= MessagePackRange.MaxFixPositiveInt)
+            if (value >= 0)
             {
-                EnsureCapacity(ref bytes, offset, 1);
-                bytes[offset] = unchecked((byte)value);
-                return 1;
-            }
-            else if (sbyte.MinValue <= value && value <= sbyte.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 2);
-                bytes[offset] = MessagePackCode.Int8;
-                bytes[offset + 1] = unchecked((byte)value);
-                return 2;
-            }
-            else if (0 <= value && value <= byte.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 2);
-                bytes[offset] = MessagePackCode.UInt8;
-                bytes[offset + 1] = unchecked((byte)value);
-                return 2;
-            }
-            else if (short.MinValue <= value && value <= short.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 3);
-                bytes[offset] = MessagePackCode.Int16;
-                bytes[offset + 1] = unchecked((byte)(value >> 8));
-                bytes[offset + 2] = unchecked((byte)value);
-                return 3;
-            }
-            else if (0 <= value && value <= ushort.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 3);
-                bytes[offset] = MessagePackCode.UInt16;
-                bytes[offset + 1] = unchecked((byte)(value >> 8));
-                bytes[offset + 2] = unchecked((byte)value);
-                return 3;
+                // positive int(use uint)
+                if (value <= MessagePackRange.MaxFixPositiveInt)
+                {
+                    EnsureCapacity(ref bytes, offset, 1);
+                    bytes[offset] = unchecked((byte)value);
+                    return 1;
+                }
+                else if (value <= byte.MaxValue)
+                {
+                    EnsureCapacity(ref bytes, offset, 2);
+                    bytes[offset] = MessagePackCode.UInt8;
+                    bytes[offset + 1] = unchecked((byte)value);
+                    return 2;
+                }
+                else if (value <= ushort.MaxValue)
+                {
+                    EnsureCapacity(ref bytes, offset, 3);
+                    bytes[offset] = MessagePackCode.UInt16;
+                    bytes[offset + 1] = unchecked((byte)(value >> 8));
+                    bytes[offset + 2] = unchecked((byte)value);
+                    return 3;
+                }
+                else
+                {
+                    EnsureCapacity(ref bytes, offset, 5);
+                    bytes[offset] = MessagePackCode.UInt32;
+                    bytes[offset + 1] = unchecked((byte)(value >> 24));
+                    bytes[offset + 2] = unchecked((byte)(value >> 16));
+                    bytes[offset + 3] = unchecked((byte)(value >> 8));
+                    bytes[offset + 4] = unchecked((byte)value);
+                    return 5;
+                }
             }
             else
             {
-                EnsureCapacity(ref bytes, offset, 5);
-                bytes[offset] = MessagePackCode.Int32;
-                bytes[offset + 1] = unchecked((byte)(value >> 24));
-                bytes[offset + 2] = unchecked((byte)(value >> 16));
-                bytes[offset + 3] = unchecked((byte)(value >> 8));
-                bytes[offset + 4] = unchecked((byte)value);
-                return 5;
+                // negative int(use int)
+                if (MessagePackRange.MinFixNegativeInt <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 1);
+                    bytes[offset] = unchecked((byte)value);
+                    return 1;
+                }
+                else if (sbyte.MinValue <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 2);
+                    bytes[offset] = MessagePackCode.Int8;
+                    bytes[offset + 1] = unchecked((byte)value);
+                    return 2;
+                }
+                else if (short.MinValue <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 3);
+                    bytes[offset] = MessagePackCode.Int16;
+                    bytes[offset + 1] = unchecked((byte)(value >> 8));
+                    bytes[offset + 2] = unchecked((byte)value);
+                    return 3;
+                }
+                else
+                {
+                    EnsureCapacity(ref bytes, offset, 5);
+                    bytes[offset] = MessagePackCode.Int32;
+                    bytes[offset + 1] = unchecked((byte)(value >> 24));
+                    bytes[offset + 2] = unchecked((byte)(value >> 16));
+                    bytes[offset + 3] = unchecked((byte)(value >> 8));
+                    bytes[offset + 4] = unchecked((byte)value);
+                    return 5;
+                }
             }
         }
 
@@ -804,75 +853,103 @@ namespace MessagePack
 
         public static int WriteInt64(ref byte[] bytes, int offset, long value)
         {
-            if (MessagePackRange.MinFixNegativeInt <= value && value <= MessagePackRange.MaxFixPositiveInt)
+            if (value >= 0)
             {
-                EnsureCapacity(ref bytes, offset, 1);
-                bytes[offset] = unchecked((byte)value);
-                return 1;
-            }
-            else if (sbyte.MinValue <= value && value <= sbyte.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 2);
-                bytes[offset] = MessagePackCode.Int8;
-                bytes[offset + 1] = unchecked((byte)value);
-                return 2;
-            }
-            else if (0 <= value && value <= byte.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 2);
-                bytes[offset] = MessagePackCode.UInt8;
-                bytes[offset + 1] = unchecked((byte)value);
-                return 2;
-            }
-            else if (short.MinValue <= value && value <= short.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 3);
-                bytes[offset] = MessagePackCode.Int16;
-                bytes[offset + 1] = unchecked((byte)(value >> 8));
-                bytes[offset + 2] = unchecked((byte)value);
-                return 3;
-            }
-            else if (0 <= value && value <= ushort.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 3);
-                bytes[offset] = MessagePackCode.UInt16;
-                bytes[offset + 1] = unchecked((byte)(value >> 8));
-                bytes[offset + 2] = unchecked((byte)value);
-                return 3;
-            }
-            else if (int.MinValue <= value && value <= int.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 5);
-                bytes[offset] = MessagePackCode.Int32;
-                bytes[offset + 1] = unchecked((byte)(value >> 24));
-                bytes[offset + 2] = unchecked((byte)(value >> 16));
-                bytes[offset + 3] = unchecked((byte)(value >> 8));
-                bytes[offset + 4] = unchecked((byte)value);
-                return 5;
-            }
-            else if (0 <= value && value <= uint.MaxValue)
-            {
-                EnsureCapacity(ref bytes, offset, 5);
-                bytes[offset] = MessagePackCode.UInt32;
-                bytes[offset + 1] = unchecked((byte)(value >> 24));
-                bytes[offset + 2] = unchecked((byte)(value >> 16));
-                bytes[offset + 3] = unchecked((byte)(value >> 8));
-                bytes[offset + 4] = unchecked((byte)value);
-                return 5;
+                // positive int(use uint)
+                if (value <= MessagePackRange.MaxFixPositiveInt)
+                {
+                    EnsureCapacity(ref bytes, offset, 1);
+                    bytes[offset] = unchecked((byte)value);
+                    return 1;
+                }
+                else if (value <= byte.MaxValue)
+                {
+                    EnsureCapacity(ref bytes, offset, 2);
+                    bytes[offset] = MessagePackCode.UInt8;
+                    bytes[offset + 1] = unchecked((byte)value);
+                    return 2;
+                }
+                else if (value <= ushort.MaxValue)
+                {
+                    EnsureCapacity(ref bytes, offset, 3);
+                    bytes[offset] = MessagePackCode.UInt16;
+                    bytes[offset + 1] = unchecked((byte)(value >> 8));
+                    bytes[offset + 2] = unchecked((byte)value);
+                    return 3;
+                }
+                else if (value <= uint.MaxValue)
+                {
+                    EnsureCapacity(ref bytes, offset, 5);
+                    bytes[offset] = MessagePackCode.UInt32;
+                    bytes[offset + 1] = unchecked((byte)(value >> 24));
+                    bytes[offset + 2] = unchecked((byte)(value >> 16));
+                    bytes[offset + 3] = unchecked((byte)(value >> 8));
+                    bytes[offset + 4] = unchecked((byte)value);
+                    return 5;
+                }
+                else
+                {
+                    EnsureCapacity(ref bytes, offset, 9);
+                    bytes[offset] = MessagePackCode.UInt64;
+                    bytes[offset + 1] = unchecked((byte)(value >> 56));
+                    bytes[offset + 2] = unchecked((byte)(value >> 48));
+                    bytes[offset + 3] = unchecked((byte)(value >> 40));
+                    bytes[offset + 4] = unchecked((byte)(value >> 32));
+                    bytes[offset + 5] = unchecked((byte)(value >> 24));
+                    bytes[offset + 6] = unchecked((byte)(value >> 16));
+                    bytes[offset + 7] = unchecked((byte)(value >> 8));
+                    bytes[offset + 8] = unchecked((byte)value);
+                    return 9;
+                }
             }
             else
             {
-                EnsureCapacity(ref bytes, offset, 9);
-                bytes[offset] = MessagePackCode.Int64;
-                bytes[offset + 1] = unchecked((byte)(value >> 56));
-                bytes[offset + 2] = unchecked((byte)(value >> 48));
-                bytes[offset + 3] = unchecked((byte)(value >> 40));
-                bytes[offset + 4] = unchecked((byte)(value >> 32));
-                bytes[offset + 5] = unchecked((byte)(value >> 24));
-                bytes[offset + 6] = unchecked((byte)(value >> 16));
-                bytes[offset + 7] = unchecked((byte)(value >> 8));
-                bytes[offset + 8] = unchecked((byte)value);
-                return 9;
+                // negative int(use int)
+                if (MessagePackRange.MinFixNegativeInt <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 1);
+                    bytes[offset] = unchecked((byte)value);
+                    return 1;
+                }
+                else if (sbyte.MinValue <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 2);
+                    bytes[offset] = MessagePackCode.Int8;
+                    bytes[offset + 1] = unchecked((byte)value);
+                    return 2;
+                }
+                else if (short.MinValue <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 3);
+                    bytes[offset] = MessagePackCode.Int16;
+                    bytes[offset + 1] = unchecked((byte)(value >> 8));
+                    bytes[offset + 2] = unchecked((byte)value);
+                    return 3;
+                }
+                else if (int.MinValue <= value)
+                {
+                    EnsureCapacity(ref bytes, offset, 5);
+                    bytes[offset] = MessagePackCode.Int32;
+                    bytes[offset + 1] = unchecked((byte)(value >> 24));
+                    bytes[offset + 2] = unchecked((byte)(value >> 16));
+                    bytes[offset + 3] = unchecked((byte)(value >> 8));
+                    bytes[offset + 4] = unchecked((byte)value);
+                    return 5;
+                }
+                else
+                {
+                    EnsureCapacity(ref bytes, offset, 9);
+                    bytes[offset] = MessagePackCode.Int64;
+                    bytes[offset + 1] = unchecked((byte)(value >> 56));
+                    bytes[offset + 2] = unchecked((byte)(value >> 48));
+                    bytes[offset + 3] = unchecked((byte)(value >> 40));
+                    bytes[offset + 4] = unchecked((byte)(value >> 32));
+                    bytes[offset + 5] = unchecked((byte)(value >> 24));
+                    bytes[offset + 6] = unchecked((byte)(value >> 16));
+                    bytes[offset + 7] = unchecked((byte)(value >> 8));
+                    bytes[offset + 8] = unchecked((byte)value);
+                    return 9;
+                }
             }
         }
 
@@ -1927,6 +2004,22 @@ namespace MessagePack.Decoders
         }
     }
 
+    internal class UInt16Int16 : IInt16Decoder
+    {
+        internal static readonly IInt16Decoder Instance = new UInt16Int16();
+
+        UInt16Int16()
+        {
+
+        }
+
+        public Int16 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 3;
+            return checked((Int16)((bytes[offset + 1] << 8) + (bytes[offset + 2])));
+        }
+    }
+
     internal class Int8Int16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new Int8Int16();
@@ -2045,6 +2138,25 @@ namespace MessagePack.Decoders
         }
     }
 
+    internal class UInt32Int32 : IInt32Decoder
+    {
+        internal static readonly IInt32Decoder Instance = new UInt32Int32();
+
+        UInt32Int32()
+        {
+
+        }
+
+        public Int32 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 5;
+            checked
+            {
+                return (Int32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+            }
+        }
+    }
+
     internal class Int8Int32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new Int8Int32();
@@ -2105,7 +2217,6 @@ namespace MessagePack.Decoders
 
         InvalidInt32()
         {
-
         }
 
         public Int32 Read(byte[] bytes, int offset, out int readSize)
@@ -2197,6 +2308,27 @@ namespace MessagePack.Decoders
             return unchecked((Int64)((uint)(bytes[offset + 1] << 24) + ((uint)bytes[offset + 2] << 16) + ((uint)bytes[offset + 3] << 8) + (uint)bytes[offset + 4]));
         }
     }
+
+    internal class UInt64Int64 : IInt64Decoder
+    {
+        internal static readonly IInt64Decoder Instance = new UInt64Int64();
+
+        UInt64Int64()
+        {
+
+        }
+
+        public Int64 Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 9;
+            checked
+            {
+                return (Int64)bytes[offset + 1] << 56 | (Int64)bytes[offset + 2] << 48 | (Int64)bytes[offset + 3] << 40 | (Int64)bytes[offset + 4] << 32
+                     | (Int64)bytes[offset + 5] << 24 | (Int64)bytes[offset + 6] << 16 | (Int64)bytes[offset + 7] << 8 | (Int64)bytes[offset + 8];
+            }
+        }
+    }
+
 
     internal class Int8Int64 : IInt64Decoder
     {

@@ -30,9 +30,9 @@ namespace MessagePack.Resolvers
         }
 
 #if NET_35
-        public void Save()
+        public AssemblyBuilder Save()
         {
-            assembly.Save();
+            return assembly.Save();
         }
 #endif
 
@@ -141,7 +141,7 @@ namespace MessagePack.Internal
             if (serializationInfo == null) return null;
 
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + type.FullName.Replace(".", "_") + "Formatter", TypeAttributes.Public, null, new[] { formatterType });
+            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + type.FullName.Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
             FieldBuilder dictionaryField = null;
 
@@ -177,6 +177,9 @@ namespace MessagePack.Internal
 
         static void BuildConstructor(Type type, ObjectSerializationInfo info, ConstructorInfo method, FieldBuilder dictionaryField, ILGenerator il)
         {
+            il.EmitLdarg(0);
+            il.Emit(OpCodes.Call, objectCtor);
+
             il.EmitLdarg(0);
             il.EmitLdc_I4(info.Members.Length);
             il.Emit(OpCodes.Newobj, dictionaryConstructor);
@@ -226,7 +229,7 @@ namespace MessagePack.Internal
                     {
                         il.EmitLdarg(3);
                     }
-                    il.EmitCall(runtimeMethods[0]);
+                    il.Emit(OpCodes.Call, runtimeMethods[0]); // don't use EmitCall helper(must use 'Call')
                 }
                 else
                 {
@@ -235,7 +238,7 @@ namespace MessagePack.Internal
                     {
                         il.Emit(OpCodes.Box, type);
                     }
-                    il.EmitCallvirt(onBeforeSerialize);
+                    il.EmitCall(onBeforeSerialize);
                 }
             }
 
@@ -372,7 +375,7 @@ namespace MessagePack.Internal
                     il.EmitLoadArg(type, 3);
                     member.EmitLoadValue(il);
                     il.EmitLdarg(4);
-                    il.EmitCallvirt(getSerialize(t));
+                    il.EmitCall(getSerialize(t));
                 });
             }
         }
@@ -574,7 +577,8 @@ namespace MessagePack.Internal
                     {
                         il.EmitLdloca(structLocal);
                     }
-                    il.EmitCall(runtimeMethods[0]);
+
+                    il.Emit(OpCodes.Call, runtimeMethods[0]); // don't use EmitCall helper(must use 'Call')
                 }
                 else
                 {
@@ -587,7 +591,7 @@ namespace MessagePack.Internal
                     {
                         il.Emit(OpCodes.Dup);
                     }
-                    il.EmitCallvirt(onAfterDeserialize);
+                    il.EmitCall(onAfterDeserialize);
                 }
             }
 
@@ -635,7 +639,7 @@ namespace MessagePack.Internal
                 il.EmitLdarg(2);
                 il.EmitLdarg(3);
                 il.EmitLdarg(4);
-                il.EmitCallvirt(getDeserialize(t));
+                il.EmitCall(getDeserialize(t));
             }
 
             il.EmitStloc(info.LocalField);
@@ -705,6 +709,8 @@ namespace MessagePack.Internal
 
         static readonly MethodInfo onBeforeSerialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnBeforeSerialize", Type.EmptyTypes);
         static readonly MethodInfo onAfterDeserialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnAfterDeserialize", Type.EmptyTypes);
+
+        static readonly ConstructorInfo objectCtor = typeof(object).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0);
 
         static class MessagePackBinaryTypeInfo
         {
@@ -784,8 +790,8 @@ namespace MessagePack.Internal
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,
-                        IsReadable = (item.GetGetMethod() != null) && item.GetGetMethod().IsPublic,
-                        IsWritable = (item.GetSetMethod()!= null) && item.GetSetMethod().IsPublic,
+                        IsReadable = (item.GetGetMethod() != null) && item.GetGetMethod().IsPublic && !item.GetGetMethod().IsStatic,
+                        IsWritable = (item.GetSetMethod() != null) && item.GetSetMethod().IsPublic && !item.GetSetMethod().IsStatic,
                         StringKey = item.Name
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
@@ -796,6 +802,7 @@ namespace MessagePack.Internal
                 {
                     if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
+                    if (item.IsStatic) continue;
 
                     var member = new EmittableMember
                     {
@@ -840,8 +847,8 @@ namespace MessagePack.Internal
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,
-                        IsReadable = (item.GetGetMethod() != null) && item.GetGetMethod().IsPublic,
-                        IsWritable = (item.GetSetMethod() != null) && item.GetSetMethod().IsPublic,
+                        IsReadable = (item.GetGetMethod() != null) && item.GetGetMethod().IsPublic && !item.GetGetMethod().IsStatic,
+                        IsWritable = (item.GetSetMethod() != null) && item.GetSetMethod().IsPublic && !item.GetSetMethod().IsStatic,
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
@@ -866,6 +873,7 @@ namespace MessagePack.Internal
                 {
                     if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
+                    if (item.IsStatic) continue;
 
                     if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
 
@@ -1000,12 +1008,20 @@ namespace MessagePack.Internal
             public Type Type { get { return IsField ? FieldInfo.FieldType : PropertyInfo.PropertyType; } }
             public FieldInfo FieldInfo { get; set; }
             public PropertyInfo PropertyInfo { get; set; }
+            public bool IsValueType
+            {
+                get
+                {
+                    var mi = IsProperty ? (MemberInfo)PropertyInfo : FieldInfo;
+                    return mi.DeclaringType.GetTypeInfo().IsValueType;
+                }
+            }
 
             public void EmitLoadValue(ILGenerator il)
             {
                 if (IsProperty)
                 {
-                    il.EmitCallvirt(PropertyInfo.GetGetMethod());
+                    il.EmitCall(PropertyInfo.GetGetMethod());
                 }
                 else
                 {
@@ -1017,7 +1033,7 @@ namespace MessagePack.Internal
             {
                 if (IsProperty)
                 {
-                    il.EmitCallvirt(PropertyInfo.GetSetMethod());
+                    il.EmitCall(PropertyInfo.GetSetMethod());
                 }
                 else
                 {

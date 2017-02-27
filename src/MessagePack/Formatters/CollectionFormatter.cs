@@ -62,6 +62,13 @@ namespace MessagePack.Formatters
 
     public class ByteArraySegmentFormatter : IMessagePackFormatter<ArraySegment<byte>>
     {
+        public static readonly ByteArraySegmentFormatter Instance = new ByteArraySegmentFormatter();
+
+        ByteArraySegmentFormatter()
+        {
+
+        }
+
         public int Serialize(ref byte[] bytes, int offset, ArraySegment<byte> value, IFormatterResolver formatterResolver)
         {
             if (value.Array == null)

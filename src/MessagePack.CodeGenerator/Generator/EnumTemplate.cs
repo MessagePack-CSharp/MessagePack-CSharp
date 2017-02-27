@@ -18,9 +18,9 @@ namespace MessagePack.CodeGenerator.Generator
     /// Class to produce the template output
     /// </summary>
     
-    #line 1 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+    #line 1 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TextTemplating", "15.0.0.0")]
-    public partial class ResolverTemplate : ResolverTemplateBase
+    public partial class EnumTemplate : EnumTemplateBase
     {
 #line hidden
         /// <summary>
@@ -30,144 +30,84 @@ namespace MessagePack.CodeGenerator.Generator
         {
             this.Write("\r\nnamespace ");
             
-            #line 7 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 7 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
             
             #line default
             #line hidden
-            this.Write("\r\n{\r\n    using System;\r\n    using MessagePack;\r\n\r\n    public class ");
+            this.Write("\r\n{\r\n    using System;\r\n    using MessagePack;\r\n\r\n");
             
-            #line 12 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            
-            #line default
-            #line hidden
-            this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static global::M" +
-                    "essagePack.IFormatterResolver Instance = new ");
-            
-            #line 14 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            #line 12 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+ foreach(var info in enumSerializationInfos) { 
             
             #line default
             #line hidden
-            this.Write("();\r\n\r\n        ");
+            this.Write("    public sealed class ");
             
-            #line 16 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            
-            #line default
-            #line hidden
-            this.Write(@"()
-        {
-
-        }
-
-        public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.formatter;
-        }
-
-        static class FormatterCache<T>
-        {
-            public static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> formatter;
-
-            static FormatterCache()
-            {
-                var f = ");
-            
-            #line 32 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            #line 13 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
             
             #line default
             #line hidden
-            this.Write(@"GetFormatterHelper.GetFormatter(typeof(T));
-                if (f != null)
-                {
-                    formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
-                }
-            }
-        }
-    }
-
-    internal static class ");
+            this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
             
-            #line 41 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            #line 13 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
-            this.Write(@"GetFormatterHelper
-    {
-        static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
-
-        static GeneratedResolverGetFormatterHelper()
-        {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(");
+            this.Write(">\r\n    {\r\n        public int Serialize(ref byte[] bytes, int offset, ");
             
-            #line 47 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(registerInfos.Length));
+            #line 15 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
-            this.Write(")\r\n            {\r\n");
+            this.Write(" value, global::MessagePack.IFormatterResolver formatterResolver)\r\n        {\r\n   " +
+                    "         return MessagePackBinary.Write");
             
-            #line 49 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
- for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; 
-            
-            #line default
-            #line hidden
-            this.Write("                {typeof(");
-            
-            #line 50 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
+            #line 17 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
             
             #line default
             #line hidden
-            this.Write("), ");
+            this.Write("(ref bytes, offset, (");
             
-            #line 50 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(i));
+            #line 17 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
             
             #line default
             #line hidden
-            this.Write(" },\r\n");
+            this.Write(")value);\r\n        }\r\n        \r\n        public ");
             
-            #line 51 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 20 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
+            
+            #line default
+            #line hidden
+            this.Write(" Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver for" +
+                    "matterResolver, out int readSize)\r\n        {\r\n            return (");
+            
+            #line 22 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
+            
+            #line default
+            #line hidden
+            this.Write(")MessagePackBinary.Read");
+            
+            #line 22 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
+            
+            #line default
+            #line hidden
+            this.Write("(bytes, offset, out readSize);\r\n        }\r\n    }\r\n\r\n");
+            
+            #line 26 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("            };\r\n        }\r\n\r\n        internal static object GetFormatter(Type t)\r" +
-                    "\n        {\r\n            int key;\r\n            if (!lookup.TryGetValue(t, out key" +
-                    ")) return null;\r\n\r\n            switch (key)\r\n            {\r\n");
-            
-            #line 62 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
- for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; 
-            
-            #line default
-            #line hidden
-            this.Write("                case ");
-            
-            #line 63 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            
-            #line default
-            #line hidden
-            this.Write(": return new ");
-            
-            #line 63 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName));
-            
-            #line default
-            #line hidden
-            this.Write("();\r\n");
-            
-            #line 64 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
- } 
-            
-            #line default
-            #line hidden
-            this.Write("                default: return null;\r\n            }\r\n        }\r\n    }\r\n}");
+            this.Write("\r\n}");
             return this.GenerationEnvironment.ToString();
         }
     }
@@ -179,7 +119,7 @@ namespace MessagePack.CodeGenerator.Generator
     /// Base class for this transformation
     /// </summary>
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TextTemplating", "15.0.0.0")]
-    public class ResolverTemplateBase
+    public class EnumTemplateBase
     {
         #region Fields
         private global::System.Text.StringBuilder generationEnvironmentField;

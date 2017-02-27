@@ -1,5 +1,6 @@
 ﻿using MessagePack;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -367,4 +368,60 @@ namespace SharedData
         public T2 MyProperty1 { get; set; }
     }
 
+
+    [MessagePackObject(true)]
+    public class LivingPrimitive
+    {
+        public short A1;
+        public readonly int A2;
+        public long A3;
+        public ushort A4;
+        public uint A5;
+        public ulong A6;
+        public float A7;
+        public double A8;
+        public bool A9;
+        public readonly byte A10;
+        public sbyte A11;
+        public DateTime A12;
+        public char A13;
+        public byte[] A14;
+        public string[] A15;
+        public string A16;
+
+        public LivingPrimitive(int a2, byte a10)
+        {
+            A2 = a2;
+            A10 = a10;
+        }
+    }
+
+
+    [MessagePackObject(true)]
+    public class DataIncludeCollection
+    {
+        public List<FirstSimpleData> Test1;
+        public FirstSimpleData[] Test2;
+        public Dictionary<int, FirstSimpleData> Test3;
+        public ILookup<IntEnum, FirstSimpleData> Test4;
+        public IList<string> Test5;
+        public Lazy<string> Test6;
+        public ConcurrentDictionary<int, string> Test7;
+        public Tuple<int, string> Test8;
+        public Tuple<int, string, FirstSimpleData, FirstSimpleData, int, int, int, int> Test9;
+
+        public int? TestNullable;
+        public MySubUnion4? TestNullable2;
+
+
+        public ArraySegment<int> S1;
+        public ArraySegment<byte> S2;
+        public ArraySegment<int>? S3;
+        public ArraySegment<byte>? S4;
+        public KeyValuePair<int, int> S5;
+
+        public DataIncludeCollection()
+        {
+        }
+    }
 }

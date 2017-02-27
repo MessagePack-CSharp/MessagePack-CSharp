@@ -237,12 +237,14 @@ namespace MessagePack.Internal
 
         public static void EmitCall(this ILGenerator il, MethodInfo methodInfo)
         {
-            il.Emit(OpCodes.Call, methodInfo);
-        }
-
-        public static void EmitCallvirt(this ILGenerator il, MethodInfo methodInfo)
-        {
-            il.Emit(OpCodes.Callvirt, methodInfo);
+            if (methodInfo.IsFinal || !methodInfo.IsVirtual)
+            {
+                il.Emit(OpCodes.Call, methodInfo);
+            }
+            else
+            {
+                il.Emit(OpCodes.Callvirt, methodInfo);
+            }
         }
 
         public static void EmitLdfld(this ILGenerator il, FieldInfo fieldInfo)

@@ -186,9 +186,6 @@ namespace Sandbox
 
             //var json = MessagePackSerializer.ToJson(MessagePackSerializer.NonGeneric.Serialize(typeof(Person), p));
             //Console.WriteLine(json);
-
-
-
         }
 
         static void Benchmark<T>(T target)

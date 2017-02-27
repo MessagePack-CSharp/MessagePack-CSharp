@@ -44,9 +44,9 @@ namespace <#= Namespace #>
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(<#= ObjectTypes.Length #>)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(<#= registerInfos.Length #>)
             {
-<# for(var i = 0; i < ObjectTypes.Length; i++) { var x = ObjectTypes[i]; #>
+<# for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; #>
                 {typeof(<#= x.FullName #>), <#= i #> },
 <# } #>
             };
@@ -59,8 +59,8 @@ namespace <#= Namespace #>
 
             switch (key)
             {
-<# for(var i = 0; i < ObjectTypes.Length; i++) { var x = ObjectTypes[i]; #>
-                case <#= i #>: return new <#= x.FullName#>Formatter();
+<# for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; #>
+                case <#= i #>: return new <#= x.FormatterName#>();
 <# } #>
                 default: return null;
             }

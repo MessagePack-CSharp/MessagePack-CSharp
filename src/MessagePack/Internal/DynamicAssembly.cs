@@ -32,9 +32,10 @@ namespace MessagePack.Internal
 
 #if NET_35
 
-        public void Save()
+        public AssemblyBuilder Save()
         {
             assemblyBuilder.Save(moduleName + ".dll");
+            return assemblyBuilder;
         }
 
 #endif

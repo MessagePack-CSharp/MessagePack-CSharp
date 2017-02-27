@@ -30,9 +30,9 @@ namespace MessagePack.Resolvers
         }
 
 #if NET_35
-        public void Save()
+        public AssemblyBuilder Save()
         {
-            assembly.Save();
+            return assembly.Save();
         }
 #endif
 
@@ -85,7 +85,7 @@ namespace MessagePack.Resolvers
             }
 
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + type.FullName.Replace(".", "_") + "Formatter", TypeAttributes.Public, null, new[] { formatterType });
+            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + type.FullName.Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
             FieldBuilder typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
             FieldBuilder keyToJumpMap = null; // Dictionary<int, int>
@@ -122,6 +122,9 @@ namespace MessagePack.Resolvers
 
         static void BuildConstructor(Type type, UnionAttribute[] infos, ConstructorInfo method, FieldBuilder typeToKeyAndJumpMap, FieldBuilder keyToJumpMap, ILGenerator il)
         {
+            il.EmitLdarg(0);
+            il.Emit(OpCodes.Call, objectCtor);
+
             {
                 il.EmitLdarg(0);
                 il.EmitLdc_I4(infos.Length);
@@ -182,10 +185,10 @@ namespace MessagePack.Resolvers
             il.EmitLoadThis();
             il.EmitLdfld(typeToKeyAndJumpMap);
             il.EmitLdarg(3);
-            il.EmitCallvirt(objectGetType);
-            il.EmitCallvirt(getTypeHandle);
+            il.EmitCall(objectGetType);
+            il.EmitCall(getTypeHandle);
             il.EmitLdloca(keyPair);
-            il.EmitCallvirt(typeMapDictionaryTryGetValue);
+            il.EmitCall(typeMapDictionaryTryGetValue);
             il.Emit(OpCodes.Brfalse, notFoundType);
 
             // var startOffset = offset;
@@ -204,7 +207,7 @@ namespace MessagePack.Resolvers
             EmitOffsetPlusEqual(il, null, () =>
             {
                 il.EmitLdloca(keyPair);
-                il.EmitCallvirt(intIntKeyValuePairGetKey);
+                il.EmitCall(intIntKeyValuePairGetKey);
                 il.EmitCall(MessagePackBinaryTypeInfo.WriteInt32);
             });
 
@@ -213,7 +216,7 @@ namespace MessagePack.Resolvers
             // switch-case (offset += resolver.GetFormatter.Serialize(with cast)
             var switchLabels = infos.Select(x => new { Label = il.DefineLabel(), Attr = x }).ToArray();
             il.EmitLdloca(keyPair);
-            il.EmitCallvirt(intIntKeyValuePairGetValue);
+            il.EmitCall(intIntKeyValuePairGetValue);
             il.Emit(OpCodes.Switch, switchLabels.Select(x => x.Label).ToArray());
             il.Emit(OpCodes.Br, loopEnd); // default
 
@@ -326,7 +329,7 @@ namespace MessagePack.Resolvers
                 il.EmitLdfld(keyToJumpMap);
                 il.EmitLdloc(key);
                 il.EmitLdloca(key);
-                il.EmitCallvirt(keyMapDictionaryTryGetValue);
+                il.EmitCall(keyMapDictionaryTryGetValue);
                 il.Emit(OpCodes.Brtrue_S, endKeyMapGet);
                 il.EmitLdc_I4(-1);
                 il.EmitStloc(key);
@@ -362,7 +365,7 @@ namespace MessagePack.Resolvers
                 il.EmitLdarg(2);
                 il.EmitLdarg(3);
                 il.EmitLdarg(4);
-                il.EmitCallvirt(getDeserialize(item.Attr.SubType));
+                il.EmitCall(getDeserialize(item.Attr.SubType));
                 if (item.Attr.SubType.GetTypeInfo().IsValueType)
                 {
                     il.Emit(OpCodes.Box, item.Attr.SubType);
@@ -429,7 +432,7 @@ namespace MessagePack.Resolvers
         static readonly MethodInfo intIntKeyValuePairGetValue = typeof(KeyValuePair<int, int>).GetRuntimeProperty("Value").GetGetMethod();
 
         static readonly ConstructorInfo invalidOperationExceptionConstructor = typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(string); });
-
+        static readonly ConstructorInfo objectCtor = typeof(object).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0);
 
         static class MessagePackBinaryTypeInfo
         {

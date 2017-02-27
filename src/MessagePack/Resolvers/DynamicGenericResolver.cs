@@ -219,7 +219,7 @@ namespace MessagePack.Internal
                 {
                     if (ti.GenericTypeArguments[0] == typeof(byte))
                     {
-                        return new ByteArraySegmentFormatter();
+                        return ByteArraySegmentFormatter.Instance;
                     }
                     else
                     {
@@ -230,7 +230,7 @@ namespace MessagePack.Internal
                 {
                     if (nullableElementType == typeof(ArraySegment<byte>))
                     {
-                        return new StaticNullableFormatter<ArraySegment<byte>>(new ByteArraySegmentFormatter());
+                        return new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance);
                     }
                     else
                     {

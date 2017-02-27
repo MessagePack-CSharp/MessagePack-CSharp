@@ -89,20 +89,43 @@ namespace MessagePack.Internal
             
             // special primitive
             {typeof(byte[]), ByteArrayFormatter.Instance},
-
-            // well-known reserved
-            {typeof(int[]), new ArrayFormatter<int>()},
-            {typeof(List<int>), new ListFormatter<int>()},
-            {typeof(float[]), new ArrayFormatter<float>()},
-            {typeof(List<float>), new ListFormatter<float>()},
-            {typeof(double[]), new ArrayFormatter<double>()},
-            {typeof(List<double>), new ListFormatter<double>()},
-            {typeof(string[]), new ArrayFormatter<string>()},
-            {typeof(List<string>), new ListFormatter<string>()},
             
             // Nil
             {typeof(Nil), NilFormatter.Instance},
             {typeof(Nil?), NullableNilFormatter.Instance},
+            
+            // primitive reserved collection formatter
+            {typeof(Int16[]), new ArrayFormatter<Int16>()},
+            {typeof(Int32[]), new ArrayFormatter<Int32>()},
+            {typeof(Int64[]), new ArrayFormatter<Int64>()},
+            {typeof(UInt16[]), new ArrayFormatter<UInt16>()},
+            {typeof(UInt32[]), new ArrayFormatter<UInt32>()},
+            {typeof(UInt64[]), new ArrayFormatter<UInt64>()},
+            {typeof(Single[]), new ArrayFormatter<Single>()},
+            {typeof(Double[]), new ArrayFormatter<Double>()},
+            {typeof(bool[]), new ArrayFormatter<bool>()},
+            {typeof(sbyte[]), new ArrayFormatter<sbyte>()},
+            {typeof(DateTime[]), new ArrayFormatter<DateTime>()},
+            {typeof(char[]), new ArrayFormatter<char>()},
+            {typeof(string[]), new ArrayFormatter<string>()},
+
+            {typeof(List<Int16>), new ListFormatter<Int16>()},
+            {typeof(List<Int32>), new ListFormatter<Int32>()},
+            {typeof(List<Int64>), new ListFormatter<Int64>()},
+            {typeof(List<UInt16>), new ListFormatter<UInt16>()},
+            {typeof(List<UInt32>), new ListFormatter<UInt32>()},
+            {typeof(List<UInt64>), new ListFormatter<UInt64>()},
+            {typeof(List<Single>), new ListFormatter<Single>()},
+            {typeof(List<Double>), new ListFormatter<Double>()},
+            {typeof(List<bool>), new ListFormatter<bool>()},
+            {typeof(List<byte>), new ListFormatter<byte>()},
+            {typeof(List<sbyte>), new ListFormatter<sbyte>()},
+            {typeof(List<DateTime>), new ListFormatter<DateTime>()},
+            {typeof(List<char>), new ListFormatter<char>()},
+            {typeof(List<string>), new ListFormatter<string>()},
+
+            { typeof(ArraySegment<byte>), ByteArraySegmentFormatter.Instance },
+            { typeof(ArraySegment<byte>?),new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance) },
 
 #if NETSTANDARD1_4
             {typeof(System.Numerics.BigInteger), BigIntegerFormatter.Instance},

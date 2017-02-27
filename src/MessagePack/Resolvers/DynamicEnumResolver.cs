@@ -11,7 +11,7 @@ namespace MessagePack.Resolvers
     /// </summary>
     public class DynamicEnumResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new DynamicEnumResolver();
+        public static DynamicEnumResolver Instance = new DynamicEnumResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicEnumResolver";
 
@@ -27,7 +27,15 @@ namespace MessagePack.Resolvers
             assembly = new DynamicAssembly(ModuleName);
         }
 
-        IMessagePackFormatter<T> IFormatterResolver.GetFormatter<T>()
+
+#if NET_35
+        public AssemblyBuilder Save()
+        {
+            return assembly.Save();
+        }
+#endif
+
+        public IMessagePackFormatter<T> GetFormatter<T>()
         {
             return FormatterCache<T>.formatter;
         }
@@ -71,7 +79,7 @@ namespace MessagePack.Resolvers
             var underlyingType = Enum.GetUnderlyingType(enumType);
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(enumType);
 
-            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter", TypeAttributes.Public, null, new[] { formatterType });
+            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
             // int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver);
             {

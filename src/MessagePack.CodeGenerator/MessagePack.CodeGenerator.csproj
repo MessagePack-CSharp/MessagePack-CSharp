@@ -143,13 +143,17 @@
   <ItemGroup>
     <Compile Include="CodeAnalysis\Definitions.cs" />
     <Compile Include="CodeAnalysis\TypeCollector.cs" />
+    <Compile Include="Generator\EnumTemplate.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>EnumTemplate.tt</DependentUpon>
+    </Compile>
     <Compile Include="Generator\FormatterTemplate.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>FormatterTemplate.tt</DependentUpon>
     </Compile>
-    <Compile Include="Generator\ResolverTemplate.Partial.cs" />
-    <Compile Include="Generator\FormatterTemplate.Partial.cs" />
+    <Compile Include="Generator\TemplatePartials.cs" />
     <Compile Include="Generator\ResolverTemplate.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -172,6 +176,10 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Generator\EnumTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>EnumTemplate.cs</LastGenOutput>
+    </Content>
     <Content Include="Generator\FormatterTemplate.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
       <LastGenOutput>FormatterTemplate.cs</LastGenOutput>

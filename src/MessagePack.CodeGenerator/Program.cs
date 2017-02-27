@@ -90,8 +90,7 @@ namespace MessagePack.CodeGenerator
             sw.Restart();
             Console.WriteLine("Method Collect Start");
 
-            ObjectSerializationInfo[] objectFormatterInfo;
-            collector.Collect(out objectFormatterInfo);
+            var (objectFormatterInfo, enumInfo, genericInfo) = collector.Collect();
 
             Console.WriteLine("Method Collect Complete:" + sw.Elapsed.ToString());
 
@@ -107,16 +106,32 @@ namespace MessagePack.CodeGenerator
                 })
                 .ToArray();
 
+            var enumFormatterTemplates = enumInfo
+                .GroupBy(x => x.Namespace)
+                .Select(x => new EnumTemplate()
+                {
+                    Namespace = x.Key,
+                    enumSerializationInfos = x.ToArray()
+                })
+                .ToArray();
+
+
             var resolverTemplate = new ResolverTemplate()
             {
                 Namespace = "Test",
-                ObjectTypes = objectFormatterInfo
+                registerInfos = enumInfo.Cast<IResolverRegisterInfo>().Concat(genericInfo).Concat(objectFormatterInfo).ToArray()
             };
 
             // TODO:
 
             var sb = new StringBuilder();
             sb.AppendLine(resolverTemplate.TransformText());
+            sb.AppendLine();
+            foreach (var item in enumFormatterTemplates)
+            {
+                var text = item.TransformText();
+                sb.AppendLine(text);
+            }
             sb.AppendLine();
             foreach (var item in objectFormatterTemplates)
             {

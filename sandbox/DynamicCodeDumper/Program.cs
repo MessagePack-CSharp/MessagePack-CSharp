@@ -3,7 +3,9 @@ using MessagePack.Resolvers;
 using SharedData;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,27 +19,46 @@ namespace DynamicCodeDumper
             DynamicObjectResolver.Instance.GetFormatter<Version0>();
             DynamicObjectResolver.Instance.GetFormatter<Version1>();
             DynamicObjectResolver.Instance.GetFormatter<Version2>();
-            DynamicObjectResolver.Instance.GetFormatter<Vector2>();
-            // DynamicObjectResolver.Instance.GetFormatter<Vector2_String>();
+            DynamicObjectResolver.Instance.GetFormatter<SimpleIntKeyData>();
+            DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
             DynamicObjectResolver.Instance.GetFormatter<Callback1>();
-            var f1 = DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
+            DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
             DynamicObjectResolver.Instance.GetFormatter<Callback2>();
             DynamicObjectResolver.Instance.GetFormatter<Callback2_2>();
 
             DynamicUnionResolver.Instance.GetFormatter<IHogeMoge>();
-            var f = DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
+            DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
             DynamicUnionResolver.Instance.GetFormatter<IUnionChecker2>();
 
+            DynamicEnumResolver.Instance.GetFormatter<IntEnum>();
+            DynamicEnumResolver.Instance.GetFormatter<ShortEnum>();
 
-            DynamicObjectResolver.Instance.Save();
-            DynamicUnionResolver.Instance.Save();
-            Console.WriteLine("Saved");
+            var a1 = DynamicObjectResolver.Instance.Save();
+            var a2 = DynamicUnionResolver.Instance.Save();
+            var a3 = DynamicEnumResolver.Instance.Save();
 
-            var mii = f.GetType().GetMethods();
+            Verify(a1, a2, a3);
+        }
 
-            byte[] xs = null;
-            var huga = f.Serialize(ref xs, 0, new MySubUnion1(), DynamicUnionResolver.Instance);
-            Console.WriteLine(huga);
+        static void Verify(params AssemblyBuilder[] builders)
+        {
+            var path = @"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\x64\PEVerify.exe";
+
+            foreach (var targetDll in builders)
+            {
+                var psi = new ProcessStartInfo(path, targetDll.GetName().Name + ".dll")
+                {
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                };
+
+                var p = Process.Start(psi);
+                var data = p.StandardOutput.ReadToEnd();
+                Console.WriteLine(data);
+            }
         }
     }
 
@@ -54,5 +75,6 @@ namespace DynamicCodeDumper
     public class HogeMoge2 : IHogeMoge
     {
     }
+
 
 }

@@ -80,6 +80,9 @@
     <Compile Include="..\..\src\MessagePack\Nil.cs">
       <Link>Code\Nil.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Resolvers\DynamicEnumResolver.cs">
+      <Link>Code\DynamicEnumResolver.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\Resolvers\DynamicObjectResolver.cs">
       <Link>Code\DynamicObjectResolver.cs</Link>
     </Compile>
