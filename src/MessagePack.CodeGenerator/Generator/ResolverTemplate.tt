@@ -9,11 +9,11 @@ namespace <#= Namespace #>
     using System;
     using MessagePack;
 
-    public class ComposittedResolver : global::MessagePack.IFormatterResolver
+    public class <#= ResolverName #> : global::MessagePack.IFormatterResolver
     {
-        public static IFormatterResolver Instance = new ComposittedResolver();
+        public static global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();
 
-        ComposittedResolver()
+        <#= ResolverName #>()
         {
 
         }
@@ -29,38 +29,7 @@ namespace <#= Namespace #>
 
             static FormatterCache()
             {
-                var f = GeneratedResolver.Instance.GetFormatter<T>();
-                if (f != null)
-                {
-                    formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
-                    return;
-                }
-                formatter = MessagePack.Resolvers.DefaultResolver.Instance.GetFormatter<T>();
-            }
-        }
-    }
-
-    public class GeneratedResolver : global::MessagePack.IFormatterResolver
-    {
-        public static IFormatterResolver Instance = new GeneratedResolver();
-
-        GeneratedResolver()
-        {
-
-        }
-
-        public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.formatter;
-        }
-
-        static class FormatterCache<T>
-        {
-            public static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> formatter;
-
-            static FormatterCache()
-            {
-                var f = GeneratedResolverGetFormatterHelper.GetFormatter(typeof(T));
+                var f = <#= ResolverName #>GetFormatterHelper.GetFormatter(typeof(T));
                 if (f != null)
                 {
                     formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
@@ -69,7 +38,7 @@ namespace <#= Namespace #>
         }
     }
 
-    internal static class GeneratedResolverGetFormatterHelper
+    internal static class <#= ResolverName #>GetFormatterHelper
     {
         static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
 

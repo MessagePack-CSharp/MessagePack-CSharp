@@ -35,64 +35,104 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\r\n{\r\n    using System;\r\n    using MessagePack;\r\n\r\n    public class ComposittedRes" +
-                    "olver : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static IFo" +
-                    "rmatterResolver Instance = new ComposittedResolver();\r\n\r\n        ComposittedReso" +
-                    "lver()\r\n        {\r\n\r\n        }\r\n\r\n        public global::MessagePack.Formatters." +
-                    "IMessagePackFormatter<T> GetFormatter<T>()\r\n        {\r\n            return Format" +
-                    "terCache<T>.formatter;\r\n        }\r\n\r\n        static class FormatterCache<T>\r\n   " +
-                    "     {\r\n            public static readonly global::MessagePack.Formatters.IMessa" +
-                    "gePackFormatter<T> formatter;\r\n\r\n            static FormatterCache()\r\n          " +
-                    "  {\r\n                var f = GeneratedResolver.Instance.GetFormatter<T>();\r\n    " +
-                    "            if (f != null)\r\n                {\r\n                    formatter = (" +
-                    "global::MessagePack.Formatters.IMessagePackFormatter<T>)f;\r\n                    " +
-                    "return;\r\n                }\r\n                formatter = MessagePack.Resolvers.De" +
-                    "faultResolver.Instance.GetFormatter<T>();\r\n            }\r\n        }\r\n    }\r\n\r\n  " +
-                    "  public class GeneratedResolver : global::MessagePack.IFormatterResolver\r\n    {" +
-                    "\r\n        public static IFormatterResolver Instance = new GeneratedResolver();\r\n" +
-                    "\r\n        GeneratedResolver()\r\n        {\r\n\r\n        }\r\n\r\n        public global::" +
-                    "MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()\r\n        {\r\n  " +
-                    "          return FormatterCache<T>.formatter;\r\n        }\r\n\r\n        static class" +
-                    " FormatterCache<T>\r\n        {\r\n            public static readonly global::Messag" +
-                    "ePack.Formatters.IMessagePackFormatter<T> formatter;\r\n\r\n            static Forma" +
-                    "tterCache()\r\n            {\r\n                var f = GeneratedResolverGetFormatte" +
-                    "rHelper.GetFormatter(typeof(T));\r\n                if (f != null)\r\n              " +
-                    "  {\r\n                    formatter = (global::MessagePack.Formatters.IMessagePac" +
-                    "kFormatter<T>)f;\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    inte" +
-                    "rnal static class GeneratedResolverGetFormatterHelper\r\n    {\r\n        static rea" +
-                    "donly global::System.Collections.Generic.Dictionary<Type, int> lookup;\r\n\r\n      " +
-                    "  static GeneratedResolverGetFormatterHelper()\r\n        {\r\n            lookup = " +
-                    "new global::System.Collections.Generic.Dictionary<Type, int>(");
+            this.Write("\r\n{\r\n    using System;\r\n    using MessagePack;\r\n\r\n    public class ");
             
-            #line 78 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 12 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            
+            #line default
+            #line hidden
+            this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static global::M" +
+                    "essagePack.IFormatterResolver Instance = new ");
+            
+            #line 14 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            
+            #line default
+            #line hidden
+            this.Write("();\r\n\r\n        ");
+            
+            #line 16 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            
+            #line default
+            #line hidden
+            this.Write(@"()
+        {
+
+        }
+
+        public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            return FormatterCache<T>.formatter;
+        }
+
+        static class FormatterCache<T>
+        {
+            public static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> formatter;
+
+            static FormatterCache()
+            {
+                var f = ");
+            
+            #line 32 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            
+            #line default
+            #line hidden
+            this.Write(@"GetFormatterHelper.GetFormatter(typeof(T));
+                if (f != null)
+                {
+                    formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
+                }
+            }
+        }
+    }
+
+    internal static class ");
+            
+            #line 41 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            
+            #line default
+            #line hidden
+            this.Write(@"GetFormatterHelper
+    {
+        static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
+
+        static GeneratedResolverGetFormatterHelper()
+        {
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(");
+            
+            #line 47 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ObjectTypes.Length));
             
             #line default
             #line hidden
             this.Write(")\r\n            {\r\n");
             
-            #line 80 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 49 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
  for(var i = 0; i < ObjectTypes.Length; i++) { var x = ObjectTypes[i]; 
             
             #line default
             #line hidden
             this.Write("                {typeof(");
             
-            #line 81 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 50 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
             
             #line default
             #line hidden
             this.Write("), ");
             
-            #line 81 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 50 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
             this.Write(" },\r\n");
             
-            #line 82 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 51 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
  } 
             
             #line default
@@ -101,28 +141,28 @@ namespace MessagePack.CodeGenerator.Generator
                     "\n        {\r\n            int key;\r\n            if (!lookup.TryGetValue(t, out key" +
                     ")) return null;\r\n\r\n            switch (key)\r\n            {\r\n");
             
-            #line 93 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 62 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
  for(var i = 0; i < ObjectTypes.Length; i++) { var x = ObjectTypes[i]; 
             
             #line default
             #line hidden
             this.Write("                case ");
             
-            #line 94 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 63 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
             this.Write(": return new ");
             
-            #line 94 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 63 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
             
             #line default
             #line hidden
             this.Write("Formatter();\r\n");
             
-            #line 95 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 64 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
  } 
             
             #line default
