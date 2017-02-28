@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack</id>
-    <version>0.2.3-beta</version>
+    <version>0.3.0-beta</version>
     <title>MessagePack for C#</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
@@ -33,7 +33,6 @@
     <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\net45" />
     <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\netstandard1.4" />
     <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\netstandard1.4" />
-    <file src="mpc.exe" target="tools\" />
-    <file src="mpc.exe.config" target="tools\" />
+    <file src=".\tools\*" target="tools\" />
   </files>
 </package>

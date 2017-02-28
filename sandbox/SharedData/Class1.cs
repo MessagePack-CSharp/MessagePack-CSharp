@@ -302,10 +302,10 @@ namespace SharedData
     }
 
     [Union(0, typeof(MySubUnion1))]
-    [Union(1, typeof(MySubUnion2))]
-    [Union(2, typeof(MySubUnion3))]
-    [Union(3, typeof(MySubUnion4))]
-    [Union(4, typeof(VersioningUnion))]
+    //[Union(1, typeof(MySubUnion2))]
+    //[Union(2, typeof(MySubUnion3))]
+    //[Union(3, typeof(MySubUnion4))]
+    //[Union(4, typeof(VersioningUnion))]
     public interface IIVersioningUnion
     {
 

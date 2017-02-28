@@ -355,21 +355,13 @@ namespace MessagePack.Formatters.SharedData
 
 		public IIVersioningUnionFormatter()
 		{
-			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(5, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(1, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
 			{
 				{ typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-				{ typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
-				{ typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(2, 2) },
-				{ typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(3, 3) },
-				{ typeof(global::SharedData.VersioningUnion).TypeHandle, new KeyValuePair<int, int>(4, 4) },
 			};
-			this.keyToJumpMap = new Dictionary<int, int>(5)
+			this.keyToJumpMap = new Dictionary<int, int>(1)
 			{
 				{ 0, 0 },
-				{ 1, 1 },
-				{ 2, 2 },
-				{ 3, 3 },
-				{ 4, 4 },
 			};
 		}
 
@@ -385,18 +377,6 @@ namespace MessagePack.Formatters.SharedData
 				{
 					case 0:
 						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion1)value, formatterResolver);
-						break;
-					case 1:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion2)value, formatterResolver);
-						break;
-					case 2:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion3)value, formatterResolver);
-						break;
-					case 3:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion4)value, formatterResolver);
-						break;
-					case 4:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.VersioningUnion>().Serialize(ref bytes, offset, (global::SharedData.VersioningUnion)value, formatterResolver);
 						break;
 					default:
 						break;
@@ -434,22 +414,6 @@ namespace MessagePack.Formatters.SharedData
 					result = (global::SharedData.IIVersioningUnion)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(bytes, offset, formatterResolver, out readSize);
 					offset += readSize;
 					break;
-				case 1:
-					result = (global::SharedData.IIVersioningUnion)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 2:
-					result = (global::SharedData.IIVersioningUnion)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 3:
-					result = (global::SharedData.IIVersioningUnion)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 4:
-					result = (global::SharedData.IIVersioningUnion)formatterResolver.GetFormatterWithVerify<global::SharedData.VersioningUnion>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
 				default:
 					offset += MessagePackBinary.ReadNext(bytes, offset);
 					break;
@@ -482,7 +446,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop1);
             offset += MessagePackBinary.WriteString(ref bytes, offset, value.Prop2);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop3);
@@ -637,7 +601,7 @@ namespace MessagePack.Formatters.SharedData
         {
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.X);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Y);
             offset += MessagePackBinary.WriteBytes(ref bytes, offset, value.BytesSpecial);
@@ -782,7 +746,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 6);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 7);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop1);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref bytes, offset, value.Prop2, formatterResolver);
             offset += MessagePackBinary.WriteString(ref bytes, offset, value.Prop3);
@@ -869,7 +833,7 @@ namespace MessagePack.Formatters.SharedData
         {
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.X);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.Y);
             return offset - startOffset;
@@ -927,7 +891,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 0);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             return offset - startOffset;
         }
@@ -973,7 +937,7 @@ namespace MessagePack.Formatters.SharedData
         {
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 0);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             return offset - startOffset;
         }
@@ -1022,7 +986,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 5);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 6);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
@@ -1092,7 +1056,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 7);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 8);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
@@ -1169,7 +1133,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 4);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
@@ -1227,7 +1191,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.Version1>().Serialize(ref bytes, offset, value.MyProperty1, formatterResolver);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.After);
             return offset - startOffset;
@@ -1288,7 +1252,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.Version2>().Serialize(ref bytes, offset, value.MyProperty1, formatterResolver);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.After);
             return offset - startOffset;
@@ -1349,7 +1313,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.Version0>().Serialize(ref bytes, offset, value.MyProperty1, formatterResolver);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.After);
             return offset - startOffset;
@@ -1411,7 +1375,7 @@ namespace MessagePack.Formatters.SharedData
             
             value.OnBeforeSerialize();
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 0);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.X);
             return offset - startOffset;
         }
@@ -1468,7 +1432,7 @@ namespace MessagePack.Formatters.SharedData
             
             ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 0);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.X);
             return offset - startOffset;
         }
@@ -1670,7 +1634,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 4);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
@@ -1724,7 +1688,7 @@ namespace MessagePack.Formatters.SharedData
         {
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 5);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 6);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
@@ -1783,7 +1747,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Three);
@@ -1836,7 +1800,7 @@ namespace MessagePack.Formatters.SharedData
         {
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 7);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 8);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
@@ -1897,7 +1861,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 7);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 8);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
