@@ -1,1 +1,0 @@
-mpc.exe -i "C:\Users\neuecc\Documents\neuecc\MessagePack\sandbox\SharedData\SharedData.csproj" -o "C:\Users\neuecc\Documents\neuecc\MessagePack\sandbox\Sandbox\Generated.cs"
