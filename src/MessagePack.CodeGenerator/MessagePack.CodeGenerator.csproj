@@ -143,6 +143,11 @@
   <ItemGroup>
     <Compile Include="CodeAnalysis\Definitions.cs" />
     <Compile Include="CodeAnalysis\TypeCollector.cs" />
+    <Compile Include="Generator\UnionTemplate.cs">
+      <DependentUpon>UnionTemplate.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="Generator\EnumTemplate.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -176,6 +181,10 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Generator\UnionTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>UnionTemplate.cs</LastGenOutput>
+    </Content>
     <Content Include="Generator\EnumTemplate.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
       <LastGenOutput>EnumTemplate.cs</LastGenOutput>

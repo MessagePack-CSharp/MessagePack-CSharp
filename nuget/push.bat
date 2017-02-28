@@ -1,4 +1,4 @@
-nuget push MessagePack.0.1.0-beta.nupkg -Source https://www.nuget.org/api/v2/package
-nuget push MessagePack.ImmutableCollections.0.1.0-beta.nupkg -Source https://www.nuget.org/api/v2/package
-nuget push MessagePack.ReactiveProperty.0.1.0-beta.nupkg -Source https://www.nuget.org/api/v2/package
-nuget push MessagePack.UnityShims.0.1.0-beta.nupkg -Source https://www.nuget.org/api/v2/package
+nuget push MessagePack.0.2.0-beta.nupkg -Source https://www.nuget.org/api/v2/package
+nuget push MessagePack.ImmutableCollection.0.2.0-beta.nupkg -Source https://www.nuget.org/api/v2/package
+nuget push MessagePack.ReactiveProperty.0.2.0-beta.nupkg -Source https://www.nuget.org/api/v2/package
+nuget push MessagePack.Unity.0.2.0-beta.nupkg -Source https://www.nuget.org/api/v2/package

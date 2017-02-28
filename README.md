@@ -23,7 +23,7 @@ for Unity, download from releases page(not yet).
 Extension Packages(info is see detail section).
 
 ```
-Install-Package MessagePack.ImmutableCollections -Pre
+Install-Package MessagePack.ImmutableCollection -Pre
 Install-Package MessagePack.ReactiveProperty -Pre
 Install-Package MessagePack.Unity -Pre
 ```

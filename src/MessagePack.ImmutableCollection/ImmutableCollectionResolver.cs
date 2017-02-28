@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
 
-namespace MessagePack.ImmutableCollections
+namespace MessagePack.ImmutableCollection
 {
     public class ImmutableCollectionResolver : IFormatterResolver
     {

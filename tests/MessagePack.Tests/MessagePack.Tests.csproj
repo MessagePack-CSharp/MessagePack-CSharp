@@ -124,9 +124,9 @@
       <Project>{3abc5c4c-2ce4-459e-8666-f2b181c3def3}</Project>
       <Name>SharedData</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\MessagePack.ImmutableCollections\MessagePack.ImmutableCollections.csproj">
-      <Project>{1e778228-8f36-41fb-8b66-a4a5a753ebde}</Project>
-      <Name>MessagePack.ImmutableCollections</Name>
+    <ProjectReference Include="..\..\src\MessagePack.ImmutableCollection\MessagePack.ImmutableCollection.csproj">
+      <Project>{e066f547-7261-4561-aefc-e64dbfd874f8}</Project>
+      <Name>MessagePack.ImmutableCollection</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\MessagePack.ReactiveProperty\MessagePack.ReactiveProperty.csproj">
       <Project>{166a16c0-b89f-41af-956a-235c6ca62c25}</Project>

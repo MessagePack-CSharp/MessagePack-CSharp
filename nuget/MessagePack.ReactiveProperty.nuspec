@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack.ReactiveProperty</id>
-    <version>0.1.0-beta</version>
+    <version>0.2.0-beta</version>
     <title>MessagePack for C# Extension Support for ReactiveProperty</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
     <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity). Extension support for ReactiveProperty.</description>
-    <releaseNotes>initial alpha.</releaseNotes>
+    <releaseNotes>dependency update.</releaseNotes>
     <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, ReactiveProperty</tags>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
@@ -17,11 +17,11 @@
     </frameworkAssemblies>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="MessagePack" version="0.0.1" />
+        <dependency id="MessagePack" version="0.2.0" />
         <dependency id="ReactiveProperty" version="3.5.0" />
       </group>
       <group targetFramework=".NETStandard1.4">
-        <dependency id="MessagePack" version="0.0.1" />
+        <dependency id="MessagePack" version="0.2.0" />
         <dependency id="ReactiveProperty" version="3.5.0" />
       </group>
     </dependencies>

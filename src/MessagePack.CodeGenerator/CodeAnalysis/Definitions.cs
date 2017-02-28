@@ -12,7 +12,7 @@ namespace MessagePack.CodeGenerator
         string FormatterName { get; }
     }
 
-    public class ObjectSerializationInfo: IResolverRegisterInfo
+    public class ObjectSerializationInfo : IResolverRegisterInfo
     {
         public string Name { get; set; }
         public string FullName { get; set; }
@@ -26,7 +26,7 @@ namespace MessagePack.CodeGenerator
         public bool HasIMessagePackSerializationCallbackReceiver { get; set; }
         public bool NeedsCastOnBefore { get; set; }
         public bool NeedsCastOnAfter { get; set; }
-        public string FormatterName => FullName  + "Formatter";
+        public string FormatterName => Namespace + "." + Name + "Formatter";
 
         public int WriteCount
         {
@@ -119,16 +119,14 @@ namespace MessagePack.CodeGenerator
         }
     }
 
-    // TODO:EnumFormatter
-
-    public class EnumSerializationInfo: IResolverRegisterInfo
+    public class EnumSerializationInfo : IResolverRegisterInfo
     {
         public string Namespace { get; set; }
         public string Name { get; set; }
         public string FullName { get; set; }
         public string UnderlyingType { get; set; }
 
-        public string FormatterName => FullName + "Formatter";
+        public string FormatterName => Namespace + "." + Name + "Formatter";
     }
 
     public class GenericSerializationInfo : IResolverRegisterInfo, IEquatable<GenericSerializationInfo>
@@ -147,5 +145,20 @@ namespace MessagePack.CodeGenerator
         {
             return FullName.GetHashCode();
         }
+    }
+
+    public class UnionSerializationInfo : IResolverRegisterInfo
+    {
+        public string Namespace { get; set; }
+        public string Name { get; set; }
+        public string FullName { get; set; }
+        public string FormatterName => Namespace + "." + Name + "Formatter";
+        public UnionSubTypeInfo[] SubTypes { get; set; }
+    }
+
+    public class UnionSubTypeInfo
+    {
+        public string Type { get; set; }
+        public int Key { get; set; }
     }
 }

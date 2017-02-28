@@ -2,7 +2,7 @@
 using System.Collections.Immutable;
 using System;
 
-namespace MessagePack.ImmutableCollections
+namespace MessagePack.ImmutableCollection
 {
     // Immutablearray<T>.Enumerator is 'not' IEnumerator<T>, can't use abstraction layer.
     public class ImmutableArrayFormatter<T> : IMessagePackFormatter<ImmutableArray<T>>

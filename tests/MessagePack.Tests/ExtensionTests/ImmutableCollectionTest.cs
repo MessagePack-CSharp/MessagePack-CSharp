@@ -1,4 +1,4 @@
-﻿using MessagePack.ImmutableCollections;
+﻿using MessagePack.ImmutableCollection;
 using System;
 using System.Collections.Generic;
 using System.Linq;

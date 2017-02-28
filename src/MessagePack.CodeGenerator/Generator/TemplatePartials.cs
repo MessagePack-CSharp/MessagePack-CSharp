@@ -15,6 +15,7 @@ namespace MessagePack.CodeGenerator.Generator
     public partial class ResolverTemplate
     {
         public string Namespace;
+        public string FormatterNamespace { get; set; }
         public string ResolverName = "GeneratedResolver";
         public IResolverRegisterInfo[] registerInfos;
     }
@@ -22,5 +23,11 @@ namespace MessagePack.CodeGenerator.Generator
     {
         public string Namespace;
         public EnumSerializationInfo[] enumSerializationInfos;
+    }
+
+    public partial class UnionTemplate
+    {
+        public string Namespace;
+        public UnionSerializationInfo[] unionSerializationInfos;
     }
 }

@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard1.4\MessagePack.ImmutableCollections.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\netstandard1.4\MessagePack.ImmutableCollection.xml</DocumentationFile>
     <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
 

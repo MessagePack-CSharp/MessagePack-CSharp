@@ -18,9 +18,9 @@ namespace MessagePack.CodeGenerator.Generator
     /// Class to produce the template output
     /// </summary>
     
-    #line 1 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+    #line 1 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TextTemplating", "15.0.0.0")]
-    public partial class ResolverTemplate : ResolverTemplateBase
+    public partial class UnionTemplate : UnionTemplateBase
     {
 #line hidden
         /// <summary>
@@ -30,144 +30,254 @@ namespace MessagePack.CodeGenerator.Generator
         {
             this.Write("\r\nnamespace ");
             
-            #line 7 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 7 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
             
             #line default
             #line hidden
-            this.Write("\r\n{\r\n    using System;\r\n    using MessagePack;\r\n\r\n    public class ");
+            this.Write("\r\n{\r\n    using System;\r\n\tusing System.Collections.Generic;\r\n    using MessagePack" +
+                    ";\r\n\r\n");
             
-            #line 12 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            
-            #line default
-            #line hidden
-            this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static global::M" +
-                    "essagePack.IFormatterResolver Instance = new ");
-            
-            #line 14 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            #line 13 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+ foreach(var info in unionSerializationInfos) { 
             
             #line default
             #line hidden
-            this.Write("();\r\n\r\n        ");
+            this.Write("    public sealed class ");
             
-            #line 16 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            
-            #line default
-            #line hidden
-            this.Write(@"()
-        {
-
-        }
-
-        public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.formatter;
-        }
-
-        static class FormatterCache<T>
-        {
-            public static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> formatter;
-
-            static FormatterCache()
-            {
-                var f = ");
-            
-            #line 32 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            #line 14 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
             
             #line default
             #line hidden
-            this.Write(@"GetFormatterHelper.GetFormatter(typeof(T));
-                if (f != null)
-                {
-                    formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
-                }
-            }
-        }
-    }
-
-    internal static class ");
+            this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
             
-            #line 41 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
+            #line 14 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
-            this.Write(@"GetFormatterHelper
-    {
-        static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
-
-        static GeneratedResolverGetFormatterHelper()
-        {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(");
+            this.Write(">\r\n    {\r\n\t\treadonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeTo" +
+                    "KeyAndJumpMap;\r\n\t\treadonly Dictionary<int, int> keyToJumpMap;\r\n\r\n\t\tpublic ");
             
-            #line 47 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(registerInfos.Length));
+            #line 19 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
             
             #line default
             #line hidden
-            this.Write(")\r\n            {\r\n");
+            this.Write("Formatter()\r\n\t\t{\r\n\t\t\tthis.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle," +
+                    " KeyValuePair<int, int>>(");
             
-            #line 49 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
- for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; 
-            
-            #line default
-            #line hidden
-            this.Write("                {typeof(");
-            
-            #line 50 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
+            #line 21 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.SubTypes.Length));
             
             #line default
             #line hidden
-            this.Write("), ");
+            this.Write(", global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)\r\n\t\t\t{\r\n" +
+                    "");
             
-            #line 50 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 23 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+ for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
+            
+            #line default
+            #line hidden
+            this.Write("\t\t\t\t{ typeof(");
+            
+            #line 24 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
+            
+            #line default
+            #line hidden
+            this.Write(").TypeHandle, new KeyValuePair<int, int>(");
+            
+            #line 24 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.Key));
+            
+            #line default
+            #line hidden
+            this.Write(", ");
+            
+            #line 24 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(i));
+            
+            #line default
+            #line hidden
+            this.Write(") },\r\n");
+            
+            #line 25 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+ } 
+            
+            #line default
+            #line hidden
+            this.Write("\t\t\t};\r\n\t\t\tthis.keyToJumpMap = new Dictionary<int, int>(");
+            
+            #line 27 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.SubTypes.Length));
+            
+            #line default
+            #line hidden
+            this.Write(")\r\n\t\t\t{\r\n");
+            
+            #line 29 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+ for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
+            
+            #line default
+            #line hidden
+            this.Write("\t\t\t\t{ ");
+            
+            #line 30 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.Key));
+            
+            #line default
+            #line hidden
+            this.Write(", ");
+            
+            #line 30 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
             this.Write(" },\r\n");
             
-            #line 51 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 31 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("            };\r\n        }\r\n\r\n        internal static object GetFormatter(Type t)\r" +
-                    "\n        {\r\n            int key;\r\n            if (!lookup.TryGetValue(t, out key" +
-                    ")) return null;\r\n\r\n            switch (key)\r\n            {\r\n");
+            this.Write("\t\t\t};\r\n\t\t}\r\n\r\n        public int Serialize(ref byte[] bytes, int offset, ");
             
-            #line 62 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
- for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; 
+            #line 35 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
-            this.Write("                case ");
+            this.Write(@" value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+			KeyValuePair<int, int> keyValuePair;
+			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+			{
+				var startOffset = offset;
+				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+				switch (keyValuePair.Value)
+				{
+");
             
-            #line 63 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 45 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+ for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
+            
+            #line default
+            #line hidden
+            this.Write("\t\t\t\t\tcase ");
+            
+            #line 46 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
-            this.Write(": return new ");
+            this.Write(":\r\n\t\t\t\t\t\toffset += formatterResolver.GetFormatterWithVerify<");
             
-            #line 63 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName:  FormatterNamespace + "." + x.FormatterName));
+            #line 47 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
             
             #line default
             #line hidden
-            this.Write("();\r\n");
+            this.Write(">().Serialize(ref bytes, offset, (");
             
-            #line 64 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
+            #line 47 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
+            
+            #line default
+            #line hidden
+            this.Write(")value, formatterResolver);\r\n\t\t\t\t\t\tbreak;\r\n");
+            
+            #line 49 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("                default: return null;\r\n            }\r\n        }\r\n    }\r\n}");
+            this.Write("\t\t\t\t\tdefault:\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\r\n\t\t\t\treturn offset - startOffset;\r\n\t\t\t}\r\n\r\n\t" +
+                    "\t\treturn MessagePackBinary.WriteNil(ref bytes, offset);\r\n        }\r\n        \r\n  " +
+                    "      public ");
+            
+            #line 60 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
+            
+            #line default
+            #line hidden
+            this.Write(@" Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+			{
+				readSize = 1;
+				return null;
+			}
+
+			var startOffset = offset;
+			
+			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+			{
+				throw new InvalidOperationException(""Invalid Union data was detected. Type:");
+            
+            #line 72 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
+            
+            #line default
+            #line hidden
+            this.Write("\");\r\n\t\t\t}\r\n\t\t\toffset += readSize;\r\n\r\n\t\t\tvar key = MessagePackBinary.ReadInt32(byt" +
+                    "es, offset, out readSize);\r\n\t\t\toffset += readSize;\r\n\r\n\t\t\t");
+            
+            #line 79 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
+            
+            #line default
+            #line hidden
+            this.Write(" result = null;\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n");
+            
+            #line 82 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+ for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
+            
+            #line default
+            #line hidden
+            this.Write("\t\t\t\tcase ");
+            
+            #line 83 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(i));
+            
+            #line default
+            #line hidden
+            this.Write(":\r\n\t\t\t\t\tresult = (");
+            
+            #line 84 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
+            
+            #line default
+            #line hidden
+            this.Write(")formatterResolver.GetFormatterWithVerify<");
+            
+            #line 84 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
+            
+            #line default
+            #line hidden
+            this.Write(">().Deserialize(bytes, offset, formatterResolver, out readSize);\r\n\t\t\t\t\toffset += " +
+                    "readSize;\r\n\t\t\t\t\tbreak;\r\n");
+            
+            #line 87 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+ } 
+            
+            #line default
+            #line hidden
+            this.Write("\t\t\t\tdefault:\r\n\t\t\t\t\toffset += MessagePackBinary.ReadNext(bytes, offset);\r\n\t\t\t\t\tbre" +
+                    "ak;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\treadSize = offset - startOffset;\r\n\t\t\t\r\n\t\t\treturn result;\r\n   " +
+                    "     }\r\n    }\r\n\r\n");
+            
+            #line 99 "C:\Users\neuecc\Documents\neuecc\MessagePack\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+ } 
+            
+            #line default
+            #line hidden
+            this.Write("\r\n}");
             return this.GenerationEnvironment.ToString();
         }
     }
@@ -179,7 +289,7 @@ namespace MessagePack.CodeGenerator.Generator
     /// Base class for this transformation
     /// </summary>
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TextTemplating", "15.0.0.0")]
-    public class ResolverTemplateBase
+    public class UnionTemplateBase
     {
         #region Fields
         private global::System.Text.StringBuilder generationEnvironmentField;

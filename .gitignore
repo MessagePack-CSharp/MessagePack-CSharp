@@ -261,9 +261,12 @@ __pycache__/
 
 # Unity
 
-# Unity
-
 src/MessagePack.UnityClient/bin/*
 src/MessagePack.UnityClient/Library/*
 src/MessagePack.UnityClient/obj/*
 src/MessagePack.UnityClient/Temp/*
+
+# Project Specified
+
+nuget/mpc.exe
+nuget/mpc.exe.config

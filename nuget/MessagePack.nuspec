@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack</id>
-    <version>0.1.0-beta</version>
+    <version>0.2.0-beta</version>
     <title>MessagePack for C#</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
     <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity).</description>
-    <releaseNotes>initial alpha.</releaseNotes>
+    <releaseNotes>improve. add mpc.exe.</releaseNotes>
     <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer</tags>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
@@ -33,5 +33,7 @@
     <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\net45" />
     <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\netstandard1.4" />
     <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\netstandard1.4" />
+    <file src="mpc.exe" target="tools\" />
+    <file src="mpc.exe.config" target="tools\" />
   </files>
 </package>

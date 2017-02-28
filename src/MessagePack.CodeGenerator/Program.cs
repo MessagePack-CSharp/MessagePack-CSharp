@@ -12,15 +12,11 @@ namespace MessagePack.CodeGenerator
 {
     class CommandlineArguments
     {
-        // moc.exe
-
         public string InputPath { get; private set; }
         public string OutputPath { get; private set; }
-        public bool UnuseUnityAttr { get; private set; }
         public List<string> ConditionalSymbols { get; private set; }
-        public bool IsSeparate { get; private set; }
-        public string NamespaceRoot { get; private set; }
         public string ResolverName { get; private set; }
+        public string NamespaceRoot { get; private set; }
 
         public bool IsParsed { get; set; }
 
@@ -28,17 +24,15 @@ namespace MessagePack.CodeGenerator
         {
             ConditionalSymbols = new List<string>();
             NamespaceRoot = "MessagePack";
-            ResolverName = "ZeroFormatter.Formatters.DefaultResolver";
+            ResolverName = "GeneratedResolver";
 
             var option = new OptionSet()
             {
                 { "i|input=", "[required]Input path of analyze csproj", x => { InputPath = x; } },
                 { "o|output=", "[required]Output path(file) or directory base(in separated mode)", x => { OutputPath = x; } },
-                { "s|separate", "[optional, default=false]Output files are separated", _ => { IsSeparate = true; } },
-                { "u|unuseunityattr", "[optional, default=false]Unuse UnityEngine's RuntimeInitializeOnLoadMethodAttribute on MagicOnionInitializer", _ => { UnuseUnityAttr = true; } },
                 { "c|conditionalsymbol=", "[optional, default=empty]conditional compiler symbol", x => { ConditionalSymbols.AddRange(x.Split(',')); } },
-                { "r|resolvername=", "[optional, default=DefaultResolver]Register CustomSerializer target", x => { ResolverName = x; } },
-                { "n|namespace=", "[optional, default=MagicOnion]Set namespace root name", x => { NamespaceRoot = x; } },
+                { "r|resolvername=", "[optional, default=GeneratedResolver]Set resolver name", x => { ResolverName = x; } },
+                { "n|namespace=", "[optional, default=MessagePack]Set namespace root name", x => { NamespaceRoot = x; } },
             };
             if (args.Length == 0)
             {
@@ -90,18 +84,18 @@ namespace MessagePack.CodeGenerator
             sw.Restart();
             Console.WriteLine("Method Collect Start");
 
-            var (objectFormatterInfo, enumInfo, genericInfo) = collector.Collect();
+            var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
 
             Console.WriteLine("Method Collect Complete:" + sw.Elapsed.ToString());
 
             Console.WriteLine("Output Generation Start");
             sw.Restart();
 
-            var objectFormatterTemplates = objectFormatterInfo
+            var objectFormatterTemplates = objectInfo
                 .GroupBy(x => x.Namespace)
                 .Select(x => new FormatterTemplate()
                 {
-                    Namespace = x.Key,
+                    Namespace = cmdArgs.NamespaceRoot + ".Formatters." + x.Key,
                     objectSerializationInfos = x.ToArray(),
                 })
                 .ToArray();
@@ -110,16 +104,26 @@ namespace MessagePack.CodeGenerator
                 .GroupBy(x => x.Namespace)
                 .Select(x => new EnumTemplate()
                 {
-                    Namespace = x.Key,
+                    Namespace = cmdArgs.NamespaceRoot + ".Formatters." + x.Key,
                     enumSerializationInfos = x.ToArray()
                 })
                 .ToArray();
 
+            var unionFormatterTemplates = unionInfo
+                .GroupBy(x => x.Namespace)
+                .Select(x => new UnionTemplate()
+                {
+                    Namespace = cmdArgs.NamespaceRoot + ".Formatters." + x.Key,
+                    unionSerializationInfos = x.ToArray()
+                })
+                .ToArray();
 
             var resolverTemplate = new ResolverTemplate()
             {
-                Namespace = "Test",
-                registerInfos = enumInfo.Cast<IResolverRegisterInfo>().Concat(genericInfo).Concat(objectFormatterInfo).ToArray()
+                Namespace = cmdArgs.NamespaceRoot + ".Resolvers",
+                FormatterNamespace = cmdArgs.NamespaceRoot + ".Formatters",
+                ResolverName = cmdArgs.ResolverName,
+                registerInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray()
             };
 
             // TODO:
@@ -133,6 +137,12 @@ namespace MessagePack.CodeGenerator
                 sb.AppendLine(text);
             }
             sb.AppendLine();
+            foreach (var item in unionFormatterTemplates)
+            {
+                var text = item.TransformText();
+                sb.AppendLine(text);
+            }
+            sb.AppendLine();
             foreach (var item in objectFormatterTemplates)
             {
                 var text = item.TransformText();
@@ -141,41 +151,7 @@ namespace MessagePack.CodeGenerator
 
             Output(cmdArgs.OutputPath, sb.ToString());
 
-            //var registerTemplate = new RegisterTemplate
-            //{
-            //    Namespace = cmdArgs.NamespaceRoot,
-            //    Interfaces = definitions.Where(x => x.IsServiceDifinition).ToArray(),
-            //    UnuseUnityAttribute = cmdArgs.UnuseUnityAttr
-            //};
-
-            //if (cmdArgs.IsSeparate)
-            //{
-            //    var initializerPath = Path.Combine(cmdArgs.OutputPath, "MagicOnionInitializer.cs");
-            //    Output(initializerPath, registerTemplate.TransformText());
-
-            //    foreach (var item in texts)
-            //    {
-            //        foreach (var interfaceDef in item.Interfaces)
-            //        {
-            //            var path = Path.Combine(cmdArgs.OutputPath, interfaceDef.ToString().Replace(".", "\\") + ".cs");
-            //            var template2 = new CodeTemplate() { Namespace = interfaceDef.Namespace, ZeroFormatterResolver = cmdArgs.ResolverName, Interfaces = new[] { interfaceDef } };
-            //            Output(path, template2.TransformText());
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    var sb = new StringBuilder();
-            //    sb.AppendLine(registerTemplate.TransformText());
-            //    foreach (var item in texts)
-            //    {
-            //        sb.AppendLine(item.TransformText());
-            //    }
-            //    Output(cmdArgs.OutputPath, sb.ToString());
-            //}
-
-            //Console.WriteLine("String Generation Complete:" + sw.Elapsed.ToString());
-            //Console.WriteLine();
+            Console.WriteLine("String Generation Complete:" + sw.Elapsed.ToString());
         }
 
         static void Output(string path, string text)

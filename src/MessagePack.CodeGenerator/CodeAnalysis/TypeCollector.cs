@@ -120,19 +120,19 @@ namespace MessagePack.CodeGenerator
 
             // extensions
 
-            {"System.Collections.Immutable.ImmutableArray<>", "global::MessagePack.ImmutableCollections.ImmutableArrayFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.ImmutableList<>", "global::MessagePack.ImmutableCollections.ImmutableListFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.ImmutableDictionary<,>", "global::MessagePack.ImmutableCollections.ImmutableDictionaryFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.ImmutableHashSet<>", "global::MessagePack.ImmutableCollections.ImmutableHashSetFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.ImmutableSortedDictionary<,>", "global::MessagePack.ImmutableCollections.ImmutableSortedDictionaryFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.ImmutableSortedSet<>", "global::MessagePack.ImmutableCollections.ImmutableSortedSetFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.ImmutableQueue<>", "global::MessagePack.ImmutableCollections.ImmutableQueueFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.ImmutableStack<>", "global::MessagePack.ImmutableCollections.ImmutableStackFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.IImmutableList<>", "global::MessagePack.ImmutableCollections.InterfaceImmutableListFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.IImmutableDictionary<,>", "global::MessagePack.ImmutableCollections.InterfaceImmutableDictionaryFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.IImmutableQueue<>", "global::MessagePack.ImmutableCollections.InterfaceImmutableQueueFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.IImmutableSet<>", "global::MessagePack.ImmutableCollections.InterfaceImmutableSetFormatter<TREPLACE>"},
-            {"System.Collections.Immutable.IImmutableStack<>", "global::MessagePack.ImmutableCollections.InterfaceImmutableStackFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.ImmutableArray<>", "global::MessagePack.ImmutableCollection.ImmutableArrayFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.ImmutableList<>", "global::MessagePack.ImmutableCollection.ImmutableListFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.ImmutableDictionary<,>", "global::MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.ImmutableHashSet<>", "global::MessagePack.ImmutableCollection.ImmutableHashSetFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.ImmutableSortedDictionary<,>", "global::MessagePack.ImmutableCollection.ImmutableSortedDictionaryFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.ImmutableSortedSet<>", "global::MessagePack.ImmutableCollection.ImmutableSortedSetFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.ImmutableQueue<>", "global::MessagePack.ImmutableCollection.ImmutableQueueFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.ImmutableStack<>", "global::MessagePack.ImmutableCollection.ImmutableStackFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.IImmutableList<>", "global::MessagePack.ImmutableCollection.InterfaceImmutableListFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.IImmutableDictionary<,>", "global::MessagePack.ImmutableCollection.InterfaceImmutableDictionaryFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.IImmutableQueue<>", "global::MessagePack.ImmutableCollection.InterfaceImmutableQueueFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.IImmutableSet<>", "global::MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<TREPLACE>"},
+            {"System.Collections.Immutable.IImmutableStack<>", "global::MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<TREPLACE>"},
 
             {"Reactive.Bindings.ReactiveProperty<>", "global::MessagePack.ReactivePropertyExtension.ReactivePropertyFormatter<TREPLACE>"},
             {"Reactive.Bindings.IReactiveProperty<>", "global::MessagePack.ReactivePropertyExtension.InterfaceReactivePropertyFormatter<TREPLACE>"},
@@ -147,6 +147,7 @@ namespace MessagePack.CodeGenerator
         List<ObjectSerializationInfo> collectedObjectInfo;
         List<EnumSerializationInfo> collectedEnumInfo;
         List<GenericSerializationInfo> collectedGenericInfo;
+        List<UnionSerializationInfo> collectedUnionInfo;
 
         // --- 
 
@@ -182,10 +183,11 @@ namespace MessagePack.CodeGenerator
             collectedObjectInfo = new List<ObjectSerializationInfo>();
             collectedEnumInfo = new List<EnumSerializationInfo>();
             collectedGenericInfo = new List<GenericSerializationInfo>();
+            collectedUnionInfo = new List<UnionSerializationInfo>();
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo) Collect()
+        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo) Collect()
         {
             ResetWorkspace();
 
@@ -194,7 +196,7 @@ namespace MessagePack.CodeGenerator
                 CollectCore(item);
             }
 
-            return (collectedObjectInfo.ToArray(), collectedEnumInfo.ToArray(), collectedGenericInfo.Distinct().ToArray());
+            return (collectedObjectInfo.ToArray(), collectedEnumInfo.ToArray(), collectedGenericInfo.Distinct().ToArray(), collectedUnionInfo.ToArray());
         }
 
         // Gate of recursive collect
@@ -262,6 +264,26 @@ namespace MessagePack.CodeGenerator
 
         void CollectUnion(INamedTypeSymbol type)
         {
+            var unionAttrs = type.GetAttributes().Where(x => x.AttributeClass == typeReferences.UnionAttribute).Select(x => x.ConstructorArguments).ToArray();
+            if (unionAttrs.Length == 0)
+            {
+                throw new MessagePackGeneratorResolveFailedException("Serialization Interface must mark UnionAttribute." + " type: " + type.Name);
+            }
+
+            // 0, Int  1, SubType
+            var info = new UnionSerializationInfo
+            {
+                Name = type.Name,
+                Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
+                FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                SubTypes = unionAttrs.Select(x => new UnionSubTypeInfo
+                {
+                    Key = (int)x[0].Value,
+                    Type = (x[1].Value as ITypeSymbol).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                }).OrderBy(x => x.Key).ToArray()
+            };
+
+            collectedUnionInfo.Add(info);
         }
 
         void CollectGeneric(INamedTypeSymbol type)
@@ -269,7 +291,7 @@ namespace MessagePack.CodeGenerator
             var genericType = type.ConstructUnboundGenericType();
             var genericTypeString = genericType.ToDisplayString();
             var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            
+
             // special case
             if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
             {
@@ -332,7 +354,7 @@ namespace MessagePack.CodeGenerator
             var contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.MessagePackObjectAttribnute);
             if (contractAttr == null)
             {
-                return;
+                throw new MessagePackGeneratorResolveFailedException("Serialization Object must mark MessagePackObjectAttribute." + " type: " + type.Name);
             }
 
             var isIntKey = true;
@@ -507,7 +529,11 @@ namespace MessagePack.CodeGenerator
             var ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass == typeReferences.SerializationConstructorAttribute));
             if (ctor == null)
             {
-                ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).OrderBy(x => x.Parameters.Length).FirstOrDefault();
+                ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public && !x.IsImplicitlyDeclared).OrderBy(x => x.Parameters.Length).FirstOrDefault();
+                if (ctor == null)
+                {
+                    ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).OrderBy(x => x.Parameters.Length).FirstOrDefault();
+                }
             }
 
             // struct allows null ctor
@@ -526,7 +552,7 @@ namespace MessagePack.CodeGenerator
                     {
                         if (intMemebrs.TryGetValue(ctorParamIndex, out paramMember))
                         {
-                            if (item.Type.ToDisplayString() == paramMember.Type && paramMember.IsReadable)
+                            if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
                             {
                                 constructorParameters.Add(paramMember);
                             }
@@ -552,7 +578,7 @@ namespace MessagePack.CodeGenerator
                             }
 
                             paramMember = hasKey.First().Value;
-                            if (item.Type.ToDisplayString() == paramMember.Type && paramMember.IsReadable)
+                            if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
                             {
                                 constructorParameters.Add(paramMember);
                             }
