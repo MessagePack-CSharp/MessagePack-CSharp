@@ -4,7 +4,7 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
-#if !(UNITY_5 || UNITY_5_3_OR_NEWER)
+#if NETSTANDARD1_4
 using System;
 
 namespace MessagePack.Formatters

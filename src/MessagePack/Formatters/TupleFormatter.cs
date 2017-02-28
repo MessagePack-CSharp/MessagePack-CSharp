@@ -1,4 +1,4 @@
-﻿#if !(UNITY_5 || UNITY_5_3_OR_NEWER)
+﻿#if NETSTANDARD1_4
 
 using System;
 
