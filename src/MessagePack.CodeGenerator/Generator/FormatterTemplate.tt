@@ -43,10 +43,10 @@ namespace <#= Namespace #>
             value.OnBeforeSerialize();
 <# } #>
             var startOffset = offset;
-<# if( objInfo.IsIntKey) { if( objInfo.WriteCount <= 15) { #>
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= objInfo.WriteCount #>);
+<# if( objInfo.IsIntKey) { if( objInfo.MaxKey <= 15) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
 <# } else { #>
-            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= objInfo.WriteCount #>);
+            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
 <# } } else if( objInfo.WriteCount <= 15) { #>
             offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, <#= objInfo.WriteCount #>);
 <# } else { #>

@@ -4,6 +4,7 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
+#if !(UNITY_5 || UNITY_5_3_OR_NEWER)
 using System;
 
 namespace MessagePack.Formatters
@@ -15,7 +16,7 @@ namespace MessagePack.Formatters
     var t = "ValueTuple<" + ts + ">"; 
 #>
 
-	public class ValueTupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
+	public class ValueTupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>><#= (t.Contains("TRest") ? " where TRest : struct" : "") #>
     {
         public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver)
         {
@@ -55,3 +56,4 @@ namespace MessagePack.Formatters
 
 <# } #>
 }
+#endif

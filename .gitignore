@@ -270,3 +270,5 @@ src/MessagePack.UnityClient/Temp/*
 
 nuget/mpc.exe
 nuget/mpc.exe.config
+
+nuget/tools/*

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !(UNITY_5 || UNITY_5_3_OR_NEWER)
+using System;
 
 namespace MessagePack.Formatters
 {
@@ -311,8 +312,7 @@ namespace MessagePack.Formatters
     }
 
 
-	public class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest>>
-         where TRest : struct
+	public class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest>> where TRest : struct
     {
         public int Serialize(ref byte[] bytes, int offset, ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest> value, IFormatterResolver formatterResolver)
         {
@@ -368,3 +368,4 @@ namespace MessagePack.Formatters
     }
 
 }
+#endif

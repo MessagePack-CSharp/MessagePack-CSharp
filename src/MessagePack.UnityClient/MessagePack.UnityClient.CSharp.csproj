@@ -79,7 +79,22 @@
     <Compile Include="Assets\Scripts\MessagePack\Formatters\IMessagePackFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\MultiDimentionalArrayFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\NullableFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
+    </Compile>
     <Compile Include="Assets\Scripts\MessagePack\Formatters\StandardClassLibraryFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\TupleFormatter.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>TupleFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
+    </Compile>
     <Compile Include="Assets\Scripts\MessagePack\IFormatterResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\IMessagePackSerializationCallbackReceiver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs" />
@@ -100,7 +115,6 @@
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicUnionResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Shims\Reflection.cs" />
     <Compile Include="Assets\Scripts\MessagePack\StringEncoding.cs" />
-    <Compile Include="Assets\Scripts\MessagePack\T4Formatters\PrimitiveFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\UnsafeExtensions\UnityBlitResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\UnsafeExtensions\UnsafeBlitFormatter.cs" />
     <Compile Include="Assets\Scripts\RuntimeUnitTestToolkit\Assert.cs" />
@@ -120,6 +134,23 @@
     <Compile Include="Assets\Scripts\Tests\UnionTest.cs" />
     <Compile Include="Assets\Scripts\Tests\UnityBlitTest.cs" />
     <Compile Include="Assets\Scripts\Tests\_Loader.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
+    </None>
+    <None Include="Assets\Scripts\MessagePack\Formatters\TupleFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>TupleFormatter.cs</LastGenOutput>
+    </None>
+    <None Include="Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

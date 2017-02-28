@@ -80,7 +80,7 @@ TODO:
 
 Build
 ---
-Open `MessagePack.sln` on Visual Studio 2017. `T4Templates` project is dummy project so unload-project. 
+Open `MessagePack.sln` on Visual Studio 2017.
 
 Unity Project is using symbolic link. At first, run `make_unity_symlink.bat` so linked under Unity project. You can open `src\MessagePack.UnityClient` on Unity Editor.
 

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if !(UNITY_5 || UNITY_5_3_OR_NEWER)
+
+using System;
 
 namespace MessagePack.Formatters
 {
@@ -431,3 +433,5 @@ namespace MessagePack.Formatters
     }
 
 }
+
+#endif

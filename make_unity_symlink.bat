@@ -10,7 +10,6 @@ mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSeri
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializer.NonGeneric.cs" "..\..\..\..\MessagePack\MessagePackSerializer.NonGeneric.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Nil.cs" "..\..\..\..\MessagePack\Nil.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" "..\..\..\..\MessagePack\StringEncoding.cs"
-mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4Formatters\PrimitiveFormatter.cs" "..\..\..\..\..\T4Templates\PrimitiveFormatter.cs"
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters" "..\..\..\..\MessagePack\Formatters"
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal" "..\..\..\..\MessagePack\Internal"
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Resolvers" "..\..\..\..\MessagePack\Resolvers"

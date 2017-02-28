@@ -310,6 +310,47 @@ namespace MessagePack
             return readNextDecoders[bytes[offset]].Read(bytes, offset);
         }
 
+        public static int ReadNextBlock(byte[] bytes, int offset)
+        {
+            switch (GetMessagePackType(bytes, offset))
+            {
+                case MessagePackType.Unknown:
+                case MessagePackType.Integer:
+                case MessagePackType.Nil:
+                case MessagePackType.Boolean:
+                case MessagePackType.Float:
+                case MessagePackType.String:
+                case MessagePackType.Binary:
+                case MessagePackType.Extension:
+                default:
+                    return ReadNext(bytes, offset);
+                case MessagePackType.Array:
+                    {
+                        var startOffset = offset;
+                        int readSize;
+                        var header = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                        offset += readSize;
+                        for (int i = 0; i < header; i++)
+                        {
+                            offset += ReadNextBlock(bytes, offset);
+                        }
+                        return offset - startOffset;
+                    }
+                case MessagePackType.Map:
+                    {
+                        var startOffset = offset;
+                        int readSize;
+                        var header = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+                        offset += readSize;
+                        for (int i = 0; i < header; i++)
+                        {
+                            offset += ReadNextBlock(bytes, offset);
+                        }
+                        return offset - startOffset;
+                    }
+            }
+        }
+
         public static int WriteNil(ref byte[] bytes, int offset)
         {
             EnsureCapacity(ref bytes, offset, 1);
@@ -846,6 +887,20 @@ namespace MessagePack
             }
         }
 
+        /// <summary>
+        /// Acquire static message block(always 5 bytes).
+        /// </summary>
+        public static int WriteInt32ForceInt32Block(ref byte[] bytes, int offset, int value)
+        {
+            EnsureCapacity(ref bytes, offset, 5);
+            bytes[offset] = MessagePackCode.Int32;
+            bytes[offset + 1] = unchecked((byte)(value >> 24));
+            bytes[offset + 2] = unchecked((byte)(value >> 16));
+            bytes[offset + 3] = unchecked((byte)(value >> 8));
+            bytes[offset + 4] = unchecked((byte)value);
+            return 5;
+        }
+
         public static int ReadInt32(byte[] bytes, int offset, out int readSize)
         {
             return int32Decoders[bytes[offset]].Read(bytes, offset, out readSize);
@@ -1148,6 +1203,8 @@ namespace MessagePack
 
         public static int WriteString(ref byte[] bytes, int offset, string value)
         {
+            if (value == null) return WriteNil(ref bytes, offset);
+
             var byteCount = StringEncoding.UTF8.GetByteCount(value);
             return WriteStringUnsafe(ref bytes, offset, value, byteCount);
         }
@@ -3311,6 +3368,7 @@ namespace MessagePack.Decoders
 
         }
         public int Read(byte[] bytes, int offset) { return 2; }
+
     }
     internal class ReadNext3 : IReadNextDecoder
     {

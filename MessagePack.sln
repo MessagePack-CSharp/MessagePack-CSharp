@@ -11,11 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{19FE674A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Tests", "tests\MessagePack.Tests\MessagePack.Tests.csproj", "{9E1A55CA-711D-4F58-A332-735960E3434C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "T4Templates", "src\T4Templates\T4Templates.csproj", "{74108F4E-91FA-4D00-9246-2B627F271458}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8761-4552-A70A-B34DC19F39C4}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		make_unity_symlink.bat = make_unity_symlink.bat
 		nuget\MessagePack.ImmutableCollection.nuspec = nuget\MessagePack.ImmutableCollection.nuspec
 		nuget\MessagePack.nuspec = nuget\MessagePack.nuspec
 		nuget\MessagePack.ReactiveProperty.nuspec = nuget\MessagePack.ReactiveProperty.nuspec
@@ -75,18 +74,6 @@ Global
 		{9E1A55CA-711D-4F58-A332-735960E3434C}.Release|x64.Build.0 = Release|Any CPU
 		{9E1A55CA-711D-4F58-A332-735960E3434C}.Release|x86.ActiveCfg = Release|Any CPU
 		{9E1A55CA-711D-4F58-A332-735960E3434C}.Release|x86.Build.0 = Release|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Debug|x64.Build.0 = Debug|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Debug|x86.Build.0 = Debug|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Release|Any CPU.Build.0 = Release|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Release|x64.ActiveCfg = Release|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Release|x64.Build.0 = Release|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Release|x86.ActiveCfg = Release|Any CPU
-		{74108F4E-91FA-4D00-9246-2B627F271458}.Release|x86.Build.0 = Release|Any CPU
 		{ED43BDA5-947C-4769-A47A-F07D3C6142AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ED43BDA5-947C-4769-A47A-F07D3C6142AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED43BDA5-947C-4769-A47A-F07D3C6142AE}.Debug|x64.ActiveCfg = Debug|x64
@@ -178,7 +165,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{7ABB33EE-A2F1-492B-8DAF-5DF89F0F0B79} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{9E1A55CA-711D-4F58-A332-735960E3434C} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
-		{74108F4E-91FA-4D00-9246-2B627F271458} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{ED43BDA5-947C-4769-A47A-F07D3C6142AE} = {BF4C4202-5015-4FBD-80E6-D0F36A06F700}
 		{D8B195AC-9E93-438E-8331-EF3A1F613D0B} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{8E511130-F838-4B47-842B-0FB27AD175B5} = {BF4C4202-5015-4FBD-80E6-D0F36A06F700}

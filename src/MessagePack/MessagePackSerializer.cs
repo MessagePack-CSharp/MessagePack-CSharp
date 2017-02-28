@@ -8,6 +8,14 @@ namespace MessagePack
     {
         static IFormatterResolver defaultResolver = Resolvers.DefaultResolver.Instance;
 
+        public static IFormatterResolver DefaultResolver
+        {
+            get
+            {
+                return defaultResolver;
+            }
+        }
+
         /// <summary>
         /// Change default resolver(configuration).
         /// </summary>

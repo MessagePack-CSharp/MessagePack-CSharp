@@ -161,7 +161,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            var startOffset = offset;\r\n");
             
             #line 46 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
- if( objInfo.IsIntKey) { if( objInfo.WriteCount <= 15) { 
+ if( objInfo.IsIntKey) { if( objInfo.MaxKey <= 15) { 
             
             #line default
             #line hidden
@@ -169,7 +169,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                     "Unsafe(ref bytes, offset, ");
             
             #line 47 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.WriteCount));
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.MaxKey + 1));
             
             #line default
             #line hidden
@@ -184,7 +184,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                     "bytes, offset, ");
             
             #line 49 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.WriteCount));
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.MaxKey + 1));
             
             #line default
             #line hidden
