@@ -76,3 +76,12 @@ TODO:
 Extensions
 ---
 TODO:
+
+
+Build
+---
+Open `MessagePack.sln` on Visual Studio 2017. `T4Templates` project is dummy project so unload-project. 
+
+Unity Project is using symbolic link. At first, run `make_unity_symlink.bat` so linked under Unity project. You can open `src\MessagePack.UnityClient` on Unity Editor.
+
+CodeGenerator(`mpc.exe`) is merged single exe to many dll by [LibZ](https://github.com/MiloszKrajewski/LibZ). run `build_libz.bat`, you can combine it.
