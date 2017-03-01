@@ -167,6 +167,13 @@ namespace Sandbox
     }
 
 
+    [MessagePackObject()]
+    public class Takox
+    {
+        public int MyProperty { get; set; }
+    }
+
+
     class Program
     {
         static void Main(string[] args)
