@@ -779,7 +779,7 @@ namespace MessagePack.Internal
 
             if (forceStringKey || contractAttr.KeyAsPropertyName)
             {
-                // Opt-out: All public members are serialize target except [Ignore] member.
+                // All public members are serialize target except [Ignore] member.
                 isIntKey = false;
 
                 var hiddenIntKey = 0;
@@ -818,7 +818,7 @@ namespace MessagePack.Internal
             }
             else
             {
-                // Opt-in: Only KeyAttribute members
+                // Public members with KeyAttribute except [Ignore] member.
                 var searchFirst = true;
                 var hiddenIntKey = 0;
 
@@ -826,8 +826,16 @@ namespace MessagePack.Internal
                 {
                     if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
 
+                    var member = new EmittableMember
+                    {
+                        PropertyInfo = item,
+                        IsReadable = (item.GetGetMethod() != null) && item.GetGetMethod().IsPublic && !item.GetGetMethod().IsStatic,
+                        IsWritable = (item.GetSetMethod() != null) && item.GetSetMethod().IsPublic && !item.GetSetMethod().IsStatic,
+                    };
+                    if (!member.IsReadable && !member.IsWritable) continue;
+
                     var key = item.GetCustomAttribute<KeyAttribute>(true);
-                    if (key == null) continue;
+                    if (key == null) throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreAttribute." + " type: " + type.FullName + " member:" + item.Name);
 
                     if (key.IntKey == null && key.StringKey == null) throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
 
@@ -843,14 +851,6 @@ namespace MessagePack.Internal
                             throw new MessagePackDynamicObjectResolverException("all members key type must be same." + " type: " + type.FullName + " member:" + item.Name);
                         }
                     }
-
-                    var member = new EmittableMember
-                    {
-                        PropertyInfo = item,
-                        IsReadable = (item.GetGetMethod() != null) && item.GetGetMethod().IsPublic && !item.GetGetMethod().IsStatic,
-                        IsWritable = (item.GetSetMethod() != null) && item.GetSetMethod().IsPublic && !item.GetSetMethod().IsStatic,
-                    };
-                    if (!member.IsReadable && !member.IsWritable) continue;
 
                     if (isIntKey)
                     {
@@ -875,8 +875,16 @@ namespace MessagePack.Internal
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 
+                    var member = new EmittableMember
+                    {
+                        FieldInfo = item,
+                        IsReadable = item.IsPublic,
+                        IsWritable = item.IsPublic && !item.IsInitOnly,
+                    };
+                    if (!member.IsReadable && !member.IsWritable) continue;
+
                     var key = item.GetCustomAttribute<KeyAttribute>(true);
-                    if (key == null) continue;
+                    if (key == null) throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreAttribute." + " type: " + type.FullName + " member:" + item.Name);
 
                     if (key.IntKey == null && key.StringKey == null) throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
 
@@ -892,14 +900,6 @@ namespace MessagePack.Internal
                             throw new MessagePackDynamicObjectResolverException("all members key type must be same." + " type: " + type.FullName + " member:" + item.Name);
                         }
                     }
-
-                    var member = new EmittableMember
-                    {
-                        FieldInfo = item,
-                        IsReadable = item.IsPublic,
-                        IsWritable = item.IsPublic && !item.IsInitOnly,
-                    };
-                    if (!member.IsReadable && !member.IsWritable) continue;
 
                     if (isIntKey)
                     {

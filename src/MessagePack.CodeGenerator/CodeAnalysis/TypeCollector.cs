@@ -421,8 +421,20 @@ namespace MessagePack.CodeGenerator
                 {
                     if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
 
+                    var member = new MemberSerializationInfo
+                    {
+                        IsReadable = (item.GetMethod != null) && item.GetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic,
+                        IsWritable = (item.SetMethod != null) && item.SetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic,
+                        IsProperty = true,
+                        IsField = false,
+                        Name = item.Name,
+                        Type = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
+                    };
+                    if (!member.IsReadable && !member.IsWritable) continue;
+
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
-                    if (key == null) continue;
+                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreAttribute." + " type: " + type.Name + " member:" + item.Name);
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
                     var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : (string)null;
@@ -440,18 +452,6 @@ namespace MessagePack.CodeGenerator
                             throw new MessagePackGeneratorResolveFailedException("all members key type must be same." + " type: " + type.Name + " member:" + item.Name);
                         }
                     }
-
-                    var member = new MemberSerializationInfo
-                    {
-                        IsReadable = (item.GetMethod != null) && item.GetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic,
-                        IsWritable = (item.SetMethod != null) && item.SetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic,
-                        IsProperty = true,
-                        IsField = false,
-                        Name = item.Name,
-                        Type = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
-                    };
-                    if (!member.IsReadable && !member.IsWritable) continue;
 
                     if (isIntKey)
                     {
@@ -477,8 +477,20 @@ namespace MessagePack.CodeGenerator
                     if (item.IsImplicitlyDeclared) continue;
                     if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
 
+                    var member = new MemberSerializationInfo
+                    {
+                        IsReadable = item.DeclaredAccessibility == Accessibility.Public && !item.IsStatic,
+                        IsWritable = item.DeclaredAccessibility == Accessibility.Public && !item.IsReadOnly && !item.IsStatic,
+                        IsProperty = true,
+                        IsField = false,
+                        Name = item.Name,
+                        Type = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
+                    };
+                    if (!member.IsReadable && !member.IsWritable) continue;
+
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
-                    if (key == null) continue;
+                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreAttribute." + " type: " + type.Name + " member:" + item.Name);
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
                     var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : (string)null;
@@ -496,18 +508,6 @@ namespace MessagePack.CodeGenerator
                             throw new MessagePackGeneratorResolveFailedException("all members key type must be same." + " type: " + type.Name + " member:" + item.Name);
                         }
                     }
-
-                    var member = new MemberSerializationInfo
-                    {
-                        IsReadable = item.DeclaredAccessibility == Accessibility.Public && !item.IsStatic,
-                        IsWritable = item.DeclaredAccessibility == Accessibility.Public && !item.IsReadOnly && !item.IsStatic,
-                        IsProperty = true,
-                        IsField = false,
-                        Name = item.Name,
-                        Type = item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
-                    };
-                    if (!member.IsReadable && !member.IsWritable) continue;
 
                     if (isIntKey)
                     {

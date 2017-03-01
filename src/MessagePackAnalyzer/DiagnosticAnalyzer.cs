@@ -415,7 +415,7 @@ namespace MessagePackAnalyzer
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
                     if (key == null)
                     {
-                        ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.PublicMemberNeedsKey, type.Locations[0], type.Name, item.Name));
+                        ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.PublicMemberNeedsKey, item.Locations[0], type.Name, item.Name));
                         continue;
                     }
 
