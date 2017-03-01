@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MessagePack.Analyzer
+namespace MessagePackAnalyzer
 {
     // Store multiple errors.
     internal class DiagnosticsReportContext

@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="MessagePack.Analyzer..dbd91658-b650-4b2d-a6b0-c60fed0a9dde" Version="1.0" Language="en-US" Publisher="y.kawai"/>
-    <DisplayName>MessagePack.Analyzer</DisplayName>
-    <Description xml:space="preserve">This is a sample diagnostic extension for the .NET Compiler Platform ("Roslyn").</Description>
+    <Identity Id="MessagePackAnalyzer..6f156dc4-edce-4392-97cf-44853e392d1c" Version="1.0" Language="en-US" Publisher="neuecc"/>
+    <DisplayName>MessagePackAnalyzer</DisplayName>
+    <Description xml:space="preserve">MessagePack AnalyzerMessagePack Analyzer</Description>
   </Metadata>
   <Installation>
     <InstallationTarget Version="[14.0,]" Id="Microsoft.VisualStudio.Pro" />
@@ -12,8 +12,8 @@
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
   </Dependencies>
   <Assets>
-    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="MessagePack.Analyzer" Path="|MessagePack.Analyzer|"/>
-    <Asset Type="Microsoft.VisualStudio.Analyzer" d:Source="Project" d:ProjectName="MessagePack.Analyzer" Path="|MessagePack.Analyzer|"/>
+    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="MessagePackAnalyzer" Path="|MessagePackAnalyzer|"/>
+    <Asset Type="Microsoft.VisualStudio.Analyzer" d:Source="Project" d:ProjectName="MessagePackAnalyzer" Path="|MessagePackAnalyzer|" />
   </Assets>
   <Prerequisites>
     <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />

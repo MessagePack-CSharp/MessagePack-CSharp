@@ -875,8 +875,6 @@ namespace MessagePack.Internal
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 
-                    if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
-
                     var key = item.GetCustomAttribute<KeyAttribute>(true);
                     if (key == null) continue;
 

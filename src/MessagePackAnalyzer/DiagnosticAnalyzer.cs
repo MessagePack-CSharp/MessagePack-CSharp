@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace MessagePack.Analyzer
+namespace MessagePackAnalyzer
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class MessagePackAnalyzer : DiagnosticAnalyzer
@@ -29,7 +29,7 @@ namespace MessagePack.Analyzer
 
         internal static readonly DiagnosticDescriptor PublicMemberNeedsKey = new DiagnosticDescriptor(
             id: DiagnosticIdBase + "_" + nameof(PublicMemberNeedsKey), title: Title, category: Category,
-            messageFormat: "Public member needs KeyAttribute or IgnoreAttribute. {0}.{1}.", // type.Name + "." + item.Name
+            messageFormat: "Public member requires KeyAttribute or IgnoreAttribute. {0}.{1}.", // type.Name + "." + item.Name
             description: "Public member must be marked with KeyAttribute or IgnoreAttribute.",
             defaultSeverity: DiagnosticSeverity.Error, isEnabledByDefault: true);
 
@@ -324,6 +324,7 @@ namespace MessagePack.Analyzer
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
                     if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+                    if (item.IsImplicitlyDeclared) continue;
 
                     var IsReadable = item.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
                     var IsWritable = item.DeclaredAccessibility == Accessibility.Public && !item.IsReadOnly && !item.IsStatic;
@@ -403,6 +404,9 @@ namespace MessagePack.Analyzer
 
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+                    if (item.IsImplicitlyDeclared) continue;
+
                     var IsReadable = item.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
                     var IsWritable = item.DeclaredAccessibility == Accessibility.Public && !item.IsReadOnly && !item.IsStatic;
                     var Name = item.Name;

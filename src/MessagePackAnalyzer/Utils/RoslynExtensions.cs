@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace MessagePack.Analyzer
+namespace MessagePackAnalyzer
 {
     // Utility and Extension methods for Roslyn
     internal static class RoslynExtensions

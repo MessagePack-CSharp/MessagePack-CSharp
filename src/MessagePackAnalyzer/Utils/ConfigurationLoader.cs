@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.IO;
 
-namespace MessagePack.Analyzer
+namespace MessagePackAnalyzer
 {
     public static class ConfigurationLoader
     {

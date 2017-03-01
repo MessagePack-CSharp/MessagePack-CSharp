@@ -8,7 +8,7 @@ using System.Text;
 // TinyJson is handmade Json reader/writer library.
 // It no needs JSON.NET dependency.
 
-namespace MessagePack.Analyzer
+namespace MessagePackAnalyzer
 {
     public class TinyJsonException : Exception
     {

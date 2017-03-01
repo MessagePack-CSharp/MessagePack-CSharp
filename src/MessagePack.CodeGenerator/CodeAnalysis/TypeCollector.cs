@@ -392,6 +392,7 @@ namespace MessagePack.CodeGenerator
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
                     if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+                    if (item.IsImplicitlyDeclared) continue;
 
                     var member = new MemberSerializationInfo
                     {
@@ -473,6 +474,9 @@ namespace MessagePack.CodeGenerator
 
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
+                    if (item.IsImplicitlyDeclared) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
                     if (key == null) continue;
 

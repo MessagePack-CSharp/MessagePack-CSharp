@@ -1,16 +1,20 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeActions;
-using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Editing;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Rename;
+using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Editing;
 
-namespace MessagePack.Analyzer
+namespace MessagePackAnalyzer
 {
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MessagePackCodeFixProvider)), Shared]
     public class MessagePackCodeFixProvider : CodeFixProvider
@@ -20,7 +24,8 @@ namespace MessagePack.Analyzer
             get
             {
                 return ImmutableArray.Create(
-                    MessagePackAnalyzer.PublicMemberNeedsKey.Id
+                    MessagePackAnalyzer.PublicMemberNeedsKey.Id,
+                    MessagePackAnalyzer.TypeMustBeMessagePackObject.Id
                 );
             }
         }
@@ -38,14 +43,22 @@ namespace MessagePack.Analyzer
             var targetNode = root.FindNode(context.Span);
             var property = targetNode as PropertyDeclarationSyntax;
             var field = targetNode as FieldDeclarationSyntax;
-            if (property == null || field == null) return;
 
-            var targetType = (property != null)
-                ? model.GetDeclaredSymbol(property)?.ContainingType
-                : model.GetDeclaredSymbol(field)?.ContainingType;
+
+            INamedTypeSymbol targetType = null;
+            if (property == null && field == null)
+            {
+                targetType = model.GetDeclaredSymbol((targetNode as TypeDeclarationSyntax));
+            }
+            else
+            {
+                targetType = (property != null)
+                     ? model.GetDeclaredSymbol(property)?.ContainingType
+                     : model.GetDeclaredSymbol(field)?.ContainingType;
+            }
             if (targetType == null) return;
 
-            var action = CodeAction.Create("Add KeyAttribute", c => AddKeyAttribute(context.Document, targetType, c), "MessagePackAnalyzer.PublicMemberNeedsKey");
+            var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttribute(context.Document, targetType, c), "MessagePackAnalyzer.AddKeyAttribute");
 
             context.RegisterCodeFix(action, context.Diagnostics.First()); // use single.
         }
@@ -61,7 +74,12 @@ namespace MessagePack.Analyzer
                 .Where(x =>
                 {
                     var p = x as IPropertySymbol;
-                    if (p == null) return true;
+                    if (p == null)
+                    {
+                        var f = (x as IFieldSymbol);
+                        if (f.IsImplicitlyDeclared) return false;
+                        return true;
+                    }
 
                     return p.ExplicitInterfaceImplementations.Length == 0;
                 })
@@ -84,12 +102,22 @@ namespace MessagePack.Analyzer
                 var attr = item.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName);
                 if (attr != null) continue; // already tagged Index.
 
-                var attribute = RoslynExtensions.ParseAttributeList($"[Key({startOrder++})]");
+                var attribute = RoslynExtensions.ParseAttributeList($"[Key({startOrder++})]")
+                    .WithTrailingTrivia(SyntaxFactory.EndOfLine(""));
 
                 editor.AddAttribute(node, attribute);
             }
 
+            if (type.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.MessagePackObjectAttributeShortName) == null)
+            {
+                var rootNode = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync();
+                editor.AddAttribute(rootNode, RoslynExtensions.ParseAttributeList("[MessagePackObject]"));
+            }
+
             var newDocument = editor.GetChangedDocument();
+            var newRoot = editor.GetChangedRoot() as CompilationUnitSyntax;
+            newDocument = newDocument.WithSyntaxRoot(newRoot.WithUsing("MessagePack"));
+
             return newDocument;
         }
     }
