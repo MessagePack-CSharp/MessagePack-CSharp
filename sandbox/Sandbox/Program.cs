@@ -197,6 +197,8 @@ namespace Sandbox
 
         static void Benchmark<T>(T target)
         {
+            const int Iteration = 10000;
+
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
             MessagePack.MessagePackSerializer.Serialize(target);
@@ -213,7 +215,7 @@ namespace Sandbox
             byte[] data2 = null;
             using (new Measure("MsgPack-Cli"))
             {
-                for (int i = 0; i < 100000; i++)
+                for (int i = 0; i < Iteration; i++)
                 {
                     data = msgpack.GetSerializer<T>().PackSingleObject(target);
                 }
@@ -221,21 +223,21 @@ namespace Sandbox
 
             using (new Measure("MessagePack-CSharp"))
             {
-                for (int i = 0; i < 100000; i++)
+                for (int i = 0; i < Iteration; i++)
                 {
                     data0 = MessagePack.MessagePackSerializer.Serialize(target);
                 }
             }
             using (new Measure("ZeroFormatter"))
             {
-                for (int i = 0; i < 100000; i++)
+                for (int i = 0; i < Iteration; i++)
                 {
                     data1 = ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
                 }
             }
             using (new Measure("protobuf-net"))
             {
-                for (int i = 0; i < 100000; i++)
+                for (int i = 0; i < Iteration; i++)
                 {
                     using (var ms = new MemoryStream())
                     {
@@ -260,7 +262,7 @@ namespace Sandbox
 
             using (new Measure("MsgPack-Cli"))
             {
-                for (int i = 0; i < 100000; i++)
+                for (int i = 0; i < Iteration; i++)
                 {
                     msgpack.GetSerializer<T>().UnpackSingleObject(data);
                 }
@@ -268,7 +270,7 @@ namespace Sandbox
 
             using (new Measure("MessagePack-CSharp"))
             {
-                for (int i = 0; i < 100000; i++)
+                for (int i = 0; i < Iteration; i++)
                 {
                     MessagePack.MessagePackSerializer.Deserialize<T>(data0);
                 }
@@ -276,7 +278,7 @@ namespace Sandbox
 
             using (new Measure("ZeroFormatter"))
             {
-                for (int i = 0; i < 100000; i++)
+                for (int i = 0; i < Iteration; i++)
                 {
                     ZeroFormatterSerializer.Deserialize<T>(data1);
                 }
@@ -284,7 +286,7 @@ namespace Sandbox
 
             using (new Measure("protobuf-net"))
             {
-                for (int i = 0; i < 100000; i++)
+                for (int i = 0; i < Iteration; i++)
                 {
                     using (var ms = new MemoryStream(data2))
                     {

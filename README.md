@@ -1,36 +1,45 @@
-MessagePack for C#(.NET, .NET Core, Unity)
+MessagePack for C#(.NET, .NET Core, Unity, Xamarin)
 ===
-Brainchild of [ZeroFormatter](https://github.com/neuecc/ZeroFormatter/), fastest MessagePack serializer on .NET.
 
-Work in progress, stay tuned.
+> TODO:Writing document now.
 
-![image](https://cloud.githubusercontent.com/assets/46207/23337257/9bf22222-fc2a-11e6-888f-20d0451a526e.png)
+Extremely fast [MessagePack](http://msgpack.org/) serializer for C#, x10~20 faster than MsgPack-Cli and acquires best performance compared with all the other C# serializers.
 
-Extremely fast, x10~20 faster than MsgPack-Cli.
+![image](https://cloud.githubusercontent.com/assets/46207/23487810/e263277a-ff2b-11e6-81a6-6b4ca7acd8e3.png)
+
+![image](https://cloud.githubusercontent.com/assets/46207/23487813/e7b22e1a-ff2b-11e6-8eeb-386c6a305628.png)
+
+MessagePack has compact binary size and full set of general purpose expression. Please see the comparison with JSON, protobuf, ZeroFormatter section. If you want to know why MessagePack C# is fastest, please see performance section.
 
 Install
 ---
-Beta is relased(please enable include pre-release package).
+The library provides in NuGet except for Unity.
 
-Standard library for .NET, .NET Core
-
-```
-Install-Package MessagePack -Pre
-```
-
-for Unity, download from releases page(not yet).
-
-Extension Packages(info is see detail section).
+Standard library for .NET, .NET Core, Xamarin.
 
 ```
-Install-Package MessagePack.ImmutableCollection -Pre
-Install-Package MessagePack.ReactiveProperty -Pre
-Install-Package MessagePack.Unity -Pre
+Install-Package MessagePack
 ```
+
+Visual Studio Analyzer to help object definition
+
+```
+Install-Package MessagePackAnalyzer
+```
+
+Extension Packages(info is see extension section).
+
+```
+Install-Package MessagePack.ImmutableCollection
+Install-Package MessagePack.ReactiveProperty
+Install-Package MessagePack.Unity
+```
+
+for Unity, download from [releases](https://github.com/neuecc/MessagePack-CSharp/releases) page, providing `.unitypackage`. Unity IL2CPP or Xamarin AOT Environment, check the pre-code generation section.
 
 Quick Start
 ---
-Define class and mark as `[MessagePackObject]` and public properties mark `[Key]`, call `MessagePackSerializer.Serialize<T>/Deserialize<T>`. 
+Define class and mark as `[MessagePackObject]` and public members(property or field) mark `[Key]`, call `MessagePackSerializer.Serialize<T>/Deserialize<T>`. 
 
 ```csharp
 // mark MessagePackObjectAttribute
@@ -62,26 +71,89 @@ class Program
             LastName = "huga",
         };
 
-		// call Serialize/Deserialize, that's all.
+        // call Serialize/Deserialize, that's all.
         var bytes = MessagePackSerializer.Serialize(mc);
         var mc2 = MessagePackSerializer.Deserialize<MyClass>(bytes);
     }
 }
 ```
 
- Union
+By default the attribute is required. Optionally it can be unnecessary, see Object Serialization Format section and Formatter Resolver section for details.
+
+Analyzer
 ---
 TODO:
+
+Built-in support types
+---
+TODO:
+
+
+Object Serialization Format
+---
+TODO:
+
+
+
+Union
+---
+TODO:
+
+
+Note:Versioning....
+
+
+Performance
+---
+TODO:
+
+
+
+FormatterResolver
+---
+TODO:
+
+
+
+MessagePackSerializer API
+---
+
+
+
 
 Extensions
 ---
 TODO:
 
+Pre Code Generation(mpc.exe)
+---
 
-Build
+
+
+
+
+RPC
+---
+TODO:
+
+How to Build
 ---
 Open `MessagePack.sln` on Visual Studio 2017.
 
 Unity Project is using symbolic link. At first, run `make_unity_symlink.bat` so linked under Unity project. You can open `src\MessagePack.UnityClient` on Unity Editor.
 
-CodeGenerator(`mpc.exe`) is merged single exe to many dll by [LibZ](https://github.com/MiloszKrajewski/LibZ). run `build_libz.bat`, you can combine it.
+Author Info
+---
+Yoshifumi Kawai(a.k.a. neuecc) is a software developer in Japan.  
+He is the Director/CTO at Grani, Inc.  
+Grani is a top social game developer in Japan.  
+He is awarding Microsoft MVP for Visual C# since 2011.  
+He is known as the creator of [UniRx](http://github.com/neuecc/UniRx/)(Reactive Extensions for Unity)  
+
+Blog: https://medium.com/@neuecc (English)  
+Blog: http://neue.cc/ (Japanese)  
+Twitter: https://twitter.com/neuecc (Japanese)   
+
+License
+---
+This library is under the MIT License.
