@@ -85,6 +85,8 @@ Analyzer
 ---
 MessagePackAnalyzer helps object definition. Attributes, accessibility etc are detected and it becomes a compiler error.
 
+TODO:Replace images
+
 ![zeroformatteranalyzer](https://cloud.githubusercontent.com/assets/46207/20078766/3ea54f14-a585-11e6-9873-b99cb5d9efe5.gif)
 
 If you want to allow a specific type (for example, when registering a custom type), put `MessagePackAnalyzer.json` at the project root and make the Build Action to `AdditionalFiles`.

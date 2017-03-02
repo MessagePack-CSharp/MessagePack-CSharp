@@ -35,16 +35,6 @@ namespace MessagePack.Formatters
 		{
 		}
 
-        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value)
-        {
-            return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value);
-        }
-
-        public <#= t.Name #> Deserialize(byte[] bytes, int offset, out int readSize)
-        {
-            return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
-        }
-
         public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver formatterResolver)
         {
             return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value);
@@ -63,31 +53,6 @@ namespace MessagePack.Formatters
 		Nullable<#= t.Name #>Formatter()
 		{
 		}
-
-        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value)
-        {
-            if (value == null)
-            {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
-            }
-            else
-            {
-                return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value.Value);
-            }
-        }
-
-        public <#= t.Name #>? Deserialize(byte[] bytes, int offset, out int readSize)
-        {
-            if (MessagePackBinary.IsNil(bytes, offset))
-            {
-                readSize = 1;
-                return null;
-            }
-            else
-            {
-                return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
-            }
-        }
 
         public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver formatterResolver)
         {

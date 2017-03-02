@@ -1,4 +1,5 @@
-﻿using MessagePack.Internal;
+﻿using MessagePack.Formatters;
+using MessagePack.Internal;
 using System;
 using System.IO;
 
@@ -38,6 +39,7 @@ namespace MessagePack
         /// </summary>
         public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
         {
+            if (resolver == null) resolver = defaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
@@ -61,6 +63,7 @@ namespace MessagePack
         /// </summary>
         public static ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver)
         {
+            if (resolver == null) resolver = defaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
@@ -84,6 +87,7 @@ namespace MessagePack
         /// </summary>
         public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
         {
+            if (resolver == null) resolver = defaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
@@ -101,6 +105,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
         {
+            if (resolver == null) resolver = defaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             int readSize;
@@ -114,6 +119,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
         {
+            if (resolver == null) resolver = defaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
 #if NETSTANDARD1_4
