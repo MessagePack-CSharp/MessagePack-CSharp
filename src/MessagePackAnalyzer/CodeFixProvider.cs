@@ -103,7 +103,7 @@ namespace MessagePackAnalyzer
                 if (attr != null) continue; // already tagged Index.
 
                 var attribute = RoslynExtensions.ParseAttributeList($"[Key({startOrder++})]")
-                    .WithTrailingTrivia(SyntaxFactory.EndOfLine(""));
+                    .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);
 
                 editor.AddAttribute(node, attribute);
             }
