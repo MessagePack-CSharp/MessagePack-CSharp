@@ -66,6 +66,17 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void NullString()
+        {
+            var o = new SimpleIntKeyData();
+            var result = Convert(o);
+            result.Prop1.Is(0);
+            result.Prop3.IsNull();
+            result.Prop4.IsNull();
+            result.BytesSpecial.IsNull();
+        }
+
+        [Fact]
         public void WithConstructor()
         {
             var o = new Vector2(100.4f, 4321.1f);

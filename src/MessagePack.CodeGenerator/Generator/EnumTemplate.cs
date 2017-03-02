@@ -28,37 +28,38 @@ namespace MessagePack.CodeGenerator.Generator
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\nnamespace ");
+            this.Write("#pragma warning disable 618\r\n#pragma warning disable 612\r\n#pragma warning disable" +
+                    " 414\r\n#pragma warning disable 168\r\n\r\nnamespace ");
             
-            #line 7 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 11 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
             
             #line default
             #line hidden
             this.Write("\r\n{\r\n    using System;\r\n    using MessagePack;\r\n\r\n");
             
-            #line 12 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 16 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
  foreach(var info in enumSerializationInfos) { 
             
             #line default
             #line hidden
             this.Write("    public sealed class ");
             
-            #line 13 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 17 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
             
             #line default
             #line hidden
             this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
             
-            #line 13 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 17 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
             this.Write(">\r\n    {\r\n        public int Serialize(ref byte[] bytes, int offset, ");
             
-            #line 15 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 19 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
@@ -66,21 +67,21 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write(" value, global::MessagePack.IFormatterResolver formatterResolver)\r\n        {\r\n   " +
                     "         return MessagePackBinary.Write");
             
-            #line 17 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 21 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
             
             #line default
             #line hidden
             this.Write("(ref bytes, offset, (");
             
-            #line 17 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 21 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
             
             #line default
             #line hidden
             this.Write(")value);\r\n        }\r\n        \r\n        public ");
             
-            #line 20 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 24 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
@@ -88,26 +89,27 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write(" Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver for" +
                     "matterResolver, out int readSize)\r\n        {\r\n            return (");
             
-            #line 22 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 26 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
             this.Write(")MessagePackBinary.Read");
             
-            #line 22 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 26 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
             
             #line default
             #line hidden
             this.Write("(bytes, offset, out readSize);\r\n        }\r\n    }\r\n\r\n");
             
-            #line 26 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
+            #line 30 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\EnumTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("\r\n}");
+            this.Write("\r\n}\r\n\r\n#pragma warning disable 168\r\n#pragma warning restore 414\r\n#pragma warning " +
+                    "restore 618\r\n#pragma warning restore 612");
             return this.GenerationEnvironment.ToString();
         }
     }

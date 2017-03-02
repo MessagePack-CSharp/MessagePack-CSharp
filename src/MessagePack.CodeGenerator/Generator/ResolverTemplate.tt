@@ -3,6 +3,10 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
+#pragma warning disable 618
+#pragma warning disable 612
+#pragma warning disable 414
+#pragma warning disable 168
 
 namespace <#= Namespace #>
 {
@@ -42,7 +46,7 @@ namespace <#= Namespace #>
     {
         static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
 
-        static GeneratedResolverGetFormatterHelper()
+        static <#= ResolverName #>GetFormatterHelper()
         {
             lookup = new global::System.Collections.Generic.Dictionary<Type, int>(<#= registerInfos.Length #>)
             {
@@ -67,3 +71,8 @@ namespace <#= Namespace #>
         }
     }
 }
+
+#pragma warning disable 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612

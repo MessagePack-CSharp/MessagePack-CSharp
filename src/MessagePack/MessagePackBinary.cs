@@ -151,6 +151,7 @@ namespace MessagePack
                 stringDecoders[i] = Decoders.FixString.Instance;
                 readNextDecoders[i] = Decoders.ReadNextFixStr.Instance;
             }
+
             stringDecoders[MessagePackCode.Str8] = Decoders.Str8String.Instance;
             stringDecoders[MessagePackCode.Str16] = Decoders.Str16String.Instance;
             stringDecoders[MessagePackCode.Str32] = Decoders.Str32String.Instance;
@@ -159,6 +160,7 @@ namespace MessagePack
             readNextDecoders[MessagePackCode.Str32] = Decoders.ReadNextStr32.Instance;
 
             // Others
+            stringDecoders[MessagePackCode.Nil] = Decoders.NilString.Instance;
             bytesDecoders[MessagePackCode.Nil] = Decoders.NilBytes.Instance;
             readNextDecoders[MessagePackCode.Nil] = Decoders.ReadNext1.Instance;
 
@@ -344,7 +346,8 @@ namespace MessagePack
                         offset += readSize;
                         for (int i = 0; i < header; i++)
                         {
-                            offset += ReadNextBlock(bytes, offset);
+                            offset += ReadNextBlock(bytes, offset); // read key block
+                            offset += ReadNextBlock(bytes, offset); // read value block
                         }
                         return offset - startOffset;
                     }
@@ -2750,6 +2753,22 @@ namespace MessagePack.Decoders
     internal interface IStringDecoder
     {
         String Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class NilString : IStringDecoder
+    {
+        internal static readonly IStringDecoder Instance = new NilString();
+
+        NilString()
+        {
+
+        }
+
+        public String Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return null;
+        }
     }
 
     internal class FixString : IStringDecoder

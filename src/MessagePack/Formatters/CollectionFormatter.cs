@@ -151,9 +151,19 @@ namespace MessagePack.Formatters
             {
                 // Optimize iteration(array is fastest)
                 var array = value as TElement[];
-                if (array != null && typeof(TElement) != typeof(byte)) // ByteArrayFormatter is special, should not use
+                if (array != null)
                 {
-                    return formatterResolver.GetFormatterWithVerify<TElement[]>().Serialize(ref bytes, offset, array, formatterResolver);
+                    var startOffset = offset;
+                    var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
+
+                    offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, array.Length);
+
+                    foreach (var item in array)
+                    {
+                        offset += formatter.Serialize(ref bytes, offset, item, formatterResolver);
+                    }
+
+                    return offset - startOffset;
                 }
                 else
                 {

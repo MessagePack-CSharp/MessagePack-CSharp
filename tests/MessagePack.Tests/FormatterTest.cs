@@ -102,6 +102,16 @@ namespace MessagePack.Tests
             new object[] { System.Numerics.Complex.Zero, System.Numerics.Complex.One, null },
         };
 
+        [Fact]
+        public void PrimitiveStringTest()
+        {
+            Convert("a").Is("a");
+            Convert("test").Is("test");
+            Convert("testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest")
+                .Is("testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest");
+            Convert((string)null).IsNull();
+        }
+
         [Theory]
         [MemberData(nameof(standardStructFormatterTestData))]
         public void StandardClassLibraryStructFormatterTest<T>(T x, T? y, T? z)

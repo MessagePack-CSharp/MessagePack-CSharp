@@ -40,7 +40,7 @@ namespace MessagePack
         {
             var formatter = resolver.GetFormatterWithVerify<T>();
 
-            var buffer = InternalMemoryPool.Buffer;
+            var buffer = InternalMemoryPool.GetBuffer();
 
             var len = formatter.Serialize(ref buffer, 0, obj, resolver);
 
@@ -63,7 +63,7 @@ namespace MessagePack
         {
             var formatter = resolver.GetFormatterWithVerify<T>();
 
-            var buffer = InternalMemoryPool.Buffer;
+            var buffer = InternalMemoryPool.GetBuffer();
 
             var len = formatter.Serialize(ref buffer, 0, obj, resolver);
 
@@ -86,7 +86,7 @@ namespace MessagePack
         {
             var formatter = resolver.GetFormatterWithVerify<T>();
 
-            var buffer = InternalMemoryPool.Buffer;
+            var buffer = InternalMemoryPool.GetBuffer();
 
             var len = formatter.Serialize(ref buffer, 0, obj, resolver);
 
@@ -133,7 +133,8 @@ namespace MessagePack
 
             // no else.
             {
-                var buffer = InternalMemoryPool.Buffer;
+                var buffer = InternalMemoryPool.GetBuffer();
+
                 FillFromStream(stream, ref buffer);
 
                 int readSize;
@@ -164,6 +165,15 @@ namespace MessagePack.Internal
     internal static class InternalMemoryPool
     {
         [ThreadStatic]
-        public static readonly byte[] Buffer = new byte[65536];
+        static byte[] buffer = null;
+
+        public static byte[] GetBuffer()
+        {
+            if (buffer == null)
+            {
+                buffer = new byte[65536];
+            }
+            return buffer;
+        }
     }
 }

@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack.ReactiveProperty</id>
-    <version>0.4.2</version>
+    <version>0.5.0</version>
     <title>MessagePack for C# Extension Support for ReactiveProperty</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
@@ -17,11 +17,11 @@
     </frameworkAssemblies>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="MessagePack" version="0.4.2" />
+        <dependency id="MessagePack" version="0.5.0" />
         <dependency id="ReactiveProperty" version="3.5.0" />
       </group>
       <group targetFramework=".NETStandard1.4">
-        <dependency id="MessagePack" version="0.4.2" />
+        <dependency id="MessagePack" version="0.5.0" />
         <dependency id="ReactiveProperty" version="3.5.0" />
       </group>
     </dependencies>

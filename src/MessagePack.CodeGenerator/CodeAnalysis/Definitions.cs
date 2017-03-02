@@ -131,7 +131,6 @@ namespace MessagePack.CodeGenerator
 
     public class GenericSerializationInfo : IResolverRegisterInfo, IEquatable<GenericSerializationInfo>
     {
-        public string Namespace { get; set; }
         public string FullName { get; set; }
 
         public string FormatterName { get; set; }

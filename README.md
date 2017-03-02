@@ -32,7 +32,7 @@ Extension Packages(info is see extension section).
 ```
 Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
-Install-Package MessagePack.Unity
+Install-Package MessagePack.UnityShims
 ```
 
 for Unity, download from [releases](https://github.com/neuecc/MessagePack-CSharp/releases) page, providing `.unitypackage`. Unity IL2CPP or Xamarin AOT Environment, check the pre-code generation section.
@@ -83,7 +83,19 @@ By default the attribute is required. Optionally it can be unnecessary, see Obje
 
 Analyzer
 ---
-TODO:
+MessagePackAnalyzer helps object definition. Attributes, accessibility etc are detected and it becomes a compiler error.
+
+![zeroformatteranalyzer](https://cloud.githubusercontent.com/assets/46207/20078766/3ea54f14-a585-11e6-9873-b99cb5d9efe5.gif)
+
+If you want to allow a specific type (for example, when registering a custom type), put `MessagePackAnalyzer.json` at the project root and make the Build Action to `AdditionalFiles`.
+
+![image](https://cloud.githubusercontent.com/assets/46207/20149311/0e6f73d6-a6f4-11e6-91cb-44c771c267cb.png)
+
+This is a sample of the contents of MessagePackAnalyzer.json. 
+
+```
+[ "System.Uri" ]
+```
 
 Built-in support types
 ---

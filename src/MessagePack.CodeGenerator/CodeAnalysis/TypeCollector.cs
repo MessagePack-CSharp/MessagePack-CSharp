@@ -63,6 +63,20 @@ namespace MessagePack.CodeGenerator
             "System.TimeSpan",
             "System.DateTime",
             "System.DateTimeOffset",
+
+            "MessagePack.Nil",
+
+            // extensions
+
+            "UnityEngine.Vector2",
+            "UnityEngine.Vector3",
+            "UnityEngine.Vector4",
+            "UnityEngine.Quaternion",
+            "UnityEngine.Color",
+            "UnityEngine.Bounds",
+            "UnityEngine.Rect",
+
+            "System.Reactive.Unit",
         });
 
         readonly Dictionary<string, string> knownGenericTypes = new Dictionary<string, string>
@@ -200,53 +214,56 @@ namespace MessagePack.CodeGenerator
         }
 
         // Gate of recursive collect
-        bool CollectCore(ITypeSymbol typeSymbol)
+        void CollectCore(ITypeSymbol typeSymbol)
         {
-            var type = typeSymbol as INamedTypeSymbol;
-
-            if (type == null)
-            {
-                return false;
-            }
             if (!alreadyCollected.Add(typeSymbol))
             {
-                return false;
-            }
-            if (embeddedTypes.Contains(type.ToString()))
-            {
-                return false;
+                return;
             }
 
-            if (type.TypeKind == TypeKind.Enum)
+            if (embeddedTypes.Contains(typeSymbol.ToString()))
+            {
+                return;
+            }
+
+            if (typeSymbol.TypeKind == TypeKind.Array)
+            {
+                CollectArray(typeSymbol as IArrayTypeSymbol);
+                return;
+            }
+
+            if (!IsAllowAccessibility(typeSymbol))
+            {
+                return;
+            }
+
+            var type = typeSymbol as INamedTypeSymbol;
+
+            if (typeSymbol.TypeKind == TypeKind.Enum)
             {
                 CollectEnum(type);
-                return true;
+                return;
             }
 
-            if (!IsAllowAccessibility(type))
-            {
-                return false;
-            }
-
-            if (type.IsGenericType || type.TypeKind == TypeKind.Array)
+            if (type.IsGenericType)
             {
                 CollectGeneric(type);
-                return true;
+                return;
             }
 
             if (type.Locations[0].IsInMetadata)
             {
-                return false;
+                return;
             }
 
             if (type.TypeKind == TypeKind.Interface)
             {
                 CollectUnion(type);
-                return true;
+                return;
             }
 
             CollectObject(type);
-            return true;
+            return;
         }
 
         void CollectEnum(INamedTypeSymbol type)
@@ -286,6 +303,22 @@ namespace MessagePack.CodeGenerator
             collectedUnionInfo.Add(info);
         }
 
+        void CollectArray(IArrayTypeSymbol array)
+        {
+            var elemType = array.ElementType;
+            CollectCore(elemType);
+
+            var info = new GenericSerializationInfo
+            {
+                FormatterName = $"global::MessagePack.Formatters.ArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>",
+                FullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            };
+
+            collectedGenericInfo.Add(info);
+
+            return;
+        }
+
         void CollectGeneric(INamedTypeSymbol type)
         {
             var genericType = type.ConstructUnboundGenericType();
@@ -309,7 +342,6 @@ namespace MessagePack.CodeGenerator
                     {
                         FormatterName = $"global::MessagePack.Formatters.NullableFormatter<{type.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>",
                         FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString()
                     };
 
                     collectedGenericInfo.Add(info);
@@ -317,8 +349,14 @@ namespace MessagePack.CodeGenerator
                 return;
             }
 
+            // collection
             if (knownGenericTypes.TryGetValue(genericTypeString, out var formatter))
             {
+                foreach (var item in type.TypeArguments)
+                {
+                    CollectCore(item);
+                }
+
                 var typeArgs = string.Join(", ", type.TypeArguments.Select(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
                 var f = formatter.Replace("TREPLACE", typeArgs);
 
@@ -326,7 +364,6 @@ namespace MessagePack.CodeGenerator
                 {
                     FormatterName = f,
                     FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                    Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 };
 
                 collectedGenericInfo.Add(info);
@@ -340,9 +377,21 @@ namespace MessagePack.CodeGenerator
                     {
                         FormatterName = f,
                         FullName = $"global::System.Linq.IGrouping<{typeArgs}>",
-                        Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                     };
+
                     collectedGenericInfo.Add(groupingInfo);
+
+                    formatter = knownGenericTypes["System.Collections.Generic.IEnumerable<>"];
+                    typeArgs = type.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    f = formatter.Replace("TREPLACE", typeArgs);
+
+                    var enumerableInfo = new GenericSerializationInfo
+                    {
+                        FormatterName = f,
+                        FullName = $"global::System.Collections.Generic.IEnumerable<{typeArgs}>",
+                    };
+
+                    collectedGenericInfo.Add(enumerableInfo);
                 }
             }
         }
@@ -625,7 +674,7 @@ namespace MessagePack.CodeGenerator
             collectedObjectInfo.Add(info);
         }
 
-        bool IsAllowAccessibility(INamedTypeSymbol symbol)
+        bool IsAllowAccessibility(ITypeSymbol symbol)
         {
             do
             {

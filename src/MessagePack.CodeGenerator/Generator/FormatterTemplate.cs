@@ -28,37 +28,38 @@ namespace MessagePack.CodeGenerator.Generator
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\nnamespace ");
+            this.Write("#pragma warning disable 618\r\n#pragma warning disable 612\r\n#pragma warning disable" +
+                    " 414\r\n#pragma warning disable 168\r\n\r\nnamespace ");
             
-            #line 7 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 11 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
             
             #line default
             #line hidden
             this.Write("\r\n{\r\n    using System;\r\n    using MessagePack;\r\n\r\n");
             
-            #line 12 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 16 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var objInfo in objectSerializationInfos) { 
             
             #line default
             #line hidden
             this.Write("\r\n    public sealed class ");
             
-            #line 14 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 18 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Name));
             
             #line default
             #line hidden
             this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
             
-            #line 14 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 18 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             
             #line default
             #line hidden
             this.Write(">\r\n    {\r\n");
             
-            #line 16 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 20 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( objInfo.IsStringKey) { 
             
             #line default
@@ -66,7 +67,7 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write("\r\n        readonly global::System.Collections.Generic.Dictionary<string, int> ___" +
                     "_keyMapping;\r\n\r\n        public ");
             
-            #line 20 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 24 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Name));
             
             #line default
@@ -74,56 +75,56 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write("Formatter()\r\n        {\r\n            this.____keyMapping = new global::System.Coll" +
                     "ections.Generic.Dictionary<string, int>(");
             
-            #line 22 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 26 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Members.Length));
             
             #line default
             #line hidden
             this.Write(")\r\n            {\r\n");
             
-            #line 24 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 28 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var x in objInfo.Members) { 
             
             #line default
             #line hidden
             this.Write("                { \"");
             
-            #line 25 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 29 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.StringKey));
             
             #line default
             #line hidden
             this.Write("\", ");
             
-            #line 25 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 29 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.IntKey));
             
             #line default
             #line hidden
             this.Write("},\r\n");
             
-            #line 26 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 30 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("            };\r\n        }\r\n\r\n");
             
-            #line 30 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 34 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("\r\n        public int Serialize(ref byte[] bytes, int offset, ");
             
-            #line 32 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 36 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             
             #line default
             #line hidden
             this.Write(" value, global::MessagePack.IFormatterResolver formatterResolver)\r\n        {\r\n");
             
-            #line 34 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 38 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( objInfo.IsClass) { 
             
             #line default
@@ -131,14 +132,14 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write("            if (value == null)\r\n            {\r\n                return global::Mes" +
                     "sagePack.MessagePackBinary.WriteNil(ref bytes, offset);\r\n            }\r\n");
             
-            #line 39 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 43 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("            \r\n");
             
-            #line 40 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 44 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
 if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { 
             
             #line default
@@ -146,21 +147,21 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize(" +
                     ");\r\n");
             
-            #line 42 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 46 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { 
             
             #line default
             #line hidden
             this.Write("            value.OnBeforeSerialize();\r\n");
             
-            #line 44 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 48 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("            var startOffset = offset;\r\n");
             
-            #line 46 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 50 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( objInfo.IsIntKey) { if( objInfo.MaxKey <= 15) { 
             
             #line default
@@ -168,38 +169,8 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeader" +
                     "Unsafe(ref bytes, offset, ");
             
-            #line 47 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.MaxKey + 1));
-            
-            #line default
-            #line hidden
-            this.Write(");\r\n");
-            
-            #line 48 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
- } else { 
-            
-            #line default
-            #line hidden
-            this.Write("            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref " +
-                    "bytes, offset, ");
-            
-            #line 49 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.MaxKey + 1));
-            
-            #line default
-            #line hidden
-            this.Write(");\r\n");
-            
-            #line 50 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
- } } else if( objInfo.WriteCount <= 15) { 
-            
-            #line default
-            #line hidden
-            this.Write("            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUn" +
-                    "safe(ref bytes, offset, ");
-            
             #line 51 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.WriteCount));
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.MaxKey + 1));
             
             #line default
             #line hidden
@@ -210,35 +181,65 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             
             #line default
             #line hidden
-            this.Write("            offset += global::MessagePack.MessagePackBinary.WriteMapHeader(ref by" +
-                    "tes, offset, ");
+            this.Write("            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref " +
+                    "bytes, offset, ");
             
             #line 53 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.WriteCount));
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.MaxKey + 1));
             
             #line default
             #line hidden
             this.Write(");\r\n");
             
             #line 54 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+ } } else if( objInfo.WriteCount <= 15) { 
+            
+            #line default
+            #line hidden
+            this.Write("            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUn" +
+                    "safe(ref bytes, offset, ");
+            
+            #line 55 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.WriteCount));
+            
+            #line default
+            #line hidden
+            this.Write(");\r\n");
+            
+            #line 56 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+ } else { 
+            
+            #line default
+            #line hidden
+            this.Write("            offset += global::MessagePack.MessagePackBinary.WriteMapHeader(ref by" +
+                    "tes, offset, ");
+            
+            #line 57 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.WriteCount));
+            
+            #line default
+            #line hidden
+            this.Write(");\r\n");
+            
+            #line 58 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             
-            #line 55 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 59 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsIntKey) { 
             
             #line default
             #line hidden
             
-            #line 56 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 60 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  for(var i =0; i<= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); 
             
             #line default
             #line hidden
             
-            #line 57 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 61 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( member == null) { 
             
             #line default
@@ -246,27 +247,27 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, o" +
                     "ffset);\r\n");
             
-            #line 59 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 63 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
             #line hidden
             this.Write("            offset += ");
             
-            #line 60 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 64 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             
             #line default
             #line hidden
             this.Write(";\r\n");
             
-            #line 61 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 65 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } } } else { 
             
             #line default
             #line hidden
             
-            #line 62 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 66 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var x in objInfo.Members) { 
             
             #line default
@@ -274,35 +275,35 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref" +
                     " bytes, offset, \"");
             
-            #line 63 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 67 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.StringKey));
             
             #line default
             #line hidden
             this.Write("\", ");
             
-            #line 63 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 67 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(Encoding.UTF8.GetByteCount(x.StringKey)));
             
             #line default
             #line hidden
             this.Write(");\r\n            offset += ");
             
-            #line 64 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 68 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.GetSerializeMethodString()));
             
             #line default
             #line hidden
             this.Write(";\r\n");
             
-            #line 65 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 69 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } } 
             
             #line default
             #line hidden
             this.Write("            return offset - startOffset;\r\n        }\r\n\r\n        public ");
             
-            #line 69 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 73 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             
             #line default
@@ -311,14 +312,14 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                     "matterResolver, out int readSize)\r\n        {\r\n            if (global::MessagePac" +
                     "k.MessagePackBinary.IsNil(bytes, offset))\r\n            {\r\n");
             
-            #line 73 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 77 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if( objInfo.IsClass) { 
             
             #line default
             #line hidden
             this.Write("                readSize = 1;\r\n                return null;\r\n");
             
-            #line 76 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 80 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
@@ -326,14 +327,14 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("                throw new InvalidOperationException(\"typecode is null, struct not" +
                     " supported\");\r\n");
             
-            #line 78 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 82 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("            }\r\n\r\n            var startOffset = offset;\r\n");
             
-            #line 82 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 86 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsStringKey) { 
             
             #line default
@@ -341,7 +342,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(byte" +
                     "s, offset, out readSize);\r\n");
             
-            #line 84 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 88 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
@@ -349,42 +350,42 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(by" +
                     "tes, offset, out readSize);\r\n");
             
-            #line 86 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 90 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("            offset += readSize;\r\n\r\n");
             
-            #line 89 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 93 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var x in objInfo.Members) { 
             
             #line default
             #line hidden
             this.Write("            var __");
             
-            #line 90 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 94 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));
             
             #line default
             #line hidden
             this.Write("__ = default(");
             
-            #line 90 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 94 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Type));
             
             #line default
             #line hidden
             this.Write(");\r\n");
             
-            #line 91 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 95 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("\r\n            for (int i = 0; i < length; i++)\r\n            {\r\n");
             
-            #line 95 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 99 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsStringKey) { 
             
             #line default
@@ -399,49 +400,49 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                 }
 ");
             
-            #line 104 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 108 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else { 
             
             #line default
             #line hidden
             this.Write("                var key = i;\r\n");
             
-            #line 106 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 110 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("\r\n                switch (key)\r\n                {\r\n");
             
-            #line 110 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 114 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var x in objInfo.Members) { 
             
             #line default
             #line hidden
             this.Write("                    case ");
             
-            #line 111 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 115 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.IntKey));
             
             #line default
             #line hidden
             this.Write(":\r\n                        __");
             
-            #line 112 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 116 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));
             
             #line default
             #line hidden
             this.Write("__ = ");
             
-            #line 112 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 116 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.GetDeserializeMethodString()));
             
             #line default
             #line hidden
             this.Write(";\r\n                        break;\r\n");
             
-            #line 114 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 118 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
@@ -450,14 +451,14 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                     "ack.MessagePackBinary.ReadNext(bytes, offset);\r\n                        break;\r\n" +
                     "                }\r\n");
             
-            #line 119 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 123 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsStringKey) { 
             
             #line default
             #line hidden
             this.Write("                \r\n                NEXT_LOOP:\r\n");
             
-            #line 121 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 125 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
@@ -465,41 +466,41 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("                offset += readSize;\r\n            }\r\n\r\n            readSize = offs" +
                     "et - startOffset;\r\n\r\n            var ____result = new ");
             
-            #line 127 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 131 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             
             #line default
             #line hidden
             this.Write(";\r\n");
             
-            #line 128 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 132 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { 
             
             #line default
             #line hidden
             this.Write("            ____result.");
             
-            #line 129 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 133 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));
             
             #line default
             #line hidden
             this.Write(" = __");
             
-            #line 129 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 133 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.Name));
             
             #line default
             #line hidden
             this.Write("__;\r\n");
             
-            #line 130 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 134 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             
-            #line 131 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 135 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
 if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAfter) { 
             
             #line default
@@ -507,26 +508,27 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAf
             this.Write("            ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeseri" +
                     "alize();\r\n");
             
-            #line 133 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 137 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { 
             
             #line default
             #line hidden
             this.Write("\t\t\t____result.OnAfterDeserialize();\r\n");
             
-            #line 135 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 139 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
             this.Write("            return ____result;\r\n        }\r\n    }\r\n\r\n");
             
-            #line 140 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
+            #line 144 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("}");
+            this.Write("}\r\n\r\n#pragma warning disable 168\r\n#pragma warning restore 414\r\n#pragma warning re" +
+                    "store 618\r\n#pragma warning restore 612");
             return this.GenerationEnvironment.ToString();
         }
     }
