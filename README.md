@@ -56,7 +56,8 @@ public class MyClass
     [Key(2)]
     public string LastName { get; set; }
 
-    // If does not mark KeyAttribute, the property don't serialize/deserialize it.
+    // public members and does not serialize target, mark IgnoreAttribute
+	[Ignore]
     public string FullName { get { return FirstName + LastName; } }
 }
 
