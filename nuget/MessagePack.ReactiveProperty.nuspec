@@ -18,11 +18,11 @@
     <dependencies>
       <group targetFramework=".NETFramework4.5">
         <dependency id="MessagePack" version="0.6.0" />
-        <dependency id="ReactiveProperty" version="3.5.0" />
+        <dependency id="ReactiveProperty" version="3.5.1" />
       </group>
       <group targetFramework=".NETStandard1.4">
         <dependency id="MessagePack" version="0.6.0" />
-        <dependency id="ReactiveProperty" version="3.5.0" />
+        <dependency id="ReactiveProperty" version="3.5.1" />
       </group>
     </dependencies>
   </metadata>

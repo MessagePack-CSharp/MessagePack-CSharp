@@ -69,6 +69,21 @@ namespace MessagePack.ReactivePropertyExtension
             mapTo[(int)id] = scheduler;
             mapFrom[scheduler] = (int)id;
         }
+
+        internal static int ToReactivePropertyModeInt<T>(global::Reactive.Bindings.ReactiveProperty<T> reactiveProperty)
+        {
+            var mode = ReactivePropertyMode.None;
+            if (reactiveProperty.IsDistinctUntilChanged)
+            {
+                mode |= ReactivePropertyMode.DistinctUntilChanged;
+            }
+            if (reactiveProperty.IsRaiseLatestValueOnSubscribe)
+            {
+                mode |= ReactivePropertyMode.RaiseLatestValueOnSubscribe;
+            }
+
+            return (int)mode;
+        }
     }
 
     // [Mode, SchedulerId, Value] : length should be three.
@@ -86,8 +101,8 @@ namespace MessagePack.ReactivePropertyExtension
 
                 offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
 
-                offset += MessagePackBinary.WriteInt32(ref bytes, offset, (int)(ReactivePropertyMode.DistinctUntilChanged | ReactivePropertyMode.RaiseLatestValueOnSubscribe)); // TODO:Write Mode
-                offset += MessagePackBinary.WriteInt32(ref bytes, offset, (int)-1); // TODO:ReactivePropertySchedulerMapper.GetSchedulerId
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, ReactivePropertySchedulerMapper.ToReactivePropertyModeInt(value));
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, ReactivePropertySchedulerMapper.GetSchedulerId(value.RaiseEventScheduler));
                 offset += formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
 
                 return offset - startOffset;
