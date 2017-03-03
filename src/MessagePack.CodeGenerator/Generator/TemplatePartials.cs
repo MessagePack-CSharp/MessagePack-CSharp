@@ -30,4 +30,11 @@ namespace MessagePack.CodeGenerator.Generator
         public string Namespace;
         public UnionSerializationInfo[] unionSerializationInfos;
     }
+
+
+    public partial class GenericFormatterTemplate
+    {
+        public string Namespace;
+        public GenericSerializationInfo[] genericSerializationInfos;
+    }
 }

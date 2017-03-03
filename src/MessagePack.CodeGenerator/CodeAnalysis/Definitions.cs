@@ -134,6 +134,8 @@ namespace MessagePack.CodeGenerator
         public string FullName { get; set; }
 
         public string FormatterName { get; set; }
+        public string ElementTypeArgs { get; set; }
+        public string GenericFormatterName { get; set; }
 
         public bool Equals(GenericSerializationInfo other)
         {
