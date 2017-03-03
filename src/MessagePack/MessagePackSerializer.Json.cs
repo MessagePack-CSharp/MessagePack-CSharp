@@ -28,6 +28,8 @@ namespace MessagePack
         /// </summary>
         public static string ToJson(byte[] bytes)
         {
+            if (bytes == null || bytes.Length == 0) return "";
+
             var sb = new StringBuilder();
             ToJsonCore(bytes, 0, sb);
             return sb.ToString();

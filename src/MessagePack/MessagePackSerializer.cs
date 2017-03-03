@@ -1,5 +1,4 @@
-﻿using MessagePack.Formatters;
-using MessagePack.Internal;
+﻿using MessagePack.Internal;
 using System;
 using System.IO;
 
@@ -7,12 +6,17 @@ namespace MessagePack
 {
     public static partial class MessagePackSerializer
     {
-        static IFormatterResolver defaultResolver = Resolvers.DefaultResolver.Instance;
+        static IFormatterResolver defaultResolver;
 
         public static IFormatterResolver DefaultResolver
         {
             get
             {
+                if (defaultResolver == null)
+                {
+                    defaultResolver = MessagePack.Resolvers.DefaultResolver.Instance;
+                }
+
                 return defaultResolver;
             }
         }
@@ -39,7 +43,7 @@ namespace MessagePack
         /// </summary>
         public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = defaultResolver;
+            if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
@@ -63,7 +67,7 @@ namespace MessagePack
         /// </summary>
         public static ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = defaultResolver;
+            if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
@@ -87,7 +91,7 @@ namespace MessagePack
         /// </summary>
         public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = defaultResolver;
+            if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             var buffer = InternalMemoryPool.GetBuffer();
@@ -105,7 +109,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = defaultResolver;
+            if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             int readSize;
@@ -119,7 +123,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = defaultResolver;
+            if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
 #if NETSTANDARD1_4
