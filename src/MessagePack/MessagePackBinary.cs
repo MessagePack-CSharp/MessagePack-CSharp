@@ -1569,7 +1569,7 @@ namespace MessagePack.Decoders
             readSize = 3;
             unchecked
             {
-                return (uint)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+                return (uint)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
             }
         }
     }
@@ -1588,7 +1588,7 @@ namespace MessagePack.Decoders
             readSize = 5;
             unchecked
             {
-                return (uint)((bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + bytes[offset + 4]);
+                return (uint)((bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | bytes[offset + 4]);
             }
         }
     }
@@ -1643,7 +1643,7 @@ namespace MessagePack.Decoders
             readSize = 3;
             unchecked
             {
-                return (uint)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+                return (uint)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
             }
         }
     }
@@ -1662,7 +1662,7 @@ namespace MessagePack.Decoders
             readSize = 5;
             unchecked
             {
-                return (uint)((bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + bytes[offset + 4]);
+                return (uint)((bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | bytes[offset + 4]);
             }
         }
     }
@@ -1847,7 +1847,7 @@ namespace MessagePack.Decoders
 
         public byte[] Read(byte[] bytes, int offset, out int readSize)
         {
-            var length = (bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + (bytes[offset + 4]);
+            var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
             var newBytes = new byte[length];
             Buffer.BlockCopy(bytes, offset + 5, newBytes, 0, length);
 
@@ -2110,7 +2110,7 @@ namespace MessagePack.Decoders
             readSize = 3;
             unchecked
             {
-                return (short)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+                return (short)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
             }
         }
     }
@@ -2194,7 +2194,7 @@ namespace MessagePack.Decoders
         public Int32 Read(byte[] bytes, int offset, out int readSize)
         {
             readSize = 3;
-            return (Int32)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+            return (Int32)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
         }
     }
 
@@ -2212,7 +2212,7 @@ namespace MessagePack.Decoders
             readSize = 5;
             checked
             {
-                return (Int32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+                return (Int32)((UInt32)(bytes[offset + 1] << 24) | (UInt32)(bytes[offset + 2] << 16) | (UInt32)(bytes[offset + 3] << 8) | (UInt32)bytes[offset + 4]);
             }
         }
     }
@@ -2247,7 +2247,7 @@ namespace MessagePack.Decoders
             readSize = 3;
             unchecked
             {
-                return (int)(short)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+                return (int)(short)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
             }
         }
     }
@@ -2266,7 +2266,7 @@ namespace MessagePack.Decoders
             readSize = 5;
             unchecked
             {
-                return (int)((bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + bytes[offset + 4]);
+                return (int)((bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | bytes[offset + 4]);
             }
         }
     }
@@ -2349,7 +2349,7 @@ namespace MessagePack.Decoders
         public Int64 Read(byte[] bytes, int offset, out int readSize)
         {
             readSize = 3;
-            return (Int64)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+            return (Int64)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
         }
     }
 
@@ -2365,7 +2365,7 @@ namespace MessagePack.Decoders
         public Int64 Read(byte[] bytes, int offset, out int readSize)
         {
             readSize = 5;
-            return unchecked((Int64)((uint)(bytes[offset + 1] << 24) + ((uint)bytes[offset + 2] << 16) + ((uint)bytes[offset + 3] << 8) + (uint)bytes[offset + 4]));
+            return unchecked((Int64)((uint)(bytes[offset + 1] << 24) | ((uint)bytes[offset + 2] << 16) | ((uint)bytes[offset + 3] << 8) | (uint)bytes[offset + 4]));
         }
     }
 
@@ -2420,7 +2420,7 @@ namespace MessagePack.Decoders
             readSize = 3;
             unchecked
             {
-                return (long)(short)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+                return (long)(short)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
             }
         }
     }
@@ -2439,7 +2439,7 @@ namespace MessagePack.Decoders
             readSize = 5;
             unchecked
             {
-                return (long)((long)(bytes[offset + 1] << 24) + (long)(bytes[offset + 2] << 16) + (long)(bytes[offset + 3] << 8) + (long)bytes[offset + 4]);
+                return (long)((long)(bytes[offset + 1] << 24) | (long)(bytes[offset + 2] << 16) | (long)(bytes[offset + 3] << 8) | (long)bytes[offset + 4]);
             }
         }
     }
@@ -2530,7 +2530,7 @@ namespace MessagePack.Decoders
             readSize = 3;
             unchecked
             {
-                return (UInt16)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+                return (UInt16)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
             }
         }
     }
@@ -2601,7 +2601,7 @@ namespace MessagePack.Decoders
             readSize = 3;
             unchecked
             {
-                return (UInt32)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+                return (UInt32)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
             }
         }
     }
@@ -2620,7 +2620,7 @@ namespace MessagePack.Decoders
             readSize = 5;
             unchecked
             {
-                return (UInt32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+                return (UInt32)((UInt32)(bytes[offset + 1] << 24) | (UInt32)(bytes[offset + 2] << 16) | (UInt32)(bytes[offset + 3] << 8) | (UInt32)bytes[offset + 4]);
             }
         }
     }
@@ -2691,7 +2691,7 @@ namespace MessagePack.Decoders
             readSize = 3;
             unchecked
             {
-                return (UInt64)((bytes[offset + 1] << 8) + (bytes[offset + 2]));
+                return (UInt64)((bytes[offset + 1] << 8) | (bytes[offset + 2]));
             }
         }
     }
@@ -2710,11 +2710,11 @@ namespace MessagePack.Decoders
             readSize = 5;
             unchecked
             {
-                return (UInt64)(((UInt64)bytes[offset + 1] << 24) + (UInt64)(bytes[offset + 2] << 16) + (UInt64)(bytes[offset + 3] << 8) + (UInt64)bytes[offset + 4]);
+                return (UInt64)(((UInt64)bytes[offset + 1] << 24) + (ulong)(bytes[offset + 2] << 16) + (UInt64)(bytes[offset + 3] << 8) + (UInt64)bytes[offset + 4]);
             }
         }
     }
-
+     
     internal class UInt64UInt64 : IUInt64Decoder
     {
         internal static readonly IUInt64Decoder Instance = new UInt64UInt64();
@@ -2838,7 +2838,7 @@ namespace MessagePack.Decoders
         {
             unchecked
             {
-                var length = (int)((uint)(bytes[offset + 1] << 24) + (uint)(bytes[offset + 2] << 16) + (uint)(bytes[offset + 3] << 8) + (uint)bytes[offset + 4]);
+                var length = (int)((uint)(bytes[offset + 1] << 24) | (uint)(bytes[offset + 2] << 16) | (uint)(bytes[offset + 3] << 8) | (uint)bytes[offset + 4]);
                 readSize = length + 5;
                 return StringEncoding.UTF8.GetString(bytes, offset + 5, length);
             }
@@ -3030,7 +3030,7 @@ namespace MessagePack.Decoders
         {
             unchecked
             {
-                var length = (int)((UInt16)(bytes[offset + 1] << 8) + (UInt16)bytes[offset + 2]);
+                var length = (int)((UInt16)(bytes[offset + 1] << 8) | (UInt16)bytes[offset + 2]);
                 var typeCode = unchecked((sbyte)bytes[offset + 3]);
 
                 var body = new byte[length];
@@ -3054,7 +3054,7 @@ namespace MessagePack.Decoders
         {
             unchecked
             {
-                var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+                var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) | (UInt32)(bytes[offset + 2] << 16) | (UInt32)(bytes[offset + 3] << 8) | (UInt32)bytes[offset + 4]);
                 var typeCode = unchecked((sbyte)bytes[offset + 5]);
 
                 var body = new byte[length];
@@ -3213,7 +3213,7 @@ namespace MessagePack.Decoders
         {
             unchecked
             {
-                var length = (UInt32)((UInt16)(bytes[offset + 1] << 8) + (UInt16)bytes[offset + 2]);
+                var length = (UInt32)((UInt16)(bytes[offset + 1] << 8) | (UInt16)bytes[offset + 2]);
                 var typeCode = unchecked((sbyte)bytes[offset + 3]);
 
                 readSize = 4;
@@ -3235,7 +3235,7 @@ namespace MessagePack.Decoders
         {
             unchecked
             {
-                var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+                var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) | (UInt32)(bytes[offset + 2] << 16) | (UInt32)(bytes[offset + 3] << 8) | (UInt32)bytes[offset + 4]);
                 var typeCode = unchecked((sbyte)bytes[offset + 5]);
 
                 readSize = 6;
@@ -3283,7 +3283,7 @@ namespace MessagePack.Decoders
 
             unchecked
             {
-                var seconds = (UInt32)((UInt32)(bytes[offset + 2] << 24) + (UInt32)(bytes[offset + 3] << 16) + (UInt32)(bytes[offset + 4] << 8) + (UInt32)bytes[offset + 5]);
+                var seconds = (UInt32)((UInt32)(bytes[offset + 2] << 24) | (UInt32)(bytes[offset + 3] << 16) | (UInt32)(bytes[offset + 4] << 8) | (UInt32)bytes[offset + 5]);
 
                 readSize = 6;
                 return DateTimeConstants.UnixEpoch.AddSeconds(seconds);
@@ -3337,7 +3337,7 @@ namespace MessagePack.Decoders
                 throw new InvalidOperationException(string.Format("typeCode is invalid. typeCode:{0}", typeCode));
             }
 
-            var nanoseconds = (UInt32)((UInt32)(bytes[offset + 3] << 24) + (UInt32)(bytes[offset + 4] << 16) + (UInt32)(bytes[offset + 5] << 8) + (UInt32)bytes[offset + 6]);
+            var nanoseconds = (UInt32)((UInt32)(bytes[offset + 3] << 24) | (UInt32)(bytes[offset + 4] << 16) | (UInt32)(bytes[offset + 5] << 8) | (UInt32)bytes[offset + 6]);
             unchecked
             {
                 var seconds = (long)bytes[offset + 7] << 56 | (long)bytes[offset + 8] << 48 | (long)bytes[offset + 9] << 40 | (long)bytes[offset + 10] << 32
@@ -3535,7 +3535,7 @@ namespace MessagePack.Decoders
         public int Read(byte[] bytes, int offset)
         {
 
-            var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+            var length = (bytes[offset + 1] << 8) | (bytes[offset + 2]);
             return length + 3;
         }
     }
@@ -3549,7 +3549,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset)
         {
-            var length = (int)((uint)(bytes[offset + 1] << 24) + (uint)(bytes[offset + 2] << 16) + (uint)(bytes[offset + 3] << 8) + (uint)bytes[offset + 4]);
+            var length = (int)((uint)(bytes[offset + 1] << 24) | (uint)(bytes[offset + 2] << 16) | (uint)(bytes[offset + 3] << 8) | (uint)bytes[offset + 4]);
             return length + 5;
         }
     }
@@ -3578,7 +3578,7 @@ namespace MessagePack.Decoders
         public int Read(byte[] bytes, int offset)
         {
 
-            var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+            var length = (bytes[offset + 1] << 8) | (bytes[offset + 2]);
             return length + 3;
         }
     }
@@ -3592,7 +3592,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset)
         {
-            var length = (bytes[offset + 1] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 3] << 8) + (bytes[offset + 4]);
+            var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
             return length + 5;
         }
     }
@@ -3620,7 +3620,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset)
         {
-            var length = (int)((UInt16)(bytes[offset + 1] << 8) + (UInt16)bytes[offset + 2]);
+            var length = (int)((UInt16)(bytes[offset + 1] << 8) | (UInt16)bytes[offset + 2]);
             return length + 4;
         }
     }
@@ -3634,7 +3634,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset)
         {
-            var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) + (UInt32)(bytes[offset + 2] << 16) + (UInt32)(bytes[offset + 3] << 8) + (UInt32)bytes[offset + 4]);
+            var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) | (UInt32)(bytes[offset + 2] << 16) | (UInt32)(bytes[offset + 3] << 8) | (UInt32)bytes[offset + 4]);
             return (int)length + 6;
         }
     }

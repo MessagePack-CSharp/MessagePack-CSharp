@@ -312,8 +312,6 @@ namespace MessagePack.CodeGenerator
             {
                 FormatterName = $"global::MessagePack.Formatters.ArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>",
                 FullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                GenericFormatterName = "global::MessagePack.Formatters.ArrayFormatter",
-                // ElementTypeArgs = 
             };
 
             collectedGenericInfo.Add(info);

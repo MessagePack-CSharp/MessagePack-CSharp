@@ -47,10 +47,10 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="ReactiveProperty, Version=3.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\ReactiveProperty.3.5.0\lib\net46\ReactiveProperty.dll</HintPath>
+      <HintPath>..\..\packages\ReactiveProperty.3.5.1\lib\net46\ReactiveProperty.dll</HintPath>
     </Reference>
     <Reference Include="ReactiveProperty.NET46, Version=3.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\ReactiveProperty.3.5.0\lib\net46\ReactiveProperty.NET46.dll</HintPath>
+      <HintPath>..\..\packages\ReactiveProperty.3.5.1\lib\net46\ReactiveProperty.NET46.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
