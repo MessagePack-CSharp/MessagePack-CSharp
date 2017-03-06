@@ -19,7 +19,7 @@ namespace MessagePack.Formatters
 
         ByteArrayFormatter()
         {
-            
+
         }
 
         public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
@@ -137,8 +137,8 @@ namespace MessagePack.Formatters
         {
             var startOffset = offset;
             offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, 2);
-            offset += MessagePackBinary.WriteDateTime(ref bytes, offset, value.UtcDateTime);
-            offset += MessagePackBinary.WriteInt64(ref bytes, offset, value.Offset.Ticks);
+            offset += MessagePackBinary.WriteDateTime(ref bytes, offset, new DateTime(value.Ticks, DateTimeKind.Utc)); // current ticks as is
+            offset += MessagePackBinary.WriteInt16(ref bytes, offset, (short)value.Offset.TotalMinutes); // offset is normalized in minutes
             return offset - startOffset;
         }
 
@@ -153,12 +153,12 @@ namespace MessagePack.Formatters
             var utc = MessagePackBinary.ReadDateTime(bytes, offset, out readSize);
             offset += readSize;
 
-            var dtOffsetTicks = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
+            var dtOffsetMinutes = MessagePackBinary.ReadInt16(bytes, offset, out readSize);
             offset += readSize;
 
             readSize = offset - startOffset;
 
-            return new DateTimeOffset(utc, new TimeSpan(dtOffsetTicks));
+            return new DateTimeOffset(utc.Ticks, TimeSpan.FromMinutes(dtOffsetMinutes));
         }
     }
 

@@ -184,5 +184,13 @@ namespace MessagePack.Tests
             ValueTask<int>? nullValueTask2 = null;
             Convert(nullValueTask2).IsNull();
         }
+
+        [Fact]
+        public void DateTimeOffsetTest()
+        {
+            DateTimeOffset now = new DateTime(DateTime.UtcNow.Ticks + TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time").BaseUtcOffset.Ticks, DateTimeKind.Local);
+            var binary = MessagePackSerializer.Serialize(now);
+            MessagePackSerializer.Deserialize<DateTimeOffset>(binary).Is(now);
+        }
     }
 }

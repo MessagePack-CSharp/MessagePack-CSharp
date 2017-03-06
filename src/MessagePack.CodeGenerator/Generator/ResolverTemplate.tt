@@ -15,7 +15,7 @@ namespace <#= Namespace #>
 
     public class <#= ResolverName #> : global::MessagePack.IFormatterResolver
     {
-        public static global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();
+        public static readonly global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();
 
         <#= ResolverName #>()
         {
