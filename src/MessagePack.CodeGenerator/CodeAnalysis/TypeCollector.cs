@@ -59,12 +59,33 @@ namespace MessagePack.CodeGenerator
             "sbyte",
             "decimal",
             "char",
+            "string",
             "System.Guid",
             "System.TimeSpan",
             "System.DateTime",
             "System.DateTimeOffset",
 
             "MessagePack.Nil",
+
+            // and arrays
+            
+            "short[]",
+            "int[]",
+            "long[]",
+            "ushort[]",
+            "uint[]",
+            "ulong[]",
+            "float[]",
+            "double[]",
+            "bool[]",
+            "byte[]",
+            "sbyte[]",
+            "decimal[]",
+            "char[]",
+            "string[]",
+            "System.DateTime[]",
+            "System.ArraySegment<byte>",
+            "System.ArraySegment<byte>?",
 
             // extensions
 

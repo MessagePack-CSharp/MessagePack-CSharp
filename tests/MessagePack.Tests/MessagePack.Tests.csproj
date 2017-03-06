@@ -114,6 +114,7 @@
     <Compile Include="UnionResolverTest.cs" />
     <Compile Include="Utils\ChainingAssertion.Ext.cs" />
     <Compile Include="Utils\ChainingAssertion.Xunit.cs" />
+    <Compile Include="ValueTupleTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

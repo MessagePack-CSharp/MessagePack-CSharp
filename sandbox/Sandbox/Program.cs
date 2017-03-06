@@ -173,7 +173,6 @@ namespace Sandbox
         public int MyProperty { get; set; }
     }
 
-
     class Program
     {
         static void Main(string[] args)
