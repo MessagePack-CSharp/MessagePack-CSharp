@@ -226,7 +226,7 @@ namespace MessagePackAnalyzer
         }
 
         // Gate of recursive collect
-        public void CollectCore(ITypeSymbol typeSymbol)
+        public void CollectCore(ITypeSymbol typeSymbol, ISymbol callerSymbol = null)
         {
             var type = typeSymbol as INamedTypeSymbol;
 
@@ -284,19 +284,22 @@ namespace MessagePackAnalyzer
             }
 
             // only do object:)
-            CollectObject(type);
+            CollectObject(type, callerSymbol);
             return;
         }
 
 
-        void CollectObject(INamedTypeSymbol type)
+        void CollectObject(INamedTypeSymbol type, ISymbol callerSymbol)
         {
             var isClass = !type.IsValueType;
 
             var contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.MessagePackObjectAttribnute);
             if (contractAttr == null)
             {
-                ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.TypeMustBeMessagePackObject, type.Locations[0], type.Name));
+                var location = callerSymbol != null ? callerSymbol.Locations[0] : type.Locations[0];
+                var targetName = callerSymbol != null ? callerSymbol.ContainingType.Name + "." + callerSymbol.Name : type.Name;
+
+                ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.TypeMustBeMessagePackObject, location, targetName));
                 return;
             }
 
@@ -319,7 +322,7 @@ namespace MessagePackAnalyzer
                     if (!IsReadable && !IsWritable) continue;
 
                     stringMembers.Add(item.Name);
-                    CollectCore(item.Type); // recursive collect
+                    CollectCore(item.Type, item); // recursive collect
                 }
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
@@ -332,7 +335,7 @@ namespace MessagePackAnalyzer
                     if (!IsReadable && !IsWritable) continue;
 
                     stringMembers.Add(item.Name);
-                    CollectCore(item.Type); // recursive collect
+                    CollectCore(item.Type, item); // recursive collect
                 }
             }
             else
@@ -399,7 +402,7 @@ namespace MessagePackAnalyzer
                         stringMembers.Add((string)stringKey);
                     }
 
-                    CollectCore(item.Type); // recursive collect
+                    CollectCore(item.Type, item); // recursive collect
                 }
 
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
@@ -462,7 +465,7 @@ namespace MessagePackAnalyzer
                         stringMembers.Add((string)stringKey);
                     }
 
-                    CollectCore(item.Type); // recursive collect
+                    CollectCore(item.Type, item); // recursive collect
                 }
             }
         }

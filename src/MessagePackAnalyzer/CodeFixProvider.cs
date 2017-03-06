@@ -43,18 +43,51 @@ namespace MessagePackAnalyzer
             var targetNode = root.FindNode(context.Span);
             var property = targetNode as PropertyDeclarationSyntax;
             var field = targetNode as FieldDeclarationSyntax;
-
+            var dec = targetNode as VariableDeclaratorSyntax;
 
             INamedTypeSymbol targetType = null;
             if (property == null && field == null)
             {
-                targetType = model.GetDeclaredSymbol((targetNode as TypeDeclarationSyntax));
+                var typeDeclare = targetNode as TypeDeclarationSyntax;
+                if (typeDeclare != null)
+                {
+                    targetType = model.GetDeclaredSymbol(typeDeclare);
+                }
+                else if (dec != null)
+                {
+                    var fieldOrProperty = model.GetDeclaredSymbol(dec) as ISymbol;
+                    if (context.Diagnostics[0].Id == MessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
+                    {
+                        targetType = (INamedTypeSymbol)(fieldOrProperty as IPropertySymbol)?.Type;
+                        if (targetType == null)
+                        {
+                            targetType = (INamedTypeSymbol)(fieldOrProperty as IFieldSymbol)?.Type;
+                        }
+                    }
+                    else
+                    {
+                        targetType = (INamedTypeSymbol)(fieldOrProperty as IPropertySymbol)?.ContainingType;
+                        if (targetType == null)
+                        {
+                            targetType = (INamedTypeSymbol)(fieldOrProperty as IFieldSymbol)?.ContainingType;
+                        }
+                    }
+                }
             }
             else
             {
-                targetType = (property != null)
-                     ? model.GetDeclaredSymbol(property)?.ContainingType
-                     : model.GetDeclaredSymbol(field)?.ContainingType;
+                if (context.Diagnostics[0].Id == MessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
+                {
+                    targetType = (property != null)
+                        ? (INamedTypeSymbol)(model.GetDeclaredSymbol(property) as IPropertySymbol)?.Type
+                        : (INamedTypeSymbol)(model.GetDeclaredSymbol(field) as IFieldSymbol)?.Type;
+                }
+                else
+                {
+                    targetType = (property != null)
+                        ? (INamedTypeSymbol)(model.GetDeclaredSymbol(property) as IPropertySymbol)?.ContainingType
+                        : (INamedTypeSymbol)(model.GetDeclaredSymbol(field) as IFieldSymbol)?.ContainingType;
+                }
             }
             if (targetType == null) return;
 
@@ -65,6 +98,11 @@ namespace MessagePackAnalyzer
 
         static async Task<Document> AddKeyAttribute(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
         {
+            if (type.DeclaringSyntaxReferences.Length != 0)
+            {
+                document = document.Project.GetDocument(type.DeclaringSyntaxReferences[0].SyntaxTree);
+            }
+
             var editor = await DocumentEditor.CreateAsync(document);
 
             var targets = type.GetAllMembers()
