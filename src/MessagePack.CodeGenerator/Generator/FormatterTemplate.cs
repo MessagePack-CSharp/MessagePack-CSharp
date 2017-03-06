@@ -395,7 +395,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
                 int key;
                 if (____keyMapping.TryGetValue(stringKey, out key))
                 {
-                    readSize = global::MessagePack.MessagePackBinary.ReadNext(bytes, offset);
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
                 }
 ");
@@ -448,8 +448,8 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             #line default
             #line hidden
             this.Write("                    default:\r\n                        readSize = global::MessageP" +
-                    "ack.MessagePackBinary.ReadNext(bytes, offset);\r\n                        break;\r\n" +
-                    "                }\r\n");
+                    "ack.MessagePackBinary.ReadNextBlock(bytes, offset);\r\n                        bre" +
+                    "ak;\r\n                }\r\n");
             
             #line 123 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  if(objInfo.IsStringKey) { 

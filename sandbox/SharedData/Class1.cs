@@ -367,4 +367,41 @@ namespace SharedData
         public T2 MyProperty1 { get; set; }
     }
 
+
+    [MessagePackObject]
+    public class VersionBlockTest
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+
+        [Key(1)]
+        public MyClass UnknownBlock { get; set; }
+
+        [Key(2)]
+        public int MyProperty2 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class UnVersionBlockTest
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+
+        //[Key(1)]
+        //public MyClass UnknownBlock { get; set; }
+
+        [Key(2)]
+        public int MyProperty2 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MyClass
+    {
+        [Key(0)]
+        public int MyProperty1 { get; set; }
+        [Key(1)]
+        public int MyProperty2 { get; set; }
+        [Key(2)]
+        public int MyProperty3 { get; set; }
+    }
 }

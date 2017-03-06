@@ -351,7 +351,7 @@ namespace MessagePack.Resolvers
             il.EmitLdarg(2);
             il.EmitLdarg(1);
             il.EmitLdarg(2);
-            il.EmitCall(MessagePackBinaryTypeInfo.ReadNext);
+            il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
             il.Emit(OpCodes.Add);
             il.EmitStarg(2);
             il.Emit(OpCodes.Br, loopEnd);
@@ -450,7 +450,7 @@ namespace MessagePack.Resolvers
             public static MethodInfo ReadInt32 = typeof(MessagePackBinary).GetRuntimeMethod("ReadInt32", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo ReadString = typeof(MessagePackBinary).GetRuntimeMethod("ReadString", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo IsNil = typeof(MessagePackBinary).GetRuntimeMethod("IsNil", new[] { typeof(byte[]), typeof(int) });
-            public static MethodInfo ReadNext = typeof(MessagePackBinary).GetRuntimeMethod("ReadNext", new[] { typeof(byte[]), typeof(int) });
+            public static MethodInfo ReadNextBlock = typeof(MessagePackBinary).GetRuntimeMethod("ReadNextBlock", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo WriteStringUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringUnsafe", new[] { refByte, typeof(int), typeof(string), typeof(int) });
 
             public static MethodInfo ReadArrayHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadArrayHeader", new[] { typeof(byte[]), typeof(int), refInt });

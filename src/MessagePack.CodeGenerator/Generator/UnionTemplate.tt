@@ -90,7 +90,7 @@ namespace <#= Namespace #>
 					break;
 <# } #>
 				default:
-					offset += MessagePackBinary.ReadNext(bytes, offset);
+					offset += MessagePackBinary.ReadNextBlock(bytes, offset);
 					break;
 			}
 			

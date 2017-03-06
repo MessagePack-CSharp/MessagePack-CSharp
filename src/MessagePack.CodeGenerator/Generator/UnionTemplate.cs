@@ -269,9 +269,9 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\t\t\t\tdefault:\r\n\t\t\t\t\toffset += MessagePackBinary.ReadNext(bytes, offset);\r\n\t\t\t\t\tbre" +
-                    "ak;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\treadSize = offset - startOffset;\r\n\t\t\t\r\n\t\t\treturn result;\r\n   " +
-                    "     }\r\n    }\r\n\r\n");
+            this.Write("\t\t\t\tdefault:\r\n\t\t\t\t\toffset += MessagePackBinary.ReadNextBlock(bytes, offset);\r\n\t\t\t" +
+                    "\t\tbreak;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\treadSize = offset - startOffset;\r\n\t\t\t\r\n\t\t\treturn result;" +
+                    "\r\n        }\r\n    }\r\n\r\n");
             
             #line 103 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  } 

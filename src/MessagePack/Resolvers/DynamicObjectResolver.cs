@@ -504,7 +504,7 @@ namespace MessagePack.Internal
                         il.EmitLdarg(4);
                         il.EmitLdarg(1);
                         il.EmitLdarg(2);
-                        il.EmitCall(MessagePackBinaryTypeInfo.ReadNext);
+                        il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
                         il.Emit(OpCodes.Stind_I4);
                         il.Emit(OpCodes.Br, loopEnd);
 
@@ -522,11 +522,11 @@ namespace MessagePack.Internal
                     il.Emit(OpCodes.Switch, infoList.Select(x => x.SwitchLabel).ToArray());
 
                     il.MarkLabel(switchDefault);
-                    // default, only read. readSize = MessagePackBinary.ReadNext(bytes, offset);
+                    // default, only read. readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
                     il.EmitLdarg(4);
                     il.EmitLdarg(1);
                     il.EmitLdarg(2);
-                    il.EmitCall(MessagePackBinaryTypeInfo.ReadNext);
+                    il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
                     il.Emit(OpCodes.Stind_I4);
                     il.Emit(OpCodes.Br, loopEnd);
 
@@ -728,7 +728,7 @@ namespace MessagePack.Internal
             public static MethodInfo ReadInt32 = typeof(MessagePackBinary).GetRuntimeMethod("ReadInt32", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo ReadString = typeof(MessagePackBinary).GetRuntimeMethod("ReadString", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo IsNil = typeof(MessagePackBinary).GetRuntimeMethod("IsNil", new[] { typeof(byte[]), typeof(int) });
-            public static MethodInfo ReadNext = typeof(MessagePackBinary).GetRuntimeMethod("ReadNext", new[] { typeof(byte[]), typeof(int) });
+            public static MethodInfo ReadNextBlock = typeof(MessagePackBinary).GetRuntimeMethod("ReadNextBlock", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo WriteStringUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringUnsafe", new[] { refByte, typeof(int), typeof(string), typeof(int) });
 
             public static MethodInfo ReadArrayHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadArrayHeader", new[] { typeof(byte[]), typeof(int), refInt });

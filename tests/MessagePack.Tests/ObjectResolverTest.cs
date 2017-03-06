@@ -264,5 +264,16 @@ namespace MessagePack.Tests
             v.MyProperty0.Is(100);
             v.MyProperty1.Is("aaa");
         }
+
+        [Fact]
+        public void Versioning3()
+        {
+            var binary = MessagePackSerializer.Serialize(new VersionBlockTest { MyProperty = 10, MyProperty2 = 99, UnknownBlock = new MyClass { MyProperty1 = 1, MyProperty2 = 99, MyProperty3 = 999 } });
+
+            var unversion = MessagePackSerializer.Deserialize<UnVersionBlockTest>(binary);
+            // MessagePackBinary.
+            unversion.MyProperty.Is(10);
+            unversion.MyProperty2.Is(99);
+        }
     }
 }

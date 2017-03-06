@@ -102,7 +102,7 @@ namespace <#= Namespace #>
                 int key;
                 if (____keyMapping.TryGetValue(stringKey, out key))
                 {
-                    readSize = global::MessagePack.MessagePackBinary.ReadNext(bytes, offset);
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
                 }
 <# } else { #>
@@ -117,7 +117,7 @@ namespace <#= Namespace #>
                         break;
 <# } #>
                     default:
-                        readSize = global::MessagePack.MessagePackBinary.ReadNext(bytes, offset);
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                         break;
                 }
 <# if(objInfo.IsStringKey) { #>                
