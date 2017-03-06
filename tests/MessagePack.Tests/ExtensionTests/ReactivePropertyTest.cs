@@ -72,7 +72,7 @@ namespace MessagePack.Tests.ExtensionTests
         public IReactiveProperty<int> Prop2 { get; private set; }
         [Key(2)]
         public IReadOnlyReactiveProperty<int> Prop3 { get; private set; }
-        [Ignore]
+        [IgnoreMember]
         public IReadOnlyReactiveProperty<int> Prop4 { get; private set; }
 
         public ViewModel(int x, int y, int z)

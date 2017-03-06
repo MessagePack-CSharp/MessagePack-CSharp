@@ -115,7 +115,7 @@ namespace UnityEngine
         [Key(0)]
         public Vector3 center { get; set; }
 
-        [Ignore]
+        [IgnoreMember]
         public Vector3 extents { get; set; }
 
         [Key(1)]

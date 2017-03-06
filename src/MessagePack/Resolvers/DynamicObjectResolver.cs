@@ -785,7 +785,7 @@ namespace MessagePack.Internal
                 var hiddenIntKey = 0;
                 foreach (var item in type.GetRuntimeProperties())
                 {
-                    if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
+                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
 
                     var member = new EmittableMember
                     {
@@ -800,7 +800,7 @@ namespace MessagePack.Internal
                 }
                 foreach (var item in type.GetRuntimeFields())
                 {
-                    if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
+                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 
@@ -824,7 +824,7 @@ namespace MessagePack.Internal
 
                 foreach (var item in type.GetRuntimeProperties())
                 {
-                    if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
+                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
 
                     var member = new EmittableMember
                     {
@@ -871,7 +871,7 @@ namespace MessagePack.Internal
 
                 foreach (var item in type.GetRuntimeFields())
                 {
-                    if (item.GetCustomAttribute<IgnoreAttribute>(true) != null) continue;
+                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 

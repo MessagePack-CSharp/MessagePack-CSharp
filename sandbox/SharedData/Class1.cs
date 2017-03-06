@@ -167,9 +167,9 @@ namespace SharedData
     {
         [Key(0)]
         public int X { get; set; }
-        [Ignore]
+        [IgnoreMember]
         public bool CalledBefore { get; private set; }
-        [Ignore]
+        [IgnoreMember]
         public bool CalledAfter { get; private set; }
 
         public Callback1(int x)
@@ -194,9 +194,9 @@ namespace SharedData
         [Key(0)]
         public int X { get; set; }
 
-        [Ignore]
+        [IgnoreMember]
         public bool CalledBefore { get; private set; }
-        [Ignore]
+        [IgnoreMember]
         public bool CalledAfter { get; private set; }
         public Callback1_2(int x)
         {

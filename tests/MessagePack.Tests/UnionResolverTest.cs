@@ -83,7 +83,7 @@ namespace ComplexdUnion
     [MessagePackObject]
     public class B : A
     {
-        [Ignore]
+        [IgnoreMember]
         public string Type { get { return "B"; } }
 
         [Key(0)]
@@ -95,7 +95,7 @@ namespace ComplexdUnion
     [MessagePackObject]
     public class C : A
     {
-        [Ignore]
+        [IgnoreMember]
         public string Type { get { return "C"; } }
 
         [Key(0)]
@@ -121,7 +121,7 @@ namespace ComplexdUnion
     [MessagePackObject]
     public class B2 : A2
     {
-        [Ignore]
+        [IgnoreMember]
         public string Type { get { return "B"; } }
 
         [Key(0)]

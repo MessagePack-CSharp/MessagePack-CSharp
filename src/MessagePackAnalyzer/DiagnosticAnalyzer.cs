@@ -103,7 +103,7 @@ namespace MessagePackAnalyzer
             UnionAttribute = compilation.GetTypeByMetadataName("MessagePack.UnionAttribute");
             SerializationConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.SerializationConstructorAttribute");
             KeyAttribnute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute");
-            IgnoreAttribnute = compilation.GetTypeByMetadataName("MessagePack.IgnoreAttribute");
+            IgnoreAttribnute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute");
             IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver");
         }
     }
