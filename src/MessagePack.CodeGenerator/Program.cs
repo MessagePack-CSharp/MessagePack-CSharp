@@ -29,7 +29,7 @@ namespace MessagePack.CodeGenerator
             var option = new OptionSet()
             {
                 { "i|input=", "[required]Input path of analyze csproj", x => { InputPath = x; } },
-                { "o|output=", "[required]Output path(file) or directory base(in separated mode)", x => { OutputPath = x; } },
+                { "o|output=", "[required]Output file path", x => { OutputPath = x; } },
                 { "c|conditionalsymbol=", "[optional, default=empty]conditional compiler symbol", x => { ConditionalSymbols.AddRange(x.Split(',')); } },
                 { "r|resolvername=", "[optional, default=GeneratedResolver]Set resolver name", x => { ResolverName = x; } },
                 { "n|namespace=", "[optional, default=MessagePack]Set namespace root name", x => { NamespaceRoot = x; } },
@@ -54,7 +54,7 @@ namespace MessagePack.CodeGenerator
             }
 
             SHOW_HELP:
-            Console.WriteLine("moc arguments help:");
+            Console.WriteLine("mpc arguments help:");
             option.WriteOptionDescriptions(Console.Out);
             IsParsed = false;
         }

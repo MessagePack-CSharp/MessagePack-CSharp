@@ -4,17 +4,23 @@ using System.IO;
 
 namespace MessagePack
 {
+    /// <summary>
+    /// High-Level API of MessagePack for C#.
+    /// </summary>
     public static partial class MessagePackSerializer
     {
         static IFormatterResolver defaultResolver;
 
+        /// <summary>
+        /// FormatterResolver that used resolver less overloads. If does not set it, used StandardResolver.
+        /// </summary>
         public static IFormatterResolver DefaultResolver
         {
             get
             {
                 if (defaultResolver == null)
                 {
-                    defaultResolver = MessagePack.Resolvers.DefaultResolver.Instance;
+                    defaultResolver = MessagePack.Resolvers.StandardResolver.Instance;
                 }
 
                 return defaultResolver;
@@ -22,7 +28,18 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Change default resolver(configuration).
+        /// Is resolver decided?
+        /// </summary>
+        public static bool IsInitialized
+        {
+            get
+            {
+                return defaultResolver != null;
+            }
+        }
+
+        /// <summary>
+        /// Set default resolver of MessagePackSerializer APIs.
         /// </summary>
         /// <param name="resolver"></param>
         public static void SetDefaultResolver(IFormatterResolver resolver)

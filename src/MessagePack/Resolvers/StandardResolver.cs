@@ -2,20 +2,28 @@
 
 namespace MessagePack.Resolvers
 {
-    public class DefaultResolver : IFormatterResolver
+    /// <summary>
+    /// Default composited resolver, builtin -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object.
+    /// </summary>
+    public class StandardResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new DefaultResolver();
+        public static IFormatterResolver Instance = new StandardResolver();
 
         static readonly IFormatterResolver[] resolvers = new[]
         {
             BuiltinResolver.Instance, // Try Builtin
+
+#if !ENABLE_IL2CPP
+
             DynamicEnumResolver.Instance, // Try Enum
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
             DynamicUnionResolver.Instance, // Try Union(Interface)
             DynamicObjectResolver.Instance // Try Object
+
+#endif
         };
 
-        DefaultResolver()
+        StandardResolver()
         {
         }
 
@@ -49,7 +57,7 @@ namespace MessagePack.Resolvers
 
         static readonly IFormatterResolver[] resolvers = new[]
         {
-            DefaultResolver.Instance,
+            StandardResolver.Instance,
             DynamicContractlessObjectResolver.Instance,
         };
 
