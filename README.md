@@ -79,7 +79,7 @@ class Program
 }
 ```
 
-By default the attribute is required. Optionally it can be unnecessary, see Object Serialization Format section and Formatter Resolver section for details.
+By default the attribute is required. Optionally it can be unnecessary, see Object Serialization section and Formatter Resolver section for details.
 
 Analyzer
 ---
@@ -96,7 +96,7 @@ If you want to allow a specific type (for example, when registering a custom typ
 This is a sample of the contents of MessagePackAnalyzer.json. 
 
 ```
-[ "System.Uri" ]
+[ "MyNamespace.FooClass", "MyNameSpace.BarStruct" ]
 ```
 
 Built-in support types
@@ -134,8 +134,7 @@ TODO:
 
 Extensions
 ---
-uses(see Extension Point section).
-
+MessagePack for C# has extension point and you can add external type' serialization support. There are official extension support.
 
 ```
 Install-Package MessagePack.ImmutableCollection
@@ -143,22 +142,33 @@ Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
 ```
 
+`MessagePack.ImmutableCollection` package add support for [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/) library. It adds `ImmutableArray<>`, `ImmutableList<>`, `ImmutableDictionary<,>`, `ImmutableHashSet<>`, `ImmutableSortedDictionary<,>`, `ImmutableSortedSet<>`, `ImmutableQueue<>`, `ImmutableStack<>`, `IImmutableList<>`, `IImmutableDictionary<,>`, `IImmutableQueue<>`, `IImmutableSet<>`, `IImmutableStack<>` serialization support.
+
+`MessagePack.ReactiveProperty` package add support for [ReactiveProperty](https://github.com/runceel/ReactiveProperty) library. It adds `ReactiveProperty<>`, `IReactiveProperty<>`, `IReadOnlyReactiveProperty<>`, `ReactiveCollection<>`, `Unit` serialization support. It is useful for save viewmodel state.
+
+`MessagePack.UnityShims` package provides shim of [Unity](https://unity3d.com/)'s standard struct(`Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`) and there formatter. It can enable to commnicate between server and Unity client.
+
+
 Author is creating other extension packages, too.
 
 * [MasterMemory](https://github.com/neuecc/MasterMemory) - Embedded Readonly In-Memory Document Database
 * [MagicOnion](https://github.com/neuecc/MagicOnion) - gRPC based HTTP/2 RPC Streaming Framework
 
+
+
 High-Level API(MessagePackSerializer)
 ---
-This is the entry point of MessagePack for C#. `Serialize<T>` convert object to byte[] or write to Stream.
+`MessagePackSerializer` is the entry point of MessagePack for C#. Its static methods are main API of MessagePack for C#.
 
 | API | Description |
 | --- | --- |
-| DefaultResolver | FormatterResolver that used resolver less overloads. If does not set it, used StandardResolver. |
-| SetDefaultResolver | Set default resolver of MessagePackSerializer APIs. |
+| `DefaultResolver` | FormatterResolver that used resolver less overloads. If does not set it, used StandardResolver. |
+| `SetDefaultResolver` | Set default resolver of MessagePackSerializer APIs. |
 | `Serialize<T>` | Convert object to byte[] or write to stream. There has IFormatterResolver overload, used specified resolver. |
-| `SerializeUnsafe<T>` | Same as `Serialize<T>` but return `ArraySegement<byte>`. The result of ArraySegment is contains internal buffer pool's, it can not share across thread and can not hold, so use quickly. |
+| `SerializeUnsafe<T>` | Same as `Serialize<T>` but return `ArraySegement<byte>`. The result of ArraySegment is contains internal buffer pool, it can not share across thread and can not hold, so use quickly. |
 | `Deserialize<T>` | Convert byte[] or stream to object. There has IFormatterResolver overload, used specified resolver. |
+| `NonGeneric.*` | NonGeneric APIs of Serialize/Deserialize. There accept type parameter at first argument. This API is bit slower than generic API. |
+| `ToJson` | Dump message-pack binary to JSON string. It is useful for debugging.  |
 
 MessagePack for C# operates at the byte[] level, so byte[] API is faster than Stream API.
 
@@ -184,7 +194,7 @@ TODO:write document more...
 
 Primitive API(MessagePackBinary)
 ---
-TODO:
+`MessagePackBinary` is most low-level API like `Reader/Writer` of other serializers. `MessagePackBinary` is static class because avoid create `Reader/Writer` allocation.
 
 
 
@@ -213,6 +223,9 @@ GetFormatter, GetFormatterWithVerify, GetFormatterDynamic
 
 
 
+
+for Unity
+---
 
 
 
