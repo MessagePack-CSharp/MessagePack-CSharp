@@ -3,7 +3,7 @@ MessagePack for C#(.NET, .NET Core, Unity, Xamarin)
 
 > TODO:Writing document now.
 
-Extremely fast [MessagePack](http://msgpack.org/) serializer for C#, x10~20 faster than MsgPack-Cli and acquires best performance compared with all the other C# serializers.
+Extremely fast [MessagePack](http://msgpack.org/) serializer for C#, x10~20 faster than MsgPack-Cli and acquires best performance compared with all the other C# serializers. Performance is always important! for Game, Distributed Computing, MicroServices, Store Data to Redis, etc.
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23487810/e263277a-ff2b-11e6-81a6-6b4ca7acd8e3.png)
 
@@ -176,7 +176,7 @@ High-Level API uses memory pool internaly to avoid unnecessary memory allocation
 
 Low-Level API(IMessagePackFormatter)
 ---
-IMessagePackFormatter is serializer by each type.  For example `Int32Formatter : IMessagePackFormatter<Int32>` represents Int32 MessagePack serializer.
+IMessagePackFormatter is serializer by each type. For example `Int32Formatter : IMessagePackFormatter<Int32>` represents Int32 MessagePack serializer.
 
 ```csharp
 public interface IMessagePackFormatter<T>
@@ -186,29 +186,75 @@ public interface IMessagePackFormatter<T>
 }
 ```
 
-Many builtin formatters exists under `MessagePack.Formatters`.
+All api works on byte[] level, no use Stream, no use Writer/Reader so improve performance. Many builtin formatters exists under `MessagePack.Formatters`. You can get sub type serializer by `formatterResolver.GetFormatter<T>`. Here is sample of write own formatter.
 
+```csharp
+// serialize fileinfo as string fullpath.
+public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
+{
+    public int Serialize(ref byte[] bytes, int offset, FileInfo value, IFormatterResolver formatterResolver)
+    {
+        if (value == null)
+        {
+            return MessagePackBinary.WriteNil(ref bytes, offset);
+        }
 
-TODO:write document more...
+        return MessagePackBinary.WriteString(ref bytes, offset, value.FullName);
+    }
 
+    public FileInfo Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+    {
+        if (MessagePackBinary.IsNil(bytes, offset))
+        {
+            readSize = 1;
+            return null;
+        }
+
+        var path = MessagePackBinary.ReadString(bytes, offset, out readSize);
+        return new FileInfo(path);
+    }
+}
+```
+
+Created formatter needs to register to `IFormatterResolver`. Please see Extension Point section.
+
+You can see many other samples from [builtin formatters](https://github.com/neuecc/MessagePack-CSharp/tree/master/src/MessagePack/Formatters).
 
 Primitive API(MessagePackBinary)
 ---
+
 `MessagePackBinary` is most low-level API like `Reader/Writer` of other serializers. `MessagePackBinary` is static class because avoid create `Reader/Writer` allocation.
 
+| Method | Description |
+| --- | --- |
+| ReadNext | Skip MessagePackFormat binary block, returns read size. |
+| ReadNextBlock | Skip MessagePackFormat binary block with sub structures(array/map), returns read size. This is useful for create deserializer. |
+| Write/ReadMapHeader | Write/Read map format header(element length). |
+| Write/ReadArrayHeader | Write/Read array format header(element length). |
+| Write/Read*** | *** is primitive type name(`Int32`, `Single`, `String`, etc...) |
+| Write/ReadBytes | Write/Read byte[] to use bin format. |
+| Write/ReadExtensionFormat | Write/Read ext format header(Length + TypeCode) and content byte[]. |
+| Write/ReadExtensionFormatHeader | Write/Read ext format, header(Length + TypeCode) only. |
+| IsNil | Is TypeCode Nil? |
+| IsMessagePackPrimitive | Is Type can become MessagePack Primitive(Sbyte, Byte, Int16, Int32, Int64, UInt16,UInt32, UInt64, Single, Double, Boolean,  DateTime, Char, Byte[], String)? |
+| GetMessagePackType | Return MessagePackType of target MessagePack bianary position. |
+| EnsureCapacity | Resize if byte can not fill.  |
+| FastResize | Buffer.BlockCopy version of Array.Resize. |
+| FastCloneWithResize | Same as FastResize but return copied byte[]. |
 
+Read API returns deserialized primitive and read size. Write API returns write size and guranteed auto ensure ref byte[].
 
+DateTime is serialized to [new MessagePack extension spec proposal](https://github.com/msgpack/msgpack/pull/209).
 
+`MessagePackType` means [msgpack spec of source types](https://github.com/msgpack/msgpack/blob/master/spec.md#serialization-type-to-format-conversion).
 
+`MessagePackCode` means [msgpack format of first byte](https://github.com/msgpack/msgpack/blob/master/spec.md#overview). Its static class has `ToMessagePackType` and `ToFormatName` utility methods.
 
-
+`MessagePackRange` means Min-Max fix range of msgpack format.
 
 Extension Point(IFormatterResolver)
 ---
-TODO:
-
-
-GetFormatter, GetFormatterWithVerify, GetFormatterDynamic 
+`IFormatterResolver` is storage of typed serializers. Serializer api accepts resolver and can customize serialization.
 
 | Resovler Name | Description |
 | --- | --- |
@@ -221,6 +267,139 @@ GetFormatter, GetFormatterWithVerify, GetFormatterDynamic
 | DynamicObjectResolver | Resolver of class and struct maked by MessagePackObjectAttribute. It uses dynamic code generation to create dynamic formatter. |
 | DynamicContractlessObjectResolver | Resolver of all classes and structs. It does not needs MessagePackObjectAttribute and serialized key as string(same as marked [MessagePackObject(true)]). |
 
+
+
+GetFormatter, GetFormatterWithVerify, GetFormatterDynamic 
+
+
+```csharp
+// use global-singleton CompositeResolver.
+// This method initialize CompositeResolver and set to default MessagePackSerializer
+CompositeResolver.RegisterAndSetAsDefault(
+    // resolver custom types first
+    ImmutableCollectionResolver.Instance,
+    ReactivePropertyResolver.Instance,
+    MessagePack.Unity.Extension.UnityBlitResolver.Instance,
+    MessagePack.Unity.UnityResolver.Instance,
+
+    // finaly use standard resolver
+    StandardResolver.Instance);
+```
+
+
+
+
+
+```csharp
+public class SampleCustomResolver : IFormatterResolver
+{
+    // Resolver should be singleton.
+    public static IFormatterResolver Instance = new SampleCustomResolver();
+
+    SampleCustomResolver()
+    {
+    }
+
+    // GetFormatter<T>'s get cost should be minimized so use type cache.
+    public IMessagePackFormatter<T> GetFormatter<T>()
+    {
+        return FormatterCache<T>.formatter;
+    }
+
+    static class FormatterCache<T>
+    {
+        public static readonly IMessagePackFormatter<T> formatter;
+
+        // generic's static constructor should be minimized for reduce type generation size!
+        // use outer helper method.
+        static FormatterCache()
+        {
+            formatter = (IMessagePackFormatter<T>)SampleCustomResolverGetFormatterHelper.GetFormatter(typeof(T));
+        }
+    }
+}
+
+internal static class SampleCustomResolverGetFormatterHelper
+{
+    // If type is concrete type, use type-formatter map
+    static readonly Dictionary<Type, object> formatterMap = new Dictionary<Type, object>()
+    {
+        {typeof(FileInfo), new FileInfoFormatter()}
+        // add more your own custom serializers.
+    };
+
+    internal static object GetFormatter(Type t)
+    {
+        object formatter;
+        if (formatterMap.TryGetValue(t, out formatter))
+        {
+            return formatter;
+        }
+
+        // If target type is generics, use MakeGenericType.
+        //if (t.IsGenericParameter && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
+        //{
+        //    return Activator.CreateInstance(typeof(ValueTupleFormatter<,>).MakeGenericType(t.GenericTypeArguments));
+        //}
+
+        // If type can not get, must return null for fallback mecanism.
+        return null;
+    }
+}
+```
+
+
+
+
+
+
+
+
+```csharp
+public class CustomCompositeResolver : IFormatterResolver
+{
+    public static IFormatterResolver Instance = new CustomCompositeResolver();
+
+    static readonly IFormatterResolver[] resolvers = new[]
+    {
+        // resolver custom types first
+        ImmutableCollectionResolver.Instance,
+        ReactivePropertyResolver.Instance,
+        MessagePack.Unity.Extension.UnityBlitResolver.Instance,
+        MessagePack.Unity.UnityResolver.Instance,
+            
+        // finaly use standard resolver
+        StandardResolver.Instance
+    };
+
+    CustomCompositeResolver()
+    {
+    }
+
+    public IMessagePackFormatter<T> GetFormatter<T>()
+    {
+        return FormatterCache<T>.formatter;
+    }
+
+    static class FormatterCache<T>
+    {
+        public static readonly IMessagePackFormatter<T> formatter;
+
+        static FormatterCache()
+        {
+            foreach (var item in resolvers)
+            {
+                var f = item.GetFormatter<T>();
+                if (f != null)
+                {
+                    formatter = f;
+                    return;
+                }
+            }
+        }
+    }
+}
+```
 
 
 
