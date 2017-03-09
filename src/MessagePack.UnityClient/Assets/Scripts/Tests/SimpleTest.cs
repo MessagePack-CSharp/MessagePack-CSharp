@@ -32,7 +32,7 @@ namespace MessagePack.UnityClient.Tests
                 var f = DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
 
                 byte[] b = null;
-                f.Serialize(ref b, 0, null, DefaultResolver.Instance);
+                f.Serialize(ref b, 0, null, StandardResolver.Instance);
 
                 //var data = new MySubUnion1 { One = 23 };
                 //var data2 = new MySubUnion1 { One = 23 };

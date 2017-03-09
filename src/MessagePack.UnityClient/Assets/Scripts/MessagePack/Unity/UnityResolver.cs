@@ -1,0 +1,1 @@
+../../../../../MessagePack.UnityShims/UnityResolver.cs

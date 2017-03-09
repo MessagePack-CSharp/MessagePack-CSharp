@@ -186,7 +186,7 @@ namespace MessagePack.UnityClient.Tests
             {
                 return (IMessagePackFormatter<T>)(object)new ValueTupleFormatter<int, int, int, int>();
             }
-            return DefaultResolver.Instance.GetFormatter<T>();
+            return StandardResolver.Instance.GetFormatter<T>();
         }
     }
 

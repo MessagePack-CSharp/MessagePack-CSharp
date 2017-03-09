@@ -15,75 +15,6 @@ using UnityEngine;
 
 namespace Sandbox
 {
-    public enum MyEnum
-    {
-        Apple, Orange, Pineapple
-    }
-    [MessagePackObject]
-    public class EmptyClass
-    {
-
-    }
-
-    [MessagePackObject]
-    public struct EmptyStruct
-    {
-
-    }
-
-    [ZeroFormattable]
-    [ProtoBuf.ProtoContract]
-    [MessagePackObject(true)]
-    public class SmallSingleObject
-    {
-        [Index(0)]
-        [Key(0)]
-        [ProtoBuf.ProtoMember(1)]
-        public virtual int MyProperty { get; set; }
-        [Index(1)]
-        [Key(1)]
-        [ProtoBuf.ProtoMember(2)]
-        public virtual int MyProperty2 { get; set; }
-        [Index(2)]
-        [Key(2)]
-        [ProtoBuf.ProtoMember(3)]
-        public virtual MyEnum MyProperty3 { get; set; }
-    }
-
-    [MessagePackObject]
-    public struct MyStruct
-    {
-        [Key(0)]
-        public byte[] MyProperty { get; set; }
-    }
-
-
-    [MessagePackObject(true)]
-    public class NewObj
-    {
-        [Key(0)]
-        public int MyProperty { get; private set; }
-        public NewObj(int myProperty)
-        {
-            this.MyProperty = myProperty;
-        }
-    }
-
-    [MessagePackObject]
-    public struct Vector2
-    {
-        [Key(0)]
-        public readonly float X;
-        [Key(1)]
-        public readonly float Y;
-
-        public Vector2(float x, float y)
-        {
-            X = x;
-            Y = y;
-        }
-    }
-
 
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
@@ -196,11 +127,12 @@ namespace Sandbox
 
         static void Benchmark<T>(T target)
         {
-            const int Iteration = 10000;
+            const int Iteration = 10000; // 10000
 
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
             MessagePack.MessagePackSerializer.Serialize(target);
+            LZ4MessagePackSerializer.Serialize(target);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
 
@@ -212,6 +144,7 @@ namespace Sandbox
             byte[] data0 = null;
             byte[] data1 = null;
             byte[] data2 = null;
+            byte[] data3 = null;
             using (new Measure("MsgPack-Cli"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -251,10 +184,20 @@ namespace Sandbox
                 data2 = ms.ToArray();
             }
 
+
+            using (new Measure("MessagePack(LZ4)"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    data3 = LZ4MessagePackSerializer.Serialize(target);
+                }
+            }
+
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
             MessagePack.MessagePackSerializer.Deserialize<T>(data0);
             ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
+            LZ4MessagePackSerializer.Deserialize<T>(data3);
 
             Console.WriteLine();
             Console.WriteLine("Deserialize::");
@@ -294,6 +237,14 @@ namespace Sandbox
                 }
             }
 
+            using (new Measure("MessagePack(LZ4)"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    LZ4MessagePackSerializer.Deserialize<T>(data3);
+                }
+            }
+
             Console.WriteLine();
             Console.WriteLine("FileSize::");
             var label = "";
@@ -301,6 +252,7 @@ namespace Sandbox
             label = "MessagePack-CSharp"; Console.WriteLine($"{label,20}   {data0.Length} Byte");
             label = "ZeroFormatter"; Console.WriteLine($"{label,20}   {data1.Length} Byte");
             label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
+            label = "MessagePack(LZ4)"; Console.WriteLine($"{label,20}   {data3.Length} Byte");
 
             Console.WriteLine();
             Console.WriteLine();

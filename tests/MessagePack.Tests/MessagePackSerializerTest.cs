@@ -26,16 +26,16 @@ namespace MessagePack.Tests
             var ms = new MemoryStream();
 
             var data1 = MessagePackSerializer.NonGeneric.Deserialize(t, MessagePackSerializer.NonGeneric.Serialize(t, data)) as FirstSimpleData;
-            var data2 = MessagePackSerializer.NonGeneric.Deserialize(t, MessagePackSerializer.NonGeneric.Serialize(t, data, DefaultResolver.Instance)) as FirstSimpleData;
+            var data2 = MessagePackSerializer.NonGeneric.Deserialize(t, MessagePackSerializer.NonGeneric.Serialize(t, data, StandardResolver.Instance)) as FirstSimpleData;
 
             MessagePackSerializer.NonGeneric.Serialize(t, ms, data);
             ms.Position = 0;
             var data3 = MessagePackSerializer.NonGeneric.Deserialize(t, ms) as FirstSimpleData;
 
             ms = new MemoryStream();
-            MessagePackSerializer.NonGeneric.Serialize(t, ms, data, DefaultResolver.Instance);
+            MessagePackSerializer.NonGeneric.Serialize(t, ms, data, StandardResolver.Instance);
             ms.Position = 0;
-            var data4 = MessagePackSerializer.NonGeneric.Deserialize(t, ms, DefaultResolver.Instance) as FirstSimpleData;
+            var data4 = MessagePackSerializer.NonGeneric.Deserialize(t, ms, StandardResolver.Instance) as FirstSimpleData;
 
             new[] { data1.Prop1, data2.Prop1, data3.Prop1, data4.Prop1 }.Distinct().Is(data.Prop1);
             new[] { data1.Prop2, data2.Prop2, data3.Prop2, data4.Prop2 }.Distinct().Is(data.Prop2);

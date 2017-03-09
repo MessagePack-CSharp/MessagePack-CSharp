@@ -2,9 +2,6 @@
 using MessagePack.Resolvers;
 using MessagePack.Unity.Extension;
 using RuntimeUnitTestToolkit;
-using SharedData;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -15,7 +12,7 @@ namespace MessagePack.UnityClient.Tests
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
             return (UnityBlitWithPrimitiveArrayResolver.Instance.GetFormatter<T>()
-                 ?? DefaultResolver.Instance.GetFormatter<T>());
+                 ?? StandardResolver.Instance.GetFormatter<T>());
         }
     }
 

@@ -18,7 +18,7 @@ namespace MessagePack.Tests.ExtensionTests
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
             return (ReactivePropertyResolver.Instance.GetFormatter<T>()
-                 ?? DefaultResolver.Instance.GetFormatter<T>());
+                 ?? StandardResolver.Instance.GetFormatter<T>());
         }
     }
 

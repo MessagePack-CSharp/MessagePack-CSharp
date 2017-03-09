@@ -13,6 +13,8 @@ mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters" "..\..\..\..\MessagePack\Formatters"
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal" "..\..\..\..\MessagePack\Internal"
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Resolvers" "..\..\..\..\MessagePack\Resolvers"
+mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\UnityResolver.cs" "..\..\..\..\..\MessagePack.UnityShims\UnityResolver.cs"
+mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\Formatters.cs" "..\..\..\..\..\MessagePack.UnityShims\Formatters.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnsafeExtensions\UnityBlitResolver.cs" "..\..\..\..\..\MessagePack.UnityShims\Extension\UnityBlitResolver.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnsafeExtensions\UnsafeBlitFormatter.cs" "..\..\..\..\..\MessagePack.UnityShims\Extension\UnsafeBlitFormatter.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\Tests\Class1.cs" "..\..\..\..\..\sandbox\SharedData\Class1.cs"

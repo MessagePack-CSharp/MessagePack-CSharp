@@ -13,6 +13,13 @@ namespace MessagePack.Resolvers
         {
             BuiltinResolver.Instance, // Try Builtin
 
+#if !NETSTANDARD1_4
+            MessagePack.Unity.UnityResolver.Instance,
+#if ENABLE_UNSAFE_RESOLVER
+            MessagePack.Unity.Extension.UnityBlitResolver.Instance,
+#endif
+#endif
+
 #if !ENABLE_IL2CPP
 
             DynamicEnumResolver.Instance, // Try Enum
@@ -51,9 +58,9 @@ namespace MessagePack.Resolvers
         }
     }
 
-    public class DefaultWithContractlessResolver : IFormatterResolver
+    public class ContractlessStandardResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new DefaultWithContractlessResolver();
+        public static IFormatterResolver Instance = new ContractlessStandardResolver();
 
         static readonly IFormatterResolver[] resolvers = new[]
         {
@@ -61,7 +68,7 @@ namespace MessagePack.Resolvers
             DynamicContractlessObjectResolver.Instance,
         };
 
-        DefaultWithContractlessResolver()
+        ContractlessStandardResolver()
         {
         }
 

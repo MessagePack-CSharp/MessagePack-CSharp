@@ -211,6 +211,9 @@ namespace MessagePack
             dateTimeDecoders[MessagePackCode.Ext8] = Decoders.Ext8DateTime.Instance;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static void EnsureCapacity(ref byte[] bytes, int offset, int appendLength)
         {
             var newLength = offset + appendLength;
@@ -243,6 +246,9 @@ namespace MessagePack
         }
 
         // Buffer.BlockCopy version of Array.Resize
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static void FastResize(ref byte[] array, int newSize)
         {
             if (newSize < 0) throw new ArgumentOutOfRangeException("newSize");
@@ -262,6 +268,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static byte[] FastCloneWithResize(byte[] array, int newSize)
         {
             if (newSize < 0) throw new ArgumentOutOfRangeException("newSize");
@@ -278,11 +287,17 @@ namespace MessagePack
             return array3;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static MessagePackType GetMessagePackType(byte[] bytes, int offset)
         {
             return MessagePackCode.ToMessagePackType(bytes[offset]);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static bool IsMessagePackPrimitive(Type type)
         {
             if (type == typeof(Int16)
@@ -307,11 +322,17 @@ namespace MessagePack
             return false;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int ReadNext(byte[] bytes, int offset)
         {
             return readNextDecoders[bytes[offset]].Read(bytes, offset);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int ReadNextBlock(byte[] bytes, int offset)
         {
             switch (GetMessagePackType(bytes, offset))
@@ -354,6 +375,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteNil(ref byte[] bytes, int offset)
         {
             EnsureCapacity(ref bytes, offset, 1);
@@ -362,6 +386,9 @@ namespace MessagePack
             return 1;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static Nil ReadNil(byte[] bytes, int offset, out int readSize)
         {
             if (bytes[offset] == MessagePackCode.Nil)
@@ -375,6 +402,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static bool IsNil(byte[] bytes, int offset)
         {
             return bytes[offset] == MessagePackCode.Nil;
@@ -384,6 +414,9 @@ namespace MessagePack
         /// Unsafe. If value is guranteed 0 ~ MessagePackRange.MaxFixMapCount(15), can use this method.
         /// </summary>
         /// <returns></returns>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteFixedMapHeaderUnsafe(ref byte[] bytes, int offset, int count)
         {
             EnsureCapacity(ref bytes, offset, 1);
@@ -394,6 +427,9 @@ namespace MessagePack
         /// <summary>
         /// Write map count.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteMapHeader(ref byte[] bytes, int offset, int count)
         {
             checked
@@ -405,6 +441,9 @@ namespace MessagePack
         /// <summary>
         /// Write map count.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteMapHeader(ref byte[] bytes, int offset, uint count)
         {
             if (count <= MessagePackRange.MaxFixMapCount)
@@ -442,6 +481,9 @@ namespace MessagePack
         /// <summary>
         /// Return map count.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int ReadMapHeader(byte[] bytes, int offset, out int readSize)
         {
             checked
@@ -453,11 +495,17 @@ namespace MessagePack
         /// <summary>
         /// Return map count.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static uint ReadMapHeaderRaw(byte[] bytes, int offset, out int readSize)
         {
             return mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int GetArrayHeaderLength(int count)
         {
             if (count <= MessagePackRange.MaxFixArrayCount)
@@ -478,6 +526,9 @@ namespace MessagePack
         /// Unsafe. If value is guranteed 0 ~ MessagePackRange.MaxFixArrayCount(15), can use this method.
         /// </summary>
         /// <returns></returns>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteFixedArrayHeaderUnsafe(ref byte[] bytes, int offset, int count)
         {
             EnsureCapacity(ref bytes, offset, 1);
@@ -488,6 +539,9 @@ namespace MessagePack
         /// <summary>
         /// Write array count.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteArrayHeader(ref byte[] bytes, int offset, int count)
         {
             checked
@@ -499,6 +553,9 @@ namespace MessagePack
         /// <summary>
         /// Write array count.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteArrayHeader(ref byte[] bytes, int offset, uint count)
         {
             if (count <= MessagePackRange.MaxFixArrayCount)
@@ -536,6 +593,9 @@ namespace MessagePack
         /// <summary>
         /// Return array count.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int ReadArrayHeader(byte[] bytes, int offset, out int readSize)
         {
             checked
@@ -547,11 +607,17 @@ namespace MessagePack
         /// <summary>
         /// Return array count.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static uint ReadArrayHeaderRaw(byte[] bytes, int offset, out int readSize)
         {
             return arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteBoolean(ref byte[] bytes, int offset, bool value)
         {
             EnsureCapacity(ref bytes, offset, 1);
@@ -560,12 +626,18 @@ namespace MessagePack
             return 1;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static bool ReadBoolean(byte[] bytes, int offset, out int readSize)
         {
             readSize = 1;
             return booleanDecoders[bytes[offset]].Read();
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteByte(ref byte[] bytes, int offset, byte value)
         {
             if (value <= MessagePackCode.MaxFixInt)
@@ -583,11 +655,17 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static byte ReadByte(byte[] bytes, int offset, out int readSize)
         {
             return byteDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteBytes(ref byte[] bytes, int offset, byte[] value)
         {
             if (value == null)
@@ -600,6 +678,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteBytes(ref byte[] dest, int dstOffset, byte[] src, int srcOffset, int count)
         {
             if (src == null)
@@ -651,11 +732,17 @@ namespace MessagePack
                 return size;
             }
         }
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static byte[] ReadBytes(byte[] bytes, int offset, out int readSize)
         {
             return bytesDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteSByte(ref byte[] bytes, int offset, sbyte value)
         {
             if (value < MessagePackRange.MinFixNegativeInt)
@@ -673,11 +760,17 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static sbyte ReadSByte(byte[] bytes, int offset, out int readSize)
         {
             return sbyteDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteSingle(ref byte[] bytes, int offset, float value)
         {
             EnsureCapacity(ref bytes, offset, 5);
@@ -703,11 +796,17 @@ namespace MessagePack
             return 5;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static float ReadSingle(byte[] bytes, int offset, out int readSize)
         {
             return singleDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteDouble(ref byte[] bytes, int offset, double value)
         {
             EnsureCapacity(ref bytes, offset, 9);
@@ -741,11 +840,17 @@ namespace MessagePack
             return 9;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static double ReadDouble(byte[] bytes, int offset, out int readSize)
         {
             return doubleDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteInt16(ref byte[] bytes, int offset, short value)
         {
             if (value >= 0)
@@ -800,6 +905,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static short ReadInt16(byte[] bytes, int offset, out int readSize)
         {
             return int16Decoders[bytes[offset]].Read(bytes, offset, out readSize);
@@ -808,7 +916,9 @@ namespace MessagePack
         /// <summary>
         /// Unsafe. If value is guranteed 0 ~ MessagePackCode.MaxFixInt(127), can use this method.
         /// </summary>
-        /// <returns></returns>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WritePositiveFixedIntUnsafe(ref byte[] bytes, int offset, int value)
         {
             EnsureCapacity(ref bytes, offset, 1);
@@ -816,6 +926,9 @@ namespace MessagePack
             return 1;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteInt32(ref byte[] bytes, int offset, int value)
         {
             if (value >= 0)
@@ -893,6 +1006,9 @@ namespace MessagePack
         /// <summary>
         /// Acquire static message block(always 5 bytes).
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteInt32ForceInt32Block(ref byte[] bytes, int offset, int value)
         {
             EnsureCapacity(ref bytes, offset, 5);
@@ -904,11 +1020,17 @@ namespace MessagePack
             return 5;
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int ReadInt32(byte[] bytes, int offset, out int readSize)
         {
             return int32Decoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteInt64(ref byte[] bytes, int offset, long value)
         {
             if (value >= 0)
@@ -1011,11 +1133,17 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static long ReadInt64(byte[] bytes, int offset, out int readSize)
         {
             return int64Decoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteUInt16(ref byte[] bytes, int offset, ushort value)
         {
             if (value <= MessagePackRange.MaxFixPositiveInt)
@@ -1041,11 +1169,17 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static ushort ReadUInt16(byte[] bytes, int offset, out int readSize)
         {
             return uint16Decoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteUInt32(ref byte[] bytes, int offset, uint value)
         {
             if (value <= MessagePackRange.MaxFixPositiveInt)
@@ -1081,11 +1215,17 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static uint ReadUInt32(byte[] bytes, int offset, out int readSize)
         {
             return uint32Decoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteUInt64(ref byte[] bytes, int offset, ulong value)
         {
             if (value <= MessagePackRange.MaxFixPositiveInt)
@@ -1135,16 +1275,25 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static ulong ReadUInt64(byte[] bytes, int offset, out int readSize)
         {
             return uint64Decoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteChar(ref byte[] bytes, int offset, char value)
         {
             return WriteUInt16(ref bytes, offset, (ushort)value);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static char ReadChar(byte[] bytes, int offset, out int readSize)
         {
             return (char)ReadUInt16(bytes, offset, out readSize);
@@ -1153,6 +1302,9 @@ namespace MessagePack
         /// <summary>
         /// Unsafe. If value is guranteed length is 0 ~ 31, can use this method.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteFixedStringUnsafe(ref byte[] bytes, int offset, string value, int byteCount)
         {
             EnsureCapacity(ref bytes, offset, byteCount + 1);
@@ -1165,6 +1317,9 @@ namespace MessagePack
         /// <summary>
         /// Unsafe. If pre-calculated byteCount of target string, can use this method.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteStringUnsafe(ref byte[] bytes, int offset, string value, int byteCount)
         {
             if (byteCount <= MessagePackRange.MaxFixStringLength)
@@ -1204,6 +1359,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteString(ref byte[] bytes, int offset, string value)
         {
             if (value == null) return WriteNil(ref bytes, offset);
@@ -1212,11 +1370,17 @@ namespace MessagePack
             return WriteStringUnsafe(ref bytes, offset, value, byteCount);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static string ReadString(byte[] bytes, int offset, out int readSize)
         {
             return stringDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteExtensionFormatHeader(ref byte[] bytes, int offset, sbyte typeCode, int dataLength)
         {
             switch (dataLength)
@@ -1281,6 +1445,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteExtensionFormat(ref byte[] bytes, int offset, sbyte typeCode, byte[] data)
         {
             var length = data.Length;
@@ -1380,6 +1547,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static ExtensionResult ReadExtensionFormat(byte[] bytes, int offset, out int readSize)
         {
             return extDecoders[bytes[offset]].Read(bytes, offset, out readSize);
@@ -1388,6 +1558,9 @@ namespace MessagePack
         /// <summary>
         /// return byte length of ExtensionFormat.
         /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static ExtensionHeader ReadExtensionFormatHeader(byte[] bytes, int offset, out int readSize)
         {
             return extHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
@@ -1399,6 +1572,9 @@ namespace MessagePack
         // FixExt8(-1) => nanoseconds + seconds | [1970-01-01 00:00:00.000000000 UTC, 2514-05-30 01:53:04.000000000 UTC) range
         // Ext8(12,-1) => nanoseconds + seconds | [-584554047284-02-23 16:59:44 UTC, 584554051223-11-09 07:00:16.000000000 UTC) range
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static int WriteDateTime(ref byte[] bytes, int offset, DateTime dateTime)
         {
             dateTime = dateTime.ToUniversalTime();
@@ -1491,6 +1667,9 @@ namespace MessagePack
             }
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static DateTime ReadDateTime(byte[] bytes, int offset, out int readSize)
         {
             return dateTimeDecoders[bytes[offset]].Read(bytes, offset, out readSize);
@@ -2439,7 +2618,7 @@ namespace MessagePack.Decoders
             readSize = 5;
             unchecked
             {
-                return (long)((long)(bytes[offset + 1] << 24) | (long)(bytes[offset + 2] << 16) | (long)(bytes[offset + 3] << 8) | (long)bytes[offset + 4]);
+                return (long)((long)(bytes[offset + 1] << 24) + (long)(bytes[offset + 2] << 16) + (long)(bytes[offset + 3] << 8) + (long)bytes[offset + 4]);
             }
         }
     }
@@ -2714,7 +2893,7 @@ namespace MessagePack.Decoders
             }
         }
     }
-     
+
     internal class UInt64UInt64 : IUInt64Decoder
     {
         internal static readonly IUInt64Decoder Instance = new UInt64UInt64();

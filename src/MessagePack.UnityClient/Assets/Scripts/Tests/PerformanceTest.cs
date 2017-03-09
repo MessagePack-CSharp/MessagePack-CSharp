@@ -1,7 +1,6 @@
 ﻿using MessagePack;
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
-using MessagePack.Unity.Extension;
 using MsgPack.Serialization;
 using Sandbox.Shared;
 using Sandbox.Shared.GeneratedSerializers;
@@ -102,10 +101,10 @@ namespace MessagePack.UnityClient.Tests
                     return;
                 }
 
-                formatter = UnityBlitResolver.Instance.GetFormatter<T>();
+                formatter = Unity.Extension.UnityBlitResolver.Instance.GetFormatter<T>();
                 if (formatter == null)
                 {
-                    formatter = DefaultResolver.Instance.GetFormatter<T>();
+                    formatter = StandardResolver.Instance.GetFormatter<T>();
                 }
             }
         }

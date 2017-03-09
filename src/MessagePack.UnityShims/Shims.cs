@@ -10,6 +10,7 @@ namespace UnityEngine
         [Key(1)]
         public float y;
 
+        [SerializationConstructor]
         public Vector2(float x, float y)
         {
             this.x = x;
@@ -27,6 +28,7 @@ namespace UnityEngine
         [Key(2)]
         public float z;
 
+        [SerializationConstructor]
         public Vector3(float x, float y, float z)
         {
             this.x = x;
@@ -52,6 +54,7 @@ namespace UnityEngine
         [Key(3)]
         public float w;
 
+        [SerializationConstructor]
         public Vector4(float x, float y, float z, float w)
         {
             this.x = x;
@@ -73,6 +76,7 @@ namespace UnityEngine
         [Key(3)]
         public float w;
 
+        [SerializationConstructor]
         public Quaternion(float x, float y, float z, float w)
         {
             this.x = x;
@@ -100,6 +104,7 @@ namespace UnityEngine
 
         }
 
+        [SerializationConstructor]
         public Color(float r, float g, float b, float a)
         {
             this.r = r;
@@ -131,6 +136,7 @@ namespace UnityEngine
             }
         }
 
+        [SerializationConstructor]
         public Bounds(Vector3 center, Vector3 size)
         {
             this.center = center;

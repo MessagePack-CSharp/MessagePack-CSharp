@@ -134,7 +134,7 @@ TODO:
 
 Extensions
 ---
-MessagePack for C# has extension point and you can add external type' serialization support. There are official extension support.
+MessagePack for C# has extension point and you can add external type's serialization support. There are official extension support.
 
 ```
 Install-Package MessagePack.ImmutableCollection
@@ -148,13 +148,30 @@ Install-Package MessagePack.UnityShims
 
 `MessagePack.UnityShims` package provides shim of [Unity](https://unity3d.com/)'s standard struct(`Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`) and there formatter. It can enable to commnicate between server and Unity client.
 
+After install, extension package must enable by configuration. Here is sample of enable all extension.
+
+```csharp
+// set extensions to default resolver.
+MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
+    // enable extension packages first
+    ImmutableCollectionResolver.Instance,
+    ReactivePropertyResolver.Instance,
+    MessagePack.Unity.Extension.UnityBlitResolver.Instance,
+    MessagePack.Unity.UnityResolver.Instance,
+
+    // finaly use standard(default) resolver
+    StandardResolver.Instance);
+);
+```
+
+Configuration details, see:Extension section.
 
 Author is creating other extension packages, too.
 
 * [MasterMemory](https://github.com/neuecc/MasterMemory) - Embedded Readonly In-Memory Document Database
 * [MagicOnion](https://github.com/neuecc/MagicOnion) - gRPC based HTTP/2 RPC Streaming Framework
 
-
+You can make your own extension serializers, let's create them and share it!
 
 High-Level API(MessagePackSerializer)
 ---
@@ -260,6 +277,7 @@ Extension Point(IFormatterResolver)
 | --- | --- |
 | BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
 | StandardResolver | Composited resolver . It resolves in the following order `builtin -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object`. This is the default of MessagePackSerializer. |
+| ContractlessStandardResolver | Composited `StandardResolver` -> `DynamicContractlessObjectResolver`. It enables contractless serialization. |
 | CompositeResolver | Singleton helper of setup custom resolvers. You can use `Register` or `RegisterAndSetAsDefault` API. |
 | DynamicEnumResolver | Resolver of enum and there nullable. It uses dynamic code generation to avoid boxing and boostup performance. |
 | DynamicGenericResolver | Resolver of generic type(`Tuple<>`, `List<>`, `Dictionary<,>`, `Array`, etc). It uses reflection call for resolve generic argument. |
