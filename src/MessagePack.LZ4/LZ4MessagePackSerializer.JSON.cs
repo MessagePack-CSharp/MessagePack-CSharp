@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if ENABLE_UNSAFE_RESOLVER
+
+using System;
 using System.Globalization;
 using System.Text;
 
@@ -37,7 +39,7 @@ namespace MessagePack
                 if (header.TypeCode == ExtensionTypeCode)
                 {
                     // decode lz4
-                    var offset = checked((int)header.Length);
+                    var offset = readSize;
                     var length = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                     offset += readSize;
 
@@ -227,3 +229,5 @@ namespace MessagePack
         }
     }
 }
+
+#endif

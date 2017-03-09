@@ -29,6 +29,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -102,6 +103,7 @@
     <Compile Include="CollectionTest.cs" />
     <Compile Include="DictionaryTest.cs" />
     <Compile Include="ExtensionTests\ImmutableCollectionTest.cs" />
+    <Compile Include="ExtensionTests\LZ4Test.cs" />
     <Compile Include="ExtensionTests\ReactivePropertyTest.cs" />
     <Compile Include="ExtensionTests\UnityShimTest.cs" />
     <Compile Include="FormatterTest.cs" />
@@ -128,6 +130,10 @@
     <ProjectReference Include="..\..\src\MessagePack.ImmutableCollection\MessagePack.ImmutableCollection.csproj">
       <Project>{e066f547-7261-4561-aefc-e64dbfd874f8}</Project>
       <Name>MessagePack.ImmutableCollection</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MessagePack.LZ4\MessagePack.LZ4.csproj">
+      <Project>{6303cd14-f396-409c-bcbf-4da3105ec45c}</Project>
+      <Name>MessagePack.LZ4</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\MessagePack.ReactiveProperty\MessagePack.ReactiveProperty.csproj">
       <Project>{166a16c0-b89f-41af-956a-235c6ca62c25}</Project>

@@ -1,4 +1,7 @@
-﻿using System;
+﻿#if ENABLE_UNSAFE_RESOLVER
+#if NETSTANDARD1_4
+
+using System;
 using System.Linq;
 using System.Reflection;
 using System.IO;
@@ -208,3 +211,6 @@ namespace MessagePack
         }
     }
 }
+
+#endif
+#endif

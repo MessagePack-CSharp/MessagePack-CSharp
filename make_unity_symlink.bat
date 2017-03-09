@@ -18,3 +18,7 @@ mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\Formatter
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnsafeExtensions\UnityBlitResolver.cs" "..\..\..\..\..\MessagePack.UnityShims\Extension\UnityBlitResolver.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnsafeExtensions\UnsafeBlitFormatter.cs" "..\..\..\..\..\MessagePack.UnityShims\Extension\UnsafeBlitFormatter.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\Tests\Class1.cs" "..\..\..\..\..\sandbox\SharedData\Class1.cs"
+mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4\Codec" "..\..\..\..\..\MessagePack.LZ4\LZ4\Codec"
+mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.cs" "..\..\..\..\..\MessagePack.LZ4\LZ4MessagePackSerializer.cs"
+mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.JSON.cs" "..\..\..\..\..\MessagePack.LZ4\LZ4MessagePackSerializer.JSON.cs"
+mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.NonGeneric.cs" "..\..\..\..\..\MessagePack.LZ4\LZ4MessagePackSerializer.NonGeneric.cs"

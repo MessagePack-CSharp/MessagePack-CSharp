@@ -1,61 +1,25 @@
-﻿using System;
+﻿#if ENABLE_UNSAFE_RESOLVER
+
+using System;
 using System.IO;
 
 namespace MessagePack
 {
     /// <summary>
-    /// LZ4 Compressed special serializer.
+    /// LZ4 Compressed special serializer. Same API as MessagePackSerialzier but DefaultResolver is used MessagePackSerializer.DefaultResolver.
     /// </summary>
     public static partial class LZ4MessagePackSerializer
     {
-        public const byte ExtensionTypeCode = 99;
+        public const sbyte ExtensionTypeCode = 99;
 
-        public const int MinSize = 50;
-
-        static IFormatterResolver defaultResolver;
-
-        /// <summary>
-        /// FormatterResolver that used resolver less overloads. If does not set it, used StandardResolver.
-        /// </summary>
-        public static IFormatterResolver DefaultResolver
-        {
-            get
-            {
-                if (defaultResolver == null)
-                {
-                    defaultResolver = MessagePack.Resolvers.StandardResolver.Instance;
-                }
-
-                return defaultResolver;
-            }
-        }
-
-        /// <summary>
-        /// Is resolver decided?
-        /// </summary>
-        public static bool IsInitialized
-        {
-            get
-            {
-                return defaultResolver != null;
-            }
-        }
-
-        /// <summary>
-        /// Set default resolver of MessagePackSerializer APIs.
-        /// </summary>
-        /// <param name="resolver"></param>
-        public static void SetDefaultResolver(IFormatterResolver resolver)
-        {
-            defaultResolver = resolver;
-        }
+        public const int NotCompressionSize = 64;
 
         /// <summary>
         /// Serialize to binary with default resolver.
         /// </summary>
         public static byte[] Serialize<T>(T obj)
         {
-            return Serialize(obj, defaultResolver);
+            return Serialize(obj, MessagePackSerializer.DefaultResolver);
         }
 
         /// <summary>
@@ -63,7 +27,7 @@ namespace MessagePack
         /// </summary>
         public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = DefaultResolver;
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
             var buffer = SerializeCore(obj, resolver);
 
             return MessagePackBinary.FastCloneWithResize(buffer.Array, buffer.Count);
@@ -74,7 +38,7 @@ namespace MessagePack
         /// </summary>
         public static void Serialize<T>(Stream stream, T obj)
         {
-            Serialize(stream, obj, defaultResolver);
+            Serialize(stream, obj, MessagePackSerializer.DefaultResolver);
         }
 
         /// <summary>
@@ -82,7 +46,7 @@ namespace MessagePack
         /// </summary>
         public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = DefaultResolver;
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
             var buffer = SerializeCore(obj, resolver);
 
             stream.Write(buffer.Array, 0, buffer.Count);
@@ -90,11 +54,9 @@ namespace MessagePack
 
         static ArraySegment<byte> SerializeCore<T>(T obj, IFormatterResolver resolver)
         {
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
             var serializedData = MessagePackSerializer.SerializeUnsafe(obj, resolver);
 
-            if (serializedData.Count < MinSize)
+            if (serializedData.Count < NotCompressionSize)
             {
                 return serializedData;
             }
@@ -115,7 +77,7 @@ namespace MessagePack
                 offset += MessagePackBinary.WriteInt32ForceInt32Block(ref buffer, offset, serializedData.Count);
 
                 // write body
-                var lz4Length = global::LZ4.LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, buffer, offset, serializedData.Count);
+                var lz4Length = global::LZ4.LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, buffer, offset, buffer.Length - offset);
 
                 return new ArraySegment<byte>(buffer, 0, lz4Length + offset);
             }
@@ -123,56 +85,63 @@ namespace MessagePack
 
         public static T Deserialize<T>(byte[] bytes)
         {
-            return Deserialize<T>(bytes, defaultResolver);
+            return Deserialize<T>(bytes, MessagePackSerializer.DefaultResolver);
         }
 
         public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = DefaultResolver;
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
+
+            return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, bytes.Length), resolver);
+        }
+
+        public static T Deserialize<T>(Stream stream)
+        {
+            return Deserialize<T>(stream, MessagePackSerializer.DefaultResolver);
+        }
+
+        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
+        {
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
+
+            var buffer = InternalMemoryPool.GetBuffer();
+
+            var len = FillFromStream(stream, ref buffer);
+
+            // note, current lz4impl needs to fit input byte[]...
+            var newBytes = MessagePackBinary.FastCloneWithResize(buffer, len);
+            return DeserializeCore<T>(new ArraySegment<byte>(newBytes, 0, newBytes.Length), resolver);
+        }
+
+        static T DeserializeCore<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
+        {
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             int readSize;
-            if (MessagePackBinary.GetMessagePackType(bytes, 0) == MessagePackType.Extension)
+            if (MessagePackBinary.GetMessagePackType(bytes.Array, 0) == MessagePackType.Extension)
             {
-                var header = MessagePackBinary.ReadExtensionFormatHeader(bytes, 0, out readSize);
+                var header = MessagePackBinary.ReadExtensionFormatHeader(bytes.Array, bytes.Offset, out readSize);
                 if (header.TypeCode == ExtensionTypeCode)
                 {
                     // decode lz4
-                    var offset = readSize;
-                    var length = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                    var offset = bytes.Offset + readSize;
+                    var length = MessagePackBinary.ReadInt32(bytes.Array, offset, out readSize);
                     offset += readSize;
 
                     var buffer = InternalMemoryPool.GetBuffer();
-                    if (!(buffer.Length < length))
+                    if (buffer.Length < length)
                     {
                         buffer = new byte[length];
                     }
 
                     // LZ4 Decode
-                    global::LZ4.LZ4Codec.Decode(bytes, offset, bytes.Length - offset, buffer, 0, length, true);
+                    global::LZ4.LZ4Codec.Decode(bytes.Array, offset, bytes.Count - offset, buffer, 0, length, true);
 
                     return formatter.Deserialize(buffer, 0, resolver, out readSize);
                 }
             }
 
-            return formatter.Deserialize(bytes, 0, resolver, out readSize);
-        }
-
-        public static T Deserialize<T>(Stream stream)
-        {
-            return Deserialize<T>(stream, defaultResolver);
-        }
-
-        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
-        {
-            if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            var buffer = InternalMemoryPool.GetBuffer();
-
-            FillFromStream(stream, ref buffer);
-
-            return Deserialize<T>(buffer, resolver);
+            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize);
         }
 
         static int FillFromStream(Stream input, ref byte[] buffer)
@@ -207,3 +176,6 @@ namespace MessagePack
         }
     }
 }
+
+
+#endif

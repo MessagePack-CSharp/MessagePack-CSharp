@@ -100,6 +100,14 @@
     <Compile Include="Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ReflectionExtensions.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Helper.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Unsafe.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Unsafe32.Dirty.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Unsafe64.Dirty.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.JSON.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.NonGeneric.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.cs" />
     <Compile Include="Assets\Scripts\MessagePack\MessagePackBinary.cs" />
     <Compile Include="Assets\Scripts\MessagePack\MessagePackCode.cs" />
     <Compile Include="Assets\Scripts\MessagePack\MessagePackSerializer.Json.cs" />

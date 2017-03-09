@@ -3,7 +3,7 @@ MessagePack for C#(.NET, .NET Core, Unity, Xamarin)
 
 > TODO:Writing document now.
 
-Extremely fast [MessagePack](http://msgpack.org/) serializer for C#, x10~20 faster than MsgPack-Cli and acquires best performance compared with all the other C# serializers. Performance is always important! for Game, Distributed Computing, MicroServices, Store Data to Redis, etc.
+Extremely fast [MessagePack](http://msgpack.org/) serializer for C#, x10~20 faster than MsgPack-Cli and acquires best performance compared with all the other C# serializers. Built-in LZ4 compression extension can achieve super fast and small binary size.  Performance is always important! for Game, Distributed Computing, MicroServices, Store Data to Redis, etc.
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23487810/e263277a-ff2b-11e6-81a6-6b4ca7acd8e3.png)
 
@@ -30,6 +30,7 @@ Install-Package MessagePackAnalyzer
 Extension Packages(info is see extension section).
 
 ```
+Install-Package MessagePack.LZ4
 Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
@@ -130,6 +131,8 @@ Performance
 ---
 TODO:
 
+
+// LZ4 result
 
 
 Extensions
