@@ -121,7 +121,7 @@ namespace Sandbox
             Console.WriteLine();
             Benchmark(l);
         }
-         
+
         static void Benchmark<T>(T target)
         {
             const int Iteration = 10000; // 10000
@@ -157,6 +157,16 @@ namespace Sandbox
                     data0 = MessagePack.MessagePackSerializer.Serialize(target);
                 }
             }
+
+
+            using (new Measure("MessagePack(LZ4)"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    data3 = LZ4MessagePackSerializer.Serialize(target);
+                }
+            }
+
             using (new Measure("ZeroFormatter"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -180,16 +190,6 @@ namespace Sandbox
                 ProtoBuf.Serializer.Serialize(ms, target);
                 data2 = ms.ToArray();
             }
-
-
-            using (new Measure("MessagePack(LZ4)"))
-            {
-                for (int i = 0; i < Iteration; i++)
-                {
-                    data3 = LZ4MessagePackSerializer.Serialize(target);
-                }
-            }
-
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
             MessagePack.MessagePackSerializer.Deserialize<T>(data0);
             ZeroFormatterSerializer.Deserialize<T>(data1);
@@ -215,6 +215,14 @@ namespace Sandbox
                 }
             }
 
+            using (new Measure("MessagePack(LZ4)"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    LZ4MessagePackSerializer.Deserialize<T>(data3);
+                }
+            }
+
             using (new Measure("ZeroFormatter"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -234,22 +242,14 @@ namespace Sandbox
                 }
             }
 
-            using (new Measure("MessagePack(LZ4)"))
-            {
-                for (int i = 0; i < Iteration; i++)
-                {
-                    LZ4MessagePackSerializer.Deserialize<T>(data3);
-                }
-            }
-
             Console.WriteLine();
             Console.WriteLine("FileSize::");
             var label = "";
             label = "MsgPack-Cli"; Console.WriteLine($"{label,20}   {data.Length} Byte");
             label = "MessagePack-CSharp"; Console.WriteLine($"{label,20}   {data0.Length} Byte");
+            label = "MessagePack(LZ4)"; Console.WriteLine($"{label,20}   {data3.Length} Byte");
             label = "ZeroFormatter"; Console.WriteLine($"{label,20}   {data1.Length} Byte");
             label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
-            label = "MessagePack(LZ4)"; Console.WriteLine($"{label,20}   {data3.Length} Byte");
 
             Console.WriteLine();
             Console.WriteLine();

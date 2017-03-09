@@ -30,7 +30,6 @@ Install-Package MessagePackAnalyzer
 Extension Packages(info is see extension section).
 
 ```
-Install-Package MessagePack.LZ4
 Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
@@ -132,8 +131,13 @@ Performance
 TODO:
 
 
-// LZ4 result
+LZ4 Compression
+---
+TODO:
 
+![image](https://cloud.githubusercontent.com/assets/46207/23766172/0c0a6158-0547-11e7-92ff-2db7a9b69877.png)
+
+achieved extremely fast and very small binary!
 
 Extensions
 ---
@@ -193,6 +197,8 @@ High-Level API(MessagePackSerializer)
 MessagePack for C# operates at the byte[] level, so byte[] API is faster than Stream API.
 
 High-Level API uses memory pool internaly to avoid unnecessary memory allocation. If result size is under 64K, allocates GC memory only for the return bytes.
+
+`LZ4MessagePackSerializer` has same api with `MessagePackSerializer` and `DefaultResolver` is shared.
 
 Low-Level API(IMessagePackFormatter)
 ---

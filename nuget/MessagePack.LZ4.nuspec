@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack.LZ4</id>
-    <version>0.8.1</version>
+    <version>0.8.2</version>
     <title>MessagePack for C#, LZ4 Compression Support</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
@@ -17,10 +17,10 @@
     </frameworkAssemblies>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="MessagePack" version="0.8.1" />
+        <dependency id="MessagePack" version="0.8.2" />
       </group>
       <group targetFramework=".NETStandard1.4">
-        <dependency id="MessagePack" version="0.8.1" />
+        <dependency id="MessagePack" version="0.8.2" />
       </group>
     </dependencies>
   </metadata>

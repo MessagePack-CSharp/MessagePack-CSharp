@@ -1,1 +1,1 @@
-../../../../../MessagePack.LZ4/LZ4MessagePackSerializer.cs
+../../../../../MessagePack/LZ4/LZ4MessagePackSerializer.cs

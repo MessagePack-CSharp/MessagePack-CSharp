@@ -7,14 +7,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;NETSTANDARD1_4</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <DocumentationFile>bin\Release\netstandard1.4\MessagePack.xml</DocumentationFile>
     <NoWarn>1701;1702;1705;1591</NoWarn>
-    <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;</DefineConstants>
+    <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,10 +43,6 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
   <ItemGroup>
