@@ -84,5 +84,16 @@ namespace MessagePack.Tests.ExtensionTests
             decompress2.IsStructuralEqual(originalData);
             decompress3.IsStructuralEqual(originalData);
         }
+
+        [Fact]
+        public void RawCompression()
+        {
+
+            var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();
+            var data = MessagePackSerializer.Serialize(originalData);
+            var data2 = LZ4.LZ4Codec.Encode64(data, 0, data.Length);
+
+
+        }
     }
 }

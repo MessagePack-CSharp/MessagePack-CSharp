@@ -178,6 +178,8 @@ namespace MessagePack.UnityClient.Tests
 
         byte[] msgPackCSharpFormatterSingleBytes;
         byte[] msgPackCSharpArrayBytes;
+        byte[] msgPackCSharpLZ4FormatterSingleBytes;
+        byte[] msgPackCSharpLZ4ArrayBytes;
         byte[] msgpackSingleBytes;
         byte[] msgpackArrayBytes;
         byte[] jsonSingleBytes;
@@ -224,6 +226,10 @@ namespace MessagePack.UnityClient.Tests
 
             msgPackCSharpFormatterSingleBytes = MessagePack.MessagePackSerializer.Serialize(p);
             msgPackCSharpArrayBytes = MessagePack.MessagePackSerializer.Serialize(l);
+
+            msgPackCSharpLZ4FormatterSingleBytes = MessagePack.LZ4MessagePackSerializer.Serialize(p);
+            msgPackCSharpLZ4ArrayBytes = MessagePack.LZ4MessagePackSerializer.Serialize(l);
+
             var serializer1 = this.msgPackContext.GetSerializer<Person>();
             msgpackSingleBytes = serializer1.PackSingleObject(p);
             var serializer2 = this.msgPackContext.GetSerializer<IList<Person>>();
@@ -289,6 +295,43 @@ namespace MessagePack.UnityClient.Tests
                 MessagePack.MessagePackSerializer.Deserialize<Person[]>(msgPackCSharpArrayBytes);
             }
         }
+
+
+
+        public void LZ4MessagePackCSharpSerializeSingle()
+        {
+            for (int i = 0; i < Iteration; i++)
+            {
+                MessagePack.LZ4MessagePackSerializer.Serialize(p);
+            }
+        }
+
+        public void LZ4MessagePackCSharpSerializeArray()
+        {
+            for (int i = 0; i < Iteration; i++)
+            {
+                MessagePack.LZ4MessagePackSerializer.Serialize(l);
+            }
+        }
+
+        public void LZ4MessagePackCSharpDeserializeSingle()
+        {
+            for (int i = 0; i < Iteration; i++)
+            {
+                MessagePack.LZ4MessagePackSerializer.Deserialize<Person>(msgPackCSharpLZ4FormatterSingleBytes);
+            }
+        }
+
+        public void LZ4MessagePackCSharpDeserializeArray()
+        {
+            for (int i = 0; i < Iteration; i++)
+            {
+                MessagePack.LZ4MessagePackSerializer.Deserialize<Person[]>(msgPackCSharpLZ4ArrayBytes);
+            }
+        }
+
+
+
 
         public void MsgPackSerializeSingle()
         {

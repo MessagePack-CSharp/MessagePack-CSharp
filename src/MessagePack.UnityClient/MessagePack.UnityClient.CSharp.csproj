@@ -17,7 +17,8 @@
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
     <UnityVersion>5.3.7p2</UnityVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
     <LangVersion Condition=" '$(VisualStudioVersion)' != '10.0' ">4</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -133,6 +134,7 @@
     <Compile Include="Assets\Scripts\Tests\Class1.cs" />
     <Compile Include="Assets\Scripts\Tests\CollectionFormatterTest.cs" />
     <Compile Include="Assets\Scripts\Tests\FormatterTest.cs" />
+    <Compile Include="Assets\Scripts\Tests\LZ4Test.cs" />
     <Compile Include="Assets\Scripts\Tests\MsgPack\PersonSerializer.cs" />
     <Compile Include="Assets\Scripts\Tests\MsgPack\SexSerializer.cs" />
     <Compile Include="Assets\Scripts\Tests\MsgPack\System_Nullable_1_Sex_Serializer.cs" />
