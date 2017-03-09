@@ -6,8 +6,9 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <LangVersion>4</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -15,6 +16,8 @@
     <DocumentationFile>bin\Release\netstandard1.4\MessagePack.xml</DocumentationFile>
     <NoWarn>1701;1702;1705;1591</NoWarn>
     <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <LangVersion>4</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +25,7 @@
     <None Remove="Resolvers\*.meta" />
     <None Remove="Internal\*.meta" />
     <None Remove="Formatters\*.meta" />
+    <None Remove="LZ4\Codec\*.meta" />
   </ItemGroup>
 
   <ItemGroup>

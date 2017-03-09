@@ -45,7 +45,7 @@ namespace MessagePack
                     offset += readSize;
 
                     var buffer = LZ4MemoryPool.GetBuffer();
-                    if (!(buffer.Length < length))
+                    if (buffer.Length < length)
                     {
                         buffer = new byte[length];
                     }

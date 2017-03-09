@@ -15,50 +15,12 @@ namespace MessagePack
 
         public const int NotCompressionSize = 64;
 
-        static IFormatterResolver defaultResolver;
-
-        /// <summary>
-        /// FormatterResolver that used resolver less overloads. If does not set it, used StandardResolver.
-        /// </summary>
-        public static IFormatterResolver DefaultResolver
-        {
-            get
-            {
-                if (defaultResolver == null)
-                {
-                    defaultResolver = MessagePack.Resolvers.StandardResolver.Instance;
-                }
-
-                return defaultResolver;
-            }
-        }
-
-        /// <summary>
-        /// Is resolver decided?
-        /// </summary>
-        public static bool IsInitialized
-        {
-            get
-            {
-                return defaultResolver != null;
-            }
-        }
-
-        /// <summary>
-        /// Set default resolver of MessagePackSerializer APIs.
-        /// </summary>
-        /// <param name="resolver"></param>
-        public static void SetDefaultResolver(IFormatterResolver resolver)
-        {
-            defaultResolver = resolver;
-        }
-
         /// <summary>
         /// Serialize to binary with default resolver.
         /// </summary>
         public static byte[] Serialize<T>(T obj)
         {
-            return Serialize(obj, defaultResolver);
+            return Serialize(obj, null);
         }
 
         /// <summary>
@@ -66,7 +28,7 @@ namespace MessagePack
         /// </summary>
         public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = DefaultResolver;
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
             var buffer = SerializeCore(obj, resolver);
 
             return MessagePackBinary.FastCloneWithResize(buffer.Array, buffer.Count);
@@ -77,7 +39,7 @@ namespace MessagePack
         /// </summary>
         public static void Serialize<T>(Stream stream, T obj)
         {
-            Serialize(stream, obj, defaultResolver);
+            Serialize(stream, obj, null);
         }
 
         /// <summary>
@@ -85,7 +47,7 @@ namespace MessagePack
         /// </summary>
         public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = DefaultResolver;
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
             var buffer = SerializeCore(obj, resolver);
 
             stream.Write(buffer.Array, 0, buffer.Count);
@@ -124,24 +86,24 @@ namespace MessagePack
 
         public static T Deserialize<T>(byte[] bytes)
         {
-            return Deserialize<T>(bytes, defaultResolver);
+            return Deserialize<T>(bytes, null);
         }
 
         public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = DefaultResolver;
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
 
             return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, bytes.Length), resolver);
         }
 
         public static T Deserialize<T>(Stream stream)
         {
-            return Deserialize<T>(stream, defaultResolver);
+            return Deserialize<T>(stream, null);
         }
 
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = DefaultResolver;
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
 
             var buffer = LZ4MemoryPool.GetBuffer();
 
