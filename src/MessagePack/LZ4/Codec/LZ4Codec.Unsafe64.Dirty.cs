@@ -81,220 +81,223 @@ namespace LZ4
             int src_len,
             int dst_maxlen)
         {
-            byte* _p;
-
-            fixed (int* debruijn64 = &DEBRUIJN_TABLE_64[0])
+            unchecked
             {
-                // r93
-                var src_p = src;
-                var src_base = src_p;
-                var src_anchor = src_p;
-                var src_end = src_p + src_len;
-                var src_mflimit = src_end - MFLIMIT;
+                byte* _p;
 
-                var dst_p = dst;
-                var dst_end = dst_p + dst_maxlen;
-
-                var src_LASTLITERALS = src_end - LASTLITERALS;
-                var src_LASTLITERALS_1 = src_LASTLITERALS - 1;
-
-                var src_LASTLITERALS_3 = src_LASTLITERALS - 3;
-                var src_LASTLITERALS_STEPSIZE_1 = src_LASTLITERALS - (STEPSIZE_64 - 1);
-                var dst_LASTLITERALS_1 = dst_end - (1 + LASTLITERALS);
-                var dst_LASTLITERALS_3 = dst_end - (2 + 1 + LASTLITERALS);
-
-                int length;
-                uint h, h_fwd;
-
-                // Init
-                if (src_len < MINLENGTH) goto _last_literals;
-
-                // First Byte
-                hash_table[((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST)] = (uint)(src_p - src_base);
-                src_p++;
-                h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST);
-
-                // Main Loop
-                while (true)
+                fixed (int* debruijn64 = &DEBRUIJN_TABLE_64[0])
                 {
-                    var findMatchAttempts = (1 << SKIPSTRENGTH) + 3;
-                    var src_p_fwd = src_p;
-                    byte* src_ref;
-                    byte* dst_token;
+                    // r93
+                    var src_p = src;
+                    var src_base = src_p;
+                    var src_anchor = src_p;
+                    var src_end = src_p + src_len;
+                    var src_mflimit = src_end - MFLIMIT;
 
-                    // Find a match
-                    do
+                    var dst_p = dst;
+                    var dst_end = dst_p + dst_maxlen;
+
+                    var src_LASTLITERALS = src_end - LASTLITERALS;
+                    var src_LASTLITERALS_1 = src_LASTLITERALS - 1;
+
+                    var src_LASTLITERALS_3 = src_LASTLITERALS - 3;
+                    var src_LASTLITERALS_STEPSIZE_1 = src_LASTLITERALS - (STEPSIZE_64 - 1);
+                    var dst_LASTLITERALS_1 = dst_end - (1 + LASTLITERALS);
+                    var dst_LASTLITERALS_3 = dst_end - (2 + 1 + LASTLITERALS);
+
+                    int length;
+                    uint h, h_fwd;
+
+                    // Init
+                    if (src_len < MINLENGTH) goto _last_literals;
+
+                    // First Byte
+                    hash_table[((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST)] = (uint)(src_p - src_base);
+                    src_p++;
+                    h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST);
+
+                    // Main Loop
+                    while (true)
                     {
-                        h = h_fwd;
-                        var step = findMatchAttempts++ >> SKIPSTRENGTH;
-                        src_p = src_p_fwd;
-                        src_p_fwd = src_p + step;
+                        var findMatchAttempts = (1 << SKIPSTRENGTH) + 3;
+                        var src_p_fwd = src_p;
+                        byte* src_ref;
+                        byte* dst_token;
 
-                        if (src_p_fwd > src_mflimit) goto _last_literals;
+                        // Find a match
+                        do
+                        {
+                            h = h_fwd;
+                            var step = findMatchAttempts++ >> SKIPSTRENGTH;
+                            src_p = src_p_fwd;
+                            src_p_fwd = src_p + step;
 
-                        h_fwd = ((((*(uint*)(src_p_fwd))) * 2654435761u) >> HASH_ADJUST);
-                        src_ref = src_base + hash_table[h];
-                        hash_table[h] = (uint)(src_p - src_base);
-                    } while ((src_ref < src_p - MAX_DISTANCE) || ((*(uint*)(src_ref)) != (*(uint*)(src_p))));
+                            if (src_p_fwd > src_mflimit) goto _last_literals;
 
-                    // Catch up
-                    while ((src_p > src_anchor) && (src_ref > src) && (src_p[-1] == src_ref[-1]))
-                    {
-                        src_p--;
-                        src_ref--;
-                    }
+                            h_fwd = ((((*(uint*)(src_p_fwd))) * 2654435761u) >> HASH_ADJUST);
+                            src_ref = src_base + hash_table[h];
+                            hash_table[h] = (uint)(src_p - src_base);
+                        } while ((src_ref < src_p - MAX_DISTANCE) || ((*(uint*)(src_ref)) != (*(uint*)(src_p))));
 
-                    // Encode Literal length
-                    length = (int)(src_p - src_anchor);
-                    dst_token = dst_p++;
+                        // Catch up
+                        while ((src_p > src_anchor) && (src_ref > src) && (src_p[-1] == src_ref[-1]))
+                        {
+                            src_p--;
+                            src_ref--;
+                        }
 
-                    if (dst_p + length + (length >> 8) > dst_LASTLITERALS_3) return 0; // Check output limit
+                        // Encode Literal length
+                        length = (int)(src_p - src_anchor);
+                        dst_token = dst_p++;
 
-                    if (length >= RUN_MASK)
-                    {
-                        var len = length - RUN_MASK;
-                        *dst_token = (RUN_MASK << ML_BITS);
-                        if (len > 254)
+                        if (dst_p + length + (length >> 8) > dst_LASTLITERALS_3) return 0; // Check output limit
+
+                        if (length >= RUN_MASK)
+                        {
+                            var len = length - RUN_MASK;
+                            *dst_token = (RUN_MASK << ML_BITS);
+                            if (len > 254)
+                            {
+                                do
+                                {
+                                    *dst_p++ = 255;
+                                    len -= 255;
+                                } while (len > 254);
+                                *dst_p++ = (byte)len;
+                                BlockCopy(src_anchor, dst_p, (length));
+                                dst_p += length;
+                                goto _next_match;
+                            }
+                            *dst_p++ = (byte)len;
+                        }
+                        else
+                        {
+                            *dst_token = (byte)(length << ML_BITS);
+                        }
+
+                        // Copy Literals
+                        _p = dst_p + (length);
                         {
                             do
                             {
+                                *(ulong*)dst_p = *(ulong*)src_anchor;
+                                dst_p += 8;
+                                src_anchor += 8;
+                            } while (dst_p < _p);
+                        }
+                        dst_p = _p;
+
+                        _next_match:
+
+                        // Encode Offset
+                        *(ushort*)dst_p = (ushort)(src_p - src_ref);
+                        dst_p += 2;
+
+                        // Start Counting
+                        src_p += MINMATCH;
+                        src_ref += MINMATCH; // MinMatch already verified
+                        src_anchor = src_p;
+
+                        while (src_p < src_LASTLITERALS_STEPSIZE_1)
+                        {
+                            var diff = (*(long*)(src_ref)) ^ (*(long*)(src_p));
+                            if (diff == 0)
+                            {
+                                src_p += STEPSIZE_64;
+                                src_ref += STEPSIZE_64;
+                                continue;
+                            }
+                            src_p += debruijn64[(((ulong)((diff) & -(diff)) * 0x0218A392CDABBD3FL)) >> 58];
+                            goto _endCount;
+                        }
+
+                        if ((src_p < src_LASTLITERALS_3) && ((*(uint*)(src_ref)) == (*(uint*)(src_p))))
+                        {
+                            src_p += 4;
+                            src_ref += 4;
+                        }
+                        if ((src_p < src_LASTLITERALS_1) && ((*(ushort*)(src_ref)) == (*(ushort*)(src_p))))
+                        {
+                            src_p += 2;
+                            src_ref += 2;
+                        }
+                        if ((src_p < src_LASTLITERALS) && (*src_ref == *src_p)) src_p++;
+
+                        _endCount:
+
+                        // Encode MatchLength
+                        length = (int)(src_p - src_anchor);
+
+                        if (dst_p + (length >> 8) > dst_LASTLITERALS_1) return 0; // Check output limit
+
+                        if (length >= ML_MASK)
+                        {
+                            *dst_token += ML_MASK;
+                            length -= ML_MASK;
+                            for (; length > 509; length -= 510)
+                            {
                                 *dst_p++ = 255;
-                                len -= 255;
-                            } while (len > 254);
-                            *dst_p++ = (byte)len;
-                            BlockCopy(src_anchor, dst_p, (length));
-                            dst_p += length;
+                                *dst_p++ = 255;
+                            }
+                            if (length > 254)
+                            {
+                                length -= 255;
+                                *dst_p++ = 255;
+                            }
+                            *dst_p++ = (byte)length;
+                        }
+                        else
+                        {
+                            *dst_token += (byte)length;
+                        }
+
+                        // Test end of chunk
+                        if (src_p > src_mflimit)
+                        {
+                            src_anchor = src_p;
+                            break;
+                        }
+
+                        // Fill table
+                        hash_table[((((*(uint*)(src_p - 2))) * 2654435761u) >> HASH_ADJUST)] = (uint)(src_p - 2 - src_base);
+
+                        // Test next position
+
+                        h = ((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST);
+                        src_ref = src_base + hash_table[h];
+                        hash_table[h] = (uint)(src_p - src_base);
+
+                        if ((src_ref > src_p - (MAX_DISTANCE + 1)) && ((*(uint*)(src_ref)) == (*(uint*)(src_p))))
+                        {
+                            dst_token = dst_p++;
+                            *dst_token = 0;
                             goto _next_match;
                         }
-                        *dst_p++ = (byte)len;
+
+                        // Prepare next loop
+                        src_anchor = src_p++;
+                        h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST);
                     }
-                    else
+
+                    _last_literals:
+
+                    // Encode Last Literals
+                    var lastRun = (int)(src_end - src_anchor);
+                    if (dst_p + lastRun + 1 + ((lastRun + 255 - RUN_MASK) / 255) > dst_end) return 0;
+                    if (lastRun >= RUN_MASK)
                     {
-                        *dst_token = (byte)(length << ML_BITS);
+                        *dst_p++ = (RUN_MASK << ML_BITS);
+                        lastRun -= RUN_MASK;
+                        for (; lastRun > 254; lastRun -= 255) *dst_p++ = 255;
+                        *dst_p++ = (byte)lastRun;
                     }
+                    else *dst_p++ = (byte)(lastRun << ML_BITS);
+                    BlockCopy(src_anchor, dst_p, (int)(src_end - src_anchor));
+                    dst_p += src_end - src_anchor;
 
-                    // Copy Literals
-                    _p = dst_p + (length);
-                    {
-                        do
-                        {
-                            *(ulong*)dst_p = *(ulong*)src_anchor;
-                            dst_p += 8;
-                            src_anchor += 8;
-                        } while (dst_p < _p);
-                    }
-                    dst_p = _p;
-
-                    _next_match:
-
-                    // Encode Offset
-                    *(ushort*)dst_p = (ushort)(src_p - src_ref);
-                    dst_p += 2;
-
-                    // Start Counting
-                    src_p += MINMATCH;
-                    src_ref += MINMATCH; // MinMatch already verified
-                    src_anchor = src_p;
-
-                    while (src_p < src_LASTLITERALS_STEPSIZE_1)
-                    {
-                        var diff = (*(long*)(src_ref)) ^ (*(long*)(src_p));
-                        if (diff == 0)
-                        {
-                            src_p += STEPSIZE_64;
-                            src_ref += STEPSIZE_64;
-                            continue;
-                        }
-                        src_p += debruijn64[(((ulong)((diff) & -(diff)) * 0x0218A392CDABBD3FL)) >> 58];
-                        goto _endCount;
-                    }
-
-                    if ((src_p < src_LASTLITERALS_3) && ((*(uint*)(src_ref)) == (*(uint*)(src_p))))
-                    {
-                        src_p += 4;
-                        src_ref += 4;
-                    }
-                    if ((src_p < src_LASTLITERALS_1) && ((*(ushort*)(src_ref)) == (*(ushort*)(src_p))))
-                    {
-                        src_p += 2;
-                        src_ref += 2;
-                    }
-                    if ((src_p < src_LASTLITERALS) && (*src_ref == *src_p)) src_p++;
-
-                    _endCount:
-
-                    // Encode MatchLength
-                    length = (int)(src_p - src_anchor);
-
-                    if (dst_p + (length >> 8) > dst_LASTLITERALS_1) return 0; // Check output limit
-
-                    if (length >= ML_MASK)
-                    {
-                        *dst_token += ML_MASK;
-                        length -= ML_MASK;
-                        for (; length > 509; length -= 510)
-                        {
-                            *dst_p++ = 255;
-                            *dst_p++ = 255;
-                        }
-                        if (length > 254)
-                        {
-                            length -= 255;
-                            *dst_p++ = 255;
-                        }
-                        *dst_p++ = (byte)length;
-                    }
-                    else
-                    {
-                        *dst_token += (byte)length;
-                    }
-
-                    // Test end of chunk
-                    if (src_p > src_mflimit)
-                    {
-                        src_anchor = src_p;
-                        break;
-                    }
-
-                    // Fill table
-                    hash_table[((((*(uint*)(src_p - 2))) * 2654435761u) >> HASH_ADJUST)] = (uint)(src_p - 2 - src_base);
-
-                    // Test next position
-
-                    h = ((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST);
-                    src_ref = src_base + hash_table[h];
-                    hash_table[h] = (uint)(src_p - src_base);
-
-                    if ((src_ref > src_p - (MAX_DISTANCE + 1)) && ((*(uint*)(src_ref)) == (*(uint*)(src_p))))
-                    {
-                        dst_token = dst_p++;
-                        *dst_token = 0;
-                        goto _next_match;
-                    }
-
-                    // Prepare next loop
-                    src_anchor = src_p++;
-                    h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST);
+                    // End
+                    return (int)(dst_p - dst);
                 }
-
-                _last_literals:
-
-                // Encode Last Literals
-                var lastRun = (int)(src_end - src_anchor);
-                if (dst_p + lastRun + 1 + ((lastRun + 255 - RUN_MASK) / 255) > dst_end) return 0;
-                if (lastRun >= RUN_MASK)
-                {
-                    *dst_p++ = (RUN_MASK << ML_BITS);
-                    lastRun -= RUN_MASK;
-                    for (; lastRun > 254; lastRun -= 255) *dst_p++ = 255;
-                    *dst_p++ = (byte)lastRun;
-                }
-                else *dst_p++ = (byte)(lastRun << ML_BITS);
-                BlockCopy(src_anchor, dst_p, (int)(src_end - src_anchor));
-                dst_p += src_end - src_anchor;
-
-                // End
-                return (int)(dst_p - dst);
             }
         }
 
@@ -309,223 +312,226 @@ namespace LZ4
             int src_len,
             int dst_maxlen)
         {
-            byte* _p;
-
-            fixed (int* debruijn64 = &DEBRUIJN_TABLE_64[0])
+            unchecked
             {
-                // r93
-                var src_p = src;
-                var src_anchor = src_p;
-                var src_base = src_p;
-                var src_end = src_p + src_len;
-                var src_mflimit = src_end - MFLIMIT;
+                byte* _p;
 
-                var dst_p = dst;
-                var dst_end = dst_p + dst_maxlen;
-
-                var src_LASTLITERALS = src_end - LASTLITERALS;
-                var src_LASTLITERALS_1 = src_LASTLITERALS - 1;
-
-                var src_LASTLITERALS_3 = src_LASTLITERALS - 3;
-
-                var src_LASTLITERALS_STEPSIZE_1 = src_LASTLITERALS - (STEPSIZE_64 - 1);
-                var dst_LASTLITERALS_1 = dst_end - (1 + LASTLITERALS);
-                var dst_LASTLITERALS_3 = dst_end - (2 + 1 + LASTLITERALS);
-
-                int len, length;
-
-                uint h, h_fwd;
-
-                // Init
-                if (src_len < MINLENGTH) goto _last_literals;
-
-                // First Byte
-                src_p++;
-                h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH64K_ADJUST);
-
-                // Main Loop
-                while (true)
+                fixed (int* debruijn64 = &DEBRUIJN_TABLE_64[0])
                 {
-                    var findMatchAttempts = (1 << SKIPSTRENGTH) + 3;
-                    var src_p_fwd = src_p;
-                    byte* src_ref;
-                    byte* dst_token;
+                    // r93
+                    var src_p = src;
+                    var src_anchor = src_p;
+                    var src_base = src_p;
+                    var src_end = src_p + src_len;
+                    var src_mflimit = src_end - MFLIMIT;
 
-                    // Find a match
-                    do
+                    var dst_p = dst;
+                    var dst_end = dst_p + dst_maxlen;
+
+                    var src_LASTLITERALS = src_end - LASTLITERALS;
+                    var src_LASTLITERALS_1 = src_LASTLITERALS - 1;
+
+                    var src_LASTLITERALS_3 = src_LASTLITERALS - 3;
+
+                    var src_LASTLITERALS_STEPSIZE_1 = src_LASTLITERALS - (STEPSIZE_64 - 1);
+                    var dst_LASTLITERALS_1 = dst_end - (1 + LASTLITERALS);
+                    var dst_LASTLITERALS_3 = dst_end - (2 + 1 + LASTLITERALS);
+
+                    int len, length;
+
+                    uint h, h_fwd;
+
+                    // Init
+                    if (src_len < MINLENGTH) goto _last_literals;
+
+                    // First Byte
+                    src_p++;
+                    h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH64K_ADJUST);
+
+                    // Main Loop
+                    while (true)
                     {
-                        h = h_fwd;
-                        var step = findMatchAttempts++ >> SKIPSTRENGTH;
-                        src_p = src_p_fwd;
-                        src_p_fwd = src_p + step;
+                        var findMatchAttempts = (1 << SKIPSTRENGTH) + 3;
+                        var src_p_fwd = src_p;
+                        byte* src_ref;
+                        byte* dst_token;
 
-                        if (src_p_fwd > src_mflimit) goto _last_literals;
-
-                        h_fwd = ((((*(uint*)(src_p_fwd))) * 2654435761u) >> HASH64K_ADJUST);
-                        src_ref = src_base + hash_table[h];
-                        hash_table[h] = (ushort)(src_p - src_base);
-                    } while ((*(uint*)(src_ref)) != (*(uint*)(src_p)));
-
-                    // Catch up
-                    while ((src_p > src_anchor) && (src_ref > src) && (src_p[-1] == src_ref[-1]))
-                    {
-                        src_p--;
-                        src_ref--;
-                    }
-
-                    // Encode Literal length
-                    length = (int)(src_p - src_anchor);
-                    dst_token = dst_p++;
-
-                    if (dst_p + length + (length >> 8) > dst_LASTLITERALS_3) return 0; // Check output limit
-
-                    if (length >= RUN_MASK)
-                    {
-                        len = length - RUN_MASK;
-                        *dst_token = (RUN_MASK << ML_BITS);
-                        if (len > 254)
+                        // Find a match
+                        do
                         {
-                            do
+                            h = h_fwd;
+                            var step = findMatchAttempts++ >> SKIPSTRENGTH;
+                            src_p = src_p_fwd;
+                            src_p_fwd = src_p + step;
+
+                            if (src_p_fwd > src_mflimit) goto _last_literals;
+
+                            h_fwd = ((((*(uint*)(src_p_fwd))) * 2654435761u) >> HASH64K_ADJUST);
+                            src_ref = src_base + hash_table[h];
+                            hash_table[h] = (ushort)(src_p - src_base);
+                        } while ((*(uint*)(src_ref)) != (*(uint*)(src_p)));
+
+                        // Catch up
+                        while ((src_p > src_anchor) && (src_ref > src) && (src_p[-1] == src_ref[-1]))
+                        {
+                            src_p--;
+                            src_ref--;
+                        }
+
+                        // Encode Literal length
+                        length = (int)(src_p - src_anchor);
+                        dst_token = dst_p++;
+
+                        if (dst_p + length + (length >> 8) > dst_LASTLITERALS_3) return 0; // Check output limit
+
+                        if (length >= RUN_MASK)
+                        {
+                            len = length - RUN_MASK;
+                            *dst_token = (RUN_MASK << ML_BITS);
+                            if (len > 254)
+                            {
+                                do
+                                {
+                                    *dst_p++ = 255;
+                                    len -= 255;
+                                } while (len > 254);
+                                *dst_p++ = (byte)len;
+                                BlockCopy(src_anchor, dst_p, (length));
+                                dst_p += length;
+                                goto _next_match;
+                            }
+                            *dst_p++ = (byte)len;
+                        }
+                        else
+                        {
+                            *dst_token = (byte)(length << ML_BITS);
+                        }
+
+                        // Copy Literals
+                        {
+                            _p = dst_p + (length);
+                            {
+                                do
+                                {
+                                    *(ulong*)dst_p = *(ulong*)src_anchor;
+                                    dst_p += 8;
+                                    src_anchor += 8;
+                                } while (dst_p < _p);
+                            }
+                            dst_p = _p;
+                        }
+
+                        _next_match:
+
+                        // Encode Offset
+                        *(ushort*)dst_p = (ushort)(src_p - src_ref);
+                        dst_p += 2;
+
+                        // Start Counting
+                        src_p += MINMATCH;
+                        src_ref += MINMATCH; // MinMatch verified
+                        src_anchor = src_p;
+
+                        while (src_p < src_LASTLITERALS_STEPSIZE_1)
+                        {
+                            var diff = (*(long*)(src_ref)) ^ (*(long*)(src_p));
+                            if (diff == 0)
+                            {
+                                src_p += STEPSIZE_64;
+                                src_ref += STEPSIZE_64;
+                                continue;
+                            }
+                            src_p += debruijn64[(((ulong)((diff) & -(diff)) * 0x0218A392CDABBD3FL)) >> 58];
+                            goto _endCount;
+                        }
+
+                        if ((src_p < src_LASTLITERALS_3) && ((*(uint*)(src_ref)) == (*(uint*)(src_p))))
+                        {
+                            src_p += 4;
+                            src_ref += 4;
+                        }
+                        if ((src_p < src_LASTLITERALS_1) && ((*(ushort*)(src_ref)) == (*(ushort*)(src_p))))
+                        {
+                            src_p += 2;
+                            src_ref += 2;
+                        }
+                        if ((src_p < src_LASTLITERALS) && (*src_ref == *src_p)) src_p++;
+
+                        _endCount:
+
+                        // Encode MatchLength
+                        len = (int)(src_p - src_anchor);
+
+                        if (dst_p + (len >> 8) > dst_LASTLITERALS_1) return 0; // Check output limit
+
+                        if (len >= ML_MASK)
+                        {
+                            *dst_token += ML_MASK;
+                            len -= ML_MASK;
+                            for (; len > 509; len -= 510)
                             {
                                 *dst_p++ = 255;
+                                *dst_p++ = 255;
+                            }
+                            if (len > 254)
+                            {
                                 len -= 255;
-                            } while (len > 254);
+                                *dst_p++ = 255;
+                            }
                             *dst_p++ = (byte)len;
-                            BlockCopy(src_anchor, dst_p, (length));
-                            dst_p += length;
+                        }
+                        else
+                        {
+                            *dst_token += (byte)len;
+                        }
+
+                        // Test end of chunk
+                        if (src_p > src_mflimit)
+                        {
+                            src_anchor = src_p;
+                            break;
+                        }
+
+                        // Fill table
+                        hash_table[((((*(uint*)(src_p - 2))) * 2654435761u) >> HASH64K_ADJUST)] = (ushort)(src_p - 2 - src_base);
+
+                        // Test next position
+
+                        h = ((((*(uint*)(src_p))) * 2654435761u) >> HASH64K_ADJUST);
+                        src_ref = src_base + hash_table[h];
+                        hash_table[h] = (ushort)(src_p - src_base);
+
+                        if ((*(uint*)(src_ref)) == (*(uint*)(src_p)))
+                        {
+                            dst_token = dst_p++;
+                            *dst_token = 0;
                             goto _next_match;
                         }
-                        *dst_p++ = (byte)len;
+
+                        // Prepare next loop
+                        src_anchor = src_p++;
+                        h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH64K_ADJUST);
                     }
-                    else
+
+                    _last_literals:
+
+                    // Encode Last Literals
+                    var lastRun = (int)(src_end - src_anchor);
+                    if (dst_p + lastRun + 1 + (lastRun - RUN_MASK + 255) / 255 > dst_end) return 0;
+                    if (lastRun >= RUN_MASK)
                     {
-                        *dst_token = (byte)(length << ML_BITS);
+                        *dst_p++ = (RUN_MASK << ML_BITS);
+                        lastRun -= RUN_MASK;
+                        for (; lastRun > 254; lastRun -= 255) *dst_p++ = 255;
+                        *dst_p++ = (byte)lastRun;
                     }
+                    else *dst_p++ = (byte)(lastRun << ML_BITS);
+                    BlockCopy(src_anchor, dst_p, (int)(src_end - src_anchor));
+                    dst_p += src_end - src_anchor;
 
-                    // Copy Literals
-                    {
-                        _p = dst_p + (length);
-                        {
-                            do
-                            {
-                                *(ulong*)dst_p = *(ulong*)src_anchor;
-                                dst_p += 8;
-                                src_anchor += 8;
-                            } while (dst_p < _p);
-                        }
-                        dst_p = _p;
-                    }
-
-                    _next_match:
-
-                    // Encode Offset
-                    *(ushort*)dst_p = (ushort)(src_p - src_ref);
-                    dst_p += 2;
-
-                    // Start Counting
-                    src_p += MINMATCH;
-                    src_ref += MINMATCH; // MinMatch verified
-                    src_anchor = src_p;
-
-                    while (src_p < src_LASTLITERALS_STEPSIZE_1)
-                    {
-                        var diff = (*(long*)(src_ref)) ^ (*(long*)(src_p));
-                        if (diff == 0)
-                        {
-                            src_p += STEPSIZE_64;
-                            src_ref += STEPSIZE_64;
-                            continue;
-                        }
-                        src_p += debruijn64[(((ulong)((diff) & -(diff)) * 0x0218A392CDABBD3FL)) >> 58];
-                        goto _endCount;
-                    }
-
-                    if ((src_p < src_LASTLITERALS_3) && ((*(uint*)(src_ref)) == (*(uint*)(src_p))))
-                    {
-                        src_p += 4;
-                        src_ref += 4;
-                    }
-                    if ((src_p < src_LASTLITERALS_1) && ((*(ushort*)(src_ref)) == (*(ushort*)(src_p))))
-                    {
-                        src_p += 2;
-                        src_ref += 2;
-                    }
-                    if ((src_p < src_LASTLITERALS) && (*src_ref == *src_p)) src_p++;
-
-                    _endCount:
-
-                    // Encode MatchLength
-                    len = (int)(src_p - src_anchor);
-
-                    if (dst_p + (len >> 8) > dst_LASTLITERALS_1) return 0; // Check output limit
-
-                    if (len >= ML_MASK)
-                    {
-                        *dst_token += ML_MASK;
-                        len -= ML_MASK;
-                        for (; len > 509; len -= 510)
-                        {
-                            *dst_p++ = 255;
-                            *dst_p++ = 255;
-                        }
-                        if (len > 254)
-                        {
-                            len -= 255;
-                            *dst_p++ = 255;
-                        }
-                        *dst_p++ = (byte)len;
-                    }
-                    else
-                    {
-                        *dst_token += (byte)len;
-                    }
-
-                    // Test end of chunk
-                    if (src_p > src_mflimit)
-                    {
-                        src_anchor = src_p;
-                        break;
-                    }
-
-                    // Fill table
-                    hash_table[((((*(uint*)(src_p - 2))) * 2654435761u) >> HASH64K_ADJUST)] = (ushort)(src_p - 2 - src_base);
-
-                    // Test next position
-
-                    h = ((((*(uint*)(src_p))) * 2654435761u) >> HASH64K_ADJUST);
-                    src_ref = src_base + hash_table[h];
-                    hash_table[h] = (ushort)(src_p - src_base);
-
-                    if ((*(uint*)(src_ref)) == (*(uint*)(src_p)))
-                    {
-                        dst_token = dst_p++;
-                        *dst_token = 0;
-                        goto _next_match;
-                    }
-
-                    // Prepare next loop
-                    src_anchor = src_p++;
-                    h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH64K_ADJUST);
+                    // End
+                    return (int)(dst_p - dst);
                 }
-
-                _last_literals:
-
-                // Encode Last Literals
-                var lastRun = (int)(src_end - src_anchor);
-                if (dst_p + lastRun + 1 + (lastRun - RUN_MASK + 255) / 255 > dst_end) return 0;
-                if (lastRun >= RUN_MASK)
-                {
-                    *dst_p++ = (RUN_MASK << ML_BITS);
-                    lastRun -= RUN_MASK;
-                    for (; lastRun > 254; lastRun -= 255) *dst_p++ = 255;
-                    *dst_p++ = (byte)lastRun;
-                }
-                else *dst_p++ = (byte)(lastRun << ML_BITS);
-                BlockCopy(src_anchor, dst_p, (int)(src_end - src_anchor));
-                dst_p += src_end - src_anchor;
-
-                // End
-                return (int)(dst_p - dst);
             }
         }
 
@@ -538,127 +544,130 @@ namespace LZ4
             byte* dst,
             int dst_len)
         {
-            fixed (int* dec32table = &DECODER_TABLE_32[0])
-            fixed (int* dec64table = &DECODER_TABLE_64[0])
+            unchecked
             {
-                // r93
-                var src_p = src;
-                byte* dst_ref;
-
-                var dst_p = dst;
-                var dst_end = dst_p + dst_len;
-                byte* dst_cpy;
-
-                var dst_LASTLITERALS = dst_end - LASTLITERALS;
-                var dst_COPYLENGTH = dst_end - COPYLENGTH;
-                var dst_COPYLENGTH_STEPSIZE_4 = dst_end - COPYLENGTH - (STEPSIZE_64 - 4);
-
-                byte token;
-
-                // Main Loop
-                while (true)
+                fixed (int* dec32table = &DECODER_TABLE_32[0])
+                fixed (int* dec64table = &DECODER_TABLE_64[0])
                 {
-                    int length;
+                    // r93
+                    var src_p = src;
+                    byte* dst_ref;
 
-                    // get runlength
-                    token = *src_p++;
-                    if ((length = (token >> ML_BITS)) == RUN_MASK)
+                    var dst_p = dst;
+                    var dst_end = dst_p + dst_len;
+                    byte* dst_cpy;
+
+                    var dst_LASTLITERALS = dst_end - LASTLITERALS;
+                    var dst_COPYLENGTH = dst_end - COPYLENGTH;
+                    var dst_COPYLENGTH_STEPSIZE_4 = dst_end - COPYLENGTH - (STEPSIZE_64 - 4);
+
+                    byte token;
+
+                    // Main Loop
+                    while (true)
                     {
-                        int len;
-                        for (; (len = *src_p++) == 255; length += 255)
+                        int length;
+
+                        // get runlength
+                        token = *src_p++;
+                        if ((length = (token >> ML_BITS)) == RUN_MASK)
                         {
-                            /* do nothing */
-                        }
-                        length += len;
-                    }
-
-                    // copy literals
-                    dst_cpy = dst_p + length;
-
-                    if (dst_cpy > dst_COPYLENGTH)
-                    {
-                        if (dst_cpy != dst_end) goto _output_error; // Error : not enough place for another match (min 4) + 5 literals
-                        BlockCopy(src_p, dst_p, (length));
-                        src_p += length;
-                        break; // EOF
-                    }
-                    do
-                    {
-                        *(ulong*)dst_p = *(ulong*)src_p;
-                        dst_p += 8;
-                        src_p += 8;
-                    } while (dst_p < dst_cpy);
-                    src_p -= (dst_p - dst_cpy);
-                    dst_p = dst_cpy;
-
-                    // get offset
-                    dst_ref = (dst_cpy) - (*(ushort*)(src_p));
-                    src_p += 2;
-                    if (dst_ref < dst) goto _output_error; // Error : offset outside destination buffer
-
-                    // get matchlength
-                    if ((length = (token & ML_MASK)) == ML_MASK)
-                    {
-                        for (; *src_p == 255; length += 255) src_p++;
-                        length += *src_p++;
-                    }
-
-                    // copy repeated sequence
-                    if ((dst_p - dst_ref) < STEPSIZE_64)
-                    {
-                        var dec64 = dec64table[dst_p - dst_ref];
-
-                        dst_p[0] = dst_ref[0];
-                        dst_p[1] = dst_ref[1];
-                        dst_p[2] = dst_ref[2];
-                        dst_p[3] = dst_ref[3];
-                        dst_p += 4;
-                        dst_ref += 4;
-                        dst_ref -= dec32table[dst_p - dst_ref];
-                        (*(uint*)(dst_p)) = (*(uint*)(dst_ref));
-                        dst_p += STEPSIZE_64 - 4;
-                        dst_ref -= dec64;
-                    }
-                    else
-                    {
-                        *(ulong*)dst_p = *(ulong*)dst_ref;
-                        dst_p += 8;
-                        dst_ref += 8;
-                    }
-                    dst_cpy = dst_p + length - (STEPSIZE_64 - 4);
-
-                    if (dst_cpy > dst_COPYLENGTH_STEPSIZE_4)
-                    {
-                        if (dst_cpy > dst_LASTLITERALS) goto _output_error; // Error : last 5 bytes must be literals
-                        while (dst_p < dst_COPYLENGTH)
-                        {
-                            *(ulong*)dst_p = *(ulong*)dst_ref;
-                            dst_p += 8;
-                            dst_ref += 8;
+                            int len;
+                            for (; (len = *src_p++) == 255; length += 255)
+                            {
+                                /* do nothing */
+                            }
+                            length += len;
                         }
 
-                        while (dst_p < dst_cpy) *dst_p++ = *dst_ref++;
-                        dst_p = dst_cpy;
-                        continue;
-                    }
+                        // copy literals
+                        dst_cpy = dst_p + length;
 
-                    {
+                        if (dst_cpy > dst_COPYLENGTH)
+                        {
+                            if (dst_cpy != dst_end) goto _output_error; // Error : not enough place for another match (min 4) + 5 literals
+                            BlockCopy(src_p, dst_p, (length));
+                            src_p += length;
+                            break; // EOF
+                        }
                         do
                         {
+                            *(ulong*)dst_p = *(ulong*)src_p;
+                            dst_p += 8;
+                            src_p += 8;
+                        } while (dst_p < dst_cpy);
+                        src_p -= (dst_p - dst_cpy);
+                        dst_p = dst_cpy;
+
+                        // get offset
+                        dst_ref = (dst_cpy) - (*(ushort*)(src_p));
+                        src_p += 2;
+                        if (dst_ref < dst) goto _output_error; // Error : offset outside destination buffer
+
+                        // get matchlength
+                        if ((length = (token & ML_MASK)) == ML_MASK)
+                        {
+                            for (; *src_p == 255; length += 255) src_p++;
+                            length += *src_p++;
+                        }
+
+                        // copy repeated sequence
+                        if ((dst_p - dst_ref) < STEPSIZE_64)
+                        {
+                            var dec64 = dec64table[dst_p - dst_ref];
+
+                            dst_p[0] = dst_ref[0];
+                            dst_p[1] = dst_ref[1];
+                            dst_p[2] = dst_ref[2];
+                            dst_p[3] = dst_ref[3];
+                            dst_p += 4;
+                            dst_ref += 4;
+                            dst_ref -= dec32table[dst_p - dst_ref];
+                            (*(uint*)(dst_p)) = (*(uint*)(dst_ref));
+                            dst_p += STEPSIZE_64 - 4;
+                            dst_ref -= dec64;
+                        }
+                        else
+                        {
                             *(ulong*)dst_p = *(ulong*)dst_ref;
                             dst_p += 8;
                             dst_ref += 8;
-                        } while (dst_p < dst_cpy);
+                        }
+                        dst_cpy = dst_p + length - (STEPSIZE_64 - 4);
+
+                        if (dst_cpy > dst_COPYLENGTH_STEPSIZE_4)
+                        {
+                            if (dst_cpy > dst_LASTLITERALS) goto _output_error; // Error : last 5 bytes must be literals
+                            while (dst_p < dst_COPYLENGTH)
+                            {
+                                *(ulong*)dst_p = *(ulong*)dst_ref;
+                                dst_p += 8;
+                                dst_ref += 8;
+                            }
+
+                            while (dst_p < dst_cpy) *dst_p++ = *dst_ref++;
+                            dst_p = dst_cpy;
+                            continue;
+                        }
+
+                        {
+                            do
+                            {
+                                *(ulong*)dst_p = *(ulong*)dst_ref;
+                                dst_p += 8;
+                                dst_ref += 8;
+                            } while (dst_p < dst_cpy);
+                        }
+                        dst_p = dst_cpy; // correction
                     }
-                    dst_p = dst_cpy; // correction
+
+                    // end of decoding
+                    return (int)((src_p) - src);
+
+                    // write overflow error detected
+                    _output_error:
+                    return (int)(-((src_p) - src));
                 }
-
-                // end of decoding
-                return (int)((src_p) - src);
-
-                // write overflow error detected
-                _output_error:
-                return (int)(-((src_p) - src));
             }
         }
 

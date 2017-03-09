@@ -24,27 +24,12 @@ namespace MessagePack.Formatters
 
         public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
         {
-            if (value == null)
-            {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
-            }
-            else
-            {
-                return MessagePackBinary.WriteBytes(ref bytes, offset, value);
-            }
+            return MessagePackBinary.WriteBytes(ref bytes, offset, value);
         }
 
         public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
-            {
-                readSize = 1;
-                return null;
-            }
-            else
-            {
-                return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
-            }
+            return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
         }
     }
 
@@ -59,27 +44,12 @@ namespace MessagePack.Formatters
 
         public int Serialize(ref byte[] bytes, int offset, String value, IFormatterResolver typeResolver)
         {
-            if (value == null)
-            {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
-            }
-            else
-            {
-                return MessagePackBinary.WriteString(ref bytes, offset, value);
-            }
+            return MessagePackBinary.WriteString(ref bytes, offset, value);
         }
 
         public String Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
-            {
-                readSize = 1;
-                return null;
-            }
-            else
-            {
-                return MessagePackBinary.ReadString(bytes, offset, out readSize);
-            }
+            return MessagePackBinary.ReadString(bytes, offset, out readSize);
         }
     }
 
