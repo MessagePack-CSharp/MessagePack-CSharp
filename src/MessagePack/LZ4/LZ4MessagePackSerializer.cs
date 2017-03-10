@@ -4,6 +4,7 @@ using MessagePack.Internal;
 using System;
 using System.Linq;
 using System.IO;
+using MessagePack.LZ4;
 
 namespace MessagePack
 {
@@ -67,7 +68,7 @@ namespace MessagePack
             }
             else
             {
-                var maxOutCount = global::LZ4.LZ4Codec.MaximumOutputLength(serializedData.Count);
+                var maxOutCount = LZ4Codec.MaximumOutputLength(serializedData.Count);
 
                 MessagePackBinary.EnsureCapacity(ref bytes, offset, 6 + 5 + maxOutCount); // (ext header size + fixed length size)
 
@@ -76,7 +77,7 @@ namespace MessagePack
                 offset += (6 + 5);
 
                 // write body
-                var lz4Length = global::LZ4.LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, bytes, offset, bytes.Length - offset);
+                var lz4Length = LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, bytes, offset, bytes.Length - offset);
 
                 // write extension header(always 6 bytes)
                 extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32(ref bytes, extHeaderOffset, (sbyte)ExtensionTypeCode, lz4Length + 5);
@@ -100,7 +101,7 @@ namespace MessagePack
             {
                 var offset = 0;
                 var buffer = LZ4MemoryPool.GetBuffer();
-                var maxOutCount = global::LZ4.LZ4Codec.MaximumOutputLength(serializedData.Count);
+                var maxOutCount = LZ4Codec.MaximumOutputLength(serializedData.Count);
                 if (buffer.Length + 6 + 5 < maxOutCount) // (ext header size + fixed length size)
                 {
                     buffer = new byte[6 + 5 + maxOutCount];
@@ -111,7 +112,7 @@ namespace MessagePack
                 offset += (6 + 5);
 
                 // write body
-                var lz4Length = global::LZ4.LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, buffer, offset, buffer.Length - offset);
+                var lz4Length = LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, buffer, offset, buffer.Length - offset);
 
                 // write extension header(always 6 bytes)
                 extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32(ref buffer, extHeaderOffset, (sbyte)ExtensionTypeCode, lz4Length + 5);
@@ -172,7 +173,7 @@ namespace MessagePack
                     }
 
                     // LZ4 Decode
-                    global::LZ4.LZ4Codec.Decode(bytes.Array, offset, bytes.Count - offset, buffer, 0, length, true);
+                    LZ4Codec.Decode(bytes.Array, offset, bytes.Count - offset, buffer, 0, length, true);
 
                     return formatter.Deserialize(buffer, 0, resolver, out readSize);
                 }

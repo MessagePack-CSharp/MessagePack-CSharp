@@ -31,9 +31,9 @@ using System;
 
 // ReSharper disable InconsistentNaming
 
-namespace LZ4
+namespace MessagePack.LZ4
 {
-    internal static partial class LZ4Codec
+    public static partial class LZ4Codec
     {
 #region configuration
 

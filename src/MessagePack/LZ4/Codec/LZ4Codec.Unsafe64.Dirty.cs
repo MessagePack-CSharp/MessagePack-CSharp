@@ -68,9 +68,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ReSharper disable TooWideLocalVariableScope
 // ReSharper disable JoinDeclarationAndInitializer
 
-namespace LZ4
+namespace MessagePack.LZ4
 {
-    internal static partial class LZ4Codec
+    public static partial class LZ4Codec
     {
         #region LZ4_compressCtx_64
 

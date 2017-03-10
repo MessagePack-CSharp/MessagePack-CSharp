@@ -2,9 +2,9 @@
 
 using System;
 
-namespace LZ4
+namespace MessagePack.LZ4
 {
-    internal static partial class LZ4Codec
+    public static partial class LZ4Codec
     {
         public static int Encode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
         {

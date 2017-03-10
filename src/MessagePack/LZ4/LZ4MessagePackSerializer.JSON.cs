@@ -1,6 +1,7 @@
 ﻿#if ENABLE_UNSAFE_MSGPACK
 
 using MessagePack.Internal;
+using MessagePack.LZ4;
 using System;
 using System.Globalization;
 using System.Text;
@@ -51,7 +52,7 @@ namespace MessagePack
                     }
 
                     // LZ4 Decode
-                    global::LZ4.LZ4Codec.Decode(bytes, offset, bytes.Length - offset, buffer, 0, length, true);
+                    LZ4Codec.Decode(bytes, offset, bytes.Length - offset, buffer, 0, length, true);
 
                     bytes = buffer; // use LZ4 bytes
                 }
