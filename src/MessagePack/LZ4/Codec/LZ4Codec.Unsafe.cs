@@ -91,7 +91,7 @@ namespace LZ4
             }
             else
             {
-                var hashTable = new byte*[HASH_TABLESIZE];
+                var hashTable = HashTablePool.GetByteHashTablePool();
                 fixed (byte** h = &hashTable[0])
                 {
                     return LZ4_compressCtx_32(h, input, output, inputLength, outputLength);
