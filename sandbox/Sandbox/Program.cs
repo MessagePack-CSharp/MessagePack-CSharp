@@ -12,6 +12,9 @@ using ProtoBuf;
 using SharedData;
 using System.Collections;
 using UnityEngine;
+using Newtonsoft.Json;
+using System.Text;
+using System.IO.Compression;
 
 namespace Sandbox
 {
@@ -126,12 +129,15 @@ namespace Sandbox
         {
             const int Iteration = 10000; // 10000
 
+            var jsonSerializer = new JsonSerializer();
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
             MessagePack.MessagePackSerializer.Serialize(target);
             LZ4MessagePackSerializer.Serialize(target);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
+            jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
+
 
             Console.WriteLine(typeof(T).Name + " serialization test");
             Console.WriteLine();
@@ -142,6 +148,8 @@ namespace Sandbox
             byte[] data1 = null;
             byte[] data2 = null;
             byte[] data3 = null;
+            byte[] dataJson = null;
+            byte[] dataGzipJson = null;
             using (new Measure("MsgPack-Cli"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -158,7 +166,6 @@ namespace Sandbox
                 }
             }
 
-
             using (new Measure("MessagePack(LZ4)"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -174,6 +181,34 @@ namespace Sandbox
                     data1 = ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
                 }
             }
+
+            using (new Measure("JsonNet"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    using (var ms = new MemoryStream())
+                    using (var sw = new StreamWriter(ms, Encoding.UTF8, 1024, true))
+                    using (var jw = new JsonTextWriter(sw))
+                    {
+                        jsonSerializer.Serialize(jw, target);
+                    }
+                }
+            }
+
+            using (new Measure("JsonNet+Gzip"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    using (var ms = new MemoryStream())
+                    using (var gzip = new GZipStream(ms, CompressionLevel.Fastest))
+                    using (var sw = new StreamWriter(gzip, Encoding.UTF8, 1024, true))
+                    using (var jw = new JsonTextWriter(sw))
+                    {
+                        jsonSerializer.Serialize(jw, target);
+                    }
+                }
+            }
+
             using (new Measure("protobuf-net"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -190,11 +225,34 @@ namespace Sandbox
                 ProtoBuf.Serializer.Serialize(ms, target);
                 data2 = ms.ToArray();
             }
+
+            using (var ms = new MemoryStream())
+            {
+                using (var sw = new StreamWriter(ms, Encoding.UTF8, 1024, true))
+                using (var jw = new JsonTextWriter(sw))
+                {
+                    jsonSerializer.Serialize(jw, target);
+                }
+                dataJson = ms.ToArray();
+            }
+            using (var ms = new MemoryStream())
+            {
+                using (var gzip = new GZipStream(ms, CompressionLevel.Fastest))
+                using (var sw = new StreamWriter(gzip, Encoding.UTF8, 1024, true))
+                using (var jw = new JsonTextWriter(sw))
+                {
+                    jsonSerializer.Serialize(jw, target);
+                }
+                dataGzipJson = ms.ToArray();
+            }
+
+
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
             MessagePack.MessagePackSerializer.Deserialize<T>(data0);
             ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
             LZ4MessagePackSerializer.Deserialize<T>(data3);
+            jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
             Console.WriteLine("Deserialize::");
@@ -231,6 +289,33 @@ namespace Sandbox
                 }
             }
 
+            using (new Measure("JsonNet"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    using (var ms = new MemoryStream(dataJson))
+                    using (var sr = new StreamReader(ms, Encoding.UTF8))
+                    using (var jr = new JsonTextReader(sr))
+                    {
+                        jsonSerializer.Deserialize<T>(jr);
+                    }
+                }
+            }
+
+            using (new Measure("JsonNet+Gzip"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    using (var ms = new MemoryStream(dataGzipJson))
+                    using (var gzip = new GZipStream(ms, CompressionMode.Decompress))
+                    using (var sr = new StreamReader(gzip, Encoding.UTF8))
+                    using (var jr = new JsonTextReader(sr))
+                    {
+                        jsonSerializer.Deserialize<T>(jr);
+                    }
+                }
+            }
+
             using (new Measure("protobuf-net"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -250,6 +335,8 @@ namespace Sandbox
             label = "MessagePack(LZ4)"; Console.WriteLine($"{label,20}   {data3.Length} Byte");
             label = "ZeroFormatter"; Console.WriteLine($"{label,20}   {data1.Length} Byte");
             label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
+            label = "JsonNet"; Console.WriteLine($"{label,20}   {dataJson.Length} Byte");
+            label = "JsonNet+GZip"; Console.WriteLine($"{label,20}   {dataGzipJson.Length} Byte");
 
             Console.WriteLine();
             Console.WriteLine();

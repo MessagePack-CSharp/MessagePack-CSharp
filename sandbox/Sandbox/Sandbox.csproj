@@ -11,7 +11,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
-    <PackageReference Include="MsgPack.Cli" Version="0.9.0-beta2" />
+    <PackageReference Include="MsgPack.Cli" Version="0.7.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.1-beta1" />
     <PackageReference Include="protobuf-net" Version="2.1.0" />
     <PackageReference Include="ZeroFormatter" Version="1.6.2" />
   </ItemGroup>

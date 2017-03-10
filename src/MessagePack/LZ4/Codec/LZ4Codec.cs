@@ -35,7 +35,7 @@ namespace MessagePack.LZ4
 {
     public static partial class LZ4Codec
     {
-#region configuration
+        #region configuration
 
         /// <summary>
         /// Memory usage formula : N->2^N Bytes (examples : 10 -> 1KB; 12 -> 4KB ; 16 -> 64KB; 20 -> 1MB; etc.)
@@ -43,7 +43,7 @@ namespace MessagePack.LZ4
         /// Reduced memory usage can improve speed, due to cache effect
         /// Default value is 14, for 16KB, which nicely fits into Intel x86 L1 cache
         /// </summary>
-        private const int MEMORY_USAGE = 14;
+        private const int MEMORY_USAGE = 12; // mod, use 12
 
         /// <summary>
         /// Decreasing this value will make the algorithm skip faster data segments considered "incompressible"
@@ -54,9 +54,9 @@ namespace MessagePack.LZ4
         /// </summary>
         private const int NOTCOMPRESSIBLE_DETECTIONLEVEL = 6;
 
-#endregion
+        #endregion
 
-#region consts
+        #region consts
 
         private const int MINMATCH = 4;
 
@@ -116,9 +116,9 @@ namespace MessagePack.LZ4
         private const int MAX_NB_ATTEMPTS = 256;
         private const int OPTIMAL_ML = (ML_MASK - 1) + MINMATCH;
 
-#endregion
+        #endregion
 
-#region public interface (common)
+        #region public interface (common)
 
         /// <summary>Gets maximum the length of the output.</summary>
         /// <param name="inputLength">Length of the input.</param>
@@ -128,9 +128,9 @@ namespace MessagePack.LZ4
             return inputLength + (inputLength / 255) + 16;
         }
 
-#endregion
+        #endregion
 
-#region internal interface (common)
+        #region internal interface (common)
 
         internal static void CheckArguments(
             byte[] input, int inputOffset, ref int inputLength,
@@ -153,7 +153,7 @@ namespace MessagePack.LZ4
                 throw new ArgumentException("outputOffset and outputLength are invalid for given output");
         }
 
-#endregion
+        #endregion
     }
 }
 
