@@ -228,6 +228,14 @@ namespace MessagePackAnalyzer
         // Gate of recursive collect
         public void CollectCore(ITypeSymbol typeSymbol, ISymbol callerSymbol = null)
         {
+            if (typeSymbol.TypeKind == TypeKind.Array)
+            {
+                var array = typeSymbol as IArrayTypeSymbol;
+                var t = array.ElementType;
+                CollectCore(t, callerSymbol);
+                return;
+            }
+
             var type = typeSymbol as INamedTypeSymbol;
 
             if (type == null)
@@ -260,16 +268,8 @@ namespace MessagePackAnalyzer
             {
                 foreach (var item in type.TypeArguments)
                 {
-                    CollectCore(item);
+                    CollectCore(item, callerSymbol);
                 }
-                return;
-            }
-
-            if (type.TypeKind == TypeKind.Array)
-            {
-                var array = type as IArrayTypeSymbol;
-                var t = array.ElementType;
-                CollectCore(t);
                 return;
             }
 
@@ -299,7 +299,8 @@ namespace MessagePackAnalyzer
                 var location = callerSymbol != null ? callerSymbol.Locations[0] : type.Locations[0];
                 var targetName = callerSymbol != null ? callerSymbol.ContainingType.Name + "." + callerSymbol.Name : type.Name;
 
-                ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.TypeMustBeMessagePackObject, location, targetName));
+                var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.TypeMustBeMessagePackObject, location, typeInfo, targetName));
                 return;
             }
 
@@ -355,7 +356,8 @@ namespace MessagePackAnalyzer
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
                     if (key == null)
                     {
-                        ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.PublicMemberNeedsKey, item.Locations[0], type.Name, item.Name));
+                        var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.PublicMemberNeedsKey, item.Locations[0], typeInfo, type.Name, item.Name));
                         continue;
                     }
 
@@ -418,7 +420,8 @@ namespace MessagePackAnalyzer
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
                     if (key == null)
                     {
-                        ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.PublicMemberNeedsKey, item.Locations[0], type.Name, item.Name));
+                        var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.PublicMemberNeedsKey, item.Locations[0], typeInfo, type.Name, item.Name));
                         continue;
                     }
 

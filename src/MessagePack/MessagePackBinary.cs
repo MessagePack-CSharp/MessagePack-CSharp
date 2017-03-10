@@ -1445,6 +1445,24 @@ namespace MessagePack
             }
         }
 
+        /// <summary>
+        /// Write extension format header, always use ext32 format(length is fixed, 6).
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteExtensionFormatHeaderForceExt32(ref byte[] bytes, int offset, sbyte typeCode, int dataLength)
+        {
+            EnsureCapacity(ref bytes, offset, dataLength + 6);
+            bytes[offset] = MessagePackCode.Ext32;
+            bytes[offset + 1] = unchecked((byte)(dataLength >> 24));
+            bytes[offset + 2] = unchecked((byte)(dataLength >> 16));
+            bytes[offset + 3] = unchecked((byte)(dataLength >> 8));
+            bytes[offset + 4] = unchecked((byte)dataLength);
+            bytes[offset + 5] = unchecked((byte)typeCode);
+            return 6;
+        }
+
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif

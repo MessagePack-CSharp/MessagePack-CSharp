@@ -40,58 +40,73 @@ namespace MessagePackAnalyzer
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false) as CompilationUnitSyntax;
             var model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
 
-            var targetNode = root.FindNode(context.Span);
-            var property = targetNode as PropertyDeclarationSyntax;
-            var field = targetNode as FieldDeclarationSyntax;
-            var dec = targetNode as VariableDeclaratorSyntax;
+            var typeInfo = context.Diagnostics[0]?.Properties.GetValueOrDefault("type", null);
+            var namedSymbol = (typeInfo != null)
+                ? model.Compilation.GetTypeByMetadataName(typeInfo.Replace("global::", ""))
+                : null;
 
-            INamedTypeSymbol targetType = null;
-            if (property == null && field == null)
+            if (namedSymbol == null)
             {
-                var typeDeclare = targetNode as TypeDeclarationSyntax;
-                if (typeDeclare != null)
+                var targetNode = root.FindNode(context.Span);
+                var property = targetNode as PropertyDeclarationSyntax;
+                var field = targetNode as FieldDeclarationSyntax;
+                var dec = targetNode as VariableDeclaratorSyntax;
+
+                ITypeSymbol targetType = null;
+                if (property == null && field == null)
                 {
-                    targetType = model.GetDeclaredSymbol(typeDeclare);
-                }
-                else if (dec != null)
-                {
-                    var fieldOrProperty = model.GetDeclaredSymbol(dec) as ISymbol;
-                    if (context.Diagnostics[0].Id == MessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
+                    var typeDeclare = targetNode as TypeDeclarationSyntax;
+                    if (typeDeclare != null)
                     {
-                        targetType = (INamedTypeSymbol)(fieldOrProperty as IPropertySymbol)?.Type;
-                        if (targetType == null)
+                        targetType = model.GetDeclaredSymbol(typeDeclare);
+                    }
+                    else if (dec != null)
+                    {
+                        var fieldOrProperty = model.GetDeclaredSymbol(dec) as ISymbol;
+                        if (context.Diagnostics[0].Id == MessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
                         {
-                            targetType = (INamedTypeSymbol)(fieldOrProperty as IFieldSymbol)?.Type;
+                            targetType = (fieldOrProperty as IPropertySymbol)?.Type;
+                            if (targetType == null)
+                            {
+                                targetType = (fieldOrProperty as IFieldSymbol)?.Type;
+                            }
+                        }
+                        else
+                        {
+                            targetType = (fieldOrProperty as IPropertySymbol)?.ContainingType;
+                            if (targetType == null)
+                            {
+                                targetType = (fieldOrProperty as IFieldSymbol)?.ContainingType;
+                            }
                         }
                     }
-                    else
-                    {
-                        targetType = (INamedTypeSymbol)(fieldOrProperty as IPropertySymbol)?.ContainingType;
-                        if (targetType == null)
-                        {
-                            targetType = (INamedTypeSymbol)(fieldOrProperty as IFieldSymbol)?.ContainingType;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (context.Diagnostics[0].Id == MessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
-                {
-                    targetType = (property != null)
-                        ? (INamedTypeSymbol)(model.GetDeclaredSymbol(property) as IPropertySymbol)?.Type
-                        : (INamedTypeSymbol)(model.GetDeclaredSymbol(field) as IFieldSymbol)?.Type;
                 }
                 else
                 {
-                    targetType = (property != null)
-                        ? (INamedTypeSymbol)(model.GetDeclaredSymbol(property) as IPropertySymbol)?.ContainingType
-                        : (INamedTypeSymbol)(model.GetDeclaredSymbol(field) as IFieldSymbol)?.ContainingType;
+                    if (context.Diagnostics[0].Id == MessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
+                    {
+                        targetType = (property != null)
+                            ? (model.GetDeclaredSymbol(property) as IPropertySymbol)?.Type
+                            : (model.GetDeclaredSymbol(field) as IFieldSymbol)?.Type;
+                    }
+                    else
+                    {
+                        targetType = (property != null)
+                            ? (model.GetDeclaredSymbol(property) as IPropertySymbol)?.ContainingType
+                            : (model.GetDeclaredSymbol(field) as IFieldSymbol)?.ContainingType;
+                    }
                 }
-            }
-            if (targetType == null) return;
+                if (targetType == null) return;
 
-            var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttribute(context.Document, targetType, c), "MessagePackAnalyzer.AddKeyAttribute");
+                if (targetType.TypeKind == TypeKind.Array)
+                {
+                    targetType = (targetType as IArrayTypeSymbol).ElementType;
+                }
+                namedSymbol = targetType as INamedTypeSymbol;
+                if (namedSymbol == null) return;
+            }
+
+            var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttribute(context.Document, namedSymbol, c), "MessagePackAnalyzer.AddKeyAttribute");
 
             context.RegisterCodeFix(action, context.Diagnostics.First()); // use single.
         }

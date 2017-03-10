@@ -2,15 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack</id>
-    <version>0.8.2</version>
+    <version>0.8.3</version>
     <title>MessagePack for C#</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
     <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity).</description>
+    <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin).</description>
     <releaseNotes>for supports LZ4.</releaseNotes>
-    <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer</tags>
+    <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, Unity, Xamarin</tags>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
       <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.5" />

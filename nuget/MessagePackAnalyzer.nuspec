@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePackAnalyzer</id>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
     <title>MessagePackAnalyzer</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
     <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Analyzer of MessagePack for C#, verify rule for [MessagePackObject] and code fix for [Key].</description>
-    <releaseNotes>improve CodeFix, detect field and nested types.</releaseNotes>
+    <releaseNotes>improve CodeFix, detect array, generics.</releaseNotes>
     <tags>MsgPack, MessagePack, Serialization, Formatter, Analyzer</tags>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework="" />

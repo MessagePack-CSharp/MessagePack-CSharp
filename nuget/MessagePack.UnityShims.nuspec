@@ -2,13 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack.UnityShims</id>
-    <version>0.8.2</version>
+    <version>0.8.3</version>
     <title>MessagePack for C# Extension Support for Unity(add pseudo Vector type and fast Vectory[] extension formatter)</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
     <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity). Extension support for Unity.</description>
+    <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for Unity.</description>
     <releaseNotes>update dependency.</releaseNotes>
     <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, ReactiveProperty</tags>
     <frameworkAssemblies>
@@ -17,10 +17,10 @@
     </frameworkAssemblies>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="MessagePack" version="0.8.2" />
+        <dependency id="MessagePack" version="0.8.3" />
       </group>
       <group targetFramework=".NETStandard1.4">
-        <dependency id="MessagePack" version="0.8.2" />
+        <dependency id="MessagePack" version="0.8.3" />
       </group>
     </dependencies>
   </metadata>

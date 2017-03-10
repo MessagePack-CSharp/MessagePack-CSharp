@@ -84,5 +84,23 @@ namespace MessagePack.Tests.ExtensionTests
             decompress2.IsStructuralEqual(originalData);
             decompress3.IsStructuralEqual(originalData);
         }
+
+        [Fact]
+        public void SerializeToBlock()
+        {
+            var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();
+
+            byte[] bytes = null;
+
+            var len = LZ4MessagePackSerializer.SerializeToBlock(ref bytes, 0, originalData, MessagePackSerializer.DefaultResolver);
+            var lz4Data = LZ4MessagePackSerializer.Serialize(originalData);
+
+            len.Is(lz4Data.Length);
+
+            for (int i = 0; i < len; i++)
+            {
+                if (bytes[i] != lz4Data[i]) throw new AssertException("not same");
+            }
+        }
     }
 }
