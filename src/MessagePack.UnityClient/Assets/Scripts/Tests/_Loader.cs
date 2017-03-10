@@ -9,7 +9,7 @@ namespace MessagePack.UnityClient.Tests
 {
     public static class UnitTestLoader
     {
-        // [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Register()
         {
             // Register Tests
