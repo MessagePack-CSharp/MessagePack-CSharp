@@ -1362,12 +1362,125 @@ namespace MessagePack
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
+        public static int WriteStringBytes(ref byte[] bytes, int offset, byte[] utf8stringBytes)
+        {
+            var byteCount = utf8stringBytes.Length;
+            if (byteCount <= MessagePackRange.MaxFixStringLength)
+            {
+                EnsureCapacity(ref bytes, offset, byteCount + 1);
+                bytes[offset] = (byte)(MessagePackCode.MinFixStr | byteCount);
+                Buffer.BlockCopy(utf8stringBytes, 0, bytes, offset + 1, byteCount);
+                return byteCount + 1;
+            }
+            else if (byteCount <= byte.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, byteCount + 2);
+                bytes[offset] = MessagePackCode.Str8;
+                bytes[offset + 1] = unchecked((byte)byteCount);
+                Buffer.BlockCopy(utf8stringBytes, 0, bytes, offset + 2, byteCount);
+                return byteCount + 2;
+            }
+            else if (byteCount <= ushort.MaxValue)
+            {
+                EnsureCapacity(ref bytes, offset, byteCount + 3);
+                bytes[offset] = MessagePackCode.Str16;
+                bytes[offset + 1] = unchecked((byte)(byteCount >> 8));
+                bytes[offset + 2] = unchecked((byte)byteCount);
+                Buffer.BlockCopy(utf8stringBytes, 0, bytes, offset + 3, byteCount);
+                return byteCount + 3;
+            }
+            else
+            {
+                EnsureCapacity(ref bytes, offset, byteCount + 5);
+                bytes[offset] = MessagePackCode.Str32;
+                bytes[offset + 1] = unchecked((byte)(byteCount >> 24));
+                bytes[offset + 2] = unchecked((byte)(byteCount >> 16));
+                bytes[offset + 3] = unchecked((byte)(byteCount >> 8));
+                bytes[offset + 4] = unchecked((byte)byteCount);
+                Buffer.BlockCopy(utf8stringBytes, 0, bytes, offset + 5, byteCount);
+                return byteCount + 5;
+            }
+        }
+
         public static int WriteString(ref byte[] bytes, int offset, string value)
         {
             if (value == null) return WriteNil(ref bytes, offset);
 
-            var byteCount = StringEncoding.UTF8.GetByteCount(value);
-            return WriteStringUnsafe(ref bytes, offset, value, byteCount);
+            // MaxByteCount -> WritePrefix -> GetBytes has some overheads of `MaxByteCount`
+            // solves heuristic length check
+
+            // ensure buffer by MaxByteCount(faster than GetByteCount)
+            MessagePackBinary.EnsureCapacity(ref bytes, offset, StringEncoding.UTF8.GetMaxByteCount(value.Length) + 5);
+
+            int useOffset;
+            if (value.Length <= MessagePackRange.MaxFixStringLength)
+            {
+                useOffset = 1;
+            }
+            else if (value.Length <= byte.MaxValue)
+            {
+                useOffset = 2;
+            }
+            else if (value.Length <= ushort.MaxValue)
+            {
+                useOffset = 3;
+            }
+            else
+            {
+                useOffset = 5;
+            }
+
+            // skip length area
+            var writeBeginOffset = offset + useOffset;
+            var byteCount = StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, writeBeginOffset);
+
+            // move body and write prefix
+            if (byteCount <= MessagePackRange.MaxFixStringLength)
+            {
+                if (useOffset != 1)
+                {
+                    Buffer.BlockCopy(bytes, writeBeginOffset, bytes, offset + 1, byteCount);
+                }
+                bytes[offset] = (byte)(MessagePackCode.MinFixStr | byteCount);
+                return byteCount + 1;
+            }
+            else if (byteCount <= byte.MaxValue)
+            {
+                if (useOffset != 2)
+                {
+                    Buffer.BlockCopy(bytes, writeBeginOffset, bytes, offset + 2, byteCount);
+                }
+
+                bytes[offset] = MessagePackCode.Str8;
+                bytes[offset + 1] = unchecked((byte)byteCount);
+                return byteCount + 2;
+            }
+            else if (byteCount <= ushort.MaxValue)
+            {
+                if (useOffset != 3)
+                {
+                    Buffer.BlockCopy(bytes, writeBeginOffset, bytes, offset + 3, byteCount);
+                }
+
+                bytes[offset] = MessagePackCode.Str16;
+                bytes[offset + 1] = unchecked((byte)(byteCount >> 8));
+                bytes[offset + 2] = unchecked((byte)byteCount);
+                return byteCount + 3;
+            }
+            else
+            {
+                if (useOffset != 5)
+                {
+                    Buffer.BlockCopy(bytes, writeBeginOffset, bytes, offset + 5, byteCount);
+                }
+
+                bytes[offset] = MessagePackCode.Str32;
+                bytes[offset + 1] = unchecked((byte)(byteCount >> 24));
+                bytes[offset + 2] = unchecked((byte)(byteCount >> 16));
+                bytes[offset + 3] = unchecked((byte)(byteCount >> 8));
+                bytes[offset + 4] = unchecked((byte)byteCount);
+                return byteCount + 5;
+            }
         }
 
 #if NETSTANDARD1_4
