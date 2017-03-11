@@ -43,7 +43,7 @@ namespace MessagePack.LZ4
         /// Reduced memory usage can improve speed, due to cache effect
         /// Default value is 14, for 16KB, which nicely fits into Intel x86 L1 cache
         /// </summary>
-        private const int MEMORY_USAGE = 12; // mod, use 12
+        private const int MEMORY_USAGE = 12;
 
         /// <summary>
         /// Decreasing this value will make the algorithm skip faster data segments considered "incompressible"
@@ -133,10 +133,9 @@ namespace MessagePack.LZ4
         #region internal interface (common)
 
         internal static void CheckArguments(
-            byte[] input, int inputOffset, ref int inputLength,
-            byte[] output, int outputOffset, ref int outputLength)
+            byte[] input, int inputOffset, int inputLength,
+            byte[] output, int outputOffset, int outputLength)
         {
-            if (inputLength < 0) inputLength = input.Length - inputOffset;
             if (inputLength == 0)
             {
                 outputLength = 0;
@@ -147,7 +146,6 @@ namespace MessagePack.LZ4
             if (inputOffset < 0 || inputOffset + inputLength > input.Length)
                 throw new ArgumentException("inputOffset and inputLength are invalid for given input");
 
-            if (outputLength < 0) outputLength = output.Length - outputOffset;
             if (output == null) throw new ArgumentNullException("output");
             if (outputOffset < 0 || outputOffset + outputLength > output.Length)
                 throw new ArgumentException("outputOffset and outputLength are invalid for given output");

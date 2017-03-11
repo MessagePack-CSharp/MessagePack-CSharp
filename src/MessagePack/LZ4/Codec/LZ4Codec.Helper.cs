@@ -10,23 +10,23 @@ namespace MessagePack.LZ4
         {
             if (IntPtr.Size == 4)
             {
-                return LZ4Codec.Encode32(input, inputOffset, inputLength, output, outputOffset, outputLength);
+                return LZ4Codec.Encode32Unsafe(input, inputOffset, inputLength, output, outputOffset, outputLength);
             }
             else
             {
-                return LZ4Codec.Encode64(input, inputOffset, inputLength, output, outputOffset, outputLength);
+                return LZ4Codec.Encode64Unsafe(input, inputOffset, inputLength, output, outputOffset, outputLength);
             }
         }
 
-        public static int Decode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength, bool knownOutputLength)
+        public static int Decode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
         {
             if (IntPtr.Size == 4)
             {
-                return LZ4Codec.Decode32(input, inputOffset, inputLength, output, outputOffset, outputLength, knownOutputLength);
+                return LZ4Codec.Decode32Unsafe(input, inputOffset, inputLength, output, outputOffset, outputLength);
             }
             else
             {
-                return LZ4Codec.Decode64(input, inputOffset, inputLength, output, outputOffset, outputLength, knownOutputLength);
+                return LZ4Codec.Decode64Unsafe(input, inputOffset, inputLength, output, outputOffset, outputLength);
             }
         }
 
@@ -37,9 +37,6 @@ namespace MessagePack.LZ4
 
             [ThreadStatic]
             static uint[] uintPool;
-
-            [ThreadStatic]
-            static byte*[] bytePool;
 
             public static ushort[] GetUShortHashTablePool()
             {
@@ -65,19 +62,6 @@ namespace MessagePack.LZ4
                     Array.Clear(uintPool, 0, uintPool.Length);
                 }
                 return uintPool;
-            }
-
-            public static byte*[] GetByteHashTablePool()
-            {
-                if (bytePool == null)
-                {
-                    bytePool = new byte*[HASH_TABLESIZE];
-                }
-                else
-                {
-                    Array.Clear(bytePool, 0, bytePool.Length);
-                }
-                return bytePool;
             }
         }
     }

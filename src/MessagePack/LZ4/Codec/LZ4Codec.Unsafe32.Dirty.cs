@@ -75,7 +75,7 @@ namespace MessagePack.LZ4
         #region LZ4_compressCtx_32
 
         private static unsafe int LZ4_compressCtx_32(
-            byte** hash_table,
+            uint* hash_table,
             byte* src,
             byte* dst,
             int src_len,
@@ -89,7 +89,7 @@ namespace MessagePack.LZ4
                 {
                     // r93
                     var src_p = src;
-                    const int src_base = 0;
+                    var src_base = src_p;
                     var src_anchor = src_p;
                     var src_end = src_p + src_len;
                     var src_mflimit = src_end - MFLIMIT;
@@ -112,7 +112,7 @@ namespace MessagePack.LZ4
                     if (src_len < MINLENGTH) goto _last_literals;
 
                     // First Byte
-                    hash_table[((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST)] = (src_p - src_base);
+                    hash_table[((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST)] = (uint)(src_p - src_base);
                     src_p++;
                     h_fwd = ((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST);
 
@@ -136,7 +136,7 @@ namespace MessagePack.LZ4
 
                             h_fwd = ((((*(uint*)(src_p_fwd))) * 2654435761u) >> HASH_ADJUST);
                             xxx_ref = src_base + hash_table[h];
-                            hash_table[h] = (src_p - src_base);
+                            hash_table[h] = (uint)(src_p - src_base);
                         } while ((xxx_ref < src_p - MAX_DISTANCE) || ((*(uint*)(xxx_ref)) != (*(uint*)(src_p))));
 
                         // Catch up
@@ -255,13 +255,13 @@ namespace MessagePack.LZ4
                         }
 
                         // Fill table
-                        hash_table[((((*(uint*)(src_p - 2))) * 2654435761u) >> HASH_ADJUST)] = (src_p - 2 - src_base);
+                        hash_table[((((*(uint*)(src_p - 2))) * 2654435761u) >> HASH_ADJUST)] = (uint)(src_p - 2 - src_base);
 
                         // Test next position
 
                         h = ((((*(uint*)(src_p))) * 2654435761u) >> HASH_ADJUST);
                         xxx_ref = src_base + hash_table[h];
-                        hash_table[h] = (src_p - src_base);
+                        hash_table[h] = (uint)(src_p - src_base);
 
                         if ((xxx_ref > src_p - (MAX_DISTANCE + 1)) && ((*(uint*)(xxx_ref)) == (*(uint*)(src_p))))
                         {

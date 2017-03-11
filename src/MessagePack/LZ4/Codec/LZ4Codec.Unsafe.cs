@@ -67,38 +67,6 @@ namespace MessagePack.LZ4
             }
         }
 
-        #region Encode32
-
-        /// <summary>Encodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="output">The output.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <param name="outputLength">Length of the output.</param>
-        /// <returns>Number of bytes written.</returns>
-        public static unsafe int Encode32(
-            byte* input,
-            byte* output,
-            int inputLength,
-            int outputLength)
-        {
-            if (inputLength < LZ4_64KLIMIT)
-            {
-                var hashTable = HashTablePool.GetUShortHashTablePool();
-                fixed (ushort* h = &hashTable[0])
-                {
-                    return LZ4_compress64kCtx_32(h, input, output, inputLength, outputLength);
-                }
-            }
-            else
-            {
-                var hashTable = HashTablePool.GetByteHashTablePool();
-                fixed (byte** h = &hashTable[0])
-                {
-                    return LZ4_compressCtx_32(h, input, output, inputLength, outputLength);
-                }
-            }
-        }
-
         /// <summary>Encodes the specified input.</summary>
         /// <param name="input">The input.</param>
         /// <param name="inputOffset">The input offset.</param>
@@ -107,7 +75,49 @@ namespace MessagePack.LZ4
         /// <param name="outputOffset">The output offset.</param>
         /// <param name="outputLength">Length of the output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static unsafe int Encode32(
+        public static unsafe int Encode32Unsafe(
+            byte[] input,
+            int inputOffset,
+            int inputLength,
+            byte[] output,
+            int outputOffset,
+            int outputLength)
+        {
+            CheckArguments(input, inputOffset, inputLength, output, outputOffset, outputLength);
+
+            if (outputLength == 0) return 0;
+
+            fixed (byte* inputPtr = &input[inputOffset])
+            fixed (byte* outputPtr = &output[outputOffset])
+            {
+                if (inputLength < LZ4_64KLIMIT)
+                {
+                    var uHashTable = HashTablePool.GetUShortHashTablePool();
+                    fixed (ushort* hash1 = &uHashTable[0])
+                    {
+                        return LZ4_compress64kCtx_32(hash1, inputPtr, outputPtr, inputLength, outputLength);
+                    }
+                }
+                else
+                {
+                    var bHashTable = HashTablePool.GetUIntHashTablePool();
+                    fixed (uint* hash2 = &bHashTable[0])
+                    {
+                        return LZ4_compressCtx_32(hash2, inputPtr, outputPtr, inputLength, outputLength);
+                    }
+                }
+            }
+        }
+
+        /// <summary>Decodes the specified input.</summary>
+        /// <param name="input">The input.</param>
+        /// <param name="inputOffset">The input offset.</param>
+        /// <param name="inputLength">Length of the input.</param>
+        /// <param name="output">The output.</param>
+        /// <param name="outputOffset">The output offset.</param>
+        /// <param name="outputLength">Length of the output.</param>
+        /// <returns>Number of bytes written.</returns>
+        public static unsafe int Decode32Unsafe(
             byte[] input,
             int inputOffset,
             int inputLength,
@@ -116,160 +126,19 @@ namespace MessagePack.LZ4
             int outputLength)
         {
             CheckArguments(
-                input, inputOffset, ref inputLength,
-                output, outputOffset, ref outputLength);
+                input, inputOffset, inputLength,
+                output, outputOffset, outputLength);
 
             if (outputLength == 0) return 0;
 
             fixed (byte* inputPtr = &input[inputOffset])
             fixed (byte* outputPtr = &output[outputOffset])
             {
-                return Encode32(inputPtr, outputPtr, inputLength, outputLength);
-            }
-        }
-
-        /// <summary>Encodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="inputOffset">The input offset.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <returns>Compressed buffer.</returns>
-        public static byte[] Encode32(byte[] input, int inputOffset, int inputLength)
-        {
-            if (inputLength < 0) inputLength = input.Length - inputOffset;
-
-            if (input == null) throw new ArgumentNullException("input");
-            if (inputOffset < 0 || inputOffset + inputLength > input.Length)
-                throw new ArgumentException("inputOffset and inputLength are invalid for given input");
-
-            var result = new byte[MaximumOutputLength(inputLength)];
-            var length = Encode32(input, inputOffset, inputLength, result, 0, result.Length);
-
-            if (length != result.Length)
-            {
-                if (length < 0)
-                    throw new InvalidOperationException("Compression has been corrupted");
-                var buffer = new byte[length];
-                Buffer.BlockCopy(result, 0, buffer, 0, length);
-                return buffer;
-            }
-            return result;
-        }
-
-        #endregion
-
-        #region Decode32
-
-        /// <summary>Decodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <param name="output">The output.</param>
-        /// <param name="outputLength">Length of the output.</param>
-        /// <param name="knownOutputLength">Set it to <c>true</c> if output length is known.</param>
-        /// <returns>Number of bytes written.</returns>
-        public static unsafe int Decode32(
-            byte* input,
-            int inputLength,
-            byte* output,
-            int outputLength,
-            bool knownOutputLength)
-        {
-            if (knownOutputLength)
-            {
-                var length = LZ4_uncompress_32(input, output, outputLength);
+                var length = LZ4_uncompress_32(inputPtr, outputPtr, outputLength);
                 if (length != inputLength)
                     throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
                 return outputLength;
             }
-            else
-            {
-                throw new InvalidOperationException("MessagePack.LZ4 impl only supports 'true'.");
-            }
-        }
-
-        /// <summary>Decodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="inputOffset">The input offset.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <param name="output">The output.</param>
-        /// <param name="outputOffset">The output offset.</param>
-        /// <param name="outputLength">Length of the output.</param>
-        /// <param name="knownOutputLength">Set it to <c>true</c> if output length is known.</param>
-        /// <returns>Number of bytes written.</returns>
-        public static unsafe int Decode32(
-            byte[] input,
-            int inputOffset,
-            int inputLength,
-            byte[] output,
-            int outputOffset,
-            int outputLength,
-            bool knownOutputLength)
-        {
-            CheckArguments(
-                input, inputOffset, ref inputLength,
-                output, outputOffset, ref outputLength);
-
-            if (outputLength == 0) return 0;
-
-            fixed (byte* inputPtr = &input[inputOffset])
-            fixed (byte* outputPtr = &output[outputOffset])
-            {
-                return Decode32(inputPtr, inputLength, outputPtr, outputLength, knownOutputLength);
-            }
-        }
-
-        /// <summary>Decodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="inputOffset">The input offset.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <param name="outputLength">Length of the output.</param>
-        /// <returns>Decompressed buffer.</returns>
-        public static byte[] Decode32(byte[] input, int inputOffset, int inputLength, int outputLength)
-        {
-            if (inputLength < 0) inputLength = input.Length - inputOffset;
-
-            if (input == null) throw new ArgumentNullException("input");
-            if (inputOffset < 0 || inputOffset + inputLength > input.Length)
-                throw new ArgumentException("inputOffset and inputLength are invalid for given input");
-
-            var result = new byte[outputLength];
-            var length = Decode32(input, inputOffset, inputLength, result, 0, outputLength, true);
-            if (length != outputLength)
-                throw new ArgumentException("outputLength is not valid");
-            return result;
-        }
-
-        #endregion
-
-        #region Encode64
-
-        /// <summary>Encodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="output">The output.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <param name="outputLength">Length of the output.</param>
-        /// <returns>Number of bytes written.</returns>
-        public static unsafe int Encode64(
-            byte* input,
-            byte* output,
-            int inputLength,
-            int outputLength)
-        {
-            if (inputLength < LZ4_64KLIMIT)
-            {
-                var hashTable = HashTablePool.GetUShortHashTablePool();
-                fixed (ushort* h = &hashTable[0])
-                {
-                    return LZ4_compress64kCtx_64(h, input, output, inputLength, outputLength);
-                }
-            }
-            else
-            {
-                var hashTable = HashTablePool.GetUIntHashTablePool();
-                fixed (uint* h = &hashTable[0])
-                {
-                    return LZ4_compressCtx_64(h, input, output, inputLength, outputLength);
-                }
-            }
         }
 
         /// <summary>Encodes the specified input.</summary>
@@ -280,7 +149,7 @@ namespace MessagePack.LZ4
         /// <param name="outputOffset">The output offset.</param>
         /// <param name="outputLength">Length of the output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static unsafe int Encode64(
+        public static unsafe int Encode64Unsafe(
             byte[] input,
             int inputOffset,
             int inputLength,
@@ -289,73 +158,30 @@ namespace MessagePack.LZ4
             int outputLength)
         {
             CheckArguments(
-                input, inputOffset, ref inputLength,
-                output, outputOffset, ref outputLength);
+                input, inputOffset, inputLength,
+                output, outputOffset, outputLength);
 
             if (outputLength == 0) return 0;
 
             fixed (byte* inputPtr = &input[inputOffset])
             fixed (byte* outputPtr = &output[outputOffset])
             {
-                return Encode64(inputPtr, outputPtr, inputLength, outputLength);
-            }
-        }
-
-        /// <summary>Encodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="inputOffset">The input offset.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <returns>Compressed buffer.</returns>
-        public static byte[] Encode64(byte[] input, int inputOffset, int inputLength)
-        {
-            if (inputLength < 0) inputLength = input.Length - inputOffset;
-
-            if (input == null) throw new ArgumentNullException("input");
-            if (inputOffset < 0 || inputOffset + inputLength > input.Length)
-                throw new ArgumentException("inputOffset and inputLength are invalid for given input");
-
-            var result = new byte[MaximumOutputLength(inputLength)];
-            var length = Encode64(input, inputOffset, inputLength, result, 0, result.Length);
-
-            if (length != result.Length)
-            {
-                if (length < 0)
-                    throw new InvalidOperationException("Compression has been corrupted");
-                var buffer = new byte[length];
-                Buffer.BlockCopy(result, 0, buffer, 0, length);
-                return buffer;
-            }
-            return result;
-        }
-
-        #endregion
-
-        #region Decode64
-
-        /// <summary>Decodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <param name="output">The output.</param>
-        /// <param name="outputLength">Length of the output.</param>
-        /// <param name="knownOutputLength">Set it to <c>true</c> if output length is known.</param>
-        /// <returns>Number of bytes written.</returns>
-        public static unsafe int Decode64(
-            byte* input,
-            int inputLength,
-            byte* output,
-            int outputLength,
-            bool knownOutputLength)
-        {
-            if (knownOutputLength)
-            {
-                var length = LZ4_uncompress_64(input, output, outputLength);
-                if (length != inputLength)
-                    throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
-                return outputLength;
-            }
-            else
-            {
-                throw new InvalidOperationException("MessagePack.LZ4 impl only supports 'true'.");
+                if (inputLength < LZ4_64KLIMIT)
+                {
+                    var uHashTable = HashTablePool.GetUShortHashTablePool();
+                    fixed (ushort* h1 = &uHashTable[0])
+                    {
+                        return LZ4_compress64kCtx_64(h1, inputPtr, outputPtr, inputLength, outputLength);
+                    }
+                }
+                else
+                {
+                    var uiHashTable = HashTablePool.GetUIntHashTablePool();
+                    fixed (uint* h2 = &uiHashTable[0])
+                    {
+                        return LZ4_compressCtx_64(h2, inputPtr, outputPtr, inputLength, outputLength);
+                    }
+                }
             }
         }
 
@@ -366,31 +192,30 @@ namespace MessagePack.LZ4
         /// <param name="output">The output.</param>
         /// <param name="outputOffset">The output offset.</param>
         /// <param name="outputLength">Length of the output.</param>
-        /// <param name="knownOutputLength">Set it to <c>true</c> if output length is known.</param>
         /// <returns>Number of bytes written.</returns>
-        public static unsafe int Decode64(
+        public static unsafe int Decode64Unsafe(
             byte[] input,
             int inputOffset,
             int inputLength,
             byte[] output,
             int outputOffset,
-            int outputLength,
-            bool knownOutputLength)
+            int outputLength)
         {
             CheckArguments(
-                input, inputOffset, ref inputLength,
-                output, outputOffset, ref outputLength);
+                input, inputOffset, inputLength,
+                output, outputOffset, outputLength);
 
             if (outputLength == 0) return 0;
 
             fixed (byte* inputPtr = &input[inputOffset])
             fixed (byte* outputPtr = &output[outputOffset])
             {
-                return Decode64(inputPtr, inputLength, outputPtr, outputLength, knownOutputLength);
+                var length = LZ4_uncompress_64(inputPtr, outputPtr, outputLength);
+                if (length != inputLength)
+                    throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
+                return outputLength;
             }
         }
-
-        #endregion
     }
 }
 

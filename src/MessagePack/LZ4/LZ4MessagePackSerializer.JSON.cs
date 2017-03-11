@@ -52,7 +52,7 @@ namespace MessagePack
                     }
 
                     // LZ4 Decode
-                    LZ4Codec.Decode(bytes, offset, bytes.Length - offset, buffer, 0, length, true);
+                    LZ4Codec.Decode(bytes, offset, bytes.Length - offset, buffer, 0, length);
 
                     bytes = buffer; // use LZ4 bytes
                 }

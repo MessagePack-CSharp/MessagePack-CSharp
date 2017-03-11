@@ -173,7 +173,7 @@ namespace MessagePack
                     }
 
                     // LZ4 Decode
-                    LZ4Codec.Decode(bytes.Array, offset, bytes.Count - offset, buffer, 0, length, true);
+                    LZ4Codec.Decode(bytes.Array, offset, bytes.Count - offset, buffer, 0, length);
 
                     return formatter.Deserialize(buffer, 0, resolver, out readSize);
                 }
