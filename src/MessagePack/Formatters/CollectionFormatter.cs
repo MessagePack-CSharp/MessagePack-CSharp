@@ -25,9 +25,9 @@ namespace MessagePack.Formatters
 
                 offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
 
-                foreach (var item in value)
+                for (int i = 0; i < value.Length; i++)
                 {
-                    offset += formatter.Serialize(ref bytes, offset, item, formatterResolver);
+                    offset += formatter.Serialize(ref bytes, offset, value[i], formatterResolver);
                 }
 
                 return offset - startOffset;
@@ -133,6 +133,58 @@ namespace MessagePack.Formatters
             {
                 var array = formatterResolver.GetFormatterWithVerify<T[]>().Deserialize(bytes, offset, formatterResolver, out readSize);
                 return new ArraySegment<T>(array, 0, array.Length);
+            }
+        }
+    }
+
+    // List<T> is popular format, should avoid abstraction.
+    public class ListFormatter<T> : IMessagePackFormatter<List<T>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, List<T> value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+
+                var c = value.Count;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, c);
+
+                for (int i = 0; i < c; i++)
+                {
+                    offset += formatter.Serialize(ref bytes, offset, value[i], formatterResolver);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public List<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var list = new List<T>(len);
+                for (int i = 0; i < len; i++)
+                {
+                    list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return list;
             }
         }
     }
@@ -331,29 +383,6 @@ namespace MessagePack.Formatters
         protected override void Add(TCollection collection, int index, TElement value)
         {
             collection.Add(value);
-        }
-    }
-
-    public class ListFormatter<T> : CollectionFormatterBase<T, List<T>, List<T>.Enumerator, List<T>>
-    {
-        protected override void Add(List<T> collection, int index, T value)
-        {
-            collection.Add(value);
-        }
-
-        protected override List<T> Complete(List<T> intermediateCollection)
-        {
-            return intermediateCollection;
-        }
-
-        protected override List<T> Create(int count)
-        {
-            return new List<T>(count);
-        }
-
-        protected override List<T>.Enumerator GetSourceEnumerator(List<T> source)
-        {
-            return source.GetEnumerator();
         }
     }
 

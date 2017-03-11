@@ -55,6 +55,59 @@ namespace MessagePack.Formatters
         }
     }
 
+	public class Int16ArrayFormatter : IMessagePackFormatter<Int16[]>
+    {
+        public static readonly Int16ArrayFormatter Instance = new Int16ArrayFormatter();
+
+        Int16ArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Int16[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteInt16(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public Int16[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new Int16[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadInt16(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
+
     public class Int32Formatter : IMessagePackFormatter<Int32>
     {
 		public static readonly Int32Formatter Instance = new Int32Formatter();
@@ -107,6 +160,59 @@ namespace MessagePack.Formatters
             }
         }
     }
+
+	public class Int32ArrayFormatter : IMessagePackFormatter<Int32[]>
+    {
+        public static readonly Int32ArrayFormatter Instance = new Int32ArrayFormatter();
+
+        Int32ArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Int32[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteInt32(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public Int32[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new Int32[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
 
     public class Int64Formatter : IMessagePackFormatter<Int64>
     {
@@ -161,6 +267,59 @@ namespace MessagePack.Formatters
         }
     }
 
+	public class Int64ArrayFormatter : IMessagePackFormatter<Int64[]>
+    {
+        public static readonly Int64ArrayFormatter Instance = new Int64ArrayFormatter();
+
+        Int64ArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Int64[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteInt64(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public Int64[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new Int64[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
+
     public class UInt16Formatter : IMessagePackFormatter<UInt16>
     {
 		public static readonly UInt16Formatter Instance = new UInt16Formatter();
@@ -213,6 +372,59 @@ namespace MessagePack.Formatters
             }
         }
     }
+
+	public class UInt16ArrayFormatter : IMessagePackFormatter<UInt16[]>
+    {
+        public static readonly UInt16ArrayFormatter Instance = new UInt16ArrayFormatter();
+
+        UInt16ArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, UInt16[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteUInt16(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public UInt16[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new UInt16[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadUInt16(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
 
     public class UInt32Formatter : IMessagePackFormatter<UInt32>
     {
@@ -267,6 +479,59 @@ namespace MessagePack.Formatters
         }
     }
 
+	public class UInt32ArrayFormatter : IMessagePackFormatter<UInt32[]>
+    {
+        public static readonly UInt32ArrayFormatter Instance = new UInt32ArrayFormatter();
+
+        UInt32ArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, UInt32[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteUInt32(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public UInt32[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new UInt32[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadUInt32(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
+
     public class UInt64Formatter : IMessagePackFormatter<UInt64>
     {
 		public static readonly UInt64Formatter Instance = new UInt64Formatter();
@@ -319,6 +584,59 @@ namespace MessagePack.Formatters
             }
         }
     }
+
+	public class UInt64ArrayFormatter : IMessagePackFormatter<UInt64[]>
+    {
+        public static readonly UInt64ArrayFormatter Instance = new UInt64ArrayFormatter();
+
+        UInt64ArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, UInt64[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteUInt64(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public UInt64[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new UInt64[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadUInt64(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
 
     public class SingleFormatter : IMessagePackFormatter<Single>
     {
@@ -373,6 +691,59 @@ namespace MessagePack.Formatters
         }
     }
 
+	public class SingleArrayFormatter : IMessagePackFormatter<Single[]>
+    {
+        public static readonly SingleArrayFormatter Instance = new SingleArrayFormatter();
+
+        SingleArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Single[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteSingle(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public Single[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new Single[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
+
     public class DoubleFormatter : IMessagePackFormatter<Double>
     {
 		public static readonly DoubleFormatter Instance = new DoubleFormatter();
@@ -425,6 +796,59 @@ namespace MessagePack.Formatters
             }
         }
     }
+
+	public class DoubleArrayFormatter : IMessagePackFormatter<Double[]>
+    {
+        public static readonly DoubleArrayFormatter Instance = new DoubleArrayFormatter();
+
+        DoubleArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Double[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteDouble(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public Double[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new Double[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadDouble(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
 
     public class BooleanFormatter : IMessagePackFormatter<Boolean>
     {
@@ -479,6 +903,59 @@ namespace MessagePack.Formatters
         }
     }
 
+	public class BooleanArrayFormatter : IMessagePackFormatter<Boolean[]>
+    {
+        public static readonly BooleanArrayFormatter Instance = new BooleanArrayFormatter();
+
+        BooleanArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Boolean[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteBoolean(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public Boolean[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new Boolean[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadBoolean(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
+
     public class ByteFormatter : IMessagePackFormatter<Byte>
     {
 		public static readonly ByteFormatter Instance = new ByteFormatter();
@@ -531,6 +1008,7 @@ namespace MessagePack.Formatters
             }
         }
     }
+
 
     public class SByteFormatter : IMessagePackFormatter<SByte>
     {
@@ -585,6 +1063,59 @@ namespace MessagePack.Formatters
         }
     }
 
+	public class SByteArrayFormatter : IMessagePackFormatter<SByte[]>
+    {
+        public static readonly SByteArrayFormatter Instance = new SByteArrayFormatter();
+
+        SByteArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, SByte[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteSByte(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public SByte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new SByte[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadSByte(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
+
     public class CharFormatter : IMessagePackFormatter<Char>
     {
 		public static readonly CharFormatter Instance = new CharFormatter();
@@ -638,6 +1169,59 @@ namespace MessagePack.Formatters
         }
     }
 
+	public class CharArrayFormatter : IMessagePackFormatter<Char[]>
+    {
+        public static readonly CharArrayFormatter Instance = new CharArrayFormatter();
+
+        CharArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Char[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteChar(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public Char[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new Char[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadChar(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
+
     public class DateTimeFormatter : IMessagePackFormatter<DateTime>
     {
 		public static readonly DateTimeFormatter Instance = new DateTimeFormatter();
@@ -690,5 +1274,58 @@ namespace MessagePack.Formatters
             }
         }
     }
+
+	public class DateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
+    {
+        public static readonly DateTimeArrayFormatter Instance = new DateTimeArrayFormatter();
+
+        DateTimeArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, DateTime[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteDateTime(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public DateTime[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new DateTime[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadDateTime(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
 
 }

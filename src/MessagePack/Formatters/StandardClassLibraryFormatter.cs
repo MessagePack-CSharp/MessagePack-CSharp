@@ -53,6 +53,59 @@ namespace MessagePack.Formatters
         }
     }
 
+    public class NullableStringArrayFormatter : IMessagePackFormatter<String[]>
+    {
+        public static readonly NullableStringArrayFormatter Instance = new NullableStringArrayFormatter();
+
+        NullableStringArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, String[] value, IFormatterResolver typeResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteString(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public String[] Deserialize(byte[] bytes, int offset, IFormatterResolver typeResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new String[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+    }
+
     public class DecimalFormatter : IMessagePackFormatter<Decimal>
     {
         public static readonly DecimalFormatter Instance = new DecimalFormatter();

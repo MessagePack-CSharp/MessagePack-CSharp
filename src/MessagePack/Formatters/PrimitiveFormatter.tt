@@ -80,5 +80,60 @@ namespace MessagePack.Formatters
         }
     }
 
+<# if(t.Name != "Byte") { #>
+	public class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
+    {
+        public static readonly <#= t.Name #>ArrayFormatter Instance = new <#= t.Name #>ArrayFormatter();
+
+        <#= t.Name #>ArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public <#= t.Name #>[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new <#= t.Name #>[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+	}
+<# } #>
+
 <# } #>
 }
