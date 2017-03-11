@@ -192,5 +192,32 @@ namespace MessagePack.Tests
             var binary = MessagePackSerializer.Serialize(now);
             MessagePackSerializer.Deserialize<DateTimeOffset>(binary).Is(now);
         }
+
+        [Fact]
+        public void StringTest_Part2()
+        {
+            var a = "あいうえお";
+            var b = new String('あ', 20);
+            var c = new String('あ', 130);
+            var d = new String('あ', 40000);
+
+            byte[] bytesA = null;
+            MessagePackBinary.WriteString(ref bytesA, 0, a).Is(Encoding.UTF8.GetByteCount(a) + 1);
+
+            byte[] bytesB = null;
+            MessagePackBinary.WriteString(ref bytesB, 0, b).Is(Encoding.UTF8.GetByteCount(b) + 2);
+
+            byte[] bytesC = null;
+            MessagePackBinary.WriteString(ref bytesC, 0, c).Is(Encoding.UTF8.GetByteCount(c) + 3);
+
+            byte[] bytesD = null;
+            MessagePackBinary.WriteString(ref bytesD, 0, d).Is(Encoding.UTF8.GetByteCount(d) + 5);
+
+            int readSize = 0;
+            MessagePackBinary.ReadString(bytesA, 0, out readSize).Is(a);
+            MessagePackBinary.ReadString(bytesB, 0, out readSize).Is(b);
+            MessagePackBinary.ReadString(bytesC, 0, out readSize).Is(c);
+            MessagePackBinary.ReadString(bytesD, 0, out readSize).Is(d);
+        }
     }
 }

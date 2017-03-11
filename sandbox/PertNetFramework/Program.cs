@@ -9,16 +9,13 @@ using ZeroFormatter;
 using System.Collections.Generic;
 using MessagePack.Internal;
 using ProtoBuf;
-using SharedData;
 using System.Collections;
-using UnityEngine;
 using Newtonsoft.Json;
 using System.Text;
 using System.IO.Compression;
 
-namespace Sandbox
+namespace PerfnetFramework
 {
-
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
     [MessagePackObject]
@@ -56,64 +53,10 @@ namespace Sandbox
         Unknown, Male, Female,
     }
 
-    public class TestCollection<T> : ICollection<T>
-    {
-        public List<T> internalCollection = new List<T>();
-
-        public int Count => internalCollection.Count;
-
-        public bool IsReadOnly => throw new NotImplementedException();
-
-        public void Add(T item)
-        {
-            internalCollection.Add(item);
-        }
-
-        public void Clear()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Contains(T item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return internalCollection.GetEnumerator();
-        }
-
-        public bool Remove(T item)
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-
-    [MessagePackObject(true)]
-    public class Takox
-    {
-        public int hoga { get; set; }
-        public int huga { get; set; }
-        public int tako { get; set; }
-    }
-
     class Program
     {
         static void Main(string[] args)
         {
-
 
             var bytes = new byte[0];
             MessagePackBinary.WriteString(ref bytes, 0, "あいうえおあいうえおあいうえお");
@@ -130,7 +73,6 @@ namespace Sandbox
             Benchmark(p);
             Console.WriteLine();
             Benchmark(l);
-
         }
 
         static void Benchmark<T>(T target)
@@ -257,7 +199,7 @@ namespace Sandbox
 
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
             MessagePack.MessagePackSerializer.Deserialize<T>(data0);
-            ZeroFormatterSerializer.Deserialize<T>(data1);
+            //ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
             LZ4MessagePackSerializer.Deserialize<T>(data3);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
@@ -405,104 +347,6 @@ namespace Sandbox
             Console.WriteLine($"{ label,20}   {sw.Elapsed.TotalMilliseconds} ms");
 
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
-        }
-    }
-
-
-
-
-    // design concept sketch of Union.
-
-    [MessagePack.Union(0, typeof(HogeMoge1))]
-    [MessagePack.Union(1, typeof(HogeMoge2))]
-    public interface IHogeMoge
-    {
-    }
-
-    public class HogeMoge1
-    {
-    }
-
-    public class HogeMoge2
-    {
-    }
-
-
-    public class HogeMogeFormatter : IMessagePackFormatter<IHogeMoge>
-    {
-        // Type to Key...
-        static readonly Dictionary<Type, KeyValuePair<int, int>> map = new Dictionary<Type, KeyValuePair<int, int>>
-        {
-            {typeof(HogeMoge1), new KeyValuePair<int,int>(0,0) },
-            {typeof(HogeMoge2), new KeyValuePair<int,int>(1,1) },
-        };
-
-        // If 0~10 don't need it.
-        static readonly Dictionary<int, int> keyToJumpTable = new Dictionary<int, int>
-        {
-            {0, 0 },
-            {1, 1 },
-        };
-
-        public int Serialize(ref byte[] bytes, int offset, IHogeMoge value, IFormatterResolver formatterResolver)
-        {
-            var startOffset = offset;
-
-            KeyValuePair<int, int> key;
-            if (map.TryGetValue(value.GetType(), out key))
-            {
-                var headerLen = MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-                offset += headerLen;
-                var keyLength = MessagePackBinary.WriteInt32(ref bytes, offset, key.Key);
-                headerLen += keyLength;
-
-                switch (key.Value)
-                {
-                    case 0:
-                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref bytes, offset, (HogeMoge1)value, formatterResolver);
-                        break;
-                    case 1:
-                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref bytes, offset, (HogeMoge2)value, formatterResolver);
-                        break;
-                    default:
-                        break;
-                }
-
-                return offset - startOffset;
-            }
-
-            return MessagePackBinary.WriteNil(ref bytes, offset);
-        }
-
-        public IHogeMoge Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
-        {
-            // TODO:array header...
-
-            int keySize;
-            int valueSize;
-            var key = MessagePackBinary.ReadInt32(bytes, offset, out keySize);
-
-            switch (key)
-            {
-                case 0:
-                    {
-                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge1>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize);
-                        readSize = keySize + valueSize;
-                        return (IHogeMoge)result;
-                    }
-                case 1:
-                    {
-                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge2>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize);
-                        readSize = keySize + valueSize;
-                        return (IHogeMoge)result;
-                    }
-                default:
-                    {
-
-                        throw new NotImplementedException();
-                    }
-            }
-
         }
     }
 }

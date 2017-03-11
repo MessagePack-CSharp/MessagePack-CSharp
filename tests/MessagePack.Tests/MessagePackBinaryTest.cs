@@ -532,8 +532,7 @@ namespace MessagePack.Tests
 
             var referencePacked = packer.PackString(target);
             referencePacked.Position.Is(returnLength);
-            referencePacked.Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            stream.ToArray().SequenceEqual(bytes.Take(returnLength).ToArray()).IsTrue();
 
             int readSize;
             MessagePackBinary.ReadString(bytes, 0, out readSize).Is(target);
