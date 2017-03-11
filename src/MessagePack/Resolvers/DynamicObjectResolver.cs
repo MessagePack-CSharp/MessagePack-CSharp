@@ -122,6 +122,12 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
+                if (!ti.IsPublic && ti.IsClass)
+                {
+                    formatter = (IMessagePackFormatter<T>)DynamicPrivateFormatterBuilder.BuildFormatter(typeof(T));
+                    return;
+                }
+
                 var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), true); // true.
                 if (formatterTypeInfo == null) return;
 
@@ -197,7 +203,7 @@ namespace MessagePack.Internal
         }
 
         // int Serialize([arg:1]ref byte[] bytes, [arg:2]int offset, [arg:3]T value, [arg:4]IFormatterResolver formatterResolver);
-        static void BuildSerialize(Type type, ObjectSerializationInfo info, MethodBuilder method, ILGenerator il)
+        static void BuildSerialize(Type type, ObjectSerializationInfo info, MethodInfo method, ILGenerator il)
         {
             // if(value == null) return WriteNil
             if (type.GetTypeInfo().IsClass)
@@ -712,7 +718,7 @@ namespace MessagePack.Internal
 
         static readonly ConstructorInfo objectCtor = typeof(object).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0);
 
-        static class MessagePackBinaryTypeInfo
+        internal static class MessagePackBinaryTypeInfo
         {
             public static TypeInfo TypeInfo = typeof(MessagePackBinary).GetTypeInfo();
 
@@ -744,6 +750,160 @@ namespace MessagePack.Internal
             public ObjectSerializationInfo.EmittableMember MemberInfo { get; set; }
             public LocalBuilder LocalField { get; set; }
             public Label SwitchLabel { get; set; }
+        }
+    }
+
+    internal static class DynamicPrivateFormatterBuilder
+    {
+        static readonly Type refByte = typeof(byte[]).MakeByRefType();
+        static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == "GetFormatterWithVerify");
+        static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Serialize", new[] { refByte, typeof(int), t, typeof(IFormatterResolver) });
+
+        // Private type formatter can not create by DynamicAssembly but sometimes needs it(anonymous type, etc...)
+        // use DynamicMethod(skipVisibility:true) can avoid it so use delegation formatter.
+        public static object BuildFormatter(Type type)
+        {
+            var info = ObjectSerializationInfo.CreateOrNull(type, true);
+
+            var serialize = new DynamicMethod("Serialize", typeof(int), new[] { typeof(byte[]).MakeByRefType(), typeof(int), type, typeof(IFormatterResolver) }, type, true);
+
+            var il = serialize.GetILGenerator();
+
+            // Build Serialize(same as DynamicObjectTypeBuilder.BuildSerialize but argument - 1)
+            {
+                // if(value == null) return WriteNil
+                var elseBody = il.DefineLabel();
+
+                il.EmitLdarg(2);
+                il.Emit(OpCodes.Brtrue_S, elseBody);
+                il.EmitLdarg(0);
+                il.EmitLdarg(1);
+                il.EmitCall(DynamicObjectTypeBuilder.MessagePackBinaryTypeInfo.WriteNil);
+                il.Emit(OpCodes.Ret);
+
+                il.MarkLabel(elseBody);
+
+                // var startOffset = offset;
+                var startOffsetLocal = il.DeclareLocal(typeof(int)); // [loc:0]
+                il.EmitLdarg(1);
+                il.EmitStloc(startOffsetLocal);
+
+                // use only Map!
+                var writeCount = info.Members.Count(x => x.IsReadable);
+
+                EmitOffsetPlusEqual(il, null, () =>
+                {
+                    il.EmitLdc_I4(writeCount);
+                    if (writeCount <= MessagePackRange.MaxFixMapCount)
+                    {
+                        il.EmitCall(DynamicObjectTypeBuilder.MessagePackBinaryTypeInfo.WriteFixedMapHeaderUnsafe);
+                    }
+                    else
+                    {
+                        il.EmitCall(DynamicObjectTypeBuilder.MessagePackBinaryTypeInfo.WriteMapHeader);
+                    }
+                });
+
+                foreach (var item in info.Members.Where(x => x.IsReadable))
+                {
+                    // offset += writekey
+                    if (info.IsStringKey)
+                    {
+                        EmitOffsetPlusEqual(il, null, () =>
+                        {
+                            // embed string and bytesize
+                            il.Emit(OpCodes.Ldstr, item.StringKey);
+                            il.EmitLdc_I4(StringEncoding.UTF8.GetByteCount(item.StringKey));
+                            il.EmitCall(DynamicObjectTypeBuilder.MessagePackBinaryTypeInfo.WriteStringUnsafe);
+                        });
+                    }
+
+                    // offset += serialzie
+                    EmitSerializeValue(il, type.GetTypeInfo(), item);
+                }
+
+                // return startOffset- offset;
+                il.EmitLdarg(1);
+                il.EmitLdloc(startOffsetLocal);
+                il.Emit(OpCodes.Sub);
+                il.Emit(OpCodes.Ret);
+            }
+
+            var method = serialize.CreateDelegate(typeof(SerializeDelegate<>).MakeGenericType(type));
+            var formatter = Activator.CreateInstance(typeof(AnonymousFormatter<>).MakeGenericType(type), new object[] { method });
+            return formatter;
+        }
+
+        static void EmitOffsetPlusEqual(ILGenerator il, Action loadEmit, Action emit)
+        {
+            il.EmitLdarg(1);
+
+            if (loadEmit != null) loadEmit();
+
+            il.EmitLdarg(0);
+            il.EmitLdarg(1);
+
+            emit();
+
+            il.Emit(OpCodes.Add);
+            il.EmitStarg(1);
+        }
+
+        static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member)
+        {
+            var t = member.Type;
+            if (MessagePackBinary.IsMessagePackPrimitive(t))
+            {
+                EmitOffsetPlusEqual(il, null, () =>
+                {
+                    il.EmitLoadArg(type, 2);
+                    member.EmitLoadValue(il);
+                    if (t == typeof(byte[]))
+                    {
+                        il.EmitCall(DynamicObjectTypeBuilder.MessagePackBinaryTypeInfo.WriteBytes);
+                    }
+                    else
+                    {
+                        il.EmitCall(DynamicObjectTypeBuilder.MessagePackBinaryTypeInfo.TypeInfo.GetDeclaredMethod("Write" + t.Name));
+                    }
+                });
+            }
+            else
+            {
+                EmitOffsetPlusEqual(il, () =>
+                {
+                    il.EmitLdarg(3);
+                    il.Emit(OpCodes.Call, getFormatterWithVerify.MakeGenericMethod(t));
+                }, () =>
+                {
+                    il.EmitLoadArg(type, 2);
+                    member.EmitLoadValue(il);
+                    il.EmitLdarg(3);
+                    il.EmitCall(getSerialize(t));
+                });
+            }
+        }
+    }
+
+    internal delegate int SerializeDelegate<T>(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver);
+
+    internal class AnonymousFormatter<T> : IMessagePackFormatter<T>
+    {
+        readonly SerializeDelegate<T> serialize;
+
+        public AnonymousFormatter(SerializeDelegate<T> serialize)
+        {
+            this.serialize = serialize;
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver)
+        {
+            return serialize(ref bytes, offset, value, formatterResolver);
+        }
+
+        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            throw new NotSupportedException("Anonymous Formatter does not support Deserialize.");
         }
     }
 

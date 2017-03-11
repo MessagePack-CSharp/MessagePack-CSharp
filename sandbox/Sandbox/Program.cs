@@ -101,10 +101,12 @@ namespace Sandbox
     }
 
 
-    [MessagePackObject()]
+    [MessagePackObject(true)]
     public class Takox
     {
-        public int MyProperty { get; set; }
+        public int hoga { get; set; }
+        public int huga { get; set; }
+        public int tako { get; set; }
     }
 
     class Program
