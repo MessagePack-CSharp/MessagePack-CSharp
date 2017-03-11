@@ -830,7 +830,7 @@ namespace MessagePack.Internal
             }
 
             var method = serialize.CreateDelegate(typeof(SerializeDelegate<>).MakeGenericType(type));
-            var formatter = Activator.CreateInstance(typeof(AnonymousFormatter<>).MakeGenericType(type), new object[] { method });
+            var formatter = Activator.CreateInstance(typeof(AnonymousSerializableFormatter<>).MakeGenericType(type), new object[] { method });
             return formatter;
         }
 
@@ -887,11 +887,11 @@ namespace MessagePack.Internal
 
     internal delegate int SerializeDelegate<T>(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver);
 
-    internal class AnonymousFormatter<T> : IMessagePackFormatter<T>
+    internal class AnonymousSerializableFormatter<T> : IMessagePackFormatter<T>
     {
         readonly SerializeDelegate<T> serialize;
 
-        public AnonymousFormatter(SerializeDelegate<T> serialize)
+        public AnonymousSerializableFormatter(SerializeDelegate<T> serialize)
         {
             this.serialize = serialize;
         }
