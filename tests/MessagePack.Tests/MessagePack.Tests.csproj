@@ -117,6 +117,7 @@
     <Compile Include="UnionResolverTest.cs" />
     <Compile Include="Utils\ChainingAssertion.Ext.cs" />
     <Compile Include="Utils\ChainingAssertion.Xunit.cs" />
+    <Compile Include="EnumAsStringTest.cs" />
     <Compile Include="ValueTupleTest.cs" />
   </ItemGroup>
   <ItemGroup>
