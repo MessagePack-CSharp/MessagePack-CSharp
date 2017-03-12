@@ -511,3 +511,5 @@ Twitter: https://twitter.com/neuecc (Japanese)
 License
 ---
 This library is under the MIT License.
+
+lz4 compression support is using Milosz Krajewski's [lz4net](https://github.com/MiloszKrajewski/lz4net) code with some modified.
