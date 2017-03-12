@@ -80,7 +80,7 @@ namespace MessagePack
                 var lz4Length = LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, bytes, offset, bytes.Length - offset);
 
                 // write extension header(always 6 bytes)
-                extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32(ref bytes, extHeaderOffset, (sbyte)ExtensionTypeCode, lz4Length + 5);
+                extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, extHeaderOffset, (sbyte)ExtensionTypeCode, lz4Length + 5);
 
                 // write length(always 5 bytes)
                 MessagePackBinary.WriteInt32ForceInt32Block(ref bytes, extHeaderOffset, serializedData.Count);
@@ -115,7 +115,7 @@ namespace MessagePack
                 var lz4Length = LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, buffer, offset, buffer.Length - offset);
 
                 // write extension header(always 6 bytes)
-                extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32(ref buffer, extHeaderOffset, (sbyte)ExtensionTypeCode, lz4Length + 5);
+                extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref buffer, extHeaderOffset, (sbyte)ExtensionTypeCode, lz4Length + 5);
 
                 // write length(always 5 bytes)
                 MessagePackBinary.WriteInt32ForceInt32Block(ref buffer, extHeaderOffset, serializedData.Count);

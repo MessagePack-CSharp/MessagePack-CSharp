@@ -1483,6 +1483,22 @@ namespace MessagePack
             }
         }
 
+        public static int WriteStringForceStr32Block(ref byte[] bytes, int offset, string value)
+        {
+            if (value == null) return WriteNil(ref bytes, offset);
+
+            MessagePackBinary.EnsureCapacity(ref bytes, offset, StringEncoding.UTF8.GetMaxByteCount(value.Length) + 5);
+
+            var byteCount = StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, offset + 5);
+
+            bytes[offset] = MessagePackCode.Str32;
+            bytes[offset + 1] = unchecked((byte)(byteCount >> 24));
+            bytes[offset + 2] = unchecked((byte)(byteCount >> 16));
+            bytes[offset + 3] = unchecked((byte)(byteCount >> 8));
+            bytes[offset + 4] = unchecked((byte)byteCount);
+            return byteCount + 5;
+        }
+
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
@@ -1564,7 +1580,7 @@ namespace MessagePack
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static int WriteExtensionFormatHeaderForceExt32(ref byte[] bytes, int offset, sbyte typeCode, int dataLength)
+        public static int WriteExtensionFormatHeaderForceExt32Block(ref byte[] bytes, int offset, sbyte typeCode, int dataLength)
         {
             EnsureCapacity(ref bytes, offset, dataLength + 6);
             bytes[offset] = MessagePackCode.Ext32;
