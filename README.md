@@ -153,6 +153,78 @@ TODO:
 
 achieved extremely fast and very small binary!
 
+
+
+
+
+
+Compare with protobuf, JSON, ZeroFormatter
+---
+
+http://stackoverflow.com/questions/21631428/protobuf-net-deserializes-empty-collection-to-null-when-the-collection-is-a-prop
+
+
+I've used protobuf-net on save the data to redis but I encount serveral annoy issues.
+
+protobuf has no `null` representation.
+
+
+protobuf(-net) can not handle null and empty collection correctly.
+
+```csharp
+[ProtoContract]
+public class Parent
+{
+    [ProtoMember(1)]
+    public int Primitive { get; set; }
+    [ProtoMember(2)]
+    public Child Prop { get; set; }
+    [ProtoMember(3)]
+    public int[] Array { get; set; }
+}
+
+[ProtoContract]
+public class Child
+{
+    [ProtoMember(1)]
+    public int Number { get; set; }
+}
+
+
+
+using (var ms = new MemoryStream())
+{
+    // serialize null.
+    ProtoBuf.Serializer.Serialize<Parent>(ms, null);
+
+    ms.Position = 0;
+    var result = ProtoBuf.Serializer.Deserialize<Parent>(ms);
+
+    Console.WriteLine(result != null); // True, not null. but all property are zero formatted.
+    Console.WriteLine(result.Primitive); // 0
+    Console.WriteLine(result.Prop); // null
+    Console.WriteLine(result.Array); // null
+}
+
+using (var ms = new MemoryStream())
+{
+    // serialize empty array.
+    ProtoBuf.Serializer.Serialize<Parent>(ms, new Parent { Array = new int[0] });
+
+    ms.Position = 0;
+    var result = ProtoBuf.Serializer.Deserialize<Parent>(ms);
+
+    Console.WriteLine(result.Array == null); // True, null!
+}
+```
+
+
+
+
+
+
+
+
 Extensions
 ---
 MessagePack for C# has extension point and you can add external type's serialization support. There are official extension support.
@@ -188,7 +260,7 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 
 Configuration details, see:Extension section.
 
-`MessagePack.AspNetCoreMvcFormatter` is add-on of ASP.NET MVC's serialization to boostup performance. This is configuration sample.
+`MessagePack.AspNetCoreMvcFormatter` is add-on of [ASP.NET Core MVC](https://github.com/aspnet/Mvc)'s serialization to boostup performance. This is configuration sample.
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
@@ -222,14 +294,14 @@ High-Level API(MessagePackSerializer)
 | `Serialize<T>` | Convert object to byte[] or write to stream. There has IFormatterResolver overload, used specified resolver. |
 | `SerializeUnsafe<T>` | Same as `Serialize<T>` but return `ArraySegement<byte>`. The result of ArraySegment is contains internal buffer pool, it can not share across thread and can not hold, so use quickly. |
 | `Deserialize<T>` | Convert byte[] or stream to object. There has IFormatterResolver overload, used specified resolver. |
-| `NonGeneric.*` | NonGeneric APIs of Serialize/Deserialize. There accept type parameter at first argument. This API is bit slower than generic API. |
+| `NonGeneric.*` | NonGeneric APIs of Serialize/Deserialize. There accept type parameter at first argument. This API is bit slower than generic API but useful for framework integration such as ASP.NET formatter. |
 | `ToJson` | Dump message-pack binary to JSON string. It is useful for debugging.  |
 
 MessagePack for C# operates at the byte[] level, so byte[] API is faster than Stream API.
 
 High-Level API uses memory pool internaly to avoid unnecessary memory allocation. If result size is under 64K, allocates GC memory only for the return bytes.
 
-`LZ4MessagePackSerializer` has same api with `MessagePackSerializer` and `DefaultResolver` is shared.
+`LZ4MessagePackSerializer` has same api with `MessagePackSerializer` and `DefaultResolver` is shared. `LZ4MessagePackSerializer` has additional `SerializeToBlock` method.
 
 Low-Level API(IMessagePackFormatter)
 ---
@@ -320,7 +392,7 @@ Extension Point(IFormatterResolver)
 | ContractlessStandardResolver | Composited `StandardResolver` -> `DynamicContractlessObjectResolver`. It enables contractless serialization. |
 | CompositeResolver | Singleton helper of setup custom resolvers. You can use `Register` or `RegisterAndSetAsDefault` API. |
 | DynamicEnumResolver | Resolver of enum and there nullable. It uses dynamic code generation to avoid boxing and boostup performance. |
-| DynamicGenericResolver | Resolver of generic type(`Tuple<>`, `List<>`, `Dictionary<,>`, `Array`, etc). It uses reflection call for resolve generic argument. |
+| DynamicGenericResolver | Resolver of generic type(`Tuple<>`, `List<>`, `Dictionary<,>`, `Array`, etc). It uses reflection call for resolve generic argument at first time. |
 | DynamicUnionResolver | Resolver of interface marked by UnionAttribute. It uses dynamic code generation to create dynamic formatter. |
 | DynamicObjectResolver | Resolver of class and struct maked by MessagePackObjectAttribute. It uses dynamic code generation to create dynamic formatter. |
 | DynamicContractlessObjectResolver | Resolver of all classes and structs. It does not needs MessagePackObjectAttribute and serialized key as string(same as marked [MessagePackObject(true)]). |
@@ -516,6 +588,8 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 ```
 
 > Note: mpc.exe is currently only run on Windows. It is .NET Core's Roslyn workspace API limitation but I want to implements to all platforms...
+
+
 
 RPC
 ---

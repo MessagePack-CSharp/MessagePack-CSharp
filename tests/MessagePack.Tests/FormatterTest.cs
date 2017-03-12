@@ -127,7 +127,8 @@ namespace MessagePack.Tests
             new object[] { new byte[] { 1, 10, 100 }, new byte[0] { }, null },
             new object[] { "aaa", "", null },
             new object[] { new Uri("Http://hogehoge.com"), new Uri("Https://hugahuga.com"), null },
-            new object[] { new Version(1,2), new Version(100,200,300,400), null },
+            new object[] { new Version(), new Version(1,2,3), new Version(255,100,30) },
+            new object[] { new Version(1,2), new Version(100, 200,300,400), null },
             new object[] { new BitArray(new[] { true, false, true }), new BitArray(1), null },
         };
 

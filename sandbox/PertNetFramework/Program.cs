@@ -57,10 +57,6 @@ namespace PerfnetFramework
     {
         static void Main(string[] args)
         {
-
-            var bytes = new byte[0];
-            MessagePackBinary.WriteString(ref bytes, 0, "あいうえおあいうえおあいうえお");
-
             var p = new Person
             {
                 Age = 99999,
@@ -68,7 +64,17 @@ namespace PerfnetFramework
                 LastName = "Server",
                 Sex = Sex.Male,
             };
-            Person[] l = Enumerable.Range(1, 100).Select(x => new Person { Age = x, FirstName = "Windows", LastName = "Server", Sex = Sex.Female }).ToArray();
+
+            var rand = new Random(100);
+            Person[] l = Enumerable.Range(1, 100)
+                .Select(x =>  new Person
+                {
+                    Age = x,
+                    FirstName = "Windows",
+                    LastName = "Server",
+                    Sex = (Sex)rand.Next(0, 3)
+                })
+                .ToArray();
 
             Benchmark(p);
             Console.WriteLine();
