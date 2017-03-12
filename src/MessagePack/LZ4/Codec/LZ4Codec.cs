@@ -43,7 +43,7 @@ namespace MessagePack.LZ4
         /// Reduced memory usage can improve speed, due to cache effect
         /// Default value is 14, for 16KB, which nicely fits into Intel x86 L1 cache
         /// </summary>
-        private const int MEMORY_USAGE = 12;
+        private const int MEMORY_USAGE = 12; // modified use 12.
 
         /// <summary>
         /// Decreasing this value will make the algorithm skip faster data segments considered "incompressible"
