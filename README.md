@@ -33,13 +33,14 @@ Extension Packages(info is see extension section).
 Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
+Install-Package MessagePack.AspNetCoreMvcFormatter
 ```
 
 for Unity, download from [releases](https://github.com/neuecc/MessagePack-CSharp/releases) page, providing `.unitypackage`. Unity IL2CPP or Xamarin AOT Environment, check the pre-code generation section.
 
 Quick Start
 ---
-Define class and mark as `[MessagePackObject]` and public members(property or field) mark `[Key]`, call `MessagePackSerializer.Serialize<T>/Deserialize<T>`. 
+Define class and mark as `[MessagePackObject]` and public members(property or field) mark `[Key]`, call `MessagePackSerializer.Serialize<T>/Deserialize<T>`. `ToJson` helps dump binary.
 
 ```csharp
 // mark MessagePackObjectAttribute
@@ -75,6 +76,12 @@ class Program
         // call Serialize/Deserialize, that's all.
         var bytes = MessagePackSerializer.Serialize(mc);
         var mc2 = MessagePackSerializer.Deserialize<MyClass>(bytes);
+
+        // you can dump msgpack binary to human readable json.
+        // In default, MeesagePack for C# reduce property name information.
+        // [99,"hoge","huga"]
+        var json = MessagePackSerializer.ToJson(bytes);
+        Console.WriteLine(json);
     }
 }
 ```
@@ -109,14 +116,21 @@ You can add custom type support and has some official extension package. for Imm
 
 Object Serialization
 ---
-TODO:
+MessagePack for C# can serialze your own `Class` or `Struct`.
+
+
 
 MessagePackObjectAttribute
+
+
 KeyAttribute
 IgnoreMemberAttribute
 SerializationConstructorAttribute
 
-Nil
+
+`MessagePack.Nil`
+
+
 
 Union
 ---
@@ -147,6 +161,7 @@ MessagePack for C# has extension point and you can add external type's serializa
 Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
+Install-Package MessagePack.AspNetCoreMvcFormatter
 ```
 
 `MessagePack.ImmutableCollection` package add support for [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/) library. It adds `ImmutableArray<>`, `ImmutableList<>`, `ImmutableDictionary<,>`, `ImmutableHashSet<>`, `ImmutableSortedDictionary<,>`, `ImmutableSortedSet<>`, `ImmutableQueue<>`, `ImmutableStack<>`, `IImmutableList<>`, `IImmutableDictionary<,>`, `IImmutableQueue<>`, `IImmutableSet<>`, `IImmutableStack<>` serialization support.
@@ -172,6 +187,22 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 ```
 
 Configuration details, see:Extension section.
+
+`MessagePack.AspNetCoreMvcFormatter` is add-on of ASP.NET MVC's serialization to boostup performance. This is configuration sample.
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddMvc().AddMvcOptions(option =>
+    {
+	    // ContractlessStandardResolver supports anonymous type, or use your custom composite resolver.
+        option.OutputFormatters.Clear();
+        option.OutputFormatters.Add(new MessagePackOutputFormatter(ContractlessStandardResolver.Instance));
+        option.InputFormatters.Clear();
+        option.InputFormatters.Add(new MessagePackInputFormatter(ContractlessStandardResolver.Instance));
+    });
+}
+```
 
 Author is creating other extension packages, too.
 

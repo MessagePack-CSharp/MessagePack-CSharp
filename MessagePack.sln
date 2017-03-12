@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26206.0
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}"
 EndProject
@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8
 		.gitignore = .gitignore
 		LICENSE = LICENSE
 		make_unity_symlink.bat = make_unity_symlink.bat
+		nuget\MessagePack.AspNetCoreMvcFormatter.nuspec = nuget\MessagePack.AspNetCoreMvcFormatter.nuspec
 		nuget\MessagePack.ImmutableCollection.nuspec = nuget\MessagePack.ImmutableCollection.nuspec
 		nuget\MessagePack.nuspec = nuget\MessagePack.nuspec
 		nuget\MessagePack.ReactiveProperty.nuspec = nuget\MessagePack.ReactiveProperty.nuspec
@@ -49,6 +50,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamarinAndroid", "sandbox\XamarinAndroid\XamarinAndroid.csproj", "{307A14EF-C896-4024-BD80-95A55B22C2AB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PertNetFramework", "sandbox\PertNetFramework\PertNetFramework.csproj", "{014A3DCE-50A6-4774-A4C1-C66EEAB67133}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.AspNetCoreMvcFormatter", "src\MessagePack.AspNetCoreMvcFormatter\MessagePack.AspNetCoreMvcFormatter.csproj", "{17831017-C29C-4A48-B159-849BCE5079FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -222,6 +225,18 @@ Global
 		{014A3DCE-50A6-4774-A4C1-C66EEAB67133}.Release|x64.Build.0 = Release|Any CPU
 		{014A3DCE-50A6-4774-A4C1-C66EEAB67133}.Release|x86.ActiveCfg = Release|Any CPU
 		{014A3DCE-50A6-4774-A4C1-C66EEAB67133}.Release|x86.Build.0 = Release|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Debug|x64.Build.0 = Debug|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Debug|x86.Build.0 = Debug|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Release|x64.ActiveCfg = Release|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Release|x64.Build.0 = Release|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Release|x86.ActiveCfg = Release|Any CPU
+		{17831017-C29C-4A48-B159-849BCE5079FB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -240,5 +255,6 @@ Global
 		{09B87BEB-D9A3-4EEB-B56A-ED53D27DF1A3} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{307A14EF-C896-4024-BD80-95A55B22C2AB} = {BF4C4202-5015-4FBD-80E6-D0F36A06F700}
 		{014A3DCE-50A6-4774-A4C1-C66EEAB67133} = {BF4C4202-5015-4FBD-80E6-D0F36A06F700}
+		{17831017-C29C-4A48-B159-849BCE5079FB} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 	EndGlobalSection
 EndGlobal

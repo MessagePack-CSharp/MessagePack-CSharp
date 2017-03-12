@@ -1,0 +1,35 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>MessagePack.AspNetCoreMvcFormatter</id>
+    <version>0.8.5</version>
+    <title>ASP.NET Core MVC Input/Output MessagePack formatter</title>
+    <authors>neuecc</authors>
+    <owners>neuecc</owners>
+    <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>ASP.NET Core MVC Input/Output MessagePack formatter.</description>
+    <releaseNotes>initial release.</releaseNotes>
+    <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, aspnetcore, aspnetcoremvc</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.5" />
+    </frameworkAssemblies>
+    <dependencies>
+      <group targetFramework=".NETFramework4.5">
+        <dependency id="MessagePack" version="0.8.5" />
+        <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.1.2" />
+      </group>
+      <group targetFramework=".NETStandard1.4">
+        <dependency id="MessagePack" version="0.8.5" />
+        <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.1.2" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.dll" target="lib\net45" />
+    <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.xml" target="lib\net45" />
+    <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.dll" target="lib\netstandard1.4" />
+    <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.xml" target="lib\netstandard1.4" />
+  </files>
+</package>
