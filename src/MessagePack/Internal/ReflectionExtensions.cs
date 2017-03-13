@@ -12,6 +12,11 @@ namespace MessagePack.Internal
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>);
         }
 
+        public static bool IsPublic(this System.Reflection.TypeInfo type)
+        {
+            return type.IsPublic;
+        }
+
 #if NETSTANDARD1_4
 
         public static bool IsConstructedGenericType(this System.Reflection.TypeInfo type)

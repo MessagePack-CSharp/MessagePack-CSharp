@@ -121,8 +121,8 @@ namespace MessagePack.Resolvers
                     formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
                     return;
                 }
-
-                if (!ti.IsPublic && ti.IsClass)
+                
+                if (!typeof(T).GetTypeInfo().IsPublic() && ti.IsClass)
                 {
                     formatter = (IMessagePackFormatter<T>)DynamicPrivateFormatterBuilder.BuildFormatter(typeof(T));
                     return;

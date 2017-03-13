@@ -6,8 +6,8 @@ namespace MessagePack.Formatters
     // Note:This implemenataion is 'not' fastest, should more improve.
     public class EnumAsStringFormatter<T> : IMessagePackFormatter<T>
     {
-        Dictionary<string, T> nameValueMapping;
-        Dictionary<T, string> valueNameMapping;
+        readonly Dictionary<string, T> nameValueMapping;
+        readonly Dictionary<T, string> valueNameMapping;
 
         public EnumAsStringFormatter()
         {

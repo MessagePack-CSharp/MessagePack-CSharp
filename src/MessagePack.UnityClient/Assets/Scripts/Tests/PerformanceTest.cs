@@ -95,12 +95,6 @@ namespace MessagePack.UnityClient.Tests
 
             static FormatterCache()
             {
-                if (typeof(T) == typeof(Vector3))
-                {
-                    formatter = (IMessagePackFormatter<T>)(object)new TempVector3Formatter();
-                    return;
-                }
-
                 formatter = Unity.Extension.UnityBlitResolver.Instance.GetFormatter<T>();
                 if (formatter == null)
                 {

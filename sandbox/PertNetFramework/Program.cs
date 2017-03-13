@@ -67,7 +67,7 @@ namespace PerfnetFramework
 
             var rand = new Random(100);
             Person[] l = Enumerable.Range(1, 100)
-                .Select(x =>  new Person
+                .Select(x => new Person
                 {
                     Age = x,
                     FirstName = "Windows",

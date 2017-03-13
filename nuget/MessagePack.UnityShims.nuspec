@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack.UnityShims</id>
-    <version>0.8.5</version>
+    <version>1.0.1</version>
     <title>MessagePack for C# Extension Support for Unity(add pseudo Vector type and fast Vectory[] extension formatter)</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
@@ -17,10 +17,10 @@
     </frameworkAssemblies>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="MessagePack" version="0.8.5" />
+        <dependency id="MessagePack" version="1.0.1" />
       </group>
       <group targetFramework=".NETStandard1.4">
-        <dependency id="MessagePack" version="0.8.5" />
+        <dependency id="MessagePack" version="1.0.1" />
       </group>
     </dependencies>
   </metadata>

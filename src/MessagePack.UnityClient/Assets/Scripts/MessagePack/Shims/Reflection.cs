@@ -24,6 +24,14 @@ namespace System.Reflection
             }
         }
 
+        public bool IsPublic
+        {
+            get
+            {
+                return type.IsPublic;
+            }
+        }
+
         public bool IsValueType
         {
             get

@@ -49,7 +49,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(EnumAsStringFormatter<>).MakeGenericType(typeof(T)));
+                formatter = (IMessagePackFormatter<T>)(object)new EnumAsStringFormatter<T>();
             }
         }
     }

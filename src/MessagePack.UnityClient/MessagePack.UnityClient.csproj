@@ -87,10 +87,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\RuntimeUnitTestToolkit\Assert.cs" />
+    <Compile Include="Assets\RuntimeUnitTestToolkit\ChainingAssertion.Unity.cs" />
+    <Compile Include="Assets\RuntimeUnitTestToolkit\UnitTestRunner.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Attributes.cs" />
     <Compile Include="Assets\Scripts\MessagePack\FloatBits.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\CollectionFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\DictionaryFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\EnumAsStringFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\IMessagePackFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\MultiDimentionalArrayFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\NullableFormatter.cs" />
@@ -120,6 +124,8 @@
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Unsafe32.Dirty.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Unsafe64.Dirty.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.JSON.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.NonGeneric.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.cs" />
     <Compile Include="Assets\Scripts\MessagePack\MessagePackBinary.cs" />
     <Compile Include="Assets\Scripts\MessagePack\MessagePackCode.cs" />
@@ -129,6 +135,7 @@
     <Compile Include="Assets\Scripts\MessagePack\Nil.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\BuiltinResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\CompositeResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicEnumAsStringResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicEnumResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicGenericResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicObjectResolver.cs" />
@@ -140,9 +147,6 @@
     <Compile Include="Assets\Scripts\MessagePack\Unity\UnityResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\UnsafeExtensions\UnityBlitResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\UnsafeExtensions\UnsafeBlitFormatter.cs" />
-    <Compile Include="Assets\Scripts\RuntimeUnitTestToolkit\Assert.cs" />
-    <Compile Include="Assets\Scripts\RuntimeUnitTestToolkit\ChainingAssertion.Unity.cs" />
-    <Compile Include="Assets\Scripts\RuntimeUnitTestToolkit\UnitTestRunner.cs" />
     <Compile Include="Assets\Scripts\Tests\Class1.cs" />
     <Compile Include="Assets\Scripts\Tests\CollectionFormatterTest.cs" />
     <Compile Include="Assets\Scripts\Tests\FormatterTest.cs" />

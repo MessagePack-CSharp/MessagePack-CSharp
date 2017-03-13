@@ -15,9 +15,6 @@ namespace MessagePack.Resolvers
 
 #if !NETSTANDARD1_4
             MessagePack.Unity.UnityResolver.Instance,
-#if ENABLE_UNSAFE_MSGPACK
-            MessagePack.Unity.Extension.UnityBlitResolver.Instance,
-#endif
 #endif
 
 #if !ENABLE_IL2CPP

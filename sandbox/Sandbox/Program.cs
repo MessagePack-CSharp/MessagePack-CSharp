@@ -109,27 +109,128 @@ namespace Sandbox
         public int tako { get; set; }
     }
 
+    [MessagePackObject]
+    public class MyClass
+    {
+        // Key is serialization index, it is important for versioning.
+        [Key(0)]
+        public int Age { get; set; }
+
+        [Key(1)]
+        public string FirstName { get; set; }
+
+        [Key(2)]
+        public string LastName { get; set; }
+
+        // public members and does not serialize target, mark IgnoreMemberttribute
+        [IgnoreMember]
+        public string FullName { get { return FirstName + LastName; } }
+    }
+
+
+    [MessagePackObject(keyAsPropertyName: true)]
+    public class Sample1
+    {
+        [Key(0)]
+        public int Foo { get; set; }
+        [Key(1)]
+        public int Bar { get; set; }
+    }
+
+    [MessagePackObject]
+    public class Sample2
+    {
+        [Key("foo")]
+        public int Foo { get; set; }
+        [Key("bar")]
+        public int Bar { get; set; }
+    }
+
+
+    [MessagePackObject]
+    public class IntKeySample
+    {
+        [Key(3)]
+        public int A { get; set; }
+        [Key(10)]
+        public int B { get; set; }
+    }
+
+
+
+    public class ContractlessSample
+    {
+        public int MyProperty1 { get; set; }
+        public int MyProperty2 { get; set; }
+    }
+
+
+
+    [MessagePackObject]
+    public struct Point
+    {
+        [Key(0)]
+        public readonly int X;
+        [Key(1)]
+        public readonly int Y;
+
+        // can't find matched constructor parameter, parameterType mismatch. type:Point parameterIndex:0 paramterType:ValueTuple`2
+        public Point((int, int) p)
+        {
+            X = p.Item1;
+            Y = p.Item2;
+        }
+
+        [SerializationConstructor]
+        public Point(int x, int y)
+        {
+            this.X = x;
+            this.Y = y;
+        }
+    }
+
+    // mark inheritance types
+    [MessagePack.Union(0, typeof(FooClass))]
+    [MessagePack.Union(1, typeof(BarClass))]
+    public interface IUnionSample
+    {
+    }
+
+    [MessagePackObject]
+    public class FooClass : IUnionSample
+    {
+        [Key(0)]
+        public int XYZ { get; set; }
+    }
+
+    [MessagePackObject]
+    public class BarClass : IUnionSample
+    {
+        [Key(0)]
+        public string OPQ { get; set; }
+    }
+
+
     class Program
     {
         static void Main(string[] args)
         {
+// composite same as StandardResolver
+CompositeResolver.RegisterAndSetAsDefault(
+    MessagePack.Resolvers.BuiltinResolver.Instance,
+
+    // replace enumasstring resolver
+    MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance,
+
+    MessagePack.Resolvers.DynamicGenericResolver.Instance,
+    MessagePack.Resolvers.DynamicUnionResolver.Instance,
+    MessagePack.Resolvers.DynamicObjectResolver.Instance,
+
+    // final fallback(last priority)
+    MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance
+);
 
 
-            var bytes = new byte[0];
-            MessagePackBinary.WriteString(ref bytes, 0, "あいうえおあいうえおあいうえお");
-
-            var p = new Person
-            {
-                Age = 99999,
-                FirstName = "Windows",
-                LastName = "Server",
-                Sex = Sex.Male,
-            };
-            Person[] l = Enumerable.Range(1, 100).Select(x => new Person { Age = x, FirstName = "Windows", LastName = "Server", Sex = Sex.Female }).ToArray();
-
-            Benchmark(p);
-            Console.WriteLine();
-            Benchmark(l);
 
         }
 
@@ -505,4 +606,5 @@ namespace Sandbox
 
         }
     }
+
 }
