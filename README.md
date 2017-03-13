@@ -111,7 +111,8 @@ You can add custom type support and has some official extension package. for Imm
 
 Object Serialization
 ---
-MessagePack for C# can serialze your own `Class` or `Struct`. Serialization target must marks `[MessagePackObject]` and `[Key]`. Key type can choose int or string. If key type is int, serialized format is used array. If key type is string, serialized format is used map. If you define `[MessagePackObject(keyAsPropertyName: true)]`, does not require `KeyAttribute`.
+MessagePack for C# can serialze your own public `Class` or `Struct`. Serialization target must marks `[MessagePackObject]` and `[Key]`. Key type can choose int or string. If key type is int, serialized format is used array. If key type is string, serialized format is used map. If you define `[MessagePackObject(keyAsPropertyName: true)]`, does not require `KeyAttribute`.
+
 
 ```csharp
 [MessagePackObject]
@@ -155,6 +156,8 @@ Console.WriteLine(MessagePackSerializer.ToJson(new Sample3 { Foo = 10, Bar = 20 
 
 All patterns serialization target are public instance member(field or property). If you want to avoid serialization target, you can add `[IgnoreMember]` to target member.
 
+> target class must be public, does not allows private, internal class.
+
 Which should uses int key or string key? I recommend use int key because faster and compact than string key. But string key has key name information, it is useful for debugging.
 
 MessagePackSerializer requests target must put attribute is for robustness. If class is grown, you need to be conscious of versioning. MessagePackSerializer uses default value if key does not exists. If uses int key, should be start from 0 and should be sequential. If unnecessary properties come out, please make a missing number. Reuse is bad. Also, if Int Key's jump number is too large, it affects binary size.
@@ -188,6 +191,8 @@ var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.Contractle
 // {"MyProperty1":99,"MyProperty2":9999}
 Console.WriteLine(MessagePackSerializer.ToJson(bin));
 ```
+
+ContractlessStandardResolver can serialize anonymous type.
 
 Resolver is key customize point of MessagePack for C#. Details, please see [extension point](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
 
