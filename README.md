@@ -247,6 +247,29 @@ public struct Point
 }
 ```
 
+Serialization Callback
+---
+If object implements `IMessagePackSerializationCallbackReceiver`, received `OnBeforeSerialize` and `OnAfterDeserialize` on serilization process.
+
+```csharp
+[MessagePackObject]
+public class SampleCallback : IMessagePackSerializationCallbackReceiver
+{
+    [Key(0)]
+    public int Key { get; set; }
+
+    public void OnBeforeSerialize()
+    {
+        Console.WriteLine("OnBefore");
+    }
+
+    public void OnAfterDeserialize()
+    {
+        Console.WriteLine("OnAfter");
+    }
+}
+```
+
 Union
 ---
 MessagePack for C# supports serialize interface. It is like `XmlInclude` or `ProtoInclude`. MessagePack for C# there called *Union*. `UnionAttribute` can only attach to interface. It requires discriminated integer key and sub-type.

@@ -164,6 +164,23 @@ namespace Sandbox
         public int MyProperty2 { get; set; }
     }
 
+    [MessagePackObject]
+    public class SampleCallback : IMessagePackSerializationCallbackReceiver
+    {
+        [Key(0)]
+        public int Key { get; set; }
+
+        public void OnBeforeSerialize()
+        {
+            Console.WriteLine("OnBefore");
+        }
+
+        public void OnAfterDeserialize()
+        {
+            Console.WriteLine("OnAfter");
+        }
+    }
+
 
 
     [MessagePackObject]
@@ -215,20 +232,20 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
-// composite same as StandardResolver
-CompositeResolver.RegisterAndSetAsDefault(
-    MessagePack.Resolvers.BuiltinResolver.Instance,
+            // composite same as StandardResolver
+            CompositeResolver.RegisterAndSetAsDefault(
+                MessagePack.Resolvers.BuiltinResolver.Instance,
 
-    // replace enumasstring resolver
-    MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance,
+                // replace enumasstring resolver
+                MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance,
 
-    MessagePack.Resolvers.DynamicGenericResolver.Instance,
-    MessagePack.Resolvers.DynamicUnionResolver.Instance,
-    MessagePack.Resolvers.DynamicObjectResolver.Instance,
+                MessagePack.Resolvers.DynamicGenericResolver.Instance,
+                MessagePack.Resolvers.DynamicUnionResolver.Instance,
+                MessagePack.Resolvers.DynamicObjectResolver.Instance,
 
-    // final fallback(last priority)
-    MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance
-);
+                // final fallback(last priority)
+                MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance
+            );
 
 
 
