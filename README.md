@@ -361,7 +361,7 @@ public static class UnionValue
 }
 
 [MessagePackObject]
-public struct UnionValue<T> : IPrimitiveUnionA, IPrimitiveUnionB //, add your union types...
+public class UnionValue<T> : IPrimitiveUnionA, IPrimitiveUnionB //, add your union types...
 {
     [Key(0)]
     public T Value { get; private set; }
