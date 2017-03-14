@@ -337,6 +337,48 @@ var bin = MessagePackSerializer.Serialize(data);
 Console.WriteLine(MessagePackSerializer.ToJson(bin));
 ```
 
+Tips: If you want to pass single primitive like F#'s discriminated union. You can create single generic value and marked interface.
+
+```csharp
+[Union(0, typeof(UnionValue<int>))]
+[Union(1, typeof(UnionValue<float[]>))]
+public interface IPrimitiveUnionA
+{
+}
+
+[Union(0, typeof(UnionValue<string>))]
+[Union(1, typeof(UnionValue<ValueTuple<int, int>>))]
+public interface IPrimitiveUnionB
+{
+}
+
+public static class UnionValue
+{
+    public static UnionValue<T> Create<T>(T value)
+    {
+        return new UnionValue<T>(value);
+    }
+}
+
+[MessagePackObject]
+public struct UnionValue<T> : IPrimitiveUnionA, IPrimitiveUnionB //, add your union types...
+{
+    [Key(0)]
+    public T Value { get; private set; }
+
+    [SerializationConstructor]
+    public UnionValue(T value)
+    {
+        this.Value = value;
+    }
+}
+
+// usage, create value and Serialize/Deserialize...
+
+IPrimitiveUnionB b1 = UnionValue.Create("foo");
+IPrimitiveUnionB b2 = UnionValue.Create((100, 200));
+```
+
 Performance
 ---
 Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison), ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) has infinitely fast deserializer so ignore deserialize performance.
