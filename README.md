@@ -341,7 +341,7 @@ Tips: If you want to pass single primitive like F#'s discriminated union. You ca
 
 ```csharp
 [Union(0, typeof(UnionValue<int>))]
-[Union(1, typeof(UnionValue<float[]>))]
+[Union(1, typeof(UnionValue<float>))]
 public interface IPrimitiveUnionA
 {
 }
@@ -382,7 +382,7 @@ public static class PrimitiveUnionA
 // usage, create value and Serialize/Deserialize...
 
 var a1 = PrimitiveUnionA.Create(100);
-var a2 = PrimitiveUnionA.Create(new[] { 1, 2, 3});
+var a2 = PrimitiveUnionA.Create(100.423f);
 ```
 
 Performance
