@@ -436,7 +436,7 @@ built-in LZ4 support uses primitive LZ4 API. The LZ4 API is more efficient if yo
 
 > Compression speed is not always fast. Depending on the target binary, it may be short or longer. However, even at worst, it is about twice, but it is still often faster than other uncompressed serializers.
 
-If target binary size under 50 bytes, LZ4MessagePackSerialzier does not compress to optimize small size serialization.
+If target binary size under 64 bytes, LZ4MessagePackSerializer does not compress to optimize small size serialization.
 
 Compare with protobuf, JSON, ZeroFormatter
 ---
