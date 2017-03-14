@@ -352,14 +352,6 @@ public interface IPrimitiveUnionB
 {
 }
 
-public static class UnionValue
-{
-    public static UnionValue<T> Create<T>(T value)
-    {
-        return new UnionValue<T>(value);
-    }
-}
-
 [MessagePackObject]
 public class UnionValue<T> : IPrimitiveUnionA, IPrimitiveUnionB //, add your union types...
 {
@@ -373,10 +365,24 @@ public class UnionValue<T> : IPrimitiveUnionA, IPrimitiveUnionB //, add your uni
     }
 }
 
+// helper of typesafe create value..
+public static class PrimitiveUnionA
+{
+    public static IPrimitiveUnionA Create(int value)
+    {
+        return new UnionValue<int>(value);
+    }
+
+    public static IPrimitiveUnionA Create(float value)
+    {
+        return new UnionValue<float>(value);
+    }
+}
+
 // usage, create value and Serialize/Deserialize...
 
-IPrimitiveUnionB b1 = UnionValue.Create("foo");
-IPrimitiveUnionB b2 = UnionValue.Create((100, 200));
+var a1 = PrimitiveUnionA.Create(100);
+var a2 = PrimitiveUnionA.Create(new[] { 1, 2, 3});
 ```
 
 Performance
