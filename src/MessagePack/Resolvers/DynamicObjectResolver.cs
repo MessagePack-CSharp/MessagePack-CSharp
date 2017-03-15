@@ -13,7 +13,7 @@ namespace MessagePack.Resolvers
     /// </summary>
     public class DynamicObjectResolver : IFormatterResolver
     {
-        public static DynamicObjectResolver Instance = new DynamicObjectResolver();
+        public static readonly DynamicObjectResolver Instance = new DynamicObjectResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
 
@@ -74,7 +74,7 @@ namespace MessagePack.Resolvers
     /// </summary>
     public class DynamicContractlessObjectResolver : IFormatterResolver
     {
-        public static DynamicContractlessObjectResolver Instance = new DynamicContractlessObjectResolver();
+        public static readonly DynamicContractlessObjectResolver Instance = new DynamicContractlessObjectResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicContractlessObjectResolver";
 

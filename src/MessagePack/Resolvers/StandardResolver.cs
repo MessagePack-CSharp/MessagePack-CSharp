@@ -7,7 +7,7 @@ namespace MessagePack.Resolvers
     /// </summary>
     public class StandardResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new StandardResolver();
+        public static readonly IFormatterResolver Instance = new StandardResolver();
 
         static readonly IFormatterResolver[] resolvers = new[]
         {
@@ -57,7 +57,7 @@ namespace MessagePack.Resolvers
 
     public class ContractlessStandardResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new ContractlessStandardResolver();
+        public static readonly IFormatterResolver Instance = new ContractlessStandardResolver();
 
         static readonly IFormatterResolver[] resolvers = new[]
         {

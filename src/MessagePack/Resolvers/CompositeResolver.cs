@@ -7,7 +7,7 @@ namespace MessagePack.Resolvers
 {
     public class CompositeResolver : IFormatterResolver
     {
-        public static CompositeResolver Instance = new CompositeResolver();
+        public static readonly CompositeResolver Instance = new CompositeResolver();
 
         static bool isFreezed = false;
         static IFormatterResolver[] resolvers = new IFormatterResolver[0];
