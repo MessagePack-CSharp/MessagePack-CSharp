@@ -14,7 +14,7 @@ namespace MessagePack.Resolvers
 {
     public class DynamicGenericResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new DynamicGenericResolver();
+        public static readonly IFormatterResolver Instance = new DynamicGenericResolver();
 
         DynamicGenericResolver()
         {

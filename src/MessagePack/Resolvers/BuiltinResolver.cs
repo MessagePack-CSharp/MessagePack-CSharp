@@ -11,7 +11,7 @@ namespace MessagePack.Resolvers
 {
     public class BuiltinResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new BuiltinResolver();
+        public static readonly IFormatterResolver Instance = new BuiltinResolver();
 
         BuiltinResolver()
         {

@@ -13,7 +13,7 @@ namespace MessagePack.Resolvers
     /// </summary>
     public class DynamicUnionResolver : IFormatterResolver
     {
-        public static DynamicUnionResolver Instance = new DynamicUnionResolver();
+        public static readonly DynamicUnionResolver Instance = new DynamicUnionResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
 

@@ -11,7 +11,7 @@ namespace MessagePack.Resolvers
     /// </summary>
     public class DynamicEnumResolver : IFormatterResolver
     {
-        public static DynamicEnumResolver Instance = new DynamicEnumResolver();
+        public static readonly DynamicEnumResolver Instance = new DynamicEnumResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicEnumResolver";
 
