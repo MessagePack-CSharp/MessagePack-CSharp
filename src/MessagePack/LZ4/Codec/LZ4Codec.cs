@@ -143,12 +143,12 @@ namespace MessagePack.LZ4
             }
 
             if (input == null) throw new ArgumentNullException("input");
-            if (inputOffset < 0 || inputOffset + inputLength > input.Length)
-                throw new ArgumentException("inputOffset and inputLength are invalid for given input");
+            if ((uint)inputOffset > (uint)input.Length) throw new ArgumentOutOfRangeException("inputOffset");
+            if ((uint)inputLength > (uint)input.Length - (uint)inputOffset) throw new ArgumentOutOfRangeException("inputLength");
 
             if (output == null) throw new ArgumentNullException("output");
-            if (outputOffset < 0 || outputOffset + outputLength > output.Length)
-                throw new ArgumentException("outputOffset and outputLength are invalid for given output");
+            if ((uint)outputOffset > (uint)output.Length) throw new ArgumentOutOfRangeException("outputOffset");
+            if ((uint)outputLength > (uint)output.Length - (uint)outputOffset) throw new ArgumentOutOfRangeException("outputLength");
         }
 
         #endregion
