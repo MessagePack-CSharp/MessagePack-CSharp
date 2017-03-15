@@ -404,4 +404,31 @@ namespace SharedData
         [Key(2)]
         public int MyProperty3 { get; set; }
     }
+
+
+    [MessagePackObject]
+    public class Empty1
+    {
+    }
+
+
+    [MessagePackObject(true)]
+    public class Empty2
+    {
+    }
+
+    [MessagePackObject]
+    public class NonEmpty1
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+    }
+
+
+    [MessagePackObject(true)]
+    public class NonEmpty2
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+    }
 }

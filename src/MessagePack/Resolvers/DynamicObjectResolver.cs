@@ -256,7 +256,7 @@ namespace MessagePack.Internal
             if (info.IsIntKey)
             {
                 // use Array
-                var maxKey = info.Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(0).Max();
+                var maxKey = info.Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
                 var intKeyMap = info.Members.Where(x => x.IsReadable).ToDictionary(x => x.IntKey);
 
                 EmitOffsetPlusEqual(il, null, () =>
@@ -438,7 +438,7 @@ namespace MessagePack.Internal
             DeserializeInfo[] infoList;
             if (info.IsIntKey)
             {
-                var maxKey = info.Members.Select(x => x.IntKey).DefaultIfEmpty(0).Max();
+                var maxKey = info.Members.Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
                 var len = maxKey + 1;
                 var intKeyMap = info.Members.ToDictionary(x => x.IntKey);
 

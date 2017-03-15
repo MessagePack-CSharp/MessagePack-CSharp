@@ -47,7 +47,7 @@ namespace MessagePack.CodeGenerator
         {
             get
             {
-                return Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(0).Max();
+                return Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
             }
         }
 

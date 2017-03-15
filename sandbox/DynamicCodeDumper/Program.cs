@@ -15,6 +15,10 @@ namespace DynamicCodeDumper
     {
         static void Main(string[] args)
         {
+            DynamicObjectResolver.Instance.GetFormatter<Empty1>();
+            DynamicObjectResolver.Instance.GetFormatter<Empty2>();
+            DynamicObjectResolver.Instance.GetFormatter<NonEmpty1>();
+            DynamicObjectResolver.Instance.GetFormatter<NonEmpty2>();
             DynamicObjectResolver.Instance.GetFormatter<FirstSimpleData>();
             DynamicObjectResolver.Instance.GetFormatter<Version0>();
             DynamicObjectResolver.Instance.GetFormatter<Version1>();

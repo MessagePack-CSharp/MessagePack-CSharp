@@ -275,5 +275,19 @@ namespace MessagePack.Tests
             unversion.MyProperty.Is(10);
             unversion.MyProperty2.Is(99);
         }
+
+        [Fact]
+        public void MoreEmpty()
+        {
+            var e1 = new Empty1();
+            var e2 = new Empty2();
+            var ne1 = new NonEmpty1();
+            var ne2 = new NonEmpty2();
+
+            MessagePackSerializer.ToJson(e1).Is("[]");
+            MessagePackSerializer.ToJson(e2).Is("{}");
+            MessagePackSerializer.ToJson(ne1).Is("[0]");
+            MessagePackSerializer.ToJson(ne2).Is(@"{""MyProperty"":0}");
+        }
     }
 }
