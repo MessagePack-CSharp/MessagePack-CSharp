@@ -881,6 +881,9 @@ mpc arguments help:
 ```
 // Simple Sample:
 mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs"
+
+// Use force map simulate DynamicContractlessObjectResolver
+mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
 ```
 
 If you create DLL by msbuild project, you can use Pre/Post build event.

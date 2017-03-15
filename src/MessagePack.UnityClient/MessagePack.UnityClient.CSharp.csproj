@@ -79,6 +79,7 @@
     <Compile Include="Assets\Scripts\MessagePack\FloatBits.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\CollectionFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\DictionaryFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\EnumAsStringFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\IMessagePackFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\MultiDimentionalArrayFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\NullableFormatter.cs" />
@@ -119,6 +120,7 @@
     <Compile Include="Assets\Scripts\MessagePack\Nil.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\BuiltinResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\CompositeResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicEnumAsStringResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicEnumResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicGenericResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicObjectResolver.cs" />
