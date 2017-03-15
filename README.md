@@ -875,6 +875,7 @@ mpc arguments help:
   -c, --conditionalsymbol  [optional, default=empty]conditional compiler symbol
   -r, --resolvername       [optional, default=GeneratedResolver]Set resolver name
   -n, --namespace          [optional, default=MessagePack]Set namespace root name
+  -m, --usemapmode         [optional, default=false]Force use map mode serialization
 ```
 
 ```

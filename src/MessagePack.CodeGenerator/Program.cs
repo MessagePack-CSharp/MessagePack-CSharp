@@ -17,6 +17,7 @@ namespace MessagePack.CodeGenerator
         public List<string> ConditionalSymbols { get; private set; }
         public string ResolverName { get; private set; }
         public string NamespaceRoot { get; private set; }
+        public bool IsUseMap { get; private set; }
 
         public bool IsParsed { get; set; }
 
@@ -25,6 +26,7 @@ namespace MessagePack.CodeGenerator
             ConditionalSymbols = new List<string>();
             NamespaceRoot = "MessagePack";
             ResolverName = "GeneratedResolver";
+            IsUseMap = false;
 
             var option = new OptionSet()
             {
@@ -33,6 +35,7 @@ namespace MessagePack.CodeGenerator
                 { "c|conditionalsymbol=", "[optional, default=empty]conditional compiler symbol", x => { ConditionalSymbols.AddRange(x.Split(',')); } },
                 { "r|resolvername=", "[optional, default=GeneratedResolver]Set resolver name", x => { ResolverName = x; } },
                 { "n|namespace=", "[optional, default=MessagePack]Set namespace root name", x => { NamespaceRoot = x; } },
+                { "m|usemapmode", "[optional, default=false]Force use map mode serialization", x => { IsUseMap = true; } },
             };
             if (args.Length == 0)
             {
@@ -76,7 +79,7 @@ namespace MessagePack.CodeGenerator
             var sw = Stopwatch.StartNew();
             Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
 
-            var collector = new TypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true);
+            var collector = new TypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
 
             Console.WriteLine("Project Compilation Complete:" + sw.Elapsed.ToString());
             Console.WriteLine();

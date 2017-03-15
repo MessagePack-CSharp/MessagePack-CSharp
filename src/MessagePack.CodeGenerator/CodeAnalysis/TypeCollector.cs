@@ -42,6 +42,7 @@ namespace MessagePack.CodeGenerator
                 typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypes);
 
         readonly string csProjPath;
+        readonly bool isForceUseMap;
         readonly ReferenceSymbols typeReferences;
         readonly INamedTypeSymbol[] targetTypes;
         readonly HashSet<string> embeddedTypes = new HashSet<string>(new string[]
@@ -186,12 +187,13 @@ namespace MessagePack.CodeGenerator
 
         // --- 
 
-        public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal)
+        public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
         {
             this.csProjPath = csProjPath;
             var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
             this.typeReferences = new ReferenceSymbols(compilation);
             this.disallowInternal = disallowInternal;
+            this.isForceUseMap = isForceUseMap;
 
             targetTypes = compilation.GetNamedTypeSymbols()
                 .Where(x =>
@@ -431,9 +433,9 @@ namespace MessagePack.CodeGenerator
             var intMemebrs = new Dictionary<int, MemberSerializationInfo>();
             var stringMembers = new Dictionary<string, MemberSerializationInfo>();
 
-            if ((bool)contractAttr.ConstructorArguments[0].Value)
+            if (isForceUseMap || (bool)contractAttr.ConstructorArguments[0].Value)
             {
-                // Opt-out: All public members are serialize target except [Ignore] member.
+                // All public members are serialize target except [Ignore] member.
                 isIntKey = false;
 
                 var hiddenIntKey = 0;
@@ -483,7 +485,7 @@ namespace MessagePack.CodeGenerator
             }
             else
             {
-                // Opt-in: Only KeyAttribute members
+                // Only KeyAttribute members
                 var searchFirst = true;
                 var hiddenIntKey = 0;
 
