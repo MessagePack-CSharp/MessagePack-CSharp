@@ -1,5 +1,7 @@
 MessagePack for C#(.NET, .NET Core, Unity, Xamarin)
 ===
+[![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Extremely fast [MessagePack](http://msgpack.org/) serializer for C#, x10 faster than MsgPack-Cli and acquires best performance compared with all the other C# serializers. MessagePack for C# has built-in LZ4 compression which can achieve super fast and small binary size.  Performance is always important! for Game, Distributed computing, Microservices, Store data to Redis, etc.
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23835716/89c8ab08-07af-11e7-9183-9e9415bdc87f.png)
