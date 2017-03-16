@@ -200,7 +200,7 @@ Resolver is key customize point of MessagePack for C#. Details, please see [exte
 
 Serialize ImmutableObject(SerializationConstructor)
 ---
-MessagePack for C# supports serialize immutable object. For example, this struct can serialize/deserialize naturally.
+MessagePack for C# supports deserialize immutable object. For example, this struct can serialize/deserialize naturally.
 
 ```csharp
 [MessagePackObject]
@@ -221,9 +221,7 @@ public struct Point
 var data = new Point(99, 9999);
 var bin = MessagePackSerializer.Serialize(data);
 
-// [99,9999]
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
-
+// Okay to deserialize immutable obejct
 var point = MessagePackSerializer.Deserialize<Point>(bin);
 ```
 
