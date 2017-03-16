@@ -1,5 +1,6 @@
 ﻿using MessagePack.Formatters;
 using MessagePack.Resolvers;
+using MessagePack.Unity;
 using MessagePack.Unity.Extension;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,17 @@ namespace MessagePack.Tests.ExtensionTests
 
     public class UnityShimTest
     {
+        T ConvertBlit<T>(T value)
+        {
+            var resolver = new WithUnityBlitResolver();
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, resolver), resolver);
+        }
+
+        T ConvertStandard<T>(T value)
+        {
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, UnityResolver.Instance), UnityResolver.Instance);
+        }
+
         public static object[] testData = new object[]
         {
             new object[]{ BlitContainer<Vector2>.Create(Enumerable.Range(1, 123).Select(x => new Vector2(x, x)))},
@@ -38,22 +50,34 @@ namespace MessagePack.Tests.ExtensionTests
             new object[]{ BlitContainer<double>.Create(Enumerable.Range(1, 123).Select(x => (double)x))},
         };
 
-        T Convert<T>(T value)
-        {
-            var resolver = new WithUnityBlitResolver();
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, resolver), resolver);
-        }
-
         [Theory]
         [MemberData(nameof(testData))]
         public void BlitTest<T>(BlitContainer<T> blit)
         {
-            var huga = Convert(blit.Array);
+            var huga = ConvertBlit(blit.Array);
             huga.IsStructuralEqual(blit.Array);
 
-            Convert(blit).IsStructuralEqual(blit);
+            ConvertBlit(blit).IsStructuralEqual(blit);
             blit.Array = null;
-            Convert(blit).Array.IsNull();
+            ConvertBlit(blit).Array.IsNull();
+        }
+
+        public static object[] testStandardData = new object[]
+        {
+            new object[]{ new Vector2(10,20) },
+            new object[]{ new Vector3(10,20, 30) },
+            new object[]{ new Vector4(10,20,30, 40) },
+            new object[]{ new Quaternion(10,20,30, 40) },
+            new object[]{ new Color(0.3f,32.1f,32.9f,324.32f) },
+            new object[]{ new Bounds(new Vector3(1,2,3), new Vector3(4,5,6)) },
+            new object[]{ new Rect(1,2,3, 4) },
+        };
+
+        [Theory]
+        [MemberData(nameof(testStandardData))]
+        public void StandardFormatterTest<T>(T data)
+        {
+            ConvertStandard(data).IsStructuralEqual(data);
         }
     }
 

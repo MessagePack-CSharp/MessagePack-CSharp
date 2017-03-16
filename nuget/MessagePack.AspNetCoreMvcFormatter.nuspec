@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack.AspNetCoreMvcFormatter</id>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <title>ASP.NET Core MVC Input/Output MessagePack formatter</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
     <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>ASP.NET Core MVC Input/Output MessagePack formatter.</description>
-    <releaseNotes>initial release.</releaseNotes>
+    <releaseNotes>update dependency.</releaseNotes>
     <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, aspnetcore, aspnetcoremvc</tags>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
@@ -17,11 +17,11 @@
     </frameworkAssemblies>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="MessagePack" version="1.0.2" />
+        <dependency id="MessagePack" version="1.0.3" />
         <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.1.2" />
       </group>
       <group targetFramework=".NETStandard1.4">
-        <dependency id="MessagePack" version="1.0.2" />
+        <dependency id="MessagePack" version="1.0.3" />
         <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.1.2" />
       </group>
     </dependencies>

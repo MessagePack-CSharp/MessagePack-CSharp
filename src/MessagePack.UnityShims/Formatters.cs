@@ -10,7 +10,7 @@ namespace MessagePack.Unity
         {
 
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.x);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.y);
             return offset - startOffset;
@@ -64,7 +64,7 @@ namespace MessagePack.Unity
         {
 
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.x);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.y);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.z);
@@ -123,7 +123,7 @@ namespace MessagePack.Unity
         {
 
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 4);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.x);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.y);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.z);
@@ -187,7 +187,7 @@ namespace MessagePack.Unity
         {
 
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 4);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.x);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.y);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.z);
@@ -251,7 +251,7 @@ namespace MessagePack.Unity
         {
 
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 4);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.r);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.g);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.b);
@@ -315,7 +315,7 @@ namespace MessagePack.Unity
         {
 
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
             offset += formatterResolver.GetFormatterWithVerify<global::UnityEngine.Vector3>().Serialize(ref bytes, offset, value.center, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<global::UnityEngine.Vector3>().Serialize(ref bytes, offset, value.size, formatterResolver);
             return offset - startOffset;
@@ -369,7 +369,7 @@ namespace MessagePack.Unity
         {
 
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 4);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.x);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.y);
             offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.width);

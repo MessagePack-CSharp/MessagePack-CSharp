@@ -431,4 +431,44 @@ namespace SharedData
         [Key(0)]
         public int MyProperty { get; set; }
     }
+
+    [MessagePackObject]
+    public struct VectorLike2
+    {
+        [Key(0)]
+        public float x;
+        [Key(1)]
+        public float y;
+
+        [SerializationConstructor]
+        public VectorLike2(float x, float y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    [MessagePackObject]
+    public struct Vector3Like
+    {
+        [Key(0)]
+        public float x;
+        [Key(1)]
+        public float y;
+        [Key(2)]
+        public float z;
+
+        [SerializationConstructor]
+        public Vector3Like(float x, float y, float z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public static Vector3Like operator *(Vector3Like a, float d)
+        {
+            return new Vector3Like(a.x * d, a.y * d, a.z * d);
+        }
+    }
 }
