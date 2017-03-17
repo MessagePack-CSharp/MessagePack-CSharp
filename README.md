@@ -559,6 +559,8 @@ Author is creating other extension packages, too.
 
 You can make your own extension serializers, let's create them and share it!
 
+* [pocketberserker/MessagePack.FSharpExtensions](https://github.com/pocketberserker/MessagePack.FSharpExtensions) - supports F# list,set,map,unit,option,discriminated union
+
 High-Level API(MessagePackSerializer)
 ---
 `MessagePackSerializer` is the entry point of MessagePack for C#. Its static methods are main API of MessagePack for C#.
