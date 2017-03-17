@@ -192,9 +192,15 @@ var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.Contractle
 
 // {"MyProperty1":99,"MyProperty2":9999}
 Console.WriteLine(MessagePackSerializer.ToJson(bin));
+
+// You can set ContractlessStandardResolver as default.
+MessagePackSerializer.SetDefaultResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+
+// serializable.
+var bin2 = MessagePackSerializer.Serialize(data);
 ```
 
-ContractlessStandardResolver can serialize anonymous type.
+ContractlessStandardResolver can serialize anonymous type, too.
 
 Resolver is key customize point of MessagePack for C#. Details, please see [extension point](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
 
