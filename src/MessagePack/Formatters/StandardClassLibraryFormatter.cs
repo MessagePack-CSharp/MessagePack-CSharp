@@ -122,7 +122,7 @@ namespace MessagePack.Formatters
 
         public decimal Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
-            return decimal.Parse(MessagePackBinary.ReadString(bytes, offset, out readSize));
+            return decimal.Parse(MessagePackBinary.ReadString(bytes, offset, out readSize), CultureInfo.InvariantCulture);
         }
     }
 

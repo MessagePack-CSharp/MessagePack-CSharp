@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -219,6 +220,19 @@ namespace MessagePack.Tests
             MessagePackBinary.ReadString(bytesB, 0, out readSize).Is(b);
             MessagePackBinary.ReadString(bytesC, 0, out readSize).Is(c);
             MessagePackBinary.ReadString(bytesD, 0, out readSize).Is(d);
+        }
+
+        // https://github.com/neuecc/MessagePack-CSharp/issues/22
+        [Fact]
+        public void DecimalLang()
+        {
+            var estonian = CultureInfo.GetCultureInfo("et-EE");
+            CultureInfo.CurrentCulture = estonian;
+
+            var b = MessagePackSerializer.Serialize(12345.6789M);
+            var d = MessagePackSerializer.Deserialize<decimal>(b);
+
+            d.Is(12345.6789M);
         }
     }
 }
