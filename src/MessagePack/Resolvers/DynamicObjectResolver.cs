@@ -934,7 +934,7 @@ namespace MessagePack.Internal
             }
 
             var isIntKey = true;
-            var intMemebrs = new Dictionary<int, EmittableMember>();
+            var intMembers = new Dictionary<int, EmittableMember>();
             var stringMembers = new Dictionary<string, EmittableMember>();
 
             if (forceStringKey || contractAttr.KeyAsPropertyName)
@@ -1015,9 +1015,9 @@ namespace MessagePack.Internal
                     if (isIntKey)
                     {
                         member.IntKey = key.IntKey.Value;
-                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
+                        if (intMembers.ContainsKey(member.IntKey)) throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
 
-                        intMemebrs.Add(member.IntKey, member);
+                        intMembers.Add(member.IntKey, member);
                     }
                     else
                     {
@@ -1064,9 +1064,9 @@ namespace MessagePack.Internal
                     if (isIntKey)
                     {
                         member.IntKey = key.IntKey.Value;
-                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
+                        if (intMembers.ContainsKey(member.IntKey)) throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
 
-                        intMemebrs.Add(member.IntKey, member);
+                        intMembers.Add(member.IntKey, member);
                     }
                     else
                     {
@@ -1099,7 +1099,7 @@ namespace MessagePack.Internal
                     EmittableMember paramMember;
                     if (isIntKey)
                     {
-                        if (intMemebrs.TryGetValue(ctorParamIndex, out paramMember))
+                        if (intMembers.TryGetValue(ctorParamIndex, out paramMember))
                         {
                             if (item.ParameterType == paramMember.Type && paramMember.IsReadable)
                             {
@@ -1151,7 +1151,7 @@ namespace MessagePack.Internal
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = (isIntKey) ? intMemebrs.Values.ToArray() : stringMembers.Values.ToArray()
+                Members = (isIntKey) ? intMembers.Values.ToArray() : stringMembers.Values.ToArray()
             };
         }
 
