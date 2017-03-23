@@ -170,7 +170,7 @@ namespace MessagePack.CodeGenerator
                 fi.Directory.Create();
             }
 
-            System.IO.File.WriteAllText(path, text);
+            System.IO.File.WriteAllText(path, text, Encoding.UTF8);
         }
     }
 }

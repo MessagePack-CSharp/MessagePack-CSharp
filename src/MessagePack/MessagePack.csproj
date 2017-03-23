@@ -29,6 +29,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="LZ4\Codec\LZ4Codec.Safe.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />

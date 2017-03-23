@@ -289,5 +289,16 @@ namespace MessagePack.Tests
             MessagePackSerializer.ToJson(ne1).Is("[0]");
             MessagePackSerializer.ToJson(ne2).Is(@"{""MyProperty"":0}");
         }
+
+        [Fact]
+        public void Contractless()
+        {
+            var data = new ContractlessConstructorCheck(10, "hogehoge");
+            var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance);
+            var re = MessagePackSerializer.Deserialize<ContractlessConstructorCheck>(bin, MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance);
+
+            re.MyProperty1.Is(10);
+            re.MyProperty2.Is("hogehoge");
+        }
     }
 }

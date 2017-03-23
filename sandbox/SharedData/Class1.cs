@@ -471,4 +471,25 @@ namespace SharedData
             return new Vector3Like(a.x * d, a.y * d, a.z * d);
         }
     }
+
+
+    
+    public class ContractlessConstructorCheck
+    {
+        public int MyProperty1 { get; set; }
+        public string MyProperty2 { get; set; }
+
+
+        public ContractlessConstructorCheck(Tuple<int,string> ok)
+        {
+
+        }
+
+        [SerializationConstructor]
+        public ContractlessConstructorCheck(int myProperty1, string myProperty2)
+        {
+            this.MyProperty1 = myProperty1;
+            this.MyProperty2 = myProperty2;
+        }
+    }
 }
