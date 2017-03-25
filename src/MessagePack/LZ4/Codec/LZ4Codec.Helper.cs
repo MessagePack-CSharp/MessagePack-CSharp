@@ -60,7 +60,7 @@ namespace MessagePack.LZ4
 
 #endif
 
-        internal unsafe static class HashTablePool
+        internal static class HashTablePool
         {
             [ThreadStatic]
             static ushort[] ushortPool;

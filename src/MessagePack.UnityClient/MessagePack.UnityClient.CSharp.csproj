@@ -83,6 +83,7 @@
     <Compile Include="Assets\Scripts\MessagePack\Formatters\IMessagePackFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\MultiDimentionalArrayFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\NullableFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\OldSpecFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -105,6 +106,9 @@
     <Compile Include="Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ReflectionExtensions.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Helper.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Safe.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Safe32.Dirty.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Safe64.Dirty.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Unsafe.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Unsafe32.Dirty.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Unsafe64.Dirty.cs" />
@@ -125,6 +129,8 @@
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicGenericResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicObjectResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicUnionResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\NativeDateTimeResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\OldSpecResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\StandardResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Shims\Reflection.cs" />
     <Compile Include="Assets\Scripts\MessagePack\StringEncoding.cs" />
