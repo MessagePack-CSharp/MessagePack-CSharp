@@ -44,6 +44,10 @@ namespace MessagePack.Internal
             {
                 return new StaticNullableFormatter<DateTime>(NativeDateTimeFormatter.Instance);
             }
+            else if (t == typeof(DateTime[]))
+            {
+                return NativeDateTimeArrayFormatter.Instance;
+            }
 
             return null;
         }

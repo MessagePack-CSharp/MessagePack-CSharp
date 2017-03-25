@@ -32,6 +32,60 @@ namespace MessagePack.Formatters
         }
     }
 
+    public class NativeDateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
+    {
+        public static readonly NativeDateTimeArrayFormatter Instance = new NativeDateTimeArrayFormatter();
+
+        NativeDateTimeArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, DateTime[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.WriteInt64(ref bytes, offset, value[i].ToBinary());
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public DateTime[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new DateTime[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    var dateData = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
+                    array[i] = DateTime.FromBinary(dateData);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+    }
+
     // Old-Spec
     // bin 8, bin 16, bin 32, str 8, str 16, str 32 -> fixraw or raw 16 or raw 32
     // fixraw -> fixstr, raw16 -> str16, raw32 -> str32
