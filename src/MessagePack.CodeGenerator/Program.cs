@@ -61,6 +61,11 @@ namespace MessagePack.CodeGenerator
             option.WriteOptionDescriptions(Console.Out);
             IsParsed = false;
         }
+
+        public string GetNamespaceDot()
+        {
+            return string.IsNullOrWhiteSpace(NamespaceRoot) ? "" : NamespaceRoot + ".";
+        }
     }
 
 
@@ -98,7 +103,7 @@ namespace MessagePack.CodeGenerator
                 .GroupBy(x => x.Namespace)
                 .Select(x => new FormatterTemplate()
                 {
-                    Namespace = cmdArgs.NamespaceRoot + ".Formatters." + x.Key,
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters." + x.Key,
                     objectSerializationInfos = x.ToArray(),
                 })
                 .ToArray();
@@ -107,7 +112,7 @@ namespace MessagePack.CodeGenerator
                 .GroupBy(x => x.Namespace)
                 .Select(x => new EnumTemplate()
                 {
-                    Namespace = cmdArgs.NamespaceRoot + ".Formatters." + x.Key,
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters." + x.Key,
                     enumSerializationInfos = x.ToArray()
                 })
                 .ToArray();
@@ -116,20 +121,18 @@ namespace MessagePack.CodeGenerator
                 .GroupBy(x => x.Namespace)
                 .Select(x => new UnionTemplate()
                 {
-                    Namespace = cmdArgs.NamespaceRoot + ".Formatters." + x.Key,
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters." + x.Key,
                     unionSerializationInfos = x.ToArray()
                 })
                 .ToArray();
 
             var resolverTemplate = new ResolverTemplate()
             {
-                Namespace = cmdArgs.NamespaceRoot + ".Resolvers",
-                FormatterNamespace = cmdArgs.NamespaceRoot + ".Formatters",
+                Namespace = cmdArgs.GetNamespaceDot() + "Resolvers",
+                FormatterNamespace = cmdArgs.GetNamespaceDot() + "Formatters",
                 ResolverName = cmdArgs.ResolverName,
                 registerInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray()
             };
-
-            // TODO:
 
             var sb = new StringBuilder();
             sb.AppendLine(resolverTemplate.TransformText());
