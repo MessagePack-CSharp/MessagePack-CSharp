@@ -506,7 +506,7 @@ namespace MessagePack.CodeGenerator
                     if (!member.IsReadable && !member.IsWritable) continue;
 
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
-                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreAttribute." + " type: " + type.Name + " member:" + item.Name);
+                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.Name + " member:" + item.Name);
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
                     var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : (string)null;
@@ -562,7 +562,7 @@ namespace MessagePack.CodeGenerator
                     if (!member.IsReadable && !member.IsWritable) continue;
 
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
-                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreAttribute." + " type: " + type.Name + " member:" + item.Name);
+                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.Name + " member:" + item.Name);
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
                     var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : (string)null;

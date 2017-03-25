@@ -18,7 +18,7 @@ namespace MessagePackAnalyzer
 
         internal const string MessagePackObjectAttributeShortName = "MessagePackObjectAttribute";
         internal const string KeyAttributeShortName = "KeyAttribute";
-        internal const string IgnoreShortName = "IgnoreAttribute";
+        internal const string IgnoreShortName = "IgnoreMemberAttribute";
         internal const string UnionAttributeShortName = "UnionAttribute";
 
         internal static readonly DiagnosticDescriptor TypeMustBeMessagePackObject = new DiagnosticDescriptor(
@@ -29,8 +29,8 @@ namespace MessagePackAnalyzer
 
         internal static readonly DiagnosticDescriptor PublicMemberNeedsKey = new DiagnosticDescriptor(
             id: DiagnosticIdBase + "_" + nameof(PublicMemberNeedsKey), title: Title, category: Category,
-            messageFormat: "Public member requires KeyAttribute or IgnoreAttribute. {0}.{1}.", // type.Name + "." + item.Name
-            description: "Public member must be marked with KeyAttribute or IgnoreAttribute.",
+            messageFormat: "Public member requires KeyAttribute or IgnoreMemberAttribute. {0}.{1}.", // type.Name + "." + item.Name
+            description: "Public member must be marked with KeyAttribute or IgnoreMemberAttribute.",
             defaultSeverity: DiagnosticSeverity.Error, isEnabledByDefault: true);
 
         internal static readonly DiagnosticDescriptor InvalidMessagePackObject = new DiagnosticDescriptor(

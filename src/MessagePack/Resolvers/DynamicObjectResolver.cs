@@ -995,7 +995,7 @@ namespace MessagePack.Internal
                     if (!member.IsReadable && !member.IsWritable) continue;
 
                     var key = item.GetCustomAttribute<KeyAttribute>(true);
-                    if (key == null) throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreAttribute." + " type: " + type.FullName + " member:" + item.Name);
+                    if (key == null) throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
 
                     if (key.IntKey == null && key.StringKey == null) throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
 
@@ -1044,7 +1044,7 @@ namespace MessagePack.Internal
                     if (!member.IsReadable && !member.IsWritable) continue;
 
                     var key = item.GetCustomAttribute<KeyAttribute>(true);
-                    if (key == null) throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreAttribute." + " type: " + type.FullName + " member:" + item.Name);
+                    if (key == null) throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
 
                     if (key.IntKey == null && key.StringKey == null) throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
 
