@@ -656,7 +656,7 @@ Primitive API(MessagePackBinary)
 
 Read API returns deserialized primitive and read size. Write API returns write size and guranteed auto ensure ref byte[].
 
-DateTime is serialized to [new MessagePack extension spec proposal](https://github.com/msgpack/msgpack/pull/209).
+DateTime is serialized to [new MessagePack extension spec proposal](https://github.com/msgpack/msgpack/pull/209), it serialize/deserialize UTC and loses `Kind` info. If you use`NativeDateTimeResolver` serialized native DateTime binary format and it can keep `Kind` info but cannot communicate other platforms.
 
 `MessagePackType` means [msgpack spec of source types](https://github.com/msgpack/msgpack/blob/master/spec.md#serialization-type-to-format-conversion).
 
@@ -674,6 +674,8 @@ Extension Point(IFormatterResolver)
 | StandardResolver | Composited resolver . It resolves in the following order `builtin -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object`. This is the default of MessagePackSerializer. |
 | ContractlessStandardResolver | Composited `StandardResolver` -> `DynamicContractlessObjectResolver`. It enables contractless serialization. |
 | CompositeResolver | Singleton helper of setup custom resolvers. You can use `Register` or `RegisterAndSetAsDefault` API. |
+| NativeDateTimeResolver | Serialize by .NET native DateTime binary format. |
+| OldSpecResolver | str and bin serialize/deserialize follows old messagepack spec(use raw format) |
 | DynamicEnumResolver | Resolver of enum and there nullable, serialize there underlying type. It uses dynamic code generation to avoid boxing and boostup performance serialize there name. |
 | DynamicEnumAsStringResolver | Resolver of enum and there nullable.  It uses reflection call for resolve nullable at first time. |
 | DynamicGenericResolver | Resolver of generic type(`Tuple<>`, `List<>`, `Dictionary<,>`, `Array`, etc). It uses reflection call for resolve generic argument at first time. |
