@@ -1,5 +1,6 @@
 ﻿using MessagePack;
 using System;
+using System.Collections.Generic;
 
 namespace SharedData
 {
@@ -480,7 +481,7 @@ namespace SharedData
         public string MyProperty2 { get; set; }
 
 
-        public ContractlessConstructorCheck(Tuple<int,string> ok)
+        public ContractlessConstructorCheck(KeyValuePair<int,string> ok)
         {
 
         }

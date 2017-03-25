@@ -1,4 +1,4 @@
-#pragma warning disable 618
+﻿#pragma warning disable 618
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
@@ -43,7 +43,7 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(30)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(36)
             {
                 {typeof(global::SharedData.ByteEnum), 0 },
                 {typeof(global::SharedData.IUnionChecker), 1 },
@@ -75,6 +75,12 @@ namespace MessagePack.Resolvers
                 {typeof(global::SharedData.MyClass), 27 },
                 {typeof(global::SharedData.VersionBlockTest), 28 },
                 {typeof(global::SharedData.UnVersionBlockTest), 29 },
+                {typeof(global::SharedData.Empty1), 30 },
+                {typeof(global::SharedData.Empty2), 31 },
+                {typeof(global::SharedData.NonEmpty1), 32 },
+                {typeof(global::SharedData.NonEmpty2), 33 },
+                {typeof(global::SharedData.VectorLike2), 34 },
+                {typeof(global::SharedData.Vector3Like), 35 },
             };
         }
 
@@ -115,6 +121,12 @@ namespace MessagePack.Resolvers
                 case 27: return new MessagePack.Formatters.SharedData.MyClassFormatter();
                 case 28: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
                 case 29: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
+                case 30: return new MessagePack.Formatters.SharedData.Empty1Formatter();
+                case 31: return new MessagePack.Formatters.SharedData.Empty2Formatter();
+                case 32: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
+                case 33: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
+                case 34: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
+                case 35: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
                 default: return null;
             }
         }
@@ -485,7 +497,7 @@ namespace MessagePack.Formatters.SharedData
             var startOffset = offset;
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop1);
-            offset += MessagePackBinary.WriteString(ref bytes, offset, value.Prop2);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.Prop2, formatterResolver);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop3);
             return offset - startOffset;
         }
@@ -516,7 +528,7 @@ namespace MessagePack.Formatters.SharedData
                         __Prop1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                         break;
                     case 1:
-                        __Prop2__ = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                        __Prop2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 2:
                         __Prop3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -641,7 +653,7 @@ namespace MessagePack.Formatters.SharedData
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.X);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Y);
-            offset += MessagePackBinary.WriteBytes(ref bytes, offset, value.BytesSpecial);
+            offset += formatterResolver.GetFormatterWithVerify<byte[]>().Serialize(ref bytes, offset, value.BytesSpecial, formatterResolver);
             return offset - startOffset;
         }
 
@@ -673,7 +685,7 @@ namespace MessagePack.Formatters.SharedData
                         __Y__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                         break;
                     case 2:
-                        __BytesSpecial__ = MessagePackBinary.ReadBytes(bytes, offset, out readSize);
+                        __BytesSpecial__ = formatterResolver.GetFormatterWithVerify<byte[]>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
@@ -786,11 +798,11 @@ namespace MessagePack.Formatters.SharedData
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 7);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop1);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref bytes, offset, value.Prop2, formatterResolver);
-            offset += MessagePackBinary.WriteString(ref bytes, offset, value.Prop3);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.Prop3, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SimlpeStringKeyData>().Serialize(ref bytes, offset, value.Prop4, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructIntKeyData>().Serialize(ref bytes, offset, value.Prop5, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>().Serialize(ref bytes, offset, value.Prop6, formatterResolver);
-            offset += MessagePackBinary.WriteBytes(ref bytes, offset, value.BytesSpecial);
+            offset += formatterResolver.GetFormatterWithVerify<byte[]>().Serialize(ref bytes, offset, value.BytesSpecial, formatterResolver);
             return offset - startOffset;
         }
 
@@ -827,7 +839,7 @@ namespace MessagePack.Formatters.SharedData
                         __Prop2__ = formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 2:
-                        __Prop3__ = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                        __Prop3__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 3:
                         __Prop4__ = formatterResolver.GetFormatterWithVerify<global::SharedData.SimlpeStringKeyData>().Deserialize(bytes, offset, formatterResolver, out readSize);
@@ -839,7 +851,7 @@ namespace MessagePack.Formatters.SharedData
                         __Prop6__ = formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 6:
-                        __BytesSpecial__ = MessagePackBinary.ReadBytes(bytes, offset, out readSize);
+                        __BytesSpecial__ = formatterResolver.GetFormatterWithVerify<byte[]>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
@@ -928,8 +940,7 @@ namespace MessagePack.Formatters.SharedData
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
-            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 0);
             return offset - startOffset;
         }
 
@@ -974,8 +985,7 @@ namespace MessagePack.Formatters.SharedData
         {
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
-            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 0);
             return offset - startOffset;
         }
 
@@ -2140,6 +2150,372 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.UnVersionBlockTest();
             ____result.MyProperty = __MyProperty__;
             ____result.MyProperty2 = __MyProperty2__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class Empty1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Empty1>
+    {
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.Empty1 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 0);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.Empty1 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.Empty1();
+            return ____result;
+        }
+    }
+
+
+    public sealed class Empty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Empty2>
+    {
+
+        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+
+        public Empty2Formatter()
+        {
+            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(0)
+            {
+            };
+        }
+
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.Empty2 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 0);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.Empty2 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (____keyMapping.TryGetValue(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+
+                switch (key)
+                {
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                
+                NEXT_LOOP:
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.Empty2();
+            return ____result;
+        }
+    }
+
+
+    public sealed class NonEmpty1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.NonEmpty1>
+    {
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.NonEmpty1 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 1);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.NonEmpty1 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __MyProperty__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.NonEmpty1();
+            ____result.MyProperty = __MyProperty__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class NonEmpty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.NonEmpty2>
+    {
+
+        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+
+        public NonEmpty2Formatter()
+        {
+            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(1)
+            {
+                { "MyProperty", 0},
+            };
+        }
+
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.NonEmpty2 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 1);
+            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "MyProperty", 10);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.NonEmpty2 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __MyProperty__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (____keyMapping.TryGetValue(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                
+                NEXT_LOOP:
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.NonEmpty2();
+            ____result.MyProperty = __MyProperty__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class VectorLike2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.VectorLike2>
+    {
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.VectorLike2 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+            offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.x);
+            offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.y);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.VectorLike2 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                throw new InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __x__ = default(float);
+            var __y__ = default(float);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        __x__ = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        break;
+                    case 1:
+                        __y__ = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.VectorLike2(__x__, __y__);
+            ____result.x = __x__;
+            ____result.y = __y__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class Vector3LikeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Vector3Like>
+    {
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.Vector3Like value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
+            offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.x);
+            offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.y);
+            offset += MessagePackBinary.WriteSingle(ref bytes, offset, value.z);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.Vector3Like Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                throw new InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __x__ = default(float);
+            var __y__ = default(float);
+            var __z__ = default(float);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        __x__ = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        break;
+                    case 1:
+                        __y__ = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        break;
+                    case 2:
+                        __z__ = MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.Vector3Like(__x__, __y__, __z__);
+            ____result.x = __x__;
+            ____result.y = __y__;
+            ____result.z = __z__;
             return ____result;
         }
     }
