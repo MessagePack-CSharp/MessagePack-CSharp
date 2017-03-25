@@ -840,17 +840,15 @@ You can install by package and includes source code. If build target as PC, you 
 
 In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Quaternion`, `Color`, `Bounds`, `Rect` and there nullable by built-in extension `UnityResolver`. It is included StandardResolver by default.
 
-If you want to use LZ4 compression support, you must enables unsafe option and define additional symbols. At first, write `-unsafe` on `smcs.rsp`, `gmcs.rsp` etc. And define `ENABLE_UNSAFE_MSGPACK` symbol.
-
-![image](https://cloud.githubusercontent.com/assets/46207/23837456/fc01c828-07cb-11e7-92bf-f23eb2575115.png)
-
-So you can use `LZ4MessagePackSerialzer`. And also additional unsafe extension of MessagePack for C# can use.
-
-`UnsafeBlitResolver` is special resolver for extremely fast unsafe serialization/deserialization for struct array.
+MessagePack for C# has additional unsafe extension.  `UnsafeBlitResolver` is special resolver for extremely fast unsafe serialization/deserialization for struct array.
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23837633/76589924-07ce-11e7-8b26-e50eab548938.png)
 
 x20 faster Vector3[] serialization than native JsonUtility. If use `UnsafeBlitResolver`, serialize special format(ext:typecode 30~39)  `Vector2[]`, `Vector3[]`, `Quaternion[]`, `Color[]`, `Bounds[]`, `Rect[]`. If use `UnityBlitWithPrimitiveArrayResolver`, supports `int[]`, `float[]`, `double[]` too. This special feature is useful for serialize Mesh(many Vector3[]) or many transform position.
+
+If you want to use unsafe resolver, you must enables unsafe option and define additional symbols. At first, write `-unsafe` on `smcs.rsp`, `gmcs.rsp` etc. And define `ENABLE_UNSAFE_MSGPACK` symbol.
+
+![image](https://cloud.githubusercontent.com/assets/46207/23837456/fc01c828-07cb-11e7-92bf-f23eb2575115.png)
 
 Here is sample of configuration.
 
