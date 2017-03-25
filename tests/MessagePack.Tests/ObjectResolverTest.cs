@@ -1,4 +1,5 @@
-﻿using SharedData;
+﻿using MessagePack.Resolvers;
+using SharedData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -294,8 +295,8 @@ namespace MessagePack.Tests
         public void Contractless()
         {
             var data = new ContractlessConstructorCheck(10, "hogehoge");
-            var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance);
-            var re = MessagePackSerializer.Deserialize<ContractlessConstructorCheck>(bin, MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance);
+            var bin = MessagePackSerializer.Serialize(data, ContractlessStandardResolver.Instance);
+            var re = MessagePackSerializer.Deserialize<ContractlessConstructorCheck>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             re.MyProperty1.Is(10);
             re.MyProperty2.Is("hogehoge");
