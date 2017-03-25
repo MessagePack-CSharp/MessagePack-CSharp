@@ -1,5 +1,4 @@
-﻿#if ENABLE_UNSAFE_MSGPACK
-#if NETSTANDARD1_4
+﻿#if NETSTANDARD1_4
 
 using System;
 using System.Linq;
@@ -212,5 +211,4 @@ namespace MessagePack
     }
 }
 
-#endif
 #endif

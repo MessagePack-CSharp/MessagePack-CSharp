@@ -1,6 +1,4 @@
-﻿#if ENABLE_UNSAFE_MSGPACK
-
-using System;
+﻿using System;
 
 namespace MessagePack.LZ4
 {
@@ -33,6 +31,8 @@ namespace MessagePack.LZ4
         }
 
 #else
+
+        // use 'Safe' code for Unity because in IL2CPP gots strange behaviour.
 
         public static int Encode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
         {
@@ -113,4 +113,3 @@ namespace MessagePack.LZ4
     }
 }
 
-#endif

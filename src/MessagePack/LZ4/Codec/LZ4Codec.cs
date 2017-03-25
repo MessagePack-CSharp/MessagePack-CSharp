@@ -1,6 +1,4 @@
-﻿#if ENABLE_UNSAFE_MSGPACK
-
-#region license
+﻿#region license
 
 /*
 Copyright (c) 2013, Milosz Krajewski
@@ -158,5 +156,3 @@ namespace MessagePack.LZ4
 }
 
 // ReSharper restore InconsistentNaming
-
-#endif

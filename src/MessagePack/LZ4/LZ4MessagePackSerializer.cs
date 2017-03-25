@@ -1,8 +1,5 @@
-﻿#if ENABLE_UNSAFE_MSGPACK
-
-using MessagePack.Internal;
+﻿using MessagePack.Internal;
 using System;
-using System.Linq;
 using System.IO;
 using MessagePack.LZ4;
 
@@ -217,5 +214,3 @@ namespace MessagePack.Internal
         }
     }
 }
-
-#endif
