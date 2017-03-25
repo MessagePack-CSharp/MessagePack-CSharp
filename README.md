@@ -649,7 +649,6 @@ Primitive API(MessagePackBinary)
 | Write/ReadExtensionFormat | Write/Read ext format header(Length + TypeCode) and content byte[]. |
 | Write/ReadExtensionFormatHeader | Write/Read ext format, header(Length + TypeCode) only. |
 | IsNil | Is TypeCode Nil? |
-| IsMessagePackPrimitive | Is Type can become MessagePack Primitive(Sbyte, Byte, Int16, Int32, Int64, UInt16,UInt32, UInt64, Single, Double, Boolean,  DateTime, Char, Byte[], String)? |
 | GetMessagePackType | Return MessagePackType of target MessagePack bianary position. |
 | EnsureCapacity | Resize if byte can not fill.  |
 | FastResize | Buffer.BlockCopy version of Array.Resize. |

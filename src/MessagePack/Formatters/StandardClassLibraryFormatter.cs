@@ -150,7 +150,6 @@ namespace MessagePack.Formatters
     {
         public static readonly IMessagePackFormatter<DateTimeOffset> Instance = new DateTimeOffsetFormatter();
 
-
         DateTimeOffsetFormatter()
         {
 

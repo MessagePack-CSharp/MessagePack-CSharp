@@ -88,10 +88,10 @@ namespace MessagePack.CodeGenerator
             "bool",
             "byte",
             "sbyte",
-            "global::System.DateTime",
             "char",
-            "byte[]",
-            "string",
+            //"global::System.DateTime",
+            //"byte[]",
+            //"string",
         });
 
         public string GetSerializeMethodString()

@@ -121,7 +121,7 @@ namespace MessagePack.Resolvers
                     formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
                     return;
                 }
-                
+
                 if (!typeof(T).GetTypeInfo().IsPublic() && ti.IsClass)
                 {
                     formatter = (IMessagePackFormatter<T>)DynamicPrivateFormatterBuilder.BuildFormatter(typeof(T));
@@ -354,7 +354,7 @@ namespace MessagePack.Internal
         static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member)
         {
             var t = member.Type;
-            if (MessagePackBinary.IsMessagePackPrimitive(t))
+            if (IsOptimizeTargetType(t))
             {
                 EmitOffsetPlusEqual(il, null, () =>
                 {
@@ -623,7 +623,7 @@ namespace MessagePack.Internal
         {
             var member = info.MemberInfo;
             var t = member.Type;
-            if (MessagePackBinary.IsMessagePackPrimitive(t))
+            if (IsOptimizeTargetType(t))
             {
                 il.EmitLdarg(1);
                 il.EmitLdarg(2);
@@ -699,6 +699,31 @@ namespace MessagePack.Internal
 
                 return result; // struct returns local result field
             }
+        }
+
+        static bool IsOptimizeTargetType(Type type)
+        {
+            if (type == typeof(Int16)
+             || type == typeof(Int32)
+             || type == typeof(Int64)
+             || type == typeof(UInt16)
+             || type == typeof(UInt32)
+             || type == typeof(UInt64)
+             || type == typeof(Single)
+             || type == typeof(Double)
+             || type == typeof(bool)
+             || type == typeof(byte)
+             || type == typeof(sbyte)
+             || type == typeof(char)
+             // not includes DateTime and String and Binary.
+             //|| type == typeof(DateTime)
+             //|| type == typeof(string)
+             //|| type == typeof(byte[])
+             )
+            {
+                return true;
+            }
+            return false;
         }
 
         // EmitInfos...
@@ -852,7 +877,7 @@ namespace MessagePack.Internal
         static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member)
         {
             var t = member.Type;
-            if (MessagePackBinary.IsMessagePackPrimitive(t))
+            if (IsOptimizeTargetType(t))
             {
                 EmitOffsetPlusEqual(il, null, () =>
                 {
@@ -882,6 +907,31 @@ namespace MessagePack.Internal
                     il.EmitCall(getSerialize(t));
                 });
             }
+        }
+
+        static bool IsOptimizeTargetType(Type type)
+        {
+            if (type == typeof(Int16)
+             || type == typeof(Int32)
+             || type == typeof(Int64)
+             || type == typeof(UInt16)
+             || type == typeof(UInt32)
+             || type == typeof(UInt64)
+             || type == typeof(Single)
+             || type == typeof(Double)
+             || type == typeof(bool)
+             || type == typeof(byte)
+             || type == typeof(sbyte)
+             || type == typeof(char)
+             // not includes DateTime and String and Binary.
+             //|| type == typeof(DateTime)
+             //|| type == typeof(string)
+             //|| type == typeof(byte[])
+             )
+            {
+                return true;
+            }
+            return false;
         }
     }
 

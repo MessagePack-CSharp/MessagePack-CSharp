@@ -298,33 +298,6 @@ namespace MessagePack
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static bool IsMessagePackPrimitive(Type type)
-        {
-            if (type == typeof(Int16)
-             || type == typeof(Int32)
-             || type == typeof(Int64)
-             || type == typeof(UInt16)
-             || type == typeof(UInt32)
-             || type == typeof(UInt64)
-             || type == typeof(Single)
-             || type == typeof(Double)
-             || type == typeof(bool)
-             || type == typeof(byte)
-             || type == typeof(sbyte)
-             || type == typeof(DateTime)
-             || type == typeof(char)
-             || type == typeof(byte[])
-             || type == typeof(string)
-             )
-            {
-                return true;
-            }
-            return false;
-        }
-
-#if NETSTANDARD1_4
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public static int ReadNext(byte[] bytes, int offset)
         {
             return readNextDecoders[bytes[offset]].Read(bytes, offset);
