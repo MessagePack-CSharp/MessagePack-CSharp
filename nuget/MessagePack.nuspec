@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack</id>
-        <version>1.1.0</version>
+        <version>1.1.1</version>
         <title>MessagePack for C#</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
