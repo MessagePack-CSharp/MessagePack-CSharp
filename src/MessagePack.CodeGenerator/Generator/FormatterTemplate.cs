@@ -162,7 +162,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write("            var startOffset = offset;\r\n");
             
             #line 50 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
- if( objInfo.IsIntKey) { if( objInfo.MaxKey <= 15) { 
+ if( objInfo.IsIntKey) { if( (objInfo.MaxKey + 1) <= 15) { 
             
             #line default
             #line hidden

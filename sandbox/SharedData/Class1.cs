@@ -474,14 +474,14 @@ namespace SharedData
     }
 
 
-    
+
     public class ContractlessConstructorCheck
     {
         public int MyProperty1 { get; set; }
         public string MyProperty2 { get; set; }
 
 
-        public ContractlessConstructorCheck(KeyValuePair<int,string> ok)
+        public ContractlessConstructorCheck(KeyValuePair<int, string> ok)
         {
 
         }
@@ -492,5 +492,42 @@ namespace SharedData
             this.MyProperty1 = myProperty1;
             this.MyProperty2 = myProperty2;
         }
+    }
+
+    [MessagePackObject]
+    public class ArrayOptimizeClass
+    {
+        [Key(0)]
+        public int MyProperty0 { get; set; }
+        [Key(1)]
+        public int MyProperty1 { get; set; }
+        [Key(2)]
+        public int MyProperty2 { get; set; }
+        [Key(3)]
+        public int MyProperty3 { get; set; }
+        [Key(4)]
+        public int MyProperty4 { get; set; }
+        [Key(5)]
+        public int MyProperty5 { get; set; }
+        [Key(6)]
+        public int MyProperty6 { get; set; }
+        [Key(7)]
+        public int MyProperty7 { get; set; }
+        [Key(8)]
+        public int MyProperty8 { get; set; }
+        [Key(9)]
+        public int MyProvperty9 { get; set; }
+        [Key(10)]
+        public int MyProperty10 { get; set; }
+        [Key(11)]
+        public int MyProperty11 { get; set; }
+        [Key(12)]
+        public int MyPropverty12 { get; set; }
+        [Key(13)]
+        public int MyPropevrty13 { get; set; }
+        [Key(14)]
+        public int MyProperty14 { get; set; }
+        [Key(15)]
+        public int MyProperty15 { get; set; }
     }
 }

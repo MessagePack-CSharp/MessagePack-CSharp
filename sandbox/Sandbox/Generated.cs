@@ -1,4 +1,4 @@
-#pragma warning disable 618
+﻿#pragma warning disable 618
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
@@ -43,7 +43,7 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(36)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(37)
             {
                 {typeof(global::SharedData.ByteEnum), 0 },
                 {typeof(global::SharedData.IUnionChecker), 1 },
@@ -81,6 +81,7 @@ namespace MessagePack.Resolvers
                 {typeof(global::SharedData.NonEmpty2), 33 },
                 {typeof(global::SharedData.VectorLike2), 34 },
                 {typeof(global::SharedData.Vector3Like), 35 },
+                {typeof(global::SharedData.ArrayOptimizeClass), 36 },
             };
         }
 
@@ -127,6 +128,7 @@ namespace MessagePack.Resolvers
                 case 33: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
                 case 34: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
                 case 35: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
+                case 36: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
                 default: return null;
             }
         }
@@ -497,7 +499,7 @@ namespace MessagePack.Formatters.SharedData
             var startOffset = offset;
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop1);
-            offset += MessagePackBinary.WriteString(ref bytes, offset, value.Prop2);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.Prop2, formatterResolver);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop3);
             return offset - startOffset;
         }
@@ -528,7 +530,7 @@ namespace MessagePack.Formatters.SharedData
                         __Prop1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                         break;
                     case 1:
-                        __Prop2__ = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                        __Prop2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 2:
                         __Prop3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
@@ -653,7 +655,7 @@ namespace MessagePack.Formatters.SharedData
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.X);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Y);
-            offset += MessagePackBinary.WriteBytes(ref bytes, offset, value.BytesSpecial);
+            offset += formatterResolver.GetFormatterWithVerify<byte[]>().Serialize(ref bytes, offset, value.BytesSpecial, formatterResolver);
             return offset - startOffset;
         }
 
@@ -685,7 +687,7 @@ namespace MessagePack.Formatters.SharedData
                         __Y__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                         break;
                     case 2:
-                        __BytesSpecial__ = MessagePackBinary.ReadBytes(bytes, offset, out readSize);
+                        __BytesSpecial__ = formatterResolver.GetFormatterWithVerify<byte[]>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
@@ -798,11 +800,11 @@ namespace MessagePack.Formatters.SharedData
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 7);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop1);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref bytes, offset, value.Prop2, formatterResolver);
-            offset += MessagePackBinary.WriteString(ref bytes, offset, value.Prop3);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.Prop3, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SimlpeStringKeyData>().Serialize(ref bytes, offset, value.Prop4, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructIntKeyData>().Serialize(ref bytes, offset, value.Prop5, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>().Serialize(ref bytes, offset, value.Prop6, formatterResolver);
-            offset += MessagePackBinary.WriteBytes(ref bytes, offset, value.BytesSpecial);
+            offset += formatterResolver.GetFormatterWithVerify<byte[]>().Serialize(ref bytes, offset, value.BytesSpecial, formatterResolver);
             return offset - startOffset;
         }
 
@@ -839,7 +841,7 @@ namespace MessagePack.Formatters.SharedData
                         __Prop2__ = formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 2:
-                        __Prop3__ = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                        __Prop3__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 3:
                         __Prop4__ = formatterResolver.GetFormatterWithVerify<global::SharedData.SimlpeStringKeyData>().Deserialize(bytes, offset, formatterResolver, out readSize);
@@ -851,7 +853,7 @@ namespace MessagePack.Formatters.SharedData
                         __Prop6__ = formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     case 6:
-                        __BytesSpecial__ = MessagePackBinary.ReadBytes(bytes, offset, out readSize);
+                        __BytesSpecial__ = formatterResolver.GetFormatterWithVerify<byte[]>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
@@ -2516,6 +2518,151 @@ namespace MessagePack.Formatters.SharedData
             ____result.x = __x__;
             ____result.y = __y__;
             ____result.z = __z__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class ArrayOptimizeClassFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.ArrayOptimizeClass>
+    {
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.ArrayOptimizeClass value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, 16);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty0);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty1);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty2);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty3);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty4);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty5);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty6);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty7);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty8);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProvperty9);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty10);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty11);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyPropverty12);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyPropevrty13);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty14);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty15);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.ArrayOptimizeClass Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __MyProperty0__ = default(int);
+            var __MyProperty1__ = default(int);
+            var __MyProperty2__ = default(int);
+            var __MyProperty3__ = default(int);
+            var __MyProperty4__ = default(int);
+            var __MyProperty5__ = default(int);
+            var __MyProperty6__ = default(int);
+            var __MyProperty7__ = default(int);
+            var __MyProperty8__ = default(int);
+            var __MyProvperty9__ = default(int);
+            var __MyProperty10__ = default(int);
+            var __MyProperty11__ = default(int);
+            var __MyPropverty12__ = default(int);
+            var __MyPropevrty13__ = default(int);
+            var __MyProperty14__ = default(int);
+            var __MyProperty15__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty0__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 1:
+                        __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 2:
+                        __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 3:
+                        __MyProperty3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 4:
+                        __MyProperty4__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 5:
+                        __MyProperty5__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 6:
+                        __MyProperty6__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 7:
+                        __MyProperty7__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 8:
+                        __MyProperty8__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 9:
+                        __MyProvperty9__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 10:
+                        __MyProperty10__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 11:
+                        __MyProperty11__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 12:
+                        __MyPropverty12__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 13:
+                        __MyPropevrty13__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 14:
+                        __MyProperty14__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 15:
+                        __MyProperty15__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.ArrayOptimizeClass();
+            ____result.MyProperty0 = __MyProperty0__;
+            ____result.MyProperty1 = __MyProperty1__;
+            ____result.MyProperty2 = __MyProperty2__;
+            ____result.MyProperty3 = __MyProperty3__;
+            ____result.MyProperty4 = __MyProperty4__;
+            ____result.MyProperty5 = __MyProperty5__;
+            ____result.MyProperty6 = __MyProperty6__;
+            ____result.MyProperty7 = __MyProperty7__;
+            ____result.MyProperty8 = __MyProperty8__;
+            ____result.MyProvperty9 = __MyProvperty9__;
+            ____result.MyProperty10 = __MyProperty10__;
+            ____result.MyProperty11 = __MyProperty11__;
+            ____result.MyPropverty12 = __MyPropverty12__;
+            ____result.MyPropevrty13 = __MyPropevrty13__;
+            ____result.MyProperty14 = __MyProperty14__;
+            ____result.MyProperty15 = __MyProperty15__;
             return ____result;
         }
     }

@@ -47,7 +47,7 @@ namespace <#= Namespace #>
             value.OnBeforeSerialize();
 <# } #>
             var startOffset = offset;
-<# if( objInfo.IsIntKey) { if( objInfo.MaxKey <= 15) { #>
+<# if( objInfo.IsIntKey) { if( (objInfo.MaxKey + 1) <= 15) { #>
             offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
 <# } else { #>
             offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
