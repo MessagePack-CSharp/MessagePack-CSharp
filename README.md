@@ -871,7 +871,7 @@ If you want to share class between Unity and Server, you can use `SharedProject`
 
 - SharedProject(source code sharing)
   - Source codes of server-client shared
-- ServerProject(.NET 4.6)
+- ServerProject(.NET 4.6/.NET Core/.NET Standard)
   - [SharedProject]
   - [MessagePack]
   - [MessagePack.UnityShims]
