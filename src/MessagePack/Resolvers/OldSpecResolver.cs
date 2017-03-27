@@ -24,7 +24,7 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                formatter = (IMessagePackFormatter<T>)OldSpecResolverResolverGetFormatterHelper.GetFormatter(typeof(T));
+                formatter = (IMessagePackFormatter<T>)OldSpecResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -32,13 +32,17 @@ namespace MessagePack.Resolvers
 
 namespace MessagePack.Internal
 {
-    internal static class OldSpecResolverResolverGetFormatterHelper
+    internal static class OldSpecResolverGetFormatterHelper
     {
         internal static object GetFormatter(Type t)
         {
             if (t == typeof(string))
             {
                 return OldSpecStringFormatter.Instance;
+            }
+            else if (t == typeof(string[]))
+            {
+                return new ArrayFormatter<string>();
             }
             else if (t == typeof(byte[]))
             {
