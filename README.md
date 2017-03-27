@@ -867,7 +867,19 @@ Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 
 `MessagePack.UnityShims` NuGet package is for .NET ServerSide serialization support to communicate with Unity. It includes shim of Vector3 etc and Safe/Unsafe serialization extension.
 
-If you want to share class between Unity and Server, you can use `SharedProject` or `Reference as Link` or new MSBuild(VS2017)'s wildcard reference etc. Anyway you need to source-code level share.
+If you want to share class between Unity and Server, you can use `SharedProject` or `Reference as Link` or new MSBuild(VS2017)'s wildcard reference etc. Anyway you need to source-code level share. This is sample project structure of use SharedProject.
+
+- SharedProject(source code sharing)
+  - Source codes of server-client shared
+- ServerProject(.NET 4.6)
+  - [SharedProject]
+  - [MessagePack]
+  - [MessagePack.UnityShims]
+- ClientDllProject(.NET 3.5)
+  - [SharedProject]
+  - [MessagePack](not dll, use MessagePack.unitypackage's sourcecodes)
+- Unity
+  - [Builded ClientDll]
 
 Pre Code Generation(Unity/Xamarin Supports)
 ---
