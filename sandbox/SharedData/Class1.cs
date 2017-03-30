@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MessagePack.Formatters;
 using System;
 using System.Collections.Generic;
 
@@ -529,5 +530,156 @@ namespace SharedData
         public int MyProperty14 { get; set; }
         [Key(15)]
         public int MyProperty15 { get; set; }
+    }
+
+
+
+    [MessagePackObject]
+    public struct DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+    {
+        [Key(0)]
+        public readonly T1 Item1;
+        [Key(1)]
+        public readonly T2 Item2;
+        [Key(2)]
+        public readonly T3 Item3;
+        [Key(3)]
+        public readonly T4 Item4;
+        [Key(4)]
+        public readonly T5 Item5;
+        [Key(5)]
+        public readonly T6 Item6;
+        [Key(6)]
+        public readonly T7 Item7;
+        [Key(7)]
+        public readonly T8 Item8;
+        [Key(8)]
+        public readonly T9 Item9;
+
+        [SerializationConstructor]
+        public DynamicArgumentTuple(T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9)
+        {
+            Item1 = item1;
+            Item2 = item2;
+            Item3 = item3;
+            Item4 = item4;
+            Item5 = item5;
+            Item6 = item6;
+            Item7 = item7;
+            Item8 = item8;
+            Item9 = item9;
+        }
+    }
+
+    public class DynamicArgumentTupleFormatter<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IMessagePackFormatter<DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
+    {
+        readonly T1 default1;
+        readonly T2 default2;
+        readonly T3 default3;
+        readonly T4 default4;
+        readonly T5 default5;
+        readonly T6 default6;
+        readonly T7 default7;
+        readonly T8 default8;
+        readonly T9 default9;
+
+        public DynamicArgumentTupleFormatter(T1 default1, T2 default2, T3 default3, T4 default4, T5 default5, T6 default6, T7 default7, T8 default8, T9 default9)
+        {
+            this.default1 = default1;
+            this.default2 = default2;
+            this.default3 = default3;
+            this.default4 = default4;
+            this.default5 = default5;
+            this.default6 = default6;
+            this.default7 = default7;
+            this.default8 = default8;
+            this.default9 = default9;
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> value, IFormatterResolver formatterResolver)
+        {
+            var startOffset = offset;
+            offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 9);
+            offset += formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref bytes, offset, value.Item1, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref bytes, offset, value.Item2, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<T3>().Serialize(ref bytes, offset, value.Item3, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<T4>().Serialize(ref bytes, offset, value.Item4, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<T5>().Serialize(ref bytes, offset, value.Item5, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<T6>().Serialize(ref bytes, offset, value.Item6, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<T7>().Serialize(ref bytes, offset, value.Item7, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<T8>().Serialize(ref bytes, offset, value.Item8, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<T9>().Serialize(ref bytes, offset, value.Item9, formatterResolver);
+            return offset - startOffset;
+        }
+
+        public DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            var startOffset = offset;
+
+            var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var item1 = default1;
+            var item2 = default2;
+            var item3 = default3;
+            var item4 = default4;
+            var item5 = default5;
+            var item6 = default6;
+            var item7 = default7;
+            var item8 = default8;
+            var item9 = default9;
+
+            for (var i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 1:
+                        item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 2:
+                        item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 3:
+                        item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 4:
+                        item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 5:
+                        item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 6:
+                        item7 = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 7:
+                        item8 = formatterResolver.GetFormatterWithVerify<T8>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 8:
+                        item9 = formatterResolver.GetFormatterWithVerify<T9>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    default:
+                        readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+            return new DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>(item1, item2, item3, item4, item5, item6, item7, item8, item9);
+        }
+    }
+}
+
+namespace Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
+{
+    [MessagePackObject]
+    public class TnonodsfarnoiuAtatqaga
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
     }
 }

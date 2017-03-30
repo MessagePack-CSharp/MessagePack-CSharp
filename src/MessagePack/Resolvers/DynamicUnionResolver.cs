@@ -5,6 +5,7 @@ using MessagePack.Internal;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace MessagePack.Resolvers
 {
@@ -18,6 +19,7 @@ namespace MessagePack.Resolvers
         const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
 
         static readonly DynamicAssembly assembly;
+        static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 
         DynamicUnionResolver()
         {
@@ -85,7 +87,7 @@ namespace MessagePack.Resolvers
             }
 
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + type.FullName.Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, "").Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
             FieldBuilder typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
             FieldBuilder keyToJumpMap = null; // Dictionary<int, int>
