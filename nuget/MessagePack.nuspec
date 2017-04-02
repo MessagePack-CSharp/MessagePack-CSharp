@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack</id>
-        <version>1.1.1</version>
+        <version>1.1.2</version>
         <title>MessagePack for C#</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
         <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin).</description>
-        <releaseNotes>add OldSpecResolver and some bug fixes.</releaseNotes>
+        <releaseNotes>Support IgnoreDataMemberAttribute, Reduce class name length restrictions, fix mpc.exe.</releaseNotes>
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, Unity, Xamarin</tags>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
@@ -37,6 +37,6 @@
         <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\net45" />
         <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\netstandard1.4" />
         <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\netstandard1.4" />
-        <file src=".\tools\*" target="tools\" />
+        <file src="tools\*" target="tools" />
     </files>
 </package>

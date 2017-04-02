@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MessagePack.AspNetCoreMvcFormatter</id>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <title>ASP.NET Core MVC Input/Output MessagePack formatter</title>
     <authors>neuecc</authors>
     <owners>neuecc</owners>
@@ -17,11 +17,11 @@
     </frameworkAssemblies>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="MessagePack" version="1.1.1" />
+        <dependency id="MessagePack" version="1.1.2" />
         <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.1.2" />
       </group>
       <group targetFramework=".NETStandard1.4">
-        <dependency id="MessagePack" version="1.1.1" />
+        <dependency id="MessagePack" version="1.1.2" />
         <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.1.2" />
       </group>
     </dependencies>
