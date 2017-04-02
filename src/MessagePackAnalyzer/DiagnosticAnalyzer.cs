@@ -19,6 +19,7 @@ namespace MessagePackAnalyzer
         internal const string MessagePackObjectAttributeShortName = "MessagePackObjectAttribute";
         internal const string KeyAttributeShortName = "KeyAttribute";
         internal const string IgnoreShortName = "IgnoreMemberAttribute";
+        internal const string IgnoreDataMemberShortName = "IgnoreDataMemberAttribute";
         internal const string UnionAttributeShortName = "UnionAttribute";
 
         internal static readonly DiagnosticDescriptor TypeMustBeMessagePackObject = new DiagnosticDescriptor(
@@ -92,7 +93,8 @@ namespace MessagePackAnalyzer
         public readonly INamedTypeSymbol UnionAttribute;
         public readonly INamedTypeSymbol SerializationConstructorAttribute;
         public readonly INamedTypeSymbol KeyAttribnute;
-        public readonly INamedTypeSymbol IgnoreAttribnute;
+        public readonly INamedTypeSymbol IgnoreAttribute;
+        public readonly INamedTypeSymbol IgnoreDataMemberAttribute;
         public readonly INamedTypeSymbol IMessagePackSerializationCallbackReceiver;
 
         public ReferenceSymbols(Compilation compilation)
@@ -103,7 +105,8 @@ namespace MessagePackAnalyzer
             UnionAttribute = compilation.GetTypeByMetadataName("MessagePack.UnionAttribute");
             SerializationConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.SerializationConstructorAttribute");
             KeyAttribnute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute");
-            IgnoreAttribnute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute");
+            IgnoreAttribute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute");
+            IgnoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
             IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver");
         }
     }
@@ -315,7 +318,7 @@ namespace MessagePackAnalyzer
 
                 foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
 
                     var IsReadable = (item.GetMethod != null) && item.GetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
                     var IsWritable = (item.SetMethod != null) && item.SetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
@@ -327,7 +330,7 @@ namespace MessagePackAnalyzer
                 }
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
                     if (item.IsImplicitlyDeclared) continue;
 
                     var IsReadable = item.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
@@ -346,7 +349,7 @@ namespace MessagePackAnalyzer
 
                 foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
 
                     var IsReadable = (item.GetMethod != null) && item.GetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
                     var IsWritable = (item.SetMethod != null) && item.SetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
@@ -409,7 +412,7 @@ namespace MessagePackAnalyzer
 
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
                     if (item.IsImplicitlyDeclared) continue;
 
                     var IsReadable = item.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;

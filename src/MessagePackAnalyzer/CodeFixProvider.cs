@@ -122,7 +122,7 @@ namespace MessagePackAnalyzer
 
             var targets = type.GetAllMembers()
                 .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
-                .Where(x => x.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.IgnoreShortName) == null)
+                .Where(x => x.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.IgnoreShortName) == null && x.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.IgnoreDataMemberShortName) == null)
                 .Where(x => !x.IsStatic)
                 .Where(x =>
                 {

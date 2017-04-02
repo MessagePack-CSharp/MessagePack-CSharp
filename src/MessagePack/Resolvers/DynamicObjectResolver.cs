@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Runtime.Serialization;
 
 namespace MessagePack.Resolvers
 {
@@ -994,11 +995,12 @@ namespace MessagePack.Internal
             {
                 // All public members are serialize target except [Ignore] member.
                 isIntKey = false;
-
+                
                 var hiddenIntKey = 0;
                 foreach (var item in type.GetRuntimeProperties())
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
+                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
 
                     var member = new EmittableMember
                     {
@@ -1014,6 +1016,7 @@ namespace MessagePack.Internal
                 foreach (var item in type.GetRuntimeFields())
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
+                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 
@@ -1038,7 +1041,8 @@ namespace MessagePack.Internal
                 foreach (var item in type.GetRuntimeProperties())
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
-
+                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
+                    
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,
@@ -1085,6 +1089,7 @@ namespace MessagePack.Internal
                 foreach (var item in type.GetRuntimeFields())
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
+                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 
