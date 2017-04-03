@@ -143,7 +143,11 @@ namespace MessagePack.Internal
 {
     internal static class DynamicObjectTypeBuilder
     {
+#if NETSTANDARD1_4
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
+#else
+        static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
+#endif
 
         public static TypeInfo BuildType(DynamicAssembly assembly, Type type, bool forceStringKey)
         {

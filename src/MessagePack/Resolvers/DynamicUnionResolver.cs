@@ -19,7 +19,11 @@ namespace MessagePack.Resolvers
         const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
 
         static readonly DynamicAssembly assembly;
+#if NETSTANDARD1_4
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
+#else
+        static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
+#endif
 
         DynamicUnionResolver()
         {
