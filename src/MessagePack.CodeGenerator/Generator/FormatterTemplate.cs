@@ -393,7 +393,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             this.Write(@"                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
