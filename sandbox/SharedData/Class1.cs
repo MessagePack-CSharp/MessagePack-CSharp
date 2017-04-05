@@ -672,6 +672,22 @@ namespace SharedData
             return new DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>(item1, item2, item3, item4, item5, item6, item7, item8, item9);
         }
     }
+
+
+    public class NestParent
+    {
+        [MessagePackObject]
+        public class NestContract
+        {
+            [Key(0)]
+            public int MyProperty { get; set; }
+        }
+
+        public class NestContractless
+        {
+            public int MyProperty { get; set; }
+        }
+    }
 }
 
 namespace Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad

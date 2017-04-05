@@ -301,5 +301,29 @@ namespace MessagePack.Tests
             re.MyProperty1.Is(10);
             re.MyProperty2.Is("hogehoge");
         }
+
+        [Fact]
+        public void NestedClass()
+        {
+            {
+                var data = new NestParent.NestContract() { MyProperty = 1000 };
+                var bin = MessagePackSerializer.Serialize(data, StandardResolver.Instance);
+                var re = MessagePackSerializer.Deserialize<NestParent.NestContract>(bin, StandardResolver.Instance);
+
+                re.MyProperty.Is(1000);
+            }
+        }
+
+        [Fact]
+        public void NestedClassContractless()
+        {
+            {
+                var data = new NestParent.NestContractless() { MyProperty = 1000 };
+                var bin = MessagePackSerializer.Serialize(data, ContractlessStandardResolver.Instance);
+                var re = MessagePackSerializer.Deserialize<NestParent.NestContractless>(bin, ContractlessStandardResolver.Instance);
+
+                re.MyProperty.Is(1000);
+            }
+        }
     }
 }

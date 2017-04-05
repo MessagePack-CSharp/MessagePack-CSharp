@@ -124,7 +124,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                if (!typeof(T).GetTypeInfo().IsPublic() && ti.IsClass)
+                if (!typeof(T).GetTypeInfo().IsPublic() && !typeof(T).GetTypeInfo().IsNestedPublic && ti.IsClass)
                 {
                     formatter = (IMessagePackFormatter<T>)DynamicPrivateFormatterBuilder.BuildFormatter(typeof(T));
                     return;
