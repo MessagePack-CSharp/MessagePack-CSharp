@@ -631,6 +631,17 @@ namespace MessagePack
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
+        public static int WriteByteForceByteBlock(ref byte[] bytes, int offset, byte value)
+        {
+            EnsureCapacity(ref bytes, offset, 2);
+            bytes[offset] = MessagePackCode.UInt8;
+            bytes[offset + 1] = value;
+            return 2;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static byte ReadByte(byte[] bytes, int offset, out int readSize)
         {
             return byteDecoders[bytes[offset]].Read(bytes, offset, out readSize);
@@ -731,6 +742,17 @@ namespace MessagePack
                 bytes[offset] = unchecked((byte)value);
                 return 1;
             }
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteSByteForceSByteBlock(ref byte[] bytes, int offset, sbyte value)
+        {
+            EnsureCapacity(ref bytes, offset, 2);
+            bytes[offset] = MessagePackCode.Int8;
+            bytes[offset + 1] = unchecked((byte)(value));
+            return 2;
         }
 
 #if NETSTANDARD1_4
@@ -876,6 +898,18 @@ namespace MessagePack
                     return 3;
                 }
             }
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteInt16ForceInt16Block(ref byte[] bytes, int offset, short value)
+        {
+            EnsureCapacity(ref bytes, offset, 3);
+            bytes[offset] = MessagePackCode.Int16;
+            bytes[offset + 1] = unchecked((byte)(value >> 8));
+            bytes[offset + 2] = unchecked((byte)value);
+            return 3;
         }
 
 #if NETSTANDARD1_4
@@ -1109,6 +1143,24 @@ namespace MessagePack
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
+        public static int WriteInt64ForceInt64Block(ref byte[] bytes, int offset, long value)
+        {
+            EnsureCapacity(ref bytes, offset, 9);
+            bytes[offset] = MessagePackCode.Int64;
+            bytes[offset + 1] = unchecked((byte)(value >> 56));
+            bytes[offset + 2] = unchecked((byte)(value >> 48));
+            bytes[offset + 3] = unchecked((byte)(value >> 40));
+            bytes[offset + 4] = unchecked((byte)(value >> 32));
+            bytes[offset + 5] = unchecked((byte)(value >> 24));
+            bytes[offset + 6] = unchecked((byte)(value >> 16));
+            bytes[offset + 7] = unchecked((byte)(value >> 8));
+            bytes[offset + 8] = unchecked((byte)value);
+            return 9;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
         public static long ReadInt64(byte[] bytes, int offset, out int readSize)
         {
             return int64Decoders[bytes[offset]].Read(bytes, offset, out readSize);
@@ -1140,6 +1192,18 @@ namespace MessagePack
                 bytes[offset + 2] = unchecked((byte)value);
                 return 3;
             }
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt16ForceUInt16Block(ref byte[] bytes, int offset, ushort value)
+        {
+            EnsureCapacity(ref bytes, offset, 3);
+            bytes[offset] = MessagePackCode.UInt16;
+            bytes[offset + 1] = unchecked((byte)(value >> 8));
+            bytes[offset + 2] = unchecked((byte)value);
+            return 3;
         }
 
 #if NETSTANDARD1_4
@@ -1186,6 +1250,20 @@ namespace MessagePack
                 bytes[offset + 4] = unchecked((byte)value);
                 return 5;
             }
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt32ForceUInt32Block(ref byte[] bytes, int offset, uint value)
+        {
+            EnsureCapacity(ref bytes, offset, 5);
+            bytes[offset] = MessagePackCode.UInt32;
+            bytes[offset + 1] = unchecked((byte)(value >> 24));
+            bytes[offset + 2] = unchecked((byte)(value >> 16));
+            bytes[offset + 3] = unchecked((byte)(value >> 8));
+            bytes[offset + 4] = unchecked((byte)value);
+            return 5;
         }
 
 #if NETSTANDARD1_4
@@ -1246,6 +1324,24 @@ namespace MessagePack
                 bytes[offset + 8] = unchecked((byte)value);
                 return 9;
             }
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt64ForceUInt64Block(ref byte[] bytes, int offset, ulong value)
+        {
+            EnsureCapacity(ref bytes, offset, 9);
+            bytes[offset] = MessagePackCode.UInt64;
+            bytes[offset + 1] = unchecked((byte)(value >> 56));
+            bytes[offset + 2] = unchecked((byte)(value >> 48));
+            bytes[offset + 3] = unchecked((byte)(value >> 40));
+            bytes[offset + 4] = unchecked((byte)(value >> 32));
+            bytes[offset + 5] = unchecked((byte)(value >> 24));
+            bytes[offset + 6] = unchecked((byte)(value >> 16));
+            bytes[offset + 7] = unchecked((byte)(value >> 8));
+            bytes[offset + 8] = unchecked((byte)value);
+            return 9;
         }
 
 #if NETSTANDARD1_4

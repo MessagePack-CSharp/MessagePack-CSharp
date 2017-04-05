@@ -645,6 +645,7 @@ Primitive API(MessagePackBinary)
 | Write/ReadMapHeader | Write/Read map format header(element length). |
 | Write/ReadArrayHeader | Write/Read array format header(element length). |
 | Write/Read*** | *** is primitive type name(`Int32`, `Single`, `String`, etc...) |
+| Write***Force***Block | *** is primitive integer name(`Byte`, `Int32`, `UInt64`, etc...), acquire strict block and write code |
 | Write/ReadBytes | Write/Read byte[] to use bin format. |
 | Write/ReadExtensionFormat | Write/Read ext format header(Length + TypeCode) and content byte[]. |
 | Write/ReadExtensionFormatHeader | Write/Read ext format, header(Length + TypeCode) only. |
@@ -671,8 +672,9 @@ Extension Point(IFormatterResolver)
 | Resovler Name | Description |
 | --- | --- |
 | BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
-| StandardResolver | Composited resolver . It resolves in the following order `builtin -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object`. This is the default of MessagePackSerializer. |
+| StandardResolver | Composited resolver . It resolves in the following order `builtin -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive object`. This is the default of MessagePackSerializer. |
 | ContractlessStandardResolver | Composited `StandardResolver` -> `DynamicContractlessObjectResolver`. It enables contractless serialization. |
+| PrimitiveObjectResolver | MessagePack primitive object resolver. It is used fallback in `object` type and supports `bool`, `char`, `sbyte`, `byte`, `short`, `int`, `long`, `ushort`, `uint`, `ulong`, `float`, `double`, `DateTime`, `string`, `byte[]`, `ICollection`, `IDictionary`. |
 | CompositeResolver | Singleton helper of setup custom resolvers. You can use `Register` or `RegisterAndSetAsDefault` API. |
 | NativeDateTimeResolver | Serialize by .NET native DateTime binary format. |
 | OldSpecResolver | str and bin serialize/deserialize follows old messagepack spec(use raw format) |
@@ -712,6 +714,8 @@ CompositeResolver.RegisterAndSetAsDefault(
     MessagePack.Resolvers.DynamicGenericResolver.Instance,
     MessagePack.Resolvers.DynamicUnionResolver.Instance,
     MessagePack.Resolvers.DynamicObjectResolver.Instance,
+
+    MessagePack.Resolvers.PrimitiveObjectResolver.Instance,
 
     // final fallback(last priority)
     MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance
@@ -929,8 +933,9 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
     // use generated resolver first, and combine many other generated/custom resolvers
     MessagePack.Resolvers.GeneratedResolver.Instance,
 
-    // finally, use builtin resolver(don't use StandardResolver, it includes dynamic generation)
-    MessagePack.Resolvers.BuiltinResolver.Instance
+    // finally, use builtin/primitive resolver(don't use StandardResolver, it includes dynamic generation)
+    MessagePack.Resolvers.BuiltinResolver.Instance,
+    MessagePack.Resolvers.PrimitiveObjectResolver.Instance
 );
 ```
 

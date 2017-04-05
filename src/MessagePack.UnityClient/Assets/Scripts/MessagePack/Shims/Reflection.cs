@@ -40,6 +40,14 @@ namespace System.Reflection
             }
         }
 
+        public bool IsNestedPublic
+        {
+            get
+            {
+                return type.IsNestedPublic;
+            }
+        }
+
         public IEnumerable<ConstructorInfo> DeclaredConstructors
         {
             get

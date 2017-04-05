@@ -22,9 +22,11 @@ namespace MessagePack.Resolvers
             DynamicEnumResolver.Instance, // Try Enum
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
             DynamicUnionResolver.Instance, // Try Union(Interface)
-            DynamicObjectResolver.Instance // Try Object
-
+            DynamicObjectResolver.Instance, // Try Object
 #endif
+
+            // finally, try primitive resolver
+            PrimitiveObjectResolver.Instance
         };
 
         StandardResolver()

@@ -118,6 +118,7 @@
     <Compile Include="MultiDimentionalArrayTest.cs" />
     <Compile Include="ObjectResolverTest.cs" />
     <Compile Include="PrimitivelikeFormatterTest.cs" />
+    <Compile Include="PrimitiveResolverTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnionResolverTest.cs" />
     <Compile Include="Utils\ChainingAssertion.Ext.cs" />
