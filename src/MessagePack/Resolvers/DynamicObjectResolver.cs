@@ -149,8 +149,34 @@ namespace MessagePack.Internal
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
 #endif
 
+        static HashSet<Type> ignoreTypes = new HashSet<Type>
+        {
+            {typeof(object)},
+            {typeof(short)},
+            {typeof(int)},
+            {typeof(long)},
+            {typeof(ushort)},
+            {typeof(uint)},
+            {typeof(ulong)},
+            {typeof(float)},
+            {typeof(double)},
+            {typeof(bool)},
+            {typeof(byte)},
+            {typeof(sbyte)},
+            {typeof(decimal)},
+            {typeof(char)},
+            {typeof(string)},
+            {typeof(System.Guid)},
+            {typeof(System.TimeSpan)},
+            {typeof(System.DateTime)},
+            {typeof(System.DateTimeOffset)},
+            {typeof(MessagePack.Nil)},
+        };
+
         public static TypeInfo BuildType(DynamicAssembly assembly, Type type, bool forceStringKey)
         {
+            if (ignoreTypes.Contains(type)) return null;
+
             var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey);
             if (serializationInfo == null) return null;
 
@@ -999,7 +1025,7 @@ namespace MessagePack.Internal
             {
                 // All public members are serialize target except [Ignore] member.
                 isIntKey = false;
-                
+
                 var hiddenIntKey = 0;
                 foreach (var item in type.GetRuntimeProperties())
                 {
@@ -1046,7 +1072,7 @@ namespace MessagePack.Internal
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
-                    
+
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,

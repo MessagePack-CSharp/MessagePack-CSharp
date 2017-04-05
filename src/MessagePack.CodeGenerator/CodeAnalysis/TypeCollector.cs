@@ -63,6 +63,7 @@ namespace MessagePack.CodeGenerator
             "decimal",
             "char",
             "string",
+            "object",
             "System.Guid",
             "System.TimeSpan",
             "System.DateTime",
