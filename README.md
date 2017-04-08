@@ -37,7 +37,7 @@ for Unity, download from [releases](https://github.com/neuecc/MessagePack-CSharp
 
 Quick Start
 ---
-Define class and mark as `[MessagePackObject]` and public members(property or field) mark `[Key]`, call `MessagePackSerializer.Serialize<T>/Deserialize<T>`. `ToJson` helps dump binary.
+Define class and mark as `[MessagePackObject]` and public members(property or field) mark as `[Key]`, call `MessagePackSerializer.Serialize<T>/Deserialize<T>`. `ToJson` helps dump binary.
 
 ```csharp
 // mark MessagePackObjectAttribute
