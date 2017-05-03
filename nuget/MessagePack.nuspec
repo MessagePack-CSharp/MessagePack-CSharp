@@ -2,26 +2,26 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack</id>
-        <version>1.2.0</version>
+        <version>1.2.1</version>
         <title>MessagePack for C#</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
         <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin).</description>
-        <releaseNotes>Support IgnoreDataMemberAttribute, Reduce class name length restrictions, fix mpc.exe.</releaseNotes>
+        <releaseNotes>fix dependency for .NET 4.7.</releaseNotes>
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, Unity, Xamarin</tags>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
             <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.5" />
         </frameworkAssemblies>
         <dependencies>
-            <group targetFramework=".NETFramework4.5">
-                <dependency id="System.Reflection.Emit" version="4.3.0" />
-                <dependency id="System.Reflection.Emit.Lightweight" version="4.3.0" />
+            <group targetFramework=".NETFramework4.7">
+                <dependency id="System.Threading.Tasks.Extensions" version="4.3.0" />
+            </group>
+            <group targetFramework=".NETFramework4.6.1">
                 <dependency id="System.ValueTuple" version="4.3.0" />
                 <dependency id="System.Threading.Tasks.Extensions" version="4.3.0" />
-                <dependency id="System.Runtime.Serialization.Primitives" version="4.3.0" />
             </group>
             <group targetFramework=".NETStandard1.4">
                 <dependency id="System.Reflection.Emit" version="4.3.0" />
@@ -33,8 +33,10 @@
         </dependencies>
     </metadata>
     <files>
-        <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\net45" />
-        <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\net45" />
+        <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\net47" />
+        <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\net47" />
+        <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\net461" />
+        <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\net461" />
         <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.dll" target="lib\netstandard1.4" />
         <file src="..\src\MessagePack\bin\Release\netstandard1.4\MessagePack.xml" target="lib\netstandard1.4" />
         <file src="tools\*" target="tools" />

@@ -1,35 +1,41 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
-  <metadata>
-    <id>MessagePack.ReactiveProperty</id>
-    <version>1.2.0</version>
-    <title>MessagePack for C# Extension Support for ReactiveProperty</title>
-    <authors>neuecc</authors>
-    <owners>neuecc</owners>
-    <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for ReactiveProperty.</description>
-    <releaseNotes>update dependency.</releaseNotes>
-    <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, ReactiveProperty</tags>
-    <frameworkAssemblies>
-      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
-      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.5" />
-    </frameworkAssemblies>
-    <dependencies>
-      <group targetFramework=".NETFramework4.5">
-        <dependency id="MessagePack" version="1.2.0" />
-        <dependency id="ReactiveProperty" version="3.5.1" />
-      </group>
-      <group targetFramework=".NETStandard1.4">
-        <dependency id="MessagePack" version="1.2.0" />
-        <dependency id="ReactiveProperty" version="3.5.1" />
-      </group>
-    </dependencies>
-  </metadata>
-  <files>
-    <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\net45" />
-    <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\net45" />
-    <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\netstandard1.4" />
-    <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\netstandard1.4" />
-  </files>
+    <metadata>
+        <id>MessagePack.ReactiveProperty</id>
+        <version>1.2.1</version>
+        <title>MessagePack for C# Extension Support for ReactiveProperty</title>
+        <authors>neuecc</authors>
+        <owners>neuecc</owners>
+        <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for ReactiveProperty.</description>
+        <releaseNotes>update dependency.</releaseNotes>
+        <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, ReactiveProperty</tags>
+        <frameworkAssemblies>
+            <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
+            <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.5" />
+        </frameworkAssemblies>
+        <dependencies>
+            <group targetFramework=".NETFramework4.7">
+                <dependency id="MessagePack" version="1.2.1" />
+                <dependency id="ReactiveProperty" version="3.5.1" />
+            </group>
+            <group targetFramework=".NETFramework4.6.1">
+                <dependency id="MessagePack" version="1.2.1" />
+                <dependency id="ReactiveProperty" version="3.5.1" />
+            </group>
+            <group targetFramework=".NETStandard1.4">
+                <dependency id="MessagePack" version="1.2.1" />
+                <dependency id="ReactiveProperty" version="3.5.1" />
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\net47" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\net47" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\net461" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\net461" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\netstandard1.4" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\netstandard1.4" />
+    </files>
 </package>
