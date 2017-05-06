@@ -143,7 +143,7 @@ namespace MessagePack
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
-#if NETSTANDARD1_4
+#if NETSTANDARD1_4 && !NET45
 
             var ms = stream as MemoryStream;
             if (ms != null)

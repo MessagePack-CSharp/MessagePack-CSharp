@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack.ReactiveProperty</id>
-        <version>1.2.1</version>
+        <version>1.2.2</version>
         <title>MessagePack for C# Extension Support for ReactiveProperty</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
@@ -17,24 +17,24 @@
         </frameworkAssemblies>
         <dependencies>
             <group targetFramework=".NETFramework4.7">
-                <dependency id="MessagePack" version="1.2.1" />
+                <dependency id="MessagePack" version="1.2.2" />
                 <dependency id="ReactiveProperty" version="3.5.1" />
             </group>
-            <group targetFramework=".NETFramework4.6.1">
-                <dependency id="MessagePack" version="1.2.1" />
+            <group targetFramework=".NETFramework4.5">
+                <dependency id="MessagePack" version="1.2.2" />
                 <dependency id="ReactiveProperty" version="3.5.1" />
             </group>
             <group targetFramework=".NETStandard1.4">
-                <dependency id="MessagePack" version="1.2.1" />
+                <dependency id="MessagePack" version="1.2.2" />
                 <dependency id="ReactiveProperty" version="3.5.1" />
             </group>
         </dependencies>
     </metadata>
     <files>
-        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\net47" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\net45\MessagePack.ReactiveProperty.dll" target="lib\net45" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\net45" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\net47\MessagePack.ReactiveProperty.dll" target="lib\net47" />
         <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\net47" />
-        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\net461" />
-        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\net461" />
         <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\netstandard1.4" />
         <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\netstandard1.4" />
     </files>

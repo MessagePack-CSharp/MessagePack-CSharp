@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack.AspNetCoreMvcFormatter</id>
-        <version>1.2.1</version>
+        <version>1.2.2</version>
         <title>ASP.NET Core MVC Input/Output MessagePack formatter</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
@@ -11,30 +11,14 @@
         <description>ASP.NET Core MVC Input/Output MessagePack formatter.</description>
         <releaseNotes>update dependency.</releaseNotes>
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, aspnetcore, aspnetcoremvc</tags>
-        <frameworkAssemblies>
-            <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
-            <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework4.5" />
-        </frameworkAssemblies>
         <dependencies>
-            <group targetFramework=".NETFramework4.7">
-                <dependency id="MessagePack" version="1.2.1" />
-                <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.2.0" />
-            </group>
-            <group targetFramework=".NETFramework4.6.1">
-                <dependency id="MessagePack" version="1.2.1" />
-                <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.2.0" />
-            </group>
             <group targetFramework=".NETStandard1.4">
-                <dependency id="MessagePack" version="1.2.1" />
+                <dependency id="MessagePack" version="1.2.2" />
                 <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.2.0" />
             </group>
         </dependencies>
     </metadata>
     <files>
-        <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.dll" target="lib\net47" />
-        <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.xml" target="lib\net47" />
-        <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.dll" target="lib\net461" />
-        <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.xml" target="lib\net461" />
         <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.dll" target="lib\netstandard1.4" />
         <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.xml" target="lib\netstandard1.4" />
     </files>
