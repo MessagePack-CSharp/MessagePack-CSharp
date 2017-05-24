@@ -688,6 +688,26 @@ namespace SharedData
             public int MyProperty { get; set; }
         }
     }
+
+    [MessagePack.Union(0, typeof(FooClass))]
+    [MessagePack.Union(100, typeof(BarClass))]
+    public interface IUnionSample
+    {
+    }
+
+    [MessagePackObject]
+    public class FooClass : IUnionSample
+    {
+        [Key(0)]
+        public int XYZ { get; set; }
+    }
+
+    [MessagePackObject]
+    public class BarClass : IUnionSample
+    {
+        [Key(0)]
+        public string OPQ { get; set; }
+    }
 }
 
 namespace Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
@@ -698,4 +718,60 @@ namespace Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
         [Key(0)]
         public int MyProperty { get; set; }
     }
+}
+
+[MessagePackObject]
+public class GlobalMan
+{
+    [Key(0)]
+    public int MyProperty { get; set; }
+}
+
+[MessagePackObject]
+public class Message
+{
+    [Key(0)]
+    public int UserId { get; set; }
+    [Key(1)]
+    public int RoomId { get; set; }
+    [Key(2)]
+    public DateTime PostTime { get; set; }
+
+    // 本文
+    [Key(3)]
+    public IMessageBody Body { get; set; }
+}
+
+[Union(10, typeof(TextMessageBody))]
+[Union(14, typeof(StampMessageBody))]
+[Union(25, typeof(QuestMessageBody))]
+public interface IMessageBody { }
+
+[MessagePackObject]
+public class TextMessageBody : IMessageBody
+{
+    [Key(0)]
+    public string Text { get; set; }
+}
+
+[MessagePackObject]
+public class StampMessageBody : IMessageBody
+{
+    [Key(0)]
+    public int StampId { get; set; }
+}
+
+[MessagePackObject]
+public class QuestMessageBody : IMessageBody
+{
+    [Key(0)]
+    public int QuestId { get; set; }
+    [Key(1)]
+    public string Text { get; set; }
+}
+
+
+public enum GlobalMyEnum
+{
+    Apple, Orange
 }

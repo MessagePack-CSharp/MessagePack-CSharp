@@ -208,7 +208,7 @@ namespace Sandbox
 
     // mark inheritance types
     [MessagePack.Union(0, typeof(FooClass))]
-    [MessagePack.Union(1, typeof(BarClass))]
+    [MessagePack.Union(100, typeof(BarClass))]
     public interface IUnionSample
     {
     }
@@ -232,29 +232,44 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
-            // composite same as StandardResolver
             CompositeResolver.RegisterAndSetAsDefault(
-                MessagePack.Resolvers.BuiltinResolver.Instance,
-
-                // replace enumasstring resolver
-                MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance,
-
-                MessagePack.Resolvers.DynamicGenericResolver.Instance,
-                MessagePack.Resolvers.DynamicUnionResolver.Instance,
-                MessagePack.Resolvers.DynamicObjectResolver.Instance,
-
-                // final fallback(last priority)
-                MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance
+                MessagePack.Resolvers.GeneratedResolver.Instance,
+                MessagePack.Resolvers.StandardResolver.Instance
             );
 
+            var foo = MessagePackSerializer.Serialize<IUnionSample>(new FooClass() { XYZ = 999 });
+            var bar = MessagePackSerializer.Serialize<IUnionSample>(new BarClass() { OPQ = "hogemoge" });
+
+            var f2 = MessagePackSerializer.Deserialize<IUnionSample>(foo);
+            var b2 = MessagePackSerializer.Deserialize<IUnionSample>(bar);
+            Console.WriteLine((f2 as FooClass).XYZ);
+            Console.WriteLine((b2 as BarClass).OPQ);
 
 
-            //var t = new DynamicArgumentTuple<global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga>(null, null, null, null, null, null, null, null, null);
+
+            //// composite same as StandardResolver
+            //CompositeResolver.RegisterAndSetAsDefault(
+            //    MessagePack.Resolvers.BuiltinResolver.Instance,
+
+            //    // replace enumasstring resolver
+            //    MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance,
+
+            //    MessagePack.Resolvers.DynamicGenericResolver.Instance,
+            //    MessagePack.Resolvers.DynamicUnionResolver.Instance,
+            //    MessagePack.Resolvers.DynamicObjectResolver.Instance,
+
+            //    // final fallback(last priority)
+            //    MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance
+            //);
 
 
-            var f = StandardResolver.Instance.GetFormatter<DynamicArgumentTuple<global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga>>();
 
-               //var __request = MessagePackSerializer.Serialize(t);
+            ////var t = new DynamicArgumentTuple<global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga>(null, null, null, null, null, null, null, null, null);
+
+
+            //var f = StandardResolver.Instance.GetFormatter<DynamicArgumentTuple<global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga>>();
+
+            //   //var __request = MessagePackSerializer.Serialize(t);
 
         }
 

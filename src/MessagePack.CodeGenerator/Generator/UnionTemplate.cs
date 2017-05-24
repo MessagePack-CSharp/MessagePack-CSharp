@@ -226,37 +226,38 @@ namespace MessagePack.CodeGenerator.Generator
             #line default
             #line hidden
             this.Write("\");\r\n\t\t\t}\r\n\t\t\toffset += readSize;\r\n\r\n\t\t\tvar key = MessagePackBinary.ReadInt32(byt" +
-                    "es, offset, out readSize);\r\n\t\t\toffset += readSize;\r\n\r\n\t\t\t");
+                    "es, offset, out readSize);\r\n\t\t\toffset += readSize;\r\n\r\n            if (!this.keyT" +
+                    "oJumpMap.TryGetValue(key, out key))\r\n\t\t\t{\r\n\t\t\t\tkey = -1;\r\n\t\t\t}\r\n\r\n\t\t\t");
             
-            #line 83 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            #line 88 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
             this.Write(" result = null;\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n");
             
-            #line 86 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            #line 91 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
             
             #line default
             #line hidden
             this.Write("\t\t\t\tcase ");
             
-            #line 87 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            #line 92 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
             this.Write(":\r\n\t\t\t\t\tresult = (");
             
-            #line 88 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            #line 93 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
             this.Write(")formatterResolver.GetFormatterWithVerify<");
             
-            #line 88 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            #line 93 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
             
             #line default
@@ -264,7 +265,7 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write(">().Deserialize(bytes, offset, formatterResolver, out readSize);\r\n\t\t\t\t\toffset += " +
                     "readSize;\r\n\t\t\t\t\tbreak;\r\n");
             
-            #line 91 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            #line 96 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  } 
             
             #line default
@@ -273,7 +274,7 @@ namespace MessagePack.CodeGenerator.Generator
                     "\t\tbreak;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\treadSize = offset - startOffset;\r\n\t\t\t\r\n\t\t\treturn result;" +
                     "\r\n        }\r\n    }\r\n\r\n");
             
-            #line 103 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
+            #line 108 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  } 
             
             #line default

@@ -64,7 +64,7 @@ namespace <#= Namespace #>
             switch (key)
             {
 <# for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; #>
-                case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName:  FormatterNamespace + "." + x.FormatterName#>();
+                case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName#>();
 <# } #>
                 default: return null;
             }

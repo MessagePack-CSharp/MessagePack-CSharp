@@ -103,7 +103,7 @@ namespace MessagePack.CodeGenerator
                 .GroupBy(x => x.Namespace)
                 .Select(x => new FormatterTemplate()
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters." + x.Key,
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
                     objectSerializationInfos = x.ToArray(),
                 })
                 .ToArray();
@@ -112,7 +112,7 @@ namespace MessagePack.CodeGenerator
                 .GroupBy(x => x.Namespace)
                 .Select(x => new EnumTemplate()
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters." + x.Key,
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
                     enumSerializationInfos = x.ToArray()
                 })
                 .ToArray();
@@ -121,7 +121,7 @@ namespace MessagePack.CodeGenerator
                 .GroupBy(x => x.Namespace)
                 .Select(x => new UnionTemplate()
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters." + x.Key,
+                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
                     unionSerializationInfos = x.ToArray()
                 })
                 .ToArray();

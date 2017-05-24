@@ -160,7 +160,7 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write(": return new ");
             
             #line 67 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\ResolverTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName:  FormatterNamespace + "." + x.FormatterName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName));
             
             #line default
             #line hidden

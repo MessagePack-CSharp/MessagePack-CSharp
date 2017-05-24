@@ -80,6 +80,11 @@ namespace <#= Namespace #>
 			var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
 			offset += readSize;
 
+            if (!this.keyToJumpMap.TryGetValue(key, out key))
+			{
+				key = -1;
+			}
+
 			<#= info.FullName #> result = null;
 			switch (key)
 			{

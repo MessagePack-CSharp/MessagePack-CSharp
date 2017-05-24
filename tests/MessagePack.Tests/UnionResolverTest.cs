@@ -66,6 +66,24 @@ namespace MessagePack.Tests
             convert2[0].IsInstanceOf<B2>().Is(x => x.Name == "b" && x.Val == 2);
             convert2[1].IsInstanceOf<C2>().Is(x => x.Name == "t" && x.Val == 5 && x.Valer == 99);
         }
+
+        [Fact]
+        public void Union2()
+        {
+            
+
+            var a = MessagePackSerializer.Serialize<IMessageBody>(new TextMessageBody() { Text = "hoge" });
+            var b = MessagePackSerializer.Serialize<IMessageBody>(new StampMessageBody() { StampId = 10 });
+            var c = MessagePackSerializer.Serialize<IMessageBody>(new QuestMessageBody() { Text = "hugahuga", QuestId = 99 });
+
+            var a2 = MessagePackSerializer.Deserialize<IMessageBody>(a);
+            var b2 = MessagePackSerializer.Deserialize<IMessageBody>(b);
+            var c2 = MessagePackSerializer.Deserialize<IMessageBody>(c);
+
+            (a2 as TextMessageBody).Text.Is("hoge");
+            (b2 as StampMessageBody).StampId.Is(10);
+            (c2 as QuestMessageBody).Is(x => x.Text == "hugahuga" && x.QuestId == 99);
+        }
     }
 }
 
