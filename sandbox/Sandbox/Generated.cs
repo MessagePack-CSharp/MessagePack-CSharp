@@ -43,62 +43,64 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(54)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(56)
             {
                 {typeof(int[,]), 0 },
                 {typeof(global::GlobalMyEnum[,]), 1 },
                 {typeof(int[,,]), 2 },
                 {typeof(int[,,,]), 3 },
-                {typeof(global::SharedData.ByteEnum), 4 },
-                {typeof(global::GlobalMyEnum), 5 },
-                {typeof(global::SharedData.IUnionChecker), 6 },
-                {typeof(global::SharedData.IUnionChecker2), 7 },
-                {typeof(global::SharedData.IIVersioningUnion), 8 },
-                {typeof(global::SharedData.IUnionSample), 9 },
-                {typeof(global::IMessageBody), 10 },
-                {typeof(global::SharedData.FirstSimpleData), 11 },
-                {typeof(global::SharedData.SimlpeStringKeyData), 12 },
-                {typeof(global::SharedData.SimpleStructIntKeyData), 13 },
-                {typeof(global::SharedData.SimpleStructStringKeyData), 14 },
-                {typeof(global::SharedData.SimpleIntKeyData), 15 },
-                {typeof(global::SharedData.Vector2), 16 },
-                {typeof(global::SharedData.EmptyClass), 17 },
-                {typeof(global::SharedData.EmptyStruct), 18 },
-                {typeof(global::SharedData.Version1), 19 },
-                {typeof(global::SharedData.Version2), 20 },
-                {typeof(global::SharedData.Version0), 21 },
-                {typeof(global::SharedData.HolderV1), 22 },
-                {typeof(global::SharedData.HolderV2), 23 },
-                {typeof(global::SharedData.HolderV0), 24 },
-                {typeof(global::SharedData.Callback1), 25 },
-                {typeof(global::SharedData.Callback1_2), 26 },
-                {typeof(global::SharedData.Callback2), 27 },
-                {typeof(global::SharedData.Callback2_2), 28 },
-                {typeof(global::SharedData.MySubUnion1), 29 },
-                {typeof(global::SharedData.MySubUnion2), 30 },
-                {typeof(global::SharedData.MySubUnion3), 31 },
-                {typeof(global::SharedData.MySubUnion4), 32 },
-                {typeof(global::SharedData.VersioningUnion), 33 },
-                {typeof(global::SharedData.MyClass), 34 },
-                {typeof(global::SharedData.VersionBlockTest), 35 },
-                {typeof(global::SharedData.UnVersionBlockTest), 36 },
-                {typeof(global::SharedData.Empty1), 37 },
-                {typeof(global::SharedData.Empty2), 38 },
-                {typeof(global::SharedData.NonEmpty1), 39 },
-                {typeof(global::SharedData.NonEmpty2), 40 },
-                {typeof(global::SharedData.VectorLike2), 41 },
-                {typeof(global::SharedData.Vector3Like), 42 },
-                {typeof(global::SharedData.ArrayOptimizeClass), 43 },
-                {typeof(global::SharedData.NestParent.NestContract), 44 },
-                {typeof(global::SharedData.FooClass), 45 },
-                {typeof(global::SharedData.BarClass), 46 },
-                {typeof(global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga), 47 },
-                {typeof(global::GlobalMan), 48 },
-                {typeof(global::Message), 49 },
-                {typeof(global::TextMessageBody), 50 },
-                {typeof(global::StampMessageBody), 51 },
-                {typeof(global::QuestMessageBody), 52 },
-                {typeof(global::ArrayTestTest), 53 },
+                {typeof(global::GlobalMyEnum[]), 4 },
+                {typeof(global::QuestMessageBody[]), 5 },
+                {typeof(global::SharedData.ByteEnum), 6 },
+                {typeof(global::GlobalMyEnum), 7 },
+                {typeof(global::SharedData.IUnionChecker), 8 },
+                {typeof(global::SharedData.IUnionChecker2), 9 },
+                {typeof(global::SharedData.IIVersioningUnion), 10 },
+                {typeof(global::SharedData.IUnionSample), 11 },
+                {typeof(global::IMessageBody), 12 },
+                {typeof(global::SharedData.FirstSimpleData), 13 },
+                {typeof(global::SharedData.SimlpeStringKeyData), 14 },
+                {typeof(global::SharedData.SimpleStructIntKeyData), 15 },
+                {typeof(global::SharedData.SimpleStructStringKeyData), 16 },
+                {typeof(global::SharedData.SimpleIntKeyData), 17 },
+                {typeof(global::SharedData.Vector2), 18 },
+                {typeof(global::SharedData.EmptyClass), 19 },
+                {typeof(global::SharedData.EmptyStruct), 20 },
+                {typeof(global::SharedData.Version1), 21 },
+                {typeof(global::SharedData.Version2), 22 },
+                {typeof(global::SharedData.Version0), 23 },
+                {typeof(global::SharedData.HolderV1), 24 },
+                {typeof(global::SharedData.HolderV2), 25 },
+                {typeof(global::SharedData.HolderV0), 26 },
+                {typeof(global::SharedData.Callback1), 27 },
+                {typeof(global::SharedData.Callback1_2), 28 },
+                {typeof(global::SharedData.Callback2), 29 },
+                {typeof(global::SharedData.Callback2_2), 30 },
+                {typeof(global::SharedData.MySubUnion1), 31 },
+                {typeof(global::SharedData.MySubUnion2), 32 },
+                {typeof(global::SharedData.MySubUnion3), 33 },
+                {typeof(global::SharedData.MySubUnion4), 34 },
+                {typeof(global::SharedData.VersioningUnion), 35 },
+                {typeof(global::SharedData.MyClass), 36 },
+                {typeof(global::SharedData.VersionBlockTest), 37 },
+                {typeof(global::SharedData.UnVersionBlockTest), 38 },
+                {typeof(global::SharedData.Empty1), 39 },
+                {typeof(global::SharedData.Empty2), 40 },
+                {typeof(global::SharedData.NonEmpty1), 41 },
+                {typeof(global::SharedData.NonEmpty2), 42 },
+                {typeof(global::SharedData.VectorLike2), 43 },
+                {typeof(global::SharedData.Vector3Like), 44 },
+                {typeof(global::SharedData.ArrayOptimizeClass), 45 },
+                {typeof(global::SharedData.NestParent.NestContract), 46 },
+                {typeof(global::SharedData.FooClass), 47 },
+                {typeof(global::SharedData.BarClass), 48 },
+                {typeof(global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga), 49 },
+                {typeof(global::GlobalMan), 50 },
+                {typeof(global::Message), 51 },
+                {typeof(global::TextMessageBody), 52 },
+                {typeof(global::StampMessageBody), 53 },
+                {typeof(global::QuestMessageBody), 54 },
+                {typeof(global::ArrayTestTest), 55 },
             };
         }
 
@@ -113,56 +115,58 @@ namespace MessagePack.Resolvers
                 case 1: return new global::MessagePack.Formatters.TwoDimentionalArrayFormatter<global::GlobalMyEnum>();
                 case 2: return new global::MessagePack.Formatters.ThreeDimentionalArrayFormatter<int>();
                 case 3: return new global::MessagePack.Formatters.FourDimentionalArrayFormatter<int>();
-                case 4: return new MessagePack.Formatters.SharedData.ByteEnumFormatter();
-                case 5: return new MessagePack.Formatters.GlobalMyEnumFormatter();
-                case 6: return new MessagePack.Formatters.SharedData.IUnionCheckerFormatter();
-                case 7: return new MessagePack.Formatters.SharedData.IUnionChecker2Formatter();
-                case 8: return new MessagePack.Formatters.SharedData.IIVersioningUnionFormatter();
-                case 9: return new MessagePack.Formatters.SharedData.IUnionSampleFormatter();
-                case 10: return new MessagePack.Formatters.IMessageBodyFormatter();
-                case 11: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
-                case 12: return new MessagePack.Formatters.SharedData.SimlpeStringKeyDataFormatter();
-                case 13: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
-                case 14: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
-                case 15: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
-                case 16: return new MessagePack.Formatters.SharedData.Vector2Formatter();
-                case 17: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
-                case 18: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
-                case 19: return new MessagePack.Formatters.SharedData.Version1Formatter();
-                case 20: return new MessagePack.Formatters.SharedData.Version2Formatter();
-                case 21: return new MessagePack.Formatters.SharedData.Version0Formatter();
-                case 22: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
-                case 23: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
-                case 24: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
-                case 25: return new MessagePack.Formatters.SharedData.Callback1Formatter();
-                case 26: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
-                case 27: return new MessagePack.Formatters.SharedData.Callback2Formatter();
-                case 28: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
-                case 29: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
-                case 30: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
-                case 31: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
-                case 32: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
-                case 33: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
-                case 34: return new MessagePack.Formatters.SharedData.MyClassFormatter();
-                case 35: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
-                case 36: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
-                case 37: return new MessagePack.Formatters.SharedData.Empty1Formatter();
-                case 38: return new MessagePack.Formatters.SharedData.Empty2Formatter();
-                case 39: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
-                case 40: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
-                case 41: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
-                case 42: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
-                case 43: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
-                case 44: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
-                case 45: return new MessagePack.Formatters.SharedData.FooClassFormatter();
-                case 46: return new MessagePack.Formatters.SharedData.BarClassFormatter();
-                case 47: return new MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqagaFormatter();
-                case 48: return new MessagePack.Formatters.GlobalManFormatter();
-                case 49: return new MessagePack.Formatters.MessageFormatter();
-                case 50: return new MessagePack.Formatters.TextMessageBodyFormatter();
-                case 51: return new MessagePack.Formatters.StampMessageBodyFormatter();
-                case 52: return new MessagePack.Formatters.QuestMessageBodyFormatter();
-                case 53: return new MessagePack.Formatters.ArrayTestTestFormatter();
+                case 4: return new global::MessagePack.Formatters.ArrayFormatter<global::GlobalMyEnum>();
+                case 5: return new global::MessagePack.Formatters.ArrayFormatter<global::QuestMessageBody>();
+                case 6: return new MessagePack.Formatters.SharedData.ByteEnumFormatter();
+                case 7: return new MessagePack.Formatters.GlobalMyEnumFormatter();
+                case 8: return new MessagePack.Formatters.SharedData.IUnionCheckerFormatter();
+                case 9: return new MessagePack.Formatters.SharedData.IUnionChecker2Formatter();
+                case 10: return new MessagePack.Formatters.SharedData.IIVersioningUnionFormatter();
+                case 11: return new MessagePack.Formatters.SharedData.IUnionSampleFormatter();
+                case 12: return new MessagePack.Formatters.IMessageBodyFormatter();
+                case 13: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
+                case 14: return new MessagePack.Formatters.SharedData.SimlpeStringKeyDataFormatter();
+                case 15: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
+                case 16: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
+                case 17: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
+                case 18: return new MessagePack.Formatters.SharedData.Vector2Formatter();
+                case 19: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
+                case 20: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
+                case 21: return new MessagePack.Formatters.SharedData.Version1Formatter();
+                case 22: return new MessagePack.Formatters.SharedData.Version2Formatter();
+                case 23: return new MessagePack.Formatters.SharedData.Version0Formatter();
+                case 24: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
+                case 25: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
+                case 26: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
+                case 27: return new MessagePack.Formatters.SharedData.Callback1Formatter();
+                case 28: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
+                case 29: return new MessagePack.Formatters.SharedData.Callback2Formatter();
+                case 30: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
+                case 31: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
+                case 32: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
+                case 33: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
+                case 34: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
+                case 35: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
+                case 36: return new MessagePack.Formatters.SharedData.MyClassFormatter();
+                case 37: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
+                case 38: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
+                case 39: return new MessagePack.Formatters.SharedData.Empty1Formatter();
+                case 40: return new MessagePack.Formatters.SharedData.Empty2Formatter();
+                case 41: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
+                case 42: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
+                case 43: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
+                case 44: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
+                case 45: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
+                case 46: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
+                case 47: return new MessagePack.Formatters.SharedData.FooClassFormatter();
+                case 48: return new MessagePack.Formatters.SharedData.BarClassFormatter();
+                case 49: return new MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqagaFormatter();
+                case 50: return new MessagePack.Formatters.GlobalManFormatter();
+                case 51: return new MessagePack.Formatters.MessageFormatter();
+                case 52: return new MessagePack.Formatters.TextMessageBodyFormatter();
+                case 53: return new MessagePack.Formatters.StampMessageBodyFormatter();
+                case 54: return new MessagePack.Formatters.QuestMessageBodyFormatter();
+                case 55: return new MessagePack.Formatters.ArrayTestTestFormatter();
                 default: return null;
             }
         }
@@ -3518,12 +3522,14 @@ namespace MessagePack.Formatters
             }
             
             var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 5);
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 7);
             offset += formatterResolver.GetFormatterWithVerify<int[]>().Serialize(ref bytes, offset, value.MyProperty0, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<int[,]>().Serialize(ref bytes, offset, value.MyProperty1, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<global::GlobalMyEnum[,]>().Serialize(ref bytes, offset, value.MyProperty2, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<int[,,]>().Serialize(ref bytes, offset, value.MyProperty3, formatterResolver);
             offset += formatterResolver.GetFormatterWithVerify<int[,,,]>().Serialize(ref bytes, offset, value.MyProperty4, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<global::GlobalMyEnum[]>().Serialize(ref bytes, offset, value.MyProperty5, formatterResolver);
+            offset += formatterResolver.GetFormatterWithVerify<global::QuestMessageBody[]>().Serialize(ref bytes, offset, value.MyProperty6, formatterResolver);
             return offset - startOffset;
         }
 
@@ -3544,6 +3550,8 @@ namespace MessagePack.Formatters
             var __MyProperty2__ = default(global::GlobalMyEnum[,]);
             var __MyProperty3__ = default(int[,,]);
             var __MyProperty4__ = default(int[,,,]);
+            var __MyProperty5__ = default(global::GlobalMyEnum[]);
+            var __MyProperty6__ = default(global::QuestMessageBody[]);
 
             for (int i = 0; i < length; i++)
             {
@@ -3566,6 +3574,12 @@ namespace MessagePack.Formatters
                     case 4:
                         __MyProperty4__ = formatterResolver.GetFormatterWithVerify<int[,,,]>().Deserialize(bytes, offset, formatterResolver, out readSize);
                         break;
+                    case 5:
+                        __MyProperty5__ = formatterResolver.GetFormatterWithVerify<global::GlobalMyEnum[]>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 6:
+                        __MyProperty6__ = formatterResolver.GetFormatterWithVerify<global::QuestMessageBody[]>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
                     default:
                         readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                         break;
@@ -3581,6 +3595,8 @@ namespace MessagePack.Formatters
             ____result.MyProperty2 = __MyProperty2__;
             ____result.MyProperty3 = __MyProperty3__;
             ____result.MyProperty4 = __MyProperty4__;
+            ____result.MyProperty5 = __MyProperty5__;
+            ____result.MyProperty6 = __MyProperty6__;
             return ____result;
         }
     }

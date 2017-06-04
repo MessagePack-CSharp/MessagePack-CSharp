@@ -789,4 +789,8 @@ public class ArrayTestTest
     public int[,,] MyProperty3 { get; set; }
     [Key(4)]
     public int[,,,] MyProperty4 { get; set; }
+    [Key(5)]
+    public GlobalMyEnum[] MyProperty5 { get; set; }
+    [Key(6)]
+    public QuestMessageBody[] MyProperty6 { get; set; }
 }
