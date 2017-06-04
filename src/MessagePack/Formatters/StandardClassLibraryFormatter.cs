@@ -236,7 +236,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                return new Uri(MessagePackBinary.ReadString(bytes, offset, out readSize));
+                return new Uri(MessagePackBinary.ReadString(bytes, offset, out readSize), UriKind.RelativeOrAbsolute);
             }
         }
     }

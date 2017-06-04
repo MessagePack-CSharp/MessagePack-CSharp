@@ -234,5 +234,15 @@ namespace MessagePack.Tests
 
             d.Is(12345.6789M);
         }
+
+        [Fact]
+        public void UriTest()
+        {
+            var absolute = new Uri("http://google.com/");
+            Convert(absolute).ToString().Is("http://google.com/");
+
+            var relative = new Uri("/me/", UriKind.Relative);
+            Convert(relative).ToString().Is("/me/");
+        }
     }
 }
