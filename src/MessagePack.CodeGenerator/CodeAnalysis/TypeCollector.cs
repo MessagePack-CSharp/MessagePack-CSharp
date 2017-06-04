@@ -336,9 +336,29 @@ namespace MessagePack.CodeGenerator
 
             var info = new GenericSerializationInfo
             {
-                FormatterName = $"global::MessagePack.Formatters.ArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>",
                 FullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             };
+
+            if (array.IsSZArray)
+            {
+                info.FormatterName = $"global::MessagePack.Formatters.ArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+            }
+            else if (array.Rank == 2)
+            {
+                info.FormatterName = $"global::MessagePack.Formatters.TwoDimentionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+            }
+            else if (array.Rank == 3)
+            {
+                info.FormatterName = $"global::MessagePack.Formatters.ThreeDimentionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+            }
+            else if (array.Rank == 4)
+            {
+                info.FormatterName = $"global::MessagePack.Formatters.FourDimentionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+            }
+            else
+            {
+                throw new InvalidOperationException("does not supports array dimention, " + info.FullName);
+            }
 
             collectedGenericInfo.Add(info);
 

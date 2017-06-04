@@ -775,3 +775,18 @@ public enum GlobalMyEnum
 {
     Apple, Orange
 }
+
+[MessagePackObject]
+public class ArrayTestTest
+{
+    [Key(0)]
+    public int[] MyProperty0 { get; set; }
+    [Key(1)]
+    public int[,] MyProperty1 { get; set; }
+    [Key(2)]
+    public GlobalMyEnum[,] MyProperty2 { get; set; }
+    [Key(3)]
+    public int[,,] MyProperty3 { get; set; }
+    [Key(4)]
+    public int[,,,] MyProperty4 { get; set; }
+}
