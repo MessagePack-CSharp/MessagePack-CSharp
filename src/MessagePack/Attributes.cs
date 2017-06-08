@@ -53,4 +53,15 @@ namespace MessagePack
     {
 
     }
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum, AllowMultiple = false, Inherited = true)]
+    public class MessagePackFormatterAttribute : Attribute
+    {
+        public Type FormatterType { get; private set; }
+
+        public MessagePackFormatterAttribute(Type formatterType)
+        {
+            this.FormatterType = formatterType;
+        }
+    }
 }

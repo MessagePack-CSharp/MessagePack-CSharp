@@ -120,6 +120,7 @@
     <Compile Include="PrimitivelikeFormatterTest.cs" />
     <Compile Include="PrimitiveResolverTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpecifiedFormatterResolverTest.cs" />
     <Compile Include="UnionResolverTest.cs" />
     <Compile Include="Utils\ChainingAssertion.Ext.cs" />
     <Compile Include="Utils\ChainingAssertion.Xunit.cs" />

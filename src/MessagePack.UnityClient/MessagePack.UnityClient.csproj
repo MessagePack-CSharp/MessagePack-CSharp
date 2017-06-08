@@ -123,6 +123,7 @@
     <Compile Include="Assets\Scripts\MessagePack\MessagePackSerializer.NonGeneric.cs" />
     <Compile Include="Assets\Scripts\MessagePack\MessagePackSerializer.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Nil.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\AttributeFormatterResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\BuiltinResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\CompositeResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\DynamicEnumAsStringResolver.cs" />

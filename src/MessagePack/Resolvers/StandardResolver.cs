@@ -3,7 +3,7 @@
 namespace MessagePack.Resolvers
 {
     /// <summary>
-    /// Default composited resolver, builtin -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object.
+    /// Default composited resolver, builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive.
     /// </summary>
     public class StandardResolver : IFormatterResolver
     {
@@ -12,6 +12,8 @@ namespace MessagePack.Resolvers
         static readonly IFormatterResolver[] resolvers = new[]
         {
             BuiltinResolver.Instance, // Try Builtin
+
+            AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
 
 #if !NETSTANDARD1_4
             MessagePack.Unity.UnityResolver.Instance,

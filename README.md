@@ -672,9 +672,10 @@ Extension Point(IFormatterResolver)
 | Resovler Name | Description |
 | --- | --- |
 | BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
-| StandardResolver | Composited resolver . It resolves in the following order `builtin -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive object`. This is the default of MessagePackSerializer. |
+| StandardResolver | Composited resolver . It resolves in the following order `builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive object`. This is the default of MessagePackSerializer. |
 | ContractlessStandardResolver | Composited `StandardResolver` -> `DynamicContractlessObjectResolver`. It enables contractless serialization. |
 | PrimitiveObjectResolver | MessagePack primitive object resolver. It is used fallback in `object` type and supports `bool`, `char`, `sbyte`, `byte`, `short`, `int`, `long`, `ushort`, `uint`, `ulong`, `float`, `double`, `DateTime`, `string`, `byte[]`, `ICollection`, `IDictionary`. |
+| AttributeFormatterResolver | Get formatter from `[MessagePackFormatter]` attribute. |
 | CompositeResolver | Singleton helper of setup custom resolvers. You can use `Register` or `RegisterAndSetAsDefault` API. |
 | NativeDateTimeResolver | Serialize by .NET native DateTime binary format. |
 | OldSpecResolver | str and bin serialize/deserialize follows old messagepack spec(use raw format) |
@@ -838,6 +839,40 @@ internal static class SampleCustomResolverGetFormatterHelper
 }
 ```
 
+MessaegPackFormatterAttribute
+---
+MessaegPackFormatterAttribute is lightweight extension point of class, struct, interface, enum. This is like JSON.NET's JsonConverterAttribute. For example, serialize private field.
+
+```csharp
+[MessagePackFormatter(typeof(CustomObjectFormatter))]
+public class CustomObject
+{
+    string internalId;
+
+    public CustomObject()
+    {
+        this.internalId = Guid.NewGuid().ToString();
+    }
+
+    // serialize/deserialize internal field.
+    class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
+    {
+        public int Serialize(ref byte[] bytes, int offset, CustomObject value, IFormatterResolver formatterResolver)
+        {
+            return formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.internalId, formatterResolver);
+        }
+
+        public CustomObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+            return new CustomObject { internalId = id };
+        }
+    }
+}
+```
+
+Formatter is retrieved by `AttributeFormatterResolver`, it is included in `StandardResolver`.
+
 for Unity
 ---
 You can install by package and includes source code. If build target as PC, you can use as is but if build target uses IL2CPP, you can not use `Dynamic***Resolver` so use pre-code generation. Please see [pre-code generation section](https://github.com/neuecc/MessagePack-CSharp#pre-code-generationunityxamarin-supports).
@@ -935,6 +970,7 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 
     // finally, use builtin/primitive resolver(don't use StandardResolver, it includes dynamic generation)
     MessagePack.Resolvers.BuiltinResolver.Instance,
+    AttributeFormatterResolver.Instance,
     MessagePack.Resolvers.PrimitiveObjectResolver.Instance
 );
 ```

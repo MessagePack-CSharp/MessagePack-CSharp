@@ -228,6 +228,33 @@ namespace Sandbox
     }
 
 
+    [MessagePackFormatter(typeof(CustomObjectFormatter))]
+    public class CustomObject
+    {
+        string internalId;
+
+        public CustomObject()
+        {
+            this.internalId = Guid.NewGuid().ToString();
+        }
+
+        // serialize/deserialize internal field.
+        class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
+        {
+            public int Serialize(ref byte[] bytes, int offset, CustomObject value, IFormatterResolver formatterResolver)
+            {
+                return formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.internalId, formatterResolver);
+            }
+
+            public CustomObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            {
+                var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                return new CustomObject { internalId = id };
+            }
+        }
+    }
+
+
     class Program
     {
         static void Main(string[] args)
