@@ -562,6 +562,7 @@ Author is creating other extension packages, too.
 
 * [MasterMemory](https://github.com/neuecc/MasterMemory) - Embedded Readonly In-Memory Document Database
 * [MagicOnion](https://github.com/neuecc/MagicOnion) - gRPC based HTTP/2 RPC Streaming Framework
+* [DatadogSharp](https://github.com/neuecc/DatadogSharp) - C# Datadog client
 
 You can make your own extension serializers, let's create them and share it!
 
@@ -708,6 +709,7 @@ Here is sample of use DynamicEnumAsStringResolver with DynamicContractlessObject
 // composite same as StandardResolver
 CompositeResolver.RegisterAndSetAsDefault(
     MessagePack.Resolvers.BuiltinResolver.Instance,
+    MessagePack.Resolvers.AttributeFormatterResolver.Instance,
 
     // replace enum resolver
     MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance,
