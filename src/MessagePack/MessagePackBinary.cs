@@ -452,6 +452,26 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Write map format header, always use map32 format(length is fixed, 5).
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteMapHeaderForceMap32Block(ref byte[] bytes, int offset, uint count)
+        {
+            EnsureCapacity(ref bytes, offset, 5);
+            unchecked
+            {
+                bytes[offset] = MessagePackCode.Map32;
+                bytes[offset + 1] = (byte)(count >> 24);
+                bytes[offset + 2] = (byte)(count >> 16);
+                bytes[offset + 3] = (byte)(count >> 8);
+                bytes[offset + 4] = (byte)(count);
+            }
+            return 5;
+        }
+
+        /// <summary>
         /// Return map count.
         /// </summary>
 #if NETSTANDARD1_4
@@ -561,6 +581,26 @@ namespace MessagePack
                 }
                 return 5;
             }
+        }
+
+        /// <summary>
+        /// Write array format header, always use array32 format(length is fixed, 5).
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteArrayHeaderForceArray32Block(ref byte[] bytes, int offset, uint count)
+        {
+            EnsureCapacity(ref bytes, offset, 5);
+            unchecked
+            {
+                bytes[offset] = MessagePackCode.Array32;
+                bytes[offset + 1] = (byte)(count >> 24);
+                bytes[offset + 2] = (byte)(count >> 16);
+                bytes[offset + 3] = (byte)(count >> 8);
+                bytes[offset + 4] = (byte)(count);
+            }
+            return 5;
         }
 
         /// <summary>
