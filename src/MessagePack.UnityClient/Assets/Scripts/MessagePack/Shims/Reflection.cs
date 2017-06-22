@@ -113,6 +113,11 @@ namespace System.Reflection
             return type.GetMethods();
         }
 
+        public PropertyInfo GetDeclaredProperty(string name)
+        {
+            return type.GetProperty(name);
+        }
+
         public T GetCustomAttribute<T>(bool inherit = true)
             where T : Attribute
         {

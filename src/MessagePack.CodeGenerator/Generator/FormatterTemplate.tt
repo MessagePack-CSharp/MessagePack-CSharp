@@ -20,6 +20,7 @@ namespace <#= Namespace #>
 <# if( objInfo.IsStringKey) { #>
 
         readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
 
         public <#= objInfo.Name #>Formatter()
         {
@@ -28,6 +29,13 @@ namespace <#= Namespace #>
 <# foreach(var x in objInfo.Members) { #>
                 { "<#= x.StringKey #>", <#= x.IntKey #>},
 <# } #>
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+<# foreach(var x in objInfo.Members.Where(x => x.IsReadable)) { #>
+                global::System.Text.Encoding.UTF8.GetBytes("<#= x.StringKey #>"),
+<# } #>                
             };
         }
 
@@ -63,8 +71,8 @@ namespace <#= Namespace #>
 <# } else { #>
             offset += <#= member.GetSerializeMethodString() #>;
 <# } } } else { #>
-<# foreach(var x in objInfo.Members) { #>
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "<#= x.StringKey #>", <#= Encoding.UTF8.GetByteCount(x.StringKey) #>);
+<# var index = 0; foreach(var x in objInfo.Members) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[<#= index++ #>]);
             offset += <#= x.GetSerializeMethodString() #>;
 <# } } #>
             return offset - startOffset;

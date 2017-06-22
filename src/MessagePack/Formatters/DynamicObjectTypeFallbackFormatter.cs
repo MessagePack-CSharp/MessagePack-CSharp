@@ -1,4 +1,6 @@
-﻿using MessagePack.Resolvers;
+﻿#if NETSTANDARD1_4
+
+using MessagePack.Resolvers;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -82,3 +84,5 @@ namespace MessagePack.Formatters
         }
     }
 }
+
+#endif

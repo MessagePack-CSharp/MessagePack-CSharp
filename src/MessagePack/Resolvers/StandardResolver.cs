@@ -84,7 +84,11 @@ namespace MessagePack.Resolvers
             DynamicContractlessObjectResolver.Instance,
 
             // finally, try primitive -> dynamic contractless
+#if NETSTANDARD1_4
             DynamicObjectTypeFallbackResolver.Instance
+#else
+            PrimitiveObjectResolver.Instance
+#endif
         };
 
         ContractlessStandardResolver()

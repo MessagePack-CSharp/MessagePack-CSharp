@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Runtime.Serialization;
+using System.Text;
 
 namespace MessagePack.Resolvers
 {
@@ -93,9 +94,9 @@ namespace MessagePack.Resolvers
         }
 
 #if NET_35
-        public void Save()
+        public AssemblyBuilder Save()
         {
-            assembly.Save();
+            return assembly.Save();
         }
 #endif
 
@@ -189,15 +190,17 @@ namespace MessagePack.Internal
             var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, "").Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
             FieldBuilder dictionaryField = null;
+            FieldBuilder stringByteKeysField = null;
 
             // string key needs string->int mapper for deserialize switch statement
             if (serializationInfo.IsStringKey)
             {
                 var method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
                 dictionaryField = typeBuilder.DefineField("keyMapping", typeof(Dictionary<string, int>), FieldAttributes.Private | FieldAttributes.InitOnly);
+                stringByteKeysField = typeBuilder.DefineField("stringByteKeys", typeof(byte[][]), FieldAttributes.Private | FieldAttributes.InitOnly);
 
                 var il = method.GetILGenerator();
-                BuildConstructor(type, serializationInfo, method, dictionaryField, il);
+                BuildConstructor(type, serializationInfo, method, dictionaryField, stringByteKeysField, il);
             }
             {
                 var method = typeBuilder.DefineMethod("Serialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
@@ -205,7 +208,7 @@ namespace MessagePack.Internal
                     new Type[] { typeof(byte[]).MakeByRefType(), typeof(int), type, typeof(IFormatterResolver) });
 
                 var il = method.GetILGenerator();
-                BuildSerialize(type, serializationInfo, method, il);
+                BuildSerialize(type, serializationInfo, method, stringByteKeysField, il);
             }
 
             {
@@ -220,7 +223,7 @@ namespace MessagePack.Internal
             return typeBuilder.CreateTypeInfo();
         }
 
-        static void BuildConstructor(Type type, ObjectSerializationInfo info, ConstructorInfo method, FieldBuilder dictionaryField, ILGenerator il)
+        static void BuildConstructor(Type type, ObjectSerializationInfo info, ConstructorInfo method, FieldBuilder dictionaryField, FieldBuilder stringByteKeysField, ILGenerator il)
         {
             il.EmitLdarg(0);
             il.Emit(OpCodes.Call, objectCtor);
@@ -238,11 +241,33 @@ namespace MessagePack.Internal
             }
 
             il.Emit(OpCodes.Stfld, dictionaryField);
+
+            //
+
+            var writeCount = info.Members.Count(x => x.IsReadable);
+            il.EmitLdarg(0);
+            il.EmitLdc_I4(writeCount);
+            il.Emit(OpCodes.Newarr, typeof(byte[]));
+
+            var i = 0;
+            foreach (var item in info.Members.Where(x => x.IsReadable))
+            {
+                il.Emit(OpCodes.Dup);
+                il.EmitLdc_I4(i);
+                il.EmitCall(getutf8);
+                il.Emit(OpCodes.Ldstr, item.StringKey);
+                il.EmitCall(getbytes);
+                il.Emit(OpCodes.Stelem_Ref);
+                i++;
+            }
+
+            il.Emit(OpCodes.Stfld, stringByteKeysField);
+
             il.Emit(OpCodes.Ret);
         }
 
         // int Serialize([arg:1]ref byte[] bytes, [arg:2]int offset, [arg:3]T value, [arg:4]IFormatterResolver formatterResolver);
-        static void BuildSerialize(Type type, ObjectSerializationInfo info, MethodInfo method, ILGenerator il)
+        static void BuildSerialize(Type type, ObjectSerializationInfo info, MethodInfo method, FieldBuilder stringByteKeysField, ILGenerator il)
         {
             // if(value == null) return WriteNil
             if (type.GetTypeInfo().IsClass)
@@ -348,19 +373,19 @@ namespace MessagePack.Internal
                     }
                 });
 
+                var index = 0;
                 foreach (var item in info.Members.Where(x => x.IsReadable))
                 {
                     // offset += writekey
-                    if (info.IsStringKey)
+                    EmitOffsetPlusEqual(il, null, () =>
                     {
-                        EmitOffsetPlusEqual(il, null, () =>
-                        {
-                            // embed string and bytesize
-                            il.Emit(OpCodes.Ldstr, item.StringKey);
-                            il.EmitLdc_I4(StringEncoding.UTF8.GetByteCount(item.StringKey));
-                            il.EmitCall(MessagePackBinaryTypeInfo.WriteStringUnsafe);
-                        });
-                    }
+                        il.EmitLdarg(0);
+                        il.EmitLdfld(stringByteKeysField);
+                        il.EmitLdc_I4(index);
+                        il.Emit(OpCodes.Ldelem_Ref);
+                        il.EmitCall(MessagePackBinaryTypeInfo.WriteStringBytes);
+                        index++;
+                    });
 
                     // offset += serialzie
                     EmitSerializeValue(il, type.GetTypeInfo(), item);
@@ -782,6 +807,9 @@ namespace MessagePack.Internal
 
         static readonly ConstructorInfo objectCtor = typeof(object).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0);
 
+        static readonly MethodInfo getutf8 = typeof(Encoding).GetTypeInfo().GetDeclaredProperty("UTF8").GetGetMethod();
+        static readonly MethodInfo getbytes = typeof(Encoding).GetRuntimeMethod("GetBytes", new[] { typeof(string) });
+
         internal static class MessagePackBinaryTypeInfo
         {
             public static TypeInfo TypeInfo = typeof(MessagePackBinary).GetTypeInfo();
@@ -800,6 +828,7 @@ namespace MessagePack.Internal
             public static MethodInfo IsNil = typeof(MessagePackBinary).GetRuntimeMethod("IsNil", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo ReadNextBlock = typeof(MessagePackBinary).GetRuntimeMethod("ReadNextBlock", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo WriteStringUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringUnsafe", new[] { refByte, typeof(int), typeof(string), typeof(int) });
+            public static MethodInfo WriteStringBytes = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringBytes", new[] { refByte, typeof(int), typeof(byte[]) });
 
             public static MethodInfo ReadArrayHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadArrayHeader", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo ReadMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadMapHeader", new[] { typeof(byte[]), typeof(int), refInt });

@@ -38,11 +38,16 @@ namespace DynamicCodeDumper
             DynamicEnumResolver.Instance.GetFormatter<IntEnum>();
             DynamicEnumResolver.Instance.GetFormatter<ShortEnum>();
 
+
+            DynamicContractlessObjectResolver.Instance.GetFormatter<ContractlessConstructorCheck>();
+            DynamicContractlessObjectResolver.Instance.GetFormatter<Contractless2>();
+
             var a1 = DynamicObjectResolver.Instance.Save();
             var a2 = DynamicUnionResolver.Instance.Save();
             var a3 = DynamicEnumResolver.Instance.Save();
+            var a4 = DynamicContractlessObjectResolver.Instance.Save();
 
-            Verify(a1, a2, a3);
+            Verify(a1, a2, a3, a4);
         }
 
         static void Verify(params AssemblyBuilder[] builders)
@@ -82,4 +87,15 @@ namespace DynamicCodeDumper
     }
 
 
+    public class EmptyContractless
+    {
+
+    }
+
+
+    public class Contractless2
+    {
+        public int MyProperty { get; set; }
+        public string MyProperty2 { get; set; }
+    }
 }
