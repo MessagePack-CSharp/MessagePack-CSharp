@@ -32,6 +32,18 @@ namespace MessagePack.Formatters
 
         }
 
+        public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
+        {
+            if (value == null) return true;
+            if (typeToJumpCode.ContainsKey(type)) return true;
+            if (typeInfo.IsEnum) return true;
+
+            if (value is System.Collections.IDictionary) return true;
+            if (value is System.Collections.ICollection) return true;
+
+            return false;
+        }
+
         public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
         {
             if (value == null)

@@ -110,6 +110,11 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
+                if (typeof(T) == typeof(object))
+                {
+                    return;
+                }
+
                 var ti = typeof(T).GetTypeInfo();
                 if (ti.IsNullable())
                 {
