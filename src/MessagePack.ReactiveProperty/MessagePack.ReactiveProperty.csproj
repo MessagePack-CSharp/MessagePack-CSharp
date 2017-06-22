@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+      <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
     </ItemGroup>
 
 </Project>

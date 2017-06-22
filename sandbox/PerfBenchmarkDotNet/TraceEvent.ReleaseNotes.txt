@@ -1,0 +1,61 @@
+Version 1.0.0.3  - Initial release to NuGet, pre-release.    
+
+    TraceEvent has been available from the site http://bcl.codeplex.com/wikipage?title=TraceEvent for some time now
+        this NuGet Version of the library supersedes that one.   WHile the 'core' part of the library is unchanged,
+        we did change lesser used features, and change the namespace and DLL name, which will cause break.   We anticipate
+        it will take an hour or so to 'port' to this version from the old one.   Below are specific details on what
+        has changed to help in this port.  
+
+           * The DLL has been renamed from TraceEvent.dll to Microsoft.Diagnostics.Tracing.TraceEvent.dll
+           * The name spaces for all classes have been changed.   The easiest way to port is to simply place
+             the following using clauses at the top of any file that uses TraceEvent classes
+                       using Microsoft.Diagnostics.Symbols;
+               using Microsoft.Diagnostics.Tracing;
+               using Microsoft.Diagnostics.Tracing.Etlx;
+               using Microsoft.Diagnostics.Tracing.Parsers.Clr;
+               using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
+               using Microsoft.Diagnostics.Tracing.Session;
+               using Microsoft.Diagnostics.Tracing.Stacks;
+           * Any method with the name RelMSec in it has been changed to be RelativeMSec.   The easiest port is to
+             simply globally rename RelMSec to RelativeMSec
+           * Any property in the Trace* classes that has the form Max*Index  has been renamed to Count.  
+           * A number of methods have been declared obsolete, these are mostly renames and the warning will tell you
+             how to update them. 
+       * The following classes have been rename
+                        SymPath -> SymbolPath
+                        SymPathElement -> SymbolPathElement
+                        SymbolReaderFlags -> SymbolReaderOptions
+           * TraceEventSession is now StopOnDispose (it will stop the session when TraceEventSesssion dies), by default
+             If you were relying on the kernel session living past the process that started it, you must now set
+                 the StopOnDispose explicitly
+           * There used to be XmlAttrib extensions methods on StringBuilder for use in manifest generated TraceEventParsers
+             These have been moved to protected members of TraceEvent.   The result is that in stead of writing
+                 sb.XmlAttrib(...)  you write XmlAttrib(sb, ...)
+           * References to Pdb in names have been replaced with 'Symbol' to conform to naming guidelines. 
+
+        ***********************************************************************************************
+Version 1.0.0.4  - Initial stable release 
+
+        Mostly this was insuring that the library was cleaned up in preparation
+        for release the TraceParserGen tool
+
+        Improved the docs, removed old code, fixed some naming convention stuff
+
+        * Additional changes from the PreRelease copy to the first Stable release
+                 
+           * The arguments to AddCallbackForProviderEvent were reversed!!!! (now provider than event)
+           * The arguments to Observe(string, string)!!!! (now provider than event)
+           * Event names for these APIs must include a / between the Task and Opcode names
+
+           * Many Events in KernelTraceEventParser were harmonized to be consistent with other conventions
+               * Events of the form PageFault* were typically renamed to Memory*
+               * The 'End' suffix was renamed to 'Stop' (its official name)
+               * PerfInfoSampleProf -> PerfInfoSample
+               * PerfInfoSampleProf -> PerfInfoSample
+               * ReadyThread -> DispatcherReadyThread
+               * StackWalkTraceData -> StackWalkStackTraceData
+               * FileIo -> FileIO
+               * DiskIo -> DiskIO
+
+           * Many Events in SymbolTraceEventParser were harmonized to be consistent with other conventions
+               * names with Symbol -> ImageID

@@ -849,6 +849,7 @@ namespace MessagePack.Formatters.SharedData
     {
 
         readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
 
         public SimlpeStringKeyDataFormatter()
         {
@@ -857,6 +858,14 @@ namespace MessagePack.Formatters.SharedData
                 { "Prop1", 0},
                 { "Prop2", 1},
                 { "Prop3", 2},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("Prop1"),
+                global::System.Text.Encoding.UTF8.GetBytes("Prop2"),
+                global::System.Text.Encoding.UTF8.GetBytes("Prop3"),
+                
             };
         }
 
@@ -870,11 +879,11 @@ namespace MessagePack.Formatters.SharedData
             
             var startOffset = offset;
             offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 3);
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "Prop1", 5);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop1);
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "Prop2", 5);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[1]);
             offset += formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref bytes, offset, value.Prop2, formatterResolver);
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "Prop3", 5);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[2]);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Prop3);
             return offset - startOffset;
         }
@@ -1003,6 +1012,7 @@ namespace MessagePack.Formatters.SharedData
     {
 
         readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
 
         public SimpleStructStringKeyDataFormatter()
         {
@@ -1010,6 +1020,13 @@ namespace MessagePack.Formatters.SharedData
             {
                 { "key-X", 0},
                 { "key-Y", 1},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("key-X"),
+                global::System.Text.Encoding.UTF8.GetBytes("key-Y"),
+                
             };
         }
 
@@ -1019,9 +1036,9 @@ namespace MessagePack.Formatters.SharedData
             
             var startOffset = offset;
             offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 2);
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "key-X", 5);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.X);
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "key-Y", 5);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[1]);
             offset += formatterResolver.GetFormatterWithVerify<int[]>().Serialize(ref bytes, offset, value.Y, formatterResolver);
             return offset - startOffset;
         }
@@ -1822,12 +1839,19 @@ namespace MessagePack.Formatters.SharedData
     {
 
         readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
 
         public Callback2Formatter()
         {
             this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(1)
             {
                 { "X", 0},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("X"),
+                
             };
         }
 
@@ -1838,7 +1862,7 @@ namespace MessagePack.Formatters.SharedData
             value.OnBeforeSerialize();
             var startOffset = offset;
             offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 1);
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "X", 1);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.X);
             return offset - startOffset;
         }
@@ -1895,12 +1919,19 @@ namespace MessagePack.Formatters.SharedData
     {
 
         readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
 
         public Callback2_2Formatter()
         {
             this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(1)
             {
                 { "X", 0},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("X"),
+                
             };
         }
 
@@ -1911,7 +1942,7 @@ namespace MessagePack.Formatters.SharedData
             ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
             var startOffset = offset;
             offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 1);
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "X", 1);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.X);
             return offset - startOffset;
         }
@@ -2502,11 +2533,17 @@ namespace MessagePack.Formatters.SharedData
     {
 
         readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
 
         public Empty2Formatter()
         {
             this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(0)
             {
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                
             };
         }
 
@@ -2625,12 +2662,19 @@ namespace MessagePack.Formatters.SharedData
     {
 
         readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
 
         public NonEmpty2Formatter()
         {
             this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(1)
             {
                 { "MyProperty", 0},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty"),
+                
             };
         }
 
@@ -2644,7 +2688,7 @@ namespace MessagePack.Formatters.SharedData
             
             var startOffset = offset;
             offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 1);
-            offset += global::MessagePack.MessagePackBinary.WriteStringUnsafe(ref bytes, offset, "MyProperty", 10);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
             offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty);
             return offset - startOffset;
         }
