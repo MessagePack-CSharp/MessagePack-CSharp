@@ -30,7 +30,7 @@ namespace MessagePack.Tests.ExtensionTests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, resolver), resolver);
         }
 
-        [Fact]
+        [Fact(Skip ="assembly reference")]
         public void ViewModelTest()
         {
             var vm = new ViewModel(10, 20, 30);
@@ -52,7 +52,7 @@ namespace MessagePack.Tests.ExtensionTests
             data.Is("[[3,-1,10],[3,-1,20],[3,-1,30]]");
         }
 
-        [Fact]
+        [Fact(Skip = "assembly reference")]
         public void MiscTest()
         {
             var rxCol = new ReactiveCollection<int> { 1, 10, 100 };
