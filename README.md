@@ -581,6 +581,7 @@ High-Level API(MessagePackSerializer)
 | `Deserialize<T>` | Convert byte[] or stream to object. There has IFormatterResolver overload, used specified resolver. |
 | `NonGeneric.*` | NonGeneric APIs of Serialize/Deserialize. There accept type parameter at first argument. This API is bit slower than generic API but useful for framework integration such as ASP.NET formatter. |
 | `ToJson` | Dump message-pack binary to JSON string. It is useful for debugging.  |
+| `FromJson` | From Json string to MessagePack binary.  |
 
 MessagePack for C# operates at the byte[] level, so byte[] API is faster than Stream API.
 
@@ -644,12 +645,15 @@ Primitive API(MessagePackBinary)
 | ReadNext | Skip MessagePackFormat binary block, returns read size. |
 | ReadNextBlock | Skip MessagePackFormat binary block with sub structures(array/map), returns read size. This is useful for create deserializer. |
 | Write/ReadMapHeader | Write/Read map format header(element length). |
+| WriteMapHeaderForceMap32Block | Write map format header, always use map32 format(length is fixed, 5). |
 | Write/ReadArrayHeader | Write/Read array format header(element length). |
+| WriteArrayHeaderForceArray32Block | Write array format header, always use array32 format(length is fixed, 5). |
 | Write/Read*** | *** is primitive type name(`Int32`, `Single`, `String`, etc...) |
 | Write***Force***Block | *** is primitive integer name(`Byte`, `Int32`, `UInt64`, etc...), acquire strict block and write code |
 | Write/ReadBytes | Write/Read byte[] to use bin format. |
 | Write/ReadExtensionFormat | Write/Read ext format header(Length + TypeCode) and content byte[]. |
 | Write/ReadExtensionFormatHeader | Write/Read ext format, header(Length + TypeCode) only. |
+| WriteExtensionFormatHeaderForceExt32Block | Write ext format header, always use ext32 format(length is fixed, 6). |
 | IsNil | Is TypeCode Nil? |
 | GetMessagePackType | Return MessagePackType of target MessagePack bianary position. |
 | EnsureCapacity | Resize if byte can not fill.  |
@@ -674,8 +678,9 @@ Extension Point(IFormatterResolver)
 | --- | --- |
 | BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
 | StandardResolver | Composited resolver . It resolves in the following order `builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive object`. This is the default of MessagePackSerializer. |
-| ContractlessStandardResolver | Composited `StandardResolver` -> `DynamicContractlessObjectResolver`. It enables contractless serialization. |
+| ContractlessStandardResolver | Composited `StandardResolver`(except primitive) -> `DynamicContractlessObjectResolver` -> `DynamicObjectTypeFallbackResolver`. It enables contractless serialization. |
 | PrimitiveObjectResolver | MessagePack primitive object resolver. It is used fallback in `object` type and supports `bool`, `char`, `sbyte`, `byte`, `short`, `int`, `long`, `ushort`, `uint`, `ulong`, `float`, `double`, `DateTime`, `string`, `byte[]`, `ICollection`, `IDictionary`. |
+| DynamicObjectTypeFallbackResolver | It is used fallback in `object` type and resolve primitive object -> dynamic contractless object |
 | AttributeFormatterResolver | Get formatter from `[MessagePackFormatter]` attribute. |
 | CompositeResolver | Singleton helper of setup custom resolvers. You can use `Register` or `RegisterAndSetAsDefault` API. |
 | NativeDateTimeResolver | Serialize by .NET native DateTime binary format. |
