@@ -64,6 +64,8 @@ namespace MessagePack
                 int16Decoders[i] = Decoders.FixNegativeInt16.Instance;
                 int32Decoders[i] = Decoders.FixNegativeInt32.Instance;
                 int64Decoders[i] = Decoders.FixNegativeInt64.Instance;
+                singleDecoders[i] = Decoders.FixNegativeFloat.Instance;
+                doubleDecoders[i] = Decoders.FixNegativeDouble.Instance;
                 readNextDecoders[i] = Decoders.ReadNext1.Instance;
             }
             for (int i = MessagePackCode.MinFixInt; i <= MessagePackCode.MaxFixInt; i++)
@@ -76,6 +78,8 @@ namespace MessagePack
                 uint16Decoders[i] = Decoders.FixUInt16.Instance;
                 uint32Decoders[i] = Decoders.FixUInt32.Instance;
                 uint64Decoders[i] = Decoders.FixUInt64.Instance;
+                singleDecoders[i] = Decoders.FixFloat.Instance;
+                doubleDecoders[i] = Decoders.FixDouble.Instance;
                 readNextDecoders[i] = Decoders.ReadNext1.Instance;
             }
 
@@ -108,9 +112,27 @@ namespace MessagePack
             uint64Decoders[MessagePackCode.UInt16] = Decoders.UInt16UInt64.Instance;
             uint64Decoders[MessagePackCode.UInt32] = Decoders.UInt32UInt64.Instance;
             uint64Decoders[MessagePackCode.UInt64] = Decoders.UInt64UInt64.Instance;
+
             singleDecoders[MessagePackCode.Float32] = Decoders.Float32Single.Instance;
+            singleDecoders[MessagePackCode.Int8] = Decoders.Int8Single.Instance;
+            singleDecoders[MessagePackCode.Int16] = Decoders.Int16Single.Instance;
+            singleDecoders[MessagePackCode.Int32] = Decoders.Int32Single.Instance;
+            singleDecoders[MessagePackCode.Int64] = Decoders.Int64Single.Instance;
+            singleDecoders[MessagePackCode.UInt8] = Decoders.UInt8Single.Instance;
+            singleDecoders[MessagePackCode.UInt16] = Decoders.UInt16Single.Instance;
+            singleDecoders[MessagePackCode.UInt32] = Decoders.UInt32Single.Instance;
+            singleDecoders[MessagePackCode.UInt64] = Decoders.UInt64Single.Instance;
+
             doubleDecoders[MessagePackCode.Float32] = Decoders.Float32Double.Instance;
             doubleDecoders[MessagePackCode.Float64] = Decoders.Float64Double.Instance;
+            doubleDecoders[MessagePackCode.Int8] = Decoders.Int8Double.Instance;
+            doubleDecoders[MessagePackCode.Int16] = Decoders.Int16Double.Instance;
+            doubleDecoders[MessagePackCode.Int32] = Decoders.Int32Double.Instance;
+            doubleDecoders[MessagePackCode.Int64] = Decoders.Int64Double.Instance;
+            doubleDecoders[MessagePackCode.UInt8] = Decoders.UInt8Double.Instance;
+            doubleDecoders[MessagePackCode.UInt16] = Decoders.UInt16Double.Instance;
+            doubleDecoders[MessagePackCode.UInt32] = Decoders.UInt32Double.Instance;
+            doubleDecoders[MessagePackCode.UInt64] = Decoders.UInt64Double.Instance;
 
             readNextDecoders[MessagePackCode.Int8] = Decoders.ReadNext2.Instance;
             readNextDecoders[MessagePackCode.Int16] = Decoders.ReadNext3.Instance;
@@ -2363,6 +2385,157 @@ namespace MessagePack.Decoders
         float Read(byte[] bytes, int offset, out int readSize);
     }
 
+    internal class FixNegativeFloat : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new FixNegativeFloat();
+
+        FixNegativeFloat()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return FixSByte.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class FixFloat : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new FixFloat();
+
+        FixFloat()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return FixByte.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class Int8Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new Int8Single();
+
+        Int8Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return Int8SByte.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class Int16Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new Int16Single();
+
+        Int16Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return Int16Int16.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class Int32Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new Int32Single();
+
+        Int32Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return Int32Int32.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class Int64Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new Int64Single();
+
+        Int64Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return Int64Int64.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+
+    internal class UInt8Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new UInt8Single();
+
+        UInt8Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return UInt8Byte.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class UInt16Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new UInt16Single();
+
+        UInt16Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return UInt16UInt16.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class UInt32Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new UInt32Single();
+
+        UInt32Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return UInt32UInt32.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class UInt64Single : ISingleDecoder
+    {
+        internal static readonly ISingleDecoder Instance = new UInt64Single();
+
+        UInt64Single()
+        {
+
+        }
+
+        public Single Read(byte[] bytes, int offset, out int readSize)
+        {
+            return UInt64UInt64.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
     internal class Float32Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new Float32Single();
@@ -2397,6 +2570,157 @@ namespace MessagePack.Decoders
     internal interface IDoubleDecoder
     {
         double Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class FixNegativeDouble : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new FixNegativeDouble();
+
+        FixNegativeDouble()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return FixSByte.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class FixDouble : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new FixDouble();
+
+        FixDouble()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return FixByte.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class Int8Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new Int8Double();
+
+        Int8Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return Int8SByte.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class Int16Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new Int16Double();
+
+        Int16Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return Int16Int16.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class Int32Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new Int32Double();
+
+        Int32Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return Int32Int32.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class Int64Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new Int64Double();
+
+        Int64Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return Int64Int64.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+
+    internal class UInt8Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new UInt8Double();
+
+        UInt8Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return UInt8Byte.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class UInt16Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new UInt16Double();
+
+        UInt16Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return UInt16UInt16.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class UInt32Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new UInt32Double();
+
+        UInt32Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return UInt32UInt32.Instance.Read(bytes, offset, out readSize);
+        }
+    }
+
+    internal class UInt64Double : IDoubleDecoder
+    {
+        internal static readonly IDoubleDecoder Instance = new UInt64Double();
+
+        UInt64Double()
+        {
+
+        }
+
+        public Double Read(byte[] bytes, int offset, out int readSize)
+        {
+            return UInt64UInt64.Instance.Read(bytes, offset, out readSize);
+        }
     }
 
     internal class Float32Double : IDoubleDecoder

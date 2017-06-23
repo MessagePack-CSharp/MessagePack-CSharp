@@ -259,44 +259,36 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
-            CompositeResolver.RegisterAndSetAsDefault(
-                MessagePack.Resolvers.GeneratedResolver.Instance,
-                MessagePack.Resolvers.StandardResolver.Instance
-            );
-
-            var foo = MessagePackSerializer.Serialize<IUnionSample>(new FooClass() { XYZ = 999 });
-            var bar = MessagePackSerializer.Serialize<IUnionSample>(new BarClass() { OPQ = "hogemoge" });
-
-            var f2 = MessagePackSerializer.Deserialize<IUnionSample>(foo);
-            var b2 = MessagePackSerializer.Deserialize<IUnionSample>(bar);
-            Console.WriteLine((f2 as FooClass).XYZ);
-            Console.WriteLine((b2 as BarClass).OPQ);
 
 
+            TestObject to = TestObject.TestBuild();
 
-            //// composite same as StandardResolver
-            //CompositeResolver.RegisterAndSetAsDefault(
-            //    MessagePack.Resolvers.BuiltinResolver.Instance,
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            string junity = JsonConvert.SerializeObject(to);
+            sw.Stop();
+            Console.WriteLine("*[Object To JsonString] - Unity :  {0}ms.", sw.ElapsedMilliseconds);
 
-            //    // replace enumasstring resolver
-            //    MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance,
+            Stopwatch sw1 = new Stopwatch();
+            sw1.Start();
+            string jmsgPack = MessagePack.MessagePackSerializer.ToJson<TestObject>(to);
+            sw1.Stop();
+            Console.WriteLine("*[Object To JsonString] - MsgPack :  {0}ms.", sw1.ElapsedMilliseconds);
 
-            //    MessagePack.Resolvers.DynamicGenericResolver.Instance,
-            //    MessagePack.Resolvers.DynamicUnionResolver.Instance,
-            //    MessagePack.Resolvers.DynamicObjectResolver.Instance,
+            Stopwatch sw3 = new Stopwatch();
+            sw3.Start();
+            TestObject toUnity = JsonConvert.DeserializeObject<TestObject>(junity);
+            sw3.Stop();
+            Console.WriteLine("*[JsonString To Object] - Unity :  {0}ms.", sw3.ElapsedMilliseconds);
 
-            //    // final fallback(last priority)
-            //    MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance
-            //);
+            Stopwatch sw4 = new Stopwatch();
+            sw4.Start();
 
+            var msgbin = MessagePack.MessagePackSerializer.FromJson(jmsgPack);
+            TestObject toMsgPack = MessagePack.MessagePackSerializer.Deserialize<TestObject>(msgbin);
+            sw4.Stop();
+            Console.WriteLine("*[JsonString To Object] - MsgPack :  {0}ms.", sw4.ElapsedMilliseconds);
 
-
-            ////var t = new DynamicArgumentTuple<global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga>(null, null, null, null, null, null, null, null, null);
-
-
-            //var f = StandardResolver.Instance.GetFormatter<DynamicArgumentTuple<global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga, global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga>>();
-
-            //   //var __request = MessagePackSerializer.Serialize(t);
 
         }
 
@@ -594,6 +586,75 @@ namespace Sandbox
     {
     }
 
+
+
+    [MessagePackObject]
+    public class TestObject
+    {
+        [MessagePackObject]
+        public class PrimitiveObject
+        {
+            [Key(0)]
+            public int v_int;
+
+            [Key(1)]
+            public string v_str;
+
+            [Key(2)]
+            public float v_float;
+
+            [Key(3)]
+            public bool v_bool;
+            public PrimitiveObject(int vi, string vs, float vf, bool vb)
+            {
+                v_int = vi; v_str = vs; v_float = vf; v_bool = vb;
+            }
+        }
+
+        [Key(0)]
+        public PrimitiveObject[] objectArray;
+
+        [Key(1)]
+        public List<PrimitiveObject> objectList;
+
+        [Key(2)]
+        public Dictionary<string, PrimitiveObject> objectMap;
+
+        public void CreateArray(int num)
+        {
+            objectArray = new PrimitiveObject[num];
+            for (int i = 0; i < num; i++)
+            {
+                objectArray[i] = new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false);
+            }
+        }
+
+        public void CreateList(int num)
+        {
+            objectList = new List<PrimitiveObject>(num);
+            for (int i = 0; i < num; i++)
+            {
+                objectList.Add(new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false));
+            }
+        }
+
+        public void CreateMap(int num)
+        {
+            objectMap = new Dictionary<string, PrimitiveObject>(num);
+            for (int i = 0; i < num; i++)
+            {
+                objectMap.Add(i.ToString(), new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false));
+            }
+        }
+        // I only tested with array
+        public static TestObject TestBuild()
+        {
+            TestObject to = new TestObject();
+            to.CreateArray(1000000);
+
+            return to;
+        }
+    }
 
     public class HogeMogeFormatter : IMessagePackFormatter<IHogeMoge>
     {

@@ -111,6 +111,7 @@
     <Compile Include="ExtensionTests\LZ4Test.cs" />
     <Compile Include="ExtensionTests\ReactivePropertyTest.cs" />
     <Compile Include="ExtensionTests\UnityShimTest.cs" />
+    <Compile Include="FloatConversionTest.cs" />
     <Compile Include="FormatterTest.cs" />
     <Compile Include="GenericFormatters.cs" />
     <Compile Include="IgnoreTest.cs" />
