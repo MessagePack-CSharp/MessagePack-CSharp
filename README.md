@@ -393,6 +393,24 @@ var a1 = PrimitiveUnionA.Create(100);
 var a2 = PrimitiveUnionA.Create(100.423f);
 ```
 
+Dynamic(Untyped) Deserialization
+---
+If use `MessagePackSerializer.Deserialize<object>` or `MessagePackSerializer.Deserialize<dynamic>`, convert messagepack binary to primitive values that convert from msgpack-primitive to `bool`, `char`, `sbyte`, `byte`, `short`, `int`, `long`, `ushort`, `uint`, `ulong`, `float`, `double`, `DateTime`, `string`, `byte[]`, `object[]`, `IDictionary<object, object>`.
+
+```csharp
+// sample binary.
+var model = new DynamicModel { Name = "foobar", Items = new[] { 1, 10, 100, 1000 } };
+var bin = MessagePackSerializer.Serialize(model, ContractlessStandardResolver.Instance);
+
+// dynamic, untyped
+var dynamicModel = MessagePackSerializer.Deserialize<dynamic>(bin, ContractlessStandardResolver.Instance);
+
+Console.WriteLine(dynamicModel["Name"]); // foobar
+Console.WriteLine(dynamicModel["Items"][2]); // 100
+```
+
+So you can access indexer for msgpack map and array.
+
 Performance
 ---
 Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and there [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config), ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) has infinitely fast deserializer so ignore deserialize performance.
