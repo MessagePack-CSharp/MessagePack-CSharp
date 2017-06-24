@@ -32,14 +32,13 @@ namespace MessagePack.Formatters
 
         }
 
-        public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
+        public static bool IsSupportedType(Type type, TypeInfo typeInfo)
         {
-            if (value == null) return true;
             if (typeToJumpCode.ContainsKey(type)) return true;
             if (typeInfo.IsEnum) return true;
 
-            if (value is System.Collections.IDictionary) return true;
-            if (value is System.Collections.ICollection) return true;
+            if (typeof(System.Collections.IDictionary).GetTypeInfo().IsAssignableFrom(typeInfo)) return true;
+            if (typeof(System.Collections.ICollection).GetTypeInfo().IsAssignableFrom(typeInfo)) return true;
 
             return false;
         }
@@ -186,6 +185,10 @@ namespace MessagePack.Formatters
                     if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
                     {
                         return MessagePackBinary.ReadDateTime(bytes, offset, out readSize);
+                    }
+                    else if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName)
+                    {
+                        return TypelessFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
                     }
                     throw new InvalidOperationException("Invalid primitive bytes.");
                 case MessagePackType.Array:

@@ -34,7 +34,7 @@ namespace MessagePack.Formatters
             var type = value.GetType();
             var ti = type.GetTypeInfo();
 
-            if (PrimitiveObjectFormatter.IsSupportedType(type, ti, value))
+            if (PrimitiveObjectFormatter.IsSupportedType(type, ti))
             {
                 return PrimitiveObjectFormatter.Instance.Serialize(ref bytes, offset, value, formatterResolver);
             }

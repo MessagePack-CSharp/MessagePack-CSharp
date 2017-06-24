@@ -239,6 +239,23 @@ namespace MessagePack
                         builder.Append(dt.ToString("o", CultureInfo.InvariantCulture));
                         builder.Append("\"");
                     }
+                    else if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName)
+                    {
+                        // prepare type name token
+                        int extOffset = 0;
+                        var typeNameToken = new StringBuilder();
+                        extOffset += ToJsonCore(ext.Data, extOffset, typeNameToken);
+                        int startBuilderLength = builder.Length;
+                        // object map
+                        var typeInside = MessagePackBinary.GetMessagePackType(ext.Data, extOffset);
+                        ToJsonCore(ext.Data, extOffset, builder);
+                        // insert type name token to start of object map
+                        if (typeInside == MessagePackType.Map)
+                            typeNameToken.Insert(0, "\"$type\":");
+                        if (builder.Length - startBuilderLength > 2)
+                            typeNameToken.Append(",");
+                        builder.Insert(startBuilderLength+1, typeNameToken.ToString());
+                    }
                     else
                     {
                         builder.Append("[");
