@@ -140,19 +140,21 @@ namespace MessagePack.Formatters
             var packType = MessagePackBinary.GetMessagePackType(bytes, offset);
             if (packType == MessagePackType.Extension)
             {
-                var ext = MessagePackBinary.ReadExtensionFormat(bytes, offset, out readSize);
+                var ext = MessagePackBinary.ReadExtensionFormatHeader(bytes, offset, out readSize);
                 if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName)
                 {
                     // it has type name serialized
-                    int extOffset = 0;
-                    int extReadSize;
-                    var typeName = MessagePackBinary.ReadString(ext.Data, extOffset, out extReadSize);
-                    extOffset += extReadSize;
-                    return DeserializeByTypeName(typeName, ext.Data, extOffset, formatterResolver, out extReadSize);
+                    offset += readSize;
+                    var typeName = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                    offset += readSize;
+                    var result = DeserializeByTypeName(typeName, bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    readSize = offset - startOffset;
+                    return result;
                 }
             }
             // fallback to primitive object formatter
-            return PrimitiveObjectFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
+            return PrimitiveObjectFormatter.Instance.Deserialize(bytes, startOffset, formatterResolver, out readSize);
         }
 
         /// <summary>
