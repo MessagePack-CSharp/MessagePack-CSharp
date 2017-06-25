@@ -69,5 +69,25 @@ namespace MessagePack.Tests
             MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""MessagePack.Tests.ContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""MessagePack.Tests.ContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
         }
 
+        [Fact]
+        public void ObjectRuntimeTypeTest()
+        {
+            var p = new Person
+            {
+                Name = "John",
+                Addresses = new object[]
+                {
+                    new object(),
+                    new Address { Street = "Ave." }
+                }
+            };
+
+            var result = MessagePack.MessagePackSerializer.Serialize(p, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+
+            var p2 = MessagePack.MessagePackSerializer.Deserialize<Person>(result, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            p.IsStructuralEqual(p2);
+
+            MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[[""System.Object, mscorlib""],{""$type"":""MessagePack.Tests.ContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+        }
     }
 }

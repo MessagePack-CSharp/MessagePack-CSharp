@@ -172,12 +172,19 @@ namespace MessagePack
                         var typeNameToken = new StringBuilder();
                         extOffset += ToJsonCore(ext.Data, extOffset, typeNameToken);
                         int startBuilderLength = builder.Length;
-                        // object map
-                        var typeInside = MessagePackBinary.GetMessagePackType(ext.Data, extOffset);
-                        ToJsonCore(ext.Data, extOffset, builder);
-                        // insert type name token to start of object map
-                        if (typeInside == MessagePackType.Map)
-                            typeNameToken.Insert(0, "\"$type\":");
+                        if (ext.Data.Length > extOffset)
+                        {
+                            // object map or array
+                            var typeInside = MessagePackBinary.GetMessagePackType(ext.Data, extOffset);
+                            ToJsonCore(ext.Data, extOffset, builder);
+                            // insert type name token to start of object map or array
+                            if (typeInside == MessagePackType.Map)
+                                typeNameToken.Insert(0, "\"$type\":");
+                        }
+                        else
+                        {
+                            builder.Append("[]");
+                        }
                         if (builder.Length - startBuilderLength > 2)
                             typeNameToken.Append(",");
                         builder.Insert(startBuilderLength + 1, typeNameToken.ToString());
