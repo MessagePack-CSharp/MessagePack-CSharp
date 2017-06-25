@@ -1,7 +1,6 @@
 ﻿#if NETSTANDARD1_4
 
 using MessagePack.Internal;
-using MessagePack.Resolvers;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -32,6 +31,7 @@ namespace MessagePack.Formatters
 
         /// <summary>
         /// When type name does not have Version, Culture, Public token - sometimes can not find type, example - ExpandoObject
+        /// In that can set to `false`
         /// </summary>
         public static volatile bool RemoveAssemblyVersion = true;
 
@@ -65,9 +65,9 @@ namespace MessagePack.Formatters
             var type = value.GetType();
             var ti = type.GetTypeInfo();
 
-            if (PrimitiveObjectFormatter.IsSupportedType(type, ti))
+            if (PrimitiveObjectFormatter.IsSupportedType(type, ti) || ti.IsAnonymous())
             {
-                return PrimitiveObjectFormatter.Instance.Serialize(ref bytes, offset, value, formatterResolver);
+                return DynamicObjectTypeFallbackFormatter.Instance.Serialize(ref bytes, offset, value, formatterResolver);
             }
 
             var typeName = BuildTypeName(type);
@@ -112,20 +112,13 @@ namespace MessagePack.Formatters
                 }
             }
 
-            if (!ti.IsAnonymous()) // anonymous type does not support typed deserializing yet
-            {
-                // mark as extension with code 100
-                var startOffset = offset;
-                offset += 6; // mark will be written at the end, when size is known
-                offset += MessagePackBinary.WriteString(ref bytes, offset, typeName);
-                offset += formatterAndDelegate.Value(formatterAndDelegate.Key, ref bytes, offset, value, formatterResolver);
-                MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, startOffset, (sbyte)ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName, offset - startOffset - 6);
-                return offset - startOffset;
-            }
-            else
-            {
-                return DynamicObjectTypeFallbackFormatter.Instance.Serialize(ref bytes, offset, value, formatterResolver);
-            }
+            // mark as extension with code 100
+            var startOffset = offset;
+            offset += 6; // mark will be written at the end, when size is known
+            offset += MessagePackBinary.WriteString(ref bytes, offset, typeName);
+            offset += formatterAndDelegate.Value(formatterAndDelegate.Key, ref bytes, offset, value, formatterResolver);
+            MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, startOffset, (sbyte)ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName, offset - startOffset - 6);
+            return offset - startOffset;
         }
 
         public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
@@ -153,13 +146,13 @@ namespace MessagePack.Formatters
                     return result;
                 }
             }
-            // fallback to primitive object formatter
-            return PrimitiveObjectFormatter.Instance.Deserialize(bytes, startOffset, formatterResolver, out readSize);
+            // fallback
+            return DynamicObjectTypeFallbackFormatter.Instance.Deserialize(bytes, startOffset, formatterResolver, out readSize);
         }
 
         /// <summary>
         /// Does not support deserializing of anonymous types
-        /// Assembly with serialized type have to be shared between serializer app and deseralizer app
+        /// Type should be covered by preceeding resolvers in complex/standard resolver
         /// </summary>
         private object DeserializeByTypeName(string typeName, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
