@@ -54,6 +54,16 @@ namespace MessagePack
                 return GetOrAdd(type).deserialize4.Invoke(stream, resolver);
             }
 
+            public static object Deserialize(Type type, Stream stream, bool readStrict)
+            {
+                return GetOrAdd(type).deserialize5.Invoke(stream, readStrict);
+            }
+
+            public static object Deserialize(Type type, Stream stream, IFormatterResolver resolver, bool readStrict)
+            {
+                return GetOrAdd(type).deserialize6.Invoke(stream, resolver, readStrict);
+            }
+
             static CompiledMethods GetOrAdd(Type type)
             {
                 lock (serializes)
@@ -83,6 +93,8 @@ namespace MessagePack
                 public readonly Func<byte[], IFormatterResolver, object> deserialize2;
                 public readonly Func<Stream, object> deserialize3;
                 public readonly Func<Stream, IFormatterResolver, object> deserialize4;
+                public readonly Func<Stream, bool, object> deserialize5;
+                public readonly Func<Stream, IFormatterResolver, bool, object> deserialize6;
 
                 public CompiledMethods(Type type)
                 {
@@ -174,7 +186,6 @@ namespace MessagePack
 
                         this.deserialize3 = lambda;
                     }
-
                     {
                         // public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
                         var deserialize = GetMethod(type, new Type[] { typeof(Stream), typeof(IFormatterResolver) });
@@ -185,6 +196,29 @@ namespace MessagePack
                         var lambda = Expression.Lambda<Func<Stream, IFormatterResolver, object>>(body, param1, param2).Compile();
 
                         this.deserialize4 = lambda;
+                    }
+                    {
+                        // public static T Deserialize<T>(Stream stream, bool readStrict)
+                        var deserialize = GetMethod(type, new Type[] { typeof(Stream), typeof(bool) });
+
+                        var param1 = Expression.Parameter(typeof(Stream), "stream");
+                        var param2 = Expression.Parameter(typeof(bool), "readStrict");
+                        var body = Expression.Convert(Expression.Call(deserialize, param1, param2), typeof(object));
+                        var lambda = Expression.Lambda<Func<Stream, bool, object>>(body, param1, param2).Compile();
+
+                        this.deserialize5 = lambda;
+                    }
+                    {
+                        // public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
+                        var deserialize = GetMethod(type, new Type[] { typeof(Stream), typeof(IFormatterResolver), typeof(bool) });
+
+                        var param1 = Expression.Parameter(typeof(Stream), "stream");
+                        var param2 = Expression.Parameter(typeof(IFormatterResolver), "resolver");
+                        var param3 = Expression.Parameter(typeof(bool), "readStrict");
+                        var body = Expression.Convert(Expression.Call(deserialize, param1, param2, param3), typeof(object));
+                        var lambda = Expression.Lambda<Func<Stream, IFormatterResolver, bool, object>>(body, param1, param2, param3).Compile();
+
+                        this.deserialize6 = lambda;
                     }
                 }
 

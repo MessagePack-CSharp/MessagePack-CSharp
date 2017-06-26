@@ -91,7 +91,7 @@ namespace MessagePack.Resolvers
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Ldarg_3);
-                il.Emit(OpCodes.Call, typeof(MessagePackBinary).GetTypeInfo().GetDeclaredMethod("Write" + underlyingType.Name));
+                il.Emit(OpCodes.Call, typeof(MessagePackBinary).GetRuntimeMethod("Write" + underlyingType.Name, new[] { typeof(byte[]).MakeByRefType(), typeof(int), underlyingType }));
                 il.Emit(OpCodes.Ret);
             }
 
@@ -105,7 +105,7 @@ namespace MessagePack.Resolvers
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Ldarg_S, (byte)4);
-                il.Emit(OpCodes.Call, typeof(MessagePackBinary).GetTypeInfo().GetDeclaredMethod("Read" + underlyingType.Name));
+                il.Emit(OpCodes.Call, typeof(MessagePackBinary).GetRuntimeMethod("Read" + underlyingType.Name, new[] { typeof(byte[]), typeof(int), typeof(int).MakeByRefType() }));
                 il.Emit(OpCodes.Ret);
             }
 

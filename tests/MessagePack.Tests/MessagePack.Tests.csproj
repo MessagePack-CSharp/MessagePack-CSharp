@@ -115,6 +115,7 @@
     <Compile Include="FormatterTest.cs" />
     <Compile Include="GenericFormatters.cs" />
     <Compile Include="IgnoreTest.cs" />
+    <Compile Include="MessagePackBinaryStream.cs" />
     <Compile Include="MessagePackBinaryTest.cs" />
     <Compile Include="MessagePackSerializerTest.cs" />
     <Compile Include="MultiDimentionalArrayTest.cs" />
