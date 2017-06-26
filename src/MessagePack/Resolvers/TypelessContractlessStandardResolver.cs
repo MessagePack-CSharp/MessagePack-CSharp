@@ -1,4 +1,5 @@
-﻿using MessagePack.Formatters;
+﻿#if NETSTANDARD1_4
+using MessagePack.Formatters;
 
 namespace MessagePack.Resolvers
 {
@@ -15,9 +16,6 @@ namespace MessagePack.Resolvers
             NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
             BuiltinResolver.Instance, // Try Builtin
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
-#if !NETSTANDARD1_4
-            MessagePack.Unity.UnityResolver.Instance,
-#endif
 #if !ENABLE_IL2CPP
             DynamicEnumResolver.Instance, // Try Enum
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
@@ -25,11 +23,7 @@ namespace MessagePack.Resolvers
             DynamicObjectResolver.Instance, // Try Object
 #endif
             DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
-#if NETSTANDARD1_4
             TypelessObjectResolver.Instance
-#else
-            PrimitiveObjectResolver.Instance
-#endif
         };
 
         TypelessContractlessStandardResolver()
@@ -60,3 +54,4 @@ namespace MessagePack.Resolvers
         }
     }
 }
+#endif

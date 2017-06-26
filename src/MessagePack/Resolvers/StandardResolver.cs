@@ -83,7 +83,7 @@ namespace MessagePack.Resolvers
 
             DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
 
-            // finally, try primitive -> try `object` -> dynamic contractless
+            // finally, try primitive -> dynamic contractless
 #if NETSTANDARD1_4
             DynamicObjectTypeFallbackResolver.Instance
 #else

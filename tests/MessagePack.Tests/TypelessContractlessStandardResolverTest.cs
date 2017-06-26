@@ -1,6 +1,7 @@
 ﻿using MessagePack.Resolvers;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -128,7 +129,18 @@ namespace MessagePack.Tests
             var deser = MessagePackSerializer.Deserialize<Dictionary<object, object>>(result, TypelessContractlessStandardResolver.Instance);
             deser.IsStructuralEqual(arr);
 
-            MessagePackSerializer.ToJson(result).Is(@"{""{""$type"":""System.Int32, mscorlib"",1}"":{""$type"":""System.String, mscorlib"",""a""},""{""$type"":""System.Int32, mscorlib"",2}"":[{""$type"":""System.String, mscorlib"",""level2""},[""System.Object[], mscorlib"",{""$type"":""System.String, mscorlib"",""level3""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, mscorlib"",636340858800000000}]}]]}");
+            MessagePackSerializer.ToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], mscorlib"",""level2"",[""System.Object[], mscorlib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, mscorlib"",636340858800000000}]}]]}");
+        }
+
+        [Fact]
+        public void PreservingCollectionTypeTest()
+        {
+            var arr = new object[] { 1, new object[] { 2, new LinkedList<object>(new object[] { "a", 42 }) } };
+            var result = MessagePackSerializer.Serialize(arr, TypelessContractlessStandardResolver.Instance);
+            var deser = MessagePackSerializer.Deserialize<object[]>(result, TypelessContractlessStandardResolver.Instance);
+            deser.IsStructuralEqual(arr);
+
+            MessagePackSerializer.ToJson(result).Is(@"[1,[""System.Object[], mscorlib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"",""a"",42]]]");
         }
     }
 }

@@ -2,6 +2,7 @@
 using MessagePack.Internal;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -31,6 +32,7 @@ namespace MessagePack.Formatters
         /// In that can set to `false`
         /// </summary>
         public static volatile bool RemoveAssemblyVersion = true;
+        private static ConcurrentDictionary<string, string> shortenedTypeNames = new ConcurrentDictionary<string, string>();
 
         TypelessFormatter()
         {
@@ -47,7 +49,25 @@ namespace MessagePack.Formatters
         internal static string BuildTypeName(Type type)
         {
             if (RemoveAssemblyVersion)
-                return SubtractFullNameRegex.Replace(type.AssemblyQualifiedName, "");
+            {
+                string full = type.AssemblyQualifiedName;
+                string shortened;
+                if (shortenedTypeNames.TryGetValue(full, out shortened))
+                {
+                    return shortened;
+                }
+                else
+                {
+                    shortened = SubtractFullNameRegex.Replace(full, "");
+                    if (Type.GetType(shortened, false) == null)
+                    {
+                        // if type cannot be found with shortened name - use full name
+                        shortened = full;
+                    }
+                }
+                shortenedTypeNames.TryAdd(full, shortened);
+                return shortened;
+            }
             else
                 return type.AssemblyQualifiedName;
         }
@@ -59,45 +79,14 @@ namespace MessagePack.Formatters
                 return MessagePackBinary.WriteNil(ref bytes, offset);
             }
 
-            if (value is IDictionary) // check IDictionary first
-            {
-                var startOffset = offset;
-                var d = value as IDictionary;
-                offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, d.Count);
-                foreach (DictionaryEntry item in d)
-                {
-                    offset += SerializeItem(ref bytes, offset, item.Key, formatterResolver);
-                    offset += SerializeItem(ref bytes, offset, item.Value, formatterResolver);
-                }
-                return offset - startOffset;
-            }
-            else if (value is ICollection)
-            {
-                var startOffset = offset;
-                var c = value as ICollection;
-                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, c.Count);
-                foreach (var item in c)
-                {
-                    offset += SerializeItem(ref bytes, offset, item, formatterResolver);
-                }
-                return offset - startOffset;
-            }
-            else
-            {
-                return SerializeItem(ref bytes, offset, value, formatterResolver);
-            };
-        }
-
-        /// <summary>
-        /// If value is anonymnous - fallback to DynamicObjectTypeFallbackFormatter
-        /// Else - serialize runtime type with current resolver
-        /// </summary>
-        private int SerializeItem(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
-        {
             var type = value.GetType();
             var ti = type.GetTypeInfo();
 
-            if (ti.IsAnonymous())
+            if ((PrimitiveObjectFormatter.IsSupportedType(type, ti, value)
+                && !(value is DateTime)
+                && !(value is IDictionary)
+                && !(value is ICollection))
+                || ti.IsAnonymous())
             {
                 return DynamicObjectTypeFallbackFormatter.Instance.Serialize(ref bytes, offset, value, formatterResolver);
             }
@@ -171,41 +160,6 @@ namespace MessagePack.Formatters
             var packType = MessagePackBinary.GetMessagePackType(bytes, offset);
             switch (packType)
             {
-                case MessagePackType.Array:
-                    {
-                        var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                        offset += readSize;
-
-                        var array = new object[length];
-                        for (int i = 0; i < length; i++)
-                        {
-                            array[i] = Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
-                        }
-
-                        readSize = offset - startOffset;
-                        return array;
-                    }
-                case MessagePackType.Map:
-                    {
-                        var length = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-                        offset += readSize;
-
-                        var hash = new Dictionary<object, object>(length);
-                        for (int i = 0; i < length; i++)
-                        {
-                            var key = Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
-
-                            var value = Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
-
-                            hash.Add(key, value);
-                        }
-
-                        readSize = offset - startOffset;
-                        return hash;
-                    }
                 case MessagePackType.Extension:
                     {
                         var ext = MessagePackBinary.ReadExtensionFormatHeader(bytes, offset, out readSize);
