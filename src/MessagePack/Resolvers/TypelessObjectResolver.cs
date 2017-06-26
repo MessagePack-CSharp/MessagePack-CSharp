@@ -6,7 +6,9 @@ namespace MessagePack.Resolvers
 
     /// <summary>
     /// Used for `object` fields/collections, ex: var arr = new object[] { 1, "a", new Model() };
-    /// DynamicContractless[IntKeys]ObjectResolver should be declared in resolvers before that one
+    /// The runtime type of value in object field, should be covered by one of resolvers in complex/standard resolver.
+    /// TypelessObjectResolver should be placed before DynamicObjectTypeFallbackResolver and PrimitiveObjectFormatter in resolvers list.
+    /// Deserializer uses Namescape.TypeName, AssemblyName to get runtime type in destination app, so that combination must be present in destination app.
     /// Serialized binary is valid MessagePack binary used ext-format and custom typecode(100).
     /// Inside ext - assembly qualified type name, and serialized object
     /// </summary>
