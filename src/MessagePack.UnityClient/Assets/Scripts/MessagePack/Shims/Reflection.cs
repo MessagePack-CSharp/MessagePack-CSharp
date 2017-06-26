@@ -79,6 +79,11 @@ namespace System.Reflection
             return type.GetMethod(name);
         }
 
+        public IEnumerable<MethodInfo> GetDeclaredMethods(string name)
+        {
+            return type.GetMethods().Where(x => x.Name == name);
+        }
+
         public Type[] GenericTypeArguments
         {
             get
@@ -147,7 +152,7 @@ namespace System.Reflection
             return new TypeInfo(type.CreateType());
         }
 
-        public static MethodInfo GetRuntimeMethods(this Type type, string name)
+        public static MethodInfo GetRuntimeMethod(this Type type, string name)
         {
             return type.GetMethod(name);
         }

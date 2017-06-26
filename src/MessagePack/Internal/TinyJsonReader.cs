@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -215,31 +216,33 @@ namespace MessagePack
                 intChar = reader.Peek();
             }
 
+
+
             var number = numberWord.ToString();
             if (isDouble)
             {
                 double parsedDouble;
-                Double.TryParse(number, out parsedDouble);
+                Double.TryParse(number, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent, System.Globalization.CultureInfo.InvariantCulture, out parsedDouble);
                 Value = parsedDouble;
             }
             else
             {
                 long parsedInt;
-                if (Int64.TryParse(number, out parsedInt))
+                if (Int64.TryParse(number, NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedInt))
                 {
                     Value = parsedInt;
                     return;
                 }
 
                 ulong parsedULong;
-                if (ulong.TryParse(number, out parsedULong))
+                if (ulong.TryParse(number, NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedULong))
                 {
                     Value = parsedULong;
                     return;
                 }
 
                 Decimal parsedDecimal;
-                if (decimal.TryParse(number, out parsedDecimal))
+                if (decimal.TryParse(number, NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal))
                 {
                     Value = parsedDecimal;
                     return;

@@ -140,12 +140,30 @@ namespace MessagePack
 
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
         {
+            return Deserialize<T>(stream, resolver, false);
+        }
+
+        public static T Deserialize<T>(Stream stream, bool readStrict)
+        {
+            return Deserialize<T>(stream, MessagePackSerializer.DefaultResolver, readStrict);
+        }
+
+        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
+        {
             if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
 
-            var buffer = MessagePack.Internal.InternalMemoryPool.GetBuffer(); // use MessagePackSerializer.Pool!
-
-            var len = FillFromStream(stream, ref buffer);
-            return DeserializeCore<T>(new ArraySegment<byte>(buffer, 0, len), resolver);
+            if (!readStrict)
+            {
+                var buffer = MessagePack.Internal.InternalMemoryPool.GetBuffer(); // use MessagePackSerializer.Pool!
+                var len = FillFromStream(stream, ref buffer);
+                return DeserializeCore<T>(new ArraySegment<byte>(buffer, 0, len), resolver);
+            }
+            else
+            {
+                int blockSize;
+                var bytes = MessagePackBinary.ReadMessageBlockFromStreamUnsafe(stream, false, out blockSize);
+                return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, blockSize), resolver);
+            }
         }
 
         static T DeserializeCore<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)

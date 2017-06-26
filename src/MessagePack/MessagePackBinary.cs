@@ -1,6 +1,7 @@
 ﻿using MessagePack.Decoders;
 using MessagePack.Internal;
 using System;
+using System.IO;
 
 namespace MessagePack
 {
@@ -8,7 +9,7 @@ namespace MessagePack
     /// Encode/Decode Utility of MessagePack Spec.
     /// https://github.com/msgpack/msgpack/blob/master/spec.md
     /// </summary>
-    public static class MessagePackBinary
+    public static partial class MessagePackBinary
     {
         const int MaxSize = 256; // [0] ~ [255]
 
@@ -1951,6 +1952,1054 @@ namespace MessagePack
         public static DateTime ReadDateTime(byte[] bytes, int offset, out int readSize)
         {
             return dateTimeDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+    }
+
+    // Stream Overload
+    public static partial class MessagePackBinary
+    {
+        static class StreamDecodeMemoryPool
+        {
+            [ThreadStatic]
+            static byte[] buffer = null;
+
+            public static byte[] GetBuffer()
+            {
+                if (buffer == null)
+                {
+                    buffer = new byte[65536];
+                }
+                return buffer;
+            }
+        }
+
+        static byte[] ReadMessageBlockFromStreamUnsafe(Stream stream)
+        {
+            int _;
+            return ReadMessageBlockFromStreamUnsafe(stream, false, out _);
+        }
+
+        /// <summary>
+        /// Read MessageBlock, returns byte[] block is in MemoryPool so careful to use.
+        /// </summary>
+        public static byte[] ReadMessageBlockFromStreamUnsafe(Stream stream, bool readOnlySingleMessage, out int readSize)
+        {
+            var bytes = StreamDecodeMemoryPool.GetBuffer();
+            readSize = ReadMessageBlockFromStreamCore(stream, ref bytes, 0, readOnlySingleMessage);
+            return bytes;
+        }
+
+        static int ReadMessageBlockFromStreamCore(Stream stream, ref byte[] bytes, int offset, bool readOnlySingleMessage)
+        {
+            var byteCode = stream.ReadByte();
+            if (byteCode < 0 || byte.MaxValue < byteCode)
+            {
+                throw new InvalidOperationException("Invalid MessagePack code was detected, code:" + byteCode);
+            }
+
+            var code = (byte)byteCode;
+
+            MessagePackBinary.EnsureCapacity(ref bytes, offset, 0);
+            bytes[offset] = code;
+
+            var type = MessagePackCode.ToMessagePackType(code);
+            switch (type)
+            {
+                case MessagePackType.Integer:
+                    {
+                        var readCount = 0;
+                        if (MessagePackCode.MinNegativeFixInt <= code && code <= MessagePackCode.MaxNegativeFixInt) return 1;
+                        else if (MessagePackCode.MinFixInt <= code && code <= MessagePackCode.MaxFixInt) return 1;
+
+                        switch (code)
+                        {
+                            case MessagePackCode.Int8: readCount = 1; break;
+                            case MessagePackCode.Int16: readCount = 2; break;
+                            case MessagePackCode.Int32: readCount = 4; break;
+                            case MessagePackCode.Int64: readCount = 8; break;
+                            case MessagePackCode.UInt8: readCount = 1; break;
+                            case MessagePackCode.UInt16: readCount = 2; break;
+                            case MessagePackCode.UInt32: readCount = 4; break;
+                            case MessagePackCode.UInt64: readCount = 8; break;
+                            default: throw new InvalidOperationException("Invalid Code");
+                        }
+
+                        MessagePackBinary.EnsureCapacity(ref bytes, offset, readCount + 1);
+                        stream.Read(bytes, offset + 1, readCount);
+                        return readCount + 1;
+                    }
+                case MessagePackType.Unknown:
+                case MessagePackType.Nil:
+                case MessagePackType.Boolean:
+                    return 1;
+                case MessagePackType.Float:
+                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 5);
+                    stream.Read(bytes, offset + 1, 4);
+                    return 5;
+                case MessagePackType.String:
+                    {
+                        if (MessagePackCode.MinFixStr <= code && code <= MessagePackCode.MaxFixStr)
+                        {
+                            var length = bytes[offset] & 0x1F;
+                            MessagePackBinary.EnsureCapacity(ref bytes, offset, 1 + length);
+                            stream.Read(bytes, offset + 1, length);
+                            return length + 1;
+                        }
+
+                        switch (code)
+                        {
+                            case MessagePackCode.Str8:
+                                {
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 2);
+                                    stream.Read(bytes, offset + 1, 1);
+                                    var length = bytes[offset + 1];
+
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 2 + length);
+                                    stream.Read(bytes, offset + 2, length);
+
+                                    return length + 2;
+                                }
+                            case MessagePackCode.Str16:
+                                {
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 3);
+                                    stream.Read(bytes, offset + 1, 2);
+                                    var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 3 + length);
+                                    stream.Read(bytes, offset + 3, length);
+
+                                    return length + 3;
+                                }
+                            case MessagePackCode.Str32:
+                                {
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 5);
+                                    stream.Read(bytes, offset + 1, 4);
+                                    var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
+
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 5 + length);
+                                    stream.Read(bytes, offset + 5, length);
+
+                                    return length + 5;
+                                }
+                            default: throw new InvalidOperationException("Invalid Code");
+                        }
+                    }
+                case MessagePackType.Binary:
+                    {
+                        switch (code)
+                        {
+                            case MessagePackCode.Bin8:
+                                {
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 2);
+                                    stream.Read(bytes, offset + 1, 1);
+                                    var length = bytes[offset + 1];
+
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 2 + length);
+                                    stream.Read(bytes, offset + 2, length);
+
+                                    return length + 2;
+                                }
+                            case MessagePackCode.Bin16:
+                                {
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 3);
+                                    stream.Read(bytes, offset + 1, 2);
+                                    var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 3 + length);
+                                    stream.Read(bytes, offset + 3, length);
+
+                                    return length + 3;
+                                }
+                            case MessagePackCode.Bin32:
+                                {
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 5);
+                                    stream.Read(bytes, offset + 1, 4);
+                                    var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
+
+                                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 5 + length);
+                                    stream.Read(bytes, offset + 5, length);
+
+                                    return length + 5;
+                                }
+                            default: throw new InvalidOperationException("Invalid Code");
+                        }
+                    }
+                case MessagePackType.Array:
+                    {
+                        var readHeaderSize = 0;
+
+                        if (MessagePackCode.MinFixArray <= code && code <= MessagePackCode.MaxFixArray) readHeaderSize = 0;
+                        else if (code == MessagePackCode.Array16) readHeaderSize = 2;
+                        else if (code == MessagePackCode.Array32) readHeaderSize = 4;
+                        if (readHeaderSize != 0)
+                        {
+                            MessagePackBinary.EnsureCapacity(ref bytes, offset, readHeaderSize + 1);
+                            stream.Read(bytes, offset + 1, readHeaderSize);
+                        }
+
+                        var startOffset = offset;
+                        offset += (readHeaderSize + 1);
+
+                        int _;
+                        var length = ReadArrayHeaderRaw(bytes, startOffset, out _);
+                        if (!readOnlySingleMessage)
+                        {
+                            for (int i = 0; i < length; i++)
+                            {
+                                offset += ReadMessageBlockFromStreamCore(stream, ref bytes, offset, readOnlySingleMessage);
+                            }
+                        }
+
+                        return offset - startOffset;
+                    }
+                case MessagePackType.Map:
+                    {
+                        var readHeaderSize = 0;
+
+                        if (MessagePackCode.MinFixMap <= code && code <= MessagePackCode.MaxFixMap) readHeaderSize = 0;
+                        else if (code == MessagePackCode.Map16) readHeaderSize = 2;
+                        else if (code == MessagePackCode.Map32) readHeaderSize = 4;
+                        if (readHeaderSize != 0)
+                        {
+                            MessagePackBinary.EnsureCapacity(ref bytes, offset, readHeaderSize + 1);
+                            stream.Read(bytes, offset + 1, readHeaderSize);
+                        }
+
+                        var startOffset = offset;
+                        offset += (readHeaderSize + 1);
+
+                        int _;
+                        var length = ReadMapHeaderRaw(bytes, startOffset, out _);
+                        if (!readOnlySingleMessage)
+                        {
+                            for (int i = 0; i < length; i++)
+                            {
+                                offset += ReadMessageBlockFromStreamCore(stream, ref bytes, offset, readOnlySingleMessage); // key
+                                offset += ReadMessageBlockFromStreamCore(stream, ref bytes, offset, readOnlySingleMessage); // value
+                            }
+                        }
+
+                        return offset - startOffset;
+                    }
+                case MessagePackType.Extension:
+                    {
+                        var readHeaderSize = 0;
+
+                        switch (code)
+                        {
+                            case MessagePackCode.FixExt1: readHeaderSize = 2; break;
+                            case MessagePackCode.FixExt2: readHeaderSize = 3; break;
+                            case MessagePackCode.FixExt4: readHeaderSize = 5; break;
+                            case MessagePackCode.FixExt8: readHeaderSize = 9; break;
+                            case MessagePackCode.FixExt16: readHeaderSize = 17; break;
+                            case MessagePackCode.Ext8: readHeaderSize = 2; break;
+                            case MessagePackCode.Ext16: readHeaderSize = 3; break;
+                            case MessagePackCode.Ext32: readHeaderSize = 5; break;
+                            default: throw new InvalidOperationException("Invalid Code");
+                        }
+
+                        MessagePackBinary.EnsureCapacity(ref bytes, offset, readHeaderSize + 1);
+                        stream.Read(bytes, offset + 1, readHeaderSize);
+
+                        int _;
+                        var header = ReadExtensionFormatHeader(bytes, offset, out _);
+
+                        MessagePackBinary.EnsureCapacity(ref bytes, offset, 1 + readHeaderSize + (int)header.Length);
+                        stream.Read(bytes, offset + 1 + readHeaderSize, (int)header.Length);
+
+                        return 1 + readHeaderSize + (int)header.Length;
+                    }
+                default: throw new InvalidOperationException("Invalid Code");
+            }
+        }
+
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int ReadNext(Stream stream)
+        {
+            var bytes = StreamDecodeMemoryPool.GetBuffer();
+            return ReadMessageBlockFromStreamCore(stream, ref bytes, 0, true);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int ReadNextBlock(Stream stream)
+        {
+            var bytes = StreamDecodeMemoryPool.GetBuffer();
+            var offset = 0;
+            return ReadMessageBlockFromStreamCore(stream, ref bytes, offset, false);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteNil(Stream stream)
+        {
+            stream.WriteByte(MessagePackCode.Nil);
+            return 1;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static Nil ReadNil(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadNil(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static bool IsNil(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+
+            return bytes[offset] == MessagePackCode.Nil;
+        }
+
+        /// <summary>
+        /// Unsafe. If value is guranteed 0 ~ MessagePackRange.MaxFixMapCount(15), can use this method.
+        /// </summary>
+        /// <returns></returns>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteFixedMapHeaderUnsafe(Stream stream, int count)
+        {
+            stream.WriteByte((byte)(MessagePackCode.MinFixMap | count));
+            return 1;
+        }
+
+        /// <summary>
+        /// Write map count.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteMapHeader(Stream stream, int count)
+        {
+            checked
+            {
+                return WriteMapHeader(stream, (uint)count);
+            }
+        }
+
+        /// <summary>
+        /// Write map count.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteMapHeader(Stream stream, uint count)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteMapHeader(ref buffer, 0, count);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        /// <summary>
+        /// Write map format header, always use map32 format(length is fixed, 5).
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteMapHeaderForceMap32Block(Stream stream, uint count)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteMapHeaderForceMap32Block(ref buffer, 0, count);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        /// <summary>
+        /// Return map count.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int ReadMapHeader(Stream stream)
+        {
+            checked
+            {
+                var bytes = StreamDecodeMemoryPool.GetBuffer();
+                ReadMessageBlockFromStreamCore(stream, ref bytes, 0, true);
+                int readSize;
+                return ReadMapHeader(bytes, 0, out readSize);
+            }
+        }
+
+        /// <summary>
+        /// Return map count.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static uint ReadMapHeaderRaw(Stream stream)
+        {
+            var bytes = StreamDecodeMemoryPool.GetBuffer();
+            ReadMessageBlockFromStreamCore(stream, ref bytes, 0, true);
+            int readSize;
+            return ReadMapHeaderRaw(bytes, 0, out readSize);
+        }
+
+        /// <summary>
+        /// Unsafe. If value is guranteed 0 ~ MessagePackRange.MaxFixArrayCount(15), can use this method.
+        /// </summary>
+        /// <returns></returns>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteFixedArrayHeaderUnsafe(Stream stream, int count)
+        {
+            stream.WriteByte((byte)(MessagePackCode.MinFixArray | count));
+            return 1;
+        }
+
+        /// <summary>
+        /// Write array count.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteArrayHeader(Stream stream, int count)
+        {
+            checked
+            {
+                return WriteArrayHeader(stream, (uint)count);
+            }
+        }
+
+        /// <summary>
+        /// Write array count.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteArrayHeader(Stream stream, uint count)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteArrayHeader(ref buffer, 0, count);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        /// <summary>
+        /// Write array format header, always use array32 format(length is fixed, 5).
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteArrayHeaderForceArray32Block(Stream stream, uint count)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteArrayHeaderForceArray32Block(ref buffer, 0, count);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        /// <summary>
+        /// Return array count.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int ReadArrayHeader(Stream stream)
+        {
+            var bytes = StreamDecodeMemoryPool.GetBuffer();
+            ReadMessageBlockFromStreamCore(stream, ref bytes, 0, true);
+            int readSize;
+            return ReadArrayHeader(bytes, 0, out readSize);
+        }
+
+        /// <summary>
+        /// Return array count.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static uint ReadArrayHeaderRaw(Stream stream)
+        {
+            var bytes = StreamDecodeMemoryPool.GetBuffer();
+            ReadMessageBlockFromStreamCore(stream, ref bytes, 0, true);
+            int readSize;
+            return ReadArrayHeaderRaw(bytes, 0, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteBoolean(Stream stream, bool value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteBoolean(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static bool ReadBoolean(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadBoolean(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteByte(Stream stream, byte value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteByte(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteByteForceByteBlock(Stream stream, byte value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteByteForceByteBlock(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static byte ReadByte(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadByte(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteBytes(Stream stream, byte[] value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteBytes(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteBytes(Stream stream, byte[] src, int srcOffset, int count)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteBytes(ref buffer, 0, src, srcOffset, count);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static byte[] ReadBytes(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadBytes(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteSByte(Stream stream, sbyte value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteSByte(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteSByteForceSByteBlock(Stream stream, sbyte value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteSByteForceSByteBlock(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static sbyte ReadSByte(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadSByte(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteSingle(Stream stream, float value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteSingle(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static float ReadSingle(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadSingle(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteDouble(Stream stream, double value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteDouble(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double ReadDouble(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadDouble(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteInt16(Stream stream, short value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteInt16(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteInt16ForceInt16Block(Stream stream, short value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteInt16ForceInt16Block(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static short ReadInt16(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadInt16(bytes, offset, out readSize);
+        }
+
+        /// <summary>
+        /// Unsafe. If value is guranteed 0 ~ MessagePackCode.MaxFixInt(127), can use this method.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WritePositiveFixedIntUnsafe(Stream stream, int value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WritePositiveFixedIntUnsafe(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteInt32(Stream stream, int value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteInt32(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        /// <summary>
+        /// Acquire static message block(always 5 bytes).
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteInt32ForceInt32Block(Stream stream, int value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteInt32ForceInt32Block(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int ReadInt32(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadInt32(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteInt64(Stream stream, long value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteInt64(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteInt64ForceInt64Block(Stream stream, long value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteInt64ForceInt64Block(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static long ReadInt64(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadInt64(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt16(Stream stream, ushort value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteUInt16(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt16ForceUInt16Block(Stream stream, ushort value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteUInt16ForceUInt16Block(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static ushort ReadUInt16(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadUInt16(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt32(Stream stream, uint value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteUInt32(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt32ForceUInt32Block(Stream stream, uint value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteUInt32ForceUInt32Block(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static uint ReadUInt32(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadUInt32(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt64(Stream stream, ulong value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteUInt64(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteUInt64ForceUInt64Block(Stream stream, ulong value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteUInt64ForceUInt64Block(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static ulong ReadUInt64(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadUInt64(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteChar(Stream stream, char value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteChar(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static char ReadChar(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadChar(bytes, offset, out readSize);
+        }
+
+        /// <summary>
+        /// Unsafe. If value is guranteed length is 0 ~ 31, can use this method.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteFixedStringUnsafe(Stream stream, string value, int byteCount)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteFixedStringUnsafe(ref buffer, 0, value, byteCount);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        /// <summary>
+        /// Unsafe. If pre-calculated byteCount of target string, can use this method.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteStringUnsafe(Stream stream, string value, int byteCount)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteStringUnsafe(ref buffer, 0, value, byteCount);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteStringBytes(Stream stream, byte[] utf8stringBytes)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteStringBytes(ref buffer, 0, utf8stringBytes);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        public static int WriteString(Stream stream, string value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteString(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        public static int WriteStringForceStr32Block(Stream stream, string value)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteStringForceStr32Block(ref buffer, 0, value);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static string ReadString(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadString(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteExtensionFormatHeader(Stream stream, sbyte typeCode, int dataLength)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteExtensionFormatHeader(ref buffer, 0, typeCode, dataLength);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+        /// <summary>
+        /// Write extension format header, always use ext32 format(length is fixed, 6).
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteExtensionFormatHeaderForceExt32Block(Stream stream, sbyte typeCode, int dataLength)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteExtensionFormatHeaderForceExt32Block(ref buffer, 0, typeCode, dataLength);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteExtensionFormat(Stream stream, sbyte typeCode, byte[] data)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteExtensionFormat(ref buffer, 0, typeCode, data);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static ExtensionResult ReadExtensionFormat(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadExtensionFormat(bytes, offset, out readSize);
+        }
+
+        /// <summary>
+        /// return byte length of ExtensionFormat.
+        /// </summary>
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static ExtensionHeader ReadExtensionFormatHeader(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadExtensionFormatHeader(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int WriteDateTime(Stream stream, DateTime dateTime)
+        {
+            var buffer = StreamDecodeMemoryPool.GetBuffer();
+            var writeCount = WriteDateTime(ref buffer, 0, dateTime);
+            stream.Write(buffer, 0, writeCount);
+            return writeCount;
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static DateTime ReadDateTime(Stream stream)
+        {
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
+            var offset = 0;
+            int readSize;
+
+            return ReadDateTime(bytes, offset, out readSize);
         }
     }
 
