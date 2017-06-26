@@ -1,7 +1,7 @@
 ﻿#if NETSTANDARD1_4
-
 using MessagePack.Internal;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -14,11 +14,8 @@ namespace MessagePack.Formatters
     /// </summary>
     public class TypelessFormatter : IMessagePackFormatter<object>
     {
-#if NETSTANDARD1_4
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
-#else
-        static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
-#endif
+
         delegate int SerializeMethod(object dynamicContractlessFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
         delegate object DeserializeMethod(object dynamicContractlessFormatter, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize);
 
@@ -62,10 +59,45 @@ namespace MessagePack.Formatters
                 return MessagePackBinary.WriteNil(ref bytes, offset);
             }
 
+            if (value is IDictionary) // check IDictionary first
+            {
+                var startOffset = offset;
+                var d = value as IDictionary;
+                offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, d.Count);
+                foreach (DictionaryEntry item in d)
+                {
+                    offset += SerializeItem(ref bytes, offset, item.Key, formatterResolver);
+                    offset += SerializeItem(ref bytes, offset, item.Value, formatterResolver);
+                }
+                return offset - startOffset;
+            }
+            else if (value is ICollection)
+            {
+                var startOffset = offset;
+                var c = value as ICollection;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, c.Count);
+                foreach (var item in c)
+                {
+                    offset += SerializeItem(ref bytes, offset, item, formatterResolver);
+                }
+                return offset - startOffset;
+            }
+            else
+            {
+                return SerializeItem(ref bytes, offset, value, formatterResolver);
+            };
+        }
+
+        /// <summary>
+        /// If value is anonymnous - fallback to DynamicObjectTypeFallbackFormatter
+        /// Else - serialize runtime type with current resolver
+        /// </summary>
+        private int SerializeItem(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        {
             var type = value.GetType();
             var ti = type.GetTypeInfo();
 
-            if (PrimitiveObjectFormatter.IsSupportedType(type, ti) || ti.IsAnonymous())
+            if (ti.IsAnonymous())
             {
                 return DynamicObjectTypeFallbackFormatter.Instance.Serialize(ref bytes, offset, value, formatterResolver);
             }
@@ -137,20 +169,59 @@ namespace MessagePack.Formatters
 
             int startOffset = offset;
             var packType = MessagePackBinary.GetMessagePackType(bytes, offset);
-            if (packType == MessagePackType.Extension)
+            switch (packType)
             {
-                var ext = MessagePackBinary.ReadExtensionFormatHeader(bytes, offset, out readSize);
-                if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName)
-                {
-                    // it has type name serialized
-                    offset += readSize;
-                    var typeName = MessagePackBinary.ReadString(bytes, offset, out readSize);
-                    offset += readSize;
-                    var result = DeserializeByTypeName(typeName, bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
-                    readSize = offset - startOffset;
-                    return result;
-                }
+                case MessagePackType.Array:
+                    {
+                        var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                        offset += readSize;
+
+                        var array = new object[length];
+                        for (int i = 0; i < length; i++)
+                        {
+                            array[i] = Deserialize(bytes, offset, formatterResolver, out readSize);
+                            offset += readSize;
+                        }
+
+                        readSize = offset - startOffset;
+                        return array;
+                    }
+                case MessagePackType.Map:
+                    {
+                        var length = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+                        offset += readSize;
+
+                        var hash = new Dictionary<object, object>(length);
+                        for (int i = 0; i < length; i++)
+                        {
+                            var key = Deserialize(bytes, offset, formatterResolver, out readSize);
+                            offset += readSize;
+
+                            var value = Deserialize(bytes, offset, formatterResolver, out readSize);
+                            offset += readSize;
+
+                            hash.Add(key, value);
+                        }
+
+                        readSize = offset - startOffset;
+                        return hash;
+                    }
+                case MessagePackType.Extension:
+                    {
+                        var ext = MessagePackBinary.ReadExtensionFormatHeader(bytes, offset, out readSize);
+                        if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName)
+                        {
+                            // it has type name serialized
+                            offset += readSize;
+                            var typeName = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                            offset += readSize;
+                            var result = DeserializeByTypeName(typeName, bytes, offset, formatterResolver, out readSize);
+                            offset += readSize;
+                            readSize = offset - startOffset;
+                            return result;
+                        }
+                        break;
+                    }
             }
             // fallback
             return DynamicObjectTypeFallbackFormatter.Instance.Deserialize(bytes, startOffset, formatterResolver, out readSize);
@@ -196,7 +267,7 @@ namespace MessagePack.Formatters
 
                         var deserializeMethodInfo = formatterType.GetRuntimeMethod("Deserialize", new[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() });
 
-                        var body = Expression.Call(
+                        var deserialize = Expression.Call(
                             Expression.Convert(param0, formatterType),
                             deserializeMethodInfo,
                             param1,
@@ -204,6 +275,9 @@ namespace MessagePack.Formatters
                             param3,
                             param4);
 
+                        Expression body = deserialize;
+                        if (ti.IsValueType)
+                            body = Expression.Convert(deserialize, typeof(object));
                         var lambda = Expression.Lambda<DeserializeMethod>(body, param0, param1, param2, param3, param4).Compile();
 
                         formatterAndDelegate = new KeyValuePair<object, DeserializeMethod>(formatter, lambda);
@@ -216,5 +290,4 @@ namespace MessagePack.Formatters
         }
     }
 }
-
 #endif

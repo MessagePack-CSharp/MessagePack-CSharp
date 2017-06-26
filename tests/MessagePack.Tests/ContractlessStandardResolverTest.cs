@@ -23,15 +23,15 @@ namespace MessagePack.Tests
 
 
         [Fact]
-        public void AnonymousTypeTest()
+        public void SimpleTest()
         {
                 var p = new Person
                 {
                     Name = "John",
                     Addresses = new[]
                     {
-                        new { Street = "St." },
-                        new { Street = "Ave." }
+                        new Address { Street = "St." },
+                        new Address { Street = "Ave." }
                     }
                 };
 
@@ -46,48 +46,6 @@ namespace MessagePack.Tests
                 var d2 = addresses[1] as IDictionary;
                 (d1["Street"] as string).Is("St.");
                 (d2["Street"] as string).Is("Ave.");
-        }
-
-        [Fact]
-        public void StrongTypeTest()
-        {
-            var p = new Person
-            {
-                Name = "John",
-                Addresses = new object[]
-                {
-                    new Address { Street = "St." },
-                    new Address { Street = "Ave." }
-                }
-            };
-
-            var result = MessagePack.MessagePackSerializer.Serialize(p, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-
-            var p2 = MessagePack.MessagePackSerializer.Deserialize<Person>(result, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            p.IsStructuralEqual(p2);
-
-            MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""MessagePack.Tests.ContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""MessagePack.Tests.ContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
-        }
-
-        [Fact]
-        public void ObjectRuntimeTypeTest()
-        {
-            var p = new Person
-            {
-                Name = "John",
-                Addresses = new object[]
-                {
-                    new object(),
-                    new Address { Street = "Ave." }
-                }
-            };
-
-            var result = MessagePack.MessagePackSerializer.Serialize(p, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-
-            var p2 = MessagePack.MessagePackSerializer.Deserialize<Person>(result, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            p.IsStructuralEqual(p2);
-
-            MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[[""System.Object, mscorlib""],{""$type"":""MessagePack.Tests.ContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
         }
     }
 }

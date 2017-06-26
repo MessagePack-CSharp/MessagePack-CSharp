@@ -9,7 +9,6 @@ namespace MessagePack.Resolvers
     /// DynamicContractless[IntKeys]ObjectResolver should be declared in resolvers before that one
     /// Serialized binary is valid MessagePack binary used ext-format and custom typecode(100).
     /// Inside ext - assembly qualified type name, and serialized object
-    /// Path: try primitive -> try `object` -> dynamic contractless (for anonymous types)
     /// </summary>
     public class TypelessObjectResolver : IFormatterResolver
     {

@@ -105,6 +105,7 @@
   <ItemGroup>
     <Compile Include="AnonymousTypeTest.cs" />
     <Compile Include="CollectionTest.cs" />
+    <Compile Include="TypelessContractlessStandardResolverTest.cs" />
     <Compile Include="ContractlessStandardResolverTest.cs" />
     <Compile Include="DictionaryTest.cs" />
     <Compile Include="ExtensionTests\ImmutableCollectionTest.cs" />

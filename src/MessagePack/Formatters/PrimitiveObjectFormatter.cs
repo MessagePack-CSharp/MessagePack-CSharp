@@ -181,14 +181,10 @@ namespace MessagePack.Formatters
                 case MessagePackType.Binary:
                     return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
                 case MessagePackType.Extension:
-                    var ext = MessagePackBinary.ReadExtensionFormat(bytes, offset, out readSize);
+                    var ext = MessagePackBinary.ReadExtensionFormatHeader(bytes, offset, out readSize);
                     if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
                     {
                         return MessagePackBinary.ReadDateTime(bytes, offset, out readSize);
-                    }
-                    else if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName)
-                    {
-                        return TypelessFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
                     }
                     throw new InvalidOperationException("Invalid primitive bytes.");
                 case MessagePackType.Array:
