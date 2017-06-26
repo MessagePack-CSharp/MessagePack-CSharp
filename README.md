@@ -601,7 +601,9 @@ High-Level API(MessagePackSerializer)
 | `ToJson` | Dump message-pack binary to JSON string. It is useful for debugging.  |
 | `FromJson` | From Json string to MessagePack binary.  |
 
-MessagePack for C# operates at the byte[] level, so byte[] API is faster than Stream API.
+MessagePack for C# operates at the byte[] level, so byte[] API is faster than Stream API. If byte [] can be used for I/O, I recommend using the byte [] API.
+
+`Deserialize<T>(Stream)` has `bool readStrict` overload. It means read byte[] from stream strictly size. The default is false, it reads all stream data, it is faster than `readStrict` but if the data is contiguous, you can use readStrict = true.
 
 High-Level API uses memory pool internaly to avoid unnecessary memory allocation. If result size is under 64K, allocates GC memory only for the return bytes.
 
@@ -662,6 +664,7 @@ Primitive API(MessagePackBinary)
 | --- | --- |
 | ReadNext | Skip MessagePackFormat binary block, returns read size. |
 | ReadNextBlock | Skip MessagePackFormat binary block with sub structures(array/map), returns read size. This is useful for create deserializer. |
+| ReadMessageBlockFromStreamUnsafe | Read binary block from Stream, if readOnlySingleMessage = false then read sub structures(array/map). | 
 | Write/ReadMapHeader | Write/Read map format header(element length). |
 | WriteMapHeaderForceMap32Block | Write map format header, always use map32 format(length is fixed, 5). |
 | Write/ReadArrayHeader | Write/Read array format header(element length). |
@@ -678,7 +681,7 @@ Primitive API(MessagePackBinary)
 | FastResize | Buffer.BlockCopy version of Array.Resize. |
 | FastCloneWithResize | Same as FastResize but return copied byte[]. |
 
-Read API returns deserialized primitive and read size. Write API returns write size and guranteed auto ensure ref byte[].
+Read API returns deserialized primitive and read size. Write API returns write size and guranteed auto ensure ref byte[]. Write/Read API has `byte[]` overload and `Stream` overload, basically the byte[] API is faster.
 
 DateTime is serialized to [new MessagePack extension spec proposal](https://github.com/msgpack/msgpack/pull/209), it serialize/deserialize UTC and loses `Kind` info. If you use`NativeDateTimeResolver` serialized native DateTime binary format and it can keep `Kind` info but cannot communicate other platforms.
 
