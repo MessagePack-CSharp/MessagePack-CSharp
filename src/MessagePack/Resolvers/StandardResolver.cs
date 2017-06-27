@@ -81,7 +81,7 @@ namespace MessagePack.Resolvers
             DynamicObjectResolver.Instance, // Try Object
 #endif
 
-            DynamicContractlessObjectResolver.Instance,
+            DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
 
             // finally, try primitive -> dynamic contractless
 #if NETSTANDARD1_4

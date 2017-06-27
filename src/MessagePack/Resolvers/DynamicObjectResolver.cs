@@ -64,7 +64,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), false);
+                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), false, false);
                 if (formatterTypeInfo == null) return;
 
                 formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
@@ -136,7 +136,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), true); // true.
+                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), true, true);
                 if (formatterTypeInfo == null) return;
 
                 formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
@@ -179,11 +179,11 @@ namespace MessagePack.Internal
             {typeof(MessagePack.Nil)},
         };
 
-        public static TypeInfo BuildType(DynamicAssembly assembly, Type type, bool forceStringKey)
+        public static TypeInfo BuildType(DynamicAssembly assembly, Type type, bool forceStringKey, bool contractless)
         {
             if (ignoreTypes.Contains(type)) return null;
 
-            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey);
+            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless);
             if (serializationInfo == null) return null;
 
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
@@ -856,7 +856,7 @@ namespace MessagePack.Internal
         // use DynamicMethod(skipVisibility:true) can avoid it so use delegation formatter.
         public static object BuildFormatter(Type type)
         {
-            var info = ObjectSerializationInfo.CreateOrNull(type, true);
+            var info = ObjectSerializationInfo.CreateOrNull(type, true, true);
 
             var serialize = new DynamicMethod("Serialize", typeof(int), new[] { typeof(byte[]).MakeByRefType(), typeof(int), type, typeof(IFormatterResolver) }, type, true);
 
@@ -1040,13 +1040,13 @@ namespace MessagePack.Internal
 
         }
 
-        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey)
+        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey, bool contractless)
         {
             var ti = type.GetTypeInfo();
             var isClass = ti.IsClass;
 
             var contractAttr = ti.GetCustomAttribute<MessagePackObjectAttribute>();
-            if (contractAttr == null && !forceStringKey)
+            if (contractAttr == null && !forceStringKey && !contractless)
             {
                 return null;
             }
@@ -1055,10 +1055,10 @@ namespace MessagePack.Internal
             var intMembers = new Dictionary<int, EmittableMember>();
             var stringMembers = new Dictionary<string, EmittableMember>();
 
-            if (forceStringKey || contractAttr.KeyAsPropertyName)
+            if (forceStringKey || contractless || (contractAttr != null && contractAttr.KeyAsPropertyName))
             {
                 // All public members are serialize target except [Ignore] member.
-                isIntKey = false;
+                isIntKey = !(forceStringKey || (contractAttr != null && contractAttr.KeyAsPropertyName));
 
                 var hiddenIntKey = 0;
                 foreach (var item in type.GetRuntimeProperties())
@@ -1075,7 +1075,10 @@ namespace MessagePack.Internal
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
                     member.IntKey = hiddenIntKey++;
-                    stringMembers.Add(member.StringKey, member);
+                    if (isIntKey)
+                        intMembers.Add(member.IntKey, member);
+                    else
+                        stringMembers.Add(member.StringKey, member);
                 }
                 foreach (var item in type.GetRuntimeFields())
                 {
@@ -1093,7 +1096,10 @@ namespace MessagePack.Internal
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
                     member.IntKey = hiddenIntKey++;
-                    stringMembers.Add(member.StringKey, member);
+                    if (isIntKey)
+                        intMembers.Add(member.IntKey, member);
+                    else
+                        stringMembers.Add(member.StringKey, member);
                 }
             }
             else

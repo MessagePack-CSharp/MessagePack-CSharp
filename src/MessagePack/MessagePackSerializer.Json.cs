@@ -231,16 +231,48 @@ namespace MessagePack
                         return totalReadSize;
                     }
                 case MessagePackType.Extension:
-                    var ext = MessagePackBinary.ReadExtensionFormat(bytes, offset, out readSize);
-                    if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
+                    var extHeader = MessagePackBinary.ReadExtensionFormatHeader(bytes, offset, out readSize);
+                    if (extHeader.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
                     {
                         var dt = MessagePackBinary.ReadDateTime(bytes, offset, out readSize);
                         builder.Append("\"");
                         builder.Append(dt.ToString("o", CultureInfo.InvariantCulture));
                         builder.Append("\"");
                     }
+                    else if (extHeader.TypeCode == ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName)
+                    {
+                        int startOffset = offset;
+                        // prepare type name token
+                        offset += 6;
+                        var typeNameToken = new StringBuilder();
+                        var typeNameReadSize = ToJsonCore(bytes, offset, typeNameToken);
+                        offset += typeNameReadSize;
+                        int startBuilderLength = builder.Length;
+                        if (extHeader.Length > typeNameReadSize)
+                        {
+                            // object map or array
+                            var typeInside = MessagePackBinary.GetMessagePackType(bytes, offset);
+                            if (typeInside != MessagePackType.Array && typeInside != MessagePackType.Map)
+                                builder.Append("{");
+                            offset += ToJsonCore(bytes, offset, builder);
+                            // insert type name token to start of object map or array
+                            if (typeInside != MessagePackType.Array)
+                                typeNameToken.Insert(0, "\"$type\":");
+                            if (typeInside != MessagePackType.Array && typeInside != MessagePackType.Map)
+                                builder.Append("}");
+                            if (builder.Length - startBuilderLength > 2)
+                                typeNameToken.Append(",");
+                            builder.Insert(startBuilderLength + 1, typeNameToken.ToString());
+                        }
+                        else
+                        {
+                            builder.Append("{\"$type\":\"" + typeNameToken.ToString() + "}");
+                        }
+                        readSize = offset - startOffset;
+                    }
                     else
                     {
+                        var ext = MessagePackBinary.ReadExtensionFormat(bytes, offset, out readSize);
                         builder.Append("[");
                         builder.Append(ext.TypeCode);
                         builder.Append(",");
