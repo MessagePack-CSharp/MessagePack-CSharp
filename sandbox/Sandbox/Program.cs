@@ -15,6 +15,7 @@ using UnityEngine;
 using Newtonsoft.Json;
 using System.Text;
 using System.IO.Compression;
+using System.Collections.Concurrent;
 
 namespace Sandbox
 {
@@ -259,35 +260,22 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
+            var mc = new MyClass()
+            {
+                Age = 10,
+                FirstName = "hoge",
+                LastName = "huga"
+            };
+            var dict = new ConcurrentDictionary<int, MyClass>();
+            dict.TryAdd(1, mc);
+
+            var t = MessagePackSerializer.Typeless.Serialize(mc);
 
 
-            TestObject to = TestObject.TestBuild();
+            var hoge = MessagePackSerializer.ToJson(t);
+            Console.WriteLine(hoge);
+            var nt = MessagePackSerializer.Typeless.Deserialize(t);
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            string junity = JsonConvert.SerializeObject(to);
-            sw.Stop();
-            Console.WriteLine("*[Object To JsonString] - Unity :  {0}ms.", sw.ElapsedMilliseconds);
-
-            Stopwatch sw1 = new Stopwatch();
-            sw1.Start();
-            string jmsgPack = MessagePack.MessagePackSerializer.ToJson<TestObject>(to);
-            sw1.Stop();
-            Console.WriteLine("*[Object To JsonString] - MsgPack :  {0}ms.", sw1.ElapsedMilliseconds);
-
-            Stopwatch sw3 = new Stopwatch();
-            sw3.Start();
-            TestObject toUnity = JsonConvert.DeserializeObject<TestObject>(junity);
-            sw3.Stop();
-            Console.WriteLine("*[JsonString To Object] - Unity :  {0}ms.", sw3.ElapsedMilliseconds);
-
-            Stopwatch sw4 = new Stopwatch();
-            sw4.Start();
-
-            var msgbin = MessagePack.MessagePackSerializer.FromJson(jmsgPack);
-            TestObject toMsgPack = MessagePack.MessagePackSerializer.Deserialize<TestObject>(msgbin);
-            sw4.Stop();
-            Console.WriteLine("*[JsonString To Object] - MsgPack :  {0}ms.", sw4.ElapsedMilliseconds);
 
 
         }
