@@ -15,6 +15,8 @@ namespace MessagePack.Formatters
     /// </summary>
     public class TypelessFormatter : IMessagePackFormatter<object>
     {
+        public const sbyte ExtensionTypeCode = 100;
+
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 
         delegate int SerializeMethod(object dynamicContractlessFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
@@ -144,7 +146,7 @@ namespace MessagePack.Formatters
             offset += 6; // mark will be written at the end, when size is known
             offset += MessagePackBinary.WriteString(ref bytes, offset, typeName);
             offset += formatterAndDelegate.Value(formatterAndDelegate.Key, ref bytes, offset, value, formatterResolver);
-            MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, startOffset, (sbyte)ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName, offset - startOffset - 6);
+            MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, startOffset, (sbyte)TypelessFormatter.ExtensionTypeCode, offset - startOffset - 6);
             return offset - startOffset;
         }
 
@@ -163,7 +165,7 @@ namespace MessagePack.Formatters
                 case MessagePackType.Extension:
                     {
                         var ext = MessagePackBinary.ReadExtensionFormatHeader(bytes, offset, out readSize);
-                        if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DynamicObjectWithTypeName)
+                        if (ext.TypeCode == TypelessFormatter.ExtensionTypeCode)
                         {
                             // it has type name serialized
                             offset += readSize;

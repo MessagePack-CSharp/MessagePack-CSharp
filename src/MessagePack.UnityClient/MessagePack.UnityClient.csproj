@@ -115,6 +115,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>TupleFormatter.tt</DependentUpon>
     </Compile>
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\TypelessFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -155,6 +156,8 @@
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\OldSpecResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\PrimitiveObjectResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\StandardResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\TypelessContractlessStandardResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\TypelessObjectResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Shims\Reflection.cs" />
     <Compile Include="Assets\Scripts\MessagePack\StringEncoding.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Unity\Formatters.cs" />

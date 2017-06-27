@@ -259,22 +259,23 @@ namespace Sandbox
     class Program
     {
         static void Main(string[] args)
-        {
-            var mc = new MyClass()
+    {
+            object mc = new Sandbox.MyClass()
             {
                 Age = 10,
                 FirstName = "hoge",
                 LastName = "huga"
             };
-            var dict = new ConcurrentDictionary<int, MyClass>();
-            dict.TryAdd(1, mc);
 
-            var t = MessagePackSerializer.Typeless.Serialize(mc);
+            // serialize to typeless
+            var bin = MessagePackSerializer.Typeless.Serialize(mc);
 
+            // binary data is embeded type-assembly information.
+            // ["Sandbox.MyClass, Sandbox",10,"hoge","huga"]
+            Console.WriteLine(MessagePackSerializer.ToJson(bin));
 
-            var hoge = MessagePackSerializer.ToJson(t);
-            Console.WriteLine(hoge);
-            var nt = MessagePackSerializer.Typeless.Deserialize(t);
+            // can deserialize to MyClass with typeless
+            var objModel = MessagePackSerializer.Typeless.Deserialize(bin) as MyClass;
 
 
 

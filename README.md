@@ -202,6 +202,8 @@ var bin2 = MessagePackSerializer.Serialize(data);
 
 ContractlessStandardResolver can serialize anonymous type, too.
 
+I don't need type, I want to use like BinaryFormatter! You can use as typeless resolver and helpers. Please see [Typeless](https://github.com/neuecc/MessagePack-CSharp#typeless) section.
+
 Resolver is key customize point of MessagePack for C#. Details, please see [extension point](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
 
 Serialize ImmutableObject(SerializationConstructor)
@@ -410,6 +412,33 @@ Console.WriteLine(dynamicModel["Items"][2]); // 100
 ```
 
 So you can access indexer for msgpack map and array.
+
+Typeless
+---
+Typeless API is like `BinaryFormatter`, embed type information to binary so no needs type to deserialize.
+
+```csharp
+object mc = new Sandbox.MyClass()
+{
+    Age = 10,
+    FirstName = "hoge",
+    LastName = "huga"
+};
+
+// serialize to typeless
+var bin = MessagePackSerializer.Typeless.Serialize(mc);
+
+// binary data is embeded type-assembly information.
+// ["Sandbox.MyClass, Sandbox",10,"hoge","huga"]
+Console.WriteLine(MessagePackSerializer.ToJson(bin));
+
+// can deserialize to MyClass with typeless
+var objModel = MessagePackSerializer.Typeless.Deserialize(bin) as MyClass;
+```
+
+Type information is serialized by mspgack `ext` format, typecode is 100.
+
+`MessagePackSerializer.Typeless` is shortcut of `Serialize/Deserialize<object>(TypelessContractlessStandardResolver.Instance)`. If you want to configure default typeless resolver, you can set by `MessagePackSerializer.Typeless.RegisterDefaultResolver`.
 
 Performance
 ---
@@ -698,7 +727,7 @@ Extension Point(IFormatterResolver)
 | Resovler Name | Description |
 | --- | --- |
 | BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
-| StandardResolver | Composited resolver . It resolves in the following order `builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive object`. This is the default of MessagePackSerializer. |
+| StandardResolver | Composited resolver. It resolves in the following order `builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive object`. This is the default of MessagePackSerializer. |
 | ContractlessStandardResolver | Composited `StandardResolver`(except primitive) -> `DynamicContractlessObjectResolver` -> `DynamicObjectTypeFallbackResolver`. It enables contractless serialization. |
 | PrimitiveObjectResolver | MessagePack primitive object resolver. It is used fallback in `object` type and supports `bool`, `char`, `sbyte`, `byte`, `short`, `int`, `long`, `ushort`, `uint`, `ulong`, `float`, `double`, `DateTime`, `string`, `byte[]`, `ICollection`, `IDictionary`. |
 | DynamicObjectTypeFallbackResolver | It is used fallback in `object` type and resolve primitive object -> dynamic contractless object |
@@ -712,6 +741,8 @@ Extension Point(IFormatterResolver)
 | DynamicUnionResolver | Resolver of interface marked by UnionAttribute. It uses dynamic code generation to create dynamic formatter. |
 | DynamicObjectResolver | Resolver of class and struct maked by MessagePackObjectAttribute. It uses dynamic code generation to create dynamic formatter. |
 | DynamicContractlessObjectResolver | Resolver of all classes and structs. It does not needs MessagePackObjectAttribute and serialized key as string(same as marked [MessagePackObject(true)]). |
+| TypelessObjectResolver | Used for `object`, embed .NET type in binary by `ext(100)` format so no need to pass type in deserilization.  |
+| TypelessContractlessStandardResolver | Composited resolver. It resolves in the following order `nativedatetime -> builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> dynamiccontractless -> typeless`. This is the default of `MessagePackSerializer.Typeless`  |
 
 It is the only configuration point to assemble the resolver's priority. In most cases, it is sufficient to have one custom resolver globally. CompositeResolver will be its helper.
 
