@@ -202,7 +202,7 @@ var bin2 = MessagePackSerializer.Serialize(data);
 
 ContractlessStandardResolver can serialize anonymous type, too.
 
-I don't need type, I want to use like BinaryFormatter! You can use as typeless resolver and helpers. Please see [Typeless](https://github.com/neuecc/MessagePack-CSharp#typeless) section.
+I don't need type, I want to use like BinaryFormatter! You can use as typeless resolver and helpers. Please see [Typeless section](https://github.com/neuecc/MessagePack-CSharp#typeless).
 
 Resolver is key customize point of MessagePack for C#. Details, please see [extension point](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
 
@@ -628,6 +628,7 @@ High-Level API(MessagePackSerializer)
 | `SerializeUnsafe<T>` | Same as `Serialize<T>` but return `ArraySegement<byte>`. The result of ArraySegment is contains internal buffer pool, it can not share across thread and can not hold, so use quickly. |
 | `Deserialize<T>` | Convert byte[] or stream to object. There has IFormatterResolver overload, used specified resolver. |
 | `NonGeneric.*` | NonGeneric APIs of Serialize/Deserialize. There accept type parameter at first argument. This API is bit slower than generic API but useful for framework integration such as ASP.NET formatter. |
+| `Typeless.*` | Typeless APIs of Serialize/Deserialize. This API no needs type parameter like BinaryFormatter. This API makes .NET specific binary and bit slower than standard APIs. |
 | `ToJson` | Dump message-pack binary to JSON string. It is useful for debugging.  |
 | `FromJson` | From Json string to MessagePack binary.  |
 
