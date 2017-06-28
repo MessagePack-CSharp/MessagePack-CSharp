@@ -1077,9 +1077,13 @@ namespace MessagePack.Internal
                     if (!member.IsReadable && !member.IsWritable) continue;
                     member.IntKey = hiddenIntKey++;
                     if (isIntKey)
+                    {
                         intMembers.Add(member.IntKey, member);
+                    }
                     else
+                    {
                         stringMembers.Add(member.StringKey, member);
+                    }
                 }
                 foreach (var item in type.GetRuntimeFields())
                 {
@@ -1158,7 +1162,7 @@ namespace MessagePack.Internal
                         }
                         else
                         {
-                            throw new MessagePackDynamicObjectResolverException("DataMemberAttribute requires Order or Name." + " type: " + type.FullName + " member:" + item.Name);
+                            key = new KeyAttribute(item.Name); // use property name
                         }
                     }
 
@@ -1207,10 +1211,41 @@ namespace MessagePack.Internal
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
-                    var key = item.GetCustomAttribute<KeyAttribute>(true);
-                    if (key == null) throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
+                    KeyAttribute key;
+                    if (contractAttr != null)
+                    {
+                        // MessagePackObjectAttribute
+                        key = item.GetCustomAttribute<KeyAttribute>(true);
+                        if (key == null)
+                        {
+                            throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
+                        }
 
-                    if (key.IntKey == null && key.StringKey == null) throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
+                        if (key.IntKey == null && key.StringKey == null) throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
+                    }
+                    else
+                    {
+                        // DataContractAttribute
+                        var pseudokey = item.GetCustomAttribute<DataMemberAttribute>(true);
+                        if (pseudokey == null)
+                        {
+                            throw new MessagePackDynamicObjectResolverException("all public members must mark DataMemberAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
+                        }
+
+                        // use Order first
+                        if (pseudokey.Order != -1)
+                        {
+                            key = new KeyAttribute(pseudokey.Order);
+                        }
+                        else if (pseudokey.Name != null)
+                        {
+                            key = new KeyAttribute(pseudokey.Name);
+                        }
+                        else
+                        {
+                            key = new KeyAttribute(item.Name); // use property name
+                        }
+                    }
 
                     if (searchFirst)
                     {

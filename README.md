@@ -614,6 +614,7 @@ Author is creating other extension packages, too.
 You can make your own extension serializers, let's create them and share it!
 
 * [pocketberserker/MessagePack.FSharpExtensions](https://github.com/pocketberserker/MessagePack.FSharpExtensions) - supports F# list,set,map,unit,option,discriminated union
+* [WebApiContrib.Core.Formatter.MessagePack](https://github.com/WebApiContrib/WebAPIContrib.Core#formatters) - supports ASP.NET Core MVC([details in blog post](https://www.strathweb.com/2017/06/using-messagepack-with-asp-net-core-mvc/))
 
 High-Level API(MessagePackSerializer)
 ---

@@ -43,7 +43,7 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(56)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(60)
             {
                 {typeof(int[,]), 0 },
                 {typeof(global::GlobalMyEnum[,]), 1 },
@@ -51,56 +51,60 @@ namespace MessagePack.Resolvers
                 {typeof(int[,,,]), 3 },
                 {typeof(global::GlobalMyEnum[]), 4 },
                 {typeof(global::QuestMessageBody[]), 5 },
-                {typeof(global::SharedData.ByteEnum), 6 },
-                {typeof(global::GlobalMyEnum), 7 },
-                {typeof(global::SharedData.IUnionChecker), 8 },
-                {typeof(global::SharedData.IUnionChecker2), 9 },
-                {typeof(global::SharedData.IIVersioningUnion), 10 },
-                {typeof(global::SharedData.IUnionSample), 11 },
-                {typeof(global::IMessageBody), 12 },
-                {typeof(global::SharedData.FirstSimpleData), 13 },
-                {typeof(global::SharedData.SimlpeStringKeyData), 14 },
-                {typeof(global::SharedData.SimpleStructIntKeyData), 15 },
-                {typeof(global::SharedData.SimpleStructStringKeyData), 16 },
-                {typeof(global::SharedData.SimpleIntKeyData), 17 },
-                {typeof(global::SharedData.Vector2), 18 },
-                {typeof(global::SharedData.EmptyClass), 19 },
-                {typeof(global::SharedData.EmptyStruct), 20 },
-                {typeof(global::SharedData.Version1), 21 },
-                {typeof(global::SharedData.Version2), 22 },
-                {typeof(global::SharedData.Version0), 23 },
-                {typeof(global::SharedData.HolderV1), 24 },
-                {typeof(global::SharedData.HolderV2), 25 },
-                {typeof(global::SharedData.HolderV0), 26 },
-                {typeof(global::SharedData.Callback1), 27 },
-                {typeof(global::SharedData.Callback1_2), 28 },
-                {typeof(global::SharedData.Callback2), 29 },
-                {typeof(global::SharedData.Callback2_2), 30 },
-                {typeof(global::SharedData.MySubUnion1), 31 },
-                {typeof(global::SharedData.MySubUnion2), 32 },
-                {typeof(global::SharedData.MySubUnion3), 33 },
-                {typeof(global::SharedData.MySubUnion4), 34 },
-                {typeof(global::SharedData.VersioningUnion), 35 },
-                {typeof(global::SharedData.MyClass), 36 },
-                {typeof(global::SharedData.VersionBlockTest), 37 },
-                {typeof(global::SharedData.UnVersionBlockTest), 38 },
-                {typeof(global::SharedData.Empty1), 39 },
-                {typeof(global::SharedData.Empty2), 40 },
-                {typeof(global::SharedData.NonEmpty1), 41 },
-                {typeof(global::SharedData.NonEmpty2), 42 },
-                {typeof(global::SharedData.VectorLike2), 43 },
-                {typeof(global::SharedData.Vector3Like), 44 },
-                {typeof(global::SharedData.ArrayOptimizeClass), 45 },
-                {typeof(global::SharedData.NestParent.NestContract), 46 },
-                {typeof(global::SharedData.FooClass), 47 },
-                {typeof(global::SharedData.BarClass), 48 },
-                {typeof(global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga), 49 },
-                {typeof(global::GlobalMan), 50 },
-                {typeof(global::Message), 51 },
-                {typeof(global::TextMessageBody), 52 },
-                {typeof(global::StampMessageBody), 53 },
-                {typeof(global::QuestMessageBody), 54 },
-                {typeof(global::ArrayTestTest), 55 },
+                {typeof(global::System.Collections.Generic.IDictionary<string, string>), 6 },
+                {typeof(global::System.Collections.Generic.IList<global::SimpleModel>), 7 },
+                {typeof(global::SharedData.ByteEnum), 8 },
+                {typeof(global::GlobalMyEnum), 9 },
+                {typeof(global::SharedData.IUnionChecker), 10 },
+                {typeof(global::SharedData.IUnionChecker2), 11 },
+                {typeof(global::SharedData.IIVersioningUnion), 12 },
+                {typeof(global::SharedData.IUnionSample), 13 },
+                {typeof(global::IMessageBody), 14 },
+                {typeof(global::SharedData.FirstSimpleData), 15 },
+                {typeof(global::SharedData.SimlpeStringKeyData), 16 },
+                {typeof(global::SharedData.SimpleStructIntKeyData), 17 },
+                {typeof(global::SharedData.SimpleStructStringKeyData), 18 },
+                {typeof(global::SharedData.SimpleIntKeyData), 19 },
+                {typeof(global::SharedData.Vector2), 20 },
+                {typeof(global::SharedData.EmptyClass), 21 },
+                {typeof(global::SharedData.EmptyStruct), 22 },
+                {typeof(global::SharedData.Version1), 23 },
+                {typeof(global::SharedData.Version2), 24 },
+                {typeof(global::SharedData.Version0), 25 },
+                {typeof(global::SharedData.HolderV1), 26 },
+                {typeof(global::SharedData.HolderV2), 27 },
+                {typeof(global::SharedData.HolderV0), 28 },
+                {typeof(global::SharedData.Callback1), 29 },
+                {typeof(global::SharedData.Callback1_2), 30 },
+                {typeof(global::SharedData.Callback2), 31 },
+                {typeof(global::SharedData.Callback2_2), 32 },
+                {typeof(global::SharedData.MySubUnion1), 33 },
+                {typeof(global::SharedData.MySubUnion2), 34 },
+                {typeof(global::SharedData.MySubUnion3), 35 },
+                {typeof(global::SharedData.MySubUnion4), 36 },
+                {typeof(global::SharedData.VersioningUnion), 37 },
+                {typeof(global::SharedData.MyClass), 38 },
+                {typeof(global::SharedData.VersionBlockTest), 39 },
+                {typeof(global::SharedData.UnVersionBlockTest), 40 },
+                {typeof(global::SharedData.Empty1), 41 },
+                {typeof(global::SharedData.Empty2), 42 },
+                {typeof(global::SharedData.NonEmpty1), 43 },
+                {typeof(global::SharedData.NonEmpty2), 44 },
+                {typeof(global::SharedData.VectorLike2), 45 },
+                {typeof(global::SharedData.Vector3Like), 46 },
+                {typeof(global::SharedData.ArrayOptimizeClass), 47 },
+                {typeof(global::SharedData.NestParent.NestContract), 48 },
+                {typeof(global::SharedData.FooClass), 49 },
+                {typeof(global::SharedData.BarClass), 50 },
+                {typeof(global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga), 51 },
+                {typeof(global::GlobalMan), 52 },
+                {typeof(global::Message), 53 },
+                {typeof(global::TextMessageBody), 54 },
+                {typeof(global::StampMessageBody), 55 },
+                {typeof(global::QuestMessageBody), 56 },
+                {typeof(global::ArrayTestTest), 57 },
+                {typeof(global::SimpleModel), 58 },
+                {typeof(global::ComplexModel), 59 },
             };
         }
 
@@ -117,56 +121,60 @@ namespace MessagePack.Resolvers
                 case 3: return new global::MessagePack.Formatters.FourDimentionalArrayFormatter<int>();
                 case 4: return new global::MessagePack.Formatters.ArrayFormatter<global::GlobalMyEnum>();
                 case 5: return new global::MessagePack.Formatters.ArrayFormatter<global::QuestMessageBody>();
-                case 6: return new MessagePack.Formatters.SharedData.ByteEnumFormatter();
-                case 7: return new MessagePack.Formatters.GlobalMyEnumFormatter();
-                case 8: return new MessagePack.Formatters.SharedData.IUnionCheckerFormatter();
-                case 9: return new MessagePack.Formatters.SharedData.IUnionChecker2Formatter();
-                case 10: return new MessagePack.Formatters.SharedData.IIVersioningUnionFormatter();
-                case 11: return new MessagePack.Formatters.SharedData.IUnionSampleFormatter();
-                case 12: return new MessagePack.Formatters.IMessageBodyFormatter();
-                case 13: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
-                case 14: return new MessagePack.Formatters.SharedData.SimlpeStringKeyDataFormatter();
-                case 15: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
-                case 16: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
-                case 17: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
-                case 18: return new MessagePack.Formatters.SharedData.Vector2Formatter();
-                case 19: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
-                case 20: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
-                case 21: return new MessagePack.Formatters.SharedData.Version1Formatter();
-                case 22: return new MessagePack.Formatters.SharedData.Version2Formatter();
-                case 23: return new MessagePack.Formatters.SharedData.Version0Formatter();
-                case 24: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
-                case 25: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
-                case 26: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
-                case 27: return new MessagePack.Formatters.SharedData.Callback1Formatter();
-                case 28: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
-                case 29: return new MessagePack.Formatters.SharedData.Callback2Formatter();
-                case 30: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
-                case 31: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
-                case 32: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
-                case 33: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
-                case 34: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
-                case 35: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
-                case 36: return new MessagePack.Formatters.SharedData.MyClassFormatter();
-                case 37: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
-                case 38: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
-                case 39: return new MessagePack.Formatters.SharedData.Empty1Formatter();
-                case 40: return new MessagePack.Formatters.SharedData.Empty2Formatter();
-                case 41: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
-                case 42: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
-                case 43: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
-                case 44: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
-                case 45: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
-                case 46: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
-                case 47: return new MessagePack.Formatters.SharedData.FooClassFormatter();
-                case 48: return new MessagePack.Formatters.SharedData.BarClassFormatter();
-                case 49: return new MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqagaFormatter();
-                case 50: return new MessagePack.Formatters.GlobalManFormatter();
-                case 51: return new MessagePack.Formatters.MessageFormatter();
-                case 52: return new MessagePack.Formatters.TextMessageBodyFormatter();
-                case 53: return new MessagePack.Formatters.StampMessageBodyFormatter();
-                case 54: return new MessagePack.Formatters.QuestMessageBodyFormatter();
-                case 55: return new MessagePack.Formatters.ArrayTestTestFormatter();
+                case 6: return new global::MessagePack.Formatters.InterfaceDictionaryFormatter<string, string>();
+                case 7: return new global::MessagePack.Formatters.InterfaceListFormatter<global::SimpleModel>();
+                case 8: return new MessagePack.Formatters.SharedData.ByteEnumFormatter();
+                case 9: return new MessagePack.Formatters.GlobalMyEnumFormatter();
+                case 10: return new MessagePack.Formatters.SharedData.IUnionCheckerFormatter();
+                case 11: return new MessagePack.Formatters.SharedData.IUnionChecker2Formatter();
+                case 12: return new MessagePack.Formatters.SharedData.IIVersioningUnionFormatter();
+                case 13: return new MessagePack.Formatters.SharedData.IUnionSampleFormatter();
+                case 14: return new MessagePack.Formatters.IMessageBodyFormatter();
+                case 15: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
+                case 16: return new MessagePack.Formatters.SharedData.SimlpeStringKeyDataFormatter();
+                case 17: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
+                case 18: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
+                case 19: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
+                case 20: return new MessagePack.Formatters.SharedData.Vector2Formatter();
+                case 21: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
+                case 22: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
+                case 23: return new MessagePack.Formatters.SharedData.Version1Formatter();
+                case 24: return new MessagePack.Formatters.SharedData.Version2Formatter();
+                case 25: return new MessagePack.Formatters.SharedData.Version0Formatter();
+                case 26: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
+                case 27: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
+                case 28: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
+                case 29: return new MessagePack.Formatters.SharedData.Callback1Formatter();
+                case 30: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
+                case 31: return new MessagePack.Formatters.SharedData.Callback2Formatter();
+                case 32: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
+                case 33: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
+                case 34: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
+                case 35: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
+                case 36: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
+                case 37: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
+                case 38: return new MessagePack.Formatters.SharedData.MyClassFormatter();
+                case 39: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
+                case 40: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
+                case 41: return new MessagePack.Formatters.SharedData.Empty1Formatter();
+                case 42: return new MessagePack.Formatters.SharedData.Empty2Formatter();
+                case 43: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
+                case 44: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
+                case 45: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
+                case 46: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
+                case 47: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
+                case 48: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
+                case 49: return new MessagePack.Formatters.SharedData.FooClassFormatter();
+                case 50: return new MessagePack.Formatters.SharedData.BarClassFormatter();
+                case 51: return new MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqagaFormatter();
+                case 52: return new MessagePack.Formatters.GlobalManFormatter();
+                case 53: return new MessagePack.Formatters.MessageFormatter();
+                case 54: return new MessagePack.Formatters.TextMessageBodyFormatter();
+                case 55: return new MessagePack.Formatters.StampMessageBodyFormatter();
+                case 56: return new MessagePack.Formatters.QuestMessageBodyFormatter();
+                case 57: return new MessagePack.Formatters.ArrayTestTestFormatter();
+                case 58: return new MessagePack.Formatters.SimpleModelFormatter();
+                case 59: return new MessagePack.Formatters.ComplexModelFormatter();
                 default: return null;
             }
         }
@@ -3641,6 +3649,259 @@ namespace MessagePack.Formatters
             ____result.MyProperty4 = __MyProperty4__;
             ____result.MyProperty5 = __MyProperty5__;
             ____result.MyProperty6 = __MyProperty6__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class SimpleModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SimpleModel>
+    {
+
+        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
+
+        public SimpleModelFormatter()
+        {
+            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(6)
+            {
+                { "Id", 0},
+                { "Name", 1},
+                { "CreatedOn", 2},
+                { "Precision", 3},
+                { "Money", 4},
+                { "Amount", 5},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("Id"),
+                global::System.Text.Encoding.UTF8.GetBytes("Name"),
+                global::System.Text.Encoding.UTF8.GetBytes("CreatedOn"),
+                global::System.Text.Encoding.UTF8.GetBytes("Precision"),
+                global::System.Text.Encoding.UTF8.GetBytes("Money"),
+                global::System.Text.Encoding.UTF8.GetBytes("Amount"),
+                
+            };
+        }
+
+
+        public int Serialize(ref byte[] bytes, int offset, global::SimpleModel value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 6);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Id);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[1]);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.Name, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[2]);
+            offset += formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref bytes, offset, value.CreatedOn, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[3]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.Precision);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[4]);
+            offset += formatterResolver.GetFormatterWithVerify<decimal>().Serialize(ref bytes, offset, value.Money, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[5]);
+            offset += MessagePackBinary.WriteInt64(ref bytes, offset, value.Amount);
+            return offset - startOffset;
+        }
+
+        public global::SimpleModel Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __Id__ = default(int);
+            var __Name__ = default(string);
+            var __CreatedOn__ = default(global::System.DateTime);
+            var __Precision__ = default(int);
+            var __Money__ = default(decimal);
+            var __Amount__ = default(long);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (!____keyMapping.TryGetValue(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+
+                switch (key)
+                {
+                    case 0:
+                        __Id__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 1:
+                        __Name__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 2:
+                        __CreatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 3:
+                        __Precision__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 4:
+                        __Money__ = formatterResolver.GetFormatterWithVerify<decimal>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 5:
+                        __Amount__ = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                
+                NEXT_LOOP:
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SimpleModel();
+            ____result.Id = __Id__;
+            ____result.Name = __Name__;
+            ____result.CreatedOn = __CreatedOn__;
+            ____result.Precision = __Precision__;
+            ____result.Money = __Money__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class ComplexModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ComplexModel>
+    {
+
+        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
+
+        public ComplexModelFormatter()
+        {
+            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(6)
+            {
+                { "AdditionalProperty", 0},
+                { "CreatedOn", 1},
+                { "Id", 2},
+                { "Name", 3},
+                { "UpdatedOn", 4},
+                { "SimpleModels", 5},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("AdditionalProperty"),
+                global::System.Text.Encoding.UTF8.GetBytes("CreatedOn"),
+                global::System.Text.Encoding.UTF8.GetBytes("Id"),
+                global::System.Text.Encoding.UTF8.GetBytes("Name"),
+                global::System.Text.Encoding.UTF8.GetBytes("UpdatedOn"),
+                global::System.Text.Encoding.UTF8.GetBytes("SimpleModels"),
+                
+            };
+        }
+
+
+        public int Serialize(ref byte[] bytes, int offset, global::ComplexModel value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 6);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
+            offset += formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Serialize(ref bytes, offset, value.AdditionalProperty, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[1]);
+            offset += formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Serialize(ref bytes, offset, value.CreatedOn, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[2]);
+            offset += formatterResolver.GetFormatterWithVerify<global::System.Guid>().Serialize(ref bytes, offset, value.Id, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[3]);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.Name, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[4]);
+            offset += formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Serialize(ref bytes, offset, value.UpdatedOn, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[5]);
+            offset += formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Serialize(ref bytes, offset, value.SimpleModels, formatterResolver);
+            return offset - startOffset;
+        }
+
+        public global::ComplexModel Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __AdditionalProperty__ = default(global::System.Collections.Generic.IDictionary<string, string>);
+            var __CreatedOn__ = default(global::System.DateTimeOffset);
+            var __Id__ = default(global::System.Guid);
+            var __Name__ = default(string);
+            var __UpdatedOn__ = default(global::System.DateTimeOffset);
+            var __SimpleModels__ = default(global::System.Collections.Generic.IList<global::SimpleModel>);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (!____keyMapping.TryGetValue(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+
+                switch (key)
+                {
+                    case 0:
+                        __AdditionalProperty__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 1:
+                        __CreatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 2:
+                        __Id__ = formatterResolver.GetFormatterWithVerify<global::System.Guid>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 3:
+                        __Name__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 4:
+                        __UpdatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 5:
+                        __SimpleModels__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                
+                NEXT_LOOP:
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::ComplexModel();
+            ____result.CreatedOn = __CreatedOn__;
+            ____result.Id = __Id__;
+            ____result.Name = __Name__;
+            ____result.UpdatedOn = __UpdatedOn__;
             return ____result;
         }
     }

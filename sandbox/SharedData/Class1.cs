@@ -794,3 +794,55 @@ public class ArrayTestTest
     [Key(6)]
     public QuestMessageBody[] MyProperty6 { get; set; }
 }
+
+[MessagePackObject(true)]
+public class ComplexModel
+{
+    public IDictionary<string, string> AdditionalProperty { get; } = new Dictionary<string, string>();
+
+    public DateTimeOffset CreatedOn { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string Name { get; set; }
+
+    public DateTimeOffset UpdatedOn { get; set; }
+
+    public IList<SimpleModel> SimpleModels { get; } = new List<SimpleModel>();
+}
+
+[MessagePackObject(true)]
+public class SimpleModel
+{
+
+    private decimal money;
+
+    public int Id { get; set; }
+
+    public string Name { get; set; }
+
+    public DateTime CreatedOn { get; set; }
+
+    public int Precision { get; set; } = 4;
+
+    public decimal Money
+    {
+        get
+        {
+            return this.money;
+        }
+
+        set
+        {
+            this.money = Math.Round(value, this.Precision);
+        }
+    }
+
+    public long Amount
+    {
+        get
+        {
+            return (long)Math.Round(this.Money, 0, MidpointRounding.ToEven);
+        }
+    }
+}
