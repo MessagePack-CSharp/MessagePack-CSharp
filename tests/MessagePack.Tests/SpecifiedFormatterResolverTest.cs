@@ -134,6 +134,44 @@ namespace MessagePack.Tests
             public int A { get; set; }
         }
 
+
+        [MessagePackFormatter(typeof(NoObjectFormatter), CustomyEnumObject.C)]
+        class CustomClassObjectWithArgument
+        {
+            int X;
+
+            public CustomClassObjectWithArgument(int x)
+            {
+                this.X = x;
+            }
+
+            public int GetX()
+            {
+                return X;
+            }
+
+            class NoObjectFormatter : IMessagePackFormatter<CustomClassObjectWithArgument>
+            {
+                CustomyEnumObject x;
+
+                public NoObjectFormatter(CustomyEnumObject x)
+                {
+                    this.x = x;
+                }
+
+                public CustomClassObjectWithArgument Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+                {
+                    var r = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                    return new CustomClassObjectWithArgument(r);
+                }
+
+                public int Serialize(ref byte[] bytes, int offset, CustomClassObjectWithArgument value, IFormatterResolver formatterResolver)
+                {
+                    return MessagePackBinary.WriteInt32(ref bytes, offset, value.X * (int)x);
+                }
+            }
+        }
+
         T Convert<T>(T value)
         {
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, MessagePack.Resolvers.StandardResolver.Instance), MessagePack.Resolvers.StandardResolver.Instance);
@@ -147,6 +185,12 @@ namespace MessagePack.Tests
             Convert(CustomyEnumObject.C).Is(CustomyEnumObject.C);
             Convert((CustomyEnumObject)(1234)).Is(CustomyEnumObject.B);
             Convert<ICustomInterfaceObject>(new HogeMoge { A = 999 }).A.Is(999);
+        }
+
+        [Fact]
+        public void WithArg()
+        {
+            Convert(new CustomClassObjectWithArgument(999)).GetX().Is(999 * 2);
         }
     }
 }

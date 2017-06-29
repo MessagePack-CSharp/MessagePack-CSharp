@@ -33,7 +33,14 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType);
+                if (attr.Arguments == null)
+                {
+                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType);
+                }
+                else
+                {
+                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType, attr.Arguments);
+                }
             }
         }
     }
