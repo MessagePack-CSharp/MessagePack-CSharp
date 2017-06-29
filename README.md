@@ -206,6 +206,14 @@ I don't need type, I want to use like BinaryFormatter! You can use as typeless r
 
 Resolver is key customize point of MessagePack for C#. Details, please see [extension point](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
 
+DataContract compatibility
+---
+You can use `[DataContract]` instead of `[MessagePackObject]`. If type is marked DataContract, you can use `[DataMember]` instead of `[Key]` and `[Ignore]` instead of `[IgnoreDataMember]`.
+
+`[DataMember(Order = int)]` is same as `[Key(int)]`, `[DataMember(Name = string)]` is same as `[Key(string)]`. If use `[DataMember]`, same as `[Key(nameof(propertyname)]`.
+
+Using DataContract makes it a shared class library and you do not have to refer to MessagePack for C#. However, it is not included in analysis by Analyzer or code generation by `mpc.exe`. Also, functions like `UnionAttribute`, `MessagePackFormatterAttribute`, `SerializationConstructorAttribute` etc can not be used. For this reason, I recommend that you use the MessagePack for C# attribute basically.
+
 Serialize ImmutableObject(SerializationConstructor)
 ---
 MessagePack for C# supports deserialize immutable object. For example, this struct can serialize/deserialize naturally.
@@ -933,6 +941,20 @@ public class CustomObject
 ```
 
 Formatter is retrieved by `AttributeFormatterResolver`, it is included in `StandardResolver`.
+
+Reserved Extension Types
+---
+MessagePack for C# already used some messagepack ext type codes, be careful to use same ext code.
+
+| Resovler Name | Description |
+| --- | --- |
+| BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
+| StandardResolver | Composited resolver. It resolves in the following order `builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive object`. This is the default of MessagePackSerializer. |
+| ContractlessStandardResolver | Composited `StandardResolver`(except primitive) -> `DynamicContractlessObjectResolver` -> `DynamicObjectTypeFallbackResolver`. It enables contractless serialization. |
+| PrimitiveObjectResolver | MessagePack primitive object resolver. It is used fallback in `object` type and supports `bool`, `char`, `sbyte`, `byte`, `short`, `int`, `long`, `ushort`, `uint`, `ulong`, `float`, `double`, `DateTime`, `string`, `byte[]`, `ICollection`, `IDictionary`. |
+| DynamicObjectTypeFallbackResolver | It is used fallback in `object` type and resolve primitive object -> dynamic contractless object |
+| AttributeFormatterResolver | Get formatter from `[MessagePackFormatter]` attribute. |
+
 
 for Unity
 ---

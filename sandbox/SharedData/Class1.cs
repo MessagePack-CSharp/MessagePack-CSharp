@@ -798,7 +798,7 @@ public class ArrayTestTest
 [MessagePackObject(true)]
 public class ComplexModel
 {
-    public IDictionary<string, string> AdditionalProperty { get; } = new Dictionary<string, string>();
+    public IDictionary<string, string> AdditionalProperty { get; private set; }
 
     public DateTimeOffset CreatedOn { get; set; }
 
@@ -808,7 +808,13 @@ public class ComplexModel
 
     public DateTimeOffset UpdatedOn { get; set; }
 
-    public IList<SimpleModel> SimpleModels { get; } = new List<SimpleModel>();
+    public IList<SimpleModel> SimpleModels { get; private set; }
+
+    public ComplexModel()
+    {
+        AdditionalProperty = new Dictionary<string, string>();
+        SimpleModels = new List<SimpleModel>();
+    }
 }
 
 [MessagePackObject(true)]
@@ -823,7 +829,12 @@ public class SimpleModel
 
     public DateTime CreatedOn { get; set; }
 
-    public int Precision { get; set; } = 4;
+    public int Precision { get; set; }
+
+    public SimpleModel()
+    {
+        Precision = 4;
+    }
 
     public decimal Money
     {
