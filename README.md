@@ -946,15 +946,21 @@ Reserved Extension Types
 ---
 MessagePack for C# already used some messagepack ext type codes, be careful to use same ext code.
 
-| Resovler Name | Description |
-| --- | --- |
-| BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
-| StandardResolver | Composited resolver. It resolves in the following order `builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive object`. This is the default of MessagePackSerializer. |
-| ContractlessStandardResolver | Composited `StandardResolver`(except primitive) -> `DynamicContractlessObjectResolver` -> `DynamicObjectTypeFallbackResolver`. It enables contractless serialization. |
-| PrimitiveObjectResolver | MessagePack primitive object resolver. It is used fallback in `object` type and supports `bool`, `char`, `sbyte`, `byte`, `short`, `int`, `long`, `ushort`, `uint`, `ulong`, `float`, `double`, `DateTime`, `string`, `byte[]`, `ICollection`, `IDictionary`. |
-| DynamicObjectTypeFallbackResolver | It is used fallback in `object` type and resolve primitive object -> dynamic contractless object |
-| AttributeFormatterResolver | Get formatter from `[MessagePackFormatter]` attribute. |
-
+| Code | Type | Use by |
+| ---  | ---  | --- |
+| -1 | DateTime | msgpack-spec reserved for timestamp |
+| 30 | Vector2[] | for Unity, UnsafeBlitFormatter |
+| 31 | Vector3[] | for Unity, UnsafeBlitFormatter |
+| 32 | Vector4[] | for Unity, UnsafeBlitFormatter |
+| 33 | Quaternion[] | for Unity, UnsafeBlitFormatter |
+| 34 | Color[] | for Unity, UnsafeBlitFormatter |
+| 35 | Bounds[] | for Unity, UnsafeBlitFormatter |
+| 36 | Rect[] | for Unity, UnsafeBlitFormatter |
+| 37 | Int[] | for Unity, UnsafeBlitFormatter |
+| 38 | Float[] | for Unity, UnsafeBlitFormatter |
+| 39 | Double[] | for Unity, UnsafeBlitFormatter |
+| 99 | All | LZ4MessagePackSerializer |
+| 100 | object | TypelessFormatter |
 
 for Unity
 ---
