@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 
+#if !(ENABLE_MONO_BLEEDING_EDGE_EDITOR || ENABLE_MONO_BLEEDING_EDGE_STANDALONE)
 namespace System.Reflection
 {
     public class TypeInfo
@@ -100,9 +101,12 @@ namespace System.Reflection
             }
         }
 
-        public bool IsConstructedGenericType()
+        public bool IsConstructedGenericType
         {
-            return type.IsGenericType && !type.IsGenericTypeDefinition;
+            get
+            {
+                return type.IsGenericType && !type.IsGenericTypeDefinition;
+            }
         }
 
         public Type[] ImplementedInterfaces
@@ -201,3 +205,4 @@ namespace System.Reflection
         }
     }
 }
+#endif
