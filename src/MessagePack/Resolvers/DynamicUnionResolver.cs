@@ -81,6 +81,10 @@ namespace MessagePack.Resolvers
             var unionAttrs = ti.GetCustomAttributes<UnionAttribute>().OrderBy(x => x.Key).ToArray();
 
             if (unionAttrs.Length == 0) return null;
+            if (!ti.IsInterface && !ti.IsAbstract)
+            {
+                throw new MessagePackDynamicUnionResolverException("Union can only be interface or abstract class. Type:" + type.Name);
+            }
 
             var checker1 = new HashSet<int>();
             var checker2 = new HashSet<Type>();

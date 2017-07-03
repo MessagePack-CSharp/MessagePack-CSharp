@@ -43,7 +43,7 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(60)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(63)
             {
                 {typeof(int[,]), 0 },
                 {typeof(global::GlobalMyEnum[,]), 1 },
@@ -58,53 +58,56 @@ namespace MessagePack.Resolvers
                 {typeof(global::SharedData.IUnionChecker), 10 },
                 {typeof(global::SharedData.IUnionChecker2), 11 },
                 {typeof(global::SharedData.IIVersioningUnion), 12 },
-                {typeof(global::SharedData.IUnionSample), 13 },
-                {typeof(global::IMessageBody), 14 },
-                {typeof(global::SharedData.FirstSimpleData), 15 },
-                {typeof(global::SharedData.SimlpeStringKeyData), 16 },
-                {typeof(global::SharedData.SimpleStructIntKeyData), 17 },
-                {typeof(global::SharedData.SimpleStructStringKeyData), 18 },
-                {typeof(global::SharedData.SimpleIntKeyData), 19 },
-                {typeof(global::SharedData.Vector2), 20 },
-                {typeof(global::SharedData.EmptyClass), 21 },
-                {typeof(global::SharedData.EmptyStruct), 22 },
-                {typeof(global::SharedData.Version1), 23 },
-                {typeof(global::SharedData.Version2), 24 },
-                {typeof(global::SharedData.Version0), 25 },
-                {typeof(global::SharedData.HolderV1), 26 },
-                {typeof(global::SharedData.HolderV2), 27 },
-                {typeof(global::SharedData.HolderV0), 28 },
-                {typeof(global::SharedData.Callback1), 29 },
-                {typeof(global::SharedData.Callback1_2), 30 },
-                {typeof(global::SharedData.Callback2), 31 },
-                {typeof(global::SharedData.Callback2_2), 32 },
-                {typeof(global::SharedData.MySubUnion1), 33 },
-                {typeof(global::SharedData.MySubUnion2), 34 },
-                {typeof(global::SharedData.MySubUnion3), 35 },
-                {typeof(global::SharedData.MySubUnion4), 36 },
-                {typeof(global::SharedData.VersioningUnion), 37 },
-                {typeof(global::SharedData.MyClass), 38 },
-                {typeof(global::SharedData.VersionBlockTest), 39 },
-                {typeof(global::SharedData.UnVersionBlockTest), 40 },
-                {typeof(global::SharedData.Empty1), 41 },
-                {typeof(global::SharedData.Empty2), 42 },
-                {typeof(global::SharedData.NonEmpty1), 43 },
-                {typeof(global::SharedData.NonEmpty2), 44 },
-                {typeof(global::SharedData.VectorLike2), 45 },
-                {typeof(global::SharedData.Vector3Like), 46 },
-                {typeof(global::SharedData.ArrayOptimizeClass), 47 },
-                {typeof(global::SharedData.NestParent.NestContract), 48 },
-                {typeof(global::SharedData.FooClass), 49 },
-                {typeof(global::SharedData.BarClass), 50 },
-                {typeof(global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga), 51 },
-                {typeof(global::GlobalMan), 52 },
-                {typeof(global::Message), 53 },
-                {typeof(global::TextMessageBody), 54 },
-                {typeof(global::StampMessageBody), 55 },
-                {typeof(global::QuestMessageBody), 56 },
-                {typeof(global::ArrayTestTest), 57 },
-                {typeof(global::SimpleModel), 58 },
-                {typeof(global::ComplexModel), 59 },
+                {typeof(global::SharedData.RootUnionType), 13 },
+                {typeof(global::SharedData.IUnionSample), 14 },
+                {typeof(global::IMessageBody), 15 },
+                {typeof(global::SharedData.FirstSimpleData), 16 },
+                {typeof(global::SharedData.SimlpeStringKeyData), 17 },
+                {typeof(global::SharedData.SimpleStructIntKeyData), 18 },
+                {typeof(global::SharedData.SimpleStructStringKeyData), 19 },
+                {typeof(global::SharedData.SimpleIntKeyData), 20 },
+                {typeof(global::SharedData.Vector2), 21 },
+                {typeof(global::SharedData.EmptyClass), 22 },
+                {typeof(global::SharedData.EmptyStruct), 23 },
+                {typeof(global::SharedData.Version1), 24 },
+                {typeof(global::SharedData.Version2), 25 },
+                {typeof(global::SharedData.Version0), 26 },
+                {typeof(global::SharedData.HolderV1), 27 },
+                {typeof(global::SharedData.HolderV2), 28 },
+                {typeof(global::SharedData.HolderV0), 29 },
+                {typeof(global::SharedData.Callback1), 30 },
+                {typeof(global::SharedData.Callback1_2), 31 },
+                {typeof(global::SharedData.Callback2), 32 },
+                {typeof(global::SharedData.Callback2_2), 33 },
+                {typeof(global::SharedData.SubUnionType1), 34 },
+                {typeof(global::SharedData.SubUnionType2), 35 },
+                {typeof(global::SharedData.MySubUnion1), 36 },
+                {typeof(global::SharedData.MySubUnion2), 37 },
+                {typeof(global::SharedData.MySubUnion3), 38 },
+                {typeof(global::SharedData.MySubUnion4), 39 },
+                {typeof(global::SharedData.VersioningUnion), 40 },
+                {typeof(global::SharedData.MyClass), 41 },
+                {typeof(global::SharedData.VersionBlockTest), 42 },
+                {typeof(global::SharedData.UnVersionBlockTest), 43 },
+                {typeof(global::SharedData.Empty1), 44 },
+                {typeof(global::SharedData.Empty2), 45 },
+                {typeof(global::SharedData.NonEmpty1), 46 },
+                {typeof(global::SharedData.NonEmpty2), 47 },
+                {typeof(global::SharedData.VectorLike2), 48 },
+                {typeof(global::SharedData.Vector3Like), 49 },
+                {typeof(global::SharedData.ArrayOptimizeClass), 50 },
+                {typeof(global::SharedData.NestParent.NestContract), 51 },
+                {typeof(global::SharedData.FooClass), 52 },
+                {typeof(global::SharedData.BarClass), 53 },
+                {typeof(global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga), 54 },
+                {typeof(global::GlobalMan), 55 },
+                {typeof(global::Message), 56 },
+                {typeof(global::TextMessageBody), 57 },
+                {typeof(global::StampMessageBody), 58 },
+                {typeof(global::QuestMessageBody), 59 },
+                {typeof(global::ArrayTestTest), 60 },
+                {typeof(global::SimpleModel), 61 },
+                {typeof(global::ComplexModel), 62 },
             };
         }
 
@@ -128,53 +131,56 @@ namespace MessagePack.Resolvers
                 case 10: return new MessagePack.Formatters.SharedData.IUnionCheckerFormatter();
                 case 11: return new MessagePack.Formatters.SharedData.IUnionChecker2Formatter();
                 case 12: return new MessagePack.Formatters.SharedData.IIVersioningUnionFormatter();
-                case 13: return new MessagePack.Formatters.SharedData.IUnionSampleFormatter();
-                case 14: return new MessagePack.Formatters.IMessageBodyFormatter();
-                case 15: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
-                case 16: return new MessagePack.Formatters.SharedData.SimlpeStringKeyDataFormatter();
-                case 17: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
-                case 18: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
-                case 19: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
-                case 20: return new MessagePack.Formatters.SharedData.Vector2Formatter();
-                case 21: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
-                case 22: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
-                case 23: return new MessagePack.Formatters.SharedData.Version1Formatter();
-                case 24: return new MessagePack.Formatters.SharedData.Version2Formatter();
-                case 25: return new MessagePack.Formatters.SharedData.Version0Formatter();
-                case 26: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
-                case 27: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
-                case 28: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
-                case 29: return new MessagePack.Formatters.SharedData.Callback1Formatter();
-                case 30: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
-                case 31: return new MessagePack.Formatters.SharedData.Callback2Formatter();
-                case 32: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
-                case 33: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
-                case 34: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
-                case 35: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
-                case 36: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
-                case 37: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
-                case 38: return new MessagePack.Formatters.SharedData.MyClassFormatter();
-                case 39: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
-                case 40: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
-                case 41: return new MessagePack.Formatters.SharedData.Empty1Formatter();
-                case 42: return new MessagePack.Formatters.SharedData.Empty2Formatter();
-                case 43: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
-                case 44: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
-                case 45: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
-                case 46: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
-                case 47: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
-                case 48: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
-                case 49: return new MessagePack.Formatters.SharedData.FooClassFormatter();
-                case 50: return new MessagePack.Formatters.SharedData.BarClassFormatter();
-                case 51: return new MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqagaFormatter();
-                case 52: return new MessagePack.Formatters.GlobalManFormatter();
-                case 53: return new MessagePack.Formatters.MessageFormatter();
-                case 54: return new MessagePack.Formatters.TextMessageBodyFormatter();
-                case 55: return new MessagePack.Formatters.StampMessageBodyFormatter();
-                case 56: return new MessagePack.Formatters.QuestMessageBodyFormatter();
-                case 57: return new MessagePack.Formatters.ArrayTestTestFormatter();
-                case 58: return new MessagePack.Formatters.SimpleModelFormatter();
-                case 59: return new MessagePack.Formatters.ComplexModelFormatter();
+                case 13: return new MessagePack.Formatters.SharedData.RootUnionTypeFormatter();
+                case 14: return new MessagePack.Formatters.SharedData.IUnionSampleFormatter();
+                case 15: return new MessagePack.Formatters.IMessageBodyFormatter();
+                case 16: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
+                case 17: return new MessagePack.Formatters.SharedData.SimlpeStringKeyDataFormatter();
+                case 18: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
+                case 19: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
+                case 20: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
+                case 21: return new MessagePack.Formatters.SharedData.Vector2Formatter();
+                case 22: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
+                case 23: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
+                case 24: return new MessagePack.Formatters.SharedData.Version1Formatter();
+                case 25: return new MessagePack.Formatters.SharedData.Version2Formatter();
+                case 26: return new MessagePack.Formatters.SharedData.Version0Formatter();
+                case 27: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
+                case 28: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
+                case 29: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
+                case 30: return new MessagePack.Formatters.SharedData.Callback1Formatter();
+                case 31: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
+                case 32: return new MessagePack.Formatters.SharedData.Callback2Formatter();
+                case 33: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
+                case 34: return new MessagePack.Formatters.SharedData.SubUnionType1Formatter();
+                case 35: return new MessagePack.Formatters.SharedData.SubUnionType2Formatter();
+                case 36: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
+                case 37: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
+                case 38: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
+                case 39: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
+                case 40: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
+                case 41: return new MessagePack.Formatters.SharedData.MyClassFormatter();
+                case 42: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
+                case 43: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
+                case 44: return new MessagePack.Formatters.SharedData.Empty1Formatter();
+                case 45: return new MessagePack.Formatters.SharedData.Empty2Formatter();
+                case 46: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
+                case 47: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
+                case 48: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
+                case 49: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
+                case 50: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
+                case 51: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
+                case 52: return new MessagePack.Formatters.SharedData.FooClassFormatter();
+                case 53: return new MessagePack.Formatters.SharedData.BarClassFormatter();
+                case 54: return new MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqagaFormatter();
+                case 55: return new MessagePack.Formatters.GlobalManFormatter();
+                case 56: return new MessagePack.Formatters.MessageFormatter();
+                case 57: return new MessagePack.Formatters.TextMessageBodyFormatter();
+                case 58: return new MessagePack.Formatters.StampMessageBodyFormatter();
+                case 59: return new MessagePack.Formatters.QuestMessageBodyFormatter();
+                case 60: return new MessagePack.Formatters.ArrayTestTestFormatter();
+                case 61: return new MessagePack.Formatters.SimpleModelFormatter();
+                case 62: return new MessagePack.Formatters.ComplexModelFormatter();
                 default: return null;
             }
         }
@@ -545,6 +551,97 @@ namespace MessagePack.Formatters.SharedData
 			{
 				case 0:
 					result = (global::SharedData.IIVersioningUnion)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+					offset += readSize;
+					break;
+				default:
+					offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+					break;
+			}
+			
+			readSize = offset - startOffset;
+			
+			return result;
+        }
+    }
+
+    public sealed class RootUnionTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.RootUnionType>
+    {
+		readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
+		readonly Dictionary<int, int> keyToJumpMap;
+
+		public RootUnionTypeFormatter()
+		{
+			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+			{
+				{ typeof(global::SharedData.SubUnionType1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
+				{ typeof(global::SharedData.SubUnionType2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
+			};
+			this.keyToJumpMap = new Dictionary<int, int>(2)
+			{
+				{ 0, 0 },
+				{ 1, 1 },
+			};
+		}
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.RootUnionType value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+			KeyValuePair<int, int> keyValuePair;
+			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+			{
+				var startOffset = offset;
+				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+				switch (keyValuePair.Value)
+				{
+					case 0:
+						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType1>().Serialize(ref bytes, offset, (global::SharedData.SubUnionType1)value, formatterResolver);
+						break;
+					case 1:
+						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType2>().Serialize(ref bytes, offset, (global::SharedData.SubUnionType2)value, formatterResolver);
+						break;
+					default:
+						break;
+				}
+
+				return offset - startOffset;
+			}
+
+			return MessagePackBinary.WriteNil(ref bytes, offset);
+        }
+        
+        public global::SharedData.RootUnionType Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+			{
+				readSize = 1;
+				return null;
+			}
+
+			var startOffset = offset;
+			
+			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+			{
+				throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.RootUnionType");
+			}
+			offset += readSize;
+
+			var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+			offset += readSize;
+
+            if (!this.keyToJumpMap.TryGetValue(key, out key))
+			{
+				key = -1;
+			}
+
+			global::SharedData.RootUnionType result = null;
+			switch (key)
+			{
+				case 0:
+					result = (global::SharedData.RootUnionType)formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+					offset += readSize;
+					break;
+				case 1:
+					result = (global::SharedData.RootUnionType)formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType2>().Deserialize(bytes, offset, formatterResolver, out readSize);
 					offset += readSize;
 					break;
 				default:
@@ -1998,6 +2095,128 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.Callback2_2(__X__);
             ____result.X = __X__;
             ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+            return ____result;
+        }
+    }
+
+
+    public sealed class SubUnionType1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SubUnionType1>
+    {
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.SubUnionType1 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty1);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.SubUnionType1 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __MyProperty1__ = default(int);
+            var __MyProperty__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 1:
+                        __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 0:
+                        __MyProperty__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.SubUnionType1();
+            ____result.MyProperty1 = __MyProperty1__;
+            ____result.MyProperty = __MyProperty__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class SubUnionType2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SubUnionType2>
+    {
+
+        public int Serialize(ref byte[] bytes, int offset, global::SharedData.SubUnionType2 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty2);
+            return offset - startOffset;
+        }
+
+        public global::SharedData.SubUnionType2 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __MyProperty2__ = default(int);
+            var __MyProperty__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 1:
+                        __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 0:
+                        __MyProperty__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::SharedData.SubUnionType2();
+            ____result.MyProperty2 = __MyProperty2__;
+            ____result.MyProperty = __MyProperty__;
             return ____result;
         }
     }

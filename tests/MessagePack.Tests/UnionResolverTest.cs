@@ -70,7 +70,7 @@ namespace MessagePack.Tests
         [Fact]
         public void Union2()
         {
-            
+
 
             var a = MessagePackSerializer.Serialize<IMessageBody>(new TextMessageBody() { Text = "hoge" });
             var b = MessagePackSerializer.Serialize<IMessageBody>(new StampMessageBody() { StampId = 10 });
@@ -83,6 +83,24 @@ namespace MessagePack.Tests
             (a2 as TextMessageBody).Text.Is("hoge");
             (b2 as StampMessageBody).StampId.Is(10);
             (c2 as QuestMessageBody).Is(x => x.Text == "hugahuga" && x.QuestId == 99);
+        }
+
+        [Fact]
+        public void ClassUnion()
+        {
+            //var a = new RootUnionType() { MyProperty = 10 };
+            var b = new SubUnionType1() { MyProperty = 11, MyProperty1 = 100 };
+            var c = new SubUnionType2() { MyProperty = 12, MyProperty2 = 200 };
+
+            // var binA = MessagePackSerializer.Serialize<RootUnionType>(a);
+            var binB = MessagePackSerializer.Serialize<RootUnionType>(b);
+            var binC = MessagePackSerializer.Serialize<RootUnionType>(c);
+
+            var b2 = MessagePackSerializer.Deserialize<RootUnionType>(binB) as SubUnionType1;
+            var c2 = MessagePackSerializer.Deserialize<RootUnionType>(binC) as SubUnionType2;
+
+            b2.MyProperty.Is(11); b2.MyProperty1.Is(100);
+            c2.MyProperty.Is(12); c2.MyProperty2.Is(200);
         }
     }
 }
@@ -154,5 +172,32 @@ namespace ComplexdUnion
     {
         [Key(2)]
         public virtual int Valer { get; set; }
+    }
+}
+
+
+namespace ClassUnion
+{
+    [Union(0, typeof(SubUnionType1))]
+    [Union(1, typeof(SubUnionType2))]
+    [MessagePackObject]
+    public abstract class RootUnionType
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType1 : RootUnionType
+    {
+        [Key(1)]
+        public int MyProperty1 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType2 : RootUnionType
+    {
+        [Key(1)]
+        public int MyProperty2 { get; set; }
     }
 }

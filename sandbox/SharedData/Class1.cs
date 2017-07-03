@@ -316,6 +316,29 @@ namespace SharedData
 
     }
 
+    [Union(0, typeof(SubUnionType1))]
+    [Union(1, typeof(SubUnionType2))]
+    [MessagePackObject]
+    public abstract class RootUnionType
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType1 : RootUnionType
+    {
+        [Key(1)]
+        public int MyProperty1 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType2 : RootUnionType
+    {
+        [Key(1)]
+        public int MyProperty2 { get; set; }
+    }
+
     [MessagePackObject]
     public class MySubUnion1 : IUnionChecker, IUnionChecker2
     {

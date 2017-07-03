@@ -35,7 +35,7 @@ namespace MessagePack
     {
     }
 
-    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = true, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class UnionAttribute : Attribute
     {
         public int Key { get; private set; }

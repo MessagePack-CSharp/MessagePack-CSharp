@@ -211,6 +211,7 @@ namespace MessagePack.CodeGenerator
                 })
                 .Where(x =>
                        ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
+                    || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
                     || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribnute))
                     || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribnute))
                     )
@@ -282,7 +283,7 @@ namespace MessagePack.CodeGenerator
                 return;
             }
 
-            if (type.TypeKind == TypeKind.Interface)
+            if (type.TypeKind == TypeKind.Interface || (type.TypeKind == TypeKind.Class && type.IsAbstract))
             {
                 CollectUnion(type);
                 return;
@@ -310,7 +311,7 @@ namespace MessagePack.CodeGenerator
             var unionAttrs = type.GetAttributes().Where(x => x.AttributeClass == typeReferences.UnionAttribute).Select(x => x.ConstructorArguments).ToArray();
             if (unionAttrs.Length == 0)
             {
-                throw new MessagePackGeneratorResolveFailedException("Serialization Interface must mark UnionAttribute." + " type: " + type.Name);
+                throw new MessagePackGeneratorResolveFailedException("Serialization Type must mark UnionAttribute." + " type: " + type.Name);
             }
 
             // 0, Int  1, SubType

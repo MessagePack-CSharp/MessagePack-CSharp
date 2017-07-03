@@ -35,6 +35,8 @@ namespace DynamicCodeDumper
             DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
             DynamicUnionResolver.Instance.GetFormatter<IUnionChecker2>();
 
+            DynamicUnionResolver.Instance.GetFormatter<RootUnionType>();
+
             DynamicEnumResolver.Instance.GetFormatter<IntEnum>();
             DynamicEnumResolver.Instance.GetFormatter<ShortEnum>();
 
