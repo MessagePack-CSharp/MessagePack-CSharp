@@ -55,7 +55,7 @@ public class MyClass
     public string LastName { get; set; }
 
     // public members and does not serialize target, mark IgnoreMemberttribute
-	[IgnoreMember]
+    [IgnoreMember]
     public string FullName { get { return FirstName + LastName; } }
 }
 
@@ -208,7 +208,7 @@ Resolver is key customize point of MessagePack for C#. Details, please see [exte
 
 DataContract compatibility
 ---
-You can use `[DataContract]` instead of `[MessagePackObject]`. If type is marked DataContract, you can use `[DataMember]` instead of `[Key]` and `[Ignore]` instead of `[IgnoreDataMember]`.
+You can use `[DataContract]` instead of `[MessagePackObject]`. If type is marked DataContract, you can use `[DataMember]` instead of `[Key]` and `[IgnoreDataMember]` instead of `[IgnoreMember]`.
 
 `[DataMember(Order = int)]` is same as `[Key(int)]`, `[DataMember(Name = string)]` is same as `[Key(string)]`. If use `[DataMember]`, same as `[Key(nameof(propertyname)]`.
 
@@ -295,7 +295,7 @@ public class SampleCallback : IMessagePackSerializationCallbackReceiver
 
 Union
 ---
-MessagePack for C# supports serialize interface. It is like `XmlInclude` or `ProtoInclude`. MessagePack for C# there called *Union*. `UnionAttribute` can only attach to interface. It requires discriminated integer key and sub-type.
+MessagePack for C# supports serialize interface. It is like `XmlInclude` or `ProtoInclude`. MessagePack for C# there called *Union*. `UnionAttribute` can only attach to interface or abstract class. It requires discriminated integer key and sub-type.
 
 ```csharp
 // mark inheritance types
@@ -354,54 +354,34 @@ var bin = MessagePackSerializer.Serialize(data);
 // [1,["FooBar"]]
 Console.WriteLine(MessagePackSerializer.ToJson(bin));
 ```
-
-Tips: If you want to pass single primitive like F#'s discriminated union. You can create single generic value and marked interface.
+Using Union in Abstract Class, you can use same of interface.
 
 ```csharp
-[Union(0, typeof(UnionValue<int>))]
-[Union(1, typeof(UnionValue<float>))]
-public interface IPrimitiveUnionA
+[Union(0, typeof(SubUnionType1))]
+[Union(1, typeof(SubUnionType2))]
+[MessagePackObject]
+public abstract class ParentUnionType
 {
-}
-
-[Union(0, typeof(UnionValue<string>))]
-[Union(1, typeof(UnionValue<ValueTuple<int, int>>))]
-public interface IPrimitiveUnionB
-{
+    [Key(0)]
+    public int MyProperty { get; set; }
 }
 
 [MessagePackObject]
-public class UnionValue<T> : IPrimitiveUnionA, IPrimitiveUnionB //, add your union types...
+public class SubUnionType1 : ParentUnionType
 {
-    [Key(0)]
-    public T Value { get; private set; }
-
-    [SerializationConstructor]
-    public UnionValue(T value)
-    {
-        this.Value = value;
-    }
+    [Key(1)]
+    public int MyProperty1 { get; set; }
 }
 
-// helper of typesafe create value..
-public static class PrimitiveUnionA
+[MessagePackObject]
+public class SubUnionType2 : ParentUnionType
 {
-    public static IPrimitiveUnionA Create(int value)
-    {
-        return new UnionValue<int>(value);
-    }
-
-    public static IPrimitiveUnionA Create(float value)
-    {
-        return new UnionValue<float>(value);
-    }
+    [Key(1)]
+    public int MyProperty2 { get; set; }
 }
-
-// usage, create value and Serialize/Deserialize...
-
-var a1 = PrimitiveUnionA.Create(100);
-var a2 = PrimitiveUnionA.Create(100.423f);
 ```
+
+Serialization of inherited type, flatten in array(or map), be carefult to integer key, it cannot duplicate parent and all childrens.
 
 Dynamic(Untyped) Deserialization
 ---
