@@ -1,4 +1,6 @@
-﻿using System;
+﻿
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -7,6 +9,8 @@ using System.Text;
 
 namespace System.Reflection
 {
+#if !NET_4_6
+
     public class TypeInfo
     {
         readonly Type type;
@@ -29,6 +33,22 @@ namespace System.Reflection
             get
             {
                 return type.IsPublic;
+            }
+        }
+
+        public bool IsInterface
+        {
+            get
+            {
+                return type.IsInterface;
+            }
+        }
+
+        public bool IsAbstract
+        {
+            get
+            {
+                return type.IsAbstract;
             }
         }
 
@@ -135,12 +155,12 @@ namespace System.Reflection
         }
     }
 
+#endif
+
     public static class ReflectionExtensions
     {
-        public static MethodInfo GetRuntimeMethod(this Type type, string name, Type[] types)
-        {
-            return type.GetMethod(name, types);
-        }
+
+#if !NET_4_6
 
         public static TypeInfo GetTypeInfo(this Type type)
         {
@@ -150,6 +170,11 @@ namespace System.Reflection
         public static TypeInfo CreateTypeInfo(this TypeBuilder type)
         {
             return new TypeInfo(type.CreateType());
+        }
+
+        public static MethodInfo GetRuntimeMethod(this Type type, string name, Type[] types)
+        {
+            return type.GetMethod(name, types);
         }
 
         public static MethodInfo GetRuntimeMethod(this Type type, string name)
@@ -199,5 +224,15 @@ namespace System.Reflection
         {
             return type.GetCustomAttributes(inherit).OfType<T>().FirstOrDefault();
         }
+        
+#else
+
+        public static bool IsConstructedGenericType(this TypeInfo type)
+        {
+            return type.IsConstructedGenericType;
+        }
+
+#endif
     }
 }
+
