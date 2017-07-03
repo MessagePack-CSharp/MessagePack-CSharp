@@ -7,7 +7,7 @@ namespace MessagePack.Resolvers
     /// Embed c# type names for `object` typed fields/collection items
     /// Preserve c# DateTime timezone
     /// </summary>
-    public class TypelessContractlessStandardResolver : IFormatterResolver
+    public sealed class TypelessContractlessStandardResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new TypelessContractlessStandardResolver();
 

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MessagePack.Formatters
 {
-    public class NullableFormatter<T> : IMessagePackFormatter<T?>
+    public sealed class NullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
         public int Serialize(ref byte[] bytes, int offset, T? value, IFormatterResolver formatterResolver)
@@ -33,7 +33,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class StaticNullableFormatter<T> : IMessagePackFormatter<T?>
+    public sealed class StaticNullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
         readonly IMessagePackFormatter<T> underlyingFormatter;

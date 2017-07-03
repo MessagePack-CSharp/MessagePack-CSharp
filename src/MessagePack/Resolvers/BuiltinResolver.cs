@@ -9,7 +9,7 @@ using System.Text;
 
 namespace MessagePack.Resolvers
 {
-    public class BuiltinResolver : IFormatterResolver
+    public sealed class BuiltinResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new BuiltinResolver();
 

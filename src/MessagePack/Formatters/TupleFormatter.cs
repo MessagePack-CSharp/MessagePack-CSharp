@@ -5,7 +5,7 @@ using System;
 namespace MessagePack.Formatters
 {
 
-	public class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>>
+	public sealed class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>>
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1> value, IFormatterResolver formatterResolver)
         {
@@ -48,7 +48,7 @@ namespace MessagePack.Formatters
     }
 
 
-	public class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>>
+	public sealed class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>>
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2> value, IFormatterResolver formatterResolver)
         {
@@ -94,7 +94,7 @@ namespace MessagePack.Formatters
     }
 
 
-	public class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>>
+	public sealed class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>>
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3> value, IFormatterResolver formatterResolver)
         {
@@ -143,7 +143,7 @@ namespace MessagePack.Formatters
     }
 
 
-	public class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>>
+	public sealed class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>>
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4> value, IFormatterResolver formatterResolver)
         {
@@ -195,7 +195,7 @@ namespace MessagePack.Formatters
     }
 
 
-	public class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>>
+	public sealed class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>>
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4, T5> value, IFormatterResolver formatterResolver)
         {
@@ -250,7 +250,7 @@ namespace MessagePack.Formatters
     }
 
 
-	public class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>>
+	public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>>
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4, T5, T6> value, IFormatterResolver formatterResolver)
         {
@@ -308,7 +308,7 @@ namespace MessagePack.Formatters
     }
 
 
-	public class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>>
+	public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>>
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4, T5, T6, T7> value, IFormatterResolver formatterResolver)
         {
@@ -369,7 +369,7 @@ namespace MessagePack.Formatters
     }
 
 
-	public class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>>
+	public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>>
     {
         public int Serialize(ref byte[] bytes, int offset, Tuple<T1, T2, T3, T4, T5, T6, T7, TRest> value, IFormatterResolver formatterResolver)
         {

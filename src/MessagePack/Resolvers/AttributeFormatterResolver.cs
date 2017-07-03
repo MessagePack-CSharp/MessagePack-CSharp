@@ -7,7 +7,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// Get formatter from [MessaegPackFromatter] attribute.
     /// </summary>
-    public class AttributeFormatterResolver : IFormatterResolver
+    public sealed class AttributeFormatterResolver : IFormatterResolver
     {
         public static IFormatterResolver Instance = new AttributeFormatterResolver();
 

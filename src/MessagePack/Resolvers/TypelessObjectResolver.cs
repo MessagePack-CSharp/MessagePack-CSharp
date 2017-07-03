@@ -12,7 +12,7 @@ namespace MessagePack.Resolvers
     /// Serialized binary is valid MessagePack binary used ext-format and custom typecode(100).
     /// Inside ext - assembly qualified type name, and serialized object
     /// </summary>
-    public class TypelessObjectResolver : IFormatterResolver
+    public sealed class TypelessObjectResolver : IFormatterResolver
     {
         public static IFormatterResolver Instance = new TypelessObjectResolver();
 

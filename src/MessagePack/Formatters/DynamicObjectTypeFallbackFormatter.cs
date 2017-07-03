@@ -11,7 +11,7 @@ namespace MessagePack.Formatters
     /// <summary>
     /// PrimitiveObjectFormatter -> DynamicContractlessFormatter(NonGeneric).
     /// </summary>
-    public class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
+    public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
     {
         delegate int SerializeMethod(object dynamicContractlessFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
 

@@ -5,7 +5,7 @@ namespace MessagePack.Formatters
     /// <summary>
     /// Serialize by .NET native DateTime binary format.
     /// </summary>
-    public class NativeDateTimeFormatter : IMessagePackFormatter<DateTime>
+    public sealed class NativeDateTimeFormatter : IMessagePackFormatter<DateTime>
     {
         public static readonly NativeDateTimeFormatter Instance = new NativeDateTimeFormatter();
 
@@ -32,7 +32,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class NativeDateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
+    public sealed class NativeDateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
     {
         public static readonly NativeDateTimeArrayFormatter Instance = new NativeDateTimeArrayFormatter();
 
@@ -94,7 +94,7 @@ namespace MessagePack.Formatters
     /// <summary>
     /// Old-MessagePack spec's string formatter.
     /// </summary>
-    public class OldSpecStringFormatter : IMessagePackFormatter<string>
+    public sealed class OldSpecStringFormatter : IMessagePackFormatter<string>
     {
         public static readonly OldSpecStringFormatter Instance = new OldSpecStringFormatter();
 
@@ -175,7 +175,7 @@ namespace MessagePack.Formatters
     /// <summary>
     /// Old-MessagePack spec's binary formatter.
     /// </summary>
-    public class OldSpecBinaryFormatter : IMessagePackFormatter<byte[]>
+    public sealed class OldSpecBinaryFormatter : IMessagePackFormatter<byte[]>
     {
         public static readonly OldSpecBinaryFormatter Instance = new OldSpecBinaryFormatter();
 

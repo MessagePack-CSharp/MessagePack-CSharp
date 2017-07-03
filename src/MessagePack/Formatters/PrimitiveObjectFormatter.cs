@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MessagePack.Formatters
 {
-    public class PrimitiveObjectFormatter : IMessagePackFormatter<object>
+    public sealed class PrimitiveObjectFormatter : IMessagePackFormatter<object>
     {
         public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter();
 

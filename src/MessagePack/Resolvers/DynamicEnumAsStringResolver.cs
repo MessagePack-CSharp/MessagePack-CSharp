@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace MessagePack.Resolvers
 {
-    public class DynamicEnumAsStringResolver : IFormatterResolver
+    public sealed class DynamicEnumAsStringResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new DynamicEnumAsStringResolver();
 

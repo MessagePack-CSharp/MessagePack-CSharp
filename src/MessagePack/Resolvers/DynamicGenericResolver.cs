@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace MessagePack.Resolvers
 {
-    public class DynamicGenericResolver : IFormatterResolver
+    public sealed class DynamicGenericResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new DynamicGenericResolver();
 

@@ -133,7 +133,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>.Enumerator, Dictionary<TKey, TValue>>
+    public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>.Enumerator, Dictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -156,7 +156,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
+    public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
         where TDictionary : IDictionary<TKey, TValue>, new()
     {
         protected override void Add(TDictionary collection, int index, TKey key, TValue value)
@@ -170,7 +170,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
+    public sealed class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -188,7 +188,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class SortedListFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedList<TKey, TValue>>
+    public sealed class SortedListFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedList<TKey, TValue>>
     {
         protected override void Add(SortedList<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -201,7 +201,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class SortedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedDictionary<TKey, TValue>, SortedDictionary<TKey, TValue>.Enumerator, SortedDictionary<TKey, TValue>>
+    public sealed class SortedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedDictionary<TKey, TValue>, SortedDictionary<TKey, TValue>.Enumerator, SortedDictionary<TKey, TValue>>
     {
         protected override void Add(SortedDictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -224,7 +224,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, ReadOnlyDictionary<TKey, TValue>>
+    public sealed class ReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, ReadOnlyDictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -242,7 +242,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>>
+    public sealed class InterfaceReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -260,7 +260,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class ConcurrentDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, System.Collections.Concurrent.ConcurrentDictionary<TKey, TValue>>
+    public sealed class ConcurrentDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, System.Collections.Concurrent.ConcurrentDictionary<TKey, TValue>>
     {
         protected override void Add(ConcurrentDictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -353,7 +353,7 @@ namespace MessagePack.Formatters
         protected abstract TDictionary Complete(TIntermediate intermediateCollection);
     }
 
-    public class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>>
+    public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -371,7 +371,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary, TDictionary>
+    public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary, TDictionary>
         where TDictionary : IDictionary<TKey, TValue>, new()
     {
         protected override void Add(TDictionary collection, int index, TKey key, TValue value)
@@ -390,7 +390,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
+    public sealed class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -408,7 +408,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class SortedListFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedList<TKey, TValue>,  SortedList<TKey, TValue>>
+    public sealed class SortedListFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedList<TKey, TValue>,  SortedList<TKey, TValue>>
     {
         protected override void Add(SortedList<TKey, TValue> collection, int index, TKey key, TValue value)
         {
@@ -426,7 +426,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class SortedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedDictionary<TKey, TValue>, SortedDictionary<TKey, TValue>>
+    public sealed class SortedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedDictionary<TKey, TValue>, SortedDictionary<TKey, TValue>>
     {
         protected override void Add(SortedDictionary<TKey, TValue> collection, int index, TKey key, TValue value)
         {

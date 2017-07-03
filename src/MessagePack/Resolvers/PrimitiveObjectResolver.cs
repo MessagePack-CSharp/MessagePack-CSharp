@@ -2,7 +2,7 @@
 
 namespace MessagePack.Resolvers
 {
-    public class PrimitiveObjectResolver : IFormatterResolver
+    public sealed class PrimitiveObjectResolver : IFormatterResolver
     {
         public static IFormatterResolver Instance = new PrimitiveObjectResolver();
 
@@ -34,7 +34,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// In `object`, when serializing resolve by concrete type and when deserializing use primitive.
     /// </summary>
-    public class DynamicObjectTypeFallbackResolver : IFormatterResolver
+    public sealed class DynamicObjectTypeFallbackResolver : IFormatterResolver
     {
         public static IFormatterResolver Instance = new DynamicObjectTypeFallbackResolver();
 

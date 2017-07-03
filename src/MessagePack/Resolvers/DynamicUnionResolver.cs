@@ -12,7 +12,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// UnionResolver by dynamic code generation.
     /// </summary>
-    public class DynamicUnionResolver : IFormatterResolver
+    public sealed class DynamicUnionResolver : IFormatterResolver
     {
         public static readonly DynamicUnionResolver Instance = new DynamicUnionResolver();
 

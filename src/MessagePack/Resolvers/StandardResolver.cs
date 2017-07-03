@@ -5,7 +5,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// Default composited resolver, builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> primitive.
     /// </summary>
-    public class StandardResolver : IFormatterResolver
+    public sealed class StandardResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new StandardResolver();
 
@@ -59,7 +59,7 @@ namespace MessagePack.Resolvers
         }
     }
 
-    public class ContractlessStandardResolver : IFormatterResolver
+    public sealed class ContractlessStandardResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new ContractlessStandardResolver();
 

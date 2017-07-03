@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MessagePack.Resolvers
 {
-    public class CompositeResolver : IFormatterResolver
+    public sealed class CompositeResolver : IFormatterResolver
     {
         public static readonly CompositeResolver Instance = new CompositeResolver();
 

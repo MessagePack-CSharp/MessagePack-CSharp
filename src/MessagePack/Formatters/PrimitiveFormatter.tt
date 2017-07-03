@@ -27,7 +27,7 @@ using System;
 namespace MessagePack.Formatters
 {
 <# foreach(var t in types) {  #>
-    public class <#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>>
+    public sealed class <#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>>
     {
 		public static readonly <#= t.Name #>Formatter Instance = new <#= t.Name #>Formatter();
 
@@ -46,7 +46,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public class Nullable<#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>?>
+    public sealed class Nullable<#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>?>
     {
 		public static readonly Nullable<#= t.Name #>Formatter Instance = new Nullable<#= t.Name #>Formatter();
 
@@ -81,7 +81,7 @@ namespace MessagePack.Formatters
     }
 
 <# if(t.Name != "Byte") { #>
-	public class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
+	public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
     {
         public static readonly <#= t.Name #>ArrayFormatter Instance = new <#= t.Name #>ArrayFormatter();
 

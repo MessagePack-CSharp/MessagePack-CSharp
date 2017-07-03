@@ -4,7 +4,7 @@ using System;
 
 namespace MessagePack.Resolvers
 {
-    public class NativeDateTimeResolver : IFormatterResolver
+    public sealed class NativeDateTimeResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new NativeDateTimeResolver();
 

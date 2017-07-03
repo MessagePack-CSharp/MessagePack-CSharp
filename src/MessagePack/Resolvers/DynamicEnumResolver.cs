@@ -9,7 +9,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// EnumResolver by dynamic code generation, serialized underlying type.
     /// </summary>
-    public class DynamicEnumResolver : IFormatterResolver
+    public sealed class DynamicEnumResolver : IFormatterResolver
     {
         public static readonly DynamicEnumResolver Instance = new DynamicEnumResolver();
 

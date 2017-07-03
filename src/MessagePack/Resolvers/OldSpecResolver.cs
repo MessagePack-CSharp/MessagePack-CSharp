@@ -4,7 +4,7 @@ using System;
 
 namespace MessagePack.Resolvers
 {
-    public class OldSpecResolver : IFormatterResolver
+    public sealed class OldSpecResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new OldSpecResolver();
 

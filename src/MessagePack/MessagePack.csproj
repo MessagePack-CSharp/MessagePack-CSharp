@@ -75,12 +75,37 @@
     <ItemGroup>
         <None Update="Formatters\PrimitiveFormatter.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
         </None>
         <None Update="Formatters\TupleFormatter.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>TupleFormatter.cs</LastGenOutput>
         </None>
         <None Update="Formatters\ValueTupleFormatter.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
         </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Formatters\PrimitiveFormatter.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
+      </Compile>
+      <Compile Update="Formatters\TupleFormatter.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>TupleFormatter.tt</DependentUpon>
+      </Compile>
+      <Compile Update="Formatters\ValueTupleFormatter.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
+      </Compile>
     </ItemGroup>
 </Project>

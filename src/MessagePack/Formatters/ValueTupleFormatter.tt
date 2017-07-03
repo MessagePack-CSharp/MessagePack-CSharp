@@ -16,7 +16,7 @@ namespace MessagePack.Formatters
     var t = "ValueTuple<" + ts + ">"; 
 #>
 
-	public class ValueTupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>><#= (t.Contains("TRest") ? " where TRest : struct" : "") #>
+	public sealed class ValueTupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>><#= (t.Contains("TRest") ? " where TRest : struct" : "") #>
     {
         public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver)
         {

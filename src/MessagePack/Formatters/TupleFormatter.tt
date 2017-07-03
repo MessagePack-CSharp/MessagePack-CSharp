@@ -17,7 +17,7 @@ namespace MessagePack.Formatters
     var t = "Tuple<" + ts + ">"; 
 #>
 
-	public class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
+	public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
     {
         public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver)
         {
