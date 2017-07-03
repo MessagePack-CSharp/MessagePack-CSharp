@@ -83,7 +83,7 @@ namespace PerfnetFramework
 
         static void Benchmark<T>(T target)
         {
-            const int Iteration = 10000; // 10000
+            const int Iteration = 1000000; // 10000
 
             var jsonSerializer = new JsonSerializer();
             var msgpack = MsgPack.Serialization.SerializationContext.Default;

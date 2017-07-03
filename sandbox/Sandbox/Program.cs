@@ -255,30 +255,44 @@ namespace Sandbox
         }
     }
 
+    public interface IEntity
+    {
+        string Name { get; }
+    }
+
+    public class Event : IEntity
+    {
+        public Event(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+    }
+
+    public class Holder
+    {
+        public Holder(IEntity entity)
+        {
+            Entity = entity;
+        }
+
+        public IEntity Entity { get; }
+    }
+
 
     class Program
     {
         static void Main(string[] args)
-    {
-            object mc = new Sandbox.MyClass()
-            {
-                Age = 10,
-                FirstName = "hoge",
-                LastName = "huga"
-            };
-
-            // serialize to typeless
-            var bin = MessagePackSerializer.Typeless.Serialize(mc);
-
-            // binary data is embeded type-assembly information.
-            // ["Sandbox.MyClass, Sandbox",10,"hoge","huga"]
-            Console.WriteLine(MessagePackSerializer.ToJson(bin));
-
-            // can deserialize to MyClass with typeless
-            var objModel = MessagePackSerializer.Typeless.Deserialize(bin) as MyClass;
+        {
+            var h = ContractlessStandardResolver.Instance.GetFormatter<IEntity>();
+            byte[] bytes = null;
+            h.Serialize(ref bytes, 0, new Event("test"), ContractlessStandardResolver.Instance);
+            //byte[] bytes = null;
+            //h.Serialize(ref bytes, 0, new Holder(new Event("Test")), ContractlessStandardResolver.Instance);
 
 
-
+            //MessagePackSerializer.Serialize(new Holder(new Event("Test")), TypelessContractlessStandardResolver.Instance)
         }
 
         static void Benchmark<T>(T target)

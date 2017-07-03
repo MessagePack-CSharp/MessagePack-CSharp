@@ -40,9 +40,10 @@ namespace DynamicCodeDumper
             DynamicEnumResolver.Instance.GetFormatter<IntEnum>();
             DynamicEnumResolver.Instance.GetFormatter<ShortEnum>();
 
-
             DynamicContractlessObjectResolver.Instance.GetFormatter<ContractlessConstructorCheck>();
             DynamicContractlessObjectResolver.Instance.GetFormatter<Contractless2>();
+
+            DynamicContractlessObjectResolver.Instance.GetFormatter<IEntity>();
 
             var a1 = DynamicObjectResolver.Instance.Save();
             var a2 = DynamicUnionResolver.Instance.Save();
@@ -99,5 +100,31 @@ namespace DynamicCodeDumper
     {
         public int MyProperty { get; set; }
         public string MyProperty2 { get; set; }
+    }
+
+
+    public interface IEntity
+    {
+        string Name { get; }
+    }
+
+    public class Event : IEntity
+    {
+        public Event(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+    }
+
+    public class Holder
+    {
+        public Holder(IEntity entity)
+        {
+            Entity = entity;
+        }
+
+        public IEntity Entity { get; }
     }
 }
