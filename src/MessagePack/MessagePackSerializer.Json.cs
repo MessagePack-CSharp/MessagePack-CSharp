@@ -158,7 +158,15 @@ namespace MessagePack
                     builder.Append(MessagePackBinary.ReadBoolean(bytes, offset, out readSize) ? "true" : "false");
                     break;
                 case MessagePackType.Float:
-                    builder.Append(MessagePackBinary.ReadDouble(bytes, offset, out readSize).ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    var floatCode = bytes[offset];
+                    if (floatCode == MessagePackCode.Float32)
+                    {
+                        builder.Append(MessagePackBinary.ReadSingle(bytes, offset, out readSize).ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    }
+                    else
+                    {
+                        builder.Append(MessagePackBinary.ReadDouble(bytes, offset, out readSize).ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    }
                     break;
                 case MessagePackType.String:
                     WriteJsonString(MessagePackBinary.ReadString(bytes, offset, out readSize), builder);

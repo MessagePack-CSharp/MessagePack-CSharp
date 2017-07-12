@@ -285,14 +285,17 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
-            var h = ContractlessStandardResolver.Instance.GetFormatter<IEntity>();
-            byte[] bytes = null;
-            h.Serialize(ref bytes, 0, new Event("test"), ContractlessStandardResolver.Instance);
-            //byte[] bytes = null;
-            //h.Serialize(ref bytes, 0, new Holder(new Event("Test")), ContractlessStandardResolver.Instance);
 
 
-            //MessagePackSerializer.Serialize(new Holder(new Event("Test")), TypelessContractlessStandardResolver.Instance)
+            var f = 33.33f;
+            var xs = MessagePackSerializer.Serialize(f);
+            var f2 = MessagePackSerializer.Deserialize<float>(xs);
+
+            var j = MessagePackSerializer.ToJson(xs);
+            Console.WriteLine(f.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Console.WriteLine(f2.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Console.WriteLine(j);
+
         }
 
         static void Benchmark<T>(T target)

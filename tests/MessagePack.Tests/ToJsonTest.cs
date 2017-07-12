@@ -33,5 +33,14 @@ namespace MessagePack.Tests
             var json = @"{""reservations"":[{""instances"":[{""type"":""small"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""large"",""state"":{""name"":""stopped""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]}]},{""instances"":[{""type"":""medium"",""state"":{""name"":""terminated""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""xlarge"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""DB""]},{""Key"":""version"",""Values"":[""1""]}]}]}]}";
             JsonConvert(json).Is(json);
         }
+
+        [Fact]
+        public void FloatJson()
+        {
+            var f = 3.33f;
+            var xs = MessagePackSerializer.Serialize(f);
+            var json = MessagePackSerializer.ToJson(xs);
+            json.Is("3.33");
+        }
     }
 }

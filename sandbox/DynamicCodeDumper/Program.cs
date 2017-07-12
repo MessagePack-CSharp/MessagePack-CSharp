@@ -43,7 +43,7 @@ namespace DynamicCodeDumper
             DynamicContractlessObjectResolver.Instance.GetFormatter<ContractlessConstructorCheck>();
             DynamicContractlessObjectResolver.Instance.GetFormatter<Contractless2>();
 
-            DynamicContractlessObjectResolver.Instance.GetFormatter<IEntity>();
+            DynamicContractlessObjectResolver.Instance.GetFormatter<EntityBase>();
 
             var a1 = DynamicObjectResolver.Instance.Save();
             var a2 = DynamicUnionResolver.Instance.Save();
@@ -126,5 +126,15 @@ namespace DynamicCodeDumper
         }
 
         public IEntity Entity { get; }
+    }
+
+    public abstract class EntityBase
+    {
+        public string Name { get; }
+
+        public EntityBase()
+        {
+
+        }
     }
 }
