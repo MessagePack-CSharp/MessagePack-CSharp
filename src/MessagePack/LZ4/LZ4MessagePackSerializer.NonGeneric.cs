@@ -12,7 +12,14 @@ namespace MessagePack
     {
         public static class NonGeneric
         {
-            static readonly System.Collections.Generic.Dictionary<Type, CompiledMethods> serializes = new System.Collections.Generic.Dictionary<Type, CompiledMethods>();
+            static readonly Func<Type, CompiledMethods> CreateCompiledMethods;
+            static readonly MessagePack.Internal.ThreadsafeHashTable<Type, CompiledMethods> serializes = new MessagePack.Internal.ThreadsafeHashTable<Type, CompiledMethods>(capacity: 64);
+
+
+            static NonGeneric()
+            {
+                CreateCompiledMethods = t => new CompiledMethods(t);
+            }
 
             public static byte[] Serialize(Type type, object obj)
             {
@@ -66,20 +73,7 @@ namespace MessagePack
 
             static CompiledMethods GetOrAdd(Type type)
             {
-                lock (serializes)
-                {
-                    CompiledMethods method;
-                    if (serializes.TryGetValue(type, out method))
-                    {
-                        return method;
-                    }
-                    else
-                    {
-                        method = new CompiledMethods(type);
-                        serializes.Add(type, method);
-                        return method;
-                    }
-                }
+                return serializes.GetOrAdd(type, CreateCompiledMethods);
             }
 
             class CompiledMethods
