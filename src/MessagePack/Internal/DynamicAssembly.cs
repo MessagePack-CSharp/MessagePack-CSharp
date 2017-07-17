@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿#if !UNITY_METRO
+
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace MessagePack.Internal
@@ -41,3 +43,5 @@ namespace MessagePack.Internal
 #endif
     }
 }
+
+#endif

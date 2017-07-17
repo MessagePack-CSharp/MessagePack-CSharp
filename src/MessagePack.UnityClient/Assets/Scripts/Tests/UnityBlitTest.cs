@@ -1,4 +1,6 @@
-﻿using MessagePack.Formatters;
+﻿#if ENABLE_UNSAFE_MSGPACK
+
+using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using MessagePack.Unity.Extension;
 using RuntimeUnitTestToolkit;
@@ -38,3 +40,5 @@ namespace MessagePack.UnityClient.Tests
         }
     }
 }
+
+#endif

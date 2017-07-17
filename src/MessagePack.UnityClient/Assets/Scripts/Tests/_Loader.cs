@@ -12,6 +12,8 @@ namespace MessagePack.UnityClient.Tests
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Register()
         {
+#if !UNITY_METRO
+
             // Register Tests
             UnitTest.RegisterAllMethods<SimpleTest>();
             UnitTest.RegisterAllMethods<FormatterTest>();
@@ -19,10 +21,15 @@ namespace MessagePack.UnityClient.Tests
             UnitTest.RegisterAllMethods<ObjectResolverTest>();
             UnitTest.RegisterAllMethods<MultiDimentionalArrayTest>();
             UnitTest.RegisterAllMethods<CollectionFormatterTest>();
+#if ENABLE_UNSAFE_MSGPACK
             UnitTest.RegisterAllMethods<UnityBlitTest>();
+#endif
+
             UnitTest.RegisterAllMethods<LZ4Test>();
 
             UnitTest.RegisterAllMethods<PerformanceTest>();
+
+#endif
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿
+
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -328,6 +330,7 @@ namespace RuntimeUnitTestToolkit
                 {
                     hasNext = enumerator.MoveNext();
                 }
+
                 catch (Exception ex)
                 {
                     exceptionCallback(ex);
@@ -362,3 +365,4 @@ namespace RuntimeUnitTestToolkit
         }
     }
 }
+

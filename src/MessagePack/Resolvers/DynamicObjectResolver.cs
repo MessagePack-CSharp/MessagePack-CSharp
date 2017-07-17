@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if !UNITY_METRO
+
+using System;
 using System.Linq;
 using MessagePack.Formatters;
 using MessagePack.Internal;
@@ -1409,3 +1411,5 @@ namespace MessagePack.Internal
         }
     }
 }
+
+#endif

@@ -1,4 +1,6 @@
-﻿using MessagePack.Formatters;
+﻿#if !UNITY_METRO
+
+using MessagePack.Formatters;
 using MessagePack.Internal;
 using System;
 using System.Reflection;
@@ -54,3 +56,5 @@ namespace MessagePack.Resolvers
         }
     }
 }
+
+#endif

@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 
 namespace MessagePack.Resolvers
 {
+#if !UNITY_METRO
+
     /// <summary>
     /// UnionResolver by dynamic code generation.
     /// </summary>
@@ -471,6 +473,8 @@ namespace MessagePack.Resolvers
             }
         }
     }
+
+#endif
 }
 
 namespace MessagePack.Internal

@@ -95,7 +95,9 @@ namespace MessagePack.UnityClient.Tests
 
             static FormatterCache()
             {
+#if ENABLE_UNSAFE_MSGPACK
                 formatter = Unity.Extension.UnityBlitResolver.Instance.GetFormatter<T>();
+#endif
                 if (formatter == null)
                 {
                     formatter = StandardResolver.Instance.GetFormatter<T>();

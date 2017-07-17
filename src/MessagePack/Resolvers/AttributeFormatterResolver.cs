@@ -1,6 +1,7 @@
 ﻿using MessagePack.Formatters;
 using System;
 using System.Reflection;
+using System.Linq; // require UNITY_METRO
 
 namespace MessagePack.Resolvers
 {
@@ -27,7 +28,11 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
+#if UNITY_METRO && !NETFX_CORE
+                var attr = (MessagePackFormatterAttribute)typeof(T).GetCustomAttributes(typeof(MessagePackFormatterAttribute), true).FirstOrDefault();
+#else
                 var attr = typeof(T).GetTypeInfo().GetCustomAttribute<MessagePackFormatterAttribute>();
+#endif
                 if (attr == null)
                 {
                     return;

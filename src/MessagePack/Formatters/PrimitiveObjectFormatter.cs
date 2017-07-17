@@ -32,6 +32,8 @@ namespace MessagePack.Formatters
 
         }
 
+#if !UNITY_METRO
+
         public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
         {
             if (value == null) return true;
@@ -43,6 +45,8 @@ namespace MessagePack.Formatters
 
             return false;
         }
+
+#endif
 
         public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
         {
@@ -94,7 +98,11 @@ namespace MessagePack.Formatters
             }
             else
             {
+#if UNITY_METRO && !NETFX_CORE
+                if (t.IsEnum)
+#else
                 if (t.GetTypeInfo().IsEnum)
+#endif
                 {
                     var underlyingType = Enum.GetUnderlyingType(t);
                     var code2 = typeToJumpCode[underlyingType];

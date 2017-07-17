@@ -1,4 +1,4 @@
-﻿
+﻿#if !UNITY_METRO
 
 using System;
 using System.Collections.Generic;
@@ -236,3 +236,5 @@ namespace System.Reflection
     }
 }
 
+
+#endif

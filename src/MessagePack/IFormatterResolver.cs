@@ -38,6 +38,8 @@ namespace MessagePack
             return formatter;
         }
 
+#if !UNITY_METRO
+
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
             var methodInfo = typeof(IFormatterResolver).GetRuntimeMethod("GetFormatter", Type.EmptyTypes);
@@ -45,6 +47,8 @@ namespace MessagePack
             var formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
             return formatter;
         }
+
+#endif
     }
 
     public class FormatterNotRegisteredException : Exception
