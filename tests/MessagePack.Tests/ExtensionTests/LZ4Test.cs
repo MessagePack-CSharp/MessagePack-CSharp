@@ -86,6 +86,36 @@ namespace MessagePack.Tests.ExtensionTests
         }
 
         [Fact]
+        public void ArraySegmentAPI()
+        {
+            var originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
+
+            var ms = new MemoryStream();
+            LZ4MessagePackSerializer.NonGeneric.Serialize(typeof(FirstSimpleData[]), ms, originalData);
+            ms.Position = 0;
+
+            var lz4normal = LZ4MessagePackSerializer.Serialize(originalData);
+
+            var paddingOffset = 10;
+            var paddedLz4Normal = new byte[lz4normal.Length + paddingOffset + paddingOffset];
+            Array.Copy(lz4normal,0, paddedLz4Normal, paddingOffset, lz4normal.Length);
+
+            var decompress1 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), ms.ToArray());
+            var decompress2 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), lz4normal);
+            var decompress3 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), ms);
+            var decompress4 = LZ4MessagePackSerializer.Deserialize<FirstSimpleData[]>(lz4normal);
+            var decompress5 = LZ4MessagePackSerializer.Deserialize<FirstSimpleData[]>(new ArraySegment<byte>(lz4normal));
+            var decompress6 = LZ4MessagePackSerializer.Deserialize<FirstSimpleData[]>(new ArraySegment<byte>(paddedLz4Normal, paddingOffset, lz4normal.Length));
+
+            decompress1.IsStructuralEqual(originalData);
+            decompress2.IsStructuralEqual(originalData);
+            decompress3.IsStructuralEqual(originalData);
+            decompress4.IsStructuralEqual(originalData);
+            decompress5.IsStructuralEqual(originalData);
+            decompress6.IsStructuralEqual(originalData);
+        }
+
+        [Fact]
         public void SerializeToBlock()
         {
             var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();

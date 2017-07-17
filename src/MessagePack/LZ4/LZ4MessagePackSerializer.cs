@@ -128,9 +128,17 @@ namespace MessagePack
 
         public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
         {
-            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
-
             return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, bytes.Length), resolver);
+        }
+
+        public static T Deserialize<T>(ArraySegment<byte> bytes)
+        {
+            return DeserializeCore<T>(bytes, null);
+        }
+
+        public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
+        {
+            return DeserializeCore<T>(bytes, resolver);
         }
 
         public static T Deserialize<T>(Stream stream)
@@ -150,8 +158,6 @@ namespace MessagePack
 
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
         {
-            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
-
             if (!readStrict)
             {
                 var buffer = MessagePack.Internal.InternalMemoryPool.GetBuffer(); // use MessagePackSerializer.Pool!
@@ -168,10 +174,11 @@ namespace MessagePack
 
         static T DeserializeCore<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
         {
+            if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
             int readSize;
-            if (MessagePackBinary.GetMessagePackType(bytes.Array, 0) == MessagePackType.Extension)
+            if (MessagePackBinary.GetMessagePackType(bytes.Array, bytes.Offset) == MessagePackType.Extension)
             {
                 var header = MessagePackBinary.ReadExtensionFormatHeader(bytes.Array, bytes.Offset, out readSize);
                 if (header.TypeCode == ExtensionTypeCode)
@@ -188,7 +195,8 @@ namespace MessagePack
                     }
 
                     // LZ4 Decode
-                    LZ4Codec.Decode(bytes.Array, offset, bytes.Count - offset, buffer, 0, length);
+                    var len = bytes.Count + bytes.Offset - offset;
+                    LZ4Codec.Decode(bytes.Array, offset, len, buffer, 0, length);
 
                     return formatter.Deserialize(buffer, 0, resolver, out readSize);
                 }
