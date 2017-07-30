@@ -14,7 +14,7 @@ namespace MessagePack
         public static class NonGeneric
         {
             static readonly Func<Type, CompiledMethods> CreateCompiledMethods;
-            static readonly MessagePack.Internal.ThreadsafeHashTable<Type, CompiledMethods> serializes = new MessagePack.Internal.ThreadsafeHashTable<Type, CompiledMethods>(capacity: 64);
+            static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
 
             static NonGeneric()
             {

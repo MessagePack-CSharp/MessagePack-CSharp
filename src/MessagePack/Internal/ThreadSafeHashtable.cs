@@ -3,51 +3,32 @@ using System.Collections.Generic;
 
 namespace MessagePack.Internal
 {
-    // for Unity, can not implementes IReadOnlyDictionary.
-
     // Safe for multiple-read, single-write.
-    internal class ThreadsafeHashTable<TKey, TValue> // : IReadOnlyDictionary<TKey, TValue>
+    internal class ThreadsafeTypeKeyHashTable<TValue>
     {
         Entry[] buckets;
         int size; // only use in writer lock
 
         readonly object writerLock = new object();
         readonly float loadFactor;
-        readonly IEqualityComparer<TKey> comparer;
 
-        public ThreadsafeHashTable()
-            : this(EqualityComparer<TKey>.Default)
-        {
+        // IEqualityComparer.Equals is overhead if key only Type, don't use it.
+        // readonly IEqualityComparer<TKey> comparer;
 
-        }
-
-        public ThreadsafeHashTable(IEqualityComparer<TKey> comaprer)
-            : this(4, 0.75f, comaprer)
-        {
-
-        }
-
-        public ThreadsafeHashTable(int capacity, float loadFactor = 0.75f)
-            : this(capacity, loadFactor, EqualityComparer<TKey>.Default)
-        {
-
-        }
-
-        public ThreadsafeHashTable(int capacity, float loadFactor, IEqualityComparer<TKey> comparer)
+        public ThreadsafeTypeKeyHashTable(int capacity = 4, float loadFactor = 0.75f)
         {
             var tableSize = CalculateCapacity(capacity, loadFactor);
             this.buckets = new Entry[tableSize];
             this.loadFactor = loadFactor;
-            this.comparer = comparer;
         }
 
-        public bool TryAdd(TKey key, Func<TKey, TValue> valueFactory)
+        public bool TryAdd(Type key, Func<Type, TValue> valueFactory)
         {
             TValue _;
             return TryAddInternal(key, valueFactory, out _);
         }
 
-        bool TryAddInternal(TKey key, Func<TKey, TValue> valueFactory, out TValue resultingValue)
+        bool TryAddInternal(Type key, Func<Type, TValue> valueFactory, out TValue resultingValue)
         {
             lock (writerLock)
             {
@@ -87,9 +68,9 @@ namespace MessagePack.Internal
             }
         }
 
-        bool AddToBuckets(Entry[] buckets, TKey newKey, Entry newEntryOrNull, Func<TKey, TValue> valueFactory, out TValue resultingValue)
+        bool AddToBuckets(Entry[] buckets, Type newKey, Entry newEntryOrNull, Func<Type, TValue> valueFactory, out TValue resultingValue)
         {
-            var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : comparer.GetHashCode(newKey);
+            var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : newKey.GetHashCode();
             if (buckets[h & (buckets.Length - 1)] == null)
             {
                 if (newEntryOrNull != null)
@@ -108,7 +89,7 @@ namespace MessagePack.Internal
                 var searchLastEntry = buckets[h & (buckets.Length - 1)];
                 while (true)
                 {
-                    if (comparer.Equals(searchLastEntry.Key, newKey))
+                    if (searchLastEntry.Key == newKey)
                     {
                         resultingValue = searchLastEntry.Value;
                         return false;
@@ -135,15 +116,15 @@ namespace MessagePack.Internal
             return true;
         }
 
-        public bool TryGetValue(TKey key, out TValue value)
+        public bool TryGetValue(Type key, out TValue value)
         {
             var table = buckets;
-            var hash = comparer.GetHashCode(key);
+            var hash = key.GetHashCode();
             var entry = table[hash & table.Length - 1];
 
             if (entry == null) goto NOT_FOUND;
 
-            if (comparer.Equals(entry.Key, key))
+            if (entry.Key == key)
             {
                 value = entry.Value;
                 return true;
@@ -152,7 +133,7 @@ namespace MessagePack.Internal
             var next = entry.Next;
             while (next != null)
             {
-                if (comparer.Equals(next.Key, key))
+                if (next.Key == key)
                 {
                     value = next.Value;
                     return true;
@@ -165,7 +146,7 @@ namespace MessagePack.Internal
             return false;
         }
 
-        public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
+        public TValue GetOrAdd(Type key, Func<Type, TValue> valueFactory)
         {
             TValue v;
             if (TryGetValue(key, out v))
@@ -194,94 +175,9 @@ namespace MessagePack.Internal
             return capacity;
         }
 
-        //#region IReadOnlyDictionary<>
-
-        //// When writing and encounts gap the multithread, returns actual size -1(by design).
-        //public int Count
-        //{
-        //    get
-        //    {
-        //        return size;
-        //    }
-        //}
-
-        //public IEnumerable<TKey> Keys
-        //{
-        //    get
-        //    {
-        //        var e = buckets;
-        //        foreach (var eItem in e)
-        //        {
-        //            var item = eItem;
-        //            while (item != null)
-        //            {
-        //                yield return item.Key;
-        //                item = item.Next;
-        //            }
-        //        }
-        //    }
-        //}
-
-        //public IEnumerable<TValue> Values
-        //{
-        //    get
-        //    {
-        //        var e = buckets;
-        //        foreach (var eItem in e)
-        //        {
-        //            var item = eItem;
-        //            while (item != null)
-        //            {
-        //                yield return item.Value;
-        //                item = item.Next;
-        //            }
-        //        }
-        //    }
-        //}
-
-        //public TValue this[TKey key]
-        //{
-        //    get
-        //    {
-        //        TValue value;
-        //        if (TryGetValue(key, out value))
-        //        {
-        //            return value;
-        //        }
-        //        throw new KeyNotFoundException("Key not found, key:" + key);
-        //    }
-        //}
-
-        //public bool ContainsKey(TKey key)
-        //{
-
-        //    TValue value;
-        //    return TryGetValue(key, out value);
-        //}
-
-        //public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
-        //{
-        //    var e = buckets;
-        //    foreach (var eItem in e)
-        //    {
-        //        var item = eItem;
-        //        while (item != null)
-        //        {
-        //            yield return new KeyValuePair<TKey, TValue>(item.Key, item.Value);
-        //            item = item.Next;
-        //        }
-        //    }
-        //}
-        ////IEnumerator IEnumerable.GetEnumerator()
-        ////{
-        ////    return GetEnumerator();
-        ////}
-
-        //#endregion
-
         class Entry
         {
-            public TKey Key;
+            public Type Key;
             public TValue Value;
             public int Hash;
             public Entry Next;

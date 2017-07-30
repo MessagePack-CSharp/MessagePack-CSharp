@@ -989,6 +989,8 @@ If you want to share class between Unity and Server, you can use `SharedProject`
 - Unity
   - [Builded ClientDll]
 
+Other ways, use plain POCO by `DataContract`/`DataMember` can use.
+
 Pre Code Generation(Unity/Xamarin Supports)
 ---
 MessagePack for C# generates object formatter dynamically by [ILGenerator](https://msdn.microsoft.com/en-us/library/system.reflection.emit.ilgenerator.aspx). It is fast and transparently generated at run time. But it needs generate cost at first time and it does not work on AOT environment(Xamarin, Unity IL2CPP, etc.).
