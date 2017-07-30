@@ -72,7 +72,7 @@ namespace MessagePack.Internal
                     var successAdd = AddToBuckets(nextBucket, key, null, valueFactory, out resultingValue);
 
                     // replace field(threadsafe for read)
-                    buckets = nextBucket;
+                    System.Threading.Volatile.Write(ref buckets, nextBucket);
 
                     if (successAdd) size++;
                     return successAdd;
@@ -95,12 +95,12 @@ namespace MessagePack.Internal
                 if (newEntryOrNull != null)
                 {
                     resultingValue = newEntryOrNull.Value;
-                    buckets[h & (buckets.Length - 1)] = newEntryOrNull;
+                    System.Threading.Volatile.Write(ref buckets[h & (buckets.Length - 1)], newEntryOrNull);
                 }
                 else
                 {
                     resultingValue = valueFactory(newKey);
-                    buckets[h & (buckets.Length - 1)] = new Entry { Key = newKey, Value = resultingValue, Hash = h };
+                    System.Threading.Volatile.Write(ref buckets[h & (buckets.Length - 1)], new Entry { Key = newKey, Value = resultingValue, Hash = h });
                 }
             }
             else
@@ -119,12 +119,12 @@ namespace MessagePack.Internal
                         if (newEntryOrNull != null)
                         {
                             resultingValue = newEntryOrNull.Value;
-                            searchLastEntry.Next = newEntryOrNull;
+                            System.Threading.Volatile.Write(ref searchLastEntry.Next, newEntryOrNull);
                         }
                         else
                         {
                             resultingValue = valueFactory(newKey);
-                            searchLastEntry.Next = new Entry { Key = newKey, Value = resultingValue, Hash = h };
+                            System.Threading.Volatile.Write(ref searchLastEntry.Next, new Entry { Key = newKey, Value = resultingValue, Hash = h });
                         }
                         break;
                     }
