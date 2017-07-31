@@ -2,6 +2,7 @@
 using System.Linq;
 using System.IO;
 using Xunit;
+using System.Text;
 
 namespace MessagePack.Tests
 {
@@ -536,6 +537,26 @@ namespace MessagePack.Tests
 
             int readSize;
             MessagePackBinary.ReadString(bytes, 0, out readSize).Is(target);
+            readSize.Is(returnLength);
+            CreateUnpackedReference(bytes).AsStringUtf8().Is(target);
+        }
+
+        [Theory]
+        [MemberData(nameof(stringTestData))]
+        public void StringSegmentTest(string target)
+        {
+            (var stream, var packer) = CreateReferencePacker();
+
+            byte[] bytes = null;
+            var returnLength = MessagePackBinary.WriteString(ref bytes, 0, target);
+
+            var referencePacked = packer.PackString(target);
+            referencePacked.Position.Is(returnLength);
+            stream.ToArray().SequenceEqual(bytes.Take(returnLength).ToArray()).IsTrue();
+
+            int readSize;
+            var segment = MessagePackBinary.ReadStringSegment(bytes, 0, out readSize);
+            Encoding.UTF8.GetString(segment.Array, segment.Offset, segment.Count).Is(target);
             readSize.Is(returnLength);
             CreateUnpackedReference(bytes).AsStringUtf8().Is(target);
         }

@@ -28,6 +28,7 @@ namespace MessagePack
         static readonly IUInt32Decoder[] uint32Decoders = new IUInt32Decoder[MaxSize];
         static readonly IUInt64Decoder[] uint64Decoders = new IUInt64Decoder[MaxSize];
         static readonly IStringDecoder[] stringDecoders = new IStringDecoder[MaxSize];
+        static readonly IStringSegmentDecoder[] stringSegmentDecoders = new IStringSegmentDecoder[MaxSize];
         static readonly IExtDecoder[] extDecoders = new IExtDecoder[MaxSize];
         static readonly IExtHeaderDecoder[] extHeaderDecoders = new IExtHeaderDecoder[MaxSize];
         static readonly IDateTimeDecoder[] dateTimeDecoders = new IDateTimeDecoder[MaxSize];
@@ -53,6 +54,7 @@ namespace MessagePack
                 uint32Decoders[i] = Decoders.InvalidUInt32.Instance;
                 uint64Decoders[i] = Decoders.InvalidUInt64.Instance;
                 stringDecoders[i] = Decoders.InvalidString.Instance;
+                stringSegmentDecoders[i] = Decoders.InvalidStringSegment.Instance;
                 extDecoders[i] = Decoders.InvalidExt.Instance;
                 extHeaderDecoders[i] = Decoders.InvalidExtHeader.Instance;
                 dateTimeDecoders[i] = Decoders.InvalidDateTime.Instance;
@@ -172,18 +174,23 @@ namespace MessagePack
             for (int i = MessagePackCode.MinFixStr; i <= MessagePackCode.MaxFixStr; i++)
             {
                 stringDecoders[i] = Decoders.FixString.Instance;
+                stringSegmentDecoders[i] = Decoders.FixStringSegment.Instance;
                 readNextDecoders[i] = Decoders.ReadNextFixStr.Instance;
             }
 
             stringDecoders[MessagePackCode.Str8] = Decoders.Str8String.Instance;
             stringDecoders[MessagePackCode.Str16] = Decoders.Str16String.Instance;
             stringDecoders[MessagePackCode.Str32] = Decoders.Str32String.Instance;
+            stringSegmentDecoders[MessagePackCode.Str8] = Decoders.Str8StringSegment.Instance;
+            stringSegmentDecoders[MessagePackCode.Str16] = Decoders.Str16StringSegment.Instance;
+            stringSegmentDecoders[MessagePackCode.Str32] = Decoders.Str32StringSegment.Instance;
             readNextDecoders[MessagePackCode.Str8] = Decoders.ReadNextStr8.Instance;
             readNextDecoders[MessagePackCode.Str16] = Decoders.ReadNextStr16.Instance;
             readNextDecoders[MessagePackCode.Str32] = Decoders.ReadNextStr32.Instance;
 
             // Others
             stringDecoders[MessagePackCode.Nil] = Decoders.NilString.Instance;
+            stringSegmentDecoders[MessagePackCode.Nil] = Decoders.NilStringSegment.Instance;
             bytesDecoders[MessagePackCode.Nil] = Decoders.NilBytes.Instance;
             readNextDecoders[MessagePackCode.Nil] = Decoders.ReadNext1.Instance;
 
@@ -1637,6 +1644,14 @@ namespace MessagePack
         public static string ReadString(byte[] bytes, int offset, out int readSize)
         {
             return stringDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static ArraySegment<byte> ReadStringSegment(byte[] bytes, int offset, out int readSize)
+        {
+            return stringSegmentDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
 #if NETSTANDARD1_4
@@ -4663,6 +4678,116 @@ namespace MessagePack.Decoders
         }
 
         public String Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IStringSegmentDecoder
+    {
+        ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class NilStringSegment : IStringSegmentDecoder
+    {
+        internal static readonly IStringSegmentDecoder Instance = new NilStringSegment();
+
+        NilStringSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return new ArraySegment<byte>(bytes, offset, 1);
+        }
+    }
+
+    internal class FixStringSegment : IStringSegmentDecoder
+    {
+        internal static readonly IStringSegmentDecoder Instance = new FixStringSegment();
+
+        FixStringSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = bytes[offset] & 0x1F;
+            readSize = length + 1;
+            return new ArraySegment<byte>(bytes, offset + 1, length);
+        }
+    }
+
+    internal class Str8StringSegment : IStringSegmentDecoder
+    {
+        internal static readonly IStringSegmentDecoder Instance = new Str8StringSegment();
+
+        Str8StringSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = (int)bytes[offset + 1];
+            readSize = length + 2;
+            return new ArraySegment<byte>(bytes, offset + 2, length);
+        }
+    }
+
+    internal class Str16StringSegment : IStringSegmentDecoder
+    {
+        internal static readonly IStringSegmentDecoder Instance = new Str16StringSegment();
+
+        Str16StringSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+                readSize = length + 3;
+                return new ArraySegment<byte>(bytes, offset + 3, length);
+            }
+        }
+    }
+
+    internal class Str32StringSegment : IStringSegmentDecoder
+    {
+        internal static readonly IStringSegmentDecoder Instance = new Str32StringSegment();
+
+        Str32StringSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            unchecked
+            {
+                var length = (int)((uint)(bytes[offset + 1] << 24) | (uint)(bytes[offset + 2] << 16) | (uint)(bytes[offset + 3] << 8) | (uint)bytes[offset + 4]);
+                readSize = length + 5;
+                return new ArraySegment<byte>(bytes, offset + 5, length);
+            }
+        }
+    }
+
+    internal class InvalidStringSegment : IStringSegmentDecoder
+    {
+        internal static readonly IStringSegmentDecoder Instance = new InvalidStringSegment();
+
+        InvalidStringSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
         {
             throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
