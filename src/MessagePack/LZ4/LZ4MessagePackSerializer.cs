@@ -172,6 +172,115 @@ namespace MessagePack
             }
         }
 
+        public static byte[] Decode(Stream stream, bool readStrict = false)
+        {
+            if (!readStrict)
+            {
+                var buffer = MessagePack.Internal.InternalMemoryPool.GetBuffer(); // use MessagePackSerializer.Pool!
+                var len = FillFromStream(stream, ref buffer);
+                return Decode(new ArraySegment<byte>(buffer, 0, len));
+            }
+            else
+            {
+                int blockSize;
+                var bytes = MessagePackBinary.ReadMessageBlockFromStreamUnsafe(stream, false, out blockSize);
+                return Decode(new ArraySegment<byte>(bytes, 0, blockSize));
+            }
+        }
+
+        public static byte[] Decode(byte[] bytes)
+        {
+            return Decode(new ArraySegment<byte>(bytes, 0, bytes.Length));
+        }
+
+        public static byte[] Decode(ArraySegment<byte> bytes)
+        {
+            int readSize;
+            if (MessagePackBinary.GetMessagePackType(bytes.Array, bytes.Offset) == MessagePackType.Extension)
+            {
+                var header = MessagePackBinary.ReadExtensionFormatHeader(bytes.Array, bytes.Offset, out readSize);
+                if (header.TypeCode == ExtensionTypeCode)
+                {
+                    // decode lz4
+                    var offset = bytes.Offset + readSize;
+                    var length = MessagePackBinary.ReadInt32(bytes.Array, offset, out readSize);
+                    offset += readSize;
+
+                    var buffer = new byte[length]; // use new buffer.
+
+                    // LZ4 Decode
+                    var len = bytes.Count + bytes.Offset - offset;
+                    LZ4Codec.Decode(bytes.Array, offset, len, buffer, 0, length);
+
+                    return buffer;
+                }
+            }
+
+            if (bytes.Offset == 0 && bytes.Array.Length == bytes.Count)
+            {
+                // return same reference
+                return bytes.Array;
+            }
+            else
+            {
+                var result = new byte[bytes.Count];
+                Buffer.BlockCopy(bytes.Array, bytes.Offset, result, 0, result.Length);
+                return result;
+            }
+        }
+
+
+        /// <summary>
+        /// Get the war memory pool byte[]. The result can not share across thread and can not hold and can not call LZ4Deserialize before use it.
+        /// </summary>
+        public static byte[] DecodeUnsafe(byte[] bytes)
+        {
+            return DecodeUnsafe(new ArraySegment<byte>(bytes, 0, bytes.Length));
+        }
+
+        /// <summary>
+        /// Get the war memory pool byte[]. The result can not share across thread and can not hold and can not call LZ4Deserialize before use it.
+        /// </summary>
+        public static byte[] DecodeUnsafe(ArraySegment<byte> bytes)
+        {
+            int readSize;
+            if (MessagePackBinary.GetMessagePackType(bytes.Array, bytes.Offset) == MessagePackType.Extension)
+            {
+                var header = MessagePackBinary.ReadExtensionFormatHeader(bytes.Array, bytes.Offset, out readSize);
+                if (header.TypeCode == ExtensionTypeCode)
+                {
+                    // decode lz4
+                    var offset = bytes.Offset + readSize;
+                    var length = MessagePackBinary.ReadInt32(bytes.Array, offset, out readSize);
+                    offset += readSize;
+
+                    var buffer = LZ4MemoryPool.GetBuffer(); // use LZ4 Pool(Unsafe)
+                    if (buffer.Length < length)
+                    {
+                        buffer = new byte[length];
+                    }
+
+                    // LZ4 Decode
+                    var len = bytes.Count + bytes.Offset - offset;
+                    LZ4Codec.Decode(bytes.Array, offset, len, buffer, 0, length);
+
+                    return buffer; // return pooled bytes.
+                }
+            }
+
+            if (bytes.Offset == 0 && bytes.Array.Length == bytes.Count)
+            {
+                // return same reference
+                return bytes.Array;
+            }
+            else
+            {
+                var result = new byte[bytes.Count];
+                Buffer.BlockCopy(bytes.Array, bytes.Offset, result, 0, result.Length);
+                return result;
+            }
+        }
+
         static T DeserializeCore<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
         {
             if (resolver == null) resolver = MessagePackSerializer.DefaultResolver;

@@ -132,5 +132,19 @@ namespace MessagePack.Tests.ExtensionTests
                 if (bytes[i] != lz4Data[i]) throw new AssertException("not same");
             }
         }
+
+        [Fact]
+        public void Decode()
+        {
+            var originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
+            var simple = LZ4MessagePackSerializer.Serialize(100);
+            var complex = LZ4MessagePackSerializer.Serialize(originalData);
+
+            var msgpack1 = LZ4MessagePackSerializer.Decode(simple);
+            var msgpack2 = LZ4MessagePackSerializer.Decode(complex);
+
+            MessagePackSerializer.Deserialize<int>(msgpack1).Is(100);
+            MessagePackSerializer.Deserialize<FirstSimpleData[]>(msgpack2).IsStructuralEqual(originalData);
+        }
     }
 }
