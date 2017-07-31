@@ -51,4 +51,53 @@ namespace MessagePack.Tests
     //        hash.TryGetValue("hog15", out y).IsTrue(); y.Is(5);
     //    }
     //}
+
+    public class ByteArrayStringHashTableTest
+    {
+        static ArraySegment<byte> ToArraySegment(string s)
+        {
+            var bin = Encoding.UTF8.GetBytes(s);
+            return new ArraySegment<byte>(bin, 0, bin.Length);
+        }
+
+        [Fact]
+        public void ByteArrayStringHashTableAddGet()
+        {
+            var hash = new MessagePack.Internal.ByteArrayStringHashTable<int>();
+
+            hash.Add("hoge", 1);
+            Assert.Throws<ArgumentException>(() => hash.Add("hoge", 2));
+            int y;
+            hash.TryGetValue(ToArraySegment("hoge"), out y).IsTrue();
+            y.Is(1);
+
+            hash.Add("hoge3", 3);
+            hash.Add("hoge4", 4);
+            hash.Add("hoge5", 5);
+            hash.Add("hoge6", 6);
+            hash.Add("hoge7", 7);
+            hash.Add("hoge8", 8);
+            hash.Add("hoge9", 9);
+            hash.Add("hog10", 0);
+            hash.Add("hog11", 1);
+            hash.Add("hog12", 2);
+            hash.Add("hog13", 3);
+            hash.Add("hog14", 4);
+            hash.Add("hog15", 5);
+
+            hash.TryGetValue(ToArraySegment("hoge3"), out y).IsTrue(); y.Is(3);
+            hash.TryGetValue(ToArraySegment("hoge4"), out y).IsTrue(); y.Is(4);
+            hash.TryGetValue(ToArraySegment("hoge5"), out y).IsTrue(); y.Is(5);
+            hash.TryGetValue(ToArraySegment("hoge6"), out y).IsTrue(); y.Is(6);
+            hash.TryGetValue(ToArraySegment("hoge7"), out y).IsTrue(); y.Is(7);
+            hash.TryGetValue(ToArraySegment("hoge8"), out y).IsTrue(); y.Is(8);
+            hash.TryGetValue(ToArraySegment("hoge9"), out y).IsTrue(); y.Is(9);
+            hash.TryGetValue(ToArraySegment("hog10"), out y).IsTrue(); y.Is(0);
+            hash.TryGetValue(ToArraySegment("hog11"), out y).IsTrue(); y.Is(1);
+            hash.TryGetValue(ToArraySegment("hog12"), out y).IsTrue(); y.Is(2);
+            hash.TryGetValue(ToArraySegment("hog13"), out y).IsTrue(); y.Is(3);
+            hash.TryGetValue(ToArraySegment("hog14"), out y).IsTrue(); y.Is(4);
+            hash.TryGetValue(ToArraySegment("hog15"), out y).IsTrue(); y.Is(5);
+        }
+    }
 }
