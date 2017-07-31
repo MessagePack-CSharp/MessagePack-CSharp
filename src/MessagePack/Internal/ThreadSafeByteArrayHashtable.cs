@@ -4,6 +4,7 @@ namespace MessagePack.Internal
 {
     // like ArraySegment<byte> hashtable.
     // API is `Get(byte[] keyBytes, int offset, int count)`.
+    // This is a cheap alternative of UTF8String(not yet completed) dictionary.
     internal class ThreadsafeByteArrayHashTable<TValue>
     {
         Entry[] buckets;
@@ -158,19 +159,32 @@ namespace MessagePack.Internal
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static int ByteArrayGetHashCode(byte[] x, int offset, int count)
+        public static uint ByteArrayGetHashCode(byte[] x, int offset, int count)
         {
-            if (x == null) return 0;
-            unchecked
+            // borrow from Roslyn's ComputeStringHash, calculate FNV-1a hash
+            // http://source.roslyn.io/#Microsoft.CodeAnalysis.CSharp/Compiler/MethodBodySynthesizer.Lowered.cs,26
+
+            uint hash = 0;
+            if (x != null)
             {
-                var hash = -1623343517;
-                var max = offset + count;
-                while (offset < max)
+                hash = 2166136261u; // hash = FNV_offset_basis
+
+                var i = offset;
+                var max = i + count;
+                goto start;
+
+                again:
+                hash = unchecked((x[i] ^ hash) * 16777619); // hash = hash XOR byte_of_data, hash = hash × FNV_prime
+                i = i + 1;
+
+                start:
+                if (i < max)
                 {
-                    hash = (-1521134295 * hash) + x[offset++];
+                    goto again;
                 }
-                return hash;
             }
+
+            return hash;
         }
 
 #if NETSTANDARD1_4
@@ -178,6 +192,8 @@ namespace MessagePack.Internal
 #endif
         public static bool ByteArrayEquals(byte[] x, int xOffset, int xCount, byte[] y, int yOffset, int yCount)
         {
+            // More improvement, use ReadOnlySpan<byte>.SequenceEqual.
+
             if (xCount != yCount) return false;
 
             var xMax = xOffset + xCount;
@@ -210,7 +226,7 @@ namespace MessagePack.Internal
         {
             public byte[] Key;
             public TValue Value;
-            public int Hash;
+            public uint Hash;
             public Entry Next;
 
             // debug only
