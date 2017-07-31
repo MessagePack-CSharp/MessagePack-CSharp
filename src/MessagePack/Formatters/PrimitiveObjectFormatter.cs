@@ -202,10 +202,11 @@ namespace MessagePack.Formatters
                         var startOffset = offset;
                         offset += readSize;
 
+                        var objectFormatter = formatterResolver.GetFormatter<object>();
                         var array = new object[length];
                         for (int i = 0; i < length; i++)
                         {
-                            array[i] = Deserialize(bytes, offset, formatterResolver, out readSize);
+                            array[i] = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
                             offset += readSize;
                         }
 
@@ -218,13 +219,14 @@ namespace MessagePack.Formatters
                         var startOffset = offset;
                         offset += readSize;
 
+                        var objectFormatter = formatterResolver.GetFormatter<object>();
                         var hash = new Dictionary<object, object>(length);
                         for (int i = 0; i < length; i++)
                         {
-                            var key = Deserialize(bytes, offset, formatterResolver, out readSize);
+                            var key = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
                             offset += readSize;
 
-                            var value = Deserialize(bytes, offset, formatterResolver, out readSize);
+                            var value = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
                             offset += readSize;
 
                             hash.Add(key, value);
