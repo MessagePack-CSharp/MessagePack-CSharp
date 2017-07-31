@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 
 namespace MessagePack.Internal
 {
     // like ArraySegment<byte> hashtable.
-    // API is `Get(byte[] keyBytes, int offset, int count)`.
     // This is a cheap alternative of UTF8String(not yet completed) dictionary.
-    internal class ThreadsafeByteArrayHashTable<TValue>
+
+    // internal, but code generator requires this class
+    public class ByteArrayStringHashTable<TValue> : IEnumerable<KeyValuePair<byte[], TValue>>
     {
         Entry[] buckets;
         int size; // only use in writer lock
@@ -13,20 +17,30 @@ namespace MessagePack.Internal
         readonly object writerLock = new object();
         readonly float loadFactor;
 
-        public ThreadsafeByteArrayHashTable(int capacity = 4, float loadFactor = 0.75f)
+        public ByteArrayStringHashTable(int capacity = 4, float loadFactor = 0.42f) // default: 0.75f -> 0.42f
         {
             var tableSize = CalculateCapacity(capacity, loadFactor);
             this.buckets = new Entry[tableSize];
             this.loadFactor = loadFactor;
         }
 
-        public bool TryAdd(byte[] key, Func<byte[], TValue> valueFactory)
+        public void Add(string key, TValue value)
         {
-            TValue _;
-            return TryAddInternal(key, valueFactory, out _);
+            if (!TryAddInternal(Encoding.UTF8.GetBytes(key), value))
+            {
+                throw new ArgumentException("Key was already exists. Key:" + key);
+            }
         }
 
-        bool TryAddInternal(byte[] key, Func<byte[], TValue> valueFactory, out TValue resultingValue)
+        public void Add(byte[] key, TValue value)
+        {
+            if (!TryAddInternal(key, value))
+            {
+                throw new ArgumentException("Key was already exists. Key:" + key);
+            }
+        }
+
+        bool TryAddInternal(byte[] key, TValue value)
         {
             lock (writerLock)
             {
@@ -42,13 +56,13 @@ namespace MessagePack.Internal
                         while (e != null)
                         {
                             var newEntry = new Entry { Key = e.Key, Value = e.Value, Hash = e.Hash };
-                            AddToBuckets(nextBucket, key, newEntry, null, out resultingValue);
+                            AddToBuckets(nextBucket, key, newEntry, default(TValue));
                             e = e.Next;
                         }
                     }
 
                     // add entry(if failed to add, only do resize)
-                    var successAdd = AddToBuckets(nextBucket, key, null, valueFactory, out resultingValue);
+                    var successAdd = AddToBuckets(nextBucket, key, null, value);
 
                     // replace field(threadsafe for read)
                     System.Threading.Volatile.Write(ref buckets, nextBucket);
@@ -59,27 +73,25 @@ namespace MessagePack.Internal
                 else
                 {
                     // add entry(insert last is thread safe for read)
-                    var successAdd = AddToBuckets(buckets, key, null, valueFactory, out resultingValue);
+                    var successAdd = AddToBuckets(buckets, key, null, value);
                     if (successAdd) size++;
                     return successAdd;
                 }
             }
         }
 
-        bool AddToBuckets(Entry[] buckets, byte[] newKey, Entry newEntryOrNull, Func<byte[], TValue> valueFactory, out TValue resultingValue)
+        bool AddToBuckets(Entry[] buckets, byte[] newKey, Entry newEntryOrNull, TValue value)
         {
             var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : ByteArrayGetHashCode(newKey, 0, newKey.Length);
             if (buckets[h & (buckets.Length - 1)] == null)
             {
                 if (newEntryOrNull != null)
                 {
-                    resultingValue = newEntryOrNull.Value;
                     System.Threading.Volatile.Write(ref buckets[h & (buckets.Length - 1)], newEntryOrNull);
                 }
                 else
                 {
-                    resultingValue = valueFactory(newKey);
-                    System.Threading.Volatile.Write(ref buckets[h & (buckets.Length - 1)], new Entry { Key = newKey, Value = resultingValue, Hash = h });
+                    System.Threading.Volatile.Write(ref buckets[h & (buckets.Length - 1)], new Entry { Key = newKey, Value = value, Hash = h });
                 }
             }
             else
@@ -89,7 +101,6 @@ namespace MessagePack.Internal
                 {
                     if (ByteArrayEquals(searchLastEntry.Key, 0, searchLastEntry.Key.Length, newKey, 0, newKey.Length))
                     {
-                        resultingValue = searchLastEntry.Value;
                         return false;
                     }
 
@@ -97,13 +108,11 @@ namespace MessagePack.Internal
                     {
                         if (newEntryOrNull != null)
                         {
-                            resultingValue = newEntryOrNull.Value;
                             System.Threading.Volatile.Write(ref searchLastEntry.Next, newEntryOrNull);
                         }
                         else
                         {
-                            resultingValue = valueFactory(newKey);
-                            System.Threading.Volatile.Write(ref searchLastEntry.Next, new Entry { Key = newKey, Value = resultingValue, Hash = h });
+                            System.Threading.Volatile.Write(ref searchLastEntry.Next, new Entry { Key = newKey, Value = value, Hash = h });
                         }
                         break;
                     }
@@ -114,15 +123,15 @@ namespace MessagePack.Internal
             return true;
         }
 
-        public bool TryGetValue(byte[] key, int offset, int count, out TValue value)
+        public bool TryGetValue(ArraySegment<byte> key, out TValue value)
         {
             var table = buckets;
-            var hash = ByteArrayGetHashCode(key, offset, count);
+            var hash = ByteArrayGetHashCode(key.Array, key.Offset, key.Count);
             var entry = table[hash & table.Length - 1];
 
             if (entry == null) goto NOT_FOUND;
 
-            if (ByteArrayEquals(entry.Key, 0, entry.Key.Length, key, offset, count))
+            if (ByteArrayEquals(entry.Key, 0, entry.Key.Length, key.Array, key.Offset, key.Count))
             {
                 value = entry.Value;
                 return true;
@@ -131,7 +140,7 @@ namespace MessagePack.Internal
             var next = entry.Next;
             while (next != null)
             {
-                if (ByteArrayEquals(next.Key, 0, next.Key.Length, key, offset, count))
+                if (ByteArrayEquals(next.Key, 0, next.Key.Length, key.Array, key.Offset, key.Count))
                 {
                     value = next.Value;
                     return true;
@@ -144,22 +153,10 @@ namespace MessagePack.Internal
             return false;
         }
 
-        public TValue GetOrAdd(byte[] key, int offset, int count, Func<byte[], TValue> valueFactory)
-        {
-            TValue v;
-            if (TryGetValue(key, offset, count, out v))
-            {
-                return v;
-            }
-
-            TryAddInternal(key, valueFactory, out v);
-            return v;
-        }
-
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static uint ByteArrayGetHashCode(byte[] x, int offset, int count)
+        static uint ByteArrayGetHashCode(byte[] x, int offset, int count)
         {
             // borrow from Roslyn's ComputeStringHash, calculate FNV-1a hash
             // http://source.roslyn.io/#Microsoft.CodeAnalysis.CSharp/Compiler/MethodBodySynthesizer.Lowered.cs,26
@@ -190,9 +187,10 @@ namespace MessagePack.Internal
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static bool ByteArrayEquals(byte[] x, int xOffset, int xCount, byte[] y, int yOffset, int yCount)
+        static bool ByteArrayEquals(byte[] x, int xOffset, int xCount, byte[] y, int yOffset, int yCount)
         {
             // More improvement, use ReadOnlySpan<byte>.SequenceEqual.
+            // or unsafe, retrieve long unroll loop.
 
             if (xCount != yCount) return false;
 
@@ -220,6 +218,28 @@ namespace MessagePack.Internal
             }
 
             return capacity;
+        }
+
+        public IEnumerator<KeyValuePair<byte[], TValue>> GetEnumerator()
+        {
+            var b = this.buckets;
+
+            foreach (var item in b)
+            {
+                if (item == null) continue;
+
+                var n = item;
+                while (n != null)
+                {
+                    yield return new KeyValuePair<byte[], TValue>(n.Key, n.Value);
+                    n = n.Next;
+                }
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         class Entry
