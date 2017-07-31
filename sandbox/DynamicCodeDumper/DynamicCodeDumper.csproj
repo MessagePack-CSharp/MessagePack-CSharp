@@ -63,6 +63,9 @@
     <Compile Include="..\..\src\MessagePack\IMessagePackSerializationCallbackReceiver.cs">
       <Link>Code\IMessagePackSerializationCallbackReceiver.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\ByteArrayStringHashTable.cs">
+      <Link>Code\ByteArrayStringHashTable.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\DynamicAssembly.cs">
       <Link>Code\DynamicAssembly.cs</Link>
     </Compile>

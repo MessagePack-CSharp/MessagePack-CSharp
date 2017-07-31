@@ -17,6 +17,17 @@ namespace MessagePack.Internal
         readonly object writerLock = new object();
         readonly float loadFactor;
 
+        public ByteArrayStringHashTable()
+            : this(4, 0.42f)
+        {
+
+        }
+
+        public ByteArrayStringHashTable(int capacity)
+            : this(capacity, 0.42f)
+        {
+        }
+
         public ByteArrayStringHashTable(int capacity = 4, float loadFactor = 0.42f) // default: 0.75f -> 0.42f
         {
             var tableSize = CalculateCapacity(capacity, loadFactor);
