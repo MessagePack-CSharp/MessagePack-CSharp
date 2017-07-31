@@ -28,7 +28,7 @@ namespace MessagePack.Internal
         {
         }
 
-        public ByteArrayStringHashTable(int capacity = 4, float loadFactor = 0.42f) // default: 0.75f -> 0.42f
+        public ByteArrayStringHashTable(int capacity, float loadFactor) // default: 0.75f -> 0.42f
         {
             var tableSize = CalculateCapacity(capacity, loadFactor);
             this.buckets = new Entry[tableSize];
