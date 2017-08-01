@@ -1,5 +1,6 @@
 ﻿extern alias oldmsgpack;
 extern alias newmsgpack;
+extern alias farmhashmsgpack;
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
@@ -38,13 +39,14 @@ namespace PerfBenchmarkDotNet
                 typeof(MapSerializeBenchmark),
             });
 
-            // args = new[] { "0" };
+            args = new[] { "0" };
             switcher.Run(args);
         }
     }
 
     [oldmsgpack::MessagePack.MessagePackObject(true)]
     [newmsgpack::MessagePack.MessagePackObject(true)]
+    [farmhashmsgpack::MessagePack.MessagePackObject(true)]
     public class SerializerTarget
     {
         public int MyProperty1 { get; set; }
@@ -67,6 +69,7 @@ namespace PerfBenchmarkDotNet
         public readonly byte[] byteA;
         public readonly byte[] byteB;
         public readonly byte[] byteC;
+        public readonly byte[] byteD;
 
         public MapDeserializeBenchmark()
         {
@@ -91,6 +94,7 @@ namespace PerfBenchmarkDotNet
             byteA = context.GetSerializer<SerializerTarget>().PackSingleObject(target);
             byteB = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
             byteC = newmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
+            byteD = farmhashmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
         }
 
         [Benchmark]
@@ -105,10 +109,16 @@ namespace PerfBenchmarkDotNet
             return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteB);
         }
 
-        [Benchmark(Baseline = true)]
+        [Benchmark]
         public SerializerTarget MessagePack_1_4_4()
         {
             return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteC);
+        }
+
+        [Benchmark(Baseline = true)]
+        public SerializerTarget MessagePack_Farmhash()
+        {
+            return farmhashmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteD);
         }
     }
 

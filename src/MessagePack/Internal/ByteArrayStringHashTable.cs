@@ -169,6 +169,12 @@ namespace MessagePack.Internal
 #endif
         static uint ByteArrayGetHashCode(byte[] x, int offset, int count)
         {
+#if NETSTANDARD1_4
+            // use FarmHash is better?  https://github.com/google/farmhash
+            if (x == null) return 0;
+            return FarmHash.Hash32(x, offset, count);
+#else
+
             // borrow from Roslyn's ComputeStringHash, calculate FNV-1a hash
             // http://source.roslyn.io/#Microsoft.CodeAnalysis.CSharp/Compiler/MethodBodySynthesizer.Lowered.cs,26
 
@@ -193,6 +199,8 @@ namespace MessagePack.Internal
             }
 
             return hash;
+
+#endif
         }
 
 #if NETSTANDARD1_4
