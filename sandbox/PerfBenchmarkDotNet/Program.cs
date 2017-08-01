@@ -1,4 +1,5 @@
-﻿//extern alias oldmsgpack;
+﻿extern alias oldmsgpack;
+extern alias newmsgpack;
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
@@ -7,6 +8,7 @@ using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
+using MsgPack.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,11 +23,8 @@ namespace PerfBenchmarkDotNet
         public BenchmarkConfig()
         {
             Add(MarkdownExporter.GitHub);
-            Add(CsvMeasurementsExporter.Default);
             Add(MemoryDiagnoser.Default);
-
-            // new BenchmarkDotNet.Diagnostics.Windows.MemoryDiagnoser()
-            Add(Job.Clr/*, Job.Core*/);
+            Add(Job.ShortRun);
         }
     }
 
@@ -33,25 +32,18 @@ namespace PerfBenchmarkDotNet
     {
         static void Main(string[] args)
         {
-            SetDefaultConfiguration();
-
             var switcher = new BenchmarkSwitcher(new[]
             {
-                typeof(SerializeBenchmark)
+                typeof(MapDeserializeBenchmark)
             });
 
+            args = new[] { "0" };
             switcher.Run(args);
-        }
-
-        static void SetDefaultConfiguration()
-        {
-            MsgPack.Serialization.SerializationContext.Default = new MsgPack.Serialization.SerializationContext
-            {
-                SerializationMethod = MsgPack.Serialization.SerializationMethod.Map
-            };
         }
     }
 
+    [oldmsgpack::MessagePack.MessagePackObject(true)]
+    [newmsgpack::MessagePack.MessagePackObject(true)]
     public class SerializerTarget
     {
         public int MyProperty1 { get; set; }
@@ -66,10 +58,16 @@ namespace PerfBenchmarkDotNet
     }
 
     [Config(typeof(BenchmarkConfig))]
-    public class SerializeBenchmark
+    public class MapDeserializeBenchmark
     {
-        readonly SerializerTarget target;
-        public SerializeBenchmark()
+
+        public readonly SerializerTarget target;
+        public readonly SerializationContext context;
+        public readonly byte[] byteA;
+        public readonly byte[] byteB;
+        public readonly byte[] byteC;
+
+        public MapDeserializeBenchmark()
         {
             target = new SerializerTarget
             {
@@ -83,24 +81,33 @@ namespace PerfBenchmarkDotNet
                 MyProperty8 = 8,
                 MyProperty9 = 9,
             };
+
+            context = new MsgPack.Serialization.SerializationContext
+            {
+                SerializationMethod = MsgPack.Serialization.SerializationMethod.Map
+            };
+
+            byteA = context.GetSerializer<SerializerTarget>().PackSingleObject(target);
+            byteB = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
+            byteC = newmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
         }
 
         [Benchmark]
-        public void MsgPackCli()
+        public SerializerTarget MsgPackCli()
         {
-            var bytes = MsgPack.Serialization.MessagePackSerializer.Get<SerializerTarget>().PackSingleObject(target);
+            return context.GetSerializer<SerializerTarget>().UnpackSingleObject(byteA);
         }
 
-        //[Benchmark]
-        //public void MessagePack_1_3_0()
-        //{
-        //    var bytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(target, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-        //}
+        [Benchmark]
+        public SerializerTarget MessagePack_1_4_3()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteB);
+        }
 
-        //[Benchmark(Baseline = true)]
-        //public void MessagePack_1_3_1()
-        //{
-        //    var bytes = MessagePack.MessagePackSerializer.Serialize(target, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-        //}
+        [Benchmark(Baseline = true)]
+        public SerializerTarget MessagePack_1_4_4()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteC);
+        }
     }
 }
