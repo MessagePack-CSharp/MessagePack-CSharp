@@ -99,13 +99,13 @@ namespace PerfBenchmarkDotNet
             byteD = farmhashmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
         }
 
-        //[Benchmark]
+        [Benchmark]
         public SerializerTarget MsgPackCli()
         {
             return context.GetSerializer<SerializerTarget>().UnpackSingleObject(byteA);
         }
 
-        //[Benchmark]
+        [Benchmark]
         public SerializerTarget MessagePack_1_4_3()
         {
             return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteB);

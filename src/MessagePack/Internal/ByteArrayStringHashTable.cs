@@ -12,8 +12,8 @@ namespace MessagePack.Internal
     // internal, but code generator requires this class
     public class ByteArrayStringHashTable : IEnumerable<KeyValuePair<string, int>>
     {
-        Entry[][] buckets; // immutable array
-        int indexFor;
+        readonly Entry[][] buckets; // immutable array(faster than linkedlist)
+        readonly int indexFor;
 
         public ByteArrayStringHashTable(int capacity)
             : this(capacity, 0.42f) // default: 0.75f -> 0.42f
@@ -161,7 +161,7 @@ namespace MessagePack.Internal
         {
             // does not do null check for array.
             if (xCount != y.Length) return false;
-            
+
             // reduce y's array bound check.
             for (int i = 0; i < y.Length; i++)
             {
@@ -212,6 +212,12 @@ namespace MessagePack.Internal
         {
             public byte[] Key;
             public int Value;
+
+            // for debugging
+            public override string ToString()
+            {
+                return "(" + Encoding.UTF8.GetString(Key) + ", " + Value + ")";
+            }
         }
     }
 }

@@ -132,7 +132,21 @@ namespace MessagePack
             int readSize;
             return formatter.Deserialize(bytes, 0, resolver, out readSize);
         }
-       
+
+        public static T Deserialize<T>(ArraySegment<byte> bytes)
+        {
+            return Deserialize<T>(bytes, defaultResolver);
+        }
+
+        public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
+        {
+            if (resolver == null) resolver = DefaultResolver;
+            var formatter = resolver.GetFormatterWithVerify<T>();
+
+            int readSize;
+            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize);
+        }
+
         public static T Deserialize<T>(Stream stream)
         {
             return Deserialize<T>(stream, defaultResolver);
