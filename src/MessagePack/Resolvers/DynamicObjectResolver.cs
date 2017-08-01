@@ -198,7 +198,7 @@ namespace MessagePack.Internal
             if (serializationInfo.IsStringKey)
             {
                 var method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
-                dictionaryField = typeBuilder.DefineField("keyMapping", typeof(ByteArrayStringHashTable<int>), FieldAttributes.Private | FieldAttributes.InitOnly);
+                dictionaryField = typeBuilder.DefineField("keyMapping", typeof(ByteArrayStringHashTable), FieldAttributes.Private | FieldAttributes.InitOnly);
                 stringByteKeysField = typeBuilder.DefineField("stringByteKeys", typeof(byte[][]), FieldAttributes.Private | FieldAttributes.InitOnly);
 
                 var il = method.GetILGenerator();
@@ -799,9 +799,9 @@ namespace MessagePack.Internal
         static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == "GetFormatterWithVerify");
         static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Serialize", new[] { refByte, typeof(int), t, typeof(IFormatterResolver) });
         static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Deserialize", new[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), refInt });
-        static readonly ConstructorInfo dictionaryConstructor = typeof(ByteArrayStringHashTable<int>).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
-        static readonly MethodInfo dictionaryAdd = typeof(ByteArrayStringHashTable<int>).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
-        static readonly MethodInfo dictionaryTryGetValue = typeof(ByteArrayStringHashTable<int>).GetRuntimeMethod("TryGetValue", new[] { typeof(ArraySegment<byte>), refInt });
+        static readonly ConstructorInfo dictionaryConstructor = typeof(ByteArrayStringHashTable).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
+        static readonly MethodInfo dictionaryAdd = typeof(ByteArrayStringHashTable).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
+        static readonly MethodInfo dictionaryTryGetValue = typeof(ByteArrayStringHashTable).GetRuntimeMethod("TryGetValue", new[] { typeof(ArraySegment<byte>), refInt });
         static readonly ConstructorInfo invalidOperationExceptionConstructor = typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(string); });
 
         static readonly MethodInfo onBeforeSerialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnBeforeSerialize", Type.EmptyTypes);

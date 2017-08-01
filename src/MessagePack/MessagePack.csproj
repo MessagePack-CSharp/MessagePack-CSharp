@@ -12,7 +12,7 @@
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>4</LangVersion>
+        <LangVersion>7</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' != 'net45'">
@@ -21,14 +21,14 @@
         <NoWarn>1701;1702;1705;1591</NoWarn>
         <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>4</LangVersion>
+        <LangVersion>7</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(TargetFramework)' == 'net45'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>4</LangVersion>
+        <LangVersion>7</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' == 'net45'">
@@ -37,7 +37,7 @@
         <NoWarn>1701;1702;1705;1591</NoWarn>
         <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>4</LangVersion>
+        <LangVersion>7</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

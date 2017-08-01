@@ -41,6 +41,8 @@ namespace PerfBenchmarkDotNet
 
             args = new[] { "0" };
             switcher.Run(args);
+
+            //var hugahgua = farmhashmsgpack::MessagePack.Resolvers.StandardResolver.Instance.GetFormatter<SerializerTarget>();
         }
     }
 
@@ -56,7 +58,7 @@ namespace PerfBenchmarkDotNet
         public int MyProperty5 { get; set; }
         public int MyProperty6 { get; set; }
         public int MyProperty7 { get; set; }
-        public int MyProperty8 { get; set; }
+        // public int MyProperty8 { get; set; }
         public int MyProperty9 { get; set; }
     }
 
@@ -82,7 +84,7 @@ namespace PerfBenchmarkDotNet
                 MyProperty5 = 5,
                 MyProperty6 = 6,
                 MyProperty7 = 7,
-                MyProperty8 = 8,
+                // MyProperty8 = 8,
                 MyProperty9 = 9,
             };
 
@@ -97,13 +99,13 @@ namespace PerfBenchmarkDotNet
             byteD = farmhashmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
         }
 
-        [Benchmark]
+        //[Benchmark]
         public SerializerTarget MsgPackCli()
         {
             return context.GetSerializer<SerializerTarget>().UnpackSingleObject(byteA);
         }
 
-        [Benchmark]
+        //[Benchmark]
         public SerializerTarget MessagePack_1_4_3()
         {
             return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteB);
@@ -139,7 +141,7 @@ namespace PerfBenchmarkDotNet
                 MyProperty5 = 5,
                 MyProperty6 = 6,
                 MyProperty7 = 7,
-                MyProperty8 = 8,
+                // MyProperty8 = 8,
                 MyProperty9 = 9,
             };
 

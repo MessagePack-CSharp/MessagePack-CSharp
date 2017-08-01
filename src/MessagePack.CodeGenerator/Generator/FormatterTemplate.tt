@@ -24,7 +24,7 @@ namespace <#= Namespace #>
 
         public <#= objInfo.Name #>Formatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable<int>(<#= objInfo.Members.Length #>)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(<#= objInfo.Members.Length #>)
             {
 <# foreach(var x in objInfo.Members) { #>
                 { "<#= x.StringKey #>", <#= x.IntKey #>},

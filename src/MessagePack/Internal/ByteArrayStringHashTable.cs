@@ -6,36 +6,28 @@ using System.Text;
 namespace MessagePack.Internal
 {
     // like ArraySegment<byte> hashtable.
-    // This is a cheap alternative of UTF8String(not yet completed) dictionary.
+    // Add is safe for construction phase only and requires capacity(does not do rehash)
+    // and specialized for internal use(nongenerics, TValue is int)
 
     // internal, but code generator requires this class
-    public class ByteArrayStringHashTable<TValue> : IEnumerable<KeyValuePair<string, TValue>>
+    public class ByteArrayStringHashTable : IEnumerable<KeyValuePair<string, int>>
     {
-        Entry[] buckets;
-        int size; // only use in writer lock
-
-        readonly object writerLock = new object();
-        readonly float loadFactor;
-
-        public ByteArrayStringHashTable()
-            : this(4, 0.42f)
-        {
-
-        }
+        Entry[][] buckets; // immutable array
+        int indexFor;
 
         public ByteArrayStringHashTable(int capacity)
-            : this(capacity, 0.42f)
+            : this(capacity, 0.42f) // default: 0.75f -> 0.42f
         {
         }
 
-        public ByteArrayStringHashTable(int capacity, float loadFactor) // default: 0.75f -> 0.42f
+        public ByteArrayStringHashTable(int capacity, float loadFactor)
         {
             var tableSize = CalculateCapacity(capacity, loadFactor);
-            this.buckets = new Entry[tableSize];
-            this.loadFactor = loadFactor;
+            this.buckets = new Entry[tableSize][];
+            this.indexFor = buckets.Length - 1;
         }
 
-        public void Add(string key, TValue value)
+        public void Add(string key, int value)
         {
             if (!TryAddInternal(Encoding.UTF8.GetBytes(key), value))
             {
@@ -43,7 +35,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public void Add(byte[] key, TValue value)
+        public void Add(byte[] key, int value)
         {
             if (!TryAddInternal(key, value))
             {
@@ -51,116 +43,75 @@ namespace MessagePack.Internal
             }
         }
 
-        bool TryAddInternal(byte[] key, TValue value)
+        bool TryAddInternal(byte[] key, int value)
         {
-            lock (writerLock)
+            var h = ByteArrayGetHashCode(key, 0, key.Length);
+            var entry = new Entry { Key = key, Value = value };
+
+            var array = buckets[h & (indexFor)];
+            if (array == null)
             {
-                var nextCapacity = CalculateCapacity(size + 1, loadFactor);
-
-                if (buckets.Length < nextCapacity)
-                {
-                    // rehash
-                    var nextBucket = new Entry[nextCapacity];
-                    for (int i = 0; i < buckets.Length; i++)
-                    {
-                        var e = buckets[i];
-                        while (e != null)
-                        {
-                            var newEntry = new Entry { Key = e.Key, Value = e.Value, Hash = e.Hash };
-                            AddToBuckets(nextBucket, key, newEntry, default(TValue));
-                            e = e.Next;
-                        }
-                    }
-
-                    // add entry(if failed to add, only do resize)
-                    var successAdd = AddToBuckets(nextBucket, key, null, value);
-
-                    // replace field(threadsafe for read)
-                    System.Threading.Volatile.Write(ref buckets, nextBucket);
-
-                    if (successAdd) size++;
-                    return successAdd;
-                }
-                else
-                {
-                    // add entry(insert last is thread safe for read)
-                    var successAdd = AddToBuckets(buckets, key, null, value);
-                    if (successAdd) size++;
-                    return successAdd;
-                }
-            }
-        }
-
-        bool AddToBuckets(Entry[] buckets, byte[] newKey, Entry newEntryOrNull, TValue value)
-        {
-            var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : ByteArrayGetHashCode(newKey, 0, newKey.Length);
-            if (buckets[h & (buckets.Length - 1)] == null)
-            {
-                if (newEntryOrNull != null)
-                {
-                    System.Threading.Volatile.Write(ref buckets[h & (buckets.Length - 1)], newEntryOrNull);
-                }
-                else
-                {
-                    System.Threading.Volatile.Write(ref buckets[h & (buckets.Length - 1)], new Entry { Key = newKey, Value = value, Hash = h });
-                }
+                buckets[h & (indexFor)] = new[] { entry };
             }
             else
             {
-                var searchLastEntry = buckets[h & (buckets.Length - 1)];
-                while (true)
+                // check duplicate
+                for (int i = 0; i < array.Length; i++)
                 {
-                    if (ByteArrayEquals(searchLastEntry.Key, 0, searchLastEntry.Key.Length, newKey, 0, newKey.Length))
+                    var e = array[i].Key;
+                    if (ByteArrayEquals(key, 0, key.Length, e))
                     {
                         return false;
                     }
-
-                    if (searchLastEntry.Next == null)
-                    {
-                        if (newEntryOrNull != null)
-                        {
-                            System.Threading.Volatile.Write(ref searchLastEntry.Next, newEntryOrNull);
-                        }
-                        else
-                        {
-                            System.Threading.Volatile.Write(ref searchLastEntry.Next, new Entry { Key = newKey, Value = value, Hash = h });
-                        }
-                        break;
-                    }
-                    searchLastEntry = searchLastEntry.Next;
                 }
+
+                var newArray = new Entry[array.Length + 1];
+                Array.Copy(array, newArray, array.Length);
+                array = newArray;
+                array[array.Length - 1] = entry;
+                buckets[h & (indexFor)] = array;
             }
 
             return true;
         }
 
-        public bool TryGetValue(ArraySegment<byte> key, out TValue value)
+        public bool TryGetValue(ArraySegment<byte> key, out int value)
         {
             var table = buckets;
             var hash = ByteArrayGetHashCode(key.Array, key.Offset, key.Count);
-            var entry = table[hash & table.Length - 1];
+            var entry = table[hash & indexFor];
 
             if (entry == null) goto NOT_FOUND;
 
-            if (ByteArrayEquals(entry.Key, 0, entry.Key.Length, key.Array, key.Offset, key.Count))
             {
-                value = entry.Value;
-                return true;
-            }
-
-            var next = entry.Next;
-            while (next != null)
-            {
-                if (ByteArrayEquals(next.Key, 0, next.Key.Length, key.Array, key.Offset, key.Count))
+#if NETSTANDARD1_4
+                ref var v = ref entry[0];
+#else
+                var v = entry[0];
+#endif
+                if (ByteArrayEquals(key.Array, key.Offset, key.Count, v.Key))
                 {
-                    value = next.Value;
+                    value = v.Value;
                     return true;
                 }
-                next = next.Next;
+            }
+
+            for (int i = 1; i < entry.Length; i++)
+            {
+#if NETSTANDARD1_4
+                ref var v = ref entry[i];
+#else
+                var v = entry[i];
+#endif
+                if (ByteArrayEquals(key.Array, key.Offset, key.Count, v.Key))
+                {
+                    value = v.Value;
+                    return true;
+                }
             }
 
             NOT_FOUND:
-            value = default(TValue);
+            value = default(int);
             return false;
         }
 
@@ -206,17 +157,15 @@ namespace MessagePack.Internal
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        static bool ByteArrayEquals(byte[] x, int xOffset, int xCount, byte[] y, int yOffset, int yCount)
+        static bool ByteArrayEquals(byte[] x, int xOffset, int xCount, byte[] y) // y is always 0 - length
         {
-            // More improvement, use ReadOnlySpan<byte>.SequenceEqual.
-            // or unsafe, retrieve long unroll loop.
-
-            if (xCount != yCount) return false;
-
-            var xMax = xOffset + xCount;
-            while (xOffset < xMax)
+            // does not do null check for array.
+            if (xCount != y.Length) return false;
+            
+            // reduce y's array bound check.
+            for (int i = 0; i < y.Length; i++)
             {
-                if (x[xOffset++] != y[yOffset++]) return false;
+                if (x[xOffset++] != y[i]) return false;
             }
 
             return true;
@@ -240,19 +189,16 @@ namespace MessagePack.Internal
         }
 
         // only for Debug use
-        public IEnumerator<KeyValuePair<string, TValue>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, int>> GetEnumerator()
         {
             var b = this.buckets;
 
             foreach (var item in b)
             {
                 if (item == null) continue;
-
-                var n = item;
-                while (n != null)
+                foreach (var item2 in item)
                 {
-                    yield return new KeyValuePair<string, TValue>(Encoding.UTF8.GetString(n.Key), n.Value);
-                    n = n.Next;
+                    yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key), item2.Value);
                 }
             }
         }
@@ -262,30 +208,10 @@ namespace MessagePack.Internal
             return GetEnumerator();
         }
 
-        class Entry
+        struct Entry
         {
             public byte[] Key;
-            public TValue Value;
-            public uint Hash;
-            public Entry Next;
-
-            // debug only
-            public override string ToString()
-            {
-                return Key + "(" + Count() + ")";
-            }
-
-            int Count()
-            {
-                var count = 1;
-                var n = this;
-                while (n.Next != null)
-                {
-                    count++;
-                    n = n.Next;
-                }
-                return count;
-            }
+            public int Value;
         }
     }
 }

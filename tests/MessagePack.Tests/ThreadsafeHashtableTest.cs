@@ -63,7 +63,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ByteArrayStringHashTableAddGet()
         {
-            var hash = new MessagePack.Internal.ByteArrayStringHashTable<int>();
+            var hash = new MessagePack.Internal.ByteArrayStringHashTable(15);
 
             hash.Add("hoge", 1);
             Assert.Throws<ArgumentException>(() => hash.Add("hoge", 2));

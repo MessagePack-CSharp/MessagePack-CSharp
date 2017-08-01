@@ -73,7 +73,7 @@ namespace MessagePack.CodeGenerator.Generator
             #line default
             #line hidden
             this.Write("Formatter()\r\n        {\r\n            this.____keyMapping = new global::MessagePack" +
-                    ".Internal.ByteArrayStringHashTable<int>(");
+                    ".Internal.ByteArrayStringHashTable(");
             
             #line 27 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Members.Length));
