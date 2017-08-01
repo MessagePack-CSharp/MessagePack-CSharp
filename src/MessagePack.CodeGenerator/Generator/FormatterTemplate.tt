@@ -24,7 +24,7 @@ namespace <#= Namespace #>
 
         public <#= objInfo.Name #>Formatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(<#= objInfo.Members.Length #>)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable<int>(<#= objInfo.Members.Length #>)
             {
 <# foreach(var x in objInfo.Members) { #>
                 { "<#= x.StringKey #>", <#= x.IntKey #>},
@@ -105,7 +105,7 @@ namespace <#= Namespace #>
             for (int i = 0; i < length; i++)
             {
 <# if(objInfo.IsStringKey) { #>
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))

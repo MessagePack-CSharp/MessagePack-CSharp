@@ -34,10 +34,11 @@ namespace PerfBenchmarkDotNet
         {
             var switcher = new BenchmarkSwitcher(new[]
             {
-                typeof(MapDeserializeBenchmark)
+                typeof(MapDeserializeBenchmark),
+                typeof(MapSerializeBenchmark),
             });
 
-            args = new[] { "0" };
+            // args = new[] { "0" };
             switcher.Run(args);
         }
     }
@@ -108,6 +109,52 @@ namespace PerfBenchmarkDotNet
         public SerializerTarget MessagePack_1_4_4()
         {
             return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteC);
+        }
+    }
+
+    [Config(typeof(BenchmarkConfig))]
+    public class MapSerializeBenchmark
+    {
+        public readonly SerializerTarget target;
+        public readonly SerializationContext context;
+
+        public MapSerializeBenchmark()
+        {
+            target = new SerializerTarget
+            {
+                MyProperty1 = 1,
+                MyProperty2 = 2,
+                MyProperty3 = 3,
+                MyProperty4 = 4,
+                MyProperty5 = 5,
+                MyProperty6 = 6,
+                MyProperty7 = 7,
+                MyProperty8 = 8,
+                MyProperty9 = 9,
+            };
+
+            context = new MsgPack.Serialization.SerializationContext
+            {
+                SerializationMethod = MsgPack.Serialization.SerializationMethod.Map
+            };
+        }
+
+        [Benchmark]
+        public byte[] MsgPackCli()
+        {
+            return context.GetSerializer<SerializerTarget>().PackSingleObject(target);
+        }
+
+        [Benchmark]
+        public byte[] MessagePack_1_4_3()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize<SerializerTarget>(target);
+        }
+
+        [Benchmark(Baseline = true)]
+        public byte[] MessagePack_1_4_4()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize<SerializerTarget>(target);
         }
     }
 }

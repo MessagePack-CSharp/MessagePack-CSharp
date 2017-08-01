@@ -287,14 +287,22 @@ namespace Sandbox
         {
 
 
-            var f = 33.33f;
-            var xs = MessagePackSerializer.Serialize(f);
-            var f2 = MessagePackSerializer.Deserialize<float>(xs);
+            //var table = new MessagePack.Internal.ByteArrayStringHashTable<int>(9);
+            //table.Add("MyProperty1", 1);
+            //table.Add("MyProperty2", 2);
+            //table.Add("MyProperty3", 3);
+            //table.Add("MyProperty4", 4);
+            //table.Add("MyProperty5", 5);
+            //table.Add("MyProperty6", 6);
+            //table.Add("MyProperty7", 7);
+            //table.Add("MyProperty8", 8);
+            //table.Add("MyProperty9", 9);
 
-            var j = MessagePackSerializer.ToJson(xs);
-            Console.WriteLine(f.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            Console.WriteLine(f2.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            Console.WriteLine(j);
+
+            var huga = MessagePack.Resolvers.ContractlessStandardResolver.Instance.GetFormatter<SerializerTarget>();
+
+            //table.TryGetValue(
+
 
         }
 
@@ -575,6 +583,18 @@ namespace Sandbox
 
 
 
+    public class SerializerTarget
+    {
+        public int MyProperty1 { get; set; }
+        public int MyProperty2 { get; set; }
+        public int MyProperty3 { get; set; }
+        public int MyProperty4 { get; set; }
+        public int MyProperty5 { get; set; }
+        public int MyProperty6 { get; set; }
+        public int MyProperty7 { get; set; }
+        public int MyProperty8 { get; set; }
+        public int MyProperty9 { get; set; }
+    }
 
     // design concept sketch of Union.
 

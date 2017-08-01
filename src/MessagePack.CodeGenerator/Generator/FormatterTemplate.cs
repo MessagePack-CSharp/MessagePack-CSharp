@@ -72,8 +72,8 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("Formatter()\r\n        {\r\n            this.____keyMapping = new global::System.Coll" +
-                    "ections.Generic.Dictionary<string, int>(");
+            this.Write("Formatter()\r\n        {\r\n            this.____keyMapping = new global::MessagePack" +
+                    ".Internal.ByteArrayStringHashTable<int>(");
             
             #line 27 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Members.Length));
@@ -405,7 +405,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             
             #line default
             #line hidden
-            this.Write(@"                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+            this.Write(@"                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))

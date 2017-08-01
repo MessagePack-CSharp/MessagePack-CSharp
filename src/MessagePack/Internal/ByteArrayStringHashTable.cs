@@ -9,7 +9,7 @@ namespace MessagePack.Internal
     // This is a cheap alternative of UTF8String(not yet completed) dictionary.
 
     // internal, but code generator requires this class
-    public class ByteArrayStringHashTable<TValue> : IEnumerable<KeyValuePair<byte[], TValue>>
+    public class ByteArrayStringHashTable<TValue> : IEnumerable<KeyValuePair<string, TValue>>
     {
         Entry[] buckets;
         int size; // only use in writer lock
@@ -231,7 +231,8 @@ namespace MessagePack.Internal
             return capacity;
         }
 
-        public IEnumerator<KeyValuePair<byte[], TValue>> GetEnumerator()
+        // only for Debug use
+        public IEnumerator<KeyValuePair<string, TValue>> GetEnumerator()
         {
             var b = this.buckets;
 
@@ -242,7 +243,7 @@ namespace MessagePack.Internal
                 var n = item;
                 while (n != null)
                 {
-                    yield return new KeyValuePair<byte[], TValue>(n.Key, n.Value);
+                    yield return new KeyValuePair<string, TValue>(Encoding.UTF8.GetString(n.Key), n.Value);
                     n = n.Next;
                 }
             }
