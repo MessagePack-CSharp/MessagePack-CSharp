@@ -62,6 +62,11 @@
       <HintPath>.\MessagePack_FarmHash.dll</HintPath>
       <Aliases>farmhashmsgpack</Aliases>
     </Reference>
+    <Reference Include="MessagePack_FarmHash2, Version=1.4.3.0, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\MessagePack_FarmHash2.dll</HintPath>
+      <Aliases>farm2msgpack</Aliases>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.CodeAnalysis.Common.2.0.0\lib\netstandard1.3\Microsoft.CodeAnalysis.dll</HintPath>
     </Reference>
@@ -173,6 +178,7 @@
   <ItemGroup>
     <Content Include="MessagePack_1_4_4.dll" />
     <Content Include="MessagePack_FarmHash.dll" />
+    <Content Include="MessagePack_FarmHash2.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\packages\Microsoft.Diagnostics.Tracing.TraceEvent.1.0.41\build\Microsoft.Diagnostics.Tracing.TraceEvent.targets" Condition="Exists('..\..\packages\Microsoft.Diagnostics.Tracing.TraceEvent.1.0.41\build\Microsoft.Diagnostics.Tracing.TraceEvent.targets')" />

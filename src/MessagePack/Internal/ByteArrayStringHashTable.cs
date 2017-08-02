@@ -13,7 +13,7 @@ namespace MessagePack.Internal
     public class ByteArrayStringHashTable : IEnumerable<KeyValuePair<string, int>>
     {
         readonly Entry[][] buckets; // immutable array(faster than linkedlist)
-        readonly int indexFor;
+        readonly ulong indexFor;
 
         public ByteArrayStringHashTable(int capacity)
             : this(capacity, 0.42f) // default: 0.75f -> 0.42f
@@ -24,7 +24,7 @@ namespace MessagePack.Internal
         {
             var tableSize = CalculateCapacity(capacity, loadFactor);
             this.buckets = new Entry[tableSize][];
-            this.indexFor = buckets.Length - 1;
+            this.indexFor = (ulong)buckets.Length - 1;
         }
 
         public void Add(string key, int value)
@@ -115,41 +115,42 @@ namespace MessagePack.Internal
             return false;
         }
 
+        static readonly bool Is32Bit = (IntPtr.Size == 4);
+
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        static uint ByteArrayGetHashCode(byte[] x, int offset, int count)
+        static ulong ByteArrayGetHashCode(byte[] x, int offset, int count)
         {
 #if NETSTANDARD1_4
-            // use FarmHash is better?  https://github.com/google/farmhash
+            // FarmHash https://github.com/google/farmhash
             if (x == null) return 0;
-            return FarmHash.Hash32(x, offset, count);
+
+            if (Is32Bit)
+            {
+                return (ulong)FarmHash.Hash32(x, offset, count);
+            }
+            else
+            {
+                return FarmHash.Hash64(x, offset, count);
+            }
+
 #else
 
-            // borrow from Roslyn's ComputeStringHash, calculate FNV-1a hash
-            // http://source.roslyn.io/#Microsoft.CodeAnalysis.CSharp/Compiler/MethodBodySynthesizer.Lowered.cs,26
-
+            // FNV1-1a 32bit https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
             uint hash = 0;
             if (x != null)
             {
-                hash = 2166136261u; // hash = FNV_offset_basis
+                var max = offset + count;
 
-                var i = offset;
-                var max = i + count;
-                goto start;
-
-                again:
-                hash = unchecked((x[i] ^ hash) * 16777619); // hash = hash XOR byte_of_data, hash = hash × FNV_prime
-                i = i + 1;
-
-                start:
-                if (i < max)
+                hash = 2166136261;
+                for (int i = offset; i < max; i++)
                 {
-                    goto again;
+                    hash = unchecked((x[i] ^ hash) * 16777619);
                 }
             }
 
-            return hash;
+            return (ulong)hash;
 
 #endif
         }
