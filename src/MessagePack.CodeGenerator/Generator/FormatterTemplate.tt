@@ -19,7 +19,7 @@ namespace <#= Namespace #>
     {
 <# if( objInfo.IsStringKey) { #>
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public <#= objInfo.Name #>Formatter()

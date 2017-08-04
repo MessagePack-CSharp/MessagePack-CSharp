@@ -614,7 +614,7 @@ High-Level API(MessagePackSerializer)
 | `SetDefaultResolver` | Set default resolver of MessagePackSerializer APIs. |
 | `Serialize<T>` | Convert object to byte[] or write to stream. There has IFormatterResolver overload, used specified resolver. |
 | `SerializeUnsafe<T>` | Same as `Serialize<T>` but return `ArraySegement<byte>`. The result of ArraySegment is contains internal buffer pool, it can not share across thread and can not hold, so use quickly. |
-| `Deserialize<T>` | Convert byte[] or stream to object. There has IFormatterResolver overload, used specified resolver. |
+| `Deserialize<T>` | Convert byte[] or `ArraySegment<byte>` or stream to object. There has IFormatterResolver overload, used specified resolver. |
 | `NonGeneric.*` | NonGeneric APIs of Serialize/Deserialize. There accept type parameter at first argument. This API is bit slower than generic API but useful for framework integration such as ASP.NET formatter. |
 | `Typeless.*` | Typeless APIs of Serialize/Deserialize. This API no needs type parameter like BinaryFormatter. This API makes .NET specific binary and bit slower than standard APIs. |
 | `ToJson` | Dump message-pack binary to JSON string. It is useful for debugging.  |
@@ -684,6 +684,7 @@ Primitive API(MessagePackBinary)
 | ReadNext | Skip MessagePackFormat binary block, returns read size. |
 | ReadNextBlock | Skip MessagePackFormat binary block with sub structures(array/map), returns read size. This is useful for create deserializer. |
 | ReadMessageBlockFromStreamUnsafe | Read binary block from Stream, if readOnlySingleMessage = false then read sub structures(array/map). | 
+| ReadStringSegment | Read string format but do not decode UTF8, returns `ArraySegment<byte>`. |
 | Write/ReadMapHeader | Write/Read map format header(element length). |
 | WriteMapHeaderForceMap32Block | Write map format header, always use map32 format(length is fixed, 5). |
 | Write/ReadArrayHeader | Write/Read array format header(element length). |

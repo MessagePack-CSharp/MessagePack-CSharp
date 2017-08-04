@@ -123,10 +123,12 @@
     </Compile>
     <Compile Include="Assets\Scripts\MessagePack\IFormatterResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\IMessagePackSerializationCallbackReceiver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\ByteArrayStringHashTable.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\FarmHash.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ReflectionExtensions.cs" />
-    <Compile Include="Assets\Scripts\MessagePack\Internal\ThreadSafeHashtable.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\ThreadsafeTypeKeyHashTable.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\TinyJsonReader.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Helper.cs" />

@@ -953,12 +953,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class SimlpeStringKeyDataFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimlpeStringKeyData>
     {
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public SimlpeStringKeyDataFormatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(3)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(3)
             {
                 { "Prop1", 0},
                 { "Prop2", 1},
@@ -1011,7 +1011,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))
@@ -1116,12 +1116,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class SimpleStructStringKeyDataFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimpleStructStringKeyData>
     {
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public SimpleStructStringKeyDataFormatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(2)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(2)
             {
                 { "key-X", 0},
                 { "key-Y", 1},
@@ -1164,7 +1164,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))
@@ -1943,12 +1943,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class Callback2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2>
     {
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public Callback2Formatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(1)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(1)
             {
                 { "X", 0},
             };
@@ -1987,7 +1987,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))
@@ -2023,12 +2023,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class Callback2_2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2_2>
     {
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public Callback2_2Formatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(1)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(1)
             {
                 { "X", 0},
             };
@@ -2067,7 +2067,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))
@@ -2759,12 +2759,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class Empty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Empty2>
     {
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public Empty2Formatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(0)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(0)
             {
             };
 
@@ -2802,7 +2802,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))
@@ -2888,12 +2888,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class NonEmpty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.NonEmpty2>
     {
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public NonEmpty2Formatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(1)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(1)
             {
                 { "MyProperty", 0},
             };
@@ -2936,7 +2936,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))
@@ -3876,12 +3876,12 @@ namespace MessagePack.Formatters
     public sealed class SimpleModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SimpleModel>
     {
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public SimpleModelFormatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(6)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(6)
             {
                 { "Id", 0},
                 { "Name", 1},
@@ -3949,7 +3949,7 @@ namespace MessagePack.Formatters
 
             for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))
@@ -4003,12 +4003,12 @@ namespace MessagePack.Formatters
     public sealed class ComplexModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ComplexModel>
     {
 
-        readonly global::System.Collections.Generic.Dictionary<string, int> ____keyMapping;
+        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public ComplexModelFormatter()
         {
-            this.____keyMapping = new global::System.Collections.Generic.Dictionary<string, int>(6)
+            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(6)
             {
                 { "AdditionalProperty", 0},
                 { "CreatedOn", 1},
@@ -4076,7 +4076,7 @@ namespace MessagePack.Formatters
 
             for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))

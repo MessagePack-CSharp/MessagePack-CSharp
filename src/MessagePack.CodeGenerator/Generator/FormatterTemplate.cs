@@ -64,8 +64,8 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\r\n        readonly global::System.Collections.Generic.Dictionary<string, int> ___" +
-                    "_keyMapping;\r\n        readonly byte[][] ____stringByteKeys;\r\n\r\n        public ");
+            this.Write("\r\n        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyM" +
+                    "apping;\r\n        readonly byte[][] ____stringByteKeys;\r\n\r\n        public ");
             
             #line 25 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Name));

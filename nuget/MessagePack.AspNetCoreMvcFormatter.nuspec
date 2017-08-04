@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack.AspNetCoreMvcFormatter</id>
-        <version>1.4.3</version>
+        <version>1.4.4</version>
         <title>ASP.NET Core MVC Input/Output MessagePack formatter</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
@@ -13,7 +13,7 @@
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, aspnetcore, aspnetcoremvc</tags>
         <dependencies>
             <group targetFramework=".NETStandard1.4">
-                <dependency id="MessagePack" version="1.4.3" />
+                <dependency id="MessagePack" version="1.4.4" />
                 <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.2.0" />
             </group>
         </dependencies>
