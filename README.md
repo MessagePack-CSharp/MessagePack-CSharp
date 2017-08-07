@@ -241,7 +241,7 @@ var bin = MessagePackSerializer.Serialize(data);
 var point = MessagePackSerializer.Deserialize<Point>(bin);
 ```
 
-MessagePackSerializer choose constructor with the least argument and match index if key in integer or match name(ignore case) if key is string.
+MessagePackSerializer choose constructor with the least argument and match index if key in integer or match name(ignore case) if key is string. If encounts `MessagePackDynamicObjectResolverException: can't find matched constructor parameter` you should check about this.
 
 If can not match automatically, you can specify to use constructor manually by `[SerializationConstructorAttribute]`.
 
