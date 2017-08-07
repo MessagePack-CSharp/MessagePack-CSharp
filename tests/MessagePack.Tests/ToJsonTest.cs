@@ -14,6 +14,11 @@ namespace MessagePack.Tests
             return MessagePackSerializer.ToJson(MessagePackSerializer.FromJson(json));
         }
 
+        string JsonConvertLZ4(string json)
+        {
+            return LZ4MessagePackSerializer.ToJson(LZ4MessagePackSerializer.FromJson(json));
+        }
+
         [Theory]
         [InlineData("null")]
         [InlineData("true")]
@@ -25,6 +30,7 @@ namespace MessagePack.Tests
         public void SimpleToJson(string json)
         {
             JsonConvert(json).Is(json);
+            JsonConvertLZ4(json).Is(json);
         }
 
         [Fact]
@@ -32,6 +38,7 @@ namespace MessagePack.Tests
         {
             var json = @"{""reservations"":[{""instances"":[{""type"":""small"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""large"",""state"":{""name"":""stopped""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]}]},{""instances"":[{""type"":""medium"",""state"":{""name"":""terminated""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""xlarge"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""DB""]},{""Key"":""version"",""Values"":[""1""]}]}]}]}";
             JsonConvert(json).Is(json);
+            JsonConvertLZ4(json).Is(json);
         }
 
         [Fact]

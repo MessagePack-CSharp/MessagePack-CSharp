@@ -3,6 +3,7 @@ using MessagePack.Internal;
 using MessagePack.LZ4;
 using System;
 using System.Globalization;
+using System.IO;
 using System.Text;
 
 namespace MessagePack
@@ -60,6 +61,23 @@ namespace MessagePack
             var sb = new StringBuilder();
             ToJsonCore(bytes, 0, sb);
             return sb.ToString();
+        }
+
+        public static byte[] FromJson(string str)
+        {
+            using (var sr = new StringReader(str))
+            {
+                return FromJson(sr);
+            }
+        }
+
+        /// <summary>
+        /// From Json String to LZ4MessagePack binary
+        /// </summary>
+        public static byte[] FromJson(TextReader reader)
+        {
+            var buffer = MessagePackSerializer.FromJsonUnsafe(reader); // offset is guranteed from 0
+            return LZ4MessagePackSerializer.ToLZ4Binary(buffer);
         }
 
         static int ToJsonCore(byte[] bytes, int offset, StringBuilder builder)

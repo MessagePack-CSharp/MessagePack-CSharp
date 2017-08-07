@@ -1,4 +1,5 @@
 ﻿using MessagePack.Formatters;
+using MessagePack.Internal;
 using System;
 using System.Globalization;
 using System.IO;
@@ -58,6 +59,20 @@ namespace MessagePack
             }
             MessagePackBinary.FastResize(ref binary, offset);
             return binary;
+        }
+
+        /// <summary>
+        /// return buffer is from memory pool, be careful to use. 
+        /// </summary>
+        internal static ArraySegment<byte> FromJsonUnsafe(TextReader reader)
+        {
+            var offset = 0;
+            byte[] binary = InternalMemoryPool.GetBuffer();  // from memory pool.
+            using (var jr = new TinyJsonReader(reader, false))
+            {
+                FromJsonCore(jr, ref binary, ref offset);
+            }
+            return new ArraySegment<byte>(binary, 0, offset);
         }
 
         static uint FromJsonCore(TinyJsonReader jr, ref byte[] binary, ref int offset)

@@ -86,10 +86,20 @@ namespace MessagePack
             }
         }
 
+        public static byte[] ToLZ4Binary(ArraySegment<byte> messagePackBinary)
+        {
+            var buffer = ToLZ4BinaryCore(messagePackBinary);
+            return MessagePackBinary.FastCloneWithResize(buffer.Array, buffer.Count);
+        }
+
         static ArraySegment<byte> SerializeCore<T>(T obj, IFormatterResolver resolver)
         {
             var serializedData = MessagePackSerializer.SerializeUnsafe(obj, resolver);
+            return ToLZ4BinaryCore(serializedData);
+        }
 
+        static ArraySegment<byte> ToLZ4BinaryCore(ArraySegment<byte> serializedData)
+        {
             if (serializedData.Count < NotCompressionSize)
             {
                 return serializedData;
