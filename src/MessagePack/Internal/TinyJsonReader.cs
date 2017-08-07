@@ -22,6 +22,18 @@ namespace MessagePack
         Null,         // null
     }
 
+    internal enum ValueType : byte
+    {
+        Null,
+        True,
+        False,
+        Double,
+        Long,
+        ULong,
+        Decimal,
+        String
+    }
+
     internal class TinyJsonException : Exception
     {
         public TinyJsonException(string message) : base(message)
@@ -34,9 +46,15 @@ namespace MessagePack
     {
         readonly TextReader reader;
         readonly bool disposeInnerReader;
+        StringBuilder reusableBuilder;
 
         public TinyJsonToken TokenType { get; private set; }
-        public object Value { get; private set; }
+        public ValueType ValueType { get; private set; }
+        public double DoubleValue { get; private set; }
+        public long LongValue { get; private set; }
+        public ulong ULongValue { get; private set; }
+        public decimal DecimalValue { get; private set; }
+        public string StringValue { get; private set; }
 
         public TinyJsonReader(TextReader reader, bool disposeInnerReader = true)
         {
@@ -58,7 +76,7 @@ namespace MessagePack
                 reader.Dispose();
             }
             TokenType = TinyJsonToken.None;
-            Value = null;
+            ValueType = ValueType.Null;
         }
 
         void SkipWhiteSpace()
@@ -157,7 +175,7 @@ namespace MessagePack
 
         void ReadValue()
         {
-            Value = null;
+            ValueType = ValueType.Null;
 
             switch (TokenType)
             {
@@ -180,7 +198,7 @@ namespace MessagePack
                     if (ReadChar() != 'r') throw new TinyJsonException("Invalid Token");
                     if (ReadChar() != 'u') throw new TinyJsonException("Invalid Token");
                     if (ReadChar() != 'e') throw new TinyJsonException("Invalid Token");
-                    Value = true;
+                    ValueType = ValueType.True;
                     break;
                 case TinyJsonToken.False:
                     if (ReadChar() != 'f') throw new TinyJsonException("Invalid Token");
@@ -188,14 +206,14 @@ namespace MessagePack
                     if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
                     if (ReadChar() != 's') throw new TinyJsonException("Invalid Token");
                     if (ReadChar() != 'e') throw new TinyJsonException("Invalid Token");
-                    Value = false;
+                    ValueType = ValueType.False;
                     break;
                 case TinyJsonToken.Null:
                     if (ReadChar() != 'n') throw new TinyJsonException("Invalid Token");
                     if (ReadChar() != 'u') throw new TinyJsonException("Invalid Token");
                     if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
                     if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
-                    Value = null;
+                    ValueType = ValueType.Null;
                     break;
                 default:
                     throw new ArgumentException("InvalidTokenState:" + TokenType);
@@ -204,7 +222,17 @@ namespace MessagePack
 
         void ReadNumber()
         {
-            var numberWord = new StringBuilder();
+            StringBuilder numberWord;
+            if (reusableBuilder == null)
+            {
+                reusableBuilder = new StringBuilder();
+                numberWord = reusableBuilder;
+            }
+            else
+            {
+                numberWord = reusableBuilder;
+                numberWord.Length = 0; // Clear
+            }
 
             var isDouble = false;
             var intChar = reader.Peek();
@@ -216,35 +244,37 @@ namespace MessagePack
                 intChar = reader.Peek();
             }
 
-
-
             var number = numberWord.ToString();
             if (isDouble)
             {
                 double parsedDouble;
                 Double.TryParse(number, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent, System.Globalization.CultureInfo.InvariantCulture, out parsedDouble);
-                Value = parsedDouble;
+                ValueType = ValueType.Double;
+                DoubleValue = parsedDouble;
             }
             else
             {
                 long parsedInt;
                 if (Int64.TryParse(number, NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedInt))
                 {
-                    Value = parsedInt;
+                    ValueType = ValueType.Long;
+                    LongValue = parsedInt;
                     return;
                 }
 
                 ulong parsedULong;
                 if (ulong.TryParse(number, NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedULong))
                 {
-                    Value = parsedULong;
+                    ValueType = ValueType.ULong;
+                    ULongValue = parsedULong;
                     return;
                 }
 
                 Decimal parsedDecimal;
                 if (decimal.TryParse(number, NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal))
                 {
-                    Value = parsedDecimal;
+                    ValueType = ValueType.Decimal;
+                    DecimalValue = parsedDecimal;
                     return;
                 }
             }
@@ -254,7 +284,18 @@ namespace MessagePack
         {
             reader.Read(); // skip ["]
 
-            var sb = new StringBuilder();
+            StringBuilder sb;
+            if (reusableBuilder == null)
+            {
+                reusableBuilder = new StringBuilder();
+                sb = reusableBuilder;
+            }
+            else
+            {
+                sb = reusableBuilder;
+                sb.Length = 0; // Clear
+            }
+
             while (true)
             {
                 if (reader.Peek() == -1) throw new TinyJsonException("Invalid Json String");
@@ -307,7 +348,8 @@ namespace MessagePack
             }
 
             END:
-            Value = sb.ToString();
+            ValueType = ValueType.String;
+            StringValue = sb.ToString();
         }
     }
 }

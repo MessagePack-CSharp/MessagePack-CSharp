@@ -299,9 +299,7 @@ namespace Sandbox
             //table.Add("MyProperty9", 9);
 
 
-            var huga = MessagePack.Resolvers.ContractlessStandardResolver.Instance.GetFormatter<SerializerTarget>();
-
-            //table.TryGetValue(
+            var bin = MessagePackSerializer.FromJson("[999, 100]");
 
 
         }
