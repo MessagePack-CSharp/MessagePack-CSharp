@@ -626,10 +626,12 @@ namespace MessagePack.CodeGenerator
             }
 
             // GetConstructor
+            var constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
+            var memberCount = isIntKey ? intMemebrs.Count : constructorLookupDictionary.Count;
             var ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass == typeReferences.SerializationConstructorAttribute));
             if (ctor == null)
             {
-                ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public && !x.IsImplicitlyDeclared).OrderBy(x => x.Parameters.Length).FirstOrDefault();
+                ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public && !x.IsImplicitlyDeclared && x.Parameters.Length <= memberCount).OrderByDescending(x => x.Parameters.Length).FirstOrDefault();
                 if (ctor == null)
                 {
                     ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).OrderBy(x => x.Parameters.Length).FirstOrDefault();
@@ -642,8 +644,6 @@ namespace MessagePack.CodeGenerator
             var constructorParameters = new List<MemberSerializationInfo>();
             if (ctor != null)
             {
-                var constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
-
                 var ctorParamIndex = 0;
                 foreach (var item in ctor.Parameters)
                 {
