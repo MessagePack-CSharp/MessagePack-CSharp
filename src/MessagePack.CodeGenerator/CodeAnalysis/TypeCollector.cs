@@ -649,79 +649,76 @@ namespace MessagePack.CodeGenerator
             {
                 var constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
 
-                while (true)
+                RETRY:
+                try
                 {
-                    try
+                    constructorParameters.Clear();
+                    var ctorParamIndex = 0;
+                    foreach (var item in ctor.Parameters)
                     {
-                        constructorParameters.Clear();
-                        var ctorParamIndex = 0;
-                        foreach (var item in ctor.Parameters)
+                        MemberSerializationInfo paramMember;
+                        if (isIntKey)
                         {
-                            MemberSerializationInfo paramMember;
-                            if (isIntKey)
+                            if (intMemebrs.TryGetValue(ctorParamIndex, out paramMember))
                             {
-                                if (intMemebrs.TryGetValue(ctorParamIndex, out paramMember))
+                                if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
                                 {
-                                    if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
-                                    {
-                                        constructorParameters.Add(paramMember);
-                                    }
-                                    else
-                                    {
-                                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.Name + " parameterIndex:" + ctorParamIndex + " paramterType:" + item.Type.Name);
-                                    }
+                                    constructorParameters.Add(paramMember);
                                 }
                                 else
                                 {
-                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.Name + " parameterIndex:" + ctorParamIndex);
+                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.Name + " parameterIndex:" + ctorParamIndex + " paramterType:" + item.Type.Name);
                                 }
                             }
                             else
                             {
-                                var hasKey = constructorLookupDictionary[item.Name];
-                                var len = hasKey.Count();
-                                if (len != 0)
-                                {
-                                    if (len != 1)
-                                    {
-                                        throw new MessagePackGeneratorResolveFailedException("duplicate matched constructor parameter name:" + type.Name + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
-                                    }
-
-                                    paramMember = hasKey.First().Value;
-                                    if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
-                                    {
-                                        constructorParameters.Add(paramMember);
-                                    }
-                                    else
-                                    {
-                                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.Name + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
-                                    }
-                                }
-                                else
-                                {
-                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.Name + " parameterName:" + item.Name);
-                                }
+                                throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.Name + " parameterIndex:" + ctorParamIndex);
                             }
-                            ctorParamIndex++;
-                        }
-
-                        break;
-                    }
-                    catch (MessagePackGeneratorResolveFailedException)
-                    {
-                        if (ctorEnumerator == null)
-                        {
-                            throw;
-                        }
-
-                        if (ctorEnumerator.MoveNext())
-                        {
-                            ctor = ctorEnumerator.Current;
                         }
                         else
                         {
-                            throw new MessagePackGeneratorResolveFailedException("can't find matched constructor. type:" + type.Name);
+                            var hasKey = constructorLookupDictionary[item.Name];
+                            var len = hasKey.Count();
+                            if (len != 0)
+                            {
+                                if (len != 1)
+                                {
+                                    throw new MessagePackGeneratorResolveFailedException("duplicate matched constructor parameter name:" + type.Name + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
+                                }
+
+                                paramMember = hasKey.First().Value;
+                                if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
+                                {
+                                    constructorParameters.Add(paramMember);
+                                }
+                                else
+                                {
+                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.Name + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
+                                }
+                            }
+                            else
+                            {
+                                throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.Name + " parameterName:" + item.Name);
+                            }
                         }
+                        ctorParamIndex++;
+                    }
+                }
+                catch (MessagePackGeneratorResolveFailedException)
+                {
+                    if (ctorEnumerator == null)
+                    {
+                        throw;
+                    }
+
+                    if (ctorEnumerator.MoveNext())
+                    {
+                        ctor = ctorEnumerator.Current;
+                        goto RETRY;
+                    }
+                    else
+                    {
+                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor. type:" + type.Name);
                     }
                 }
             }
