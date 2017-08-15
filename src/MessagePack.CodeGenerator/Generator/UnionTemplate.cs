@@ -36,8 +36,8 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\r\n{\r\n    using System;\r\n\tusing System.Collections.Generic;\r\n    using MessagePack" +
-                    ";\r\n\r\n");
+            this.Write("\r\n{\r\n    using System;\r\n    using System.Collections.Generic;\r\n    using MessageP" +
+                    "ack;\r\n\r\n");
             
             #line 17 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  foreach(var info in unionSerializationInfos) { 
@@ -58,31 +58,32 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(">\r\n    {\r\n\t\treadonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeTo" +
-                    "KeyAndJumpMap;\r\n\t\treadonly Dictionary<int, int> keyToJumpMap;\r\n\r\n\t\tpublic ");
+            this.Write(">\r\n    {\r\n        readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> " +
+                    "typeToKeyAndJumpMap;\r\n        readonly Dictionary<int, int> keyToJumpMap;\r\n\r\n   " +
+                    "     public ");
             
             #line 23 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
             
             #line default
             #line hidden
-            this.Write("Formatter()\r\n\t\t{\r\n\t\t\tthis.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle," +
-                    " KeyValuePair<int, int>>(");
+            this.Write("Formatter()\r\n        {\r\n            this.typeToKeyAndJumpMap = new Dictionary<Run" +
+                    "timeTypeHandle, KeyValuePair<int, int>>(");
             
             #line 25 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.SubTypes.Length));
             
             #line default
             #line hidden
-            this.Write(", global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)\r\n\t\t\t{\r\n" +
-                    "");
+            this.Write(", global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)\r\n      " +
+                    "      {\r\n");
             
             #line 27 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
             
             #line default
             #line hidden
-            this.Write("\t\t\t\t{ typeof(");
+            this.Write("                { typeof(");
             
             #line 28 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
@@ -110,21 +111,21 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\t\t\t};\r\n\t\t\tthis.keyToJumpMap = new Dictionary<int, int>(");
+            this.Write("            };\r\n            this.keyToJumpMap = new Dictionary<int, int>(");
             
             #line 31 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.SubTypes.Length));
             
             #line default
             #line hidden
-            this.Write(")\r\n\t\t\t{\r\n");
+            this.Write(")\r\n            {\r\n");
             
             #line 33 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
             
             #line default
             #line hidden
-            this.Write("\t\t\t\t{ ");
+            this.Write("                { ");
             
             #line 34 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Key));
@@ -145,7 +146,8 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\t\t\t};\r\n\t\t}\r\n\r\n        public int Serialize(ref byte[] bytes, int offset, ");
+            this.Write("            };\r\n        }\r\n\r\n        public int Serialize(ref byte[] bytes, int o" +
+                    "ffset, ");
             
             #line 39 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
@@ -154,14 +156,14 @@ namespace MessagePack.CodeGenerator.Generator
             #line hidden
             this.Write(@" value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-			KeyValuePair<int, int> keyValuePair;
-			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
-			{
-				var startOffset = offset;
-				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
-				switch (keyValuePair.Value)
-				{
+            KeyValuePair<int, int> keyValuePair;
+            if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+                switch (keyValuePair.Value)
+                {
 ");
             
             #line 49 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
@@ -169,14 +171,14 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\t\t\t\t\tcase ");
+            this.Write("                    case ");
             
             #line 50 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
-            this.Write(":\r\n\t\t\t\t\t\toffset += formatterResolver.GetFormatterWithVerify<");
+            this.Write(":\r\n                        offset += formatterResolver.GetFormatterWithVerify<");
             
             #line 51 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
@@ -190,16 +192,17 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(")value, formatterResolver);\r\n\t\t\t\t\t\tbreak;\r\n");
+            this.Write(")value, formatterResolver);\r\n                        break;\r\n");
             
             #line 53 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("\t\t\t\t\tdefault:\r\n\t\t\t\t\t\tbreak;\r\n\t\t\t\t}\r\n\r\n\t\t\t\treturn offset - startOffset;\r\n\t\t\t}\r\n\r\n\t" +
-                    "\t\treturn MessagePackBinary.WriteNil(ref bytes, offset);\r\n        }\r\n        \r\n  " +
-                    "      public ");
+            this.Write("                    default:\r\n                        break;\r\n                }\r\n" +
+                    "\r\n                return offset - startOffset;\r\n            }\r\n\r\n            ret" +
+                    "urn MessagePackBinary.WriteNil(ref bytes, offset);\r\n        }\r\n        \r\n       " +
+                    " public ");
             
             #line 64 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
@@ -209,46 +212,56 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write(@" Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
-			{
-				readSize = 1;
-				return null;
-			}
+            {
+                readSize = 1;
+                return null;
+            }
 
-			var startOffset = offset;
-			
-			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
-			{
-				throw new InvalidOperationException(""Invalid Union data was detected. Type:");
+            var startOffset = offset;
+            
+            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+            {
+                throw new InvalidOperationException(""Invalid Union data was detected. Type:");
             
             #line 76 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
-            this.Write("\");\r\n\t\t\t}\r\n\t\t\toffset += readSize;\r\n\r\n\t\t\tvar key = MessagePackBinary.ReadInt32(byt" +
-                    "es, offset, out readSize);\r\n\t\t\toffset += readSize;\r\n\r\n            if (!this.keyT" +
-                    "oJumpMap.TryGetValue(key, out key))\r\n\t\t\t{\r\n\t\t\t\tkey = -1;\r\n\t\t\t}\r\n\r\n\t\t\t");
+            this.Write(@""");
+            }
+            offset += readSize;
+
+            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (!this.keyToJumpMap.TryGetValue(key, out key))
+            {
+                key = -1;
+            }
+
+            ");
             
             #line 88 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
-            this.Write(" result = null;\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n");
+            this.Write(" result = null;\r\n            switch (key)\r\n            {\r\n");
             
             #line 91 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
             
             #line default
             #line hidden
-            this.Write("\t\t\t\tcase ");
+            this.Write("                case ");
             
             #line 92 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
-            this.Write(":\r\n\t\t\t\t\tresult = (");
+            this.Write(":\r\n                    result = (");
             
             #line 93 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
@@ -262,17 +275,26 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(">().Deserialize(bytes, offset, formatterResolver, out readSize);\r\n\t\t\t\t\toffset += " +
-                    "readSize;\r\n\t\t\t\t\tbreak;\r\n");
+            this.Write(">().Deserialize(bytes, offset, formatterResolver, out readSize);\r\n               " +
+                    "     offset += readSize;\r\n                    break;\r\n");
             
             #line 96 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write("\t\t\t\tdefault:\r\n\t\t\t\t\toffset += MessagePackBinary.ReadNextBlock(bytes, offset);\r\n\t\t\t" +
-                    "\t\tbreak;\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\treadSize = offset - startOffset;\r\n\t\t\t\r\n\t\t\treturn result;" +
-                    "\r\n        }\r\n    }\r\n\r\n");
+            this.Write(@"                default:
+                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                    break;
+            }
+            
+            readSize = offset - startOffset;
+            
+            return result;
+        }
+    }
+
+");
             
             #line 108 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\UnionTemplate.tt"
  } 

@@ -143,7 +143,7 @@ namespace <#= Namespace #>
 <#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAfter) { #>
             ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
-			____result.OnAfterDeserialize();
+            ____result.OnAfterDeserialize();
 <# } #>
             return ____result;
         }

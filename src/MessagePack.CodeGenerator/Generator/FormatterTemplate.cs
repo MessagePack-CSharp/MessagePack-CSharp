@@ -528,7 +528,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAf
             
             #line default
             #line hidden
-            this.Write("\t\t\t____result.OnAfterDeserialize();\r\n");
+            this.Write("            ____result.OnAfterDeserialize();\r\n");
             
             #line 147 "C:\Users\y.kawai\Documents\neuecc\MessagePack-CSharp\src\MessagePack.CodeGenerator\Generator\FormatterTemplate.tt"
  } 
