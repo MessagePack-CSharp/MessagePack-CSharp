@@ -641,6 +641,8 @@ High-Level API(MessagePackSerializer)
 | `Typeless.*` | Typeless APIs of Serialize/Deserialize. This API no needs type parameter like BinaryFormatter. This API makes .NET specific binary and bit slower than standard APIs. |
 | `ToJson` | Dump message-pack binary to JSON string. It is useful for debugging.  |
 | `FromJson` | From Json string to MessagePack binary.  |
+| `ToLZ4Binary` | (LZ4 only)Convert msgpack binary to LZ4 msgpack binary. |
+| `Decode` | (LZ4 only)Convert LZ4 msgpack binary to standard msgpack binary. |
 
 MessagePack for C# operates at the byte[] level, so byte[] API is faster than Stream API. If byte [] can be used for I/O, I recommend using the byte [] API.
 
@@ -719,6 +721,7 @@ Primitive API(MessagePackBinary)
 | WriteExtensionFormatHeaderForceExt32Block | Write ext format header, always use ext32 format(length is fixed, 6). |
 | IsNil | Is TypeCode Nil? |
 | GetMessagePackType | Return MessagePackType of target MessagePack bianary position. |
+| GetExtensionFormatHeaderLength | Calculate extension formatter header length. |
 | EnsureCapacity | Resize if byte can not fill.  |
 | FastResize | Buffer.BlockCopy version of Array.Resize. |
 | FastCloneWithResize | Same as FastResize but return copied byte[]. |
