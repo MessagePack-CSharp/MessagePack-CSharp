@@ -29,11 +29,11 @@ namespace MessagePack.Formatters
 <# foreach(var t in types) {  #>
     public sealed class <#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>>
     {
-		public static readonly <#= t.Name #>Formatter Instance = new <#= t.Name #>Formatter();
+        public static readonly <#= t.Name #>Formatter Instance = new <#= t.Name #>Formatter();
 
-		<#= t.Name #>Formatter()
-		{
-		}
+        <#= t.Name #>Formatter()
+        {
+        }
 
         public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver formatterResolver)
         {
@@ -48,11 +48,11 @@ namespace MessagePack.Formatters
 
     public sealed class Nullable<#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>?>
     {
-		public static readonly Nullable<#= t.Name #>Formatter Instance = new Nullable<#= t.Name #>Formatter();
+        public static readonly Nullable<#= t.Name #>Formatter Instance = new Nullable<#= t.Name #>Formatter();
 
-		Nullable<#= t.Name #>Formatter()
-		{
-		}
+        Nullable<#= t.Name #>Formatter()
+        {
+        }
 
         public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver formatterResolver)
         {
@@ -81,7 +81,7 @@ namespace MessagePack.Formatters
     }
 
 <# if(t.Name != "Byte") { #>
-	public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
+    public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
     {
         public static readonly <#= t.Name #>ArrayFormatter Instance = new <#= t.Name #>ArrayFormatter();
 
@@ -132,7 +132,7 @@ namespace MessagePack.Formatters
                 return array;
             }
         }
-	}
+    }
 <# } #>
 
 <# } #>

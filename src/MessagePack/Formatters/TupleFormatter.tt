@@ -17,7 +17,7 @@ namespace MessagePack.Formatters
     var t = "Tuple<" + ts + ">"; 
 #>
 
-	public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
+    public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
     {
         public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver)
         {
@@ -27,15 +27,15 @@ namespace MessagePack.Formatters
             }
             else
             {
-				var startOffset = offset;
-				offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= i #>);
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= i #>);
 
 <# for(var j = 1; j <= i; j++) { #>
-				offset += formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref bytes, offset, value.<#= toItem(j) #>, formatterResolver);
+                offset += formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref bytes, offset, value.<#= toItem(j) #>, formatterResolver);
 <# } #>
 
-				return offset - startOffset;
-			}
+                return offset - startOffset;
+            }
         }
 
         public <#= t #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
@@ -47,19 +47,19 @@ namespace MessagePack.Formatters
             }
             else
             {
-				var startOffset = offset;
-				var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-				if (count != <#= i #>) throw new InvalidOperationException("Invalid Tuple count");
-				offset += readSize;
+                var startOffset = offset;
+                var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                if (count != <#= i #>) throw new InvalidOperationException("Invalid Tuple count");
+                offset += readSize;
 
 <# for(var j = 1; j <= i; j++) { #>
-				var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-				offset += readSize;
+                var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
 <# } #>
-			
-				readSize = offset - startOffset;
-				return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
-			}
+            
+                readSize = offset - startOffset;
+                return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+            }
         }
     }
 
