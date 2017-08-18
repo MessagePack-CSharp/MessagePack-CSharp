@@ -38,11 +38,11 @@ namespace PerfBenchmarkDotNet
         {
             var switcher = new BenchmarkSwitcher(new[]
             {
-                typeof(TypelessBenchmark),
-                // typeof(MapSerializeBenchmark),
+                typeof(TypelessSerializeBenchmark),
+                typeof(TypelessDeserializeBenchmark),
             });
 
-            args = new[] { "0" };
+            // args = new[] { "0" };
 #if !DEBUG
             switcher.Run(args);
 #else
@@ -96,8 +96,66 @@ namespace PerfBenchmarkDotNet
         public object Nested { get; }
     }
 
+
     [Config(typeof(BenchmarkConfig))]
-    public class TypelessBenchmark
+    public class TypelessSerializeBenchmark
+    {
+        private ContractType TestContractType = new ContractType("John", new ContractType("Jack", null));
+        private ContractlessType TestContractlessType = new ContractlessType("John", new ContractlessType("Jack", null));
+        private TypelessPrimitiveType TestTypelessPrimitiveType = new TypelessPrimitiveType("John", 555);
+        private TypelessPrimitiveType TestTypelessComplexType = new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null));
+
+        [Benchmark]
+        public byte[] Old_MessagePackSerializer_Serialize_StandardResolver()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(TestContractType, oldmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        }
+
+        [Benchmark]
+        public byte[] Old_MessagePackSerializer_Serialize_ContractlessStandardResolver()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(TestContractlessType, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        }
+
+        [Benchmark]
+        public byte[] Old_MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_primitive()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessPrimitiveType, oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        }
+
+        [Benchmark]
+        public byte[] Old_MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_complex()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessComplexType, oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        }
+
+        [Benchmark]
+        public byte[] MessagePackSerializer_Serialize_StandardResolver()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestContractType, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        }
+
+        [Benchmark]
+        public byte[] MessagePackSerializer_Serialize_ContractlessStandardResolver()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestContractlessType, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        }
+
+        [Benchmark]
+        public byte[] MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_primitive()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessPrimitiveType, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        }
+
+        [Benchmark]
+        public byte[] MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_complex()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessComplexType, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        }
+    }
+
+    [Config(typeof(BenchmarkConfig))]
+    public class TypelessDeserializeBenchmark
     {
         private byte[] OldStandardResolverBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractType("John", new ContractType("Jack", null)), oldmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
         private byte[] OldContractlessStandardResolverBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractlessType("John", new ContractlessType("Jack", null)), oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
@@ -109,35 +167,35 @@ namespace PerfBenchmarkDotNet
         private byte[] NewTypelessContractlessStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
         private byte[] NewTypelessContractlessStandardResolverComplexBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
 
-        //[Benchmark]
-        //public ContractType Old_MessagePackSerializer_Deserialize_StandardResolver()
-        //{
-        //    return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractType>(OldStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
-        //}
+        [Benchmark]
+        public ContractType Old_MessagePackSerializer_Deserialize_StandardResolver()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractType>(OldStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        }
 
-        //[Benchmark]
-        //public ContractlessType Old_MessagePackSerializer_Deserialize_ContractlessStandardResolver()
-        //{
-        //    return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractlessType>(OldContractlessStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-        //}
+        [Benchmark]
+        public ContractlessType Old_MessagePackSerializer_Deserialize_ContractlessStandardResolver()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractlessType>(OldContractlessStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        }
 
-        //[Benchmark]
-        //public TypelessPrimitiveType Old_MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
-        //{
-        //    return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(OldTypelessContractlessStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
-        //}
+        [Benchmark]
+        public TypelessPrimitiveType Old_MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(OldTypelessContractlessStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        }
 
-        //[Benchmark]
-        //public TypelessPrimitiveType Old_MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes()
-        //{
-        //    return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(OldTypelessContractlessStandardResolverComplexBytes, oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
-        //}
+        [Benchmark]
+        public TypelessPrimitiveType Old_MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(OldTypelessContractlessStandardResolverComplexBytes, oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        }
 
-        //[Benchmark]
-        //public ContractType MessagePackSerializer_Deserialize_StandardResolver()
-        //{
-        //    return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractType>(NewStandardResolverBytes, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
-        //}
+        [Benchmark]
+        public ContractType MessagePackSerializer_Deserialize_StandardResolver()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractType>(NewStandardResolverBytes, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        }
 
         [Benchmark]
         public ContractlessType MessagePackSerializer_Deserialize_ContractlessStandardResolver()
@@ -145,11 +203,11 @@ namespace PerfBenchmarkDotNet
             return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractlessType>(NewContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
         }
 
-        //[Benchmark]
-        //public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
-        //{
-        //    return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
-        //}
+        [Benchmark]
+        public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        }
 
         [Benchmark]
         public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes()
