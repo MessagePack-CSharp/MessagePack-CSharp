@@ -20,8 +20,6 @@ namespace MessagePack.Internal
             return type.IsPublic;
         }
 
-#if NETSTANDARD1_4
-
         public static bool IsAnonymous(this System.Reflection.TypeInfo type)
         {
             return type.GetCustomAttribute<CompilerGeneratedAttribute>() != null
@@ -29,6 +27,8 @@ namespace MessagePack.Internal
                 && (type.Name.StartsWith("<>") || type.Name.StartsWith("VB$"))
                 && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic;
         }
+
+#if NETSTANDARD1_4
 
         public static bool IsConstructedGenericType(this System.Reflection.TypeInfo type)
         {

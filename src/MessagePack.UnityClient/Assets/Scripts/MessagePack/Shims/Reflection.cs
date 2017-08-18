@@ -20,6 +20,22 @@ namespace System.Reflection
             this.type = type;
         }
 
+        public string Name
+        {
+            get
+            {
+                return type.Name;
+            }
+        }
+
+        public TypeAttributes Attributes
+        {
+            get
+            {
+                return type.Attributes;
+            }
+        }
+
         public bool IsClass
         {
             get
