@@ -83,48 +83,72 @@ namespace MessagePack.UnityClient.Tests
         }
     }
 
+    public class NonSerializableObject
+    {
+        public int v_int;
+
+        public string v_str;
+
+        public float v_float;
+
+        public bool v_bool;
+        public NonSerializableObject(int vi, string vs, float vf, bool vb)
+        {
+            v_int = vi; v_str = vs; v_float = vf; v_bool = vb;
+        }
+    }
+
 
     public class SimpleTest
     {
         public void Hello()
         {
-            try
-            {
-                TestObject to = TestObject.TestBuild();
+            //try
+            //{
 
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
-                string junity = JsonUtility.ToJson(to);
-                sw.Stop();
-                UnityEngine.Debug.LogFormat("*[Object To JsonString] - Unity :  {0}ms.", sw.ElapsedMilliseconds);
+            var so = new NonSerializableObject(1, "hoge", 1.342f, true);
 
-                Stopwatch sw1 = new Stopwatch();
-                sw1.Start();
-                string jmsgPack = MessagePack.MessagePackSerializer.ToJson<TestObject>(to);
-                sw1.Stop();
-                UnityEngine.Debug.LogFormat("*[Object To JsonString] - MsgPack :  {0}ms.", sw1.ElapsedMilliseconds);
+            var bin = MessagePackSerializer.Serialize(so);
 
-                Stopwatch sw3 = new Stopwatch();
-                sw3.Start();
-                TestObject toUnity = JsonUtility.FromJson<TestObject>(junity);
-                sw3.Stop();
-                UnityEngine.Debug.LogFormat("*[JsonString To Object] - Unity :  {0}ms.", sw3.ElapsedMilliseconds);
+            var s = MessagePackSerializer.ToJson(bin);
 
-                Stopwatch sw4 = new Stopwatch();
-                sw4.Start();
-                TestObject toMsgPack = MessagePack.MessagePackSerializer.Deserialize<TestObject>(MessagePack.MessagePackSerializer.FromJson(jmsgPack));
-                sw4.Stop();
-                UnityEngine.Debug.LogFormat("*[JsonString To Object] - MsgPack :  {0}ms.", sw4.ElapsedMilliseconds);
+            UnityEngine.Debug.Log(s);
+
+            //TestObject to = TestObject.TestBuild();
+
+            //Stopwatch sw = new Stopwatch();
+            //sw.Start();
+            //string junity = JsonUtility.ToJson(to);
+            //sw.Stop();
+            //UnityEngine.Debug.LogFormat("*[Object To JsonString] - Unity :  {0}ms.", sw.ElapsedMilliseconds);
+
+            //Stopwatch sw1 = new Stopwatch();
+            //sw1.Start();
+            //string jmsgPack = MessagePack.MessagePackSerializer.ToJson<TestObject>(to);
+            //sw1.Stop();
+            //UnityEngine.Debug.LogFormat("*[Object To JsonString] - MsgPack :  {0}ms.", sw1.ElapsedMilliseconds);
+
+            //Stopwatch sw3 = new Stopwatch();
+            //sw3.Start();
+            //TestObject toUnity = JsonUtility.FromJson<TestObject>(junity);
+            //sw3.Stop();
+            //UnityEngine.Debug.LogFormat("*[JsonString To Object] - Unity :  {0}ms.", sw3.ElapsedMilliseconds);
+
+            //Stopwatch sw4 = new Stopwatch();
+            //sw4.Start();
+            //TestObject toMsgPack = MessagePack.MessagePackSerializer.Deserialize<TestObject>(MessagePack.MessagePackSerializer.FromJson(jmsgPack));
+            //sw4.Stop();
+            //UnityEngine.Debug.LogFormat("*[JsonString To Object] - MsgPack :  {0}ms.", sw4.ElapsedMilliseconds);
 
 
 
 
-            }
-            catch (Exception ex)
-            {
-                UnityEngine.Debug.LogException(ex);
-                throw;
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    UnityEngine.Debug.LogException(ex);
+            //    throw;
+            //}
         }
     }
 

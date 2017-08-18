@@ -115,7 +115,9 @@ namespace MessagePack.Internal
             return false;
         }
 
+#if NETSTANDARD1_4
         static readonly bool Is32Bit = (IntPtr.Size == 4);
+#endif
 
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

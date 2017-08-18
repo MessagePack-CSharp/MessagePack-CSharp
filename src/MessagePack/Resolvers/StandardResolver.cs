@@ -10,7 +10,10 @@ namespace MessagePack.Resolvers
     public sealed class StandardResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new StandardResolver();
+
+#if NETSTANDARD1_4
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverCore.Instance);
+#endif
 
         StandardResolver()
         {
@@ -47,7 +50,10 @@ namespace MessagePack.Resolvers
     public sealed class ContractlessStandardResolver : IFormatterResolver
     {
         public static readonly IFormatterResolver Instance = new ContractlessStandardResolver();
+
+#if NETSTANDARD1_4
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverCore.Instance);
+#endif
 
         ContractlessStandardResolver()
         {
