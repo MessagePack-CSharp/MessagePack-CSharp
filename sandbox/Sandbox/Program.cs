@@ -287,20 +287,13 @@ namespace Sandbox
         {
 
 
-            //var table = new MessagePack.Internal.ByteArrayStringHashTable<int>(9);
-            //table.Add("MyProperty1", 1);
-            //table.Add("MyProperty2", 2);
-            //table.Add("MyProperty3", 3);
-            //table.Add("MyProperty4", 4);
-            //table.Add("MyProperty5", 5);
-            //table.Add("MyProperty6", 6);
-            //table.Add("MyProperty7", 7);
-            //table.Add("MyProperty8", 8);
-            //table.Add("MyProperty9", 9);
 
+            var bin = MessagePackSerializer.Serialize<object>(new
+            {
+                Hoge =100
+            }, StandardResolver.Instance);
 
-            var bin = MessagePackSerializer.Serialize<object>(100);
-
+            Console.WriteLine(MessagePackSerializer.ToJson(bin));
 
         }
 

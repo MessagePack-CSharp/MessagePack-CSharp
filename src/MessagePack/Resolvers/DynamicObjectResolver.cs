@@ -66,6 +66,12 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
+                if (ti.IsAnonymous())
+                {
+                    formatter = (IMessagePackFormatter<T>)DynamicPrivateFormatterBuilder.BuildFormatter(typeof(T));
+                    return;
+                }
+
                 var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), false, false);
                 if (formatterTypeInfo == null) return;
 
