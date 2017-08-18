@@ -19,11 +19,13 @@ namespace MessagePack.Tests
             var formatter = resolver.GetFormatter<T>();
             var dataSize = formatter.Serialize(ref buffer, 0, data, resolver);
 
-            MessagePackBinary.EnsureCapacity(ref buffer, 0, 6);
-            Buffer.BlockCopy(buffer, 0, buffer, 6, dataSize);
-            MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref buffer, 0, ExtTypeCode, dataSize);
+            var headerLength =MessagePackBinary.GetExtensionFormatHeaderLength(dataSize);
 
-            stream.Write(buffer, 0, dataSize + 6);
+            MessagePackBinary.EnsureCapacity(ref buffer, 0, headerLength);
+            Buffer.BlockCopy(buffer, 0, buffer, headerLength, dataSize);
+            MessagePackBinary.WriteExtensionFormatHeader(ref buffer, 0, ExtTypeCode, dataSize);
+
+            stream.Write(buffer, 0, dataSize + headerLength);
         }
 
         static T DeserializeWithLengthPrefixExt<T>(Stream stream, IFormatterResolver resolver)

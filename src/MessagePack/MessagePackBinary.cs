@@ -1860,6 +1860,35 @@ namespace MessagePack
             return extHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static int GetExtensionFormatHeaderLength(int dataLength)
+        {
+            switch (dataLength)
+            {
+                case 1:
+                case 2:
+                case 4:
+                case 8:
+                case 16:
+                    return 2;
+                default:
+                    if (dataLength <= byte.MaxValue)
+                    {
+                        return 3;
+                    }
+                    else if (dataLength <= UInt16.MaxValue)
+                    {
+                        return 4;
+                    }
+                    else
+                    {
+                        return 6;
+                    }
+            }
+        }
+
         // Timestamp spec
         // https://github.com/msgpack/msgpack/pull/209
         // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
@@ -2202,11 +2231,11 @@ namespace MessagePack
 
                         switch (code)
                         {
-                            case MessagePackCode.FixExt1: readHeaderSize = 2; break;
-                            case MessagePackCode.FixExt2: readHeaderSize = 3; break;
-                            case MessagePackCode.FixExt4: readHeaderSize = 5; break;
-                            case MessagePackCode.FixExt8: readHeaderSize = 9; break;
-                            case MessagePackCode.FixExt16: readHeaderSize = 17; break;
+                            case MessagePackCode.FixExt1: readHeaderSize = 1; break;
+                            case MessagePackCode.FixExt2: readHeaderSize = 1; break;
+                            case MessagePackCode.FixExt4: readHeaderSize = 1; break;
+                            case MessagePackCode.FixExt8: readHeaderSize = 1; break;
+                            case MessagePackCode.FixExt16: readHeaderSize = 1; break;
                             case MessagePackCode.Ext8: readHeaderSize = 2; break;
                             case MessagePackCode.Ext16: readHeaderSize = 3; break;
                             case MessagePackCode.Ext32: readHeaderSize = 5; break;
