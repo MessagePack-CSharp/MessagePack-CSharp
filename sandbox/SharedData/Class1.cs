@@ -518,6 +518,24 @@ namespace SharedData
         }
     }
 
+    public class FindingConstructorCheck
+    {
+        public int MyProperty1 { get; set; }
+        public string MyProperty2 { get; set; }
+
+
+        public FindingConstructorCheck(KeyValuePair<int, string> ok)
+        {
+
+        }
+
+        public FindingConstructorCheck(int myProperty1, string myProperty2)
+        {
+            this.MyProperty1 = myProperty1;
+            this.MyProperty2 = myProperty2;
+        }
+    }
+
     [MessagePackObject]
     public class ArrayOptimizeClass
     {
