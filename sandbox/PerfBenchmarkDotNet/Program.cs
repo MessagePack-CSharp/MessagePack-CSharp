@@ -1,7 +1,5 @@
 ﻿extern alias oldmsgpack;
 extern alias newmsgpack;
-extern alias farmhashmsgpack;
-extern alias farm2msgpack;
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
@@ -48,6 +46,7 @@ namespace PerfBenchmarkDotNet
 #if !DEBUG
             switcher.Run(args);
 #else
+            new TypelessBenchmark().MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes();
 #endif
         }
     }
