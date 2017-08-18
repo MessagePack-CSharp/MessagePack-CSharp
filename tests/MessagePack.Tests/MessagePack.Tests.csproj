@@ -106,6 +106,7 @@
     <Compile Include="AnonymousTypeTest.cs" />
     <Compile Include="CollectionTest.cs" />
     <Compile Include="DataContractTest.cs" />
+    <Compile Include="DynamicObjectFallbackTest.cs" />
     <Compile Include="StreamStrictTest.cs" />
     <Compile Include="ThreadsafeHashtableTest.cs" />
     <Compile Include="TypelessContractlessStandardResolverTest.cs" />

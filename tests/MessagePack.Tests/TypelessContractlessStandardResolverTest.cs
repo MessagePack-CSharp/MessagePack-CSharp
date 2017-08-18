@@ -121,8 +121,8 @@ namespace MessagePack.Tests
         {
             var arr = new Dictionary<object, object>()
             {
-                { 1, "a"},
-                { 2, new object[] { "level2", new object[] { "level3", new Person() { Name = "Peter", Addresses = new object[] { new Address() { Street = "St." }, new DateTime(2017,6,26,14,58,0) } } } } }
+                { (byte)1, "a"},
+                { (byte)2, new object[] { "level2", new object[] { "level3", new Person() { Name = "Peter", Addresses = new object[] { new Address() { Street = "St." }, new DateTime(2017,6,26,14,58,0) } } } } }
             };
             var result = MessagePackSerializer.Serialize(arr, TypelessContractlessStandardResolver.Instance);
 
@@ -135,7 +135,7 @@ namespace MessagePack.Tests
         [Fact]
         public void PreservingCollectionTypeTest()
         {
-            var arr = new object[] { 1, new object[] { 2, new LinkedList<object>(new object[] { "a", 42 }) } };
+            var arr = new object[] { (byte)1, new object[] { (byte)2, new LinkedList<object>(new object[] { "a", (byte)42 }) } };
             var result = MessagePackSerializer.Serialize(arr, TypelessContractlessStandardResolver.Instance);
             var deser = MessagePackSerializer.Deserialize<object[]>(result, TypelessContractlessStandardResolver.Instance);
             deser.IsStructuralEqual(arr);

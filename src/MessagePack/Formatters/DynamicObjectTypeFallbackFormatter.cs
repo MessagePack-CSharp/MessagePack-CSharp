@@ -8,20 +8,18 @@ using System.Reflection;
 
 namespace MessagePack.Formatters
 {
-    /// <summary>
-    /// PrimitiveObjectFormatter -> DynamicContractlessFormatter(NonGeneric).
-    /// </summary>
     public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
     {
         delegate int SerializeMethod(object dynamicContractlessFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
 
-        public static readonly IMessagePackFormatter<object> Instance = new DynamicObjectTypeFallbackFormatter();
+        static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
 
-        static readonly System.Collections.Generic.Dictionary<Type, KeyValuePair<object, SerializeMethod>> serializers = new Dictionary<Type, KeyValuePair<object, SerializeMethod>>();
+        readonly IFormatterResolver innerResolver;
 
-        DynamicObjectTypeFallbackFormatter()
+
+        public DynamicObjectTypeFallbackFormatter(IFormatterResolver innerResolver)
         {
-
+            this.innerResolver = innerResolver;
         }
 
         public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
@@ -34,9 +32,10 @@ namespace MessagePack.Formatters
             var type = value.GetType();
             var ti = type.GetTypeInfo();
 
-            if (PrimitiveObjectFormatter.IsSupportedType(type, ti, value))
+            if (type == typeof(object))
             {
-                return PrimitiveObjectFormatter.Instance.Serialize(ref bytes, offset, value, formatterResolver);
+                // serialize to empty map
+                return MessagePackBinary.WriteMapHeader(ref bytes, offset, 0);
             }
 
             KeyValuePair<object, SerializeMethod> formatterAndDelegate;
@@ -44,34 +43,37 @@ namespace MessagePack.Formatters
             {
                 if (!serializers.TryGetValue(type, out formatterAndDelegate))
                 {
-                    var formatter = DynamicContractlessObjectResolver.Instance.GetFormatterDynamic(type);
+                    var formatter = formatterResolver.GetFormatterDynamic(type);
                     if (formatter == null)
                     {
-                        throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolver:" + typeof(DynamicContractlessObjectResolver).Name);
+                        throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolver:" + formatterResolver.GetType().Name);
                     }
 
-                    var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-                    var param0 = Expression.Parameter(typeof(object), "formatter");
-                    var param1 = Expression.Parameter(typeof(byte[]).MakeByRefType(), "bytes");
-                    var param2 = Expression.Parameter(typeof(int), "offset");
-                    var param3 = Expression.Parameter(typeof(object), "value");
-                    var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
+                    serializers.TryAdd(type, t =>
+                    {
+                        var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(t);
+                        var param0 = Expression.Parameter(typeof(object), "formatter");
+                        var param1 = Expression.Parameter(typeof(byte[]).MakeByRefType(), "bytes");
+                        var param2 = Expression.Parameter(typeof(int), "offset");
+                        var param3 = Expression.Parameter(typeof(object), "value");
+                        var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
 
-                    var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(byte[]).MakeByRefType(), typeof(int), type, typeof(IFormatterResolver) });
+                        var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(byte[]).MakeByRefType(), typeof(int), t, typeof(IFormatterResolver) });
 
-                    var body = Expression.Call(
-                        Expression.Convert(param0, formatterType),
-                        serializeMethodInfo,
-                        param1,
-                        param2,
-                        ti.IsValueType ? Expression.Unbox(param3, type) : Expression.Convert(param3, type),
-                        param4);
+                        var body = Expression.Call(
+                            Expression.Convert(param0, formatterType),
+                            serializeMethodInfo,
+                            param1,
+                            param2,
+                            ti.IsValueType ? Expression.Unbox(param3, t) : Expression.Convert(param3, t),
+                            param4);
 
-                    var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4).Compile();
+                        var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4).Compile();
 
-                    formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
+                        formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
 
-                    serializers[type] = formatterAndDelegate;
+                        return formatterAndDelegate;
+                    });
                 }
             }
 

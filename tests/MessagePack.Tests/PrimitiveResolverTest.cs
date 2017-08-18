@@ -27,8 +27,11 @@ namespace MessagePack.Tests
         public void PrimitiveObjectTest<T>(T x)
         {
             var bin = MessagePackSerializer.Serialize<object>(x);
-            var re1 = MessagePackSerializer.Deserialize<object>(bin);
-            ((T)re1).Is(x);
+            var bin2 = MessagePackSerializer.Serialize<T>(x);
+
+            bin.Is(bin2);
+            //var re1 = MessagePackSerializer.Deserialize<object>(bin);
+            //((T)re1).Is(x);
         }
 
         [Fact]
@@ -50,7 +53,7 @@ namespace MessagePack.Tests
                 var x = SharedData.IntEnum.C;
                 var bin = MessagePackSerializer.Serialize<object>(x);
                 var re1 = MessagePackSerializer.Deserialize<object>(bin);
-                ((SharedData.IntEnum)re1).Is(x);
+                ((SharedData.IntEnum)(int)(byte)re1).Is(x);
             }
             {
                 var x = new object[] { 1, 10, 1000, new[] { 999, 424 }, new Dictionary<string, int> { { "hoge", 100 }, { "foo", 999 } }, true };
@@ -58,16 +61,16 @@ namespace MessagePack.Tests
                 var bin = MessagePackSerializer.Serialize<object>(x);
                 var re1 = (object[])MessagePackSerializer.Deserialize<object>(bin);
 
-                x[0].Is(re1[0]);
-                x[1].Is(re1[1]);
-                x[2].Is(re1[2]);
+                x[0].Is((int)(byte)re1[0]);
+                x[1].Is((int)(byte)re1[1]);
+                x[2].Is((int)(ushort)re1[2]);
                 x[5].Is(re1[5]);
 
-                ((int[])x[3])[0].Is(((object[])re1[3])[0]);
-                ((int[])x[3])[1].Is(((object[])re1[3])[1]);
+                ((int[])x[3])[0].Is((ushort)((object[])re1[3])[0]);
+                ((int[])x[3])[1].Is((ushort)((object[])re1[3])[1]);
 
-                (x[4] as Dictionary<string, int>)["hoge"].Is((re1[4] as Dictionary<object, object>)["hoge"]);
-                (x[4] as Dictionary<string, int>)["foo"].Is((re1[4] as Dictionary<object, object>)["foo"]);
+                (x[4] as Dictionary<string, int>)["hoge"].Is((int)(byte)(re1[4] as Dictionary<object, object>)["hoge"]);
+                (x[4] as Dictionary<string, int>)["foo"].Is((ushort)(re1[4] as Dictionary<object, object>)["foo"]);
             }
         }
     }

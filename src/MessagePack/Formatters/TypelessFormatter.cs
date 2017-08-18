@@ -90,7 +90,7 @@ namespace MessagePack.Formatters
                 && !(value is ICollection))
                 || ti.IsAnonymous())
             {
-                return DynamicObjectTypeFallbackFormatter.Instance.Serialize(ref bytes, offset, value, formatterResolver);
+                return Resolvers.ContractlessStandardResolver.Instance.GetFormatter<object>().Serialize(ref bytes, offset, value, formatterResolver);
             }
 
             var typeName = BuildTypeName(type);
@@ -180,7 +180,7 @@ namespace MessagePack.Formatters
                     }
             }
             // fallback
-            return DynamicObjectTypeFallbackFormatter.Instance.Deserialize(bytes, startOffset, formatterResolver, out readSize);
+            return Resolvers.ContractlessStandardResolver.Instance.GetFormatter<object>().Deserialize(bytes, startOffset, formatterResolver, out readSize);
         }
 
         /// <summary>
@@ -196,7 +196,7 @@ namespace MessagePack.Formatters
             KeyValuePair<object, DeserializeMethod> formatterAndDelegate;
             if (type == typeof(object))
             {
-                formatterAndDelegate = new KeyValuePair<object, DeserializeMethod>(null, (object p1, byte[] p2, int p3, IFormatterResolver p4, out int p5) => 
+                formatterAndDelegate = new KeyValuePair<object, DeserializeMethod>(null, (object p1, byte[] p2, int p3, IFormatterResolver p4, out int p5) =>
                 {
                     p5 = 0;
                     return new object();
