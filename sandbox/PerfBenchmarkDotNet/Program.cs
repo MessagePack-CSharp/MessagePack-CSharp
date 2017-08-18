@@ -27,8 +27,10 @@ namespace PerfBenchmarkDotNet
             Add(MarkdownExporter.GitHub);
             Add(MemoryDiagnoser.Default);
 
-            Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
-                Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
+            Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1));
+
+            //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
+            //  Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
         }
     }
 
@@ -38,7 +40,7 @@ namespace PerfBenchmarkDotNet
         {
             var switcher = new BenchmarkSwitcher(new[]
             {
-                typeof(MapDeserializeBenchmark),
+                typeof(TypelessBenchmark),
                 // typeof(MapSerializeBenchmark),
             });
 
@@ -46,142 +48,114 @@ namespace PerfBenchmarkDotNet
 #if !DEBUG
             switcher.Run(args);
 #else
-            var hugahgua1 = farmhashmsgpack::MessagePack.Resolvers.StandardResolver.Instance.GetFormatter<SerializerTarget>();
-            var hugahgua2 = farm2msgpack::MessagePack.Resolvers.StandardResolver.Instance.GetFormatter<SerializerTarget>();
 #endif
         }
     }
 
-    [oldmsgpack::MessagePack.MessagePackObject(true)]
-    [newmsgpack::MessagePack.MessagePackObject(true)]
-    [farmhashmsgpack::MessagePack.MessagePackObject(true)]
-    [farm2msgpack::MessagePack.MessagePackObject(true)]
-    public class SerializerTarget
+    [oldmsgpack::MessagePack.MessagePackObject]
+    [newmsgpack::MessagePack.MessagePackObject]
+    public class ContractType
     {
-        public int MyProperty1 { get; set; }
-        public int MyProperty2 { get; set; }
-        public int MyProperty3 { get; set; }
-        public int MyProperty4 { get; set; }
-        public int MyProperty5 { get; set; }
-        public int MyProperty6 { get; set; }
-        public int MyProperty7 { get; set; }
-        // public int MyProperty8 { get; set; }
-        public int MyProperty9 { get; set; }
+        public ContractType(string name, ContractType nested)
+        {
+            Name = name;
+            Nested = nested;
+        }
+
+        [oldmsgpack::MessagePack.Key(0)]
+        [newmsgpack::MessagePack.Key(0)]
+        public string Name { get; }
+
+        [oldmsgpack::MessagePack.Key(1)]
+        [newmsgpack::MessagePack.Key(1)]
+        public ContractType Nested { get; }
+    }
+
+    public class ContractlessType
+    {
+        public ContractlessType(string name, ContractlessType nested)
+        {
+            Name = name;
+            Nested = nested;
+        }
+
+        public string Name { get; }
+
+        public ContractlessType Nested { get; }
+    }
+
+    public class TypelessPrimitiveType
+    {
+        public TypelessPrimitiveType(string name, object nested)
+        {
+            Name = name;
+            Nested = nested;
+        }
+
+        public string Name { get; }
+
+        public object Nested { get; }
     }
 
     [Config(typeof(BenchmarkConfig))]
-    public class MapDeserializeBenchmark
+    public class TypelessBenchmark
     {
+        private byte[] OldStandardResolverBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractType("John", new ContractType("Jack", null)), oldmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        private byte[] OldContractlessStandardResolverBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractlessType("John", new ContractlessType("Jack", null)), oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        private byte[] OldTypelessContractlessStandardResolverBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        private byte[] OldTypelessContractlessStandardResolverComplexBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
 
-        public readonly SerializerTarget target;
-        public readonly SerializationContext context;
-        public readonly byte[] byteA;
-        public readonly byte[] byteB;
-        public readonly byte[] byteC;
-        public readonly byte[] byteD;
-        public readonly byte[] byteE;
+        private byte[] NewStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractType("John", new ContractType("Jack", null)), newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        private byte[] NewContractlessStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractlessType("John", new ContractlessType("Jack", null)), newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        private byte[] NewTypelessContractlessStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        private byte[] NewTypelessContractlessStandardResolverComplexBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
 
-        public MapDeserializeBenchmark()
-        {
-            target = new SerializerTarget
-            {
-                MyProperty1 = 1,
-                MyProperty2 = 2,
-                MyProperty3 = 3,
-                MyProperty4 = 4,
-                MyProperty5 = 5,
-                MyProperty6 = 6,
-                MyProperty7 = 7,
-                // MyProperty8 = 8,
-                MyProperty9 = 9,
-            };
+        //[Benchmark]
+        //public ContractType Old_MessagePackSerializer_Deserialize_StandardResolver()
+        //{
+        //    return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractType>(OldStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        //}
 
-            context = new MsgPack.Serialization.SerializationContext
-            {
-                SerializationMethod = MsgPack.Serialization.SerializationMethod.Map
-            };
+        //[Benchmark]
+        //public ContractlessType Old_MessagePackSerializer_Deserialize_ContractlessStandardResolver()
+        //{
+        //    return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractlessType>(OldContractlessStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        //}
 
-            byteA = context.GetSerializer<SerializerTarget>().PackSingleObject(target);
-            byteB = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
-            byteC = newmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
-            byteD = farmhashmsgpack::MessagePack.MessagePackSerializer.Serialize(target);
-            byteE = farm2msgpack::MessagePack.MessagePackSerializer.Serialize(target);
-        }
+        //[Benchmark]
+        //public TypelessPrimitiveType Old_MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
+        //{
+        //    return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(OldTypelessContractlessStandardResolverBytes, oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        //}
 
-        [Benchmark]
-        public SerializerTarget MsgPackCli()
-        {
-            return context.GetSerializer<SerializerTarget>().UnpackSingleObject(byteA);
-        }
+        //[Benchmark]
+        //public TypelessPrimitiveType Old_MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes()
+        //{
+        //    return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(OldTypelessContractlessStandardResolverComplexBytes, oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        //}
+
+        //[Benchmark]
+        //public ContractType MessagePackSerializer_Deserialize_StandardResolver()
+        //{
+        //    return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractType>(NewStandardResolverBytes, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        //}
 
         [Benchmark]
-        public SerializerTarget MessagePack_1_4_3()
+        public ContractlessType MessagePackSerializer_Deserialize_ContractlessStandardResolver()
         {
-            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteB);
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractlessType>(NewContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
         }
+
+        //[Benchmark]
+        //public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
+        //{
+        //    return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        //}
 
         [Benchmark]
-        public SerializerTarget MessagePack_1_4_4()
+        public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteC);
-        }
-
-        [Benchmark]
-        public SerializerTarget MessagePack_Farmhash()
-        {
-            return farmhashmsgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteD);
-        }
-
-        [Benchmark(Baseline = true)]
-        public SerializerTarget MessagePack_Farmhash2()
-        {
-            return farm2msgpack::MessagePack.MessagePackSerializer.Deserialize<SerializerTarget>(byteE);
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverComplexBytes, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
         }
     }
-
-    //[Config(typeof(BenchmarkConfig))]
-    //public class MapSerializeBenchmark
-    //{
-    //    public readonly SerializerTarget target;
-    //    public readonly SerializationContext context;
-
-    //    public MapSerializeBenchmark()
-    //    {
-    //        target = new SerializerTarget
-    //        {
-    //            MyProperty1 = 1,
-    //            MyProperty2 = 2,
-    //            MyProperty3 = 3,
-    //            MyProperty4 = 4,
-    //            MyProperty5 = 5,
-    //            MyProperty6 = 6,
-    //            MyProperty7 = 7,
-    //            // MyProperty8 = 8,
-    //            MyProperty9 = 9,
-    //        };
-
-    //        context = new MsgPack.Serialization.SerializationContext
-    //        {
-    //            SerializationMethod = MsgPack.Serialization.SerializationMethod.Map
-    //        };
-    //    }
-
-    //    [Benchmark]
-    //    public byte[] MsgPackCli()
-    //    {
-    //        return context.GetSerializer<SerializerTarget>().PackSingleObject(target);
-    //    }
-
-    //    [Benchmark]
-    //    public byte[] MessagePack_1_4_3()
-    //    {
-    //        return oldmsgpack::MessagePack.MessagePackSerializer.Serialize<SerializerTarget>(target);
-    //    }
-
-    //    [Benchmark(Baseline = true)]
-    //    public byte[] MessagePack_1_4_4()
-    //    {
-    //        return newmsgpack::MessagePack.MessagePackSerializer.Serialize<SerializerTarget>(target);
-    //    }
-    //}
 }
