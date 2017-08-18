@@ -200,8 +200,6 @@ MessagePackSerializer.SetDefaultResolver(MessagePack.Resolvers.ContractlessStand
 var bin2 = MessagePackSerializer.Serialize(data);
 ```
 
-ContractlessStandardResolver can serialize anonymous type, too.
-
 I don't need type, I want to use like BinaryFormatter! You can use as typeless resolver and helpers. Please see [Typeless section](https://github.com/neuecc/MessagePack-CSharp#typeless).
 
 Resolver is key customize point of MessagePack for C#. Details, please see [extension point](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
@@ -401,6 +399,29 @@ Console.WriteLine(dynamicModel["Items"][2]); // 100
 
 So you can access indexer for msgpack map and array.
 
+Object Type Serialization
+---
+`StandardResolver` and `ContractlessStandardResolver` can serialize `object` type as concrete type by `DynamicObjectTypeFallbackResolver`.
+
+```csharp
+var objects = new object[] { 1, "aaa", new ObjectFieldType { Anything = 9999 } };
+var bin = MessagePackSerializer.Serialize(objects);
+
+// [1,"aaa",[9999]]
+Console.WriteLine(MessagePackSerializer.ToJson(bin));
+
+// Support Anonymous Type Serialize
+var anonType = new { Foo = 100, Bar = "foobar" };
+var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+
+// {"Foo":100,"Bar":"foobar"}
+Console.WriteLine(MessagePackSerializer.ToJson(bin2));
+```
+
+> Unity supports is limited.
+
+When deserializing, same as Dynamic(Untyped) Deserialization.
+
 Typeless
 ---
 Typeless API is like `BinaryFormatter`, embed type information to binary so no needs type to deserialize.
@@ -586,7 +607,6 @@ public void ConfigureServices(IServiceCollection services)
 {
     services.AddMvc().AddMvcOptions(option =>
     {
-	    // ContractlessStandardResolver supports anonymous type, or use your custom composite resolver.
         option.OutputFormatters.Clear();
         option.OutputFormatters.Add(new MessagePackOutputFormatter(ContractlessStandardResolver.Instance));
         option.InputFormatters.Clear();
