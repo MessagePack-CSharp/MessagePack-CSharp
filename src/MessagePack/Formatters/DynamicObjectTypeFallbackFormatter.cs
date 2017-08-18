@@ -10,12 +10,11 @@ namespace MessagePack.Formatters
 {
     public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
     {
-        delegate int SerializeMethod(object dynamicContractlessFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
+        delegate int SerializeMethod(object dynamicFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
 
-        static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
+        readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
 
         readonly IFormatterResolver innerResolver;
-
 
         public DynamicObjectTypeFallbackFormatter(IFormatterResolver innerResolver)
         {
