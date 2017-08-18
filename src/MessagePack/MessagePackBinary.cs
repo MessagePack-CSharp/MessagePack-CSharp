@@ -2216,13 +2216,20 @@ namespace MessagePack
                         MessagePackBinary.EnsureCapacity(ref bytes, offset, readHeaderSize + 1);
                         stream.Read(bytes, offset + 1, readHeaderSize);
 
-                        int _;
-                        var header = ReadExtensionFormatHeader(bytes, offset, out _);
+                        if (!readOnlySingleMessage)
+                        {
+                            int _;
+                            var header = ReadExtensionFormatHeader(bytes, offset, out _);
 
-                        MessagePackBinary.EnsureCapacity(ref bytes, offset, 1 + readHeaderSize + (int)header.Length);
-                        stream.Read(bytes, offset + 1 + readHeaderSize, (int)header.Length);
+                            MessagePackBinary.EnsureCapacity(ref bytes, offset, 1 + readHeaderSize + (int)header.Length);
+                            stream.Read(bytes, offset + 1 + readHeaderSize, (int)header.Length);
 
-                        return 1 + readHeaderSize + (int)header.Length;
+                            return 1 + readHeaderSize + (int)header.Length;
+                        }
+                        else
+                        {
+                            return readHeaderSize + 1;
+                        }
                     }
                 default: throw new InvalidOperationException("Invalid Code");
             }
@@ -2987,9 +2994,9 @@ namespace MessagePack
 #endif
         public static ExtensionHeader ReadExtensionFormatHeader(Stream stream)
         {
-            var bytes = ReadMessageBlockFromStreamUnsafe(stream);
-            var offset = 0;
             int readSize;
+            var bytes = ReadMessageBlockFromStreamUnsafe(stream, true, out readSize);
+            var offset = 0;
 
             return ReadExtensionFormatHeader(bytes, offset, out readSize);
         }
