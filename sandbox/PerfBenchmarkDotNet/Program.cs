@@ -46,7 +46,7 @@ namespace PerfBenchmarkDotNet
 #if !DEBUG
             switcher.Run(args);
 #else
-            new TypelessBenchmark().MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes();
+            // new TypelessBenchmark().MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes();
 #endif
         }
     }

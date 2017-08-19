@@ -96,6 +96,11 @@ namespace MessagePack.Internal
             return v;
         }
 
+        public bool TryAdd(TKey1 key, TValue value)
+        {
+            return TryAdd(key, _ => value); // closure capture
+        }
+
         public bool TryAdd(TKey1 key, Func<TKey1, TValue> valueFactory)
         {
             TValue _;
