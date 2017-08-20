@@ -31,6 +31,23 @@ namespace MessagePack.Formatters
         static readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> typeCache = new AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type>(new StringArraySegmentByteAscymmetricEqualityComparer());
 
         static readonly HashSet<string> blacklistCheck;
+        static readonly HashSet<Type> useBuiltinTypes = new HashSet<Type>()
+        {
+            typeof(Boolean),
+            typeof(Char),
+            typeof(SByte),
+            typeof(Byte),
+            typeof(Int16),
+            typeof(UInt16),
+            typeof(Int32),
+            typeof(UInt32),
+            typeof(Int64),
+            typeof(UInt64),
+            typeof(Single),
+            typeof(Double),
+            typeof(string),
+            typeof(byte[]),
+        };
 
         /// <summary>
         /// When type name does not have Version, Culture, Public token - sometimes can not find type, example - ExpandoObject
@@ -96,7 +113,7 @@ namespace MessagePack.Formatters
                 }
 
                 var ti = type.GetTypeInfo();
-                if (ti.IsAnonymous())
+                if (ti.IsAnonymous() || useBuiltinTypes.Contains(type) || ti.IsEnum)
                 {
                     typeName = null;
                 }
@@ -107,8 +124,7 @@ namespace MessagePack.Formatters
                 typeNameCache.TryAdd(type, typeName);
             }
 
-
-            if (value == null)
+            if (typeName == null)
             {
                 return Resolvers.ContractlessStandardResolver.Instance.GetFormatter<object>().Serialize(ref bytes, offset, value, formatterResolver);
             }
