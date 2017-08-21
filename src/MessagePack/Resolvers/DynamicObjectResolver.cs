@@ -53,6 +53,12 @@ namespace MessagePack.Resolvers
             static FormatterCache()
             {
                 var ti = typeof(T).GetTypeInfo();
+
+                if (ti.IsInterface)
+                {
+                    return;
+                }
+
                 if (ti.IsNullable())
                 {
                     ti = ti.GenericTypeArguments[0].GetTypeInfo();
@@ -125,6 +131,12 @@ namespace MessagePack.Resolvers
                 }
 
                 var ti = typeof(T).GetTypeInfo();
+
+                if (ti.IsInterface)
+                {
+                    return;
+                }
+
                 if (ti.IsNullable())
                 {
                     ti = ti.GenericTypeArguments[0].GetTypeInfo();
