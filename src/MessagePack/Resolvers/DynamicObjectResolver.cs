@@ -1321,6 +1321,7 @@ namespace MessagePack.Internal
                                 {
                                     if (ctorEnumerator != null)
                                     {
+                                        ctor = null;
                                         continue;
                                     }
                                     else
@@ -1333,6 +1334,7 @@ namespace MessagePack.Internal
                             {
                                 if (ctorEnumerator != null)
                                 {
+                                    ctor = null;
                                     continue;
                                 }
                                 else
@@ -1351,6 +1353,7 @@ namespace MessagePack.Internal
                                 {
                                     if (ctorEnumerator != null)
                                     {
+                                        ctor = null;
                                         continue;
                                     }
                                     else
@@ -1368,6 +1371,7 @@ namespace MessagePack.Internal
                                 {
                                     if (ctorEnumerator != null)
                                     {
+                                        ctor = null;
                                         continue;
                                     }
                                     else
@@ -1380,6 +1384,7 @@ namespace MessagePack.Internal
                             {
                                 if (ctorEnumerator != null)
                                 {
+                                    ctor = null;
                                     continue;
                                 }
                                 else
@@ -1410,7 +1415,7 @@ namespace MessagePack.Internal
 
         static bool TryGetNextConstructor(IEnumerator<ConstructorInfo> ctorEnumerator, ref ConstructorInfo ctor)
         {
-            if (ctorEnumerator == null)
+            if (ctorEnumerator == null || ctor != null)
             {
                 return false;
             }

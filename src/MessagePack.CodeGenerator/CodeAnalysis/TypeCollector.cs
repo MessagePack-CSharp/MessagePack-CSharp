@@ -667,6 +667,7 @@ namespace MessagePack.CodeGenerator
                                 {
                                     if (ctorEnumerator != null)
                                     {
+                                        ctor = null;
                                         continue;
                                     }
                                     else
@@ -679,6 +680,7 @@ namespace MessagePack.CodeGenerator
                             {
                                 if (ctorEnumerator != null)
                                 {
+                                    ctor = null;
                                     continue;
                                 }
                                 else
@@ -697,6 +699,7 @@ namespace MessagePack.CodeGenerator
                                 {
                                     if (ctorEnumerator != null)
                                     {
+                                        ctor = null;
                                         continue;
                                     }
                                     else
@@ -714,6 +717,7 @@ namespace MessagePack.CodeGenerator
                                 {
                                     if (ctorEnumerator != null)
                                     {
+                                        ctor = null;
                                         continue;
                                     }
                                     else
@@ -726,6 +730,7 @@ namespace MessagePack.CodeGenerator
                             {
                                 if (ctorEnumerator != null)
                                 {
+                                    ctor = null;
                                     continue;
                                 }
                                 else
@@ -771,7 +776,7 @@ namespace MessagePack.CodeGenerator
 
         static bool TryGetNextConstructor(IEnumerator<IMethodSymbol> ctorEnumerator, ref IMethodSymbol ctor)
         {
-            if (ctorEnumerator == null)
+            if (ctorEnumerator == null || ctor != null)
             {
                 return false;
             }
