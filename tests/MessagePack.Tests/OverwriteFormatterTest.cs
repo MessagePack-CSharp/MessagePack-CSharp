@@ -39,6 +39,19 @@ namespace MessagePack.Tests
         }
     }
 
+    public class DefaultCollectionFormatter : CollectionFormatterBase<int, int[]>
+    {
+        protected override void Add(int[] collection, int index, int value)
+        {
+            collection[index] = value;
+        }
+
+        protected override int[] Create(int count)
+        {
+            return new int[count];
+        }
+    }
+
     public class CollectionOverwriteFormatterTest
     {
         // test patterns
@@ -114,6 +127,132 @@ namespace MessagePack.Tests
 
                 to = new[] { 1, 2, 3 };
                 DeserializeTo(formatter, resolver, ref to, new int[] { 4, 5, 6, 7 });
+                to.Is(4, 5, 6, 7);
+            }
+
+            // TODO:T is overwritable test
+        }
+
+        [Fact]
+        public void DefaultAddFormatter()
+        {
+            var formatter = new DefaultCollectionFormatter();
+
+            {
+                var resolver = new AddResolver();
+
+                int[] to = null;
+                DeserializeTo(formatter, resolver, ref to, new[] { 4, 5, 6 });
+                to.Is(4, 5, 6);
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, (int[])null);
+                to.Is(1, 2, 3);
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, new int[0]);
+                to.Is(1, 2, 3);
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, new int[] { 4, 5 });
+                to.Is(1, 2, 3, 4, 5);
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, new int[] { 4, 5, 6 });
+                to.Is(1, 2, 3, 4, 5, 6);
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, new int[] { 4, 5, 6, 7 });
+                to.Is(1, 2, 3, 4, 5, 6, 7);
+            }
+            {
+                var resolver = new OverwriteResolver();
+
+                int[] to = null;
+                DeserializeTo(formatter, resolver, ref to, new[] { 4, 5, 6 });
+                to.Is(4, 5, 6);
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, (int[])null);
+                to.IsNull();
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, new int[0]);
+                to.IsZero();
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, new int[] { 4, 5 });
+                to.Is(4, 5);
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, new int[] { 4, 5, 6 });
+                to.Is(4, 5, 6);
+
+                to = new[] { 1, 2, 3 };
+                DeserializeTo(formatter, resolver, ref to, new int[] { 4, 5, 6, 7 });
+                to.Is(4, 5, 6, 7);
+            }
+
+            // TODO:T is overwritable test
+        }
+
+        [Fact]
+        public void LinkedListFormatter()
+        {
+            var formatter = new LinkedListFormatter<int>();
+
+            {
+                var resolver = new AddResolver();
+
+                LinkedList<int> to = null;
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>(new[] { 4, 5, 6 }));
+                to.Is(4, 5, 6);
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, (LinkedList<int>)null);
+                to.Is(1, 2, 3);
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>());
+                to.Is(1, 2, 3);
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>(new int[] { 4, 5 }));
+                to.Is(1, 2, 3, 4, 5);
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>(new int[] { 4, 5, 6 }));
+                to.Is(1, 2, 3, 4, 5, 6);
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>(new int[] { 4, 5, 6, 7 }));
+                to.Is(1, 2, 3, 4, 5, 6, 7);
+            }
+            {
+                var resolver = new OverwriteResolver();
+
+                LinkedList<int> to = null;
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>(new[] { 4, 5, 6 }));
+                to.Is(4, 5, 6);
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, (LinkedList<int>)null);
+                to.IsNull();
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>());
+                to.IsZero();
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>(new int[] { 4, 5 }));
+                to.Is(4, 5);
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>(new int[] { 4, 5, 6 }));
+                to.Is(4, 5, 6);
+
+                to = new LinkedList<int>(new[] { 1, 2, 3 });
+                DeserializeTo(formatter, resolver, ref to, new LinkedList<int>(new int[] { 4, 5, 6, 7 }));
                 to.Is(4, 5, 6, 7);
             }
 

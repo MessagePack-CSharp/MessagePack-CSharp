@@ -261,8 +261,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public abstract class CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection> : IMessagePackFormatter<TCollection>
-        where TCollection : IEnumerable<TElement>
+    public abstract class CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>
+        : IMessagePackFormatter<TCollection>, IOverwriteMessagePackFormatter<TCollection>
+        where TCollection : class, IEnumerable<TElement>
         where TEnumerator : IEnumerator<TElement>
     {
         public int Serialize(ref byte[] bytes, int offset, TCollection value, IFormatterResolver formatterResolver)
@@ -395,6 +396,34 @@ namespace MessagePack.Formatters
             }
         }
 
+        protected bool CanBeginDeserializeTo(ref TCollection to, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (to == null)
+            {
+                to = Deserialize(bytes, offset, formatterResolver, out readSize);
+                return false;
+            }
+
+            var behaviour = formatterResolver.GetConfiguration().CollectionDeserializeToBehaviour;
+
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                if (behaviour == CollectionDeserializeToBehaviour.Add)
+                {
+                    return false; // do nothing
+                }
+                else
+                {
+                    to = null;
+                    return false;
+                }
+            }
+
+            readSize = -1; // not yet read
+            return true;
+        }
+
         // abstraction for serialize
         protected virtual int? GetCount(TCollection sequence)
         {
@@ -424,10 +453,81 @@ namespace MessagePack.Formatters
         protected abstract TIntermediate Create(int count);
         protected abstract void Add(TIntermediate collection, int index, TElement value);
         protected abstract TCollection Complete(TIntermediate intermediateCollection);
+
+        // default implementation. this is slower than optimized for target collections, should be override
+        public virtual void DeserializeTo(ref TCollection to, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (!CanBeginDeserializeTo(ref to, bytes, offset, formatterResolver, out readSize)) return;
+
+            var startOffset = offset;
+            var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
+            var option = formatterResolver.GetConfiguration().CollectionDeserializeToBehaviour;
+
+            var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var overwriteFormatter = formatter as IOverwriteMessagePackFormatter<TElement>;
+            List<TElement> originalSource = null;
+
+            if ((option == CollectionDeserializeToBehaviour.Add) || (option == CollectionDeserializeToBehaviour.OverwriteReplace && overwriteFormatter != null))
+            {
+                var count = GetCount(to);
+                originalSource = new List<TElement>(count ?? 0);
+                var enumerator = GetSourceEnumerator(to);
+                try
+                {
+                    while (enumerator.MoveNext())
+                    {
+                        originalSource.Add(enumerator.Current);
+                    }
+                }
+                finally
+                {
+                    enumerator.Dispose();
+                }
+            }
+
+            var finalLength = (option == CollectionDeserializeToBehaviour.Add) ? originalSource.Count + len : len;
+            var intermediateCollection = Create(finalLength);
+
+            if (option == CollectionDeserializeToBehaviour.Add)
+            {
+                for (int i = 0; i < originalSource.Count; i++)
+                {
+                    Add(intermediateCollection, i, originalSource[i]);
+                }
+            }
+
+            {
+                int i = 0;
+                if (option == CollectionDeserializeToBehaviour.OverwriteReplace && overwriteFormatter != null)
+                {
+                    for (; i < originalSource.Count && i < finalLength; i++)
+                    {
+                        var v = originalSource[i];
+                        overwriteFormatter.DeserializeTo(ref v, bytes, offset, formatterResolver, out readSize);
+                        Add(intermediateCollection, i, v);
+                    }
+                }
+                else
+                {
+                    i = (originalSource == null) ? 0 : originalSource.Count;
+                }
+
+                for (; i < finalLength; i++)
+                {
+                    Add(intermediateCollection, i, formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                    offset += readSize;
+                }
+            }
+
+            readSize = offset - startOffset;
+            to = Complete(intermediateCollection);
+        }
     }
 
     public abstract class CollectionFormatterBase<TElement, TIntermediate, TCollection> : CollectionFormatterBase<TElement, TIntermediate, IEnumerator<TElement>, TCollection>
-        where TCollection : IEnumerable<TElement>
+        where TCollection : class, IEnumerable<TElement>
     {
         protected override IEnumerator<TElement> GetSourceEnumerator(TCollection source)
         {
@@ -436,7 +536,7 @@ namespace MessagePack.Formatters
     }
 
     public abstract class CollectionFormatterBase<TElement, TCollection> : CollectionFormatterBase<TElement, TCollection, TCollection>
-        where TCollection : IEnumerable<TElement>
+        where TCollection : class, IEnumerable<TElement>
     {
         protected sealed override TCollection Complete(TCollection intermediateCollection)
         {
@@ -445,7 +545,7 @@ namespace MessagePack.Formatters
     }
 
     public sealed class GenericCollectionFormatter<TElement, TCollection> : CollectionFormatterBase<TElement, TCollection>
-         where TCollection : ICollection<TElement>, new()
+         where TCollection : class, ICollection<TElement>, new()
     {
         protected override TCollection Create(int count)
         {
@@ -458,7 +558,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class LinkedListFormatter<T> : CollectionFormatterBase<T, LinkedList<T>, LinkedList<T>.Enumerator, LinkedList<T>>
+    public sealed class LinkedListFormatter<T> :
+        CollectionFormatterBase<T, LinkedList<T>, LinkedList<T>.Enumerator, LinkedList<T>>,
+        IOverwriteMessagePackFormatter<LinkedList<T>>
     {
         protected override void Add(LinkedList<T> collection, int index, T value)
         {
@@ -478,6 +580,72 @@ namespace MessagePack.Formatters
         protected override LinkedList<T>.Enumerator GetSourceEnumerator(LinkedList<T> source)
         {
             return source.GetEnumerator();
+        }
+
+        public override void DeserializeTo(ref LinkedList<T> to, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (!CanBeginDeserializeTo(ref to, bytes, offset, formatterResolver, out readSize)) return;
+
+            var startOffset = offset;
+            var behaviour = formatterResolver.GetConfiguration().CollectionDeserializeToBehaviour;
+            var formatter = formatterResolver.GetFormatterWithVerify<T>();
+
+            var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            if (behaviour == CollectionDeserializeToBehaviour.Add)
+            {
+                for (var i = 0; i < len; i++)
+                {
+                    to.AddLast(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                    offset += readSize;
+                }
+            }
+            else
+            {
+                var i = 0;
+                var node = to.First;
+
+                var overwriteFormatter = formatter as IOverwriteMessagePackFormatter<T>;
+                if (overwriteFormatter == null)
+                {
+                    while (node != null && i < len)
+                    {
+                        node.Value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
+                        i++;
+                        node = node.Next;
+                    }
+                }
+                else
+                {
+                    while (node != null && i < len)
+                    {
+                        var v = node.Value;
+                        overwriteFormatter.DeserializeTo(ref v, bytes, offset, formatterResolver, out readSize);
+                        node.Value = v;
+                        offset += readSize;
+
+                        i++;
+                        node = node.Next;
+                    }
+                }
+
+                while (node != null)
+                {
+                    var nextTarget = node.Next;
+                    to.Remove(node);
+                    node = nextTarget;
+                }
+
+                for (; i < len; i++)
+                {
+                    to.AddLast(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                    offset += readSize;
+                }
+            }
+
+            readSize = offset - startOffset;
         }
     }
 
