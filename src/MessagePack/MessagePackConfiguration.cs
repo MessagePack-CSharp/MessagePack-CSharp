@@ -10,13 +10,13 @@ namespace MessagePack
 
     public enum CollectionDeserializeToBehaviour
     {
-        Add,
-        Overwrite,
+        OverwriteReplace,
+        Add
     }
 
     public class MessagePackConfiguration : IResolverConfiguration, IMessagePackFormatter<IResolverConfiguration>
     {
-        public static readonly MessagePackConfiguration Default = new MessagePackConfiguration(CollectionDeserializeToBehaviour.Add);
+        public static readonly MessagePackConfiguration Default = new MessagePackConfiguration(CollectionDeserializeToBehaviour.OverwriteReplace);
 
         public CollectionDeserializeToBehaviour CollectionDeserializeToBehaviour { get; private set; }
 

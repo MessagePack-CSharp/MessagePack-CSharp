@@ -10,7 +10,7 @@ using System.Collections.Concurrent;
 
 namespace MessagePack.Formatters
 {
-    public sealed class ArrayFormatter<T> : IMessagePackFormatter<T[]>
+    public sealed class ArrayFormatter<T> : IMessagePackFormatter<T[]>, IOverwriteMessagePackFormatter<T[]>
     {
         public int Serialize(ref byte[] bytes, int offset, T[] value, IFormatterResolver formatterResolver)
         {
@@ -56,6 +56,78 @@ namespace MessagePack.Formatters
                 }
                 readSize = offset - startOffset;
                 return array;
+            }
+        }
+
+        public void DeserializeTo(ref T[] to, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (to == null)
+            {
+                to = Deserialize(bytes, offset, formatterResolver, out readSize);
+                return;
+            }
+
+            var behaviour = formatterResolver.GetConfiguration().CollectionDeserializeToBehaviour;
+
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                if (behaviour == CollectionDeserializeToBehaviour.Add)
+                {
+                    return; // do nothing
+                }
+                else
+                {
+                    to = null;
+                    return;
+                }
+            }
+            else
+            {
+                var startOffset = offset;
+                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+
+                if (behaviour == CollectionDeserializeToBehaviour.Add)
+                {
+                    var i = to.Length;
+                    Array.Resize(ref to, to.Length + len);
+
+                    for (; i < to.Length; i++)
+                    {
+                        to[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
+                    }
+                }
+                else
+                {
+                    if (to.Length != len)
+                    {
+                        Array.Resize(ref to, len);
+                    }
+
+                    var overwriteFormatter = formatter as IOverwriteMessagePackFormatter<T>;
+                    if (overwriteFormatter == null)
+                    {
+                        for (int i = 0; i < to.Length; i++)
+                        {
+                            to[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                            offset += readSize;
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < to.Length; i++)
+                        {
+                            overwriteFormatter.DeserializeTo(ref to[i], bytes, offset, formatterResolver, out readSize);
+                            offset += readSize;
+                        }
+                    }
+                }
+
+                readSize = offset - startOffset;
             }
         }
     }
