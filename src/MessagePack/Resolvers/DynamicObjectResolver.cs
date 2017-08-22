@@ -1302,9 +1302,7 @@ namespace MessagePack.Internal
             if (ctor != null)
             {
                 var constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
-
-                RETRY:
-                try
+                do
                 {
                     constructorParameters.Clear();
                     var ctorParamIndex = 0;
@@ -1321,12 +1319,26 @@ namespace MessagePack.Internal
                                 }
                                 else
                                 {
-                                    throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, parameterType mismatch. type:" + type.FullName + " parameterIndex:" + ctorParamIndex + " paramterType:" + item.ParameterType.Name);
+                                    if (ctorEnumerator != null)
+                                    {
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, parameterType mismatch. type:" + type.FullName + " parameterIndex:" + ctorParamIndex + " paramterType:" + item.ParameterType.Name);
+                                    }
                                 }
                             }
                             else
                             {
-                                throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, index not found. type:" + type.FullName + " parameterIndex:" + ctorParamIndex);
+                                if (ctorEnumerator != null)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, index not found. type:" + type.FullName + " parameterIndex:" + ctorParamIndex);
+                                }
                             }
                         }
                         else
@@ -1337,7 +1349,14 @@ namespace MessagePack.Internal
                             {
                                 if (len != 1)
                                 {
-                                    throw new MessagePackDynamicObjectResolverException("duplicate matched constructor parameter name:" + type.FullName + " parameterName:" + item.Name + " paramterType:" + item.ParameterType.Name);
+                                    if (ctorEnumerator != null)
+                                    {
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        throw new MessagePackDynamicObjectResolverException("duplicate matched constructor parameter name:" + type.FullName + " parameterName:" + item.Name + " paramterType:" + item.ParameterType.Name);
+                                    }
                                 }
 
                                 paramMember = hasKey.First().Value;
@@ -1347,33 +1366,35 @@ namespace MessagePack.Internal
                                 }
                                 else
                                 {
-                                    throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, parameterType mismatch. type:" + type.FullName + " parameterName:" + item.Name + " paramterType:" + item.ParameterType.Name);
+                                    if (ctorEnumerator != null)
+                                    {
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, parameterType mismatch. type:" + type.FullName + " parameterName:" + item.Name + " paramterType:" + item.ParameterType.Name);
+                                    }
                                 }
                             }
                             else
                             {
-                                throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, index not found. type:" + type.FullName + " parameterName:" + item.Name);
+                                if (ctorEnumerator != null)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, index not found. type:" + type.FullName + " parameterName:" + item.Name);
+                                }
                             }
                         }
                         ctorParamIndex++;
                     }
-                }
-                catch (MessagePackDynamicObjectResolverException)
-                {
-                    if (ctorEnumerator == null)
-                    {
-                        throw;
-                    }
+                } while (TryGetNextConstructor(ctorEnumerator, ref ctor));
 
-                    if (ctorEnumerator.MoveNext())
-                    {
-                        ctor = ctorEnumerator.Current;
-                        goto RETRY;
-                    }
-                    else
-                    {
-                        throw new MessagePackDynamicObjectResolverException("can't find matched constructor. type:" + type.FullName);
-                    }
+                if (ctor == null)
+                {
+                    throw new MessagePackDynamicObjectResolverException("can't find matched constructor. type:" + type.FullName);
                 }
             }
 
@@ -1385,6 +1406,25 @@ namespace MessagePack.Internal
                 IsIntKey = isIntKey,
                 Members = (isIntKey) ? intMembers.Values.ToArray() : stringMembers.Values.ToArray()
             };
+        }
+
+        static bool TryGetNextConstructor(IEnumerator<ConstructorInfo> ctorEnumerator, ref ConstructorInfo ctor)
+        {
+            if (ctorEnumerator == null)
+            {
+                return false;
+            }
+
+            if (ctorEnumerator.MoveNext())
+            {
+                ctor = ctorEnumerator.Current;
+                return true;
+            }
+            else
+            {
+                ctor = null;
+                return false;
+            }
         }
 
         public class EmittableMember
