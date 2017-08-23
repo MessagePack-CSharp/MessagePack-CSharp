@@ -65,6 +65,9 @@
     <Compile Include="..\..\src\MessagePack\IMessagePackSerializationCallbackReceiver.cs">
       <Link>Code\IMessagePackSerializationCallbackReceiver.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\ByteArrayComparer.cs">
+      <Link>Code\ByteArrayComparer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\ByteArrayStringHashTable.cs">
       <Link>Code\ByteArrayStringHashTable.cs</Link>
     </Compile>

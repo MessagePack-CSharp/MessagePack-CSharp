@@ -123,6 +123,8 @@
     </Compile>
     <Compile Include="Assets\Scripts\MessagePack\IFormatterResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\IMessagePackSerializationCallbackReceiver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\AsymmetricKeyHashTable.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\ByteArrayComparer.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ByteArrayStringHashTable.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\FarmHash.cs" />

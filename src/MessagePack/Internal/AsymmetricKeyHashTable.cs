@@ -34,7 +34,7 @@ namespace MessagePack.Internal
 
         public bool Equals(byte[] x, ArraySegment<byte> y)
         {
-            return ByteArrayComparer.Compare(y.Array, y.Offset, y.Count, x);
+            return ByteArrayComparer.Equals(y.Array, y.Offset, y.Count, x);
         }
 
         public int GetHashCode(byte[] key1)

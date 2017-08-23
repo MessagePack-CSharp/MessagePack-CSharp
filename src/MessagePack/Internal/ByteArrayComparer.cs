@@ -9,17 +9,36 @@ namespace MessagePack.Internal
 #if ENABLE_UNSAFE_MSGPACK
 
 #if NETSTANDARD1_4
+
+        static readonly bool Is32Bit = (IntPtr.Size == 4);
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int GetHashCode(byte[] bytes, int offset, int count)
+        {
+            if (Is32Bit)
+            {
+                return unchecked((int)FarmHash.Hash32(bytes, offset, count));
+            }
+            else
+            {
+                return unchecked((int)FarmHash.Hash64(bytes, offset, count));
+            }
+        }
+
+#endif
+
+#if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static unsafe bool Compare(byte[] xs, int xsOffset, int xsCount, byte[] ys)
+        public static unsafe bool Equals(byte[] xs, int xsOffset, int xsCount, byte[] ys)
         {
-            return Compare(xs, xsOffset, xsCount, ys, 0, ys.Length);
+            return Equals(xs, xsOffset, xsCount, ys, 0, ys.Length);
         }
 
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static unsafe bool Compare(byte[] xs, int xsOffset, int xsCount, byte[] ys, int ysOffset, int ysCount)
+        public static unsafe bool Equals(byte[] xs, int xsOffset, int xsCount, byte[] ys, int ysOffset, int ysCount)
         {
             if (xs == null || ys == null || xsCount != ysCount)
             {
@@ -78,7 +97,7 @@ namespace MessagePack.Internal
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static bool Compare(byte[] xs, int xsOffset, int xsCount, byte[] ys)
+        public static bool Equals(byte[] xs, int xsOffset, int xsCount, byte[] ys)
         {
             if (xs == null || ys == null || xsCount != ys.Length)
             {
@@ -96,7 +115,7 @@ namespace MessagePack.Internal
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static bool Compare(byte[] xs, int xsOffset, int xsCount, byte[] ys, int ysOffset, int ysCount)
+        public static bool Equals(byte[] xs, int xsOffset, int xsCount, byte[] ys, int ysOffset, int ysCount)
         {
             if (xs == null || ys == null || xsCount != ysCount)
             {

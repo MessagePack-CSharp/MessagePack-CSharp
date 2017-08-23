@@ -59,7 +59,7 @@ namespace MessagePack.Internal
                 for (int i = 0; i < array.Length; i++)
                 {
                     var e = array[i].Key;
-                    if (ByteArrayComparer.Compare(key, 0, key.Length, e))
+                    if (ByteArrayComparer.Equals(key, 0, key.Length, e))
                     {
                         return false;
                     }
@@ -89,7 +89,7 @@ namespace MessagePack.Internal
 #else
                 var v = entry[0];
 #endif
-                if (ByteArrayComparer.Compare(key.Array, key.Offset, key.Count, v.Key))
+                if (ByteArrayComparer.Equals(key.Array, key.Offset, key.Count, v.Key))
                 {
                     value = v.Value;
                     return true;
@@ -103,7 +103,7 @@ namespace MessagePack.Internal
 #else
                 var v = entry[i];
 #endif
-                if (ByteArrayComparer.Compare(key.Array, key.Offset, key.Count, v.Key))
+                if (ByteArrayComparer.Equals(key.Array, key.Offset, key.Count, v.Key))
                 {
                     value = v.Value;
                     return true;
