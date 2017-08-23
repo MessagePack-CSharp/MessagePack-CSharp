@@ -341,6 +341,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    // note, serialize to bool[] array is too bad(requires many binary spaces!).
     public sealed class BitArrayFormatter : IMessagePackFormatter<BitArray>
     {
         public static readonly IMessagePackFormatter<BitArray> Instance = new BitArrayFormatter();
