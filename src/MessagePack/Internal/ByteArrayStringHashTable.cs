@@ -59,7 +59,7 @@ namespace MessagePack.Internal
                 for (int i = 0; i < array.Length; i++)
                 {
                     var e = array[i].Key;
-                    if (ByteArrayEquals(key, 0, key.Length, e))
+                    if (ByteArrayComparer.Compare(key, 0, key.Length, e))
                     {
                         return false;
                     }
@@ -89,7 +89,7 @@ namespace MessagePack.Internal
 #else
                 var v = entry[0];
 #endif
-                if (ByteArrayEquals(key.Array, key.Offset, key.Count, v.Key))
+                if (ByteArrayComparer.Compare(key.Array, key.Offset, key.Count, v.Key))
                 {
                     value = v.Value;
                     return true;
@@ -103,7 +103,7 @@ namespace MessagePack.Internal
 #else
                 var v = entry[i];
 #endif
-                if (ByteArrayEquals(key.Array, key.Offset, key.Count, v.Key))
+                if (ByteArrayComparer.Compare(key.Array, key.Offset, key.Count, v.Key))
                 {
                     value = v.Value;
                     return true;
@@ -155,23 +155,6 @@ namespace MessagePack.Internal
             return (ulong)hash;
 
 #endif
-        }
-
-#if NETSTANDARD1_4
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        static bool ByteArrayEquals(byte[] x, int xOffset, int xCount, byte[] y) // y is always 0 - length
-        {
-            // does not do null check for array.
-            if (xCount != y.Length) return false;
-
-            // reduce y's array bound check.
-            for (int i = 0; i < y.Length; i++)
-            {
-                if (x[xOffset++] != y[i]) return false;
-            }
-
-            return true;
         }
 
         static int CalculateCapacity(int collectionSize, float loadFactor)
