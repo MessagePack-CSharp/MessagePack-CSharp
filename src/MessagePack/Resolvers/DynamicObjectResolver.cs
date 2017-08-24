@@ -563,18 +563,34 @@ namespace MessagePack.Internal
                     {
                         MemberInfo = item,
                         LocalField = il.DeclareLocal(item.Type),
-                        SwitchLabel = il.DefineLabel()
+                        // SwitchLabel = il.DefineLabel()
                     })
                     .ToArray();
             }
 
 
             // Read Loop(for var i = 0; i< length; i++)
+
+            // TODO:string loop
+            AutomataDictionary automata = null;
+            LocalBuilder keyArraySegment = null;
+            if (info.IsStringKey)
+            {
+                automata = new AutomataDictionary();
+                for (int i = 0; i < info.Members.Length; i++)
+                {
+                    automata.Add(info.Members[i].StringKey, i);
+                }
+
+                keyArraySegment = il.DeclareLocal(typeof(ArraySegment<byte>));
+            }
+
             {
                 var key = il.DeclareLocal(typeof(int));
                 var switchDefault = il.DefineLabel();
                 var loopEnd = il.DefineLabel();
                 var stringKeyTrue = il.DefineLabel();
+
                 il.EmitIncrementFor(length, forILocal =>
                 {
                     if (info.IsStringKey)
@@ -586,11 +602,41 @@ namespace MessagePack.Internal
                         il.EmitLdarg(2);
                         il.EmitLdarg(4);
                         il.EmitCall(MessagePackBinaryTypeInfo.ReadStringSegment);
-                        il.EmitLdloca(key);
-                        il.EmitCall(dictionaryTryGetValue);
+                        il.EmitStloc(keyArraySegment);
                         EmitOffsetPlusReadSize(il);
-                        il.Emit(OpCodes.Brtrue_S, stringKeyTrue);
+                        automata.EmitMatch(il, keyArraySegment, x =>
+                        {
+                            var i = x.Value;
+                            if (infoList[i].MemberInfo != null)
+                            {
+                                EmitDeserializeValue(il, infoList[i]);
+                                // TODO:loop end?
+                                // il.Emit(OpCodes.Br, loopEnd);
+                            }
+                        },
+                        () =>
+                        {
+                            il.EmitLdarg(4);
+                            il.EmitLdarg(1);
+                            il.EmitLdarg(2);
+                            il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
+                            il.Emit(OpCodes.Stind_I4);
+                            il.Emit(OpCodes.Br, loopEnd);
+                        });
+                    }
+                    else
+                    {
+                        il.EmitLdloc(forILocal);
+                        il.EmitStloc(key);
 
+
+                        // switch... local = Deserialize
+                        il.EmitLdloc(key);
+
+                        il.Emit(OpCodes.Switch, infoList.Select(x => x.SwitchLabel).ToArray());
+
+                        il.MarkLabel(switchDefault);
+                        // default, only read. readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
                         il.EmitLdarg(4);
                         il.EmitLdarg(1);
                         il.EmitLdarg(2);
@@ -598,47 +644,26 @@ namespace MessagePack.Internal
                         il.Emit(OpCodes.Stind_I4);
                         il.Emit(OpCodes.Br, loopEnd);
 
-                        il.MarkLabel(stringKeyTrue);
-                    }
-                    else
-                    {
-                        il.EmitLdloc(forILocal);
-                        il.EmitStloc(key);
-                    }
-
-                    // switch... local = Deserialize
-                    il.EmitLdloc(key);
-
-                    il.Emit(OpCodes.Switch, infoList.Select(x => x.SwitchLabel).ToArray());
-
-                    il.MarkLabel(switchDefault);
-                    // default, only read. readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
-                    il.EmitLdarg(4);
-                    il.EmitLdarg(1);
-                    il.EmitLdarg(2);
-                    il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
-                    il.Emit(OpCodes.Stind_I4);
-                    il.Emit(OpCodes.Br, loopEnd);
-
-                    if (gotoDefault != null)
-                    {
-                        il.MarkLabel(gotoDefault.Value);
-                        il.Emit(OpCodes.Br, switchDefault);
-                    }
-
-                    foreach (var item in infoList)
-                    {
-                        if (item.MemberInfo != null)
+                        if (gotoDefault != null)
                         {
-                            il.MarkLabel(item.SwitchLabel);
-                            EmitDeserializeValue(il, item);
-                            il.Emit(OpCodes.Br, loopEnd);
+                            il.MarkLabel(gotoDefault.Value);
+                            il.Emit(OpCodes.Br, switchDefault);
                         }
-                    }
 
-                    // offset += readSize
-                    il.MarkLabel(loopEnd);
-                    EmitOffsetPlusReadSize(il);
+                        foreach (var item in infoList)
+                        {
+                            if (item.MemberInfo != null)
+                            {
+                                il.MarkLabel(item.SwitchLabel);
+                                EmitDeserializeValue(il, item);
+                                il.Emit(OpCodes.Br, loopEnd);
+                            }
+                        }
+
+                        // offset += readSize
+                        il.MarkLabel(loopEnd);
+                        EmitOffsetPlusReadSize(il);
+                    }
                 });
             }
 

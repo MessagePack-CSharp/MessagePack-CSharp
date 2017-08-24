@@ -297,7 +297,7 @@ namespace Sandbox
                 "MyProperty1",
             };
 
-            var dict = new ByteArrayAutomataDictionary();
+            var dict = new AutomataDictionary();
             int x1 = 0;
             foreach (var item in hoge)
             {

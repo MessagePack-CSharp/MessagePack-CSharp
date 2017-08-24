@@ -5,6 +5,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Reflection.Emit;
+using System.Reflection;
 
 namespace MessagePack.Internal
 {
@@ -16,24 +18,29 @@ namespace MessagePack.Internal
         internal string originalKey; // for debugging
 
         internal AutomataNode[] nexts; // immutable array
+        internal long[] nextKeys;      // for index search
 
         public AutomataNode(long key)
         {
             this.Key = key;
             this.Value = -1;
             this.nexts = new AutomataNode[0];
+            this.nextKeys = new long[0];
             this.originalKey = null;
         }
 
         public AutomataNode Add(long key)
         {
-            var index = Array.BinarySearch(nexts, new AutomataNode(key)); // TODO:dummy should be removed
+            var index = Array.BinarySearch(nextKeys, key);
             if (index < 0)
             {
                 Array.Resize<AutomataNode>(ref nexts, nexts.Length + 1);
+                Array.Resize<long>(ref nextKeys, nextKeys.Length + 1);
                 var nextNode = new AutomataNode(key);
                 nexts[nexts.Length - 1] = nextNode;
+                nextKeys[nextKeys.Length - 1] = key;
                 Array.Sort(nexts);
+                Array.Sort(nextKeys);
                 return nextNode;
             }
             else
@@ -67,52 +74,52 @@ namespace MessagePack.Internal
 
         public AutomataNode SearchNext(ref byte* p, ref int rest)
         {
-            long v;
+            long key;
             if (rest >= 8)
             {
-                v = Fetch64(p);
+                key = Fetch64(p);
                 p += 8;
                 rest -= 8;
             }
             else if (rest >= 4)
             {
-                v = Fetch32(p);
+                key = Fetch32(p);
                 p += 4;
                 rest -= 4;
             }
             else if (rest >= 2)
             {
-                v = Fetch16(p);
+                key = Fetch16(p);
                 p += 2;
                 rest -= 2;
             }
             else
             {
-                v = *(byte*)p;
+                key = *(byte*)p;
                 p += 1;
                 rest -= 1;
             }
 
-            //if (nexts.Length < 7)
-            //{
-            // linear search
-            for (int i = 0; i < nexts.Length; i++)
+            if (nextKeys.Length < 7)
             {
-                if (nexts[i].Key == v)
+                // linear search
+                for (int i = 0; i < nextKeys.Length; i++)
                 {
-                    return nexts[i];
+                    if (nextKeys[i] == key)
+                    {
+                        return nexts[i];
+                    }
                 }
             }
-            //}
-            //else
-            //{
-            //    // binary search
-            //    var index = Array.BinarySearch(nexts, v); // TODO:can not do binary search
-            //    if (index < 0)
-            //    {
-            //        return nexts[index];
-            //    }
-            //}
+            else
+            {
+                // binary search
+                var index = Array.BinarySearch(nextKeys, key);
+                if (index < 0)
+                {
+                    return nexts[index];
+                }
+            }
 
             return null;
         }
@@ -138,15 +145,114 @@ namespace MessagePack.Internal
         {
             return this.Key.CompareTo(other.Key);
         }
+
+        // SearchNext(ref byte* p, ref int rest, ref long key)
+        public void EmitSearchNext(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action notFound)
+        {
+            il.EmitLdloca(p);
+            il.EmitLdloca(rest);
+            il.EmitCall(AutomataEmitHelper.GetKeyMethod);
+            il.EmitStloc(key);
+
+            // TODO:Emit Binary Search
+            var loopEnd = il.DefineLabel();
+            var nextIf = Enumerable.Range(1, Math.Max(nexts.Length - 2, 0)).Select(_ => il.DefineLabel()).ToArray();
+            for (int i = 0; i < nexts.Length; i++)
+            {
+                if (i != 0)
+                {
+                    il.MarkLabel(nextIf[i]);
+                }
+
+                il.EmitLdloc(key);
+                il.Emit(OpCodes.Ldc_I8, nexts[i].Key);
+                if (i != nexts.Length - 1)
+                {
+                    il.Emit(OpCodes.Bne_Un, nextIf[i + 1]);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Bne_Un, loopEnd);
+                }
+
+                if (nexts[i].Value != -1)
+                {
+                    onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
+                }
+                il.Emit(OpCodes.Br, loopEnd);
+            }
+            // TODO:Emit NotFound
+
+            il.MarkLabel(loopEnd);
+        }
     }
 
-    public class ByteArrayAutomataDictionary : IEnumerable<int>
+    public static class AutomataEmitHelper
+    {
+        public static readonly MethodInfo GetKeyMethod = typeof(AutomataEmitHelper).GetRuntimeMethod("GetKey", new[] { typeof(byte*).MakeByRefType(), typeof(int).MakeByRefType() });
+
+        public static unsafe long GetKey(ref byte* p, ref int rest)
+        {
+            long key;
+            if (rest >= 8)
+            {
+                key = *(long*)p;
+                p += 8;
+                rest -= 8;
+            }
+            else if (rest >= 4)
+            {
+                key = *(int*)p;
+                p += 4;
+                rest -= 4;
+            }
+            else if (rest >= 2)
+            {
+                key = *(short*)p;
+                p += 2;
+                rest -= 2;
+            }
+            else
+            {
+                key = *(byte*)p;
+                p += 1;
+                rest -= 1;
+            }
+            return key;
+        }
+    }
+
+    internal partial class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
     {
         readonly AutomataNode root;
 
-        public ByteArrayAutomataDictionary()
+        public AutomataDictionary()
         {
             root = new AutomataNode(-1);
+        }
+
+        static unsafe long Fetch64(byte[] xs, int offset)
+        {
+            fixed (byte* p = &xs[offset])
+            {
+                return *(long*)p;
+            }
+        }
+
+        static unsafe int Fetch32(byte[] xs, int offset)
+        {
+            fixed (byte* p = &xs[offset])
+            {
+                return *(int*)p;
+            }
+        }
+
+        static unsafe short Fetch16(byte[] xs, int offset)
+        {
+            fixed (byte* p = &xs[offset])
+            {
+                return *(short*)p;
+            }
         }
 
         public void Add(string str, int value)
@@ -164,7 +270,7 @@ namespace MessagePack.Internal
                 var rest = bytes.Length - i;
                 if (rest >= 8)
                 {
-                    var l = BitConverter.ToInt64(bytes, i);
+                    var l = Fetch64(bytes, i);
                     i += 8;
                     if (i == bytes.Length)
                     {
@@ -178,7 +284,7 @@ namespace MessagePack.Internal
                 }
                 else if (rest >= 4)
                 {
-                    var l = (long)BitConverter.ToInt32(bytes, i);
+                    var l = (long)Fetch32(bytes, i);
                     i += 4;
                     if (i == bytes.Length)
                     {
@@ -192,7 +298,7 @@ namespace MessagePack.Internal
                 }
                 else if (rest >= 2)
                 {
-                    var l = (long)BitConverter.ToInt16(bytes, i);
+                    var l = (long)Fetch16(bytes, i);
                     i += 2;
                     if (i == bytes.Length)
                     {
@@ -219,11 +325,6 @@ namespace MessagePack.Internal
                     continue;
                 }
             }
-        }
-
-        public IEnumerator<int> GetEnumerator()
-        {
-            throw new NotImplementedException();
         }
 
         public unsafe bool TryGetValue(byte[] bytes, int offset, int count, out int value)
@@ -282,10 +383,60 @@ namespace MessagePack.Internal
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return (this as IEnumerable<KeyValuePair<string, int>>).GetEnumerator();
+        }
+
+        IEnumerator<KeyValuePair<string, int>> IEnumerable<KeyValuePair<string, int>>.GetEnumerator()
+        {
+            return YieldCore(this.root.nexts).GetEnumerator();
+        }
+
+        static IEnumerable<KeyValuePair<string, int>> YieldCore(AutomataNode[] nexts)
+        {
+            foreach (var item in nexts)
+            {
+                if (item.Value != -1) yield return new KeyValuePair<string, int>(item.originalKey, item.Value);
+                YieldCore(item.nexts);
+            }
+        }
+
+        public void EmitMatch(ILGenerator il, LocalBuilder arraySegment, Action<KeyValuePair<string, int>> onFound, Action notFound)
+        {
+            var fixedP = il.DeclareLocal(typeof(byte).MakeByRefType(), true);
+            var p = il.DeclareLocal(typeof(byte*));
+            //var rest = il.DeclareLocal(typeof(int));
+            //var key = il.DeclareLocal(typeof(long));
+            //il.EmitLdc_I4(0);
+            //il.Emit(OpCodes.Conv_I8);
+            //il.EmitStloc(key);
+
+            // fixed (byte* p1 = &arraySegment.Array[arraySegment.Offset])
+            il.EmitLdloca(arraySegment);
+            il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Array").GetGetMethod());
+            il.EmitLdloca(arraySegment);
+            il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Offset").GetGetMethod());
+            il.Emit(OpCodes.Ldelema, typeof(byte));
+            il.EmitStloc(fixedP);
+
+            // var p2 = p1;
+            il.Emit(OpCodes.Ldloc, fixedP); // fixed byte&
+            il.Emit(OpCodes.Conv_I);
+            il.EmitStloc(p);
+
+
+            // var rest = arraySegment.Count;
+            //il.EmitLdloca(arraySegment);
+            //il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Count").GetGetMethod());
+            //il.EmitStloc(rest);
+
+            //root.EmitSearchNext(il, p, rest, key, onFound, notFound);
+
+            // end fixed
+            //il.Emit(OpCodes.Ldc_I4_0);
+            //il.Emit(OpCodes.Conv_U);
+            //il.EmitStloc(fixedP);
         }
     }
-
 }
 
 #endif
