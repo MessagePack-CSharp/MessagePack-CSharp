@@ -1,5 +1,5 @@
-﻿extern alias oldmsgpack;
-extern alias newmsgpack;
+﻿extern alias newmsgpack;
+extern alias oldmsgpack;
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
@@ -17,7 +17,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 
 namespace PerfBenchmarkDotNet
 {
@@ -44,6 +43,8 @@ namespace PerfBenchmarkDotNet
                 typeof(TypelessSerializeBenchmark),
                 typeof(TypelessDeserializeBenchmark),
                 typeof(DeserializeBenchmark),
+                typeof(DictionaryLookupCompare),
+                typeof(StringKeyDeserializeCompare)
             });
 
             // args = new[] { "0" };
@@ -373,4 +374,456 @@ namespace PerfBenchmarkDotNet
             }
         }
     }
+
+    [Config(typeof(BenchmarkConfig))]
+    public class DictionaryLookupCompare
+    {
+        newmsgpack::MessagePack.Internal.ByteArrayStringHashTable hashTable;
+        newmsgpack::MessagePack.Internal.ByteArrayAutomataDictionary automata;
+        byte[][] keys;
+
+        public DictionaryLookupCompare()
+        {
+            hashTable = new newmsgpack::MessagePack.Internal.ByteArrayStringHashTable(9);
+            automata = new newmsgpack::MessagePack.Internal.ByteArrayAutomataDictionary();
+            keys = new byte[9][];
+            foreach (var item in Enumerable.Range(0, 9).Select(x => new { str = "MyProperty" + (x + 1), i = x }))
+            {
+                hashTable.Add(Encoding.UTF8.GetBytes(item.str), item.i);
+                automata.Add(Encoding.UTF8.GetBytes(item.str), item.i);
+                keys[item.i] = Encoding.UTF8.GetBytes(item.str);
+            }
+        }
+
+        [Benchmark]
+        public void Automata()
+        {
+            for (int i = 0; i < keys.Length; i++)
+            {
+                automata.TryGetValue(keys[i], 0, keys[i].Length, out _);
+            }
+        }
+
+        [Benchmark]
+        public void Hashtable()
+        {
+            for (int i = 0; i < keys.Length; i++)
+            {
+                hashTable.TryGetValue(new ArraySegment<byte>(keys[i], 0, keys[i].Length), out _);
+            }
+        }
+    }
+
+
+    [Config(typeof(BenchmarkConfig))]
+    public class StringKeyDeserializeCompare
+    {
+        byte[] bin;
+        byte[] binIntKey;
+        newmsgpack::MessagePack.IFormatterResolver automata;
+        newmsgpack::MessagePack.IFormatterResolver hashtable;
+
+        public StringKeyDeserializeCompare()
+        {
+            bin = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
+            binIntKey = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new IntKeySerializerTarget());
+            automata = new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_AutomataLookup());
+            hashtable = new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_ByteArrayStringHashTable());
+        }
+
+        [Benchmark(Baseline = true)]
+        public IntKeySerializerTarget IntKey()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(binIntKey);
+        }
+
+
+        [Benchmark]
+        public StringKeySerializerTarget Automata()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, automata);
+        }
+
+        [Benchmark]
+        public StringKeySerializerTarget Hashtable()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, hashtable);
+        }
+    }
+
+    public class Resolver : newmsgpack::MessagePack.IFormatterResolver
+    {
+        object formatter;
+
+        public Resolver(object formatter)
+        {
+            this.formatter = formatter;
+        }
+
+        public newmsgpack::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            return (newmsgpack::MessagePack.Formatters.IMessagePackFormatter<T>)formatter;
+        }
+    }
+}
+
+
+namespace GeneratedFormatter
+{
+    using System;
+    using System.Text;
+    using newmsgpack::MessagePack.Internal;
+    using newmsgpack::MessagePack.Formatters;
+    using PerfBenchmarkDotNet;
+    using newmsgpack::MessagePack;
+
+    namespace MessagePack.Formatters
+    {
+        public sealed class StringKeySerializerTargetFormatter_ByteArrayStringHashTable : IMessagePackFormatter<StringKeySerializerTarget>
+        {
+            private readonly ByteArrayStringHashTable keyMapping;
+
+            private readonly byte[][] stringByteKeys;
+
+            public StringKeySerializerTargetFormatter_ByteArrayStringHashTable()
+            {
+                this.keyMapping = new ByteArrayStringHashTable(9)
+                {
+                    {
+                        "MyProperty1",
+                        0
+                    },
+                    {
+                        "MyProperty2",
+                        1
+                    },
+                    {
+                        "MyProperty3",
+                        2
+                    },
+                    {
+                        "MyProperty4",
+                        3
+                    },
+                    {
+                        "MyProperty5",
+                        4
+                    },
+                    {
+                        "MyProperty6",
+                        5
+                    },
+                    {
+                        "MyProperty7",
+                        6
+                    },
+                    {
+                        "MyProperty8",
+                        7
+                    },
+                    {
+                        "MyProperty9",
+                        8
+                    }
+                };
+                this.stringByteKeys = new byte[][]
+                {
+                Encoding.UTF8.GetBytes("MyProperty1"),
+                Encoding.UTF8.GetBytes("MyProperty2"),
+                Encoding.UTF8.GetBytes("MyProperty3"),
+                Encoding.UTF8.GetBytes("MyProperty4"),
+                Encoding.UTF8.GetBytes("MyProperty5"),
+                Encoding.UTF8.GetBytes("MyProperty6"),
+                Encoding.UTF8.GetBytes("MyProperty7"),
+                Encoding.UTF8.GetBytes("MyProperty8"),
+                Encoding.UTF8.GetBytes("MyProperty9")
+                };
+            }
+
+            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            {
+                if (stringKeySerializerTarget == null)
+                {
+                    return MessagePackBinary.WriteNil(ref bytes, num);
+                }
+                int num2 = num;
+                num += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, num, 9);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[0]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty1);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[1]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty2);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[2]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty3);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[3]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty4);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[4]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty5);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[5]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty6);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[6]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty7);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[7]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty8);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[8]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty9);
+                return num - num2;
+            }
+
+            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr)
+            {
+                if (MessagePackBinary.IsNil(bytes, num))
+                {
+                    ptr = 1;
+                    return null;
+                }
+                int num2 = num;
+                int num3 = MessagePackBinary.ReadMapHeader(bytes, num, out ptr);
+                num += ptr;
+                int myProperty = 0;
+                int myProperty2 = 0;
+                int myProperty3 = 0;
+                int myProperty4 = 0;
+                int myProperty5 = 0;
+                int myProperty6 = 0;
+                int myProperty7 = 0;
+                int myProperty8 = 0;
+                int myProperty9 = 0;
+                for (int i = 0; i < num3; i++)
+                {
+                    int num4;
+                    bool arg_47_0 = this.keyMapping.TryGetValue(MessagePackBinary.ReadStringSegment(bytes, num, out ptr), out num4);
+                    num += ptr;
+                    if (!arg_47_0)
+                    {
+                        ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                    }
+                    else
+                    {
+                        switch (num4)
+                        {
+                            case 0:
+                                myProperty = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 1:
+                                myProperty2 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 2:
+                                myProperty3 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 3:
+                                myProperty4 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 4:
+                                myProperty5 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 5:
+                                myProperty6 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 6:
+                                myProperty7 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 7:
+                                myProperty8 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 8:
+                                myProperty9 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            default:
+                                ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                                break;
+                        }
+                    }
+                    num += ptr;
+                }
+                ptr = num - num2;
+                return new StringKeySerializerTarget
+                {
+                    MyProperty1 = myProperty,
+                    MyProperty2 = myProperty2,
+                    MyProperty3 = myProperty3,
+                    MyProperty4 = myProperty4,
+                    MyProperty5 = myProperty5,
+                    MyProperty6 = myProperty6,
+                    MyProperty7 = myProperty7,
+                    MyProperty8 = myProperty8,
+                    MyProperty9 = myProperty9
+                };
+            }
+        }
+
+
+        public sealed class StringKeySerializerTargetFormatter_AutomataLookup : IMessagePackFormatter<StringKeySerializerTarget>
+        {
+            private readonly ByteArrayAutomataDictionary keyMapping;
+
+            private readonly byte[][] stringByteKeys;
+
+            public StringKeySerializerTargetFormatter_AutomataLookup()
+            {
+                this.keyMapping = new ByteArrayAutomataDictionary()
+                {
+                    {
+                        "MyProperty1",
+                        0
+                    },
+                    {
+                        "MyProperty2",
+                        1
+                    },
+                    {
+                        "MyProperty3",
+                        2
+                    },
+                    {
+                        "MyProperty4",
+                        3
+                    },
+                    {
+                        "MyProperty5",
+                        4
+                    },
+                    {
+                        "MyProperty6",
+                        5
+                    },
+                    {
+                        "MyProperty7",
+                        6
+                    },
+                    {
+                        "MyProperty8",
+                        7
+                    },
+                    {
+                        "MyProperty9",
+                        8
+                    }
+                };
+                this.stringByteKeys = new byte[][]
+                {
+                Encoding.UTF8.GetBytes("MyProperty1"),
+                Encoding.UTF8.GetBytes("MyProperty2"),
+                Encoding.UTF8.GetBytes("MyProperty3"),
+                Encoding.UTF8.GetBytes("MyProperty4"),
+                Encoding.UTF8.GetBytes("MyProperty5"),
+                Encoding.UTF8.GetBytes("MyProperty6"),
+                Encoding.UTF8.GetBytes("MyProperty7"),
+                Encoding.UTF8.GetBytes("MyProperty8"),
+                Encoding.UTF8.GetBytes("MyProperty9")
+                };
+            }
+
+            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            {
+                if (stringKeySerializerTarget == null)
+                {
+                    return MessagePackBinary.WriteNil(ref bytes, num);
+                }
+                int num2 = num;
+                num += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, num, 9);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[0]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty1);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[1]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty2);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[2]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty3);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[3]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty4);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[4]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty5);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[5]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty6);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[6]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty7);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[7]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty8);
+                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[8]);
+                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty9);
+                return num - num2;
+            }
+
+            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr)
+            {
+                if (MessagePackBinary.IsNil(bytes, num))
+                {
+                    ptr = 1;
+                    return null;
+                }
+                int num2 = num;
+                int num3 = MessagePackBinary.ReadMapHeader(bytes, num, out ptr);
+                num += ptr;
+                int myProperty = 0;
+                int myProperty2 = 0;
+                int myProperty3 = 0;
+                int myProperty4 = 0;
+                int myProperty5 = 0;
+                int myProperty6 = 0;
+                int myProperty7 = 0;
+                int myProperty8 = 0;
+                int myProperty9 = 0;
+                for (int i = 0; i < num3; i++)
+                {
+                    int num4;
+                    var segment = MessagePackBinary.ReadStringSegment(bytes, num, out ptr);
+                    bool arg_47_0 = this.keyMapping.TryGetValue(segment.Array, segment.Offset, segment.Count, out num4);
+                    num += ptr;
+                    if (!arg_47_0)
+                    {
+                        ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                    }
+                    else
+                    {
+                        switch (num4)
+                        {
+                            case 0:
+                                myProperty = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 1:
+                                myProperty2 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 2:
+                                myProperty3 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 3:
+                                myProperty4 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 4:
+                                myProperty5 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 5:
+                                myProperty6 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 6:
+                                myProperty7 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 7:
+                                myProperty8 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            case 8:
+                                myProperty9 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                break;
+                            default:
+                                ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                                break;
+                        }
+                    }
+                    num += ptr;
+                }
+                ptr = num - num2;
+                return new StringKeySerializerTarget
+                {
+                    MyProperty1 = myProperty,
+                    MyProperty2 = myProperty2,
+                    MyProperty3 = myProperty3,
+                    MyProperty4 = myProperty4,
+                    MyProperty5 = myProperty5,
+                    MyProperty6 = myProperty6,
+                    MyProperty7 = myProperty7,
+                    MyProperty8 = myProperty8,
+                    MyProperty9 = myProperty9
+                };
+            }
+        }
+    }
+
 }
