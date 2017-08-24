@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace MessagePack.Internal
 {
@@ -12,14 +13,16 @@ namespace MessagePack.Internal
     {
         public readonly long Key;
         public int Value; // can only set from private
+        internal string originalKey; // for debugging
 
-        AutomataNode[] nexts; // immutable array
+        internal AutomataNode[] nexts; // immutable array
 
         public AutomataNode(long key)
         {
             this.Key = key;
             this.Value = -1;
             this.nexts = new AutomataNode[0];
+            this.originalKey = null;
         }
 
         public AutomataNode Add(long key)
@@ -39,10 +42,11 @@ namespace MessagePack.Internal
             }
         }
 
-        public AutomataNode Add(long key, int value)
+        public AutomataNode Add(long key, int value, string originalKey)
         {
             var v = Add(key);
             v.Value = value;
+            v.originalKey = originalKey;
             return v;
         }
 
@@ -164,7 +168,7 @@ namespace MessagePack.Internal
                     i += 8;
                     if (i == bytes.Length)
                     {
-                        node = node.Add(l, value);
+                        node = node.Add(l, value, Encoding.UTF8.GetString(bytes));
                     }
                     else
                     {
@@ -178,7 +182,7 @@ namespace MessagePack.Internal
                     i += 4;
                     if (i == bytes.Length)
                     {
-                        node = node.Add(l, value);
+                        node = node.Add(l, value, Encoding.UTF8.GetString(bytes));
                     }
                     else
                     {
@@ -192,7 +196,7 @@ namespace MessagePack.Internal
                     i += 2;
                     if (i == bytes.Length)
                     {
-                        node = node.Add(l, value);
+                        node = node.Add(l, value, Encoding.UTF8.GetString(bytes));
                     }
                     else
                     {
@@ -206,7 +210,7 @@ namespace MessagePack.Internal
                     i += 1;
                     if (i == bytes.Length)
                     {
-                        node = node.Add(l, value);
+                        node = node.Add(l, value, Encoding.UTF8.GetString(bytes));
                     }
                     else
                     {
@@ -245,6 +249,34 @@ namespace MessagePack.Internal
                     value = node.Value;
                     return true;
                 }
+            }
+        }
+
+        // for debugging
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            ToStringCore(root.nexts, sb, 0);
+            return sb.ToString();
+        }
+
+        static void ToStringCore(AutomataNode[] nexts, StringBuilder sb, int depth)
+        {
+            foreach (var item in nexts)
+            {
+                if (depth != 0)
+                {
+                    sb.Append(' ', depth * 2);
+                }
+                sb.Append("[" + item.Key + "]");
+                if (item.Value != -1)
+                {
+                    sb.Append("(" + item.originalKey + ")");
+                    sb.Append(" = ");
+                    sb.Append(item.Value);
+                }
+                sb.AppendLine();
+                ToStringCore(item.nexts, sb, depth + 1);
             }
         }
 

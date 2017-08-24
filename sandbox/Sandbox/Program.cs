@@ -285,15 +285,38 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
-
-
-
-            var bin = MessagePackSerializer.Serialize<object>(new
+            // var hoge = Enumerable.Range(0, 10).Select(x => Encoding.UTF8.GetBytes("MyProperty" + x)).ToArray();
+            var hoge = new[]
             {
-                Hoge =100
-            }, StandardResolver.Instance);
+                "Name",
+                "Age",
+                "FullName",
+                "Capacity",
+                "HogeHogeFugaFuga",
+                "FooBar",
+                "MyProperty1",
+            };
 
-            Console.WriteLine(MessagePackSerializer.ToJson(bin));
+            var dict = new ByteArrayAutomataDictionary();
+            int x1 = 0;
+            foreach (var item in hoge)
+            {
+                dict.Add(item, x1++);
+            }
+
+            var key = Encoding.UTF8.GetBytes("Age");
+            if (dict.TryGetValue(key, 0, key.Length, out var _))
+            {
+                Console.WriteLine("found");
+            }
+            else
+            {
+                Console.WriteLine("not found");
+            }
+            Console.WriteLine("--------------------------");
+
+            Console.WriteLine(dict.ToString());
+
 
         }
 
