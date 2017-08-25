@@ -18,6 +18,7 @@ namespace MessagePack
         static readonly IBooleanDecoder[] booleanDecoders = new IBooleanDecoder[MaxSize];
         static readonly IByteDecoder[] byteDecoders = new IByteDecoder[MaxSize];
         static readonly IBytesDecoder[] bytesDecoders = new IBytesDecoder[MaxSize];
+        static readonly IBytesSegmentDecoder[] bytesSegmentDecoders = new IBytesSegmentDecoder[MaxSize];
         static readonly ISByteDecoder[] sbyteDecoders = new ISByteDecoder[MaxSize];
         static readonly ISingleDecoder[] singleDecoders = new ISingleDecoder[MaxSize];
         static readonly IDoubleDecoder[] doubleDecoders = new IDoubleDecoder[MaxSize];
@@ -44,6 +45,7 @@ namespace MessagePack
                 booleanDecoders[i] = Decoders.InvalidBoolean.Instance;
                 byteDecoders[i] = Decoders.InvalidByte.Instance;
                 bytesDecoders[i] = Decoders.InvalidBytes.Instance;
+                bytesSegmentDecoders[i] = Decoders.InvalidBytesSegment.Instance;
                 sbyteDecoders[i] = Decoders.InvalidSByte.Instance;
                 singleDecoders[i] = Decoders.InvalidSingle.Instance;
                 doubleDecoders[i] = Decoders.InvalidDouble.Instance;
@@ -192,6 +194,7 @@ namespace MessagePack
             stringDecoders[MessagePackCode.Nil] = Decoders.NilString.Instance;
             stringSegmentDecoders[MessagePackCode.Nil] = Decoders.NilStringSegment.Instance;
             bytesDecoders[MessagePackCode.Nil] = Decoders.NilBytes.Instance;
+            bytesSegmentDecoders[MessagePackCode.Nil] = Decoders.NilBytesSegment.Instance;
             readNextDecoders[MessagePackCode.Nil] = Decoders.ReadNext1.Instance;
 
             booleanDecoders[MessagePackCode.False] = Decoders.False.Instance;
@@ -202,6 +205,9 @@ namespace MessagePack
             bytesDecoders[MessagePackCode.Bin8] = Decoders.Bin8Bytes.Instance;
             bytesDecoders[MessagePackCode.Bin16] = Decoders.Bin16Bytes.Instance;
             bytesDecoders[MessagePackCode.Bin32] = Decoders.Bin32Bytes.Instance;
+            bytesSegmentDecoders[MessagePackCode.Bin8] = Decoders.Bin8BytesSegment.Instance;
+            bytesSegmentDecoders[MessagePackCode.Bin16] = Decoders.Bin16BytesSegment.Instance;
+            bytesSegmentDecoders[MessagePackCode.Bin32] = Decoders.Bin32BytesSegment.Instance;
             readNextDecoders[MessagePackCode.Bin8] = Decoders.ReadNextBin8.Instance;
             readNextDecoders[MessagePackCode.Bin16] = Decoders.ReadNextBin16.Instance;
             readNextDecoders[MessagePackCode.Bin32] = Decoders.ReadNextBin32.Instance;
@@ -786,12 +792,21 @@ namespace MessagePack
                 return size;
             }
         }
+
 #if NETSTANDARD1_4
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
         public static byte[] ReadBytes(byte[] bytes, int offset, out int readSize)
         {
             return bytesDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+        }
+
+#if NETSTANDARD1_4
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public static ArraySegment<byte> ReadBytesSegment(byte[] bytes, int offset, out int readSize)
+        {
+            return bytesSegmentDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
 
 #if NETSTANDARD1_4
@@ -3434,6 +3449,95 @@ namespace MessagePack.Decoders
         }
 
         public byte[] Read(byte[] bytes, int offset, out int readSize)
+        {
+            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+        }
+    }
+
+    internal interface IBytesSegmentDecoder
+    {
+        ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize);
+    }
+
+    internal class NilBytesSegment : IBytesSegmentDecoder
+    {
+        internal static readonly IBytesSegmentDecoder Instance = new NilBytesSegment();
+
+        NilBytesSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            readSize = 1;
+            return default(ArraySegment<byte>);
+        }
+    }
+
+    internal class Bin8BytesSegment : IBytesSegmentDecoder
+    {
+        internal static readonly IBytesSegmentDecoder Instance = new Bin8BytesSegment();
+
+        Bin8BytesSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = bytes[offset + 1];
+
+            readSize = length + 2;
+            return new ArraySegment<byte>(bytes, offset + 2, length);
+        }
+    }
+
+    internal class Bin16BytesSegment : IBytesSegmentDecoder
+    {
+        internal static readonly IBytesSegmentDecoder Instance = new Bin16BytesSegment();
+
+        Bin16BytesSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+
+            readSize = length + 3;
+            return new ArraySegment<byte>(bytes, offset + 3, length);
+        }
+    }
+
+    internal class Bin32BytesSegment : IBytesSegmentDecoder
+    {
+        internal static readonly IBytesSegmentDecoder Instance = new Bin32BytesSegment();
+
+        Bin32BytesSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
+            readSize = length + 5;
+            return new ArraySegment<byte>(bytes, offset + 5, length);
+        }
+    }
+
+    internal class InvalidBytesSegment : IBytesSegmentDecoder
+    {
+        internal static readonly IBytesSegmentDecoder Instance = new InvalidBytesSegment();
+
+        InvalidBytesSegment()
+        {
+
+        }
+
+        public ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize)
         {
             throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
         }
