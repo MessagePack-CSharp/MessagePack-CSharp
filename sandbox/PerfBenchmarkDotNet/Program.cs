@@ -390,7 +390,7 @@ namespace PerfBenchmarkDotNet
             foreach (var item in Enumerable.Range(0, 9).Select(x => new { str = "MyProperty" + (x + 1), i = x }))
             {
                 hashTable.Add(Encoding.UTF8.GetBytes(item.str), item.i);
-                automata.Add(Encoding.UTF8.GetBytes(item.str), item.i);
+                automata.Add(item.str, item.i);
                 keys[item.i] = Encoding.UTF8.GetBytes(item.str);
             }
         }
