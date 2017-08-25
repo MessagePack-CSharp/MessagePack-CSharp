@@ -11,248 +11,6 @@ using System.Reflection;
 namespace MessagePack.Internal
 {
     // Key = long, Value = int
-    internal unsafe class AutomataNode : IComparable<AutomataNode>
-    {
-        public readonly long Key;
-        public int Value; // can only set from private
-        internal string originalKey; // for debugging
-
-        internal AutomataNode[] nexts; // immutable array
-        internal long[] nextKeys;      // for index search
-
-        public AutomataNode(long key)
-        {
-            this.Key = key;
-            this.Value = -1;
-            this.nexts = new AutomataNode[0];
-            this.nextKeys = new long[0];
-            this.originalKey = null;
-        }
-
-        public AutomataNode Add(long key)
-        {
-            var index = Array.BinarySearch(nextKeys, key);
-            if (index < 0)
-            {
-                Array.Resize<AutomataNode>(ref nexts, nexts.Length + 1);
-                Array.Resize<long>(ref nextKeys, nextKeys.Length + 1);
-                var nextNode = new AutomataNode(key);
-                nexts[nexts.Length - 1] = nextNode;
-                nextKeys[nextKeys.Length - 1] = key;
-                Array.Sort(nexts);
-                Array.Sort(nextKeys);
-                return nextNode;
-            }
-            else
-            {
-                return nexts[index];
-            }
-        }
-
-        public AutomataNode Add(long key, int value, string originalKey)
-        {
-            var v = Add(key);
-            v.Value = value;
-            v.originalKey = originalKey;
-            return v;
-        }
-
-        public AutomataNode SearchNext(ref byte* p, ref int rest)
-        {
-            var key = AutomataEmitHelper.GetKey(ref p, ref rest);
-            if (nextKeys.Length < 7)
-            {
-                // linear search
-                for (int i = 0; i < nextKeys.Length; i++)
-                {
-                    if (nextKeys[i] == key)
-                    {
-                        return nexts[i];
-                    }
-                }
-            }
-            else
-            {
-                // binary search
-                var index = Array.BinarySearch(nextKeys, key);
-                if (index >= 0)
-                {
-                    return nexts[index];
-                }
-            }
-
-            return null;
-        }
-
-        public int GetMaxDepth()
-        {
-            return GetDepth(nexts, 0);
-        }
-
-        int GetDepth(AutomataNode[] nodes, int currentDepth)
-        {
-            var maxDepth = currentDepth;
-            for (int i = 0; i < nodes.Length; i++)
-            {
-                var depth = GetDepth(nodes[i].nexts, currentDepth + 1);
-                maxDepth = Math.Max(maxDepth, depth);
-            }
-
-            return maxDepth;
-        }
-
-        public int CompareTo(AutomataNode other)
-        {
-            return this.Key.CompareTo(other.Key);
-        }
-
-        // SearchNext(ref byte* p, ref int rest, ref long key)
-        public void EmitSearchNext(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action notFound)
-        {
-            il.EmitLdloca(p);
-            il.EmitLdloca(rest);
-            il.EmitCall(AutomataEmitHelper.GetKeyMethod);
-            il.EmitStloc(key);
-
-            EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts);
-        }
-
-        static void EmitSearchNextCore(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action notFound, AutomataNode[] nexts)
-        {
-            // TODO:Emit NotFound
-
-            var loopEnd = il.DefineLabel();
-            if (nexts.Length < 4)
-            {
-                // linear-search
-                var nextIf = Enumerable.Range(0, Math.Max(nexts.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
-                for (int i = 0; i < nexts.Length; i++)
-                {
-                    if (i != 0)
-                    {
-                        il.MarkLabel(nextIf[i - 1]);
-                    }
-
-                    il.EmitLdloc(key);
-                    il.Emit(OpCodes.Ldc_I8, nexts[i].Key);
-                    if (i != nexts.Length - 1)
-                    {
-                        il.Emit(OpCodes.Bne_Un, nextIf[i]);
-                    }
-                    else
-                    {
-                        // TODO:is notfound here?
-                        // notFound();
-                        il.Emit(OpCodes.Bne_Un, loopEnd);
-                    }
-
-                    if (nexts[i].Value != -1)
-                    {
-                        onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
-                        il.Emit(OpCodes.Br, loopEnd);
-                    }
-                    else
-                    {
-                        nexts[i].EmitSearchNext(il, p, rest, key, onFound, notFound);
-                    }
-                }
-            }
-            else
-            {
-                // switch-case
-                if (IsSequential(nexts))
-                {
-                    // TODO:require default
-                    var switchLabels = nexts.Select(_ => il.DefineLabel()).ToArray();
-
-                    il.EmitLdloc(key);
-                    il.Emit(OpCodes.Switch, switchLabels);
-
-                    for (int i = 0; i < nexts.Length; i++)
-                    {
-                        il.MarkLabel(switchLabels[i]);
-                        if (nexts[i].Value != -1)
-                        {
-                            onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
-                            il.Emit(OpCodes.Br, loopEnd);
-                        }
-                        else
-                        {
-                            nexts[i].EmitSearchNext(il, p, rest, key, onFound, notFound);
-                        }
-                    }
-                }
-                else
-                {
-                    // binary-search
-                    var midline = nexts.Length / 2;
-                    var mid = nexts[midline].Key;
-
-                    var gotoRight = il.DefineLabel();
-
-                    // if(key < mid)
-                    il.EmitLdloc(key);
-                    il.Emit(OpCodes.Ldc_I8, mid);
-                    il.Emit(OpCodes.Bge, gotoRight);
-                    EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts.Take(midline).ToArray());
-
-                    // else
-                    il.MarkLabel(gotoRight);
-                    EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts.Skip(midline).ToArray());
-                }
-            }
-
-            il.MarkLabel(loopEnd);
-        }
-
-        static bool IsSequential(AutomataNode[] array)
-        {
-            var v = array[0].Key;
-            for (int i = 0; i < array.Length; i++)
-            {
-                if (v++ != array[i].Key) return false;
-            }
-            return true;
-        }
-    }
-
-    public static class AutomataEmitHelper
-    {
-        public static readonly MethodInfo GetKeyMethod = typeof(AutomataEmitHelper).GetRuntimeMethod("GetKey", new[] { typeof(byte*).MakeByRefType(), typeof(int).MakeByRefType() });
-
-        public static unsafe long GetKey(ref byte* p, ref int rest)
-        {
-            if (rest >= 8)
-            {
-                var key = *(long*)p;
-                p += 8;
-                rest -= 8;
-                return key;
-            }
-            else if (rest >= 4)
-            {
-                var key = *(int*)p;
-                p += 4;
-                rest -= 4;
-                return key;
-            }
-            else if (rest >= 2)
-            {
-                var key = *(short*)p;
-                p += 2;
-                rest -= 2;
-                return key;
-            }
-            else
-            {
-                var key = *(byte*)p;
-                p += 1;
-                rest -= 1;
-                return key;
-            }
-        }
-    }
-
     public class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
     {
         readonly AutomataNode root;
@@ -262,98 +20,31 @@ namespace MessagePack.Internal
             root = new AutomataNode(-1);
         }
 
-        static unsafe long Fetch64(byte[] xs, int offset)
-        {
-            fixed (byte* p = &xs[offset])
-            {
-                return *(long*)p;
-            }
-        }
-
-        static unsafe int Fetch32(byte[] xs, int offset)
-        {
-            fixed (byte* p = &xs[offset])
-            {
-                return *(int*)p;
-            }
-        }
-
-        static unsafe short Fetch16(byte[] xs, int offset)
-        {
-            fixed (byte* p = &xs[offset])
-            {
-                return *(short*)p;
-            }
-        }
-
         public void Add(string str, int value)
         {
             Add(Encoding.UTF8.GetBytes(str), value);
         }
 
-        public void Add(byte[] bytes, int value)
+        public unsafe void Add(byte[] bytes, int value)
         {
-            var node = root;
-
-            var i = 0;
-            while (i != bytes.Length)
+            fixed (byte* buffer = bytes)
             {
-                var rest = bytes.Length - i;
-                if (rest >= 8)
+                var node = root;
+
+                var p = buffer;
+                var rest = bytes.Length;
+                while (rest != 0)
                 {
-                    var l = Fetch64(bytes, i);
-                    i += 8;
-                    if (i == bytes.Length)
+                    var key = AutomataKeyGen.GetKey(ref p, ref rest);
+
+                    if (rest == 0)
                     {
-                        node = node.Add(l, value, Encoding.UTF8.GetString(bytes));
+                        node = node.Add(key, value, Encoding.UTF8.GetString(bytes));
                     }
                     else
                     {
-                        node = node.Add(l);
+                        node = node.Add(key);
                     }
-                    continue;
-                }
-                else if (rest >= 4)
-                {
-                    var l = (long)Fetch32(bytes, i);
-                    i += 4;
-                    if (i == bytes.Length)
-                    {
-                        node = node.Add(l, value, Encoding.UTF8.GetString(bytes));
-                    }
-                    else
-                    {
-                        node = node.Add(l);
-                    }
-                    continue;
-                }
-                else if (rest >= 2)
-                {
-                    var l = (long)Fetch16(bytes, i);
-                    i += 2;
-                    if (i == bytes.Length)
-                    {
-                        node = node.Add(l, value, Encoding.UTF8.GetString(bytes));
-                    }
-                    else
-                    {
-                        node = node.Add(l);
-                    }
-                    continue;
-                }
-                else
-                {
-                    var l = (long)bytes[i];
-                    i += 1;
-                    if (i == bytes.Length)
-                    {
-                        node = node.Add(l, value, Encoding.UTF8.GetString(bytes));
-                    }
-                    else
-                    {
-                        node = node.Add(l);
-                    }
-                    continue;
                 }
             }
         }
@@ -465,6 +156,256 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Conv_U);
             il.EmitStloc(fixedP);
+        }
+    }
+
+    public static class AutomataKeyGen
+    {
+        public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKey", new[] { typeof(byte*).MakeByRefType(), typeof(int).MakeByRefType() });
+
+        public static unsafe long GetKey(ref byte* p, ref int rest)
+        {
+            int readSize;
+            long key;
+
+            if (rest >= 8)
+            {
+                key = *(long*)p;
+                readSize = 8;
+            }
+            else
+            {
+                switch (rest)
+                {
+                    case 1:
+                        {
+                            key = *(byte*)p;
+                            readSize = 1;
+                            break;
+                        }
+                    case 2:
+                        {
+                            key = *(short*)p;
+                            readSize = 2;
+                            break;
+                        }
+                    case 3:
+                        {
+                            var a = *p;
+                            var b = *(short*)(p + 1);
+                            key = ((long)a | (long)b << 8);
+                            readSize = 3;
+                            break;
+                        }
+                    case 4:
+                        {
+                            key = *(int*)p;
+                            readSize = 4;
+                            break;
+                        }
+                    case 5:
+                        {
+                            var a = *p;
+                            var b = *(int*)(p + 1);
+                            key = ((long)a | (long)b << 8);
+                            readSize = 5;
+                            break;
+                        }
+                    case 6:
+                        {
+                            var a = *(short*)p;
+                            var b = *(int*)(p + 2);
+                            key = ((long)a | (long)b << 16);
+                            readSize = 6;
+                            break;
+                        }
+                    case 7:
+                        {
+                            var a = *(byte*)p;
+                            var b = *(short*)(p + 1);
+                            var c = *(int*)(p + 3);
+                            key = ((long)a | (long)b << 8 | (long)c << 24);
+                            readSize = 7;
+                            break;
+                        }
+                    default:
+                        throw new InvalidOperationException("Not Supported Length");
+                }
+            }
+
+            p += readSize;
+            rest -= readSize;
+            return key;
+        }
+    }
+
+    // Key = long, Value = int
+    internal unsafe class AutomataNode : IComparable<AutomataNode>
+    {
+        public readonly long Key;
+        public int Value; // can only set from private
+        internal string originalKey; // for debugging
+
+        internal AutomataNode[] nexts; // immutable array
+        internal long[] nextKeys;      // for index search
+
+        public AutomataNode(long key)
+        {
+            this.Key = key;
+            this.Value = -1;
+            this.nexts = new AutomataNode[0];
+            this.nextKeys = new long[0];
+            this.originalKey = null;
+        }
+
+        public AutomataNode Add(long key)
+        {
+            var index = Array.BinarySearch(nextKeys, key);
+            if (index < 0)
+            {
+                Array.Resize<AutomataNode>(ref nexts, nexts.Length + 1);
+                Array.Resize<long>(ref nextKeys, nextKeys.Length + 1);
+                var nextNode = new AutomataNode(key);
+                nexts[nexts.Length - 1] = nextNode;
+                nextKeys[nextKeys.Length - 1] = key;
+                Array.Sort(nexts);
+                Array.Sort(nextKeys);
+                return nextNode;
+            }
+            else
+            {
+                return nexts[index];
+            }
+        }
+
+        public AutomataNode Add(long key, int value, string originalKey)
+        {
+            var v = Add(key);
+            v.Value = value;
+            v.originalKey = originalKey;
+            return v;
+        }
+
+        public AutomataNode SearchNext(ref byte* p, ref int rest)
+        {
+            var key = AutomataKeyGen.GetKey(ref p, ref rest);
+            if (nextKeys.Length < 4)
+            {
+                // linear search
+                for (int i = 0; i < nextKeys.Length; i++)
+                {
+                    if (nextKeys[i] == key)
+                    {
+                        return nexts[i];
+                    }
+                }
+            }
+            else
+            {
+                // binary search
+                var index = Array.BinarySearch(nextKeys, key);
+                if (index >= 0)
+                {
+                    return nexts[index];
+                }
+            }
+
+            return null;
+        }
+
+        public int GetMaxDepth()
+        {
+            return GetDepth(nexts, 0);
+        }
+
+        int GetDepth(AutomataNode[] nodes, int currentDepth)
+        {
+            var maxDepth = currentDepth;
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                var depth = GetDepth(nodes[i].nexts, currentDepth + 1);
+                maxDepth = Math.Max(maxDepth, depth);
+            }
+
+            return maxDepth;
+        }
+
+        public int CompareTo(AutomataNode other)
+        {
+            return this.Key.CompareTo(other.Key);
+        }
+
+        // SearchNext(ref byte* p, ref int rest, ref long key)
+        public void EmitSearchNext(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action notFound)
+        {
+            il.EmitLdloca(p);
+            il.EmitLdloca(rest);
+            il.EmitCall(AutomataKeyGen.GetKeyMethod);
+            il.EmitStloc(key);
+
+            EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts);
+        }
+
+        static void EmitSearchNextCore(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action notFound, AutomataNode[] nexts)
+        {
+            // TODO:Emit NotFound
+
+            var loopEnd = il.DefineLabel();
+            if (nexts.Length < 4)
+            {
+                // linear-search
+                var nextIf = Enumerable.Range(0, Math.Max(nexts.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
+                for (int i = 0; i < nexts.Length; i++)
+                {
+                    if (i != 0)
+                    {
+                        il.MarkLabel(nextIf[i - 1]);
+                    }
+
+                    il.EmitLdloc(key);
+                    il.Emit(OpCodes.Ldc_I8, nexts[i].Key);
+                    if (i != nexts.Length - 1)
+                    {
+                        il.Emit(OpCodes.Bne_Un, nextIf[i]);
+                    }
+                    else
+                    {
+                        // TODO:is notfound here?
+                        // notFound();
+                        il.Emit(OpCodes.Bne_Un, loopEnd);
+                    }
+
+                    if (nexts[i].Value != -1)
+                    {
+                        onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
+                        il.Emit(OpCodes.Br, loopEnd);
+                    }
+                    else
+                    {
+                        nexts[i].EmitSearchNext(il, p, rest, key, onFound, notFound);
+                    }
+                }
+            }
+            else
+            {
+                // binary-search
+                var midline = nexts.Length / 2;
+                var mid = nexts[midline].Key;
+
+                var gotoRight = il.DefineLabel();
+
+                // if(key < mid)
+                il.EmitLdloc(key);
+                il.Emit(OpCodes.Ldc_I8, mid);
+                il.Emit(OpCodes.Bge, gotoRight);
+                EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts.Take(midline).ToArray());
+
+                // else
+                il.MarkLabel(gotoRight);
+                EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts.Skip(midline).ToArray());
+            }
+
+            il.MarkLabel(loopEnd);
         }
     }
 }
