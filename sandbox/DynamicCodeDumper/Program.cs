@@ -142,12 +142,14 @@ namespace DynamicCodeDumper
         public int MyProperty9 { get; set; }
         public int MyProperty70 { get; set; }
         public int MyProperty16 { get; set; }
+        public int MyProperty16MyProperty16MyProperty16MyProperty16 { get; set; }
         public int MyProperty23 { get; set; }
         public int MyProperty3 { get; set; }
         public int MyProperty10 { get; set; }
         public int MyProperty67 { get; set; }
         public int MyProperty68 { get; set; }
         public int MyProperty4 { get; set; }
+        public int FooPropertyWithBazBaz { get; set; }
         public int MyProperty69 { get; set; }
         public int MyProperty71 { get; set; }
     }

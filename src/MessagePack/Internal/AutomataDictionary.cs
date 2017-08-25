@@ -75,7 +75,7 @@ namespace MessagePack.Internal
             {
                 // binary search
                 var index = Array.BinarySearch(nextKeys, key);
-                if (index < 0)
+                if (index >= 0)
                 {
                     return nexts[index];
                 }
@@ -141,6 +141,8 @@ namespace MessagePack.Internal
                     }
                     else
                     {
+                        // TODO:is notfound here?
+                        // notFound();
                         il.Emit(OpCodes.Bne_Un, loopEnd);
                     }
 
