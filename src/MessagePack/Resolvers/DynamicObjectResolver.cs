@@ -209,18 +209,16 @@ namespace MessagePack.Internal
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
             var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, "").Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
-            FieldBuilder dictionaryField = null;
             FieldBuilder stringByteKeysField = null;
 
             // string key needs string->int mapper for deserialize switch statement
             if (serializationInfo.IsStringKey)
             {
                 var method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
-                dictionaryField = typeBuilder.DefineField("keyMapping", typeof(ByteArrayStringHashTable), FieldAttributes.Private | FieldAttributes.InitOnly);
                 stringByteKeysField = typeBuilder.DefineField("stringByteKeys", typeof(byte[][]), FieldAttributes.Private | FieldAttributes.InitOnly);
 
                 var il = method.GetILGenerator();
-                BuildConstructor(type, serializationInfo, method, dictionaryField, stringByteKeysField, il);
+                BuildConstructor(type, serializationInfo, method, stringByteKeysField, il);
             }
             {
                 var method = typeBuilder.DefineMethod("Serialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
@@ -237,32 +235,16 @@ namespace MessagePack.Internal
                     new Type[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() });
 
                 var il = method.GetILGenerator();
-                BuildDeserialize(type, serializationInfo, method, dictionaryField, il);
+                BuildDeserialize(type, serializationInfo, method, il);
             }
 
             return typeBuilder.CreateTypeInfo();
         }
 
-        static void BuildConstructor(Type type, ObjectSerializationInfo info, ConstructorInfo method, FieldBuilder dictionaryField, FieldBuilder stringByteKeysField, ILGenerator il)
+        static void BuildConstructor(Type type, ObjectSerializationInfo info, ConstructorInfo method, FieldBuilder stringByteKeysField, ILGenerator il)
         {
             il.EmitLdarg(0);
             il.Emit(OpCodes.Call, objectCtor);
-
-            il.EmitLdarg(0);
-            il.EmitLdc_I4(info.Members.Length);
-            il.Emit(OpCodes.Newobj, dictionaryConstructor);
-
-            foreach (var item in info.Members)
-            {
-                il.Emit(OpCodes.Dup);
-                il.Emit(OpCodes.Ldstr, item.StringKey);
-                il.EmitLdc_I4(item.IntKey);
-                il.EmitCall(dictionaryAdd);
-            }
-
-            il.Emit(OpCodes.Stfld, dictionaryField);
-
-            //
 
             var writeCount = info.Members.Count(x => x.IsReadable);
             il.EmitLdarg(0);
@@ -471,7 +453,7 @@ namespace MessagePack.Internal
         }
 
         // T Deserialize([arg:1]byte[] bytes, [arg:2]int offset, [arg:3]IFormatterResolver formatterResolver, [arg:4]out int readSize);
-        static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, FieldBuilder dictionaryField, ILGenerator il)
+        static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, ILGenerator il)
         {
             // if(MessagePackBinary.IsNil) readSize = 1, return null;
             var falseLabel = il.DefineLabel();

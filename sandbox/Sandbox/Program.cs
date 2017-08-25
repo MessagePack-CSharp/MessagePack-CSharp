@@ -288,13 +288,22 @@ namespace Sandbox
             // var hoge = Enumerable.Range(0, 10).Select(x => Encoding.UTF8.GetBytes("MyProperty" + x)).ToArray();
             var hoge = new[]
             {
-                "Name",
-                "Age",
-                "FullName",
-                "Capacity",
-                "HogeHogeFugaFuga",
-                "FooBar",
+                //"Name",
+                //"Age",
+                //"FullName",
+                //"Capacity",
+                //"HogeHogeFugaFuga",
+                //"FooBar",
+                //"MyProperty1",
                 "MyProperty1",
+                "MyProperty2",
+                "MyProperty3",
+                "MyProperty4",
+                "FooBar",
+                "MyProperty6",
+                "MyProperty7",
+                "MyProperty8",
+                "MyProperty9",
             };
 
             var dict = new AutomataDictionary();

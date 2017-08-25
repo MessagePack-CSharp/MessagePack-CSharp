@@ -30,6 +30,7 @@ namespace DynamicCodeDumper
              DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
              DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
             DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
+            DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
             //DynamicObjectResolver.Instance.GetFormatter<Callback1>();
             //DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
             //DynamicObjectResolver.Instance.GetFormatter<Callback2>();
@@ -120,6 +121,35 @@ namespace DynamicCodeDumper
         public int MyProperty7 { get; set; }
         public int MyProperty8 { get; set; }
         public int MyProperty9 { get; set; }
+    }
+
+    [MessagePack.MessagePackObject(true)]
+    public class StringKeySerializerTargetBinary
+    {
+        public int MyProperty12 { get; set; }
+        public int MyProperty6 { get; set; }
+        public int MyProperty45 { get; set; }
+        public int MyProperty14 { get; set; }
+        public int MyProperty7 { get; set; }
+        public int MyProperty72 { get; set; }
+        public int MyProperty99 { get; set; }
+        public int MyProperty88 { get; set; }
+
+        public int MyProperty1 { get; set; }
+        public int MyProperty2 { get; set; }
+        public int MyProperty5 { get; set; }
+        public int MyProperty8 { get; set; }
+        public int MyProperty9 { get; set; }
+        public int MyProperty70 { get; set; }
+        public int MyProperty16 { get; set; }
+        public int MyProperty23 { get; set; }
+        public int MyProperty3 { get; set; }
+        public int MyProperty10 { get; set; }
+        public int MyProperty67 { get; set; }
+        public int MyProperty68 { get; set; }
+        public int MyProperty4 { get; set; }
+        public int MyProperty69 { get; set; }
+        public int MyProperty71 { get; set; }
     }
 
     public class Contractless2

@@ -57,49 +57,9 @@ namespace MessagePack.Internal
             return v;
         }
 
-        static long Fetch64(byte* p)
-        {
-            return *(long*)p;
-        }
-
-        static int Fetch32(byte* p)
-        {
-            return *(int*)p;
-        }
-
-        static short Fetch16(byte* p)
-        {
-            return *(short*)p;
-        }
-
         public AutomataNode SearchNext(ref byte* p, ref int rest)
         {
-            long key;
-            if (rest >= 8)
-            {
-                key = Fetch64(p);
-                p += 8;
-                rest -= 8;
-            }
-            else if (rest >= 4)
-            {
-                key = Fetch32(p);
-                p += 4;
-                rest -= 4;
-            }
-            else if (rest >= 2)
-            {
-                key = Fetch16(p);
-                p += 2;
-                rest -= 2;
-            }
-            else
-            {
-                key = *(byte*)p;
-                p += 1;
-                rest -= 1;
-            }
-
+            var key = AutomataEmitHelper.GetKey(ref p, ref rest);
             if (nextKeys.Length < 7)
             {
                 // linear search
@@ -154,40 +114,103 @@ namespace MessagePack.Internal
             il.EmitCall(AutomataEmitHelper.GetKeyMethod);
             il.EmitStloc(key);
 
-            // TODO:Emit Binary Search or switch-case
-            var loopEnd = il.DefineLabel();
-            var nextIf = Enumerable.Range(0, Math.Max(nexts.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
-            for (int i = 0; i < nexts.Length; i++)
-            {
-                if (i != 0)
-                {
-                    il.MarkLabel(nextIf[i - 1]);
-                }
+            EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts);
+        }
 
-                il.EmitLdloc(key);
-                il.Emit(OpCodes.Ldc_I8, nexts[i].Key);
-                if (i != nexts.Length - 1)
-                {
-                    il.Emit(OpCodes.Bne_Un, nextIf[i]);
-                }
-                else
-                {
-                    il.Emit(OpCodes.Bne_Un, loopEnd);
-                }
-
-                if (nexts[i].Value != -1)
-                {
-                    onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
-                    il.Emit(OpCodes.Br, loopEnd);
-                }
-                else
-                {
-                    nexts[i].EmitSearchNext(il, p, rest, key, onFound, notFound);
-                }
-            }
+        static void EmitSearchNextCore(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action notFound, AutomataNode[] nexts)
+        {
             // TODO:Emit NotFound
 
+            var loopEnd = il.DefineLabel();
+            if (nexts.Length < 4)
+            {
+                // linear-search
+                var nextIf = Enumerable.Range(0, Math.Max(nexts.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
+                for (int i = 0; i < nexts.Length; i++)
+                {
+                    if (i != 0)
+                    {
+                        il.MarkLabel(nextIf[i - 1]);
+                    }
+
+                    il.EmitLdloc(key);
+                    il.Emit(OpCodes.Ldc_I8, nexts[i].Key);
+                    if (i != nexts.Length - 1)
+                    {
+                        il.Emit(OpCodes.Bne_Un, nextIf[i]);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Bne_Un, loopEnd);
+                    }
+
+                    if (nexts[i].Value != -1)
+                    {
+                        onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
+                        il.Emit(OpCodes.Br, loopEnd);
+                    }
+                    else
+                    {
+                        nexts[i].EmitSearchNext(il, p, rest, key, onFound, notFound);
+                    }
+                }
+            }
+            else
+            {
+                // switch-case
+                if (IsSequential(nexts))
+                {
+                    // TODO:require default
+                    var switchLabels = nexts.Select(_ => il.DefineLabel()).ToArray();
+
+                    il.EmitLdloc(key);
+                    il.Emit(OpCodes.Switch, switchLabels);
+
+                    for (int i = 0; i < nexts.Length; i++)
+                    {
+                        il.MarkLabel(switchLabels[i]);
+                        if (nexts[i].Value != -1)
+                        {
+                            onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
+                            il.Emit(OpCodes.Br, loopEnd);
+                        }
+                        else
+                        {
+                            nexts[i].EmitSearchNext(il, p, rest, key, onFound, notFound);
+                        }
+                    }
+                }
+                else
+                {
+                    // binary-search
+                    var midline = nexts.Length / 2;
+                    var mid = nexts[midline].Key;
+
+                    var gotoRight = il.DefineLabel();
+
+                    // if(key < mid)
+                    il.EmitLdloc(key);
+                    il.Emit(OpCodes.Ldc_I8, mid);
+                    il.Emit(OpCodes.Bge, gotoRight);
+                    EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts.Take(midline).ToArray());
+
+                    // else
+                    il.MarkLabel(gotoRight);
+                    EmitSearchNextCore(il, p, rest, key, onFound, notFound, nexts.Skip(midline).ToArray());
+                }
+            }
+
             il.MarkLabel(loopEnd);
+        }
+
+        static bool IsSequential(AutomataNode[] array)
+        {
+            var v = array[0].Key;
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (v++ != array[i].Key) return false;
+            }
+            return true;
         }
     }
 
@@ -197,32 +220,34 @@ namespace MessagePack.Internal
 
         public static unsafe long GetKey(ref byte* p, ref int rest)
         {
-            long key;
             if (rest >= 8)
             {
-                key = *(long*)p;
+                var key = *(long*)p;
                 p += 8;
                 rest -= 8;
+                return key;
             }
             else if (rest >= 4)
             {
-                key = *(int*)p;
+                var key = *(int*)p;
                 p += 4;
                 rest -= 4;
+                return key;
             }
             else if (rest >= 2)
             {
-                key = *(short*)p;
+                var key = *(short*)p;
                 p += 2;
                 rest -= 2;
+                return key;
             }
             else
             {
-                key = *(byte*)p;
+                var key = *(byte*)p;
                 p += 1;
                 rest -= 1;
+                return key;
             }
-            return key;
         }
     }
 
@@ -435,7 +460,6 @@ namespace MessagePack.Internal
             root.EmitSearchNext(il, p, rest, key, onFound, notFound);
 
             // end fixed
-
             il.Emit(OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Conv_U);
             il.EmitStloc(fixedP);
