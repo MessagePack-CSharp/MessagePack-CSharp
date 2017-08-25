@@ -28,6 +28,7 @@ namespace DynamicCodeDumper
             //DynamicObjectResolver.Instance.GetFormatter<Version2>();
             //DynamicObjectResolver.Instance.GetFormatter<SimpleIntKeyData>();
              DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
+             DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
             DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
             //DynamicObjectResolver.Instance.GetFormatter<Callback1>();
             //DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
@@ -97,6 +98,14 @@ namespace DynamicCodeDumper
     public class EmptyContractless
     {
 
+    }
+
+    [MessagePackObject(true)]
+    public class SimlpeStringKeyData2
+    {
+        public int FooBarBaz {get; set; }
+        public int FooBarPoo { get; set; }
+        public ByteEnum AprilJuneJuly { get; set; }
     }
 
     [MessagePack.MessagePackObject(true)]
