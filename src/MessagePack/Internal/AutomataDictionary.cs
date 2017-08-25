@@ -154,21 +154,21 @@ namespace MessagePack.Internal
             il.EmitCall(AutomataEmitHelper.GetKeyMethod);
             il.EmitStloc(key);
 
-            // TODO:Emit Binary Search
+            // TODO:Emit Binary Search or switch-case
             var loopEnd = il.DefineLabel();
-            var nextIf = Enumerable.Range(1, Math.Max(nexts.Length - 2, 0)).Select(_ => il.DefineLabel()).ToArray();
+            var nextIf = Enumerable.Range(0, Math.Max(nexts.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
             for (int i = 0; i < nexts.Length; i++)
             {
                 if (i != 0)
                 {
-                    il.MarkLabel(nextIf[i]);
+                    il.MarkLabel(nextIf[i - 1]);
                 }
 
                 il.EmitLdloc(key);
                 il.Emit(OpCodes.Ldc_I8, nexts[i].Key);
                 if (i != nexts.Length - 1)
                 {
-                    il.Emit(OpCodes.Bne_Un, nextIf[i + 1]);
+                    il.Emit(OpCodes.Bne_Un, nextIf[i]);
                 }
                 else
                 {
@@ -178,8 +178,12 @@ namespace MessagePack.Internal
                 if (nexts[i].Value != -1)
                 {
                     onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
+                    il.Emit(OpCodes.Br, loopEnd);
                 }
-                il.Emit(OpCodes.Br, loopEnd);
+                else
+                {
+                    nexts[i].EmitSearchNext(il, p, rest, key, onFound, notFound);
+                }
             }
             // TODO:Emit NotFound
 
@@ -222,7 +226,7 @@ namespace MessagePack.Internal
         }
     }
 
-    internal partial class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
+    public class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
     {
         readonly AutomataNode root;
 
@@ -404,11 +408,11 @@ namespace MessagePack.Internal
         {
             var fixedP = il.DeclareLocal(typeof(byte).MakeByRefType(), true);
             var p = il.DeclareLocal(typeof(byte*));
-            //var rest = il.DeclareLocal(typeof(int));
-            //var key = il.DeclareLocal(typeof(long));
-            //il.EmitLdc_I4(0);
-            //il.Emit(OpCodes.Conv_I8);
-            //il.EmitStloc(key);
+            var rest = il.DeclareLocal(typeof(int));
+            var key = il.DeclareLocal(typeof(long));
+            il.EmitLdc_I4(0);
+            il.Emit(OpCodes.Conv_I8);
+            il.EmitStloc(key);
 
             // fixed (byte* p1 = &arraySegment.Array[arraySegment.Offset])
             il.EmitLdloca(arraySegment);
@@ -423,18 +427,18 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Conv_I);
             il.EmitStloc(p);
 
-
             // var rest = arraySegment.Count;
-            //il.EmitLdloca(arraySegment);
-            //il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Count").GetGetMethod());
-            //il.EmitStloc(rest);
+            il.EmitLdloca(arraySegment);
+            il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Count").GetGetMethod());
+            il.EmitStloc(rest);
 
-            //root.EmitSearchNext(il, p, rest, key, onFound, notFound);
+            root.EmitSearchNext(il, p, rest, key, onFound, notFound);
 
             // end fixed
-            //il.Emit(OpCodes.Ldc_I4_0);
-            //il.Emit(OpCodes.Conv_U);
-            //il.EmitStloc(fixedP);
+
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Conv_U);
+            il.EmitStloc(fixedP);
         }
     }
 }

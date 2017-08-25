@@ -572,8 +572,8 @@ namespace MessagePack.Internal
             // Read Loop(for var i = 0; i< length; i++)
 
             // TODO:string loop
-            AutomataDictionary automata = null;
             LocalBuilder keyArraySegment = null;
+            AutomataDictionary automata = null;
             if (info.IsStringKey)
             {
                 automata = new AutomataDictionary();
@@ -581,7 +581,6 @@ namespace MessagePack.Internal
                 {
                     automata.Add(info.Members[i].StringKey, i);
                 }
-
                 keyArraySegment = il.DeclareLocal(typeof(ArraySegment<byte>));
             }
 
@@ -596,8 +595,7 @@ namespace MessagePack.Internal
                     if (info.IsStringKey)
                     {
                         // get string key -> dictionary lookup
-                        il.EmitLdarg(0);
-                        il.Emit(OpCodes.Ldfld, dictionaryField);
+
                         il.EmitLdarg(1);
                         il.EmitLdarg(2);
                         il.EmitLdarg(4);
@@ -610,8 +608,7 @@ namespace MessagePack.Internal
                             if (infoList[i].MemberInfo != null)
                             {
                                 EmitDeserializeValue(il, infoList[i]);
-                                // TODO:loop end?
-                                // il.Emit(OpCodes.Br, loopEnd);
+                                il.Emit(OpCodes.Br, loopEnd);
                             }
                         },
                         () =>
@@ -623,6 +620,10 @@ namespace MessagePack.Internal
                             il.Emit(OpCodes.Stind_I4);
                             il.Emit(OpCodes.Br, loopEnd);
                         });
+
+                        // offset += readSize
+                        il.MarkLabel(loopEnd);
+                        EmitOffsetPlusReadSize(il);
                     }
                     else
                     {

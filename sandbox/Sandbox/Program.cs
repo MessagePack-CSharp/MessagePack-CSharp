@@ -317,6 +317,9 @@ namespace Sandbox
 
             Console.WriteLine(dict.ToString());
 
+            var bin = MessagePackSerializer.Serialize(new ContractlessSample() { MyProperty1 = 100, MyProperty2 = 9999 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var foo = MessagePackSerializer.Deserialize<ContractlessSample>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            Console.WriteLine((foo.MyProperty1, foo.MyProperty2));
 
         }
 

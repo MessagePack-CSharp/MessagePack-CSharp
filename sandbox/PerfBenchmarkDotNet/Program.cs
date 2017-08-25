@@ -379,13 +379,13 @@ namespace PerfBenchmarkDotNet
     public class DictionaryLookupCompare
     {
         newmsgpack::MessagePack.Internal.ByteArrayStringHashTable hashTable;
-        newmsgpack::MessagePack.Internal.ByteArrayAutomataDictionary automata;
+        newmsgpack::MessagePack.Internal.AutomataDictionary automata;
         byte[][] keys;
 
         public DictionaryLookupCompare()
         {
             hashTable = new newmsgpack::MessagePack.Internal.ByteArrayStringHashTable(9);
-            automata = new newmsgpack::MessagePack.Internal.ByteArrayAutomataDictionary();
+            automata = new newmsgpack::MessagePack.Internal.AutomataDictionary();
             keys = new byte[9][];
             foreach (var item in Enumerable.Range(0, 9).Select(x => new { str = "MyProperty" + (x + 1), i = x }))
             {
@@ -448,6 +448,12 @@ namespace PerfBenchmarkDotNet
         public StringKeySerializerTarget Hashtable()
         {
             return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, hashtable);
+        }
+
+        [Benchmark]
+        public StringKeySerializerTarget AutomataInlineEmit()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
         }
     }
 
@@ -654,13 +660,13 @@ namespace GeneratedFormatter
 
         public sealed class StringKeySerializerTargetFormatter_AutomataLookup : IMessagePackFormatter<StringKeySerializerTarget>
         {
-            private readonly ByteArrayAutomataDictionary keyMapping;
+            private readonly AutomataDictionary keyMapping;
 
             private readonly byte[][] stringByteKeys;
 
             public StringKeySerializerTargetFormatter_AutomataLookup()
             {
-                this.keyMapping = new ByteArrayAutomataDictionary()
+                this.keyMapping = new AutomataDictionary()
                 {
                     {
                         "MyProperty1",
