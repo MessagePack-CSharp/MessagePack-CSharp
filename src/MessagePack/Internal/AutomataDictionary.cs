@@ -10,7 +10,8 @@ using System.Reflection;
 
 namespace MessagePack.Internal
 {
-    // Key = long, Value = int
+    // Key = long, Value = int for UTF8String Dictionary
+
     public class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
     {
         readonly AutomataNode root;
@@ -346,6 +347,8 @@ namespace MessagePack.Internal
             }
             else
             {
+                
+
                 return nexts[index];
             }
         }

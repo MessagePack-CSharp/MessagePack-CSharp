@@ -3122,7 +3122,7 @@ namespace MessagePack.Decoders
         uint Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixMapHeader : IMapHeaderDecoder
+    internal sealed class FixMapHeader : IMapHeaderDecoder
     {
         internal static readonly IMapHeaderDecoder Instance = new FixMapHeader();
 
@@ -3138,7 +3138,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Map16Header : IMapHeaderDecoder
+    internal sealed class Map16Header : IMapHeaderDecoder
     {
         internal static readonly IMapHeaderDecoder Instance = new Map16Header();
 
@@ -3157,7 +3157,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Map32Header : IMapHeaderDecoder
+    internal sealed class Map32Header : IMapHeaderDecoder
     {
         internal static readonly IMapHeaderDecoder Instance = new Map32Header();
 
@@ -3176,7 +3176,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidMapHeader : IMapHeaderDecoder
+    internal sealed class InvalidMapHeader : IMapHeaderDecoder
     {
         internal static readonly IMapHeaderDecoder Instance = new InvalidMapHeader();
 
@@ -3196,7 +3196,7 @@ namespace MessagePack.Decoders
         uint Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixArrayHeader : IArrayHeaderDecoder
+    internal sealed class FixArrayHeader : IArrayHeaderDecoder
     {
         internal static readonly IArrayHeaderDecoder Instance = new FixArrayHeader();
 
@@ -3212,7 +3212,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Array16Header : IArrayHeaderDecoder
+    internal sealed class Array16Header : IArrayHeaderDecoder
     {
         internal static readonly IArrayHeaderDecoder Instance = new Array16Header();
 
@@ -3231,7 +3231,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Array32Header : IArrayHeaderDecoder
+    internal sealed class Array32Header : IArrayHeaderDecoder
     {
         internal static readonly IArrayHeaderDecoder Instance = new Array32Header();
 
@@ -3250,7 +3250,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidArrayHeader : IArrayHeaderDecoder
+    internal sealed class InvalidArrayHeader : IArrayHeaderDecoder
     {
         internal static readonly IArrayHeaderDecoder Instance = new InvalidArrayHeader();
 
@@ -3270,7 +3270,7 @@ namespace MessagePack.Decoders
         bool Read();
     }
 
-    internal class True : IBooleanDecoder
+    internal sealed class True : IBooleanDecoder
     {
         internal static IBooleanDecoder Instance = new True();
 
@@ -3282,7 +3282,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class False : IBooleanDecoder
+    internal sealed class False : IBooleanDecoder
     {
         internal static IBooleanDecoder Instance = new False();
 
@@ -3294,7 +3294,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidBoolean : IBooleanDecoder
+    internal sealed class InvalidBoolean : IBooleanDecoder
     {
         internal static IBooleanDecoder Instance = new InvalidBoolean();
 
@@ -3311,7 +3311,7 @@ namespace MessagePack.Decoders
         byte Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixByte : IByteDecoder
+    internal sealed class FixByte : IByteDecoder
     {
         internal static readonly IByteDecoder Instance = new FixByte();
 
@@ -3327,7 +3327,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt8Byte : IByteDecoder
+    internal sealed class UInt8Byte : IByteDecoder
     {
         internal static readonly IByteDecoder Instance = new UInt8Byte();
 
@@ -3343,7 +3343,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidByte : IByteDecoder
+    internal sealed class InvalidByte : IByteDecoder
     {
         internal static readonly IByteDecoder Instance = new InvalidByte();
 
@@ -3363,7 +3363,7 @@ namespace MessagePack.Decoders
         byte[] Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class NilBytes : IBytesDecoder
+    internal sealed class NilBytes : IBytesDecoder
     {
         internal static readonly IBytesDecoder Instance = new NilBytes();
 
@@ -3379,7 +3379,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Bin8Bytes : IBytesDecoder
+    internal sealed class Bin8Bytes : IBytesDecoder
     {
         internal static readonly IBytesDecoder Instance = new Bin8Bytes();
 
@@ -3399,7 +3399,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Bin16Bytes : IBytesDecoder
+    internal sealed class Bin16Bytes : IBytesDecoder
     {
         internal static readonly IBytesDecoder Instance = new Bin16Bytes();
 
@@ -3419,7 +3419,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Bin32Bytes : IBytesDecoder
+    internal sealed class Bin32Bytes : IBytesDecoder
     {
         internal static readonly IBytesDecoder Instance = new Bin32Bytes();
 
@@ -3439,7 +3439,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidBytes : IBytesDecoder
+    internal sealed class InvalidBytes : IBytesDecoder
     {
         internal static readonly IBytesDecoder Instance = new InvalidBytes();
 
@@ -3459,7 +3459,7 @@ namespace MessagePack.Decoders
         ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class NilBytesSegment : IBytesSegmentDecoder
+    internal sealed class NilBytesSegment : IBytesSegmentDecoder
     {
         internal static readonly IBytesSegmentDecoder Instance = new NilBytesSegment();
 
@@ -3475,7 +3475,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Bin8BytesSegment : IBytesSegmentDecoder
+    internal sealed class Bin8BytesSegment : IBytesSegmentDecoder
     {
         internal static readonly IBytesSegmentDecoder Instance = new Bin8BytesSegment();
 
@@ -3493,7 +3493,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Bin16BytesSegment : IBytesSegmentDecoder
+    internal sealed class Bin16BytesSegment : IBytesSegmentDecoder
     {
         internal static readonly IBytesSegmentDecoder Instance = new Bin16BytesSegment();
 
@@ -3511,7 +3511,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Bin32BytesSegment : IBytesSegmentDecoder
+    internal sealed class Bin32BytesSegment : IBytesSegmentDecoder
     {
         internal static readonly IBytesSegmentDecoder Instance = new Bin32BytesSegment();
 
@@ -3528,7 +3528,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidBytesSegment : IBytesSegmentDecoder
+    internal sealed class InvalidBytesSegment : IBytesSegmentDecoder
     {
         internal static readonly IBytesSegmentDecoder Instance = new InvalidBytesSegment();
 
@@ -3548,7 +3548,7 @@ namespace MessagePack.Decoders
         sbyte Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixSByte : ISByteDecoder
+    internal sealed class FixSByte : ISByteDecoder
     {
         internal static readonly ISByteDecoder Instance = new FixSByte();
 
@@ -3564,7 +3564,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int8SByte : ISByteDecoder
+    internal sealed class Int8SByte : ISByteDecoder
     {
         internal static readonly ISByteDecoder Instance = new Int8SByte();
 
@@ -3580,7 +3580,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidSByte : ISByteDecoder
+    internal sealed class InvalidSByte : ISByteDecoder
     {
         internal static readonly ISByteDecoder Instance = new InvalidSByte();
 
@@ -3600,7 +3600,7 @@ namespace MessagePack.Decoders
         float Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixNegativeFloat : ISingleDecoder
+    internal sealed class FixNegativeFloat : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new FixNegativeFloat();
 
@@ -3615,7 +3615,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixFloat : ISingleDecoder
+    internal sealed class FixFloat : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new FixFloat();
 
@@ -3630,7 +3630,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int8Single : ISingleDecoder
+    internal sealed class Int8Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new Int8Single();
 
@@ -3645,7 +3645,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int16Single : ISingleDecoder
+    internal sealed class Int16Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new Int16Single();
 
@@ -3660,7 +3660,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int32Single : ISingleDecoder
+    internal sealed class Int32Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new Int32Single();
 
@@ -3675,7 +3675,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int64Single : ISingleDecoder
+    internal sealed class Int64Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new Int64Single();
 
@@ -3691,7 +3691,7 @@ namespace MessagePack.Decoders
     }
 
 
-    internal class UInt8Single : ISingleDecoder
+    internal sealed class UInt8Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new UInt8Single();
 
@@ -3706,7 +3706,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt16Single : ISingleDecoder
+    internal sealed class UInt16Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new UInt16Single();
 
@@ -3721,7 +3721,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt32Single : ISingleDecoder
+    internal sealed class UInt32Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new UInt32Single();
 
@@ -3736,7 +3736,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt64Single : ISingleDecoder
+    internal sealed class UInt64Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new UInt64Single();
 
@@ -3751,7 +3751,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Float32Single : ISingleDecoder
+    internal sealed class Float32Single : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new Float32Single();
 
@@ -3767,7 +3767,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidSingle : ISingleDecoder
+    internal sealed class InvalidSingle : ISingleDecoder
     {
         internal static readonly ISingleDecoder Instance = new InvalidSingle();
 
@@ -3787,7 +3787,7 @@ namespace MessagePack.Decoders
         double Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixNegativeDouble : IDoubleDecoder
+    internal sealed class FixNegativeDouble : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new FixNegativeDouble();
 
@@ -3802,7 +3802,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixDouble : IDoubleDecoder
+    internal sealed class FixDouble : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new FixDouble();
 
@@ -3817,7 +3817,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int8Double : IDoubleDecoder
+    internal sealed class Int8Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new Int8Double();
 
@@ -3832,7 +3832,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int16Double : IDoubleDecoder
+    internal sealed class Int16Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new Int16Double();
 
@@ -3847,7 +3847,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int32Double : IDoubleDecoder
+    internal sealed class Int32Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new Int32Double();
 
@@ -3862,7 +3862,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int64Double : IDoubleDecoder
+    internal sealed class Int64Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new Int64Double();
 
@@ -3878,7 +3878,7 @@ namespace MessagePack.Decoders
     }
 
 
-    internal class UInt8Double : IDoubleDecoder
+    internal sealed class UInt8Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new UInt8Double();
 
@@ -3893,7 +3893,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt16Double : IDoubleDecoder
+    internal sealed class UInt16Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new UInt16Double();
 
@@ -3908,7 +3908,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt32Double : IDoubleDecoder
+    internal sealed class UInt32Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new UInt32Double();
 
@@ -3923,7 +3923,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt64Double : IDoubleDecoder
+    internal sealed class UInt64Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new UInt64Double();
 
@@ -3938,7 +3938,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Float32Double : IDoubleDecoder
+    internal sealed class Float32Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new Float32Double();
 
@@ -3954,7 +3954,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Float64Double : IDoubleDecoder
+    internal sealed class Float64Double : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new Float64Double();
 
@@ -3970,7 +3970,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidDouble : IDoubleDecoder
+    internal sealed class InvalidDouble : IDoubleDecoder
     {
         internal static readonly IDoubleDecoder Instance = new InvalidDouble();
 
@@ -3990,7 +3990,7 @@ namespace MessagePack.Decoders
         Int16 Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixNegativeInt16 : IInt16Decoder
+    internal sealed class FixNegativeInt16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new FixNegativeInt16();
 
@@ -4006,7 +4006,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixInt16 : IInt16Decoder
+    internal sealed class FixInt16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new FixInt16();
 
@@ -4022,7 +4022,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt8Int16 : IInt16Decoder
+    internal sealed class UInt8Int16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new UInt8Int16();
 
@@ -4038,7 +4038,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt16Int16 : IInt16Decoder
+    internal sealed class UInt16Int16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new UInt16Int16();
 
@@ -4054,7 +4054,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int8Int16 : IInt16Decoder
+    internal sealed class Int8Int16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new Int8Int16();
 
@@ -4070,7 +4070,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int16Int16 : IInt16Decoder
+    internal sealed class Int16Int16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new Int16Int16();
 
@@ -4089,7 +4089,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidInt16 : IInt16Decoder
+    internal sealed class InvalidInt16 : IInt16Decoder
     {
         internal static readonly IInt16Decoder Instance = new InvalidInt16();
 
@@ -4109,7 +4109,7 @@ namespace MessagePack.Decoders
         Int32 Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixNegativeInt32 : IInt32Decoder
+    internal sealed class FixNegativeInt32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new FixNegativeInt32();
 
@@ -4125,7 +4125,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixInt32 : IInt32Decoder
+    internal sealed class FixInt32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new FixInt32();
 
@@ -4141,7 +4141,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt8Int32 : IInt32Decoder
+    internal sealed class UInt8Int32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new UInt8Int32();
 
@@ -4156,7 +4156,7 @@ namespace MessagePack.Decoders
             return unchecked((int)(byte)(bytes[offset + 1]));
         }
     }
-    internal class UInt16Int32 : IInt32Decoder
+    internal sealed class UInt16Int32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new UInt16Int32();
 
@@ -4172,7 +4172,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt32Int32 : IInt32Decoder
+    internal sealed class UInt32Int32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new UInt32Int32();
 
@@ -4191,7 +4191,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int8Int32 : IInt32Decoder
+    internal sealed class Int8Int32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new Int8Int32();
 
@@ -4207,7 +4207,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int16Int32 : IInt32Decoder
+    internal sealed class Int16Int32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new Int16Int32();
 
@@ -4226,7 +4226,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int32Int32 : IInt32Decoder
+    internal sealed class Int32Int32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new Int32Int32();
 
@@ -4245,7 +4245,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidInt32 : IInt32Decoder
+    internal sealed class InvalidInt32 : IInt32Decoder
     {
         internal static readonly IInt32Decoder Instance = new InvalidInt32();
 
@@ -4264,7 +4264,7 @@ namespace MessagePack.Decoders
         Int64 Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixNegativeInt64 : IInt64Decoder
+    internal sealed class FixNegativeInt64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new FixNegativeInt64();
 
@@ -4280,7 +4280,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixInt64 : IInt64Decoder
+    internal sealed class FixInt64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new FixInt64();
 
@@ -4296,7 +4296,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt8Int64 : IInt64Decoder
+    internal sealed class UInt8Int64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new UInt8Int64();
 
@@ -4311,7 +4311,7 @@ namespace MessagePack.Decoders
             return unchecked((int)(byte)(bytes[offset + 1]));
         }
     }
-    internal class UInt16Int64 : IInt64Decoder
+    internal sealed class UInt16Int64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new UInt16Int64();
 
@@ -4327,7 +4327,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt32Int64 : IInt64Decoder
+    internal sealed class UInt32Int64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new UInt32Int64();
 
@@ -4343,7 +4343,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt64Int64 : IInt64Decoder
+    internal sealed class UInt64Int64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new UInt64Int64();
 
@@ -4364,7 +4364,7 @@ namespace MessagePack.Decoders
     }
 
 
-    internal class Int8Int64 : IInt64Decoder
+    internal sealed class Int8Int64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new Int8Int64();
 
@@ -4380,7 +4380,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int16Int64 : IInt64Decoder
+    internal sealed class Int16Int64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new Int16Int64();
 
@@ -4399,7 +4399,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int32Int64 : IInt64Decoder
+    internal sealed class Int32Int64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new Int32Int64();
 
@@ -4418,7 +4418,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Int64Int64 : IInt64Decoder
+    internal sealed class Int64Int64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new Int64Int64();
 
@@ -4438,7 +4438,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidInt64 : IInt64Decoder
+    internal sealed class InvalidInt64 : IInt64Decoder
     {
         internal static readonly IInt64Decoder Instance = new InvalidInt64();
 
@@ -4458,7 +4458,7 @@ namespace MessagePack.Decoders
         UInt16 Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixUInt16 : IUInt16Decoder
+    internal sealed class FixUInt16 : IUInt16Decoder
     {
         internal static readonly IUInt16Decoder Instance = new FixUInt16();
 
@@ -4474,7 +4474,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt8UInt16 : IUInt16Decoder
+    internal sealed class UInt8UInt16 : IUInt16Decoder
     {
         internal static readonly IUInt16Decoder Instance = new UInt8UInt16();
 
@@ -4490,7 +4490,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt16UInt16 : IUInt16Decoder
+    internal sealed class UInt16UInt16 : IUInt16Decoder
     {
         internal static readonly IUInt16Decoder Instance = new UInt16UInt16();
 
@@ -4509,7 +4509,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidUInt16 : IUInt16Decoder
+    internal sealed class InvalidUInt16 : IUInt16Decoder
     {
         internal static readonly IUInt16Decoder Instance = new InvalidUInt16();
 
@@ -4529,7 +4529,7 @@ namespace MessagePack.Decoders
         UInt32 Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixUInt32 : IUInt32Decoder
+    internal sealed class FixUInt32 : IUInt32Decoder
     {
         internal static readonly IUInt32Decoder Instance = new FixUInt32();
 
@@ -4545,7 +4545,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt8UInt32 : IUInt32Decoder
+    internal sealed class UInt8UInt32 : IUInt32Decoder
     {
         internal static readonly IUInt32Decoder Instance = new UInt8UInt32();
 
@@ -4561,7 +4561,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt16UInt32 : IUInt32Decoder
+    internal sealed class UInt16UInt32 : IUInt32Decoder
     {
         internal static readonly IUInt32Decoder Instance = new UInt16UInt32();
 
@@ -4580,7 +4580,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt32UInt32 : IUInt32Decoder
+    internal sealed class UInt32UInt32 : IUInt32Decoder
     {
         internal static readonly IUInt32Decoder Instance = new UInt32UInt32();
 
@@ -4599,7 +4599,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidUInt32 : IUInt32Decoder
+    internal sealed class InvalidUInt32 : IUInt32Decoder
     {
         internal static readonly IUInt32Decoder Instance = new InvalidUInt32();
 
@@ -4619,7 +4619,7 @@ namespace MessagePack.Decoders
         UInt64 Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixUInt64 : IUInt64Decoder
+    internal sealed class FixUInt64 : IUInt64Decoder
     {
         internal static readonly IUInt64Decoder Instance = new FixUInt64();
 
@@ -4635,7 +4635,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt8UInt64 : IUInt64Decoder
+    internal sealed class UInt8UInt64 : IUInt64Decoder
     {
         internal static readonly IUInt64Decoder Instance = new UInt8UInt64();
 
@@ -4651,7 +4651,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt16UInt64 : IUInt64Decoder
+    internal sealed class UInt16UInt64 : IUInt64Decoder
     {
         internal static readonly IUInt64Decoder Instance = new UInt16UInt64();
 
@@ -4670,7 +4670,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt32UInt64 : IUInt64Decoder
+    internal sealed class UInt32UInt64 : IUInt64Decoder
     {
         internal static readonly IUInt64Decoder Instance = new UInt32UInt64();
 
@@ -4689,7 +4689,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class UInt64UInt64 : IUInt64Decoder
+    internal sealed class UInt64UInt64 : IUInt64Decoder
     {
         internal static readonly IUInt64Decoder Instance = new UInt64UInt64();
 
@@ -4709,7 +4709,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidUInt64 : IUInt64Decoder
+    internal sealed class InvalidUInt64 : IUInt64Decoder
     {
         internal static readonly IUInt64Decoder Instance = new InvalidUInt64();
 
@@ -4729,7 +4729,7 @@ namespace MessagePack.Decoders
         String Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class NilString : IStringDecoder
+    internal sealed class NilString : IStringDecoder
     {
         internal static readonly IStringDecoder Instance = new NilString();
 
@@ -4745,7 +4745,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixString : IStringDecoder
+    internal sealed class FixString : IStringDecoder
     {
         internal static readonly IStringDecoder Instance = new FixString();
 
@@ -4762,7 +4762,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Str8String : IStringDecoder
+    internal sealed class Str8String : IStringDecoder
     {
         internal static readonly IStringDecoder Instance = new Str8String();
 
@@ -4779,7 +4779,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Str16String : IStringDecoder
+    internal sealed class Str16String : IStringDecoder
     {
         internal static readonly IStringDecoder Instance = new Str16String();
 
@@ -4799,7 +4799,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Str32String : IStringDecoder
+    internal sealed class Str32String : IStringDecoder
     {
         internal static readonly IStringDecoder Instance = new Str32String();
 
@@ -4819,7 +4819,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidString : IStringDecoder
+    internal sealed class InvalidString : IStringDecoder
     {
         internal static readonly IStringDecoder Instance = new InvalidString();
 
@@ -4839,7 +4839,7 @@ namespace MessagePack.Decoders
         ArraySegment<byte> Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class NilStringSegment : IStringSegmentDecoder
+    internal sealed class NilStringSegment : IStringSegmentDecoder
     {
         internal static readonly IStringSegmentDecoder Instance = new NilStringSegment();
 
@@ -4855,7 +4855,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixStringSegment : IStringSegmentDecoder
+    internal sealed class FixStringSegment : IStringSegmentDecoder
     {
         internal static readonly IStringSegmentDecoder Instance = new FixStringSegment();
 
@@ -4872,7 +4872,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Str8StringSegment : IStringSegmentDecoder
+    internal sealed class Str8StringSegment : IStringSegmentDecoder
     {
         internal static readonly IStringSegmentDecoder Instance = new Str8StringSegment();
 
@@ -4889,7 +4889,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Str16StringSegment : IStringSegmentDecoder
+    internal sealed class Str16StringSegment : IStringSegmentDecoder
     {
         internal static readonly IStringSegmentDecoder Instance = new Str16StringSegment();
 
@@ -4909,7 +4909,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Str32StringSegment : IStringSegmentDecoder
+    internal sealed class Str32StringSegment : IStringSegmentDecoder
     {
         internal static readonly IStringSegmentDecoder Instance = new Str32StringSegment();
 
@@ -4929,7 +4929,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidStringSegment : IStringSegmentDecoder
+    internal sealed class InvalidStringSegment : IStringSegmentDecoder
     {
         internal static readonly IStringSegmentDecoder Instance = new InvalidStringSegment();
 
@@ -4949,7 +4949,7 @@ namespace MessagePack.Decoders
         ExtensionResult Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixExt1 : IExtDecoder
+    internal sealed class FixExt1 : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new FixExt1();
 
@@ -4967,7 +4967,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt2 : IExtDecoder
+    internal sealed class FixExt2 : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new FixExt2();
 
@@ -4989,7 +4989,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt4 : IExtDecoder
+    internal sealed class FixExt4 : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new FixExt4();
 
@@ -5013,7 +5013,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt8 : IExtDecoder
+    internal sealed class FixExt8 : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new FixExt8();
 
@@ -5041,7 +5041,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt16 : IExtDecoder
+    internal sealed class FixExt16 : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new FixExt16();
 
@@ -5077,7 +5077,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Ext8 : IExtDecoder
+    internal sealed class Ext8 : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new Ext8();
 
@@ -5101,7 +5101,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Ext16 : IExtDecoder
+    internal sealed class Ext16 : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new Ext16();
 
@@ -5125,7 +5125,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Ext32 : IExtDecoder
+    internal sealed class Ext32 : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new Ext32();
 
@@ -5152,7 +5152,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidExt : IExtDecoder
+    internal sealed class InvalidExt : IExtDecoder
     {
         internal static readonly IExtDecoder Instance = new InvalidExt();
 
@@ -5177,7 +5177,7 @@ namespace MessagePack.Decoders
         ExtensionHeader Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixExt1Header : IExtHeaderDecoder
+    internal sealed class FixExt1Header : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new FixExt1Header();
 
@@ -5194,7 +5194,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt2Header : IExtHeaderDecoder
+    internal sealed class FixExt2Header : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new FixExt2Header();
 
@@ -5211,7 +5211,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt4Header : IExtHeaderDecoder
+    internal sealed class FixExt4Header : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new FixExt4Header();
 
@@ -5228,7 +5228,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt8Header : IExtHeaderDecoder
+    internal sealed class FixExt8Header : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new FixExt8Header();
 
@@ -5245,7 +5245,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt16Header : IExtHeaderDecoder
+    internal sealed class FixExt16Header : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new FixExt16Header();
 
@@ -5262,7 +5262,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Ext8Header : IExtHeaderDecoder
+    internal sealed class Ext8Header : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new Ext8Header();
 
@@ -5284,7 +5284,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Ext16Header : IExtHeaderDecoder
+    internal sealed class Ext16Header : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new Ext16Header();
 
@@ -5306,7 +5306,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Ext32Header : IExtHeaderDecoder
+    internal sealed class Ext32Header : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new Ext32Header();
 
@@ -5328,7 +5328,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidExtHeader : IExtHeaderDecoder
+    internal sealed class InvalidExtHeader : IExtHeaderDecoder
     {
         internal static readonly IExtHeaderDecoder Instance = new InvalidExtHeader();
 
@@ -5348,7 +5348,7 @@ namespace MessagePack.Decoders
         DateTime Read(byte[] bytes, int offset, out int readSize);
     }
 
-    internal class FixExt4DateTime : IDateTimeDecoder
+    internal sealed class FixExt4DateTime : IDateTimeDecoder
     {
         internal static readonly IDateTimeDecoder Instance = new FixExt4DateTime();
 
@@ -5375,7 +5375,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class FixExt8DateTime : IDateTimeDecoder
+    internal sealed class FixExt8DateTime : IDateTimeDecoder
     {
         internal static readonly IDateTimeDecoder Instance = new FixExt8DateTime();
 
@@ -5403,7 +5403,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class Ext8DateTime : IDateTimeDecoder
+    internal sealed class Ext8DateTime : IDateTimeDecoder
     {
         internal static readonly IDateTimeDecoder Instance = new Ext8DateTime();
 
@@ -5433,7 +5433,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class InvalidDateTime : IDateTimeDecoder
+    internal sealed class InvalidDateTime : IDateTimeDecoder
     {
         internal static readonly IDateTimeDecoder Instance = new InvalidDateTime();
 
@@ -5453,7 +5453,7 @@ namespace MessagePack.Decoders
         int Read(byte[] bytes, int offset);
     }
 
-    internal class ReadNext1 : IReadNextDecoder
+    internal sealed class ReadNext1 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext1();
         ReadNext1()
@@ -5463,7 +5463,7 @@ namespace MessagePack.Decoders
         public int Read(byte[] bytes, int offset) { return 1; }
     }
 
-    internal class ReadNext2 : IReadNextDecoder
+    internal sealed class ReadNext2 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext2();
         ReadNext2()
@@ -5473,7 +5473,7 @@ namespace MessagePack.Decoders
         public int Read(byte[] bytes, int offset) { return 2; }
 
     }
-    internal class ReadNext3 : IReadNextDecoder
+    internal sealed class ReadNext3 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext3();
         ReadNext3()
@@ -5482,7 +5482,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset) { return 3; }
     }
-    internal class ReadNext4 : IReadNextDecoder
+    internal sealed class ReadNext4 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext4();
         ReadNext4()
@@ -5491,7 +5491,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset) { return 4; }
     }
-    internal class ReadNext5 : IReadNextDecoder
+    internal sealed class ReadNext5 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext5();
         ReadNext5()
@@ -5500,7 +5500,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset) { return 5; }
     }
-    internal class ReadNext6 : IReadNextDecoder
+    internal sealed class ReadNext6 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext6();
         ReadNext6()
@@ -5510,7 +5510,7 @@ namespace MessagePack.Decoders
         public int Read(byte[] bytes, int offset) { return 6; }
     }
 
-    internal class ReadNext9 : IReadNextDecoder
+    internal sealed class ReadNext9 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext9();
         ReadNext9()
@@ -5519,7 +5519,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset) { return 9; }
     }
-    internal class ReadNext10 : IReadNextDecoder
+    internal sealed class ReadNext10 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext10();
         ReadNext10()
@@ -5528,7 +5528,7 @@ namespace MessagePack.Decoders
         }
         public int Read(byte[] bytes, int offset) { return 10; }
     }
-    internal class ReadNext18 : IReadNextDecoder
+    internal sealed class ReadNext18 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNext18();
         ReadNext18()
@@ -5538,7 +5538,7 @@ namespace MessagePack.Decoders
         public int Read(byte[] bytes, int offset) { return 18; }
     }
 
-    internal class ReadNextMap : IReadNextDecoder
+    internal sealed class ReadNextMap : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextMap();
         ReadNextMap()
@@ -5560,7 +5560,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextArray : IReadNextDecoder
+    internal sealed class ReadNextArray : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextArray();
         ReadNextArray()
@@ -5581,7 +5581,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextFixStr : IReadNextDecoder
+    internal sealed class ReadNextFixStr : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextFixStr();
         ReadNextFixStr()
@@ -5595,7 +5595,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextStr8 : IReadNextDecoder
+    internal sealed class ReadNextStr8 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextStr8();
         ReadNextStr8()
@@ -5609,7 +5609,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextStr16 : IReadNextDecoder
+    internal sealed class ReadNextStr16 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextStr16();
         ReadNextStr16()
@@ -5624,7 +5624,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextStr32 : IReadNextDecoder
+    internal sealed class ReadNextStr32 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextStr32();
         ReadNextStr32()
@@ -5638,7 +5638,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextBin8 : IReadNextDecoder
+    internal sealed class ReadNextBin8 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextBin8();
         ReadNextBin8()
@@ -5652,7 +5652,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextBin16 : IReadNextDecoder
+    internal sealed class ReadNextBin16 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextBin16();
         ReadNextBin16()
@@ -5667,7 +5667,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextBin32 : IReadNextDecoder
+    internal sealed class ReadNextBin32 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextBin32();
         ReadNextBin32()
@@ -5681,7 +5681,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextExt8 : IReadNextDecoder
+    internal sealed class ReadNextExt8 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextExt8();
         ReadNextExt8()
@@ -5695,7 +5695,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextExt16 : IReadNextDecoder
+    internal sealed class ReadNextExt16 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextExt16();
         ReadNextExt16()
@@ -5709,7 +5709,7 @@ namespace MessagePack.Decoders
         }
     }
 
-    internal class ReadNextExt32 : IReadNextDecoder
+    internal sealed class ReadNextExt32 : IReadNextDecoder
     {
         internal static readonly IReadNextDecoder Instance = new ReadNextExt32();
         ReadNextExt32()

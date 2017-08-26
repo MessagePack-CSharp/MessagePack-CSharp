@@ -437,6 +437,11 @@ namespace PerfBenchmarkDotNet
             return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(binIntKey);
         }
 
+        [Benchmark]
+        public StringKeySerializerTarget OldStringKey()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        }
 
         [Benchmark]
         public StringKeySerializerTarget Automata()
