@@ -1,6 +1,4 @@
-﻿#if NETSTANDARD1_4
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -21,6 +19,7 @@ namespace MessagePack.Internal
             root = new AutomataNode(-1);
         }
 
+#if NETSTANDARD1_4
         public unsafe void Add(string str, int value)
         {
             var bytes = Encoding.UTF8.GetBytes(str);
@@ -69,6 +68,58 @@ namespace MessagePack.Internal
                     value = node.Value;
                     return true;
                 }
+            }
+        }
+#else
+        // for Unity, use safe only.
+
+        public void Add(string str, int value)
+        {
+            var bytes = Encoding.UTF8.GetBytes(str);
+            var offset = 0;
+
+            var node = root;
+
+            var rest = bytes.Length;
+            while (rest != 0)
+            {
+                var key = AutomataKeyGen.GetKeySafe(bytes, ref offset, ref rest);
+
+                if (rest == 0)
+                {
+                    node = node.Add(key, value, str);
+                }
+                else
+                {
+                    node = node.Add(key);
+                }
+            }
+        }
+
+#endif
+
+
+        public bool TryGetValueSafe(ArraySegment<byte> key, out int value)
+        {
+            var node = root;
+            var bytes = key.Array;
+            var offset = key.Offset;
+            var rest = key.Count;
+
+            while (rest != 0 && node != null)
+            {
+                node = node.SearchNextSafe(bytes, ref offset, ref rest);
+            }
+
+            if (node == null)
+            {
+                value = -1;
+                return false;
+            }
+            else
+            {
+                value = node.Value;
+                return true;
             }
         }
 
@@ -201,7 +252,7 @@ namespace MessagePack.Internal
                 else
                 {
                     // binary search
-                    var index = Array.BinarySearch(nextKeys, 0, count, key);
+                    var index = BinarySearch(nextKeys, 0, count, key);
                     if (index >= 0)
                     {
                         return nexts[index];
@@ -209,6 +260,61 @@ namespace MessagePack.Internal
                 }
 
                 return null;
+            }
+
+            public unsafe AutomataNode SearchNextSafe(byte[] p, ref int offset, ref int rest)
+            {
+                var key = AutomataKeyGen.GetKeySafe(p, ref offset, ref rest);
+                if (count < 4)
+                {
+                    // linear search
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (nextKeys[i] == key)
+                        {
+                            return nexts[i];
+                        }
+                    }
+                }
+                else
+                {
+                    // binary search
+                    var index = BinarySearch(nextKeys, 0, count, key);
+                    if (index >= 0)
+                    {
+                        return nexts[index];
+                    }
+                }
+
+                return null;
+            }
+
+            internal static int BinarySearch(long[] array, int index, int length, long value)
+            {
+                int lo = index;
+                int hi = index + length - 1;
+                while (lo <= hi)
+                {
+                    int i = lo + ((hi - lo) >> 1);
+
+                    var arrayValue = array[i];
+                    int order;
+                    if (arrayValue < value) order = -1;
+                    else if (arrayValue > value) order = 1;
+                    else order = 0;
+
+                    if (order == 0) return i;
+                    if (order < 0)
+                    {
+                        lo = i + 1;
+                    }
+                    else
+                    {
+                        hi = i - 1;
+                    }
+                }
+
+                return ~lo;
             }
 
             public int CompareTo(AutomataNode other)
@@ -243,7 +349,7 @@ namespace MessagePack.Internal
                 {
                     // linear-search
                     var valueExists = nexts.Take(count).Where(x => x.Value != -1).ToArray();
-                    var childrenExists = nexts.Take(count).Where(x => x.HasChildren).ToArray();                    
+                    var childrenExists = nexts.Take(count).Where(x => x.HasChildren).ToArray();
                     var gotoSearchNext = il.DefineLabel();
                     var gotoNotFound = il.DefineLabel();
 
@@ -251,7 +357,7 @@ namespace MessagePack.Internal
                         il.EmitLdloc(rest);
                         if (childrenExists.Length != 0 && valueExists.Length == 0)
                         {
-                            
+
                             il.Emit(OpCodes.Brfalse, gotoNotFound); // if(rest == 0)
                         }
                         else
@@ -345,7 +451,7 @@ namespace MessagePack.Internal
     public static class AutomataKeyGen
     {
         public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKey", new[] { typeof(byte*).MakeByRefType(), typeof(int).MakeByRefType() });
-        public static readonly MethodInfo GetKeySafeMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKeySafe", new[] { typeof(byte[]), typeof(int).MakeByRefType(), typeof(int).MakeByRefType() });
+        // public static readonly MethodInfo GetKeySafeMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKeySafe", new[] { typeof(byte[]), typeof(int).MakeByRefType(), typeof(int).MakeByRefType() });
 
         public static unsafe long GetKey(ref byte* p, ref int rest)
         {
@@ -430,74 +536,144 @@ namespace MessagePack.Internal
             int readSize;
             long key;
 
-            unchecked
+            if (BitConverter.IsLittleEndian)
             {
-                if (rest >= 8)
+                unchecked
                 {
-                    key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24
-                        | (long)bytes[offset + 4] << 32 | (long)bytes[offset + 5] << 40 | (long)bytes[offset + 6] << 48 | (long)bytes[offset + 7] << 56;
-                    readSize = 8;
-                }
-                else
-                {
-                    switch (rest)
+                    if (rest >= 8)
                     {
-                        case 1:
-                            {
-                                key = bytes[offset];
-                                readSize = 1;
-                                break;
-                            }
-                        case 2:
-                            {
-                                key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8;
-                                readSize = 2;
-                                break;
-                            }
-                        case 3:
-                            {
-                                key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16;
-                                readSize = 3;
-                                break;
-                            }
-                        case 4:
-                            {
-                                key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24;
-                                readSize = 4;
-                                break;
-                            }
-                        case 5:
-                            {
-                                key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24
-                                    | (long)bytes[offset + 4] << 32;
-                                readSize = 5;
-                                break;
-                            }
-                        case 6:
-                            {
-                                key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24
-                                    | (long)bytes[offset + 4] << 32 | (long)bytes[offset + 5] << 40;
-                                readSize = 6;
-                                break;
-                            }
-                        case 7:
-                            {
-                                key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24
-                                    | (long)bytes[offset + 4] << 32 | (long)bytes[offset + 5] << 40 | (long)bytes[offset + 6] << 48;
-                                readSize = 7;
-                                break;
-                            }
-                        default:
-                            throw new InvalidOperationException("Not Supported Length");
+                        key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24
+                            | (long)bytes[offset + 4] << 32 | (long)bytes[offset + 5] << 40 | (long)bytes[offset + 6] << 48 | (long)bytes[offset + 7] << 56;
+                        readSize = 8;
                     }
-                }
+                    else
+                    {
+                        switch (rest)
+                        {
+                            case 1:
+                                {
+                                    key = bytes[offset];
+                                    readSize = 1;
+                                    break;
+                                }
+                            case 2:
+                                {
+                                    key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8;
+                                    readSize = 2;
+                                    break;
+                                }
+                            case 3:
+                                {
+                                    key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16;
+                                    readSize = 3;
+                                    break;
+                                }
+                            case 4:
+                                {
+                                    key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24;
+                                    readSize = 4;
+                                    break;
+                                }
+                            case 5:
+                                {
+                                    key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24
+                                        | (long)bytes[offset + 4] << 32;
+                                    readSize = 5;
+                                    break;
+                                }
+                            case 6:
+                                {
+                                    key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24
+                                        | (long)bytes[offset + 4] << 32 | (long)bytes[offset + 5] << 40;
+                                    readSize = 6;
+                                    break;
+                                }
+                            case 7:
+                                {
+                                    key = (long)bytes[offset] << 0 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 24
+                                        | (long)bytes[offset + 4] << 32 | (long)bytes[offset + 5] << 40 | (long)bytes[offset + 6] << 48;
+                                    readSize = 7;
+                                    break;
+                                }
+                            default:
+                                throw new InvalidOperationException("Not Supported Length");
+                        }
+                    }
 
-                offset += readSize;
-                rest -= readSize;
-                return key;
+                    offset += readSize;
+                    rest -= readSize;
+                    return key;
+                }
+            }
+            else
+            {
+                unchecked
+                {
+                    if (rest >= 8)
+                    {
+                        key = (long)bytes[offset] << 56 | (long)bytes[offset + 1] << 48 | (long)bytes[offset + 2] << 40 | (long)bytes[offset + 3] << 32
+                            | (long)bytes[offset + 4] << 24 | (long)bytes[offset + 5] << 16 | (long)bytes[offset + 6] << 8 | (long)bytes[offset + 7];
+                        readSize = 8;
+                    }
+                    else
+                    {
+                        switch (rest)
+                        {
+                            case 1:
+                                {
+                                    key = bytes[offset];
+                                    readSize = 1;
+                                    break;
+                                }
+                            case 2:
+                                {
+                                    key = (long)bytes[offset] << 8 | (long)bytes[offset + 1] << 0;
+                                    readSize = 2;
+                                    break;
+                                }
+                            case 3:
+                                {
+                                    key = (long)bytes[offset] << 16 | (long)bytes[offset + 1] << 8 | (long)bytes[offset + 2] << 0;
+                                    readSize = 3;
+                                    break;
+                                }
+                            case 4:
+                                {
+                                    key = (long)bytes[offset] << 24 | (long)bytes[offset + 1] << 16 | (long)bytes[offset + 2] << 8 | (long)bytes[offset + 3] << 0;
+                                    readSize = 4;
+                                    break;
+                                }
+                            case 5:
+                                {
+                                    key = (long)bytes[offset] << 32 | (long)bytes[offset + 1] << 24 | (long)bytes[offset + 2] << 16 | (long)bytes[offset + 3] << 8
+                                        | (long)bytes[offset + 4] << 0;
+                                    readSize = 5;
+                                    break;
+                                }
+                            case 6:
+                                {
+                                    key = (long)bytes[offset] << 40 | (long)bytes[offset + 1] << 32 | (long)bytes[offset + 2] << 24 | (long)bytes[offset + 3] << 16
+                                        | (long)bytes[offset + 4] << 8 | (long)bytes[offset + 5] << 0;
+                                    readSize = 6;
+                                    break;
+                                }
+                            case 7:
+                                {
+                                    key = (long)bytes[offset] << 48 | (long)bytes[offset + 1] << 40 | (long)bytes[offset + 2] << 32 | (long)bytes[offset + 3] << 24
+                                        | (long)bytes[offset + 4] << 16 | (long)bytes[offset + 5] << 8 | (long)bytes[offset + 6] << 0;
+                                    readSize = 7;
+                                    break;
+                                }
+                            default:
+                                throw new InvalidOperationException("Not Supported Length");
+                        }
+                    }
+
+                    offset += readSize;
+                    rest -= readSize;
+                    return key;
+                }
             }
         }
     }
 }
-
-#endif

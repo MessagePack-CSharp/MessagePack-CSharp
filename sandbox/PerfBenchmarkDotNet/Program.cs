@@ -8,6 +8,7 @@ using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
+using GeneratedFormatter.MessagePack.Formatters;
 using MsgPack.Serialization;
 using Newtonsoft.Json;
 using ProtoBuf;
@@ -40,11 +41,13 @@ namespace PerfBenchmarkDotNet
         {
             var switcher = new BenchmarkSwitcher(new[]
             {
-                typeof(TypelessSerializeBenchmark),
-                typeof(TypelessDeserializeBenchmark),
+                //typeof(TypelessSerializeBenchmark),
+                //typeof(TypelessDeserializeBenchmark),
                 typeof(DeserializeBenchmark),
+                typeof(SerializeBenchmark),
                 typeof(DictionaryLookupCompare),
-                typeof(StringKeyDeserializeCompare)
+                typeof(StringKeyDeserializeCompare),
+                typeof(NewVsOld)
             });
 
             // args = new[] { "0" };
@@ -289,6 +292,9 @@ namespace PerfBenchmarkDotNet
         static Hyperion.Serializer hyperionSerializer = new Hyperion.Serializer();
         static byte[] hyperionObj;
 
+        static newmsgpack::MessagePack.IFormatterResolver mpcGenFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedAutomata());
+        static newmsgpack::MessagePack.IFormatterResolver mpcGenDictFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedDictionary());
+
         static DeserializeBenchmark()
         {
             using (var ms = new MemoryStream())
@@ -314,6 +320,18 @@ namespace PerfBenchmarkDotNet
         public StringKeySerializerTarget StringKey()
         {
             return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj);
+        }
+
+        // [Benchmark]
+        public StringKeySerializerTarget StringKey_MpcGenerated()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenFormatterResolver);
+        }
+
+        // [Benchmark]
+        public StringKeySerializerTarget StringKey_MpcGeneratedDict()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenDictFormatterResolver);
         }
 
         [Benchmark]
@@ -388,6 +406,116 @@ namespace PerfBenchmarkDotNet
             using (var sr = new StreamReader(ms, Encoding.UTF8))
             {
                 return Jil.JSON.Deserialize<IntKeySerializerTarget>(sr);
+            }
+        }
+    }
+
+
+
+    [Config(typeof(BenchmarkConfig))]
+    public class SerializeBenchmark
+    {
+        static MsgPack.Serialization.SerializationContext mapContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Map };
+        static MsgPack.Serialization.SerializationContext arrayContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Array };
+        static JsonSerializer jsonSerialzier = new JsonSerializer();
+        static Hyperion.Serializer hyperionSerializer = new Hyperion.Serializer();
+        static newmsgpack::MessagePack.IFormatterResolver mpcGenFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedAutomata());
+        static newmsgpack::MessagePack.IFormatterResolver mpcGenDictFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedDictionary());
+        static IntKeySerializerTarget intData = new IntKeySerializerTarget();
+        static StringKeySerializerTarget stringData = new StringKeySerializerTarget();
+
+        [Benchmark(Baseline = true)]
+        public byte[] IntKey()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize<IntKeySerializerTarget>(intData);
+        }
+
+        [Benchmark]
+        public byte[] StringKey()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize<StringKeySerializerTarget>(stringData);
+        }
+
+        [Benchmark]
+        public byte[] Typeless_IntKey()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Typeless.Serialize(intData);
+        }
+
+        [Benchmark]
+        public byte[] Typeless_StringKey()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Typeless.Serialize(stringData);
+        }
+
+        [Benchmark]
+        public byte[] MsgPackCliMap()
+        {
+            return mapContext.GetSerializer<IntKeySerializerTarget>().PackSingleObject(intData);
+        }
+
+        [Benchmark]
+        public byte[] MsgPackCliArray()
+        {
+            return arrayContext.GetSerializer<IntKeySerializerTarget>().PackSingleObject(intData);
+        }
+
+        [Benchmark]
+        public byte[] ProtobufNet()
+        {
+            using (var ms = new MemoryStream())
+            {
+                ProtoBuf.Serializer.Serialize<IntKeySerializerTarget>(ms, intData);
+                return ms.ToArray();
+            }
+        }
+
+        [Benchmark]
+        public byte[] Hyperion()
+        {
+            using (var ms = new MemoryStream())
+            {
+                hyperionSerializer.Serialize(intData, ms);
+                return ms.ToArray();
+            }
+        }
+
+        [Benchmark]
+        public byte[] JsonNetString()
+        {
+            return Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(intData));
+        }
+
+        [Benchmark]
+        public byte[] JsonNetStreamWriter()
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var sr = new StreamWriter(ms, Encoding.UTF8))
+                using (var jr = new JsonTextWriter(sr))
+                {
+                    jsonSerialzier.Serialize(jr, intData);
+                }
+                return ms.ToArray();
+            }
+        }
+
+        [Benchmark]
+        public byte[] JilString()
+        {
+            return Encoding.UTF8.GetBytes(Jil.JSON.Serialize<IntKeySerializerTarget>(intData));
+        }
+
+        [Benchmark]
+        public byte[] JilStreamWriter()
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var sr = new StreamWriter(ms, Encoding.UTF8))
+                {
+                    Jil.JSON.Serialize<IntKeySerializerTarget>(intData, sr);
+                }
+                return ms.ToArray();
             }
         }
     }
@@ -476,6 +604,30 @@ namespace PerfBenchmarkDotNet
         public StringKeySerializerTarget AutomataInlineEmit()
         {
             return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        }
+    }
+
+
+
+    [Config(typeof(BenchmarkConfig))]
+    public class NewVsOld
+    {
+        byte[] bin;
+        public NewVsOld()
+        {
+            bin = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
+        }
+
+        [Benchmark(Baseline = true)]
+        public StringKeySerializerTarget New()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        }
+
+        [Benchmark]
+        public StringKeySerializerTarget Old()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
         }
     }
 
@@ -793,7 +945,7 @@ namespace GeneratedFormatter
                 {
                     int num4;
                     var segment = MessagePackBinary.ReadStringSegment(bytes, num, out ptr);
-                    bool arg_47_0 = this.keyMapping.TryGetValue(segment.Array, segment.Offset, segment.Count, out num4);
+                    bool arg_47_0 = this.keyMapping.TryGetValueSafe(segment, out num4);
                     num += ptr;
                     if (!arg_47_0)
                     {
@@ -850,6 +1002,265 @@ namespace GeneratedFormatter
                     MyProperty8 = myProperty8,
                     MyProperty9 = myProperty9
                 };
+            }
+        }
+
+
+        public sealed class StringKeySerializerTargetFormatter_MpcGeneratedAutomata : newmsgpack::MessagePack.Formatters.IMessagePackFormatter<StringKeySerializerTarget>
+        {
+
+            readonly newmsgpack::MessagePack.Internal.AutomataDictionary ____keyMapping;
+            readonly byte[][] ____stringByteKeys;
+
+            public StringKeySerializerTargetFormatter_MpcGeneratedAutomata()
+            {
+                this.____keyMapping = new newmsgpack::MessagePack.Internal.AutomataDictionary()
+            {
+                { "MyProperty1", 0},
+                { "MyProperty2", 1},
+                { "MyProperty3", 2},
+                { "MyProperty4", 3},
+                { "MyProperty5", 4},
+                { "MyProperty6", 5},
+                { "MyProperty7", 6},
+                { "MyProperty8", 7},
+                { "MyProperty9", 8},
+            };
+
+                this.____stringByteKeys = new byte[][]
+                {
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty1"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty2"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty3"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty4"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty5"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty6"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty7"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty8"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty9"),
+
+                };
+            }
+
+
+            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            {
+                throw new NotImplementedException();
+            }
+
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+            {
+                if (newmsgpack::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+                {
+                    readSize = 1;
+                    return null;
+                }
+
+                var startOffset = offset;
+                var length = newmsgpack::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+                offset += readSize;
+
+                var __MyProperty1__ = default(int);
+                var __MyProperty2__ = default(int);
+                var __MyProperty3__ = default(int);
+                var __MyProperty4__ = default(int);
+                var __MyProperty5__ = default(int);
+                var __MyProperty6__ = default(int);
+                var __MyProperty7__ = default(int);
+                var __MyProperty8__ = default(int);
+                var __MyProperty9__ = default(int);
+
+                for (int i = 0; i < length; i++)
+                {
+                    var stringKey = newmsgpack::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                    offset += readSize;
+                    int key;
+                    if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                    {
+                        readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        goto NEXT_LOOP;
+                    }
+
+                    switch (key)
+                    {
+                        case 0:
+                            __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 1:
+                            __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 2:
+                            __MyProperty3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 3:
+                            __MyProperty4__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 4:
+                            __MyProperty5__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 5:
+                            __MyProperty6__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 6:
+                            __MyProperty7__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 7:
+                            __MyProperty8__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 8:
+                            __MyProperty9__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        default:
+                            readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                            break;
+                    }
+
+                    NEXT_LOOP:
+                    offset += readSize;
+                }
+
+                readSize = offset - startOffset;
+
+                var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget();
+                ____result.MyProperty1 = __MyProperty1__;
+                ____result.MyProperty2 = __MyProperty2__;
+                ____result.MyProperty3 = __MyProperty3__;
+                ____result.MyProperty4 = __MyProperty4__;
+                ____result.MyProperty5 = __MyProperty5__;
+                ____result.MyProperty6 = __MyProperty6__;
+                ____result.MyProperty7 = __MyProperty7__;
+                ____result.MyProperty8 = __MyProperty8__;
+                ____result.MyProperty9 = __MyProperty9__;
+                return ____result;
+            }
+        }
+
+        public sealed class StringKeySerializerTargetFormatter_MpcGeneratedDictionary : newmsgpack::MessagePack.Formatters.IMessagePackFormatter<StringKeySerializerTarget>
+        {
+
+            readonly newmsgpack::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+            readonly byte[][] ____stringByteKeys;
+
+            public StringKeySerializerTargetFormatter_MpcGeneratedDictionary()
+            {
+                this.____keyMapping = new newmsgpack::MessagePack.Internal.ByteArrayStringHashTable(9)
+            {
+                { "MyProperty1", 0},
+                { "MyProperty2", 1},
+                { "MyProperty3", 2},
+                { "MyProperty4", 3},
+                { "MyProperty5", 4},
+                { "MyProperty6", 5},
+                { "MyProperty7", 6},
+                { "MyProperty8", 7},
+                { "MyProperty9", 8},
+            };
+
+                this.____stringByteKeys = new byte[][]
+                {
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty1"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty2"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty3"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty4"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty5"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty6"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty7"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty8"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty9"),
+
+                };
+            }
+
+
+            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            {
+                throw new NotImplementedException();
+            }
+
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+            {
+                if (newmsgpack::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+                {
+                    readSize = 1;
+                    return null;
+                }
+
+                var startOffset = offset;
+                var length = newmsgpack::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+                offset += readSize;
+
+                var __MyProperty1__ = default(int);
+                var __MyProperty2__ = default(int);
+                var __MyProperty3__ = default(int);
+                var __MyProperty4__ = default(int);
+                var __MyProperty5__ = default(int);
+                var __MyProperty6__ = default(int);
+                var __MyProperty7__ = default(int);
+                var __MyProperty8__ = default(int);
+                var __MyProperty9__ = default(int);
+
+                for (int i = 0; i < length; i++)
+                {
+                    var stringKey = newmsgpack::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                    offset += readSize;
+                    int key;
+                    if (!____keyMapping.TryGetValue(stringKey, out key))
+                    {
+                        readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        goto NEXT_LOOP;
+                    }
+
+                    switch (key)
+                    {
+                        case 0:
+                            __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 1:
+                            __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 2:
+                            __MyProperty3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 3:
+                            __MyProperty4__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 4:
+                            __MyProperty5__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 5:
+                            __MyProperty6__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 6:
+                            __MyProperty7__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 7:
+                            __MyProperty8__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        case 8:
+                            __MyProperty9__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            break;
+                        default:
+                            readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                            break;
+                    }
+
+                    NEXT_LOOP:
+                    offset += readSize;
+                }
+
+                readSize = offset - startOffset;
+
+                var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget();
+                ____result.MyProperty1 = __MyProperty1__;
+                ____result.MyProperty2 = __MyProperty2__;
+                ____result.MyProperty3 = __MyProperty3__;
+                ____result.MyProperty4 = __MyProperty4__;
+                ____result.MyProperty5 = __MyProperty5__;
+                ____result.MyProperty6 = __MyProperty6__;
+                ____result.MyProperty7 = __MyProperty7__;
+                ____result.MyProperty8 = __MyProperty8__;
+                ____result.MyProperty9 = __MyProperty9__;
+                return ____result;
             }
         }
     }

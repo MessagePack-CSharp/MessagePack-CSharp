@@ -19,12 +19,12 @@ namespace <#= Namespace #>
     {
 <# if( objInfo.IsStringKey) { #>
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public <#= objInfo.Name #>Formatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(<#= objInfo.Members.Length #>)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
 <# foreach(var x in objInfo.Members) { #>
                 { "<#= x.StringKey #>", <#= x.IntKey #>},
@@ -108,7 +108,7 @@ namespace <#= Namespace #>
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
