@@ -43,7 +43,7 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(63)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(64)
             {
                 {typeof(int[,]), 0 },
                 {typeof(global::GlobalMyEnum[,]), 1 },
@@ -108,6 +108,7 @@ namespace MessagePack.Resolvers
                 {typeof(global::ArrayTestTest), 60 },
                 {typeof(global::SimpleModel), 61 },
                 {typeof(global::ComplexModel), 62 },
+                {typeof(global::PerfBenchmarkDotNet.StringKeySerializerTarget), 63 },
             };
         }
 
@@ -181,6 +182,7 @@ namespace MessagePack.Resolvers
                 case 60: return new MessagePack.Formatters.ArrayTestTestFormatter();
                 case 61: return new MessagePack.Formatters.SimpleModelFormatter();
                 case 62: return new MessagePack.Formatters.ComplexModelFormatter();
+                case 63: return new MessagePack.Formatters.PerfBenchmarkDotNet.StringKeySerializerTargetFormatter();
                 default: return null;
             }
         }
@@ -261,488 +263,488 @@ namespace MessagePack.Formatters
 namespace MessagePack.Formatters.SharedData
 {
     using System;
-	using System.Collections.Generic;
+    using System.Collections.Generic;
     using MessagePack;
 
     public sealed class IUnionCheckerFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionChecker>
     {
-		readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-		readonly Dictionary<int, int> keyToJumpMap;
+        readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        readonly Dictionary<int, int> keyToJumpMap;
 
-		public IUnionCheckerFormatter()
-		{
-			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
-			{
-				{ typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-				{ typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
-				{ typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(2, 2) },
-				{ typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(3, 3) },
-			};
-			this.keyToJumpMap = new Dictionary<int, int>(4)
-			{
-				{ 0, 0 },
-				{ 1, 1 },
-				{ 2, 2 },
-				{ 3, 3 },
-			};
-		}
+        public IUnionCheckerFormatter()
+        {
+            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            {
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
+                { typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(2, 2) },
+                { typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(3, 3) },
+            };
+            this.keyToJumpMap = new Dictionary<int, int>(4)
+            {
+                { 0, 0 },
+                { 1, 1 },
+                { 2, 2 },
+                { 3, 3 },
+            };
+        }
 
         public int Serialize(ref byte[] bytes, int offset, global::SharedData.IUnionChecker value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-			KeyValuePair<int, int> keyValuePair;
-			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
-			{
-				var startOffset = offset;
-				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
-				switch (keyValuePair.Value)
-				{
-					case 0:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion1)value, formatterResolver);
-						break;
-					case 1:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion2)value, formatterResolver);
-						break;
-					case 2:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion3)value, formatterResolver);
-						break;
-					case 3:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion4)value, formatterResolver);
-						break;
-					default:
-						break;
-				}
+            KeyValuePair<int, int> keyValuePair;
+            if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+                switch (keyValuePair.Value)
+                {
+                    case 0:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion1)value, formatterResolver);
+                        break;
+                    case 1:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion2)value, formatterResolver);
+                        break;
+                    case 2:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion3)value, formatterResolver);
+                        break;
+                    case 3:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion4)value, formatterResolver);
+                        break;
+                    default:
+                        break;
+                }
 
-				return offset - startOffset;
-			}
+                return offset - startOffset;
+            }
 
-			return MessagePackBinary.WriteNil(ref bytes, offset);
+            return MessagePackBinary.WriteNil(ref bytes, offset);
         }
         
         public global::SharedData.IUnionChecker Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
-			{
-				readSize = 1;
-				return null;
-			}
+            {
+                readSize = 1;
+                return null;
+            }
 
-			var startOffset = offset;
-			
-			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
-			{
-				throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker");
-			}
-			offset += readSize;
+            var startOffset = offset;
+            
+            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+            {
+                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker");
+            }
+            offset += readSize;
 
-			var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-			offset += readSize;
+            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
-			{
-				key = -1;
-			}
+            {
+                key = -1;
+            }
 
-			global::SharedData.IUnionChecker result = null;
-			switch (key)
-			{
-				case 0:
-					result = (global::SharedData.IUnionChecker)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 1:
-					result = (global::SharedData.IUnionChecker)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 2:
-					result = (global::SharedData.IUnionChecker)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 3:
-					result = (global::SharedData.IUnionChecker)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				default:
-					offset += MessagePackBinary.ReadNextBlock(bytes, offset);
-					break;
-			}
-			
-			readSize = offset - startOffset;
-			
-			return result;
+            global::SharedData.IUnionChecker result = null;
+            switch (key)
+            {
+                case 0:
+                    result = (global::SharedData.IUnionChecker)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 1:
+                    result = (global::SharedData.IUnionChecker)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 2:
+                    result = (global::SharedData.IUnionChecker)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 3:
+                    result = (global::SharedData.IUnionChecker)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                default:
+                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                    break;
+            }
+            
+            readSize = offset - startOffset;
+            
+            return result;
         }
     }
 
     public sealed class IUnionChecker2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionChecker2>
     {
-		readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-		readonly Dictionary<int, int> keyToJumpMap;
+        readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        readonly Dictionary<int, int> keyToJumpMap;
 
-		public IUnionChecker2Formatter()
-		{
-			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
-			{
-				{ typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(31, 0) },
-				{ typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(42, 1) },
-				{ typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(63, 2) },
-				{ typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(120, 3) },
-			};
-			this.keyToJumpMap = new Dictionary<int, int>(4)
-			{
-				{ 31, 0 },
-				{ 42, 1 },
-				{ 63, 2 },
-				{ 120, 3 },
-			};
-		}
+        public IUnionChecker2Formatter()
+        {
+            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            {
+                { typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(31, 0) },
+                { typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(42, 1) },
+                { typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(63, 2) },
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(120, 3) },
+            };
+            this.keyToJumpMap = new Dictionary<int, int>(4)
+            {
+                { 31, 0 },
+                { 42, 1 },
+                { 63, 2 },
+                { 120, 3 },
+            };
+        }
 
         public int Serialize(ref byte[] bytes, int offset, global::SharedData.IUnionChecker2 value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-			KeyValuePair<int, int> keyValuePair;
-			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
-			{
-				var startOffset = offset;
-				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
-				switch (keyValuePair.Value)
-				{
-					case 0:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion2)value, formatterResolver);
-						break;
-					case 1:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion3)value, formatterResolver);
-						break;
-					case 2:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion4)value, formatterResolver);
-						break;
-					case 3:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion1)value, formatterResolver);
-						break;
-					default:
-						break;
-				}
+            KeyValuePair<int, int> keyValuePair;
+            if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+                switch (keyValuePair.Value)
+                {
+                    case 0:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion2)value, formatterResolver);
+                        break;
+                    case 1:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion3)value, formatterResolver);
+                        break;
+                    case 2:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion4)value, formatterResolver);
+                        break;
+                    case 3:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion1)value, formatterResolver);
+                        break;
+                    default:
+                        break;
+                }
 
-				return offset - startOffset;
-			}
+                return offset - startOffset;
+            }
 
-			return MessagePackBinary.WriteNil(ref bytes, offset);
+            return MessagePackBinary.WriteNil(ref bytes, offset);
         }
         
         public global::SharedData.IUnionChecker2 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
-			{
-				readSize = 1;
-				return null;
-			}
+            {
+                readSize = 1;
+                return null;
+            }
 
-			var startOffset = offset;
-			
-			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
-			{
-				throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker2");
-			}
-			offset += readSize;
+            var startOffset = offset;
+            
+            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+            {
+                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker2");
+            }
+            offset += readSize;
 
-			var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-			offset += readSize;
+            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
-			{
-				key = -1;
-			}
+            {
+                key = -1;
+            }
 
-			global::SharedData.IUnionChecker2 result = null;
-			switch (key)
-			{
-				case 0:
-					result = (global::SharedData.IUnionChecker2)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 1:
-					result = (global::SharedData.IUnionChecker2)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 2:
-					result = (global::SharedData.IUnionChecker2)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 3:
-					result = (global::SharedData.IUnionChecker2)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				default:
-					offset += MessagePackBinary.ReadNextBlock(bytes, offset);
-					break;
-			}
-			
-			readSize = offset - startOffset;
-			
-			return result;
+            global::SharedData.IUnionChecker2 result = null;
+            switch (key)
+            {
+                case 0:
+                    result = (global::SharedData.IUnionChecker2)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 1:
+                    result = (global::SharedData.IUnionChecker2)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 2:
+                    result = (global::SharedData.IUnionChecker2)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 3:
+                    result = (global::SharedData.IUnionChecker2)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                default:
+                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                    break;
+            }
+            
+            readSize = offset - startOffset;
+            
+            return result;
         }
     }
 
     public sealed class IIVersioningUnionFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IIVersioningUnion>
     {
-		readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-		readonly Dictionary<int, int> keyToJumpMap;
+        readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        readonly Dictionary<int, int> keyToJumpMap;
 
-		public IIVersioningUnionFormatter()
-		{
-			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(1, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
-			{
-				{ typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-			};
-			this.keyToJumpMap = new Dictionary<int, int>(1)
-			{
-				{ 0, 0 },
-			};
-		}
+        public IIVersioningUnionFormatter()
+        {
+            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(1, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            {
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
+            };
+            this.keyToJumpMap = new Dictionary<int, int>(1)
+            {
+                { 0, 0 },
+            };
+        }
 
         public int Serialize(ref byte[] bytes, int offset, global::SharedData.IIVersioningUnion value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-			KeyValuePair<int, int> keyValuePair;
-			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
-			{
-				var startOffset = offset;
-				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
-				switch (keyValuePair.Value)
-				{
-					case 0:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion1)value, formatterResolver);
-						break;
-					default:
-						break;
-				}
+            KeyValuePair<int, int> keyValuePair;
+            if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+                switch (keyValuePair.Value)
+                {
+                    case 0:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref bytes, offset, (global::SharedData.MySubUnion1)value, formatterResolver);
+                        break;
+                    default:
+                        break;
+                }
 
-				return offset - startOffset;
-			}
+                return offset - startOffset;
+            }
 
-			return MessagePackBinary.WriteNil(ref bytes, offset);
+            return MessagePackBinary.WriteNil(ref bytes, offset);
         }
         
         public global::SharedData.IIVersioningUnion Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
-			{
-				readSize = 1;
-				return null;
-			}
+            {
+                readSize = 1;
+                return null;
+            }
 
-			var startOffset = offset;
-			
-			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
-			{
-				throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IIVersioningUnion");
-			}
-			offset += readSize;
+            var startOffset = offset;
+            
+            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+            {
+                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IIVersioningUnion");
+            }
+            offset += readSize;
 
-			var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-			offset += readSize;
+            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
-			{
-				key = -1;
-			}
+            {
+                key = -1;
+            }
 
-			global::SharedData.IIVersioningUnion result = null;
-			switch (key)
-			{
-				case 0:
-					result = (global::SharedData.IIVersioningUnion)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				default:
-					offset += MessagePackBinary.ReadNextBlock(bytes, offset);
-					break;
-			}
-			
-			readSize = offset - startOffset;
-			
-			return result;
+            global::SharedData.IIVersioningUnion result = null;
+            switch (key)
+            {
+                case 0:
+                    result = (global::SharedData.IIVersioningUnion)formatterResolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                default:
+                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                    break;
+            }
+            
+            readSize = offset - startOffset;
+            
+            return result;
         }
     }
 
     public sealed class RootUnionTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.RootUnionType>
     {
-		readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-		readonly Dictionary<int, int> keyToJumpMap;
+        readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        readonly Dictionary<int, int> keyToJumpMap;
 
-		public RootUnionTypeFormatter()
-		{
-			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
-			{
-				{ typeof(global::SharedData.SubUnionType1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-				{ typeof(global::SharedData.SubUnionType2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
-			};
-			this.keyToJumpMap = new Dictionary<int, int>(2)
-			{
-				{ 0, 0 },
-				{ 1, 1 },
-			};
-		}
+        public RootUnionTypeFormatter()
+        {
+            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            {
+                { typeof(global::SharedData.SubUnionType1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.SubUnionType2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
+            };
+            this.keyToJumpMap = new Dictionary<int, int>(2)
+            {
+                { 0, 0 },
+                { 1, 1 },
+            };
+        }
 
         public int Serialize(ref byte[] bytes, int offset, global::SharedData.RootUnionType value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-			KeyValuePair<int, int> keyValuePair;
-			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
-			{
-				var startOffset = offset;
-				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
-				switch (keyValuePair.Value)
-				{
-					case 0:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType1>().Serialize(ref bytes, offset, (global::SharedData.SubUnionType1)value, formatterResolver);
-						break;
-					case 1:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType2>().Serialize(ref bytes, offset, (global::SharedData.SubUnionType2)value, formatterResolver);
-						break;
-					default:
-						break;
-				}
+            KeyValuePair<int, int> keyValuePair;
+            if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+                switch (keyValuePair.Value)
+                {
+                    case 0:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType1>().Serialize(ref bytes, offset, (global::SharedData.SubUnionType1)value, formatterResolver);
+                        break;
+                    case 1:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType2>().Serialize(ref bytes, offset, (global::SharedData.SubUnionType2)value, formatterResolver);
+                        break;
+                    default:
+                        break;
+                }
 
-				return offset - startOffset;
-			}
+                return offset - startOffset;
+            }
 
-			return MessagePackBinary.WriteNil(ref bytes, offset);
+            return MessagePackBinary.WriteNil(ref bytes, offset);
         }
         
         public global::SharedData.RootUnionType Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
-			{
-				readSize = 1;
-				return null;
-			}
+            {
+                readSize = 1;
+                return null;
+            }
 
-			var startOffset = offset;
-			
-			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
-			{
-				throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.RootUnionType");
-			}
-			offset += readSize;
+            var startOffset = offset;
+            
+            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+            {
+                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.RootUnionType");
+            }
+            offset += readSize;
 
-			var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-			offset += readSize;
+            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
-			{
-				key = -1;
-			}
+            {
+                key = -1;
+            }
 
-			global::SharedData.RootUnionType result = null;
-			switch (key)
-			{
-				case 0:
-					result = (global::SharedData.RootUnionType)formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 1:
-					result = (global::SharedData.RootUnionType)formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				default:
-					offset += MessagePackBinary.ReadNextBlock(bytes, offset);
-					break;
-			}
-			
-			readSize = offset - startOffset;
-			
-			return result;
+            global::SharedData.RootUnionType result = null;
+            switch (key)
+            {
+                case 0:
+                    result = (global::SharedData.RootUnionType)formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 1:
+                    result = (global::SharedData.RootUnionType)formatterResolver.GetFormatterWithVerify<global::SharedData.SubUnionType2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                default:
+                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                    break;
+            }
+            
+            readSize = offset - startOffset;
+            
+            return result;
         }
     }
 
     public sealed class IUnionSampleFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionSample>
     {
-		readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-		readonly Dictionary<int, int> keyToJumpMap;
+        readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        readonly Dictionary<int, int> keyToJumpMap;
 
-		public IUnionSampleFormatter()
-		{
-			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
-			{
-				{ typeof(global::SharedData.FooClass).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-				{ typeof(global::SharedData.BarClass).TypeHandle, new KeyValuePair<int, int>(100, 1) },
-			};
-			this.keyToJumpMap = new Dictionary<int, int>(2)
-			{
-				{ 0, 0 },
-				{ 100, 1 },
-			};
-		}
+        public IUnionSampleFormatter()
+        {
+            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            {
+                { typeof(global::SharedData.FooClass).TypeHandle, new KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.BarClass).TypeHandle, new KeyValuePair<int, int>(100, 1) },
+            };
+            this.keyToJumpMap = new Dictionary<int, int>(2)
+            {
+                { 0, 0 },
+                { 100, 1 },
+            };
+        }
 
         public int Serialize(ref byte[] bytes, int offset, global::SharedData.IUnionSample value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-			KeyValuePair<int, int> keyValuePair;
-			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
-			{
-				var startOffset = offset;
-				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
-				switch (keyValuePair.Value)
-				{
-					case 0:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.FooClass>().Serialize(ref bytes, offset, (global::SharedData.FooClass)value, formatterResolver);
-						break;
-					case 1:
-						offset += formatterResolver.GetFormatterWithVerify<global::SharedData.BarClass>().Serialize(ref bytes, offset, (global::SharedData.BarClass)value, formatterResolver);
-						break;
-					default:
-						break;
-				}
+            KeyValuePair<int, int> keyValuePair;
+            if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+                switch (keyValuePair.Value)
+                {
+                    case 0:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.FooClass>().Serialize(ref bytes, offset, (global::SharedData.FooClass)value, formatterResolver);
+                        break;
+                    case 1:
+                        offset += formatterResolver.GetFormatterWithVerify<global::SharedData.BarClass>().Serialize(ref bytes, offset, (global::SharedData.BarClass)value, formatterResolver);
+                        break;
+                    default:
+                        break;
+                }
 
-				return offset - startOffset;
-			}
+                return offset - startOffset;
+            }
 
-			return MessagePackBinary.WriteNil(ref bytes, offset);
+            return MessagePackBinary.WriteNil(ref bytes, offset);
         }
         
         public global::SharedData.IUnionSample Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
-			{
-				readSize = 1;
-				return null;
-			}
+            {
+                readSize = 1;
+                return null;
+            }
 
-			var startOffset = offset;
-			
-			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
-			{
-				throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionSample");
-			}
-			offset += readSize;
+            var startOffset = offset;
+            
+            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+            {
+                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionSample");
+            }
+            offset += readSize;
 
-			var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-			offset += readSize;
+            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
-			{
-				key = -1;
-			}
+            {
+                key = -1;
+            }
 
-			global::SharedData.IUnionSample result = null;
-			switch (key)
-			{
-				case 0:
-					result = (global::SharedData.IUnionSample)formatterResolver.GetFormatterWithVerify<global::SharedData.FooClass>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 1:
-					result = (global::SharedData.IUnionSample)formatterResolver.GetFormatterWithVerify<global::SharedData.BarClass>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				default:
-					offset += MessagePackBinary.ReadNextBlock(bytes, offset);
-					break;
-			}
-			
-			readSize = offset - startOffset;
-			
-			return result;
+            global::SharedData.IUnionSample result = null;
+            switch (key)
+            {
+                case 0:
+                    result = (global::SharedData.IUnionSample)formatterResolver.GetFormatterWithVerify<global::SharedData.FooClass>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 1:
+                    result = (global::SharedData.IUnionSample)formatterResolver.GetFormatterWithVerify<global::SharedData.BarClass>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                default:
+                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                    break;
+            }
+            
+            readSize = offset - startOffset;
+            
+            return result;
         }
     }
 
@@ -761,106 +763,106 @@ namespace MessagePack.Formatters.SharedData
 namespace MessagePack.Formatters
 {
     using System;
-	using System.Collections.Generic;
+    using System.Collections.Generic;
     using MessagePack;
 
     public sealed class IMessageBodyFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::IMessageBody>
     {
-		readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-		readonly Dictionary<int, int> keyToJumpMap;
+        readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        readonly Dictionary<int, int> keyToJumpMap;
 
-		public IMessageBodyFormatter()
-		{
-			this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(3, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
-			{
-				{ typeof(global::TextMessageBody).TypeHandle, new KeyValuePair<int, int>(10, 0) },
-				{ typeof(global::StampMessageBody).TypeHandle, new KeyValuePair<int, int>(14, 1) },
-				{ typeof(global::QuestMessageBody).TypeHandle, new KeyValuePair<int, int>(25, 2) },
-			};
-			this.keyToJumpMap = new Dictionary<int, int>(3)
-			{
-				{ 10, 0 },
-				{ 14, 1 },
-				{ 25, 2 },
-			};
-		}
+        public IMessageBodyFormatter()
+        {
+            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(3, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            {
+                { typeof(global::TextMessageBody).TypeHandle, new KeyValuePair<int, int>(10, 0) },
+                { typeof(global::StampMessageBody).TypeHandle, new KeyValuePair<int, int>(14, 1) },
+                { typeof(global::QuestMessageBody).TypeHandle, new KeyValuePair<int, int>(25, 2) },
+            };
+            this.keyToJumpMap = new Dictionary<int, int>(3)
+            {
+                { 10, 0 },
+                { 14, 1 },
+                { 25, 2 },
+            };
+        }
 
         public int Serialize(ref byte[] bytes, int offset, global::IMessageBody value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-			KeyValuePair<int, int> keyValuePair;
-			if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
-			{
-				var startOffset = offset;
-				offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-				offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
-				switch (keyValuePair.Value)
-				{
-					case 0:
-						offset += formatterResolver.GetFormatterWithVerify<global::TextMessageBody>().Serialize(ref bytes, offset, (global::TextMessageBody)value, formatterResolver);
-						break;
-					case 1:
-						offset += formatterResolver.GetFormatterWithVerify<global::StampMessageBody>().Serialize(ref bytes, offset, (global::StampMessageBody)value, formatterResolver);
-						break;
-					case 2:
-						offset += formatterResolver.GetFormatterWithVerify<global::QuestMessageBody>().Serialize(ref bytes, offset, (global::QuestMessageBody)value, formatterResolver);
-						break;
-					default:
-						break;
-				}
+            KeyValuePair<int, int> keyValuePair;
+            if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+                switch (keyValuePair.Value)
+                {
+                    case 0:
+                        offset += formatterResolver.GetFormatterWithVerify<global::TextMessageBody>().Serialize(ref bytes, offset, (global::TextMessageBody)value, formatterResolver);
+                        break;
+                    case 1:
+                        offset += formatterResolver.GetFormatterWithVerify<global::StampMessageBody>().Serialize(ref bytes, offset, (global::StampMessageBody)value, formatterResolver);
+                        break;
+                    case 2:
+                        offset += formatterResolver.GetFormatterWithVerify<global::QuestMessageBody>().Serialize(ref bytes, offset, (global::QuestMessageBody)value, formatterResolver);
+                        break;
+                    default:
+                        break;
+                }
 
-				return offset - startOffset;
-			}
+                return offset - startOffset;
+            }
 
-			return MessagePackBinary.WriteNil(ref bytes, offset);
+            return MessagePackBinary.WriteNil(ref bytes, offset);
         }
         
         public global::IMessageBody Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
-			{
-				readSize = 1;
-				return null;
-			}
+            {
+                readSize = 1;
+                return null;
+            }
 
-			var startOffset = offset;
-			
-			if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
-			{
-				throw new InvalidOperationException("Invalid Union data was detected. Type:global::IMessageBody");
-			}
-			offset += readSize;
+            var startOffset = offset;
+            
+            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+            {
+                throw new InvalidOperationException("Invalid Union data was detected. Type:global::IMessageBody");
+            }
+            offset += readSize;
 
-			var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-			offset += readSize;
+            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            offset += readSize;
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
-			{
-				key = -1;
-			}
+            {
+                key = -1;
+            }
 
-			global::IMessageBody result = null;
-			switch (key)
-			{
-				case 0:
-					result = (global::IMessageBody)formatterResolver.GetFormatterWithVerify<global::TextMessageBody>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 1:
-					result = (global::IMessageBody)formatterResolver.GetFormatterWithVerify<global::StampMessageBody>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				case 2:
-					result = (global::IMessageBody)formatterResolver.GetFormatterWithVerify<global::QuestMessageBody>().Deserialize(bytes, offset, formatterResolver, out readSize);
-					offset += readSize;
-					break;
-				default:
-					offset += MessagePackBinary.ReadNextBlock(bytes, offset);
-					break;
-			}
-			
-			readSize = offset - startOffset;
-			
-			return result;
+            global::IMessageBody result = null;
+            switch (key)
+            {
+                case 0:
+                    result = (global::IMessageBody)formatterResolver.GetFormatterWithVerify<global::TextMessageBody>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 1:
+                    result = (global::IMessageBody)formatterResolver.GetFormatterWithVerify<global::StampMessageBody>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                case 2:
+                    result = (global::IMessageBody)formatterResolver.GetFormatterWithVerify<global::QuestMessageBody>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    break;
+                default:
+                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                    break;
+            }
+            
+            readSize = offset - startOffset;
+            
+            return result;
         }
     }
 
@@ -953,12 +955,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class SimlpeStringKeyDataFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimlpeStringKeyData>
     {
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public SimlpeStringKeyDataFormatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(3)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
                 { "Prop1", 0},
                 { "Prop2", 1},
@@ -1014,7 +1016,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -1116,12 +1118,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class SimpleStructStringKeyDataFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimpleStructStringKeyData>
     {
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public SimpleStructStringKeyDataFormatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(2)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
                 { "key-X", 0},
                 { "key-Y", 1},
@@ -1167,7 +1169,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -1877,7 +1879,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.Callback1(__X__);
             ____result.X = __X__;
-			____result.OnAfterDeserialize();
+            ____result.OnAfterDeserialize();
             return ____result;
         }
     }
@@ -1943,12 +1945,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class Callback2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2>
     {
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public Callback2Formatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(1)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
                 { "X", 0},
             };
@@ -1990,7 +1992,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -2014,7 +2016,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.Callback2(__X__);
             ____result.X = __X__;
-			____result.OnAfterDeserialize();
+            ____result.OnAfterDeserialize();
             return ____result;
         }
     }
@@ -2023,12 +2025,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class Callback2_2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2_2>
     {
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public Callback2_2Formatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(1)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
                 { "X", 0},
             };
@@ -2070,7 +2072,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -2759,12 +2761,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class Empty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Empty2>
     {
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public Empty2Formatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(0)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
             };
 
@@ -2805,7 +2807,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -2888,12 +2890,12 @@ namespace MessagePack.Formatters.SharedData
     public sealed class NonEmpty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.NonEmpty2>
     {
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public NonEmpty2Formatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(1)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
                 { "MyProperty", 0},
             };
@@ -2939,7 +2941,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -3876,12 +3878,12 @@ namespace MessagePack.Formatters
     public sealed class SimpleModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SimpleModel>
     {
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public SimpleModelFormatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(6)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
                 { "Id", 0},
                 { "Name", 1},
@@ -3952,7 +3954,7 @@ namespace MessagePack.Formatters
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -4003,12 +4005,12 @@ namespace MessagePack.Formatters
     public sealed class ComplexModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ComplexModel>
     {
 
-        readonly global::MessagePack.Internal.ByteArrayStringHashTable ____keyMapping;
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
         readonly byte[][] ____stringByteKeys;
 
         public ComplexModelFormatter()
         {
-            this.____keyMapping = new global::MessagePack.Internal.ByteArrayStringHashTable(6)
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
             {
                 { "AdditionalProperty", 0},
                 { "CreatedOn", 1},
@@ -4079,7 +4081,7 @@ namespace MessagePack.Formatters
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValue(stringKey, out key))
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -4121,6 +4123,177 @@ namespace MessagePack.Formatters
             ____result.Id = __Id__;
             ____result.Name = __Name__;
             ____result.UpdatedOn = __UpdatedOn__;
+            return ____result;
+        }
+    }
+
+}
+
+#pragma warning disable 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
+#pragma warning disable 618
+#pragma warning disable 612
+#pragma warning disable 414
+#pragma warning disable 168
+
+namespace MessagePack.Formatters.PerfBenchmarkDotNet
+{
+    using System;
+    using MessagePack;
+
+
+    public sealed class StringKeySerializerTargetFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::PerfBenchmarkDotNet.StringKeySerializerTarget>
+    {
+
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
+
+        public StringKeySerializerTargetFormatter()
+        {
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
+            {
+                { "MyProperty1", 0},
+                { "MyProperty2", 1},
+                { "MyProperty3", 2},
+                { "MyProperty4", 3},
+                { "MyProperty5", 4},
+                { "MyProperty6", 5},
+                { "MyProperty7", 6},
+                { "MyProperty8", 7},
+                { "MyProperty9", 8},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty1"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty2"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty3"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty4"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty5"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty6"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty7"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty8"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty9"),
+                
+            };
+        }
+
+
+        public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 9);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty1);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[1]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty2);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[2]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty3);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[3]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty4);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[4]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty5);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[5]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty6);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[6]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty7);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[7]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty8);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[8]);
+            offset += MessagePackBinary.WriteInt32(ref bytes, offset, value.MyProperty9);
+            return offset - startOffset;
+        }
+
+        public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __MyProperty1__ = default(int);
+            var __MyProperty2__ = default(int);
+            var __MyProperty3__ = default(int);
+            var __MyProperty4__ = default(int);
+            var __MyProperty5__ = default(int);
+            var __MyProperty6__ = default(int);
+            var __MyProperty7__ = default(int);
+            var __MyProperty8__ = default(int);
+            var __MyProperty9__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 1:
+                        __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 2:
+                        __MyProperty3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 3:
+                        __MyProperty4__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 4:
+                        __MyProperty5__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 5:
+                        __MyProperty6__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 6:
+                        __MyProperty7__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 7:
+                        __MyProperty8__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    case 8:
+                        __MyProperty9__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                
+                NEXT_LOOP:
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget();
+            ____result.MyProperty1 = __MyProperty1__;
+            ____result.MyProperty2 = __MyProperty2__;
+            ____result.MyProperty3 = __MyProperty3__;
+            ____result.MyProperty4 = __MyProperty4__;
+            ____result.MyProperty5 = __MyProperty5__;
+            ____result.MyProperty6 = __MyProperty6__;
+            ____result.MyProperty7 = __MyProperty7__;
+            ____result.MyProperty8 = __MyProperty8__;
+            ____result.MyProperty9 = __MyProperty9__;
             return ____result;
         }
     }

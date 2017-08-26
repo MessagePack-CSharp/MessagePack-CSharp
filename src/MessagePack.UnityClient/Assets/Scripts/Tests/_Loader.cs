@@ -21,6 +21,7 @@ namespace MessagePack.UnityClient.Tests
             UnitTest.RegisterAllMethods<ObjectResolverTest>();
             UnitTest.RegisterAllMethods<MultiDimentionalArrayTest>();
             UnitTest.RegisterAllMethods<CollectionFormatterTest>();
+            UnitTest.RegisterAllMethods<Contractless>();
 #if ENABLE_UNSAFE_MSGPACK
             UnitTest.RegisterAllMethods<UnityBlitTest>();
 #endif

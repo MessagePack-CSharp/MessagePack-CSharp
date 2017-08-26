@@ -209,18 +209,16 @@ namespace MessagePack.Internal
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
             var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, "").Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
-            FieldBuilder dictionaryField = null;
             FieldBuilder stringByteKeysField = null;
 
             // string key needs string->int mapper for deserialize switch statement
             if (serializationInfo.IsStringKey)
             {
                 var method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
-                dictionaryField = typeBuilder.DefineField("keyMapping", typeof(ByteArrayStringHashTable), FieldAttributes.Private | FieldAttributes.InitOnly);
                 stringByteKeysField = typeBuilder.DefineField("stringByteKeys", typeof(byte[][]), FieldAttributes.Private | FieldAttributes.InitOnly);
 
                 var il = method.GetILGenerator();
-                BuildConstructor(type, serializationInfo, method, dictionaryField, stringByteKeysField, il);
+                BuildConstructor(type, serializationInfo, method, stringByteKeysField, il);
             }
             {
                 var method = typeBuilder.DefineMethod("Serialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
@@ -237,32 +235,16 @@ namespace MessagePack.Internal
                     new Type[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() });
 
                 var il = method.GetILGenerator();
-                BuildDeserialize(type, serializationInfo, method, dictionaryField, il);
+                BuildDeserialize(type, serializationInfo, method, il);
             }
 
             return typeBuilder.CreateTypeInfo();
         }
 
-        static void BuildConstructor(Type type, ObjectSerializationInfo info, ConstructorInfo method, FieldBuilder dictionaryField, FieldBuilder stringByteKeysField, ILGenerator il)
+        static void BuildConstructor(Type type, ObjectSerializationInfo info, ConstructorInfo method, FieldBuilder stringByteKeysField, ILGenerator il)
         {
             il.EmitLdarg(0);
             il.Emit(OpCodes.Call, objectCtor);
-
-            il.EmitLdarg(0);
-            il.EmitLdc_I4(info.Members.Length);
-            il.Emit(OpCodes.Newobj, dictionaryConstructor);
-
-            foreach (var item in info.Members)
-            {
-                il.Emit(OpCodes.Dup);
-                il.Emit(OpCodes.Ldstr, item.StringKey);
-                il.EmitLdc_I4(item.IntKey);
-                il.EmitCall(dictionaryAdd);
-            }
-
-            il.Emit(OpCodes.Stfld, dictionaryField);
-
-            //
 
             var writeCount = info.Members.Count(x => x.IsReadable);
             il.EmitLdarg(0);
@@ -471,7 +453,7 @@ namespace MessagePack.Internal
         }
 
         // T Deserialize([arg:1]byte[] bytes, [arg:2]int offset, [arg:3]IFormatterResolver formatterResolver, [arg:4]out int readSize);
-        static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, FieldBuilder dictionaryField, ILGenerator il)
+        static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, ILGenerator il)
         {
             // if(MessagePackBinary.IsNil) readSize = 1, return null;
             var falseLabel = il.DefineLabel();
@@ -563,48 +545,107 @@ namespace MessagePack.Internal
                     {
                         MemberInfo = item,
                         LocalField = il.DeclareLocal(item.Type),
-                        SwitchLabel = il.DefineLabel()
+                        // SwitchLabel = il.DefineLabel()
                     })
                     .ToArray();
             }
 
-
             // Read Loop(for var i = 0; i< length; i++)
+            if (info.IsStringKey)
+            {
+                var automata = new AutomataDictionary();
+                for (int i = 0; i < info.Members.Length; i++)
+                {
+                    automata.Add(info.Members[i].StringKey, i);
+                }
+
+                var buffer = il.DeclareLocal(typeof(byte).MakeByRefType(), true);
+                var keyArraySegment = il.DeclareLocal(typeof(ArraySegment<byte>));
+                var longKey = il.DeclareLocal(typeof(long));
+                var p = il.DeclareLocal(typeof(byte*));
+                var rest = il.DeclareLocal(typeof(int));
+
+                // fixed (byte* buffer = &bytes[0]) {
+                il.EmitLdarg(1);
+                il.EmitLdc_I4(0);
+                il.Emit(OpCodes.Ldelema, typeof(byte));
+                il.EmitStloc(buffer);
+
+                // for (int i = 0; i < len; i++)
+                il.EmitIncrementFor(length, forILocal =>
+                {
+                    var readNext = il.DefineLabel();
+                    var loopEnd = il.DefineLabel();
+
+                    il.EmitLdarg(1);
+                    il.EmitLdarg(2);
+                    il.EmitLdarg(4);
+                    il.EmitCall(MessagePackBinaryTypeInfo.ReadStringSegment);
+                    il.EmitStloc(keyArraySegment);
+                    EmitOffsetPlusReadSize(il);
+
+                    // p = buffer + arraySegment.Offset
+                    il.EmitLdloc(buffer);
+                    il.Emit(OpCodes.Conv_I);
+                    il.EmitLdloca(keyArraySegment);
+                    il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Offset").GetGetMethod());
+                    il.Emit(OpCodes.Add);
+                    il.EmitStloc(p);
+
+                    // rest = arraySegment.Count
+                    il.EmitLdloca(keyArraySegment);
+                    il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Count").GetGetMethod());
+                    il.EmitStloc(rest);
+
+                    // if(rest == 0) goto End
+                    il.EmitLdloc(rest);
+                    il.Emit(OpCodes.Brfalse, readNext);
+
+                    // gen automata name lookup
+                    automata.EmitMatch(il, p, rest, longKey, x =>
+                    {
+                        var i = x.Value;
+                        if (infoList[i].MemberInfo != null)
+                        {
+                            EmitDeserializeValue(il, infoList[i]);
+                            il.Emit(OpCodes.Br, loopEnd);
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Br, readNext);
+                        }
+                    }, () =>
+                    {
+                        il.Emit(OpCodes.Br, readNext);
+                    });
+
+                    il.MarkLabel(readNext);
+                    il.EmitLdarg(4);
+                    il.EmitLdarg(1);
+                    il.EmitLdarg(2);
+                    il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
+                    il.Emit(OpCodes.Stind_I4);
+
+                    il.MarkLabel(loopEnd);
+                    EmitOffsetPlusReadSize(il);
+                });
+
+                // end fixed
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Conv_U);
+                il.EmitStloc(buffer);
+            }
+            else
             {
                 var key = il.DeclareLocal(typeof(int));
                 var switchDefault = il.DefineLabel();
-                var loopEnd = il.DefineLabel();
-                var stringKeyTrue = il.DefineLabel();
+
                 il.EmitIncrementFor(length, forILocal =>
                 {
-                    if (info.IsStringKey)
-                    {
-                        // get string key -> dictionary lookup
-                        il.EmitLdarg(0);
-                        il.Emit(OpCodes.Ldfld, dictionaryField);
-                        il.EmitLdarg(1);
-                        il.EmitLdarg(2);
-                        il.EmitLdarg(4);
-                        il.EmitCall(MessagePackBinaryTypeInfo.ReadStringSegment);
-                        il.EmitLdloca(key);
-                        il.EmitCall(dictionaryTryGetValue);
-                        EmitOffsetPlusReadSize(il);
-                        il.Emit(OpCodes.Brtrue_S, stringKeyTrue);
+                    var loopEnd = il.DefineLabel();
 
-                        il.EmitLdarg(4);
-                        il.EmitLdarg(1);
-                        il.EmitLdarg(2);
-                        il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
-                        il.Emit(OpCodes.Stind_I4);
-                        il.Emit(OpCodes.Br, loopEnd);
-
-                        il.MarkLabel(stringKeyTrue);
-                    }
-                    else
-                    {
-                        il.EmitLdloc(forILocal);
-                        il.EmitStloc(key);
-                    }
+                    il.EmitLdloc(forILocal);
+                    il.EmitStloc(key);
 
                     // switch... local = Deserialize
                     il.EmitLdloc(key);

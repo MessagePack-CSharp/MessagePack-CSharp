@@ -28,7 +28,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;NET_35</DefineConstants>
+    <DefineConstants>TRACE;NET_35, NETSTANDARD1_4</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
@@ -64,6 +64,9 @@
     </Compile>
     <Compile Include="..\..\src\MessagePack\IMessagePackSerializationCallbackReceiver.cs">
       <Link>Code\IMessagePackSerializationCallbackReceiver.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\AutomataDictionary.cs">
+      <Link>Code\AutomataDictionary.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\ByteArrayComparer.cs">
       <Link>Code\ByteArrayComparer.cs</Link>

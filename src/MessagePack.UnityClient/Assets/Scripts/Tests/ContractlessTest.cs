@@ -1,109 +1,17 @@
-﻿using System;
-using System.Collections;
+﻿using RuntimeUnitTestToolkit;
+using SharedData;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Xunit;
 
-namespace MessagePack.Tests
+namespace MessagePack.UnityClient.Tests
 {
-    public class ContractlessStandardResolverTest
+    public class Contractless
     {
-        public class Address
+        T Convert<T>(T value)
         {
-            public string Street { get; set; }
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public class Person
-        {
-            public string Name { get; set; }
-            public object[] /*Address*/ Addresses { get; set; }
-        }
-
-        public class V1
-        {
-            public int ABCDEFG1 { get; set; }
-            public int ABCDEFG3 { get; set; }
-        }
-
-
-
-        public class V2
-        {
-            public int ABCDEFG1 { get; set; }
-            public int ABCDEFG2 { get; set; }
-            public int ABCDEFG3 { get; set; }
-        }
-
-        public class Dup
-        {
-            public int ABCDEFGH { get; set; }
-            public int ABCDEFGHIJKL { get; set; }
-        }
-
-        public class BinSearchSmall
-        {
-            public int MyP1 { get; set; }
-            public int MyP2 { get; set; }
-            public int MyP3 { get; set; }
-            public int MyP4 { get; set; }
-            public int MyP5 { get; set; }
-            public int MyP6 { get; set; }
-            public int MyP7 { get; set; }
-            public int MyP8 { get; set; }
-            public int MyP9 { get; set; }
-        }
-
-        public class BinSearchWithBranch
-        {
-            public int MyProperty1 { get; set; }
-            public int MyProperty2 { get; set; }
-            public int MyProperty3 { get; set; }
-            public int MyProperty4 { get; set; }
-            public int MyProperty5 { get; set; }
-            public int MyProperty6 { get; set; }
-            public int MyProperty7 { get; set; }
-            public int MyProperty8 { get; set; }
-            public int MyProperty9 { get; set; }
-        }
-
-        public class LongestString
-        {
-            public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1 { get; set; }
-            public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2 { get; set; }
-            public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2MyProperty { get; set; }
-            public int OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ { get; set; }
-        }
-
-
-        [Fact]
-        public void SimpleTest()
-        {
-            var p = new Person
-            {
-                Name = "John",
-                Addresses = new[]
-                {
-                        new Address { Street = "St." },
-                        new Address { Street = "Ave." }
-                    }
-            };
-
-            var result = MessagePack.MessagePackSerializer.Serialize(p, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-
-            MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
-
-            var p2 = MessagePack.MessagePackSerializer.Deserialize<Person>(result, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            p2.Name.Is("John");
-            var addresses = p2.Addresses as IList;
-            var d1 = addresses[0] as IDictionary;
-            var d2 = addresses[1] as IDictionary;
-            (d1["Street"] as string).Is("St.");
-            (d2["Street"] as string).Is("Ave.");
-        }
-
-        [Fact]
         public void Versioning()
         {
             var v1 = MessagePack.MessagePackSerializer.Serialize(new V1 { ABCDEFG1 = 10, ABCDEFG3 = 99 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
@@ -120,7 +28,6 @@ namespace MessagePack.Tests
             v2_2.ABCDEFG1.Is(350); v2_2.ABCDEFG2.Is(34); v2_2.ABCDEFG3.Is(500);
         }
 
-        [Fact]
         public void DuplicateAutomata()
         {
             var bin = MessagePack.MessagePackSerializer.Serialize(new Dup { ABCDEFGH = 10, ABCDEFGHIJKL = 99 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
@@ -130,7 +37,6 @@ namespace MessagePack.Tests
             v.ABCDEFGHIJKL.Is(99);
         }
 
-        [Fact]
         public void BinSearchSmallCheck()
         {
             var o = new BinSearchSmall
@@ -148,10 +54,17 @@ namespace MessagePack.Tests
             var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
             var v = MessagePackSerializer.Deserialize<BinSearchSmall>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
-            v.IsStructuralEqual(o);
+            v.MyP1.Is(o.MyP1);
+            v.MyP2.Is(o.MyP2);
+            v.MyP3.Is(o.MyP3);
+            v.MyP4.Is(o.MyP4);
+            v.MyP5.Is(o.MyP5);
+            v.MyP6.Is(o.MyP6);
+            v.MyP7.Is(o.MyP7);
+            v.MyP8.Is(o.MyP8);
+            v.MyP9.Is(o.MyP9);
         }
 
-        [Fact]
         public void BinSearchWithBranchCheck()
         {
             var o = new BinSearchWithBranch
@@ -169,10 +82,17 @@ namespace MessagePack.Tests
             var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
             var v = MessagePackSerializer.Deserialize<BinSearchWithBranch>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
-            v.IsStructuralEqual(o);
+            v.MyProperty1.Is(o.MyProperty1);
+            v.MyProperty2.Is(o.MyProperty2);
+            v.MyProperty3.Is(o.MyProperty3);
+            v.MyProperty4.Is(o.MyProperty4);
+            v.MyProperty5.Is(o.MyProperty5);
+            v.MyProperty6.Is(o.MyProperty6);
+            v.MyProperty7.Is(o.MyProperty7);
+            v.MyProperty8.Is(o.MyProperty8);
+            v.MyProperty9.Is(o.MyProperty9);
         }
 
-        [Fact]
         public void LongestStringCheck()
         {
             var o = new LongestString
@@ -185,7 +105,65 @@ namespace MessagePack.Tests
             var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
             var v = MessagePackSerializer.Deserialize<LongestString>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
-            v.IsStructuralEqual(o);
+            v.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1.Is(o.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1);
+            v.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2.Is(o.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2);
+            v.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2MyProperty.Is(o.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2MyProperty);
+            v.OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ.Is(o.OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ);
         }
     }
+
+    public class V1
+    {
+        public int ABCDEFG1 { get; set; }
+        public int ABCDEFG3 { get; set; }
+    }
+
+
+    public class V2
+    {
+        public int ABCDEFG1 { get; set; }
+        public int ABCDEFG2 { get; set; }
+        public int ABCDEFG3 { get; set; }
+    }
+
+    public class Dup
+    {
+        public int ABCDEFGH { get; set; }
+        public int ABCDEFGHIJKL { get; set; }
+    }
+
+    public class BinSearchSmall
+    {
+        public int MyP1 { get; set; }
+        public int MyP2 { get; set; }
+        public int MyP3 { get; set; }
+        public int MyP4 { get; set; }
+        public int MyP5 { get; set; }
+        public int MyP6 { get; set; }
+        public int MyP7 { get; set; }
+        public int MyP8 { get; set; }
+        public int MyP9 { get; set; }
+    }
+
+    public class BinSearchWithBranch
+    {
+        public int MyProperty1 { get; set; }
+        public int MyProperty2 { get; set; }
+        public int MyProperty3 { get; set; }
+        public int MyProperty4 { get; set; }
+        public int MyProperty5 { get; set; }
+        public int MyProperty6 { get; set; }
+        public int MyProperty7 { get; set; }
+        public int MyProperty8 { get; set; }
+        public int MyProperty9 { get; set; }
+    }
+
+    public class LongestString
+    {
+        public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1 { get; set; }
+        public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2 { get; set; }
+        public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2MyProperty { get; set; }
+        public int OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ { get; set; }
+    }
+
 }

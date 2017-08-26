@@ -104,6 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnonymousTypeTest.cs" />
+    <Compile Include="AutomataSafe.cs" />
     <Compile Include="ByteArrayComparerTest.cs" />
     <Compile Include="CollectionTest.cs" />
     <Compile Include="DataContractTest.cs" />
