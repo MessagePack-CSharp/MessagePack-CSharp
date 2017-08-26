@@ -281,6 +281,8 @@ namespace Sandbox
     }
 
 
+
+
     class Program
     {
         static void Main(string[] args)
@@ -295,17 +297,10 @@ namespace Sandbox
                 //"HogeHogeFugaFuga",
                 //"FooBar",
                 //"MyProperty1",
-                "MyProperty1",
-                "MyProperty2",
-                "MyProperty3",
-                "MyProperty4",
-                "FooBar",
-                "MyProperty6",
-                "MyProperty7",
-                "MyProperty8",
-                "MyProperty9",
+                "ABCDEFGH",
+                "ABCDEFGHIJKL",
+                "ABCDEFGHIJKO",
             };
-
             var dict = new AutomataDictionary();
             int x1 = 0;
             foreach (var item in hoge)
@@ -326,9 +321,9 @@ namespace Sandbox
 
             Console.WriteLine(dict.ToString());
 
-            var bin = MessagePackSerializer.Serialize(new ContractlessSample() { MyProperty1 = 100, MyProperty2 = 9999 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var foo = MessagePackSerializer.Deserialize<ContractlessSample>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            Console.WriteLine((foo.MyProperty1, foo.MyProperty2));
+            //var bin = MessagePackSerializer.Serialize(new ContractlessSample() { MyProperty1 = 100, MyProperty2 = 9999 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            //var foo = MessagePackSerializer.Deserialize<ContractlessSample>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            //Console.WriteLine((foo.MyProperty1, foo.MyProperty2));
 
         }
 

@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MessagePack.Internal;
 using MessagePack.Resolvers;
 using SharedData;
 using System;
@@ -26,11 +27,13 @@ namespace DynamicCodeDumper
             //DynamicObjectResolver.Instance.GetFormatter<Version0>();
             //DynamicObjectResolver.Instance.GetFormatter<Version1>();
             //DynamicObjectResolver.Instance.GetFormatter<Version2>();
-            //DynamicObjectResolver.Instance.GetFormatter<SimpleIntKeyData>();
-             DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
-             DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
+            DynamicObjectResolver.Instance.GetFormatter<SimpleIntKeyData>();
+            DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
+            DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
             DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
-            DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
+            DynamicObjectResolver.Instance.GetFormatter<LongestString>();
+            DynamicObjectResolver.Instance.GetFormatter<Dup>();
+            //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
             //DynamicObjectResolver.Instance.GetFormatter<Callback1>();
             //DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
             //DynamicObjectResolver.Instance.GetFormatter<Callback2>();
@@ -104,7 +107,7 @@ namespace DynamicCodeDumper
     [MessagePackObject(true)]
     public class SimlpeStringKeyData2
     {
-        public int FooBarBaz {get; set; }
+        public int FooBarBaz { get; set; }
         public int FooBarPoo { get; set; }
         public ByteEnum AprilJuneJuly { get; set; }
     }
@@ -154,6 +157,23 @@ namespace DynamicCodeDumper
         public int MyProperty71 { get; set; }
     }
 
+    [MessagePack.MessagePackObject(true)]
+    public class LongestString
+    {
+        public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1 { get; set; }
+        public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2 { get; set; }
+        public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2MyProperty { get; set; }
+        public int OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ { get; set; }
+    }
+
+    [MessagePack.MessagePackObject(true)]
+    public class Dup
+    {
+        public int ABCDEFGH { get; set; }
+        public int ABCDEFGHIJKL { get; set; }
+        public int ABCDEFGHIJKO { get; set; }
+    }
+
     public class Contractless2
     {
         public int MyProperty { get; set; }
@@ -193,6 +213,101 @@ namespace DynamicCodeDumper
         public EntityBase()
         {
 
+        }
+    }
+
+    public class SimulateDup : MessagePack.Formatters.IMessagePackFormatter<Dup>
+    {
+        public unsafe Dup Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+
+            var len = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+
+            int aBCDEFGH = 0;
+            int aBCDEFGHIJKL = 0;
+            int aBCDEFGHIJKO = 0;
+
+            // ---isStringKey
+
+            long key;
+            ArraySegment<byte> arraySegment;
+            byte* p;
+            int rest;
+
+            fixed (byte* buffer = &bytes[0])
+            {
+                for (int i = 0; i < len; i++)
+                {
+                    arraySegment = MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                    offset += readSize;
+
+                    p = buffer + arraySegment.Offset;
+                    rest = arraySegment.Count;
+
+                    if (rest == 0) goto LOOP_END;
+
+                    key = AutomataKeyGen.GetKey(ref p, ref rest);
+                    if (rest == 0)
+                    {
+                        if (key == 5208208757389214273L)
+                        {
+                            aBCDEFGH = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            goto LOOP_END;
+                        }
+
+                        goto READ_NEXT;
+                    }
+
+                    if (key == 5208208757389214273L)
+                    {
+                        key = AutomataKeyGen.GetKey(ref p, ref rest);
+                        if (rest == 0)
+                        {
+                            if (key == 1280002633L)
+                            {
+                                aBCDEFGHIJKL = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                                goto LOOP_END;
+                            }
+
+                            if (key == 1330334281L)
+                            {
+                                aBCDEFGHIJKO = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                                goto LOOP_END;
+                            }
+                        }
+                    }
+
+                    READ_NEXT:
+                    readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
+
+                    LOOP_END:
+                    offset += readSize;
+                    continue;
+                }
+            }
+
+            // --- end
+
+            return new Dup
+            {
+                ABCDEFGH = aBCDEFGH,
+                ABCDEFGHIJKL = aBCDEFGHIJKL,
+                ABCDEFGHIJKO = aBCDEFGHIJKO
+            };
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, Dup value, IFormatterResolver formatterResolver)
+        {
+            throw new NotImplementedException();
         }
     }
 }

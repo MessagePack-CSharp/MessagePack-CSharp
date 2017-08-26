@@ -48,6 +48,9 @@
     <Reference Include="BenchmarkDotNet.Toolchains.Roslyn, Version=0.10.8.0, Culture=neutral, PublicKeyToken=aa0ca2f9092cefc4, processorArchitecture=MSIL">
       <HintPath>..\..\packages\BenchmarkDotNet.Toolchains.Roslyn.0.10.8\lib\net46\BenchmarkDotNet.Toolchains.Roslyn.dll</HintPath>
     </Reference>
+    <Reference Include="Hyperion, Version=0.9.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Hyperion.0.9.6\lib\net45\Hyperion.dll</HintPath>
+    </Reference>
     <Reference Include="Jil, Version=2.15.4.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Jil.2.15.4\lib\net45\Jil.dll</HintPath>
     </Reference>

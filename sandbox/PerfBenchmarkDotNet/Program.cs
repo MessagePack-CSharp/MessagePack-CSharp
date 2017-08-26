@@ -286,6 +286,8 @@ namespace PerfBenchmarkDotNet
         static string jilObj = Jil.JSON.Serialize(new IntKeySerializerTarget());
         static byte[] jilByteArray = Encoding.UTF8.GetBytes(jilObj);
         static JsonSerializer jsonSerialzier = new JsonSerializer();
+        static Hyperion.Serializer hyperionSerializer = new Hyperion.Serializer();
+        static byte[] hyperionObj;
 
         static DeserializeBenchmark()
         {
@@ -293,6 +295,12 @@ namespace PerfBenchmarkDotNet
             {
                 ProtoBuf.Serializer.Serialize(ms, new IntKeySerializerTarget());
                 protoObj = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream())
+            {
+                hyperionSerializer.Serialize(new IntKeySerializerTarget(), ms);
+                hyperionObj = ms.ToArray();
             }
         }
 
@@ -342,13 +350,22 @@ namespace PerfBenchmarkDotNet
         }
 
         [Benchmark]
+        public IntKeySerializerTarget Hyperion()
+        {
+            using (var ms = new MemoryStream(hyperionObj))
+            {
+                return hyperionSerializer.Deserialize<IntKeySerializerTarget>(ms);
+            }
+        }
+
+        [Benchmark]
         public IntKeySerializerTarget JsonNetString()
         {
             return Newtonsoft.Json.JsonConvert.DeserializeObject<IntKeySerializerTarget>(jsonnetObj);
         }
 
         [Benchmark]
-        public IntKeySerializerTarget JsonNetByteArray()
+        public IntKeySerializerTarget JsonNetStreamReader()
         {
             using (var ms = new MemoryStream(jsonnetByteArray))
             using (var sr = new StreamReader(ms, Encoding.UTF8))
@@ -365,7 +382,7 @@ namespace PerfBenchmarkDotNet
         }
 
         [Benchmark]
-        public IntKeySerializerTarget JilByteArray()
+        public IntKeySerializerTarget JilStreamReader()
         {
             using (var ms = new MemoryStream(jilByteArray))
             using (var sr = new StreamReader(ms, Encoding.UTF8))

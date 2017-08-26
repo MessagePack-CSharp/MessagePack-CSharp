@@ -550,103 +550,136 @@ namespace MessagePack.Internal
                     .ToArray();
             }
 
-
             // Read Loop(for var i = 0; i< length; i++)
-
-            // TODO:string loop
-            LocalBuilder keyArraySegment = null;
-            AutomataDictionary automata = null;
             if (info.IsStringKey)
             {
-                automata = new AutomataDictionary();
+                var automata = new AutomataDictionary();
                 for (int i = 0; i < info.Members.Length; i++)
                 {
                     automata.Add(info.Members[i].StringKey, i);
                 }
-                keyArraySegment = il.DeclareLocal(typeof(ArraySegment<byte>));
-            }
 
+                var buffer = il.DeclareLocal(typeof(byte).MakeByRefType(), true);
+                var keyArraySegment = il.DeclareLocal(typeof(ArraySegment<byte>));
+                var longKey = il.DeclareLocal(typeof(long));
+                var p = il.DeclareLocal(typeof(byte*));
+                var rest = il.DeclareLocal(typeof(int));
+
+                // fixed (byte* buffer = &bytes[0]) {
+                il.EmitLdarg(1);
+                il.EmitLdc_I4(0);
+                il.Emit(OpCodes.Ldelema, typeof(byte));
+                il.EmitStloc(buffer);
+
+                // for (int i = 0; i < len; i++)
+                il.EmitIncrementFor(length, forILocal =>
+                {
+                    var readNext = il.DefineLabel();
+                    var loopEnd = il.DefineLabel();
+
+                    il.EmitLdarg(1);
+                    il.EmitLdarg(2);
+                    il.EmitLdarg(4);
+                    il.EmitCall(MessagePackBinaryTypeInfo.ReadStringSegment);
+                    il.EmitStloc(keyArraySegment);
+                    EmitOffsetPlusReadSize(il);
+
+                    // p = buffer + arraySegment.Offset
+                    il.EmitLdloc(buffer);
+                    il.Emit(OpCodes.Conv_I);
+                    il.EmitLdloca(keyArraySegment);
+                    il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Offset").GetGetMethod());
+                    il.Emit(OpCodes.Add);
+                    il.EmitStloc(p);
+
+                    // rest = arraySegment.Count
+                    il.EmitLdloca(keyArraySegment);
+                    il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Count").GetGetMethod());
+                    il.EmitStloc(rest);
+
+                    // if(rest == 0) goto End
+                    il.EmitLdloc(rest);
+                    il.Emit(OpCodes.Brfalse, readNext);
+
+                    // gen automata name lookup
+                    automata.EmitMatch(il, p, rest, longKey, x =>
+                    {
+                        var i = x.Value;
+                        if (infoList[i].MemberInfo != null)
+                        {
+                            EmitDeserializeValue(il, infoList[i]);
+                            il.Emit(OpCodes.Br, loopEnd);
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Br, readNext);
+                        }
+                    }, () =>
+                    {
+                        il.Emit(OpCodes.Br, readNext);
+                    });
+
+                    il.MarkLabel(readNext);
+                    il.EmitLdarg(4);
+                    il.EmitLdarg(1);
+                    il.EmitLdarg(2);
+                    il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
+                    il.Emit(OpCodes.Stind_I4);
+
+                    il.MarkLabel(loopEnd);
+                    EmitOffsetPlusReadSize(il);
+                });
+
+                // end fixed
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Conv_U);
+                il.EmitStloc(buffer);
+            }
+            else
             {
                 var key = il.DeclareLocal(typeof(int));
                 var switchDefault = il.DefineLabel();
-                var loopEnd = il.DefineLabel();
-                var stringKeyTrue = il.DefineLabel();
 
                 il.EmitIncrementFor(length, forILocal =>
                 {
-                    if (info.IsStringKey)
-                    {
-                        // get string key -> dictionary lookup
+                    var loopEnd = il.DefineLabel();
 
-                        il.EmitLdarg(1);
-                        il.EmitLdarg(2);
-                        il.EmitLdarg(4);
-                        il.EmitCall(MessagePackBinaryTypeInfo.ReadStringSegment);
-                        il.EmitStloc(keyArraySegment);
-                        EmitOffsetPlusReadSize(il);
-                        automata.EmitMatch(il, keyArraySegment, x =>
+                    il.EmitLdloc(forILocal);
+                    il.EmitStloc(key);
+
+                    // switch... local = Deserialize
+                    il.EmitLdloc(key);
+
+                    il.Emit(OpCodes.Switch, infoList.Select(x => x.SwitchLabel).ToArray());
+
+                    il.MarkLabel(switchDefault);
+                    // default, only read. readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
+                    il.EmitLdarg(4);
+                    il.EmitLdarg(1);
+                    il.EmitLdarg(2);
+                    il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
+                    il.Emit(OpCodes.Stind_I4);
+                    il.Emit(OpCodes.Br, loopEnd);
+
+                    if (gotoDefault != null)
+                    {
+                        il.MarkLabel(gotoDefault.Value);
+                        il.Emit(OpCodes.Br, switchDefault);
+                    }
+
+                    foreach (var item in infoList)
+                    {
+                        if (item.MemberInfo != null)
                         {
-                            var i = x.Value;
-                            if (infoList[i].MemberInfo != null)
-                            {
-                                EmitDeserializeValue(il, infoList[i]);
-                                il.Emit(OpCodes.Br, loopEnd);
-                            }
-                        },
-                        () =>
-                        {
-                            il.EmitLdarg(4);
-                            il.EmitLdarg(1);
-                            il.EmitLdarg(2);
-                            il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
-                            il.Emit(OpCodes.Stind_I4);
+                            il.MarkLabel(item.SwitchLabel);
+                            EmitDeserializeValue(il, item);
                             il.Emit(OpCodes.Br, loopEnd);
-                        });
-
-                        // offset += readSize
-                        il.MarkLabel(loopEnd);
-                        EmitOffsetPlusReadSize(il);
-                    }
-                    else
-                    {
-                        il.EmitLdloc(forILocal);
-                        il.EmitStloc(key);
-
-
-                        // switch... local = Deserialize
-                        il.EmitLdloc(key);
-
-                        il.Emit(OpCodes.Switch, infoList.Select(x => x.SwitchLabel).ToArray());
-
-                        il.MarkLabel(switchDefault);
-                        // default, only read. readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
-                        il.EmitLdarg(4);
-                        il.EmitLdarg(1);
-                        il.EmitLdarg(2);
-                        il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
-                        il.Emit(OpCodes.Stind_I4);
-                        il.Emit(OpCodes.Br, loopEnd);
-
-                        if (gotoDefault != null)
-                        {
-                            il.MarkLabel(gotoDefault.Value);
-                            il.Emit(OpCodes.Br, switchDefault);
                         }
-
-                        foreach (var item in infoList)
-                        {
-                            if (item.MemberInfo != null)
-                            {
-                                il.MarkLabel(item.SwitchLabel);
-                                EmitDeserializeValue(il, item);
-                                il.Emit(OpCodes.Br, loopEnd);
-                            }
-                        }
-
-                        // offset += readSize
-                        il.MarkLabel(loopEnd);
-                        EmitOffsetPlusReadSize(il);
                     }
+
+                    // offset += readSize
+                    il.MarkLabel(loopEnd);
+                    EmitOffsetPlusReadSize(il);
                 });
             }
 
