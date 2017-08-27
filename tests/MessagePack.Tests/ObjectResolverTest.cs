@@ -303,6 +303,17 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void FindingConstructor()
+        {
+            var data = new FindingConstructorCheck(10, "hogehoge");
+            var bin = MessagePackSerializer.Serialize(data, ContractlessStandardResolver.Instance);
+            var re = MessagePackSerializer.Deserialize<FindingConstructorCheck>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+
+            re.MyProperty1.Is(10);
+            re.MyProperty2.Is("hogehoge");
+        }
+
+        [Fact]
         public void NestedClass()
         {
             {
