@@ -1,0 +1,134 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+    var types = new[]
+    {
+        typeof(Int16),
+        typeof(Int32),
+        typeof(Int64),
+        typeof(UInt16),
+        typeof(UInt32),
+        typeof(UInt64),
+        typeof(byte), 
+        typeof(sbyte),
+    };
+#>
+using System;
+
+namespace MessagePack.Formatters
+{
+<# foreach(var t in types) {  #>
+    public sealed class Force<#= t.Name #>BlockFormatter : IMessagePackFormatter<<#= t.Name #>>
+    {
+        public static readonly Force<#= t.Name #>BlockFormatter Instance = new Force<#= t.Name #>BlockFormatter();
+
+        Force<#= t.Name #>BlockFormatter()
+        {
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #> value, IFormatterResolver formatterResolver)
+        {
+            return MessagePackBinary.Write<#= t.Name #>Force<#= t.Name #>Block(ref bytes, offset, value);
+        }
+
+        public <#= t.Name #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+        }
+    }
+
+    public sealed class NullableForce<#= t.Name #>BlockFormatter : IMessagePackFormatter<<#= t.Name #>?>
+    {
+        public static readonly NullableForce<#= t.Name #>BlockFormatter Instance = new NullableForce<#= t.Name #>BlockFormatter();
+
+        NullableForce<#= t.Name #>BlockFormatter()
+        {
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>? value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                return MessagePackBinary.Write<#= t.Name #>Force<#= t.Name #>Block(ref bytes, offset, value.Value);
+            }
+        }
+
+        public <#= t.Name #>? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+            }
+        }
+    }
+
+<# if(t.Name != "Byte") { #>
+    public sealed class Force<#= t.Name #>BlockArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
+    {
+        public static readonly Force<#= t.Name #>BlockArrayFormatter Instance = new Force<#= t.Name #>BlockArrayFormatter();
+
+        Force<#= t.Name #>BlockArrayFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, <#= t.Name #>[] value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    offset += MessagePackBinary.Write<#= t.Name #>Force<#= t.Name #>Block(ref bytes, offset, value[i]);
+                }
+
+                return offset - startOffset;
+            }
+        }
+
+        public <#= t.Name #>[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                var array = new <#= t.Name #>[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+                    offset += readSize;
+                }
+                readSize = offset - startOffset;
+                return array;
+            }
+        }
+    }
+<# } #>
+
+<# } #>
+}

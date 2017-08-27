@@ -23,31 +23,35 @@ namespace MessagePack.Tests
             public object[] /*Address*/ Addresses { get; set; }
         }
 
+        public class ForTypelessObj
+        {
+            public object Obj { get; set; }
+        }
 
         [Fact]
         public void AnonymousTypeTest()
         {
-                var p = new Person
+            var p = new Person
+            {
+                Name = "John",
+                Addresses = new[]
                 {
-                    Name = "John",
-                    Addresses = new[]
-                    {
                         new { Street = "St." },
                         new { Street = "Ave." }
                     }
-                };
+            };
 
-                var result = MessagePackSerializer.Serialize(p, TypelessContractlessStandardResolver.Instance);
+            var result = MessagePackSerializer.Serialize(p, TypelessContractlessStandardResolver.Instance);
 
-                MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
+            MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
 
-                var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Instance);
-                p2.Name.Is("John");
-                var addresses = p2.Addresses as IList;
-                var d1 = addresses[0] as IDictionary;
-                var d2 = addresses[1] as IDictionary;
-                (d1["Street"] as string).Is("St.");
-                (d2["Street"] as string).Is("Ave.");
+            var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Instance);
+            p2.Name.Is("John");
+            var addresses = p2.Addresses as IList;
+            var d1 = addresses[0] as IDictionary;
+            var d2 = addresses[1] as IDictionary;
+            (d1["Street"] as string).Is("St.");
+            (d2["Street"] as string).Is("Ave.");
         }
 
         [Fact]
@@ -104,9 +108,9 @@ namespace MessagePack.Tests
         }
 
         [MessagePackObject]
-        public class AC { [Key(0)] public int Id; }
+        public class AC {[Key(0)] public int Id; }
         [MessagePackObject]
-        public class BC {[Key(0)] public AC Nested; [Key(1)] public string Name; }
+        public class BC {[Key(0)] public AC Nested;[Key(1)] public string Name; }
 
         [Fact]
         public void TypelessAttributedTest()
@@ -141,6 +145,51 @@ namespace MessagePack.Tests
             deser.IsStructuralEqual(arr);
 
             MessagePackSerializer.ToJson(result).Is(@"[1,[""System.Object[], mscorlib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"",""a"",42]]]");
+        }
+
+        [Theory]
+        [InlineData((sbyte)0)]
+        [InlineData((short)0)]
+        [InlineData((int)0)]
+        [InlineData((long)0)]
+        [InlineData((byte)0)]
+        [InlineData((ushort)0)]
+        [InlineData((uint)0)]
+        [InlineData((ulong)0)]
+        [InlineData((char)'a')]
+        public void TypelessPrimitive<T>(T p)
+        {
+            var v = new ForTypelessObj() { Obj = p };
+
+            var bin = MessagePackSerializer.Typeless.Serialize(v);
+            var o = (ForTypelessObj)MessagePackSerializer.Typeless.Deserialize(bin);
+
+            o.Obj.GetType().Is(typeof(T));
+        }
+
+        [Fact]
+        public void TypelessPrimitive2()
+        {
+            {
+                var now = DateTime.Now;
+                var v = new ForTypelessObj() { Obj = now };
+
+                var bin = MessagePackSerializer.Typeless.Serialize(v);
+                var o = (ForTypelessObj)MessagePackSerializer.Typeless.Deserialize(bin);
+
+                o.Obj.GetType().Is(typeof(DateTime));
+                ((DateTime)o.Obj).Is(now);
+            }
+            {
+                var now = DateTimeOffset.Now;
+                var v = new ForTypelessObj() { Obj = now };
+
+                var bin = MessagePackSerializer.Typeless.Serialize(v);
+                var o = (ForTypelessObj)MessagePackSerializer.Typeless.Deserialize(bin);
+
+                o.Obj.GetType().Is(typeof(DateTimeOffset));
+                ((DateTimeOffset)o.Obj).Is(now);
+            }
         }
     }
 }

@@ -34,7 +34,7 @@ namespace MessagePack.Formatters
         static readonly HashSet<Type> useBuiltinTypes = new HashSet<Type>()
         {
             typeof(Boolean),
-            typeof(Char),
+            // typeof(Char),
             typeof(SByte),
             typeof(Byte),
             typeof(Int16),
@@ -47,7 +47,36 @@ namespace MessagePack.Formatters
             typeof(Double),
             typeof(string),
             typeof(byte[]),
+
+            typeof(Boolean[]),
+            // typeof(Char[]),
+            typeof(SByte[]),
+            typeof(Int16[]),
+            typeof(UInt16[]),
+            typeof(Int32[]),
+            typeof(UInt32[]),
+            typeof(Int64[]),
+            typeof(UInt64[]),
+            typeof(Single[]),
+            typeof(Double[]),
+            typeof(string[]),
+
+            typeof(Boolean?),
+            // typeof(Char?),
+            typeof(SByte?),
+            typeof(Byte?),
+            typeof(Int16?),
+            typeof(UInt16?),
+            typeof(Int32?),
+            typeof(UInt32?),
+            typeof(Int64?),
+            typeof(UInt64?),
+            typeof(Single?),
+            typeof(Double?),
         };
+
+        // mscorlib or System.Private.CoreLib
+        static bool isMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
 
         /// <summary>
         /// When type name does not have Version, Culture, Public token - sometimes can not find type, example - ExpandoObject
@@ -126,7 +155,7 @@ namespace MessagePack.Formatters
 
             if (typeName == null)
             {
-                return Resolvers.ContractlessStandardResolver.Instance.GetFormatter<object>().Serialize(ref bytes, offset, value, formatterResolver);
+                return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref bytes, offset, value, formatterResolver);
             }
 
             // don't use GetOrAdd for avoid closure capture.
@@ -206,7 +235,7 @@ namespace MessagePack.Formatters
             }
 
             // fallback
-            return Resolvers.ContractlessStandardResolver.Instance.GetFormatter<object>().Deserialize(bytes, startOffset, formatterResolver, out readSize);
+            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Deserialize(bytes, startOffset, formatterResolver, out readSize);
         }
 
         /// <summary>
@@ -222,7 +251,24 @@ namespace MessagePack.Formatters
                 var buffer = new byte[typeName.Count];
                 Buffer.BlockCopy(typeName.Array, typeName.Offset, buffer, 0, buffer.Length);
                 var str = StringEncoding.UTF8.GetString(buffer);
-                type = Type.GetType(str, true);
+                type = Type.GetType(str, false);
+                if (type == null)
+                {
+                    if (isMscorlib && str.Contains("System.Private.CoreLib"))
+                    {
+                        str = str.Replace("System.Private.CoreLib", "mscorlib");
+                        type = Type.GetType(str, true); // throw
+                    }
+                    else if (!isMscorlib && str.Contains("mscorlib"))
+                    {
+                        str = str.Replace("mscorlib", "System.Private.CoreLib");
+                        type = Type.GetType(str, true); // throw
+                    }
+                    else
+                    {
+                        type = Type.GetType(str, true); // re-throw
+                    }
+                }
                 typeCache.TryAdd(buffer, type);
             }
 

@@ -285,69 +285,13 @@ namespace Sandbox
 
     class Program
     {
-        static unsafe void Main(string[] args)
+        static  void Main(string[] args)
         {
-            // var hoge = Enumerable.Range(0, 10).Select(x => Encoding.UTF8.GetBytes("MyProperty" + x)).ToArray();
-            //var hoge = new[]
-            //{
-            //    //"Name",
-            //    //"Age",
-            //    //"FullName",
-            //    //"Capacity",
-            //    //"HogeHogeFugaFuga",
-            //    //"FooBar",
-            //    //"MyProperty1",
-            //    "ABCDEFGH",
-            //    "ABCDEFGHIJKL",
-            //    "ABCDEFGHIJKO",
-            //};
-            //var dict = new AutomataDictionary();
-            //int x1 = 0;
-            //foreach (var item in hoge)
-            //{
-            //    dict.Add(item, x1++);
-            //}
+            var now = MessagePackSerializer.Typeless.Serialize('a');
 
-            //var key = Encoding.UTF8.GetBytes("Age");
-            //if (dict.TryGetValue(key, 0, key.Length, out var _))
-            //{
-            //    Console.WriteLine("found");
-            //}
-            //else
-            //{
-            //    Console.WriteLine("not found");
-            //}
-            //Console.WriteLine("--------------------------");
+            // File.WriteAllBytes(@"msgpack.bin", now);
 
-            //Console.WriteLine(dict.ToString());
-
-            ////var bin = MessagePackSerializer.Serialize(new ContractlessSample() { MyProperty1 = 100, MyProperty2 = 9999 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            ////var foo = MessagePackSerializer.Deserialize<ContractlessSample>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            ////Console.WriteLine((foo.MyProperty1, foo.MyProperty2));
-
-
-            //var automata = new AutomataDictionary();
-
-
-            //automata.Add("a", 1);
-            //automata.Add("a", 1);
-
-            //var keyA = "ab";
-
-            //var bytes = Encoding.UTF8.GetBytes("ab");
-            //var rest = bytes.Length;
-            //fixed (byte* buf = bytes)
-            //{
-            //    var p = buf;
-            //    var l1 = AutomataKeyGen.GetKey(ref p, ref rest);
-
-            //    var offset = 0;
-            //    rest = bytes.Length;
-            //    var l2 = AutomataKeyGen.GetKeySafe(bytes, ref offset, ref rest);
-
-            //    Console.WriteLine(l1);
-            //    Console.WriteLine(l2);
-            //}
+            Console.WriteLine(MessagePackSerializer.ToJson(now));
 
         }
 

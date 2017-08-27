@@ -3,6 +3,7 @@
 using MessagePack.Resolvers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -14,11 +15,11 @@ namespace MessagePack.Formatters
 
         readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
 
-        readonly IFormatterResolver innerResolver;
+        readonly IFormatterResolver[] innerResolvers;
 
-        public DynamicObjectTypeFallbackFormatter(IFormatterResolver innerResolver)
+        public DynamicObjectTypeFallbackFormatter(params IFormatterResolver[] innerResolvers)
         {
-            this.innerResolver = innerResolver;
+            this.innerResolvers = innerResolvers;
         }
 
         public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
@@ -38,41 +39,49 @@ namespace MessagePack.Formatters
             }
 
             KeyValuePair<object, SerializeMethod> formatterAndDelegate;
-            lock (serializers)
+            if (!serializers.TryGetValue(type, out formatterAndDelegate))
             {
-                if (!serializers.TryGetValue(type, out formatterAndDelegate))
+                lock (serializers)
                 {
-                    var formatter = formatterResolver.GetFormatterDynamic(type);
-                    if (formatter == null)
+                    if (!serializers.TryGetValue(type, out formatterAndDelegate))
                     {
-                        throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolver:" + formatterResolver.GetType().Name);
+                        object formatter = null;
+                        foreach (var innerResolver in innerResolvers)
+                        {
+                            formatter = innerResolver.GetFormatterDynamic(type);
+                            if (formatter != null) break;
+                        }
+                        if (formatter == null)
+                        {
+                            throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolvers:" + string.Join(", ", innerResolvers.Select(x => x.GetType().Name).ToArray()));
+                        }
+
+                        var t = type;
+                        {
+                            var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(t);
+                            var param0 = Expression.Parameter(typeof(object), "formatter");
+                            var param1 = Expression.Parameter(typeof(byte[]).MakeByRefType(), "bytes");
+                            var param2 = Expression.Parameter(typeof(int), "offset");
+                            var param3 = Expression.Parameter(typeof(object), "value");
+                            var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
+
+                            var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(byte[]).MakeByRefType(), typeof(int), t, typeof(IFormatterResolver) });
+
+                            var body = Expression.Call(
+                                Expression.Convert(param0, formatterType),
+                                serializeMethodInfo,
+                                param1,
+                                param2,
+                                ti.IsValueType ? Expression.Unbox(param3, t) : Expression.Convert(param3, t),
+                                param4);
+
+                            var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4).Compile();
+
+                            formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
+                        }
+
+                        serializers.TryAdd(t, formatterAndDelegate);
                     }
-
-                    serializers.TryAdd(type, t =>
-                    {
-                        var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(t);
-                        var param0 = Expression.Parameter(typeof(object), "formatter");
-                        var param1 = Expression.Parameter(typeof(byte[]).MakeByRefType(), "bytes");
-                        var param2 = Expression.Parameter(typeof(int), "offset");
-                        var param3 = Expression.Parameter(typeof(object), "value");
-                        var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
-
-                        var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(byte[]).MakeByRefType(), typeof(int), t, typeof(IFormatterResolver) });
-
-                        var body = Expression.Call(
-                            Expression.Convert(param0, formatterType),
-                            serializeMethodInfo,
-                            param1,
-                            param2,
-                            ti.IsValueType ? Expression.Unbox(param3, t) : Expression.Convert(param3, t),
-                            param4);
-
-                        var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4).Compile();
-
-                        formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
-
-                        return formatterAndDelegate;
-                    });
                 }
             }
 
