@@ -520,8 +520,8 @@ namespace SharedData
 
     public class FindingConstructorCheck
     {
-        public int MyProperty1 { get; set; }
-        public string MyProperty2 { get; set; }
+        public int MyProperty1 { get; private set; }
+        public string MyProperty2 { get; private set; }
 
 
         public FindingConstructorCheck(KeyValuePair<int, string> ok)

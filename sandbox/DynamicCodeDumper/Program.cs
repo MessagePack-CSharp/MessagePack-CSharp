@@ -107,9 +107,8 @@ namespace DynamicCodeDumper
     [MessagePackObject(true)]
     public class SimlpeStringKeyData2
     {
-        public int FooBarBaz { get; set; }
-        public int FooBarPoo { get; set; }
-        public ByteEnum AprilJuneJuly { get; set; }
+        public int MyProperty1 { get; set; }
+        public int MyProperty2 { get; set; }
     }
 
     [MessagePack.MessagePackObject(true)]

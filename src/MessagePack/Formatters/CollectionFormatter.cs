@@ -90,6 +90,7 @@ namespace MessagePack.Formatters
             }
             else
             {
+                // use ReadBytesSegment? But currently straem api uses memory pool so can't save arraysegment...
                 var binary = MessagePackBinary.ReadBytes(bytes, offset, out readSize);
                 return new ArraySegment<byte>(binary, 0, binary.Length);
             }

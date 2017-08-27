@@ -239,7 +239,7 @@ var bin = MessagePackSerializer.Serialize(data);
 var point = MessagePackSerializer.Deserialize<Point>(bin);
 ```
 
-MessagePackSerializer choose constructor with the least argument and match index if key in integer or match name(ignore case) if key is string. If encounts `MessagePackDynamicObjectResolverException: can't find matched constructor parameter` you should check about this.
+MessagePackSerializer choose constructor with the least matched argument, match index if key in integer or match name(ignore case) if key is string. If encounts `MessagePackDynamicObjectResolverException: can't find matched constructor parameter` you should check about this.
 
 If can not match automatically, you can specify to use constructor manually by `[SerializationConstructorAttribute]`.
 
@@ -252,11 +252,10 @@ public struct Point
     [Key(1)]
     public readonly int Y;
 
-    // can't find matched constructor parameter, parameterType mismatch. type:Point parameterIndex:0 paramterType:ValueTuple`2
-    public Point((int, int) p)
+    // If not marked attribute, used this(least matched argument)
+    public Point(int x)
     {
-        X = p.Item1;
-        Y = p.Item2;
+        X = x;
     }
 
     [SerializationConstructor]
@@ -468,9 +467,46 @@ Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core 
 * Don't use `IEnumerable<T>` abstraction on iterate collection, [see:CollectionFormatterBase](https://github.com/neuecc/MessagePack-CSharp/blob/209f301e2e595ed366408624011ba2e856d23429/src/MessagePack/Formatters/CollectionFormatter.cs#L192-L355) and inherited collection formatters
 * Uses pre generated lookup table to reduce check messagepack type, [see: MessagePackBinary](https://github.com/neuecc/MessagePack-CSharp/blob/209f301e2e595ed366408624011ba2e856d23429/src/MessagePack/MessagePackBinary.cs#L15-L212)
 * Uses optimized type key dictionary for non-generic methods, [see: ThreadsafeTypeKeyHashTable](https://github.com/neuecc/MessagePack-CSharp/blob/91312921cb7fe987f48336768c898a76ac7dbb40/src/MessagePack/Internal/ThreadsafeTypeKeyHashTable.cs)
-* Avoid string key decode for lookup map(string key) key with calc hash by FarmHash, see: [ByteArrayStringHashTable](https://github.com/neuecc/MessagePack-CSharp/blob/91312921cb7fe987f48336768c898a76ac7dbb40/src/MessagePack/Internal/ByteArrayStringHashTable.cs)
+* Avoid string key decode for lookup map(string key) key and uses automata based name lookup with il inlining code generation, see: [AutomataDictionary](https://github.com/neuecc/MessagePack-CSharp/blob/bcedbce3fd98cb294210d6b4a22bdc4c75ccd916/src/MessagePack/Internal/AutomataDictionary.cs)
 
 Before creating this library, I implemented a fast fast serializer with [ZeroFormatter#Performance](https://github.com/neuecc/ZeroFormatter#performance). And this is a further evolved implementation. MessagePack for C# is always fast, optimized for all types(primitive, small struct, large object, any collections).
+
+Deserialize Perfomrance per options
+---
+Performance varies depending on options. This is a micro benchamark with [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet). Target object has 9 members(`MyProperty1` ~ `MyProperty9`), value are zero.
+
+ |              Method |        Mean | Error | Scaled |  Gen 0 | Allocated |
+ |-------------------- |------------:|------:|-------:|-------:|----------:|
+ |              IntKey |    72.67 ns |    NA |   1.00 | 0.0132 |      56 B |
+ |           StringKey |   217.95 ns |    NA |   3.00 | 0.0131 |      56 B |
+ |     Typeless_IntKey |   176.71 ns |    NA |   2.43 | 0.0131 |      56 B |
+ |  Typeless_StringKey |   378.64 ns |    NA |   5.21 | 0.0129 |      56 B |
+ |       MsgPackCliMap | 1,355.26 ns |    NA |  18.65 | 0.1431 |     608 B |
+ |     MsgPackCliArray |   455.28 ns |    NA |   6.26 | 0.0415 |     176 B |
+ |         ProtobufNet |   265.85 ns |    NA |   3.66 | 0.0319 |     136 B |
+ |            Hyperion |   366.47 ns |    NA |   5.04 | 0.0949 |     400 B |
+ |       JsonNetString | 2,783.39 ns |    NA |  38.30 | 0.6790 |    2864 B |
+ | JsonNetStreamReader | 3,297.90 ns |    NA |  45.38 | 1.4267 |    6000 B |
+ |           JilString |   553.65 ns |    NA |   7.62 | 0.0362 |     152 B |
+ |     JilStreamReader | 1,408.46 ns |    NA |  19.38 | 0.8450 |    3552 B |
+
+IntKey, StringKey, Typeless_IntKey, Typeless_StringKey are MessagePack for C# options. All MessagePack for C# options achive zero memory allocation on deserialization process. JsonNetString/JilString is deserialized from string. JsonNetStreamReader/JilStreamReader is deserialized from UTF8 byte[] with StreamReader. Deserialization is normally read from Stream. Thus, it will be restored from byte[](or Stream) instead of string.
+
+MessagePack for C# IntKey is fastest. StringKey is slower than IntKey because matching from the character string is required. If IntKey, read array length, for(array length) { binary decode }. If StringKey, read map length, for(map length) { decode key, lookup by key, binary decode } so requires additional two steps(decode key and lookup by key).
+
+String key is often useful, contractless, simple replacement of JSON, interoperability with other languages, and more certain versioning. MessagePack for C# is also optimized for String Key. First of all, it do not decode UTF8 byte[] to String for matching with the member name, it will look up the byte[] as it is(avoid decode cost and extra allocation).
+
+And It will try to match each `long type` (per 8 character, if it is not enough, pad with 0) using automata and inline it when IL code generating.
+
+![image](https://user-images.githubusercontent.com/46207/29754771-216b40e2-8bc7-11e7-8310-1c3602e80a08.png)
+
+This also avoids calculating the hash code of byte[], and the comparison can be made several times on a long unit.
+
+This is the sample decompile of generated deserializer code by [ILSpy](http://ilspy.net/).
+
+![image](https://user-images.githubusercontent.com/46207/29754804-b5ba0f44-8bc7-11e7-9f6b-0c8f3c041237.png)
+
+If the number of nodes is large, search with a embedded binary search.
 
 LZ4 Compression
 ---
@@ -709,6 +745,7 @@ Primitive API(MessagePackBinary)
 | ReadNextBlock | Skip MessagePackFormat binary block with sub structures(array/map), returns read size. This is useful for create deserializer. |
 | ReadMessageBlockFromStreamUnsafe | Read binary block from Stream, if readOnlySingleMessage = false then read sub structures(array/map). | 
 | ReadStringSegment | Read string format but do not decode UTF8, returns `ArraySegment<byte>`. |
+| ReadBytesSegment | Read binary format but do not copy bytes, returns `ArraySegment<byte>`. |
 | Write/ReadMapHeader | Write/Read map format header(element length). |
 | WriteMapHeaderForceMap32Block | Write map format header, always use map32 format(length is fixed, 5). |
 | Write/ReadArrayHeader | Write/Read array format header(element length). |

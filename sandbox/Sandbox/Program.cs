@@ -287,11 +287,22 @@ namespace Sandbox
     {
         static  void Main(string[] args)
         {
-            var now = MessagePackSerializer.Typeless.Serialize('a');
 
-            // File.WriteAllBytes(@"msgpack.bin", now);
+            var automata = new AutomataDictionary();
+            automata.Add("MyProperty1", 0);
+            automata.Add("MyProperty2", 0);
 
-            Console.WriteLine(MessagePackSerializer.ToJson(now));
+            Console.WriteLine(string.Join(" ", Encoding.UTF8.GetBytes("MyProperty1")));
+            Console.WriteLine(string.Join(" ", Encoding.UTF8.GetBytes("MyProperty2")));
+            //Console.WriteLine(Encoding.UTF8.GetBytes("MyProperty2"));
+
+
+            Console.WriteLine(automata.ToString());
+
+
+
+
+
 
         }
 
