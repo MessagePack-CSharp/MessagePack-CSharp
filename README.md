@@ -496,7 +496,7 @@ MessagePack for C# IntKey is fastest. StringKey is slower than IntKey because ma
 
 String key is often useful, contractless, simple replacement of JSON, interoperability with other languages, and more certain versioning. MessagePack for C# is also optimized for String Key. First of all, it do not decode UTF8 byte[] to String for matching with the member name, it will look up the byte[] as it is(avoid decode cost and extra allocation).
 
-And It will try to match each `long type` (per 8 character, if it is not enough, pad with 0) using automata and inline it when IL code generating.
+And It will try to match each `long type` (per 8 character, if it is not enough, pad with 0) using [automata](https://en.wikipedia.org/wiki/Automata_theory) and inline it when IL code generating.
 
 ![image](https://user-images.githubusercontent.com/46207/29754771-216b40e2-8bc7-11e7-8310-1c3602e80a08.png)
 
