@@ -166,7 +166,7 @@ namespace MessagePack.Internal
             foreach (var item in nexts)
             {
                 if (item.Value != -1) yield return new KeyValuePair<string, int>(item.originalKey, item.Value);
-                YieldCore(item.YieldChildren());
+                foreach (var x in YieldCore(item.YieldChildren())) yield return x;
             }
         }
 
