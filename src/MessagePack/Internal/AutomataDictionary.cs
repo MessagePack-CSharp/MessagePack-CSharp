@@ -379,7 +379,7 @@ namespace MessagePack.Internal
                             il.Emit(OpCodes.Ldc_I8, valueExists[i].Key);
                             il.Emit(OpCodes.Bne_Un, notFoundLabel);
                             // found
-                            onFound(new KeyValuePair<string, int>(nexts[i].originalKey, nexts[i].Value));
+                            onFound(new KeyValuePair<string, int>(valueExists[i].originalKey, valueExists[i].Value));
 
                             // notfound
                             il.MarkLabel(notFoundLabel);
@@ -505,9 +505,9 @@ namespace MessagePack.Internal
                             }
                         case 6:
                             {
-                                var a = *(short*)p;
-                                var b = *(int*)(p + 2);
-                                key = ((long)a | (long)b << 16);
+                                long a = *(short*)p;
+                                long b = *(int*)(p + 2);
+                                key = (a | (b << 16));
                                 readSize = 6;
                                 break;
                             }
