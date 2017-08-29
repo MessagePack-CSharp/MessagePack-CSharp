@@ -280,55 +280,6 @@ namespace Sandbox
         public IEntity Entity { get; }
     }
 
-    [MessagePackObject(true)]
-    public class AutomataBugCheckResponse
-    {
-        public string api_status = null;
-        public int api_status_code = 0;
-        public string api_message = null;
-        public string access_time = null;
-        public int ver_asset = 0;
-        public int ver_data = 0;
-    }
-
-    [MessagePackObject(true)]
-    public class MasterVersionResponse : AutomataBugCheckResponse
-    {
-        public int font = 0;
-
-        public int user_level = 0;
-
-        public int item = 0;
-        public int series = 0;
-        public int character = 0;
-        public int stamp = 0;
-
-        public int stamp_collection = 0;
-
-        public int deco_tree = 0;
-
-        public int partner = 0;
-        public int partner_level = 0;
-        public int partner_boost = 0;
-        public int partner_skill = 0;
-        public int partner_avator = 0;
-
-        public int home_menu = 0;
-        public int gacha_menu = 0;
-
-        public int stage = 0;
-        public int stage_level = 0;
-        public int stage_stamp = 0;
-        public int stage_layout = 0;
-        public int stage_layout_detail = 0;
-        public int stage_question = 0;
-        public int stage_question_page = 0;
-        public int stage_question_detail = 0;
-        public int stage_question_draw = 0;
-
-        public int story = 0;
-    }
-
 
 
     class Program
@@ -336,9 +287,7 @@ namespace Sandbox
         static  void Main(string[] args)
         {
 
-            MessagePackSerializer.Serialize(new MasterVersionResponse());
-
-
+        
 
 
 

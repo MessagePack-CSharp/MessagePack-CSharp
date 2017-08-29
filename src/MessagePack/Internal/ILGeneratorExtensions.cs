@@ -276,6 +276,11 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ret);
         }
 
+        public static void EmitULong(this ILGenerator il, ulong value)
+        {
+            il.Emit(OpCodes.Ldc_I8, unchecked((long)value));
+        }
+
         public static void EmitThrowNotimplemented(this ILGenerator il)
         {
             il.Emit(OpCodes.Newobj, typeof(System.NotImplementedException).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0));

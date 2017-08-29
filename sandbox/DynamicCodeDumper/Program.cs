@@ -237,7 +237,7 @@ namespace DynamicCodeDumper
 
             // ---isStringKey
 
-            long key;
+            ulong key;
             ArraySegment<byte> arraySegment;
             byte* p;
             int rest;

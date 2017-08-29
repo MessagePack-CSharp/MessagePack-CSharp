@@ -561,7 +561,7 @@ namespace MessagePack.Internal
 
                 var buffer = il.DeclareLocal(typeof(byte).MakeByRefType(), true);
                 var keyArraySegment = il.DeclareLocal(typeof(ArraySegment<byte>));
-                var longKey = il.DeclareLocal(typeof(long));
+                var longKey = il.DeclareLocal(typeof(ulong));
                 var p = il.DeclareLocal(typeof(byte*));
                 var rest = il.DeclareLocal(typeof(int));
 
