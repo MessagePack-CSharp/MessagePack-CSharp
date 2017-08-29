@@ -142,7 +142,7 @@ namespace MessagePack.Formatters
                 }
 
                 var ti = type.GetTypeInfo();
-                if (ti.IsAnonymous() || useBuiltinTypes.Contains(type) || ti.IsEnum)
+                if (ti.IsAnonymous() || useBuiltinTypes.Contains(type))
                 {
                     typeName = null;
                 }

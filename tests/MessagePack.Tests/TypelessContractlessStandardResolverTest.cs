@@ -191,5 +191,13 @@ namespace MessagePack.Tests
                 ((DateTimeOffset)o.Obj).Is(now);
             }
         }
+
+        [Fact]
+        public void TypelessEnum()
+        {
+            var e = MessagePackSerializer.Typeless.Serialize(GlobalMyEnum.Apple);
+            var b = MessagePackSerializer.Typeless.Deserialize(e);
+            b.GetType().Is(typeof(GlobalMyEnum));
+        }
     }
 }
