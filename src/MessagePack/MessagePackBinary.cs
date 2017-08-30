@@ -419,6 +419,13 @@ namespace MessagePack
             return bytes[offset] == MessagePackCode.Nil;
         }
 
+        public static int WriteRaw(ref byte[] bytes,int offset, byte[] rawMessagePackBlock)
+        {
+            EnsureCapacity(ref bytes, offset, rawMessagePackBlock.Length);
+            Buffer.BlockCopy(rawMessagePackBlock, 0, bytes, offset, rawMessagePackBlock.Length);
+            return rawMessagePackBlock.Length;
+        }
+
         /// <summary>
         /// Unsafe. If value is guranteed 0 ~ MessagePackRange.MaxFixMapCount(15), can use this method.
         /// </summary>
@@ -1553,6 +1560,46 @@ namespace MessagePack
                 bytes[offset + 4] = unchecked((byte)byteCount);
                 Buffer.BlockCopy(utf8stringBytes, 0, bytes, offset + 5, byteCount);
                 return byteCount + 5;
+            }
+        }
+
+        public static byte[] GetEncodedStringBytes(string value)
+        {
+            var byteCount = StringEncoding.UTF8.GetByteCount(value);
+            if (byteCount <= MessagePackRange.MaxFixStringLength)
+            {
+                var bytes = new byte[byteCount + 1];
+                bytes[0] = (byte)(MessagePackCode.MinFixStr | byteCount);
+                StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, 1);
+                return bytes;
+            }
+            else if (byteCount <= byte.MaxValue)
+            {
+                var bytes = new byte[byteCount + 2];
+                bytes[0] = MessagePackCode.Str8;
+                bytes[1] = unchecked((byte)byteCount);
+                StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, 2);
+                return bytes;
+            }
+            else if (byteCount <= ushort.MaxValue)
+            {
+                var bytes = new byte[byteCount + 3];
+                bytes[0] = MessagePackCode.Str16;
+                bytes[1] = unchecked((byte)(byteCount >> 8));
+                bytes[2] = unchecked((byte)byteCount);
+                StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, 3);
+                return bytes;
+            }
+            else
+            {
+                var bytes = new byte[byteCount + 5];
+                bytes[0] = MessagePackCode.Str32;
+                bytes[1] = unchecked((byte)(byteCount >> 24));
+                bytes[2] = unchecked((byte)(byteCount >> 16));
+                bytes[3] = unchecked((byte)(byteCount >> 8));
+                bytes[4] = unchecked((byte)byteCount);
+                StringEncoding.UTF8.GetBytes(value, 0, value.Length, bytes, 5);
+                return bytes;
             }
         }
 

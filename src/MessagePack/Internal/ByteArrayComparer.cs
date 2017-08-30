@@ -45,8 +45,8 @@ namespace MessagePack.Internal
                 return false;
             }
 
-            fixed (byte* p1 = xs)
-            fixed (byte* p2 = ys)
+            fixed (byte* p1 = &xs[0])
+            fixed (byte* p2 = &ys[0])
             {
                 var x1 = p1 + xsOffset;
                 var x2 = p2 + ysOffset;

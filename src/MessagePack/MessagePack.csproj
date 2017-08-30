@@ -89,6 +89,10 @@
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
         </None>
+        <None Update="Internal\UnsafeMemory.tt">
+          <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
+          <Generator>TextTemplatingFileGenerator</Generator>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -115,6 +119,11 @@
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
         <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
+      </Compile>
+      <Compile Update="Internal\UnsafeMemory.cs">
+        <DependentUpon>UnsafeMemory.tt</DependentUpon>
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
       </Compile>
     </ItemGroup>
 </Project>

@@ -18,9 +18,9 @@ namespace MessagePack.Internal
                 return Hash32Len0to4(bytes, offset, (uint)count);
             }
 
-            fixed (byte* p = bytes)
+            fixed (byte* p = &bytes[offset])
             {
-                return Hash32(p + offset, (uint)count);
+                return Hash32(p, (uint)count);
             }
         }
 
@@ -197,9 +197,9 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe ulong Hash64(byte[] bytes, int offset, int count)
         {
-            fixed (byte* p = bytes)
+            fixed (byte* p = &bytes[offset])
             {
-                return Hash64(p + offset, (uint)count);
+                return Hash64(p, (uint)count);
             }
         }
 

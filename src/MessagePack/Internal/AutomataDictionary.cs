@@ -23,7 +23,7 @@ namespace MessagePack.Internal
         public unsafe void Add(string str, int value)
         {
             var bytes = Encoding.UTF8.GetBytes(str);
-            fixed (byte* buffer = bytes)
+            fixed (byte* buffer = &bytes[0])
             {
                 var node = root;
 
@@ -47,7 +47,7 @@ namespace MessagePack.Internal
 
         public unsafe bool TryGetValue(byte[] bytes, int offset, int count, out int value)
         {
-            fixed (byte* p = bytes)
+            fixed (byte* p = &bytes[0])
             {
                 var p1 = p;
                 var node = root;
