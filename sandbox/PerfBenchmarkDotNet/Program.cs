@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZeroFormatter;
 
 namespace PerfBenchmarkDotNet
 {
@@ -120,35 +121,45 @@ namespace PerfBenchmarkDotNet
 
     [newmsgpack::MessagePack.MessagePackObject]
     [ProtoContract]
+    [ZeroFormattable]
     public class IntKeySerializerTarget
     {
         [newmsgpack::MessagePack.Key(0)]
+        [Index(0)]
         [ProtoMember(1)]
-        public int MyProperty1 { get; set; }
+        public virtual int MyProperty1 { get; set; }
         [newmsgpack::MessagePack.Key(1)]
+        [Index(1)]
         [ProtoMember(2)]
-        public int MyProperty2 { get; set; }
+        public virtual int MyProperty2 { get; set; }
         [newmsgpack::MessagePack.Key(2)]
+        [Index(2)]
         [ProtoMember(3)]
-        public int MyProperty3 { get; set; }
+        public virtual int MyProperty3 { get; set; }
         [newmsgpack::MessagePack.Key(3)]
+        [Index(3)]
         [ProtoMember(4)]
-        public int MyProperty4 { get; set; }
+        public virtual int MyProperty4 { get; set; }
         [newmsgpack::MessagePack.Key(4)]
+        [Index(4)]
         [ProtoMember(5)]
-        public int MyProperty5 { get; set; }
+        public virtual int MyProperty5 { get; set; }
         [newmsgpack::MessagePack.Key(5)]
+        [Index(5)]
         [ProtoMember(6)]
-        public int MyProperty6 { get; set; }
+        public virtual int MyProperty6 { get; set; }
         [newmsgpack::MessagePack.Key(6)]
+        [Index(6)]
         [ProtoMember(7)]
-        public int MyProperty7 { get; set; }
+        public virtual int MyProperty7 { get; set; }
         [ProtoMember(8)]
         [newmsgpack::MessagePack.Key(7)]
-        public int MyProperty8 { get; set; }
+        [Index(7)]
+        public virtual int MyProperty8 { get; set; }
         [ProtoMember(9)]
         [newmsgpack::MessagePack.Key(8)]
-        public int MyProperty9 { get; set; }
+        [Index(8)]
+        public virtual int MyProperty9 { get; set; }
     }
 
 
@@ -424,6 +435,8 @@ namespace PerfBenchmarkDotNet
         static IntKeySerializerTarget intData = new IntKeySerializerTarget();
         static StringKeySerializerTarget stringData = new StringKeySerializerTarget();
 
+        static byte[] zeroFormatterPool = null;
+
         [Benchmark(Baseline = true)]
         public byte[] IntKey()
         {
@@ -478,6 +491,12 @@ namespace PerfBenchmarkDotNet
                 hyperionSerializer.Serialize(intData, ms);
                 return ms.ToArray();
             }
+        }
+
+        [Benchmark]
+        public byte[] ZeroFormatter()
+        {
+            return ZeroFormatterSerializer.Serialize(intData);
         }
 
         [Benchmark]

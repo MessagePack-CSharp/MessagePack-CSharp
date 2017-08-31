@@ -508,6 +508,26 @@ This is the sample decompile of generated deserializer code by [ILSpy](http://il
 
 If the number of nodes is large, search with a embedded binary search.
 
+Extra note, this is serialize benchmark result.
+
+ |              Method |        Mean | Error | Scaled |  Gen 0 | Allocated |
+ |-------------------- |------------:|------:|-------:|-------:|----------:|
+ |              IntKey |    95.31 ns |    NA |   1.00 | 0.0094 |      40 B |
+ |           StringKey |   225.33 ns |    NA |   2.36 | 0.0339 |     144 B |
+ |     Typeless_IntKey |   168.00 ns |    NA |   1.76 | 0.0265 |     112 B |
+ |  Typeless_StringKey |   325.38 ns |    NA |   3.41 | 0.0510 |     216 B |
+ |       MsgPackCliMap | 1,158.00 ns |    NA |  12.15 | 0.1297 |     552 B |
+ |     MsgPackCliArray |   332.33 ns |    NA |   3.49 | 0.1006 |     424 B |
+ |         ProtobufNet |   260.88 ns |    NA |   2.74 | 0.0665 |     280 B |
+ |            Hyperion |   300.12 ns |    NA |   3.15 | 0.1674 |     704 B |
+ |       ZeroFormatter |   165.17 ns |    NA |   1.73 | 0.1009 |     424 B |
+ |       JsonNetString | 1,524.97 ns |    NA |  16.00 | 0.4616 |    1944 B |
+ | JsonNetStreamWriter | 1,847.29 ns |    NA |  19.38 | 1.5526 |    6522 B |
+ |           JilString |   580.54 ns |    NA |   6.09 | 0.3481 |    1464 B |
+ |     JilStreamWriter |   848.34 ns |    NA |   8.90 | 1.4448 |    6066 B |
+
+ Of course, IntKey is fastest but StringKey also good.
+
 LZ4 Compression
 ---
 MessagePack is a fast and *compact* format but it is not compression. [LZ4](https://github.com/lz4/lz4) is extremely fast compression algorithm, with MessagePack for C# can achive extremely fast perfrormance and extremely compact binary size!
