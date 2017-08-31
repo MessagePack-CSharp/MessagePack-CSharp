@@ -54,9 +54,9 @@
     <Reference Include="Jil, Version=2.15.4.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Jil.2.15.4\lib\net45\Jil.dll</HintPath>
     </Reference>
-    <Reference Include="MessagePack_1_4_4, Version=1.4.3.0, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
+    <Reference Include="MessagePack_1_6_0_3, Version=1.6.0.3, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\MessagePack_1_4_4.dll</HintPath>
+      <HintPath>.\MessagePack_1_6_0_3.dll</HintPath>
       <Aliases>oldmsgpack</Aliases>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -185,6 +185,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MessagePack_1_4_4.dll" />
+    <Content Include="MessagePack_1_6_0_3.dll" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">

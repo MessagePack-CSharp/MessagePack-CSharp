@@ -435,8 +435,6 @@ namespace PerfBenchmarkDotNet
         static IntKeySerializerTarget intData = new IntKeySerializerTarget();
         static StringKeySerializerTarget stringData = new StringKeySerializerTarget();
 
-        static byte[] zeroFormatterPool = null;
-
         [Benchmark(Baseline = true)]
         public byte[] IntKey()
         {
