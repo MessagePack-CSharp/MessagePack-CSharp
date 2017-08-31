@@ -284,11 +284,15 @@ namespace Sandbox
 
     class Program
     {
-        static  void Main(string[] args)
+        static void Main(string[] args)
         {
 
-        
+            var gb = 1024 * 1024 * 1024;
+            byte[] bytes = null;
+            MessagePackBinary.EnsureCapacity(ref bytes, 0, gb);
+            MessagePackBinary.EnsureCapacity(ref bytes, gb, 1);
 
+            MessagePackBinary.EnsureCapacity(ref bytes, 0x7FFFFFC7, 1);
 
 
         }

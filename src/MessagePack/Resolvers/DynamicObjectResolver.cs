@@ -257,7 +257,7 @@ namespace MessagePack.Internal
                 il.Emit(OpCodes.Dup);
                 il.EmitLdc_I4(i);
                 il.Emit(OpCodes.Ldstr, item.StringKey);
-                il.EmitCall(getEncodedStringBytes);
+                il.EmitCall(MessagePackBinaryTypeInfo.GetEncodedStringBytes);
                 il.Emit(OpCodes.Stelem_Ref);
                 i++;
             }
@@ -886,16 +886,13 @@ namespace MessagePack.Internal
 
         static readonly ConstructorInfo objectCtor = typeof(object).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0);
 
-        static readonly MethodInfo getutf8 = typeof(Encoding).GetTypeInfo().GetDeclaredProperty("UTF8").GetGetMethod();
-        static readonly MethodInfo getbytes = typeof(Encoding).GetRuntimeMethod("GetBytes", new[] { typeof(string) });
-        static readonly MethodInfo getEncodedStringBytes = typeof(MessagePackBinary).GetRuntimeMethod("GetEncodedStringBytes", new[] { typeof(string) });
-
-
         internal static class MessagePackBinaryTypeInfo
         {
             public static TypeInfo TypeInfo = typeof(MessagePackBinary).GetTypeInfo();
 
-            public static MethodInfo WriteFixedMapHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedMapHeaderUnsafe", new[] { refByte, typeof(int), typeof(int) });
+            public static readonly MethodInfo GetEncodedStringBytes = typeof(MessagePackBinary).GetRuntimeMethod("GetEncodedStringBytes", new[] { typeof(string) });
+            public static MethodInfo WriteFixedMapHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedMapHeaderUnsafe", new[] { refByte, 
+typeof(int), typeof(int) });
             public static MethodInfo WriteFixedArrayHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedArrayHeaderUnsafe", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("WriteMapHeader", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteArrayHeader = typeof(MessagePackBinary).GetRuntimeMethod("WriteArrayHeader", new[] { refByte, typeof(int), typeof(int) });

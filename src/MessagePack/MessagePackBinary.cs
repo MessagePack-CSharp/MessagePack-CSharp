@@ -12,6 +12,7 @@ namespace MessagePack
     public static partial class MessagePackBinary
     {
         const int MaxSize = 256; // [0] ~ [255]
+        const int ArrayMaxSize = 0x7FFFFFC7; // https://msdn.microsoft.com/en-us/library/system.array
 
         static readonly IMapHeaderDecoder[] mapHeaderDecoders = new IMapHeaderDecoder[MaxSize];
         static readonly IArrayHeaderDecoder[] arrayHeaderDecoders = new IArrayHeaderDecoder[MaxSize];
@@ -272,9 +273,23 @@ namespace MessagePack
                     FastResize(ref bytes, num);
                     return;
                 }
-                if (num < current * 2)
+
+                if (current == ArrayMaxSize)
                 {
-                    num = current * 2;
+                    throw new InvalidOperationException("byte[] size reached maximum size of array(0x7FFFFFC7), can not write to single byte[]. Details: https://msdn.microsoft.com/en-us/library/system.array");
+                }
+
+                var newSize = unchecked((current * 2));
+                if (newSize < 0) // overflow
+                {
+                    num = ArrayMaxSize;
+                }
+                else
+                {
+                    if (num < newSize)
+                    {
+                        num = newSize;
+                    }
                 }
 
                 FastResize(ref bytes, num);
