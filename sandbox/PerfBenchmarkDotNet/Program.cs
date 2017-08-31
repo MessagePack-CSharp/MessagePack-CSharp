@@ -29,10 +29,10 @@ namespace PerfBenchmarkDotNet
             Add(MarkdownExporter.GitHub);
             Add(MemoryDiagnoser.Default);
 
-            Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1));
+            //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1));
 
-            //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
-            //  Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
+            Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
+              Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
         }
     }
 
@@ -48,7 +48,8 @@ namespace PerfBenchmarkDotNet
                 typeof(SerializeBenchmark),
                 typeof(DictionaryLookupCompare),
                 typeof(StringKeyDeserializeCompare),
-                typeof(NewVsOld)
+                typeof(NewVsOld),
+                typeof(ImproveStringKeySerializeBenchmark)
             });
 
             // args = new[] { "0" };
@@ -105,6 +106,7 @@ namespace PerfBenchmarkDotNet
         public object Nested { get; }
     }
 
+    [oldmsgpack::MessagePack.MessagePackObject(true)]
     [newmsgpack::MessagePack.MessagePackObject(true)]
     public class StringKeySerializerTarget
     {
@@ -576,6 +578,24 @@ namespace PerfBenchmarkDotNet
         }
     }
 
+
+    [Config(typeof(BenchmarkConfig))]
+    public class ImproveStringKeySerializeBenchmark
+    {
+        static StringKeySerializerTarget stringData = new StringKeySerializerTarget();
+
+        [Benchmark]
+        public byte[] OldSerialize()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize<StringKeySerializerTarget>(stringData);
+        }
+
+        [Benchmark(Baseline = true)]
+        public byte[] NewSerialize()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize<StringKeySerializerTarget>(stringData);
+        }
+    }
 
     [Config(typeof(BenchmarkConfig))]
     public class StringKeyDeserializeCompare

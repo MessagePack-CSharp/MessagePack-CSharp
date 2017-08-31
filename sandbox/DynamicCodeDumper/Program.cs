@@ -16,49 +16,57 @@ namespace DynamicCodeDumper
     {
         static void Main(string[] args)
         {
+            try
+            {
+                //DynamicObjectResolver.Instance.GetFormatter<ArrayOptimizeClass>();
+                //DynamicObjectResolver.Instance.GetFormatter<Empty1>();
+                //DynamicObjectResolver.Instance.GetFormatter<Empty2>();
 
-            //DynamicObjectResolver.Instance.GetFormatter<ArrayOptimizeClass>();
-            //DynamicObjectResolver.Instance.GetFormatter<Empty1>();
-            //DynamicObjectResolver.Instance.GetFormatter<Empty2>();
+                //DynamicObjectResolver.Instance.GetFormatter<NonEmpty1>();
+                //DynamicObjectResolver.Instance.GetFormatter<NonEmpty2>();
+                //DynamicObjectResolver.Instance.GetFormatter<FirstSimpleData>();
+                //DynamicObjectResolver.Instance.GetFormatter<Version0>();
+                //DynamicObjectResolver.Instance.GetFormatter<Version1>();
+                //DynamicObjectResolver.Instance.GetFormatter<Version2>();
+                DynamicObjectResolver.Instance.GetFormatter<SimpleIntKeyData>();
+                DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
+                DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
+                DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
+                DynamicObjectResolver.Instance.GetFormatter<LongestString>();
+                DynamicObjectResolver.Instance.GetFormatter<Dup>();
+                //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
+                //DynamicObjectResolver.Instance.GetFormatter<Callback1>();
+                //DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
+                //DynamicObjectResolver.Instance.GetFormatter<Callback2>();
+                //DynamicObjectResolver.Instance.GetFormatter<Callback2_2>();
 
-            //DynamicObjectResolver.Instance.GetFormatter<NonEmpty1>();
-            //DynamicObjectResolver.Instance.GetFormatter<NonEmpty2>();
-            //DynamicObjectResolver.Instance.GetFormatter<FirstSimpleData>();
-            //DynamicObjectResolver.Instance.GetFormatter<Version0>();
-            //DynamicObjectResolver.Instance.GetFormatter<Version1>();
-            //DynamicObjectResolver.Instance.GetFormatter<Version2>();
-            DynamicObjectResolver.Instance.GetFormatter<SimpleIntKeyData>();
-            DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
-            DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
-            DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
-            DynamicObjectResolver.Instance.GetFormatter<LongestString>();
-            DynamicObjectResolver.Instance.GetFormatter<Dup>();
-            //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
-            //DynamicObjectResolver.Instance.GetFormatter<Callback1>();
-            //DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
-            //DynamicObjectResolver.Instance.GetFormatter<Callback2>();
-            //DynamicObjectResolver.Instance.GetFormatter<Callback2_2>();
+                //DynamicUnionResolver.Instance.GetFormatter<IHogeMoge>();
+                //DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
+                //DynamicUnionResolver.Instance.GetFormatter<IUnionChecker2>();
 
-            //DynamicUnionResolver.Instance.GetFormatter<IHogeMoge>();
-            //DynamicUnionResolver.Instance.GetFormatter<IUnionChecker>();
-            //DynamicUnionResolver.Instance.GetFormatter<IUnionChecker2>();
+                //DynamicUnionResolver.Instance.GetFormatter<RootUnionType>();
 
-            //DynamicUnionResolver.Instance.GetFormatter<RootUnionType>();
+                //DynamicEnumResolver.Instance.GetFormatter<IntEnum>();
+                //DynamicEnumResolver.Instance.GetFormatter<ShortEnum>();
 
-            //DynamicEnumResolver.Instance.GetFormatter<IntEnum>();
-            //DynamicEnumResolver.Instance.GetFormatter<ShortEnum>();
+                //DynamicContractlessObjectResolver.Instance.GetFormatter<ContractlessConstructorCheck>();
+                //DynamicContractlessObjectResolver.Instance.GetFormatter<Contractless2>();
 
-            //DynamicContractlessObjectResolver.Instance.GetFormatter<ContractlessConstructorCheck>();
-            //DynamicContractlessObjectResolver.Instance.GetFormatter<Contractless2>();
+                //DynamicContractlessObjectResolver.Instance.GetFormatter<EntityBase>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            finally
+            {
+                var a1 = DynamicObjectResolver.Instance.Save();
+                var a2 = DynamicUnionResolver.Instance.Save();
+                var a3 = DynamicEnumResolver.Instance.Save();
+                var a4 = DynamicContractlessObjectResolver.Instance.Save();
 
-            //DynamicContractlessObjectResolver.Instance.GetFormatter<EntityBase>();
-
-            var a1 = DynamicObjectResolver.Instance.Save();
-            var a2 = DynamicUnionResolver.Instance.Save();
-            var a3 = DynamicEnumResolver.Instance.Save();
-            var a4 = DynamicContractlessObjectResolver.Instance.Save();
-
-            Verify(a1);
+                Verify(a1);
+            }
             //Verify(a1, a2, a3, a4);
         }
 

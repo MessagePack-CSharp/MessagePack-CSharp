@@ -167,7 +167,6 @@ namespace MessagePack
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
-
             if (!readStrict)
             {
 #if NETSTANDARD1_4 && !NET45

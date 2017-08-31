@@ -256,9 +256,8 @@ namespace MessagePack.Internal
             {
                 il.Emit(OpCodes.Dup);
                 il.EmitLdc_I4(i);
-                il.EmitCall(getutf8);
                 il.Emit(OpCodes.Ldstr, item.StringKey);
-                il.EmitCall(getbytes);
+                il.EmitCall(getEncodedStringBytes);
                 il.Emit(OpCodes.Stelem_Ref);
                 i++;
             }
@@ -385,7 +384,26 @@ namespace MessagePack.Internal
                         il.EmitLdfld(stringByteKeysField);
                         il.EmitLdc_I4(index);
                         il.Emit(OpCodes.Ldelem_Ref);
-                        il.EmitCall(MessagePackBinaryTypeInfo.WriteStringBytes);
+
+                        // Optimize, WriteRaw(Unity, large) or UnsafeMemory32/64.WriteRawX
+#if NETSTANDARD1_4
+                        var valueLen = MessagePackBinary.GetEncodedStringBytes(item.StringKey).Length;
+                        if (valueLen <= MessagePackRange.MaxFixStringLength)
+                        {
+                            if (UnsafeMemory.Is32Bit)
+                            {
+                                il.EmitCall(typeof(UnsafeMemory32).GetRuntimeMethod("WriteRaw" + valueLen, new[] { refByte, typeof(int), typeof(byte[]) }));
+                            }
+                            else
+                            {
+                                il.EmitCall(typeof(UnsafeMemory64).GetRuntimeMethod("WriteRaw" + valueLen, new[] { refByte, typeof(int), typeof(byte[]) }));
+                            }
+                        }
+                        else
+#endif
+                        {
+                            il.EmitCall(MessagePackBinaryTypeInfo.WriteRaw);
+                        }
                         index++;
                     });
 
@@ -870,6 +888,8 @@ namespace MessagePack.Internal
 
         static readonly MethodInfo getutf8 = typeof(Encoding).GetTypeInfo().GetDeclaredProperty("UTF8").GetGetMethod();
         static readonly MethodInfo getbytes = typeof(Encoding).GetRuntimeMethod("GetBytes", new[] { typeof(string) });
+        static readonly MethodInfo getEncodedStringBytes = typeof(MessagePackBinary).GetRuntimeMethod("GetEncodedStringBytes", new[] { typeof(string) });
+
 
         internal static class MessagePackBinaryTypeInfo
         {
@@ -891,6 +911,7 @@ namespace MessagePack.Internal
             public static MethodInfo ReadNextBlock = typeof(MessagePackBinary).GetRuntimeMethod("ReadNextBlock", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo WriteStringUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringUnsafe", new[] { refByte, typeof(int), typeof(string), typeof(int) });
             public static MethodInfo WriteStringBytes = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringBytes", new[] { refByte, typeof(int), typeof(byte[]) });
+            public static MethodInfo WriteRaw = typeof(MessagePackBinary).GetRuntimeMethod("WriteRaw", new[] { refByte, typeof(int), typeof(byte[]) });
 
             public static MethodInfo ReadArrayHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadArrayHeader", new[] { typeof(byte[]), typeof(int), refInt });
             public static MethodInfo ReadMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadMapHeader", new[] { typeof(byte[]), typeof(int), refInt });
@@ -1345,7 +1366,7 @@ namespace MessagePack.Internal
             var ctor = ti.DeclaredConstructors.Where(x => x.IsPublic).SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) != null);
             if (ctor == null)
             {
-                ctorEnumerator = 
+                ctorEnumerator =
                     ti.DeclaredConstructors.Where(x => x.IsPublic).OrderBy(x => x.GetParameters().Length)
                     .GetEnumerator();
 
