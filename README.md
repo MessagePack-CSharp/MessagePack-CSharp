@@ -510,21 +510,21 @@ If the number of nodes is large, search with a embedded binary search.
 
 Extra note, this is serialize benchmark result.
 
- |              Method |       Mean | Error | Scaled |  Gen 0 | Allocated |
- |-------------------- |-----------:|------:|-------:|-------:|----------:|
- |              IntKey |   109.3 ns |    NA |   1.00 | 0.0093 |      40 B |
- |           StringKey |   170.8 ns |    NA |   1.56 | 0.0341 |     144 B |
- |     Typeless_IntKey |   223.0 ns |    NA |   2.04 | 0.0265 |     112 B |
- |  Typeless_StringKey |   279.1 ns |    NA |   2.55 | 0.0510 |     216 B |
- |       MsgPackCliMap | 1,304.8 ns |    NA |  11.94 | 0.1297 |     552 B |
- |     MsgPackCliArray |   409.7 ns |    NA |   3.75 | 0.1006 |     424 B |
- |         ProtobufNet |   213.4 ns |    NA |   1.95 | 0.0665 |     280 B |
- |            Hyperion |   359.6 ns |    NA |   3.29 | 0.1674 |     704 B |
- |       ZeroFormatter |   186.7 ns |    NA |   1.71 | 0.1009 |     424 B |
- |       JsonNetString | 1,814.3 ns |    NA |  16.60 | 0.4616 |    1944 B |
- | JsonNetStreamWriter | 2,211.0 ns |    NA |  20.24 | 1.5526 |    6522 B |
- |           JilString |   702.0 ns |    NA |   6.42 | 0.3481 |    1464 B |
- |     JilStreamWriter |   988.0 ns |    NA |   9.04 | 1.4448 |    6066 B |
+ |              Method |        Mean | Error | Scaled |  Gen 0 | Allocated |
+ |-------------------- |------------:|------:|-------:|-------:|----------:|
+ |              IntKey |    84.11 ns |    NA |   1.00 | 0.0094 |      40 B |
+ |           StringKey |   126.75 ns |    NA |   1.51 | 0.0341 |     144 B |
+ |     Typeless_IntKey |   183.31 ns |    NA |   2.18 | 0.0265 |     112 B |
+ |  Typeless_StringKey |   193.95 ns |    NA |   2.31 | 0.0513 |     216 B |
+ |       MsgPackCliMap |   967.68 ns |    NA |  11.51 | 0.1297 |     552 B |
+ |     MsgPackCliArray |   284.20 ns |    NA |   3.38 | 0.1006 |     424 B |
+ |         ProtobufNet |   176.43 ns |    NA |   2.10 | 0.0665 |     280 B |
+ |            Hyperion |   280.14 ns |    NA |   3.33 | 0.1674 |     704 B |
+ |       ZeroFormatter |   149.95 ns |    NA |   1.78 | 0.1009 |     424 B |
+ |       JsonNetString | 1,432.55 ns |    NA |  17.03 | 0.4616 |    1944 B |
+ | JsonNetStreamWriter | 1,775.72 ns |    NA |  21.11 | 1.5526 |    6522 B |
+ |           JilString |   547.51 ns |    NA |   6.51 | 0.3481 |    1464 B |
+ |     JilStreamWriter |   778.78 ns |    NA |   9.26 | 1.4448 |    6066 B |
 
  Of course, IntKey is fastest but StringKey also good.
 
