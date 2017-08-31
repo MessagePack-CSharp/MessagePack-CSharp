@@ -105,7 +105,7 @@ Built-in support types
 ---
 These types can serialize by default.
 
-Primitives(`int`, `string`, etc...), `Enum`, `Nullable<>`,  `TimeSpan`,  `DateTime`, `DateTimeOffset`, `Nil`, `Guid`, `Uri`, `Version`, `StringBuilder`, `BitArray`, `ArraySegment<>`, `BigInteger`, `Complext`, `Task`, `Array[]`, `Array[,]`, `Array[,,]`, `Array[,,,]`, `KeyValuePair<,>`, `Tuple<,...>`, `ValueTuple<,...>`, `List<>`, `LinkedList<>`, `Queue<>`, `Stack<>`, `HashSet<>`, `ReadOnlyCollection<>`, `IList<>`, `ICollection<>`, `IEnumerable<>`, `Dictionary<,>`, `IDictionary<,>`, `SortedDictionary<,>`, `SortedList<,>`, `ILookup<,>`, `IGrouping<,>`, `ObservableCollection<>`, `ReadOnlyOnservableCollection<>`, `IReadOnlyList<>`, `IReadOnlyCollection<>`, `ISet<>`, `ConcurrentBag<>`, `ConcurrentQueue<>`, `ConcurrentStack<>`, `ReadOnlyDictionary<,>`, `IReadOnlyDictionary<,>`, `ConcurrentDictionary<,>`, `Lazy<>`, `Task<>` and custom inherited `ICollection<>` or `IDictionary<,>` with paramterless constructor.
+Primitives(`int`, `string`, etc...), `Enum`, `Nullable<>`,  `TimeSpan`,  `DateTime`, `DateTimeOffset`, `Nil`, `Guid`, `Uri`, `Version`, `StringBuilder`, `BitArray`, `ArraySegment<>`, `BigInteger`, `Complext`, `Task`, `Array[]`, `Array[,]`, `Array[,,]`, `Array[,,,]`, `KeyValuePair<,>`, `Tuple<,...>`, `ValueTuple<,...>`, `List<>`, `LinkedList<>`, `Queue<>`, `Stack<>`, `HashSet<>`, `ReadOnlyCollection<>`, `IList<>`, `ICollection<>`, `IEnumerable<>`, `Dictionary<,>`, `IDictionary<,>`, `SortedDictionary<,>`, `SortedList<,>`, `ILookup<,>`, `IGrouping<,>`, `ObservableCollection<>`, `ReadOnlyOnservableCollection<>`, `IReadOnlyList<>`, `IReadOnlyCollection<>`, `ISet<>`, `ConcurrentBag<>`, `ConcurrentQueue<>`, `ConcurrentStack<>`, `ReadOnlyDictionary<,>`, `IReadOnlyDictionary<,>`, `ConcurrentDictionary<,>`, `Lazy<>`, `Task<>`, custom inherited `ICollection<>` or `IDictionary<,>` with paramterless constructor, `IList`, `IDictionary` and custom inherited `ICollection` or `IDictionary` with paramterless constructor(includes `ArrayList` and `Hashtable`).
 
 You can add custom type support and has some official/third-party extension package. for ImmutableCollections(`ImmutableList<>`, etc), for ReactiveProperty and for Unity(`Vector3`, `Quaternion`, etc...), for F#(Record, FsList, Discriminated Unions, etc...). Please see [extensions section](https://github.com/neuecc/MessagePack-CSharp#extensions).
 
@@ -114,7 +114,6 @@ You can add custom type support and has some official/third-party extension pack
 Object Serialization
 ---
 MessagePack for C# can serialze your own public `Class` or `Struct`. Serialization target must marks `[MessagePackObject]` and `[Key]`. Key type can choose int or string. If key type is int, serialized format is used array. If key type is string, serialized format is used map. If you define `[MessagePackObject(keyAsPropertyName: true)]`, does not require `KeyAttribute`.
-
 
 ```csharp
 [MessagePackObject]
@@ -510,21 +509,21 @@ If the number of nodes is large, search with a embedded binary search.
 
 Extra note, this is serialize benchmark result.
 
- |              Method |        Mean | Error | Scaled |  Gen 0 | Allocated |
- |-------------------- |------------:|------:|-------:|-------:|----------:|
- |              IntKey |    95.31 ns |    NA |   1.00 | 0.0094 |      40 B |
- |           StringKey |   225.33 ns |    NA |   2.36 | 0.0339 |     144 B |
- |     Typeless_IntKey |   168.00 ns |    NA |   1.76 | 0.0265 |     112 B |
- |  Typeless_StringKey |   325.38 ns |    NA |   3.41 | 0.0510 |     216 B |
- |       MsgPackCliMap | 1,158.00 ns |    NA |  12.15 | 0.1297 |     552 B |
- |     MsgPackCliArray |   332.33 ns |    NA |   3.49 | 0.1006 |     424 B |
- |         ProtobufNet |   260.88 ns |    NA |   2.74 | 0.0665 |     280 B |
- |            Hyperion |   300.12 ns |    NA |   3.15 | 0.1674 |     704 B |
- |       ZeroFormatter |   165.17 ns |    NA |   1.73 | 0.1009 |     424 B |
- |       JsonNetString | 1,524.97 ns |    NA |  16.00 | 0.4616 |    1944 B |
- | JsonNetStreamWriter | 1,847.29 ns |    NA |  19.38 | 1.5526 |    6522 B |
- |           JilString |   580.54 ns |    NA |   6.09 | 0.3481 |    1464 B |
- |     JilStreamWriter |   848.34 ns |    NA |   8.90 | 1.4448 |    6066 B |
+ |              Method |       Mean | Error | Scaled |  Gen 0 | Allocated |
+ |-------------------- |-----------:|------:|-------:|-------:|----------:|
+ |              IntKey |   109.3 ns |    NA |   1.00 | 0.0093 |      40 B |
+ |           StringKey |   170.8 ns |    NA |   1.56 | 0.0341 |     144 B |
+ |     Typeless_IntKey |   223.0 ns |    NA |   2.04 | 0.0265 |     112 B |
+ |  Typeless_StringKey |   279.1 ns |    NA |   2.55 | 0.0510 |     216 B |
+ |       MsgPackCliMap | 1,304.8 ns |    NA |  11.94 | 0.1297 |     552 B |
+ |     MsgPackCliArray |   409.7 ns |    NA |   3.75 | 0.1006 |     424 B |
+ |         ProtobufNet |   213.4 ns |    NA |   1.95 | 0.0665 |     280 B |
+ |            Hyperion |   359.6 ns |    NA |   3.29 | 0.1674 |     704 B |
+ |       ZeroFormatter |   186.7 ns |    NA |   1.71 | 0.1009 |     424 B |
+ |       JsonNetString | 1,814.3 ns |    NA |  16.60 | 0.4616 |    1944 B |
+ | JsonNetStreamWriter | 2,211.0 ns |    NA |  20.24 | 1.5526 |    6522 B |
+ |           JilString |   702.0 ns |    NA |   6.42 | 0.3481 |    1464 B |
+ |     JilStreamWriter |   988.0 ns |    NA |   9.04 | 1.4448 |    6066 B |
 
  Of course, IntKey is fastest but StringKey also good.
 
@@ -776,9 +775,11 @@ Primitive API(MessagePackBinary)
 | Write/ReadExtensionFormat | Write/Read ext format header(Length + TypeCode) and content byte[]. |
 | Write/ReadExtensionFormatHeader | Write/Read ext format, header(Length + TypeCode) only. |
 | WriteExtensionFormatHeaderForceExt32Block | Write ext format header, always use ext32 format(length is fixed, 6). |
+| WriteRaw | Write msgpack block directly. |
 | IsNil | Is TypeCode Nil? |
 | GetMessagePackType | Return MessagePackType of target MessagePack bianary position. |
 | GetExtensionFormatHeaderLength | Calculate extension formatter header length. |
+| GetEncodedStringBytes | Get msgpack packed raw binary. |
 | EnsureCapacity | Resize if byte can not fill.  |
 | FastResize | Buffer.BlockCopy version of Array.Resize. |
 | FastCloneWithResize | Same as FastResize but return copied byte[]. |
@@ -1004,6 +1005,27 @@ public class CustomObject
 ```
 
 Formatter is retrieved by `AttributeFormatterResolver`, it is included in `StandardResolver`.
+
+IgnoreFormatter
+---
+`IgnoreFormatter<T>` is lightweight extension point of class and struct, if exists can't serializable type in external type, you can register `IgnoreFormatter<T>` that serialize to nil.
+
+```csharp
+// CompositeResolver can set custom formatter.
+MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
+    new IMessagePackFormatter[] 
+    {
+        // for example, register reflection infos(can not serialize in default)
+        new IgnoreFormatter<MethodBase>(),
+        new IgnoreFormatter<MethodInfo>(),
+        new IgnoreFormatter<PropertyInfo>(),
+        new IgnoreFormatter<FieldInfo>()
+    },
+    new IFormatterResolver[] 
+    {
+        ContractlessStandardResolver.Instance
+    });
+```
 
 Reserved Extension Types
 ---

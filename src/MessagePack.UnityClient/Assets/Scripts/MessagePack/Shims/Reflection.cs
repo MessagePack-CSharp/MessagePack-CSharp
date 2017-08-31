@@ -154,6 +154,11 @@ namespace System.Reflection
             return type.GetMethods();
         }
 
+        public bool IsAssignableFrom(TypeInfo c)
+        {
+            return type.IsAssignableFrom(c.AsType());
+        }
+
         public PropertyInfo GetDeclaredProperty(string name)
         {
             return type.GetProperty(name);
@@ -240,7 +245,7 @@ namespace System.Reflection
         {
             return type.GetCustomAttributes(inherit).OfType<T>().FirstOrDefault();
         }
-        
+
 #else
 
         public static bool IsConstructedGenericType(this TypeInfo type)

@@ -104,6 +104,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ForceSizePrimitiveFormatter.tt</DependentUpon>
     </Compile>
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\IgnoreFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\IMessagePackFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\MultiDimentionalArrayFormatter.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\NullableFormatter.cs" />
@@ -138,6 +139,12 @@
     <Compile Include="Assets\Scripts\MessagePack\Internal\ReflectionExtensions.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ThreadsafeTypeKeyHashTable.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\TinyJsonReader.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\UnsafeMemory.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>UnsafeMemory.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Assets\Scripts\MessagePack\Internal\UnsafeMemory.Low.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Helper.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Safe.cs" />
@@ -208,6 +215,10 @@
     <None Include="Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
+    </None>
+    <None Include="Assets\Scripts\MessagePack\Internal\UnsafeMemory.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
     </None>
   </ItemGroup>
   <ItemGroup>

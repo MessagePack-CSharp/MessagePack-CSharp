@@ -299,9 +299,20 @@ namespace Sandbox
             {
                 // var ex = new Dummy___();
 
+                // CompositeResolver can set custom formatter.
                 MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
-                    new[] { new IgnoreFormatter<MethodBase>() },
-                    new[] { ContractlessStandardResolver.Instance });
+                    new IMessagePackFormatter[] 
+                    {
+                        // for example, register reflection infos(can not serialize in default)
+                        new IgnoreFormatter<MethodBase>(),
+                        new IgnoreFormatter<MethodInfo>(),
+                        new IgnoreFormatter<PropertyInfo>(),
+                        new IgnoreFormatter<FieldInfo>()
+                    },
+                    new IFormatterResolver[] 
+                    {
+                        ContractlessStandardResolver.Instance
+                    });
 
                 var bin = MessagePack.MessagePackSerializer.Serialize(ex);
 
