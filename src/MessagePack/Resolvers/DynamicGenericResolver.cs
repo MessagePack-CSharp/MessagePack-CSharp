@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Collections.ObjectModel;
+using System.Collections;
 
 #if NETSTANDARD1_4
 using System.Threading.Tasks;
@@ -266,6 +267,26 @@ namespace MessagePack.Internal
                         var valueType = ti.GenericTypeArguments[1];
                         return CreateInstance(typeof(GenericDictionaryFormatter<,,>), new[] { keyType, valueType, t });
                     }
+                }
+            }
+            else
+            {
+                // NonGeneric Collection
+                if (t == typeof(IList))
+                {
+                    return NonGenericInterfaceListFormatter.Instance;
+                }
+                else if (t == typeof(IDictionary))
+                {
+                    return NonGenericInterfaceDictionaryFormatter.Instance;
+                }
+                if (typeof(IList).GetTypeInfo().IsAssignableFrom(ti) && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
+                {
+                    return Activator.CreateInstance(typeof(NonGenericListFormatter<>).MakeGenericType(t));
+                }
+                else if (typeof(IDictionary).GetTypeInfo().IsAssignableFrom(ti) && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
+                {
+                    return Activator.CreateInstance(typeof(NonGenericDictionaryFormatter<>).MakeGenericType(t));
                 }
             }
 

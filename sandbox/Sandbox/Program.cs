@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using System.Text;
 using System.IO.Compression;
 using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace Sandbox
 {
@@ -280,21 +281,32 @@ namespace Sandbox
         public IEntity Entity { get; }
     }
 
+    public class Dummy___
+    {
+        public MethodBase MyProperty { get; set; }
+    }
 
 
     class Program
     {
         static void Main(string[] args)
         {
+            try
+            {
+                throw new InvalidOperationException("foo bar");
+            }
+            catch (Exception ex)
+            {
+                // var ex = new Dummy___();
 
-            var gb = 1024 * 1024 * 1024;
-            byte[] bytes = null;
-            MessagePackBinary.EnsureCapacity(ref bytes, 0, gb);
-            MessagePackBinary.EnsureCapacity(ref bytes, gb, 1);
+                MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
+                    new[] { new IgnoreFormatter<MethodBase>() },
+                    new[] { ContractlessStandardResolver.Instance });
 
-            MessagePackBinary.EnsureCapacity(ref bytes, 0x7FFFFFC7, 1);
+                var bin = MessagePack.MessagePackSerializer.Serialize(ex);
 
-
+                Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(bin));
+            }
         }
 
         static void Benchmark<T>(T target)

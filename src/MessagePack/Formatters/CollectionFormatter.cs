@@ -703,6 +703,224 @@ namespace MessagePack.Formatters
         }
     }
 
+    // NonGenerics
+
+    public sealed class NonGenericListFormatter<T> : IMessagePackFormatter<T>
+        where T : class, IList, new()
+    {
+        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                MessagePackBinary.WriteNil(ref bytes, offset);
+                return 1;
+            }
+
+            var formatter = formatterResolver.GetFormatterWithVerify<object>();
+            var startOffset = offset;
+
+            offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Count);
+            foreach (var item in value)
+            {
+                offset += formatter.Serialize(ref bytes, offset, item, formatterResolver);
+            }
+
+            return offset - startOffset;
+        }
+
+        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return default(T);
+            }
+
+            var formatter = formatterResolver.GetFormatterWithVerify<object>();
+            var startOffset = offset;
+
+            var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var list = new T();
+            for (int i = 0; i < count; i++)
+            {
+                list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+            return list;
+        }
+    }
+
+    public sealed class NonGenericInterfaceListFormatter : IMessagePackFormatter<IList>
+    {
+        public static readonly IMessagePackFormatter<IList> Instance = new NonGenericInterfaceListFormatter();
+
+        NonGenericInterfaceListFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, IList value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                MessagePackBinary.WriteNil(ref bytes, offset);
+                return 1;
+            }
+
+            var formatter = formatterResolver.GetFormatterWithVerify<object>();
+            var startOffset = offset;
+
+            offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, value.Count);
+            foreach (var item in value)
+            {
+                offset += formatter.Serialize(ref bytes, offset, item, formatterResolver);
+            }
+
+            return offset - startOffset;
+        }
+
+        public IList Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return default(IList);
+            }
+
+            var formatter = formatterResolver.GetFormatterWithVerify<object>();
+            var startOffset = offset;
+
+            var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var list = new object[count];
+            for (int i = 0; i < count; i++)
+            {
+                list[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+            return list;
+        }
+    }
+
+    public sealed class NonGenericDictionaryFormatter<T> : IMessagePackFormatter<T>
+        where T : class, IDictionary, new()
+    {
+        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                MessagePackBinary.WriteNil(ref bytes, offset);
+                return 1;
+            }
+
+            var formatter = formatterResolver.GetFormatterWithVerify<object>();
+            var startOffset = offset;
+
+            offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, value.Count);
+            foreach (DictionaryEntry item in value)
+            {
+                offset += formatter.Serialize(ref bytes, offset, item.Key, formatterResolver);
+                offset += formatter.Serialize(ref bytes, offset, item.Value, formatterResolver);
+            }
+
+            return offset - startOffset;
+        }
+
+        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var formatter = formatterResolver.GetFormatterWithVerify<object>();
+            var startOffset = offset;
+
+            var count = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var dict = new T();
+            for (int i = 0; i < count; i++)
+            {
+                var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
+                var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
+                dict.Add(key, value);
+            }
+
+            readSize = offset - startOffset;
+            return dict;
+        }
+    }
+
+    public sealed class NonGenericInterfaceDictionaryFormatter : IMessagePackFormatter<IDictionary>
+    {
+        public static readonly IMessagePackFormatter<IDictionary> Instance = new NonGenericInterfaceDictionaryFormatter();
+
+        NonGenericInterfaceDictionaryFormatter()
+        {
+
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, IDictionary value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                MessagePackBinary.WriteNil(ref bytes, offset);
+                return 1;
+            }
+
+            var formatter = formatterResolver.GetFormatterWithVerify<object>();
+            var startOffset = offset;
+
+            offset += MessagePackBinary.WriteMapHeader(ref bytes, offset, value.Count);
+            foreach (DictionaryEntry item in value)
+            {
+                offset += formatter.Serialize(ref bytes, offset, item.Key, formatterResolver);
+                offset += formatter.Serialize(ref bytes, offset, item.Value, formatterResolver);
+            }
+
+            return offset - startOffset;
+        }
+
+        public IDictionary Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var formatter = formatterResolver.GetFormatterWithVerify<object>();
+            var startOffset = offset;
+
+            var count = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var dict = new Dictionary<object, object>(count);
+            for (int i = 0; i < count; i++)
+            {
+                var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
+                var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
+                dict.Add(key, value);
+            }
+
+            readSize = offset - startOffset;
+            return dict;
+        }
+    }
+
 #if NETSTANDARD1_4
 
     public sealed class ObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>>
