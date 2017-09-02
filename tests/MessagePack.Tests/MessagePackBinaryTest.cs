@@ -278,6 +278,33 @@ namespace MessagePack.Tests
             CreateUnpackedReference(bytes).AsInt32().Is(target);
         }
 
+        [Fact]
+        public void IntOverflowTest()
+        {
+            byte[] bytes = null;
+            {
+                MessagePackBinary.WriteUInt32ForceUInt32Block(ref bytes, 0, 100);
+                MessagePackBinary.ReadInt32(bytes, 0, out var _).Is(100);
+
+                MessagePackBinary.WriteUInt32ForceUInt32Block(ref bytes, 0, uint.MaxValue);
+                Assert.Throws<OverflowException>(() => MessagePackBinary.ReadInt32(bytes, 0, out var _));
+            }
+            {
+                MessagePackBinary.WriteInt64ForceInt64Block(ref bytes, 0, 100);
+                MessagePackBinary.ReadInt32(bytes, 0, out var _).Is(100);
+
+                MessagePackBinary.WriteInt64ForceInt64Block(ref bytes, 0, long.MaxValue);
+                Assert.Throws<OverflowException>(() => MessagePackBinary.ReadInt32(bytes, 0, out var _));
+            }
+            {
+                MessagePackBinary.WriteUInt64ForceUInt64Block(ref bytes, 0, 100);
+                MessagePackBinary.ReadInt64(bytes, 0, out var _).Is(100);
+
+                MessagePackBinary.WriteUInt64ForceUInt64Block(ref bytes, 0, ulong.MaxValue);
+                Assert.Throws<OverflowException>(() => MessagePackBinary.ReadInt32(bytes, 0, out var _));
+            }
+        }
+
         [Theory]
         [InlineData(long.MinValue, 9)]
         [InlineData(-3372036854775807, 9)]
@@ -335,6 +362,19 @@ namespace MessagePack.Tests
             readSize.Is(length);
 
             CreateUnpackedReference(bytes).AsInt64().Is(target);
+        }
+
+        [Fact]
+        public void Int64OverflowTest()
+        {
+            byte[] bytes = null;
+            {
+                MessagePackBinary.WriteUInt64ForceUInt64Block(ref bytes, 0, 100);
+                MessagePackBinary.ReadInt64(bytes, 0, out var _).Is(100);
+
+                MessagePackBinary.WriteUInt64ForceUInt64Block(ref bytes, 0, ulong.MaxValue);
+                Assert.Throws<OverflowException>(() => MessagePackBinary.ReadInt32(bytes, 0, out var _));
+            }
         }
 
         [Theory]

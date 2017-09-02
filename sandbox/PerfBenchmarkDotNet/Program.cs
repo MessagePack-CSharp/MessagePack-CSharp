@@ -32,7 +32,7 @@ namespace PerfBenchmarkDotNet
             Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1));
 
             //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
-              //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
+            //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
         }
     }
 
@@ -49,7 +49,8 @@ namespace PerfBenchmarkDotNet
                 typeof(DictionaryLookupCompare),
                 typeof(StringKeyDeserializeCompare),
                 typeof(NewVsOld),
-                typeof(ImproveStringKeySerializeBenchmark)
+                typeof(ImproveStringKeySerializeBenchmark),
+                typeof(ImproveIntKeyDeserializeBenchmark),
             });
 
             // args = new[] { "0" };
@@ -122,44 +123,57 @@ namespace PerfBenchmarkDotNet
     }
 
     [newmsgpack::MessagePack.MessagePackObject]
+    [oldmsgpack::MessagePack.MessagePackObject]
     [ProtoContract]
     [ZeroFormattable]
     public class IntKeySerializerTarget
     {
         [newmsgpack::MessagePack.Key(0)]
+        [oldmsgpack::MessagePack.Key(0)]
         [Index(0)]
         [ProtoMember(1)]
         public virtual int MyProperty1 { get; set; }
         [newmsgpack::MessagePack.Key(1)]
+        [oldmsgpack::MessagePack.Key(1)]
         [Index(1)]
         [ProtoMember(2)]
         public virtual int MyProperty2 { get; set; }
         [newmsgpack::MessagePack.Key(2)]
+        [oldmsgpack::MessagePack.Key(2)]
         [Index(2)]
         [ProtoMember(3)]
         public virtual int MyProperty3 { get; set; }
         [newmsgpack::MessagePack.Key(3)]
+        [oldmsgpack::MessagePack.Key(3)]
         [Index(3)]
         [ProtoMember(4)]
         public virtual int MyProperty4 { get; set; }
         [newmsgpack::MessagePack.Key(4)]
+        [oldmsgpack::MessagePack.Key(4)]
         [Index(4)]
         [ProtoMember(5)]
         public virtual int MyProperty5 { get; set; }
         [newmsgpack::MessagePack.Key(5)]
+        [oldmsgpack::MessagePack.Key(5)]
         [Index(5)]
         [ProtoMember(6)]
         public virtual int MyProperty6 { get; set; }
+
         [newmsgpack::MessagePack.Key(6)]
+        [oldmsgpack::MessagePack.Key(6)]
         [Index(6)]
         [ProtoMember(7)]
         public virtual int MyProperty7 { get; set; }
+
         [ProtoMember(8)]
         [newmsgpack::MessagePack.Key(7)]
+        [oldmsgpack::MessagePack.Key(7)]
         [Index(7)]
         public virtual int MyProperty8 { get; set; }
+
         [ProtoMember(9)]
         [newmsgpack::MessagePack.Key(8)]
+        [oldmsgpack::MessagePack.Key(8)]
         [Index(8)]
         public virtual int MyProperty9 { get; set; }
     }
@@ -594,6 +608,29 @@ namespace PerfBenchmarkDotNet
         public byte[] NewSerialize()
         {
             return newmsgpack::MessagePack.MessagePackSerializer.Serialize<StringKeySerializerTarget>(stringData);
+        }
+    }
+
+    [Config(typeof(BenchmarkConfig))]
+    public class ImproveIntKeyDeserializeBenchmark
+    {
+        byte[] bin;
+
+        public ImproveIntKeyDeserializeBenchmark()
+        {
+            bin = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new IntKeySerializerTarget());
+        }
+
+        [Benchmark]
+        public IntKeySerializerTarget OldDeserialize()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(bin);
+        }
+
+        [Benchmark(Baseline = true)]
+        public IntKeySerializerTarget NewDeserialize()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(bin);
         }
     }
 
