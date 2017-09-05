@@ -281,6 +281,63 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ldc_I8, unchecked((long)value));
         }
 
+        // bool、byte、char、double、float、int、long、short、string
+        // object, type, enum, or its array
+        public static void EmitConstant(this ILGenerator il, object value)
+        {
+            if (value == null) return;
+
+            if (value is string)
+            {
+                il.Emit(OpCodes.Ldstr, (string)value);
+            }
+            else if (value is bool)
+            {
+                EmitLdc_I4(il, ((bool)value) ? 1 : 0);
+            }
+            else if (value is byte)
+            {
+                EmitLdc_I4(il, (int)(byte)value);
+            }
+            else if (value is char)
+            {
+                EmitLdc_I4(il, (int)(char)value);
+            }
+            else if (value is double)
+            {
+                il.Emit(OpCodes.Ldc_R8, (double)value);
+            }
+            else if (value is float)
+            {
+                il.Emit(OpCodes.Ldc_R4, (float)value);
+            }
+            else if (value is int)
+            {
+                il.Emit(OpCodes.Ldc_I4, (int)value);
+            }
+            else if (value is long)
+            {
+                il.Emit(OpCodes.Ldc_I8, (long)value);
+            }
+            else if (value is short)
+            {
+                EmitLdc_I4(il, (int)(short)value);
+            }
+            else if (value is Type)
+            {
+                // TODO:
+                throw new NotImplementedException("TODO:Not Implemented");
+            }
+            else if (value.GetType().GetTypeInfo().IsEnum)
+            {
+                throw new NotImplementedException("TODO:Not Implemented");
+            }
+            else if (value.GetType().GetTypeInfo().IsArray)
+            {
+                throw new NotImplementedException("TODO:Not Implemented");
+            }
+        }
+
         public static void EmitThrowNotimplemented(this ILGenerator il)
         {
             il.Emit(OpCodes.Newobj, typeof(System.NotImplementedException).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0));

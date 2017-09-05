@@ -29,6 +29,7 @@ namespace SharedData
     public class SimpleIntKeyData
     {
         [Key(0)]
+        //[MessagePackFormatter(typeof(OreOreFormatter))]
         public int Prop1 { get; set; }
         [Key(1)]
         public ByteEnum Prop2 { get; set; }
@@ -42,6 +43,41 @@ namespace SharedData
         public SimpleStructStringKeyData Prop6 { get; set; }
         [Key(6)]
         public byte[] BytesSpecial { get; set; }
+        //[Key(7)]
+        //[MessagePackFormatter(typeof(OreOreFormatter2), 100, "hogehoge")]
+        //[MessagePackFormatter(typeof(OreOreFormatter))]
+        //public int Prop7 { get; set; }
+    }
+
+    public class OreOreFormatter : IMessagePackFormatter<int>
+    {
+        public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class OreOreFormatter2 : IMessagePackFormatter<int>
+    {
+        public OreOreFormatter2(int x, string y)
+        {
+
+        }
+
+        public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     [MessagePackObject(true)]

@@ -210,6 +210,7 @@ namespace MessagePack.Internal
             var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, "").Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
             FieldBuilder stringByteKeysField = null;
+            Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> dict = null;
 
             // string key needs string->int mapper for deserialize switch statement
             if (serializationInfo.IsStringKey)
@@ -219,14 +220,26 @@ namespace MessagePack.Internal
 
                 var il = method.GetILGenerator();
                 BuildConstructor(type, serializationInfo, method, stringByteKeysField, il);
+                dict = BuildCustomFormatterField(typeBuilder, serializationInfo, il);
+                il.Emit(OpCodes.Ret);
             }
+            else
+            {
+                var method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
+                var il = method.GetILGenerator();
+                il.EmitLdarg(0);
+                il.Emit(OpCodes.Call, objectCtor);
+                dict = BuildCustomFormatterField(typeBuilder, serializationInfo, il);
+                il.Emit(OpCodes.Ret);
+            }
+
             {
                 var method = typeBuilder.DefineMethod("Serialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
                     typeof(int),
                     new Type[] { typeof(byte[]).MakeByRefType(), typeof(int), type, typeof(IFormatterResolver) });
 
                 var il = method.GetILGenerator();
-                BuildSerialize(type, serializationInfo, method, stringByteKeysField, il);
+                BuildSerialize(type, serializationInfo, method, stringByteKeysField, dict, il);
             }
 
             {
@@ -235,7 +248,7 @@ namespace MessagePack.Internal
                     new Type[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() });
 
                 var il = method.GetILGenerator();
-                BuildDeserialize(type, serializationInfo, method, il);
+                BuildDeserialize(type, serializationInfo, method, il, dict);
             }
 
             return typeBuilder.CreateTypeInfo();
@@ -263,12 +276,63 @@ namespace MessagePack.Internal
             }
 
             il.Emit(OpCodes.Stfld, stringByteKeysField);
+        }
 
-            il.Emit(OpCodes.Ret);
+        static Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> BuildCustomFormatterField(TypeBuilder builder, ObjectSerializationInfo info, ILGenerator il)
+        {
+            Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> dict = new Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo>();
+            foreach (var item in info.Members.Where(x => x.IsReadable || x.IsWritable))
+            {
+                var attr = item.GetMessagePackFormatterAttribtue();
+                if (attr != null)
+                {
+                    var f = builder.DefineField(item.Name + "_formatter", attr.FormatterType, FieldAttributes.Private | FieldAttributes.InitOnly);
+
+                    il.EmitLdarg(0);
+                    il.Emit(OpCodes.Ldtoken, f.FieldType);
+                    var getTypeFromHandle = ExpressionUtility.GetMethodInfo(() => Type.GetTypeFromHandle(default(RuntimeTypeHandle)));
+                    il.Emit(OpCodes.Call, getTypeFromHandle);
+
+                    if (attr.Arguments == null || attr.Arguments.Length == 0)
+                    {
+                        var mi = ExpressionUtility.GetMethodInfo(() => Activator.CreateInstance(default(Type)));
+                        il.Emit(OpCodes.Call, mi);
+                    }
+                    else
+                    {
+                        il.EmitLdc_I4(attr.Arguments.Length);
+                        il.Emit(OpCodes.Newarr, typeof(object));
+                        
+                        var ii = 0;
+                        foreach (var item2 in attr.Arguments)
+                        {
+                            il.Emit(OpCodes.Dup);
+                            il.EmitLdc_I4(ii);
+                            il.EmitConstant(item2);
+                            if (item2.GetType().GetTypeInfo().IsValueType)
+                            {
+                                il.Emit(OpCodes.Box, item2.GetType());
+                            }
+                            il.Emit(OpCodes.Stelem_Ref);
+                            ii++;
+                        }
+
+                        var mi = ExpressionUtility.GetMethodInfo(() => Activator.CreateInstance(default(Type), default(object[])));
+                        il.Emit(OpCodes.Call, mi);
+                    }
+
+                    il.Emit(OpCodes.Castclass, attr.FormatterType);
+                    il.Emit(OpCodes.Stfld, f);
+
+                    dict.Add(item, f);
+                }
+            }
+
+            return dict;
         }
 
         // int Serialize([arg:1]ref byte[] bytes, [arg:2]int offset, [arg:3]T value, [arg:4]IFormatterResolver formatterResolver);
-        static void BuildSerialize(Type type, ObjectSerializationInfo info, MethodInfo method, FieldBuilder stringByteKeysField, ILGenerator il)
+        static void BuildSerialize(Type type, ObjectSerializationInfo info, MethodInfo method, FieldBuilder stringByteKeysField, Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> customFormatterLookup, ILGenerator il)
         {
             // if(value == null) return WriteNil
             if (type.GetTypeInfo().IsClass)
@@ -344,7 +408,7 @@ namespace MessagePack.Internal
                     if (intKeyMap.TryGetValue(i, out member))
                     {
                         // offset += serialzie
-                        EmitSerializeValue(il, type.GetTypeInfo(), member);
+                        EmitSerializeValue(il, type.GetTypeInfo(), member, customFormatterLookup);
                     }
                     else
                     {
@@ -408,7 +472,7 @@ namespace MessagePack.Internal
                     });
 
                     // offset += serialzie
-                    EmitSerializeValue(il, type.GetTypeInfo(), item);
+                    EmitSerializeValue(il, type.GetTypeInfo(), item, customFormatterLookup);
                 }
             }
 
@@ -435,10 +499,25 @@ namespace MessagePack.Internal
             il.EmitStarg(2);
         }
 
-        static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member)
+        static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member, Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> customFormatterLookup)
         {
             var t = member.Type;
-            if (IsOptimizeTargetType(t))
+            FieldInfo customFormatter;
+            if (customFormatterLookup.TryGetValue(member, out customFormatter))
+            {
+                EmitOffsetPlusEqual(il, () =>
+                {
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.EmitLdfld(customFormatter);
+                }, () =>
+                {
+                    il.EmitLoadArg(type, 3);
+                    member.EmitLoadValue(il);
+                    il.EmitLdarg(4);
+                    il.EmitCall(customFormatter.FieldType.GetRuntimeMethod("Serialize", new[] { refByte, typeof(int), t, typeof(IFormatterResolver) }));
+                });
+            }
+            else if (IsOptimizeTargetType(t))
             {
                 EmitOffsetPlusEqual(il, null, () =>
                 {
@@ -471,7 +550,7 @@ namespace MessagePack.Internal
         }
 
         // T Deserialize([arg:1]byte[] bytes, [arg:2]int offset, [arg:3]IFormatterResolver formatterResolver, [arg:4]out int readSize);
-        static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, ILGenerator il)
+        static void BuildDeserialize(Type type, ObjectSerializationInfo info, MethodBuilder method, ILGenerator il, Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> customFormatterLookup)
         {
             // if(MessagePackBinary.IsNil) readSize = 1, return null;
             var falseLabel = il.DefineLabel();
@@ -625,7 +704,7 @@ namespace MessagePack.Internal
                         var i = x.Value;
                         if (infoList[i].MemberInfo != null)
                         {
-                            EmitDeserializeValue(il, infoList[i]);
+                            EmitDeserializeValue(il, infoList[i], customFormatterLookup);
                             il.Emit(OpCodes.Br, loopEnd);
                         }
                         else
@@ -690,7 +769,7 @@ namespace MessagePack.Internal
                         if (item.MemberInfo != null)
                         {
                             il.MarkLabel(item.SwitchLabel);
-                            EmitDeserializeValue(il, item);
+                            EmitDeserializeValue(il, item, customFormatterLookup);
                             il.Emit(OpCodes.Br, loopEnd);
                         }
                     }
@@ -762,11 +841,22 @@ namespace MessagePack.Internal
             il.EmitStarg(2);
         }
 
-        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info)
+        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> customFormatterLookup)
         {
             var member = info.MemberInfo;
             var t = member.Type;
-            if (IsOptimizeTargetType(t))
+            FieldInfo customFormatter;
+            if (customFormatterLookup.TryGetValue(member, out customFormatter))
+            {
+                il.Emit(OpCodes.Ldarg_0);
+                il.EmitLdfld(customFormatter);
+                il.EmitLdarg(1);
+                il.EmitLdarg(2);
+                il.EmitLdarg(3);
+                il.EmitLdarg(4);
+                il.EmitCall(customFormatter.FieldType.GetRuntimeMethod("Deserialize", new[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), refInt }));
+            }
+            else if (IsOptimizeTargetType(t))
             {
                 il.EmitLdarg(1);
                 il.EmitLdarg(2);
@@ -891,7 +981,7 @@ namespace MessagePack.Internal
             public static TypeInfo TypeInfo = typeof(MessagePackBinary).GetTypeInfo();
 
             public static readonly MethodInfo GetEncodedStringBytes = typeof(MessagePackBinary).GetRuntimeMethod("GetEncodedStringBytes", new[] { typeof(string) });
-            public static MethodInfo WriteFixedMapHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedMapHeaderUnsafe", new[] { refByte, 
+            public static MethodInfo WriteFixedMapHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedMapHeaderUnsafe", new[] { refByte,
 typeof(int), typeof(int) });
             public static MethodInfo WriteFixedArrayHeaderUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteFixedArrayHeaderUnsafe", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("WriteMapHeader", new[] { refByte, typeof(int), typeof(int) });
@@ -1520,12 +1610,33 @@ typeof(int), typeof(int) });
             public Type Type { get { return IsField ? FieldInfo.FieldType : PropertyInfo.PropertyType; } }
             public FieldInfo FieldInfo { get; set; }
             public PropertyInfo PropertyInfo { get; set; }
+
+            public string Name
+            {
+                get
+                {
+                    return IsProperty ? PropertyInfo.Name : FieldInfo.Name;
+                }
+            }
+
             public bool IsValueType
             {
                 get
                 {
                     var mi = IsProperty ? (MemberInfo)PropertyInfo : FieldInfo;
                     return mi.DeclaringType.GetTypeInfo().IsValueType;
+                }
+            }
+
+            public MessagePackFormatterAttribute GetMessagePackFormatterAttribtue()
+            {
+                if (IsProperty)
+                {
+                    return (MessagePackFormatterAttribute)PropertyInfo.GetCustomAttribute(typeof(MessagePackFormatterAttribute), true);
+                }
+                else
+                {
+                    return (MessagePackFormatterAttribute)FieldInfo.GetCustomAttribute(typeof(MessagePackFormatterAttribute), true);
                 }
             }
 

@@ -77,6 +77,9 @@
     <Compile Include="..\..\src\MessagePack\Internal\DynamicAssembly.cs">
       <Link>Code\DynamicAssembly.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\ExpressionUtility.cs">
+      <Link>Code\ExpressionUtility.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\FarmHash.cs">
       <Link>Code\FarmHash.cs</Link>
     </Compile>
