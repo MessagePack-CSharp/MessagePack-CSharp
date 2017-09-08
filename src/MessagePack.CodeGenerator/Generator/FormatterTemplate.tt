@@ -34,7 +34,7 @@ namespace <#= Namespace #>
             this.____stringByteKeys = new byte[][]
             {
 <# foreach(var x in objInfo.Members.Where(x => x.IsReadable)) { #>
-                global::System.Text.Encoding.UTF8.GetBytes("<#= x.StringKey #>"),
+                global::MessagePack.MessagePackBinary.GetEncodedStringBytes("<#= x.StringKey #>"),
 <# } #>                
             };
         }
@@ -72,7 +72,7 @@ namespace <#= Namespace #>
             offset += <#= member.GetSerializeMethodString() #>;
 <# } } } else { #>
 <# var index = 0; foreach(var x in objInfo.Members) { #>
-            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[<#= index++ #>]);
+            offset += global::MessagePack.MessagePackBinary.WriteRaw(ref bytes, offset, this.____stringByteKeys[<#= index++ #>]);
             offset += <#= x.GetSerializeMethodString() #>;
 <# } } #>
             return offset - startOffset;
