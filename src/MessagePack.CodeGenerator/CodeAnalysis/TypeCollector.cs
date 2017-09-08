@@ -464,7 +464,7 @@ namespace MessagePack.CodeGenerator
 
                 var hiddenIntKey = 0;
 
-                foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>())
+                foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>().Where(x => !x.IsOverride))
                 {
                     if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
 

@@ -43,13 +43,15 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(5)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(7)
             {
                 {typeof(global::System.Collections.Generic.List<global::TestData2.A>), 0 },
                 {typeof(global::System.Collections.Generic.List<global::TestData2.B>), 1 },
                 {typeof(global::TestData2.C), 2 },
                 {typeof(global::TestData2.B), 3 },
                 {typeof(global::TestData2.A), 4 },
+                {typeof(global::TestData2.PropNameCheck1), 5 },
+                {typeof(global::TestData2.PropNameCheck2), 6 },
             };
         }
 
@@ -65,6 +67,8 @@ namespace MessagePack.Resolvers
                 case 2: return new MessagePack.Formatters.TestData2.CFormatter();
                 case 3: return new MessagePack.Formatters.TestData2.BFormatter();
                 case 4: return new MessagePack.Formatters.TestData2.AFormatter();
+                case 5: return new MessagePack.Formatters.TestData2.PropNameCheck1Formatter();
+                case 6: return new MessagePack.Formatters.TestData2.PropNameCheck2Formatter();
                 default: return null;
             }
         }
@@ -378,6 +382,190 @@ namespace MessagePack.Formatters.TestData2
             ____result.a = __a__;
             ____result.bs = __bs__;
             ____result.c = __c__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class PropNameCheck1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck1>
+    {
+
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
+
+        public PropNameCheck1Formatter()
+        {
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
+            {
+                { "MyProperty1", 0},
+                { "MyProperty2", 1},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty1"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty2"),
+                
+            };
+        }
+
+
+        public int Serialize(ref byte[] bytes, int offset, global::TestData2.PropNameCheck1 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 2);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.MyProperty1, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[1]);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.MyProperty2, formatterResolver);
+            return offset - startOffset;
+        }
+
+        public global::TestData2.PropNameCheck1 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __MyProperty1__ = default(string);
+            var __MyProperty2__ = default(string);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 1:
+                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                
+                NEXT_LOOP:
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::TestData2.PropNameCheck1();
+            ____result.MyProperty1 = __MyProperty1__;
+            ____result.MyProperty2 = __MyProperty2__;
+            return ____result;
+        }
+    }
+
+
+    public sealed class PropNameCheck2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck2>
+    {
+
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
+
+        public PropNameCheck2Formatter()
+        {
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
+            {
+                { "MyProperty1", 0},
+                { "MyProperty2", 1},
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty1"),
+                global::System.Text.Encoding.UTF8.GetBytes("MyProperty2"),
+                
+            };
+        }
+
+
+        public int Serialize(ref byte[] bytes, int offset, global::TestData2.PropNameCheck2 value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            
+            var startOffset = offset;
+            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, 2);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[0]);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.MyProperty1, formatterResolver);
+            offset += global::MessagePack.MessagePackBinary.WriteStringBytes(ref bytes, offset, this.____stringByteKeys[1]);
+            offset += formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.MyProperty2, formatterResolver);
+            return offset - startOffset;
+        }
+
+        public global::TestData2.PropNameCheck2 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+
+            var startOffset = offset;
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            offset += readSize;
+
+            var __MyProperty1__ = default(string);
+            var __MyProperty2__ = default(string);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    case 1:
+                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        break;
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+                
+                NEXT_LOOP:
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new global::TestData2.PropNameCheck2();
+            ____result.MyProperty1 = __MyProperty1__;
+            ____result.MyProperty2 = __MyProperty2__;
             return ____result;
         }
     }

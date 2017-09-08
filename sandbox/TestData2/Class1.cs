@@ -15,4 +15,21 @@ namespace TestData2
 
     [MessagePackObject(true)]
     public class C { public B b; public int a; }
+
+
+    [MessagePackObject(true)]
+    public class PropNameCheck1
+    {
+        public string MyProperty1 { get; set; }
+        public virtual string MyProperty2 { get; set; }
+    }
+
+    [MessagePackObject(true)]
+    public class PropNameCheck2 : PropNameCheck1
+    {
+        public override string MyProperty2
+        {
+            get => base.MyProperty2;
+             set => base.MyProperty2 = value; }
+    }
 }
