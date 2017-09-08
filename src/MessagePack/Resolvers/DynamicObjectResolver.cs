@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Threading;
 
 namespace MessagePack.Resolvers
 {
@@ -175,6 +176,8 @@ namespace MessagePack.Internal
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
 #endif
 
+        static int nameSequence = 0;
+
         static HashSet<Type> ignoreTypes = new HashSet<Type>
         {
             {typeof(object)},
@@ -207,7 +210,7 @@ namespace MessagePack.Internal
             if (serializationInfo == null) return null;
 
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, "").Replace(".", "_") + "Formatter", TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, "").Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
             FieldBuilder stringByteKeysField = null;
             Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> dict = null;
