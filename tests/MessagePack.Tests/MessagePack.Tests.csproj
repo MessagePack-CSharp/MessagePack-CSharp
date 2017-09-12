@@ -134,6 +134,7 @@
     <Compile Include="SpecifiedFormatterResolverTest.cs" />
     <Compile Include="ToJsonTest.cs" />
     <Compile Include="UnionResolverTest.cs" />
+    <Compile Include="UnsafeFormattersTest.cs" />
     <Compile Include="UnsafeMemoryTest.cs" />
     <Compile Include="Utils\ChainingAssertion.Ext.cs" />
     <Compile Include="Utils\ChainingAssertion.Xunit.cs" />
