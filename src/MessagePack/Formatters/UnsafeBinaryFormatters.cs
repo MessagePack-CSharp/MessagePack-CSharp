@@ -30,7 +30,7 @@ namespace MessagePack.Formatters
                 dst[0] = MessagePackCode.Bin8;
                 dst[1] = 16;
 
-                *(Guid*)(dst + 2) = src[0];
+                *(Guid*)(dst + 2) = *src;
             }
 
             return 18;
@@ -45,7 +45,7 @@ namespace MessagePack.Formatters
                 throw new ArgumentOutOfRangeException();
             }
 
-            fixed (byte* src = &bytes[0])
+            fixed (byte* src = &bytes[offset])
             {
                 if (src[0] != MessagePackCode.Bin8)
                 {
@@ -89,7 +89,7 @@ namespace MessagePack.Formatters
                 dst[0] = MessagePackCode.Bin8;
                 dst[1] = 16;
 
-                *(Decimal*)(dst + 2) = src[0];
+                *(Decimal*)(dst + 2) = *src;
             }
 
             return 18;
@@ -104,7 +104,7 @@ namespace MessagePack.Formatters
                 throw new ArgumentOutOfRangeException();
             }
 
-            fixed (byte* src = &bytes[0])
+            fixed (byte* src = &bytes[offset])
             {
                 if (src[0] != MessagePackCode.Bin8)
                 {
