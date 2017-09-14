@@ -32,7 +32,7 @@ namespace PerfBenchmarkDotNet
             Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1));
 
             //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
-              //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
+            //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
         }
     }
 
@@ -49,6 +49,7 @@ namespace PerfBenchmarkDotNet
                 typeof(DictionaryLookupCompare),
                 typeof(StringKeyDeserializeCompare),
                 typeof(NewVsOld),
+                typeof(GuidImprov),
                 typeof(ImproveStringKeySerializeBenchmark)
             });
 
@@ -665,6 +666,43 @@ namespace PerfBenchmarkDotNet
         public StringKeySerializerTarget Old()
         {
             return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        }
+    }
+
+
+    [Config(typeof(BenchmarkConfig))]
+    public class GuidImprov
+    {
+        Guid guid;
+        byte[] bin;
+        public GuidImprov()
+        {
+            guid = Guid.NewGuid();
+            bin = newmsgpack::MessagePack.MessagePackSerializer.Serialize(guid);
+        }
+
+        [Benchmark]
+        public byte[] NewSerialize()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(guid);
+        }
+
+        [Benchmark]
+        public byte[] OldSerialize()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(guid);
+        }
+
+        [Benchmark]
+        public Guid NewDeserialize()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<Guid>(bin);
+        }
+
+        [Benchmark]
+        public Guid OldDeserialize()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<Guid>(bin);
         }
     }
 

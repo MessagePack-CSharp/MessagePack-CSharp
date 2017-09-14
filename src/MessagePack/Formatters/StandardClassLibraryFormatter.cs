@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MessagePack.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -196,12 +197,18 @@ namespace MessagePack.Formatters
 
         public int Serialize(ref byte[] bytes, int offset, Guid value, IFormatterResolver formatterResolver)
         {
-            return MessagePackBinary.WriteString(ref bytes, offset, value.ToString());
+            MessagePackBinary.EnsureCapacity(ref bytes, offset, 38);
+
+            bytes[offset] = MessagePackCode.Str8;
+            bytes[offset + 1] = unchecked((byte)36);
+            new GuidBits(ref value).Write(bytes, offset + 2);
+            return 38;
         }
 
         public Guid Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
-            return new Guid(MessagePackBinary.ReadString(bytes, offset, out readSize));
+            var segment = MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+            return new GuidBits(segment).Value;
         }
     }
 
