@@ -54,7 +54,7 @@ namespace MessagePack.Internal
             this.Value = value;
         }
 
-        // 4-pattern, lower/higher and '-' or no
+        // 4-pattern, lower/upper and '-' or no
         public GuidBits(ArraySegment<byte> utf8string)
         {
             this = default(GuidBits);
