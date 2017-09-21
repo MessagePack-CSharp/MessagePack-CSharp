@@ -809,6 +809,7 @@ Extension Point(IFormatterResolver)
 | AttributeFormatterResolver | Get formatter from `[MessagePackFormatter]` attribute. |
 | CompositeResolver | Singleton helper of setup custom resolvers. You can use `Register` or `RegisterAndSetAsDefault` API. |
 | NativeDateTimeResolver | Serialize by .NET native DateTime binary format. |
+| UnsafeBinaryResolver | Guid and Decimal serialize by binary representation. It is faster than standard(string) representation. |
 | OldSpecResolver | str and bin serialize/deserialize follows old messagepack spec(use raw format) |
 | DynamicEnumResolver | Resolver of enum and there nullable, serialize there underlying type. It uses dynamic code generation to avoid boxing and boostup performance serialize there name. |
 | DynamicEnumAsStringResolver | Resolver of enum and there nullable.  It uses reflection call for resolve nullable at first time. |
