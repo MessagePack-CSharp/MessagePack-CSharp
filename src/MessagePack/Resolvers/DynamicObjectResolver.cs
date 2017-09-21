@@ -1635,11 +1635,11 @@ typeof(int), typeof(int) });
             {
                 if (IsProperty)
                 {
-                    return (MessagePackFormatterAttribute)PropertyInfo.GetCustomAttribute(typeof(MessagePackFormatterAttribute), true);
+                    return (MessagePackFormatterAttribute)PropertyInfo.GetCustomAttribute<MessagePackFormatterAttribute>(true);
                 }
                 else
                 {
-                    return (MessagePackFormatterAttribute)FieldInfo.GetCustomAttribute(typeof(MessagePackFormatterAttribute), true);
+                    return (MessagePackFormatterAttribute)FieldInfo.GetCustomAttribute<MessagePackFormatterAttribute>(true);
                 }
             }
 

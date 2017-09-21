@@ -13,12 +13,12 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile>Assets\smcs.rsp</CompilerResponseFile>
+    <CompilerResponseFile></CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
     <UnityVersion>2017.1.0f1</UnityVersion>
     <RootNamespace></RootNamespace>
-    <LangVersion Condition=" '$(VisualStudioVersion)' != '10.0' ">4</LangVersion>
+    <LangVersion>4</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -122,6 +122,7 @@
       <DependentUpon>TupleFormatter.tt</DependentUpon>
     </Compile>
     <Compile Include="Assets\Scripts\MessagePack\Formatters\TypelessFormatter.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Formatters\UnsafeBinaryFormatters.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -134,7 +135,9 @@
     <Compile Include="Assets\Scripts\MessagePack\Internal\ByteArrayComparer.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ByteArrayStringHashTable.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\ExpressionUtility.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\FarmHash.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\GuidBits.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ReflectionExtensions.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Internal\ThreadsafeTypeKeyHashTable.cs" />
@@ -176,6 +179,7 @@
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\StandardResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\TypelessContractlessStandardResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Resolvers\TypelessObjectResolver.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Resolvers\UnsafeBinaryResolver.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Shims\Reflection.cs" />
     <Compile Include="Assets\Scripts\MessagePack\StringEncoding.cs" />
     <Compile Include="Assets\Scripts\MessagePack\Unity\Formatters.cs" />

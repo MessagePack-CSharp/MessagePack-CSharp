@@ -68,6 +68,14 @@ namespace System.Reflection
             }
         }
 
+        public bool IsArray
+        {
+            get
+            {
+                return type.IsArray;
+            }
+        }
+
         public bool IsValueType
         {
             get
