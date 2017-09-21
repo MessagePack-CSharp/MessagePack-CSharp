@@ -2362,9 +2362,18 @@ namespace MessagePack
                 case MessagePackType.Boolean:
                     return 1;
                 case MessagePackType.Float:
-                    MessagePackBinary.EnsureCapacity(ref bytes, offset, 5);
-                    ReadFully(stream, bytes, offset + 1, 4);
-                    return 5;
+                    if (code == MessagePackCode.Float32)
+                    {
+                        MessagePackBinary.EnsureCapacity(ref bytes, offset, 5);
+                        ReadFully(stream, bytes, offset + 1, 4);
+                        return 5;
+                    }
+                    else
+                    {
+                        MessagePackBinary.EnsureCapacity(ref bytes, offset, 9);
+                        ReadFully(stream, bytes, offset + 1, 8);
+                        return 9;
+                    }
                 case MessagePackType.String:
                     {
                         if (MessagePackCode.MinFixStr <= code && code <= MessagePackCode.MaxFixStr)
