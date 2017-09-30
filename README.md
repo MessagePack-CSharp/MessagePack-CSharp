@@ -615,7 +615,7 @@ protobuf(-net) can not handle null and empty collection correctly. Because proto
 
 Protocol Buffers has good IDL and [gRPC](http://www.grpc.io/), that is a much good point than MessagePack. If you want to use IDL, I recommend [Google.Protobuf](https://github.com/google/protobuf/tree/master/csharp/src/Google.Protobuf) than MessagePack.
 
-JSON is good general-purpose format. It is perfect, simple and enough spec. But it's text. Text can not avoid the overhead of UTF-8 conversion. [Jil](https://github.com/kevin-montrose/Jil) is wonderful, but can not exceed the difference in wire format specifications.
+JSON is good general-purpose format. It is perfect, simple and enough spec. [Utf8Json](https://github.com/neuecc/Utf8Json) which created me that adopts same architecture as MessagePack for C# and avoid encoding/decoing cost so work like binary. If you want to know about binary vs text, see [Utf8Json/which serializer should be used](https://github.com/neuecc/Utf8Json#which-serializer-should-be-used) section.
 
 [ZeroFormatter](https://github.com/neuecc/ZeroFormatter/) is similar as [FlatBuffers](https://google.github.io/flatbuffers/) but specialized to C#. It is special. Deserialization is infinitely fast but instead the binary size is large. And ZeroFormatter's caching algorithm requires additional memory.
 
