@@ -250,7 +250,8 @@ namespace MessagePack.Formatters
             {
                 var buffer = new byte[typeName.Count];
                 Buffer.BlockCopy(typeName.Array, typeName.Offset, buffer, 0, buffer.Length);
-                var str = StringEncoding.UTF8.GetString(buffer);
+                // var str = StringEncoding.UTF8.GetString(buffer);
+                var str = UnicodeUtility.GetStringFromUtf8(buffer, 0, buffer.Length);
                 type = Type.GetType(str, false);
                 if (type == null)
                 {

@@ -184,7 +184,8 @@ namespace MessagePack.Internal
                 if (item == null) continue;
                 foreach (var item2 in item)
                 {
-                    yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key), item2.Value);
+                    // yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key), item2.Value);
+                    yield return new KeyValuePair<string, int>(UnicodeUtility.GetStringFromUtf8(item2.Key, 0, item2.Key.Length), item2.Value);
                 }
             }
         }

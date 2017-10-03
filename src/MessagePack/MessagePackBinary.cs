@@ -5037,7 +5037,8 @@ namespace MessagePack.Decoders
         {
             var length = bytes[offset] & 0x1F;
             readSize = length + 1;
-            return StringEncoding.UTF8.GetString(bytes, offset + 1, length);
+            // return StringEncoding.UTF8.GetString(bytes, offset + 1, length);
+            return UnicodeUtility.GetStringFromUtf8(bytes, offset + 1, length);
         }
     }
 
@@ -5054,7 +5055,8 @@ namespace MessagePack.Decoders
         {
             var length = (int)bytes[offset + 1];
             readSize = length + 2;
-            return StringEncoding.UTF8.GetString(bytes, offset + 2, length);
+            // return StringEncoding.UTF8.GetString(bytes, offset + 2, length);
+            return UnicodeUtility.GetStringFromUtf8(bytes, offset + 2, length);
         }
     }
 
@@ -5074,6 +5076,7 @@ namespace MessagePack.Decoders
                 var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
                 readSize = length + 3;
                 return StringEncoding.UTF8.GetString(bytes, offset + 3, length);
+                // return UnicodeUtility.GetStringFromUtf8(bytes, offset + 3, length);
             }
         }
     }
