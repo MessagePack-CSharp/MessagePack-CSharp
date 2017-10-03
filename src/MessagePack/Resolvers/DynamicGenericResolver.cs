@@ -1,4 +1,4 @@
-﻿#if !UNITY_METRO
+﻿#if !UNITY_WSA
 
 using MessagePack.Formatters;
 using System.Linq;

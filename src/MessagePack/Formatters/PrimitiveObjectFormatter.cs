@@ -32,7 +32,7 @@ namespace MessagePack.Formatters
 
         }
 
-#if !UNITY_METRO
+#if !UNITY_WSA
 
         public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
         {
@@ -98,7 +98,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-#if UNITY_METRO && !NETFX_CORE
+#if UNITY_WSA && !NETFX_CORE
                 if (t.IsEnum)
 #else
                 if (t.GetTypeInfo().IsEnum)

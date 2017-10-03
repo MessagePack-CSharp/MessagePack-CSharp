@@ -183,7 +183,7 @@ namespace MessagePack.Internal
         {
 #if NETSTANDARD1_4
             System.Threading.Volatile.Write(ref location, value);
-#elif UNITY_METRO || NET_4_6
+#elif UNITY_WSA || NET_4_6
             System.Threading.Volatile.Write(ref location, value);
 #else
             System.Threading.Thread.MemoryBarrier();
@@ -195,7 +195,7 @@ namespace MessagePack.Internal
         {
 #if NETSTANDARD1_4
             System.Threading.Volatile.Write(ref location, value);
-#elif UNITY_METRO || NET_4_6
+#elif UNITY_WSA || NET_4_6
             System.Threading.Volatile.Write(ref location, value);
 #else
             System.Threading.Thread.MemoryBarrier();
