@@ -28,6 +28,11 @@ namespace MessagePack.Internal
                 && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic;
         }
 
+        public static bool IsIndexer(this System.Reflection.PropertyInfo propertyInfo)
+        {
+            return propertyInfo.GetIndexParameters().Length > 0;
+        }
+
 #if NETSTANDARD1_4
 
         public static bool IsConstructedGenericType(this System.Reflection.TypeInfo type)

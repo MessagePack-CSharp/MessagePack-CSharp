@@ -471,7 +471,8 @@ namespace Xunit
 
             // is object
             var fields = left.GetType().GetTypeInfo().GetFields(BindingFlags.Instance | BindingFlags.Public);
-            var properties = left.GetType().GetTypeInfo().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(x => x.GetGetMethod(false) != null);
+            var properties = left.GetType().GetTypeInfo().GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Where(x => x.GetGetMethod(false) != null && x.GetIndexParameters().Length == 0);
             var members = fields.Cast<MemberInfo>().Concat(properties);
 
             foreach (dynamic mi in fields.Cast<MemberInfo>().Concat(properties))
