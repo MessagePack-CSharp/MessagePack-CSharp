@@ -76,14 +76,6 @@ namespace MessagePack.Tests
             public int OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ { get; set; }
         }
 
-        public class HasIndexer
-        {
-            public int Data1 { get; set; }
-            public string Data2 { get; set; }
-
-            public int this[int i] { get { return 0; } }
-        }
-
         [Fact]
         public void SimpleTest()
         {
@@ -191,20 +183,6 @@ namespace MessagePack.Tests
             };
             var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
             var v = MessagePackSerializer.Deserialize<LongestString>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-
-            v.IsStructuralEqual(o);
-        }
-
-        [Fact]
-        public void IndexerCheck()
-        {
-            var o = new HasIndexer
-            {
-                Data1 = 15,
-                Data2 = "15"
-            };
-            var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v = MessagePackSerializer.Deserialize<HasIndexer>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             v.IsStructuralEqual(o);
         }

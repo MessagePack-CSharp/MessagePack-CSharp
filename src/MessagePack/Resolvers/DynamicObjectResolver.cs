@@ -1295,6 +1295,7 @@ typeof(int), typeof(int) });
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
+                    if (item.IsIndexer()) continue;
 
                     var member = new EmittableMember
                     {
