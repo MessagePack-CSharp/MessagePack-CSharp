@@ -12,6 +12,7 @@ mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Nil.cs" "..\..\
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" "..\..\..\..\MessagePack\StringEncoding.cs"
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters" "..\..\..\..\MessagePack\Formatters"
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal" "..\..\..\..\MessagePack\Internal"
+mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnicodeUtility.cs" "..\..\..\..\MessagePack\Internal\UnicodeUtility.cs
 mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Resolvers" "..\..\..\..\MessagePack\Resolvers"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\UnityResolver.cs" "..\..\..\..\..\MessagePack.UnityShims\UnityResolver.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\Formatters.cs" "..\..\..\..\..\MessagePack.UnityShims\Formatters.cs"

@@ -148,6 +148,7 @@
       <DependentUpon>UnsafeMemory.tt</DependentUpon>
     </Compile>
     <Compile Include="Assets\Scripts\MessagePack\Internal\UnsafeMemory.Low.cs" />
+    <Compile Include="Assets\Scripts\MessagePack\Internal\UnicodeUtility.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Helper.cs" />
     <Compile Include="Assets\Scripts\MessagePack\LZ4\Codec\LZ4Codec.Safe.cs" />
