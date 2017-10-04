@@ -336,5 +336,33 @@ namespace MessagePack.Tests
                 re.MyProperty.Is(1000);
             }
         }
+        
+        [Fact]
+        public void WithIndexer()
+        {
+            var o = new WithIndexer
+            {
+                Data1 = 15,
+                Data2 = "15"
+            };
+            var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.StandardResolver.Instance);
+            var v = MessagePackSerializer.Deserialize<WithIndexer>(bin, MessagePack.Resolvers.StandardResolver.Instance);
+
+            v.IsStructuralEqual(o);
+        }
+        
+        [Fact]
+        public void WithIndexerContractless()
+        {
+            var o = new WithIndexerContractless
+            {
+                Data1 = 15,
+                Data2 = "15"
+            };
+            var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v = MessagePackSerializer.Deserialize<WithIndexerContractless>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+
+            v.IsStructuralEqual(o);
+        }
     }
 }

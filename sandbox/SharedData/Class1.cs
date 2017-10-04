@@ -785,6 +785,26 @@ namespace SharedData
         [Key(0)]
         public string OPQ { get; set; }
     }
+    
+    [MessagePackObject]
+    public class WithIndexer
+    {
+        [Key(0)]
+        public int Data1 { get; set; }
+        
+        [Key(1)]
+        public string Data2 { get; set; }
+
+        [Key(2)]
+        public int this[int i] { get { return 0; } }
+    }
+    
+    public class WithIndexerContractless
+    {
+        public int Data1 { get; set; }
+        public string Data2 { get; set; }
+        public int this[int i] { get { return 0; } }
+    }
 }
 
 namespace Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad

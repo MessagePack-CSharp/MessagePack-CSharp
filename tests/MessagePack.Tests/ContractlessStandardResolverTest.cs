@@ -76,8 +76,6 @@ namespace MessagePack.Tests
             public int OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ { get; set; }
         }
 
-   
-
         [Fact]
         public void SimpleTest()
         {
