@@ -119,7 +119,9 @@
     <Compile Include="..\SharedData\Class1.cs">
       <Link>Class1.cs</Link>
     </Compile>
-    <Compile Include="Code\UnicodeUtility.cs" />
+    <Compile Include="..\..\src\MessagePack\Internal\UnicodeUtility.cs">
+      <Link>Code\UnicodeUtility.cs</Link>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
