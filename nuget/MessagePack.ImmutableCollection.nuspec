@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack.ImmutableCollection</id>
-        <version>1.6.1.2</version>
+        <version>1.6.2</version>
         <title>MessagePack for C# Extension Support for ImmutableCollection</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
@@ -17,15 +17,15 @@
         </frameworkAssemblies>
         <dependencies>
             <group targetFramework=".NETFramework4.7">
-                <dependency id="MessagePack" version="1.6.1.2" />
+                <dependency id="MessagePack" version="1.6.2" />
                 <dependency id="System.Collections.Immutable" version="1.3.1" />
             </group>
             <group targetFramework=".NETFramework4.5">
-                <dependency id="MessagePack" version="1.6.1.2" />
+                <dependency id="MessagePack" version="1.6.2" />
                 <dependency id="System.Collections.Immutable" version="1.3.1" />
             </group>
             <group targetFramework=".NETStandard1.4">
-                <dependency id="MessagePack" version="1.6.1.2" />
+                <dependency id="MessagePack" version="1.6.2" />
                 <dependency id="System.Collections.Immutable" version="1.3.1" />
             </group>
         </dependencies>
