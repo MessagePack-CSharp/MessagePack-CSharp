@@ -1,4 +1,4 @@
-﻿#if !UNITY_METRO
+﻿#if !UNITY_WSA
 
 using System.Reflection;
 using System.Reflection.Emit;

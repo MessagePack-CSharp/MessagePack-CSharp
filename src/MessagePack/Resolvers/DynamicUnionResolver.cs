@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace MessagePack.Resolvers
 {
-#if !UNITY_METRO
+#if !UNITY_WSA
 
     /// <summary>
     /// UnionResolver by dynamic code generation.

@@ -38,7 +38,7 @@ namespace MessagePack
             return formatter;
         }
 
-#if !UNITY_METRO
+#if !UNITY_WSA
 
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
