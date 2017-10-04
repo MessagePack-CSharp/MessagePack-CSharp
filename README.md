@@ -1104,7 +1104,7 @@ MessagePack for C# generates object formatter dynamically by [ILGenerator](https
 
 > Note: If Unity's build target as PC, does not need code generation. It works well.
 
-If you want to avoid generate cost or run on Xamarin or Unity, you need pre-code generation. `mpc.exe`(MessagePackCompiler) is code generator of MessagePack for C#. mpc is located in `packages\MessagePack.*.*.*\tools\mpc.exe` or includes for unity's package. mpc is using [Roslyn](https://github.com/dotnet/roslyn) so analyze source code.
+If you want to avoid generate cost or run on Xamarin or Unity, you need pre-code generation. `mpc.exe`(MessagePackCompiler) is code generator of MessagePack for C#. mpc can download from [releases](https://github.com/neuecc/MessagePack-CSharp/releases/tag/v1.6.2) page, `mpc.zip`. mpc is using [Roslyn](https://github.com/dotnet/roslyn) so analyze source code.
 
 ```
 mpc arguments help:
