@@ -195,7 +195,7 @@ namespace MessagePack.Formatters
                 MessagePackBinary.EnsureCapacity(ref bytes, offset, byteCount + 1);
 
                 bytes[offset] = (byte)(MessagePackCode.MinFixStr | byteCount);
-                Buffer.BlockCopy(bytes, offset + 1, value, 0, byteCount);
+                Buffer.BlockCopy(value, 0, bytes, offset + 1, byteCount);
                 return byteCount + 1;
             }
             else if (byteCount <= ushort.MaxValue)
@@ -205,7 +205,7 @@ namespace MessagePack.Formatters
                 bytes[offset] = MessagePackCode.Str16;
                 bytes[offset + 1] = unchecked((byte)(byteCount >> 8));
                 bytes[offset + 2] = unchecked((byte)byteCount);
-                Buffer.BlockCopy(bytes, offset + 3, value, 0, byteCount);
+                Buffer.BlockCopy(value, 0, bytes, offset + 3, byteCount);
                 return byteCount + 3;
             }
             else
@@ -217,7 +217,7 @@ namespace MessagePack.Formatters
                 bytes[offset + 2] = unchecked((byte)(byteCount >> 16));
                 bytes[offset + 3] = unchecked((byte)(byteCount >> 8));
                 bytes[offset + 4] = unchecked((byte)byteCount);
-                Buffer.BlockCopy(bytes, offset + 5, value, 0, byteCount);
+                Buffer.BlockCopy(value, 0, bytes, offset + 5, byteCount);
                 return byteCount + 5;
             }
         }
