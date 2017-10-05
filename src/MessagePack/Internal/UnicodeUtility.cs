@@ -5,9 +5,10 @@ namespace MessagePack.Internal
     /// <summary>
     /// unicode manupilation utilities
     /// </summary>
-    internal static class UnicodeUtility
+    public static class UnicodeUtility
     {
         [ThreadStatic]
+        const char UnicodeInvalidChar = (char)0xfffd;
         static char[] Utf8Buffer;
         /// <summary>
         /// convert utf8 bytearray to string instance
@@ -99,12 +100,41 @@ namespace MessagePack.Internal
             {
                 if (data + 4 > endptr)
                 {
-                    return false;
+                    *outbuf = UnicodeInvalidChar;
+                    outbuf++;
+                    data = endptr;
+                    return true;
                 }
-                if (((*data & 0x07) | (*(data + 1) & 0x30)) == 0)
+                // between U+110000 and U+1FFFFF should be retrieved as invalid unicode point
+                if (((*data & 0x07) | (*(data + 1) & 0x30)) == 0 || (((*data & 0x03) | (*(data + 1) & 0x30)) != 0))
                 {
-                    throw new InvalidOperationException("invalid utf-8 byte sequence(not shortest)");
+                    outbuf[0] = UnicodeInvalidChar;
+                    outbuf++;
+                    data++;
+                    return true;
                 }
+                else if ((*(data + 1) & 0xc0) != 0x80)
+                {
+                    outbuf[0] = UnicodeInvalidChar;
+                    outbuf++;
+                    data++;
+                    return true;
+                }
+                else if ((*(data + 2) & 0xc0) != 0x80)
+                {
+                    outbuf[0] = UnicodeInvalidChar;
+                    outbuf++;
+                    data+=2;
+                    return true;
+                }
+                else if((*(data + 3) & 0xc0) != 0x80)
+                {
+                    outbuf[0] = UnicodeInvalidChar;
+                    outbuf++;
+                    data += 3;
+                    return true;
+                }
+                // U+10FFFF(surrogate pair)
                 var w = ((((((*data) & 0x7) << 2)
                     | ((*(data + 1) & 0x30) >> 4))
                     - 1) & 0x0f) << 6;
@@ -134,11 +164,31 @@ namespace MessagePack.Internal
             {
                 if (data + 3 > endptr)
                 {
-                    return false;
+                    *outbuf = UnicodeInvalidChar;
+                    outbuf++;
+                    data = endptr;
+                    return true;
                 }
-                if (((*data & 0xf) | (*(data + 1) & 0x20)) == 0)
+                if ((((*data & 0xf) | (*(data + 1) & 0x20)) == 0))
                 {
-                    throw new InvalidOperationException("invalid byte sequence(not shortest)");
+                    *outbuf = UnicodeInvalidChar;
+                    data++;
+                    outbuf++;
+                    return true;
+                }
+                else if ((*(data + 1) & 0xc0) != 0x80)
+                {
+                    *outbuf = UnicodeInvalidChar;
+                    outbuf++;
+                    data++;
+                    return true;
+                }
+                else if ((*(data + 2) & 0xc0) != 0x80)
+                {
+                    *outbuf = UnicodeInvalidChar;
+                    outbuf++;
+                    data += 2;
+                    return true;
                 }
                 // U+FFFF
                 // 4 + 6 + 6 = 16
@@ -152,12 +202,18 @@ namespace MessagePack.Internal
             {
                 if (data + 2 > endptr)
                 {
-                    return false;
+                    *outbuf = UnicodeInvalidChar;
+                    outbuf++;
+                    data = endptr;
+                    return true;
                 }
                 // U+07FF
-                if ((*data & 0x1e) == 0)
+                if ((*data & 0x1e) == 0 || ((*(data + 1) & 0xc0) != 0x80))
                 {
-                    throw new InvalidOperationException("invalid utf-8 byte sequence(not shortest)");
+                    outbuf[0] = UnicodeInvalidChar;
+                    outbuf++;
+                    data++;
+                    return true;
                 }
                 outbuf[0] = (char)(((*data & 0x1f) << 6) | ((*(data + 1)) & 0x3f));
                 data += 2;
@@ -165,7 +221,10 @@ namespace MessagePack.Internal
             }
             else
             {
-                throw new InvalidOperationException("unknown byte data");
+                *outbuf = UnicodeInvalidChar;
+                data++;
+                outbuf++;
+                //throw new InvalidOperationException("unknown byte data");
             }
             return true;
         }
