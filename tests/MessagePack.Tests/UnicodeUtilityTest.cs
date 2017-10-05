@@ -44,6 +44,10 @@ namespace MessagePack.Tests
         [InlineData(new byte[] { 0xf7, 0xbf, 0xbf, 0xbf })]
         // invalid third byte data, short of data length
         [InlineData(new byte[] { 0xe0, 0xa0, 0xe0, 0xa0 })]
+        // retrieve as error when U+20000,U+3FFFFFF codepoint has come
+        [InlineData(new byte[] { 0xf8, 0x88, 0x80, 0x80, 0x80, 0xfb, 0xbf, 0xbf, 0xbf, 0xbf})]
+        // retrieve as error when U+4000000,U+7FFFFFFF codepoint has come
+        [InlineData(new byte[] { 0xfc, 0x84, 0x80, 0x80, 0x80, 0x80, 0xfd, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf})]
         public void Utf8ToUtf16_InvalidByteSequence(byte[] bytes)
         {
             var expected = Encoding.UTF8.GetString(bytes).ToCharArray();

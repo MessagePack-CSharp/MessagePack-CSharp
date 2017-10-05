@@ -96,7 +96,7 @@ namespace MessagePack.Internal
                     return true;
                 }
             }
-            if ((*data & 0xf0) == 0xf0)
+            if ((*data & 0xf8) == 0xf0)
             {
                 if (data + 4 > endptr)
                 {
@@ -160,7 +160,7 @@ namespace MessagePack.Internal
                 data += 4;
                 outbuf++;
             }
-            else if ((*data & 0xe0) == 0xe0)
+            else if ((*data & 0xf0) == 0xe0)
             {
                 if (data + 3 > endptr)
                 {
@@ -198,7 +198,7 @@ namespace MessagePack.Internal
                 data += 3;
                 outbuf++;
             }
-            else if ((*data & 0xc0) == 0xc0)
+            else if ((*data & 0xe0) == 0xc0)
             {
                 if (data + 2 > endptr)
                 {
