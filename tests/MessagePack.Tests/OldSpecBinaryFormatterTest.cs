@@ -41,7 +41,6 @@ namespace MessagePack.Tests
             Assert.Equal(0xda, messagePackBytes[0]); // str 16
 
             var deserializedBytes = OldSpecBinaryFormatter.Instance.Deserialize(messagePackBytes, 0, StandardResolver.Instance, out var readSize);
-            
             Assert.Equal(sourceBytes, deserializedBytes);
         }
 
@@ -51,7 +50,6 @@ namespace MessagePack.Tests
             var messagePackBytes = new byte[]{ 0xc0 }; // nil
 
             var deserializedObj = OldSpecBinaryFormatter.Instance.Deserialize(messagePackBytes, 0, StandardResolver.Instance, out var readSize);
-
             Assert.Null(deserializedObj);
         }
 
