@@ -186,6 +186,8 @@ namespace MessagePack.Formatters
 
         public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
         {
+            if (value == null) return MessagePackBinary.WriteNil(ref bytes, offset);
+
             var byteCount = value.Length;
 
             if (byteCount <= MessagePackRange.MaxFixStringLength)
@@ -223,7 +225,12 @@ namespace MessagePack.Formatters
         public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             var type = MessagePackBinary.GetMessagePackType(bytes, offset);
-            if (type == MessagePackType.Binary)
+            if (type == MessagePackType.Nil)
+            {
+                readSize = 1;
+                return null;
+            }
+            else if (type == MessagePackType.Binary)
             {
                 return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
             }
