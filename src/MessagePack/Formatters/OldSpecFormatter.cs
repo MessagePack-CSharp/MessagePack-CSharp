@@ -186,6 +186,8 @@ namespace MessagePack.Formatters
 
         public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
         {
+            if (value == null) return MessagePackBinary.WriteNil(ref bytes, offset);
+
             var byteCount = value.Length;
 
             if (byteCount <= MessagePackRange.MaxFixStringLength)
@@ -193,7 +195,7 @@ namespace MessagePack.Formatters
                 MessagePackBinary.EnsureCapacity(ref bytes, offset, byteCount + 1);
 
                 bytes[offset] = (byte)(MessagePackCode.MinFixStr | byteCount);
-                Buffer.BlockCopy(bytes, offset + 1, value, 0, byteCount);
+                Buffer.BlockCopy(value, 0, bytes, offset + 1, byteCount);
                 return byteCount + 1;
             }
             else if (byteCount <= ushort.MaxValue)
@@ -203,7 +205,7 @@ namespace MessagePack.Formatters
                 bytes[offset] = MessagePackCode.Str16;
                 bytes[offset + 1] = unchecked((byte)(byteCount >> 8));
                 bytes[offset + 2] = unchecked((byte)byteCount);
-                Buffer.BlockCopy(bytes, offset + 3, value, 0, byteCount);
+                Buffer.BlockCopy(value, 0, bytes, offset + 3, byteCount);
                 return byteCount + 3;
             }
             else
@@ -215,7 +217,7 @@ namespace MessagePack.Formatters
                 bytes[offset + 2] = unchecked((byte)(byteCount >> 16));
                 bytes[offset + 3] = unchecked((byte)(byteCount >> 8));
                 bytes[offset + 4] = unchecked((byte)byteCount);
-                Buffer.BlockCopy(bytes, offset + 5, value, 0, byteCount);
+                Buffer.BlockCopy(value, 0, bytes, offset + 5, byteCount);
                 return byteCount + 5;
             }
         }
@@ -223,7 +225,12 @@ namespace MessagePack.Formatters
         public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             var type = MessagePackBinary.GetMessagePackType(bytes, offset);
-            if (type == MessagePackType.Binary)
+            if (type == MessagePackType.Nil)
+            {
+                readSize = 1;
+                return null;
+            }
+            else if (type == MessagePackType.Binary)
             {
                 return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
             }
@@ -232,7 +239,7 @@ namespace MessagePack.Formatters
                 var code = bytes[offset];
                 unchecked
                 {
-                    if (MessagePackRange.MinFixStringLength <= code && code <= MessagePackRange.MaxFixStringLength)
+                    if (MessagePackCode.MinFixStr <= code && code <= MessagePackCode.MaxFixStr)
                     {
                         var length = bytes[offset] & 0x1F;
                         readSize = length + 1;
