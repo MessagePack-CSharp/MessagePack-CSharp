@@ -239,7 +239,7 @@ namespace MessagePack.Formatters
                 var code = bytes[offset];
                 unchecked
                 {
-                    if (MessagePackRange.MinFixStringLength <= code && code <= MessagePackRange.MaxFixStringLength)
+                    if (MessagePackCode.MinFixStr <= code && code <= MessagePackCode.MaxFixStr)
                     {
                         var length = bytes[offset] & 0x1F;
                         readSize = length + 1;
