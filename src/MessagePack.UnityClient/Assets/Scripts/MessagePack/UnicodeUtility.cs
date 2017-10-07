@@ -7,8 +7,6 @@ namespace MessagePack.Internal
     /// </summary>
     internal static class UnicodeUtility
     {
-        [ThreadStatic]
-        static char[] Utf8Buffer;
         /// <summary>
         /// convert utf8 bytearray to string instance
         /// </summary>

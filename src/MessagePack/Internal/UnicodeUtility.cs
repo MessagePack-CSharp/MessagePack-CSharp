@@ -7,9 +7,10 @@ namespace MessagePack.Internal
     /// </summary>
     public static class UnicodeUtility
     {
-        [ThreadStatic]
         const char UnicodeInvalidChar = (char)0xfffd;
-        static char[] Utf8Buffer;
+        // cache off
+        // [ThreadStatic]
+        // static char[] Utf8Buffer;
         /// <summary>
         /// convert utf8 bytearray to string instance
         /// </summary>
@@ -41,7 +42,8 @@ namespace MessagePack.Internal
                 }
                 else
                 {
-                    Utf8Buffer = Utf8Buffer != null && Utf8Buffer.Length >= count ? Utf8Buffer : new char[count];
+                    // Utf8Buffer = Utf8Buffer != null && Utf8Buffer.Length >= count ? Utf8Buffer : new char[count];
+                    var Utf8Buffer = new char[count];
                     fixed (char* bufferptr = &Utf8Buffer[0])
                     {
                         char* iterptr = bufferptr;
@@ -65,20 +67,19 @@ namespace MessagePack.Internal
                 unchecked
                 {
                     byte* stopptr = endptr - 8;
-                    byte* outbyteptr = IsLittleEndian ? (byte*)outbuf : (byte*)outbuf + 1;
                     while (data < stopptr)
                     {
                         if ((*(ulong*)data & unchecked(0x8080808080808080UL)) == 0)
                         {
-                            outbyteptr[0] = data[0];
-                            outbyteptr[2] = data[1];
-                            outbyteptr[4] = data[2];
-                            outbyteptr[6] = data[3];
-                            outbyteptr[8] = data[4];
-                            outbyteptr[10] = data[5];
-                            outbyteptr[12] = data[6];
-                            outbyteptr[14] = data[7];
-                            outbyteptr += 16;
+                            outbuf[0] = (char)data[0];
+                            outbuf[1] = (char)data[1];
+                            outbuf[2] = (char)data[2];
+                            outbuf[3] = (char)data[3];
+                            outbuf[4] = (char)data[4];
+                            outbuf[5] = (char)data[5];
+                            outbuf[6] = (char)data[6];
+                            outbuf[7] = (char)data[7];
+                            outbuf += 8;
                             data += 8;
                         }
                         else
@@ -88,11 +89,10 @@ namespace MessagePack.Internal
                     }
                     while (data < endptr && *data < 0x80)
                     {
-                        *outbyteptr = *data;
-                        outbyteptr += 2;
+                        *outbuf = (char)*data;
+                        outbuf++;
                         data++;
                     }
-                    outbuf = (char*)(outbyteptr - (IsLittleEndian ? 0 : 1));
                     return true;
                 }
             }
@@ -124,10 +124,10 @@ namespace MessagePack.Internal
                 {
                     outbuf[0] = UnicodeInvalidChar;
                     outbuf++;
-                    data+=2;
+                    data += 2;
                     return true;
                 }
-                else if((*(data + 3) & 0xc0) != 0x80)
+                else if ((*(data + 3) & 0xc0) != 0x80)
                 {
                     outbuf[0] = UnicodeInvalidChar;
                     outbuf++;
