@@ -390,40 +390,39 @@ namespace MessagePack.Internal
             //    var attr = item.GetMessagePackFormatterAttribtue();
             //    if (attr != null)
             //    {
+            //        // var attr = typeof(Foo).Get .GetCustomAttribute<T>(true);
+            //        // this.f = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
+
             //        var f = builder.DefineField(item.Name + "_formatter", attr.FormatterType, FieldAttributes.Private | FieldAttributes.InitOnly);
 
-            //        il.EmitLoadThis();
-            //        il.Emit(OpCodes.Ldtoken, f.FieldType);
-            //        var getTypeFromHandle = ExpressionUtility.GetMethodInfo(() => Type.GetTypeFromHandle(default(RuntimeTypeHandle)));
-            //        il.Emit(OpCodes.Call, getTypeFromHandle);
+            //        // var bindingFlags = (int)(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            //        if (attr.Arguments == null || attr.Arguments.Length == 0)
+            //        var attrVar = il.DeclareLocal(typeof(MessagePackFormatterAttribute));
+                    
+            //        il.Emit(OpCodes.Ldtoken, info.Type);
+            //        il.EmitCall(EmitInfo.GetTypeFromHandle);
+            //        il.Emit(OpCodes.Ldstr, item.Name);
+            //        il.EmitLdc_I4(bindingFlags);
+            //        if (item.IsProperty)
             //        {
-            //            var mi = ExpressionUtility.GetMethodInfo(() => Activator.CreateInstance(default(Type)));
-            //            il.Emit(OpCodes.Call, mi);
+            //            il.EmitCall(EmitInfo.TypeGetProperty);
             //        }
             //        else
             //        {
-            //            il.EmitLdc_I4(attr.Arguments.Length);
-            //            il.Emit(OpCodes.Newarr, typeof(object));
-
-            //            var ii = 0;
-            //            foreach (var item2 in attr.Arguments)
-            //            {
-            //                il.Emit(OpCodes.Dup);
-            //                il.EmitLdc_I4(ii);
-            //                // il.EmitConstant(item2);
-            //                if (item2.GetType().GetTypeInfo().IsValueType)
-            //                {
-            //                    il.Emit(OpCodes.Box, item2.GetType());
-            //                }
-            //                il.Emit(OpCodes.Stelem_Ref);
-            //                ii++;
-            //            }
-
-            //            var mi = ExpressionUtility.GetMethodInfo(() => Activator.CreateInstance(default(Type), default(object[])));
-            //            il.Emit(OpCodes.Call, mi);
+            //            il.EmitCall(EmitInfo.TypeGetField);
             //        }
+
+            //        il.EmitTrue();
+            //        il.EmitCall(EmitInfo.GetCustomAttributeJsonFormatterAttribute);
+            //        il.EmitStloc(attrVar);
+
+            //        il.EmitLoadThis();
+
+            //        il.EmitLdloc(attrVar);
+            //        il.EmitCall(EmitInfo.JsonFormatterAttr.FormatterType);
+            //        il.EmitLdloc(attrVar);
+            //        il.EmitCall(EmitInfo.JsonFormatterAttr.Arguments);
+            //        il.EmitCall(EmitInfo.ActivatorCreateInstance);
 
             //        il.Emit(OpCodes.Castclass, attr.FormatterType);
             //        il.Emit(OpCodes.Stfld, f);
@@ -1108,6 +1107,13 @@ typeof(int), typeof(int) });
             }
         }
 
+        internal static class EmitInfo
+        {
+            public static readonly MethodInfo GetTypeFromHandle = ExpressionUtility.GetMethodInfo(() => Type.GetTypeFromHandle(default(RuntimeTypeHandle)));
+            //public static readonly MethodInfo TypeGetProperty = ExpressionUtility.GetMethodInfo((Type t) => t.GetProperty(default(string), default(BindingFlags)));
+            //public static readonly MethodInfo TypeGetField = ExpressionUtility.GetMethodInfo((Type t) => t.GetField(default(string), default(BindingFlags)));
+        }
+
         class DeserializeInfo
         {
             public ObjectSerializationInfo.EmittableMember MemberInfo { get; set; }
@@ -1151,6 +1157,7 @@ typeof(int), typeof(int) });
 
     internal class ObjectSerializationInfo
     {
+        public Type Type { get; set; }
         public bool IsIntKey { get; set; }
         public bool IsStringKey { get { return !IsIntKey; } }
         public bool IsClass { get; set; }
@@ -1528,11 +1535,12 @@ typeof(int), typeof(int) });
 
             return new ObjectSerializationInfo
             {
+                Type = type,
                 IsClass = isClass,
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = (isIntKey) ? intMembers.Values.ToArray() : stringMembers.Values.ToArray()
+                Members = (isIntKey) ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
             };
         }
 
