@@ -199,6 +199,33 @@ MessagePackSerializer.SetDefaultResolver(MessagePack.Resolvers.ContractlessStand
 var bin2 = MessagePackSerializer.Serialize(data);
 ```
 
+I want to serialize private member! In default, can not serialize/deserialize private members. But you can use allow-private resolver.
+
+```csharp
+[MessagePackObject]
+public class PrivateSample
+{
+    [Key(0)]
+    int x;
+
+    public void SetX(int v)
+    {
+        x = v;
+    }
+
+    public int GetX()
+    {
+        return x;
+    }
+}
+
+var data = new PrivateSample();
+data.SetX(9999);
+
+// You can choose StandardResolverAllowPrivate or  ContractlessStandardResolverAllowPrivate
+var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.Instance);
+```
+
 I don't need type, I want to use like BinaryFormatter! You can use as typeless resolver and helpers. Please see [Typeless section](https://github.com/neuecc/MessagePack-CSharp#typeless).
 
 Resolver is key customize point of MessagePack for C#. Details, please see [extension point](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
@@ -804,6 +831,8 @@ Extension Point(IFormatterResolver)
 | BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
 | StandardResolver | Composited resolver. It resolves in the following order `builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> dynamic object fallback`. This is the default of MessagePackSerializer. |
 | ContractlessStandardResolver | Composited `StandardResolver`(except dynamic object fallback) -> `DynamicContractlessObjectResolver` -> `DynamicObjectTypeFallbackResolver`. It enables contractless serialization. |
+| StandardResolverAllowPrivate | Same as StandardResolver but allow serialize/deserialize private members. |
+| ContractlessStandardResolverAllowPrivate | Same as ContractlessStandardResolver but allow serialize/deserialize private members. |
 | PrimitiveObjectResolver | MessagePack primitive object resolver. It is used fallback in `object` type and supports `bool`, `char`, `sbyte`, `byte`, `short`, `int`, `long`, `ushort`, `uint`, `ulong`, `float`, `double`, `DateTime`, `string`, `byte[]`, `ICollection`, `IDictionary`. |
 | DynamicObjectTypeFallbackResolver | Serialize is used type in from `object` type, deserialize is used PrimitiveObjectResolver. |
 | AttributeFormatterResolver | Get formatter from `[MessagePackFormatter]` attribute. |
@@ -817,6 +846,8 @@ Extension Point(IFormatterResolver)
 | DynamicUnionResolver | Resolver of interface marked by UnionAttribute. It uses dynamic code generation to create dynamic formatter. |
 | DynamicObjectResolver | Resolver of class and struct maked by MessagePackObjectAttribute. It uses dynamic code generation to create dynamic formatter. |
 | DynamicContractlessObjectResolver | Resolver of all classes and structs. It does not needs MessagePackObjectAttribute and serialized key as string(same as marked [MessagePackObject(true)]). |
+| DynamicObjectResolverAllowPrivate | Same as DynamicObjectResolver but allow serialize/deserialize private members. |
+| DynamicContractlessObjectResolverAllowPrivate | Same as DynamicContractlessObjectResolver but allow serialize/deserialize private members. |
 | TypelessObjectResolver | Used for `object`, embed .NET type in binary by `ext(100)` format so no need to pass type in deserilization.  |
 | TypelessContractlessStandardResolver | Composited resolver. It resolves in the following order `nativedatetime -> builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> dynamiccontractless -> typeless`. This is the default of `MessagePackSerializer.Typeless`  |
 
@@ -976,7 +1007,7 @@ internal static class SampleCustomResolverGetFormatterHelper
 
 MessaegPackFormatterAttribute
 ---
-MessaegPackFormatterAttribute is lightweight extension point of class, struct, interface, enum. This is like JSON.NET's JsonConverterAttribute. For example, serialize private field.
+MessaegPackFormatterAttribute is lightweight extension point of class, struct, interface, enum and property/field. This is like JSON.NET's JsonConverterAttribute. For example, serialize private field, serialize x10 formatter.
 
 ```csharp
 [MessagePackFormatter(typeof(CustomObjectFormatter))]
@@ -1003,6 +1034,30 @@ public class CustomObject
             return new CustomObject { internalId = id };
         }
     }
+}
+
+// per field, member
+
+public class Int_x10Formatter : IMessagePackFormatter<int>
+{
+    public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+    {
+        return MessagePackBinary.ReadInt32(bytes, offset, out readSize) * 10;
+    }
+
+    public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+    {
+        return MessagePackBinary.WriteInt32(ref bytes, offset, value * 10);
+    }
+}
+
+[MessagePackObject]
+public class MyClass
+{
+    // You can attach custom formatter per member.
+    [Key(0)]
+    [MessagePackFormatter(typeof(Int_x10Formatter))]
+    public int MyProperty1 { get; set; }
 }
 ```
 

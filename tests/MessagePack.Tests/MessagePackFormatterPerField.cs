@@ -1,4 +1,5 @@
 ﻿using MessagePack.Formatters;
+using MessagePack.Resolvers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,6 +72,7 @@ namespace MessagePack.Tests
         [Fact]
         public void FooBar()
         {
+            MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate
             {
                 var bin = MessagePack.MessagePackSerializer.Serialize(new MyClass { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
                 var json = MessagePackSerializer.ToJson(bin);

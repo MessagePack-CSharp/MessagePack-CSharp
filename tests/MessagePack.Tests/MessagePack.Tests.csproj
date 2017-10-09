@@ -103,6 +103,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AllowPrivateTest.cs" />
     <Compile Include="AnonymousTypeTest.cs" />
     <Compile Include="AutomataSafe.cs" />
     <Compile Include="ByteArrayComparerTest.cs" />
