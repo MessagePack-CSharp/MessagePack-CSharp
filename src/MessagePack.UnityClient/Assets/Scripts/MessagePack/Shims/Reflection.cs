@@ -263,6 +263,17 @@ namespace System.Reflection
 
 #endif
     }
+
+#if !NET_4_6
+    public static class CustomAttributeExtensions
+    {
+        public static T GetCustomAttribute<T>(MemberInfo memberInfo, bool inherit)
+        {
+            return (T)memberInfo.GetCustomAttributes(typeof(T), inherit).FirstOrDefault();
+        }
+    }
+
+#endif
 }
 
 

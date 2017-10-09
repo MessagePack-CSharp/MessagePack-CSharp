@@ -274,3 +274,4 @@ nuget/mpc.exe.config
 nuget/tools/*
 nuget/unity/tools/*
 nuget/unity*
+/nuget/*.unitypackage
