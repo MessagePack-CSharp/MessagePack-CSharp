@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard1.4;net45;net47</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;net45;net47</TargetFrameworks>
         <SignAssembly>True</SignAssembly>
         <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <DocumentationFile>bin\Release\netstandard1.4\MessagePack.ImmutableCollection.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml</DocumentationFile>
         <NoWarn>1701;1702;1705;1591</NoWarn>
     </PropertyGroup>
 

@@ -29,7 +29,7 @@ namespace MessagePack.Resolvers
         }
     }
 
-//#if NETSTANDARD1_4
+//#if NETSTANDARD
 
 //    /// <summary>
 //    /// In `object`, when serializing resolve by concrete type and when deserializing use primitive.

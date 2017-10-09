@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard1.4;net45;net47</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;net45;net47</TargetFrameworks>
         <RootNamespace>MessagePack.Unity</RootNamespace>
         <SignAssembly>True</SignAssembly>
         <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
@@ -10,14 +10,14 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DocumentationFile>bin\Release\netstandard1.4\MessagePack.UnityShims.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.UnityShims.xml</DocumentationFile>
         <NoWarn>1701;1702;1705;1591</NoWarn>
-        <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK</DefineConstants>
+        <DefineConstants>TRACE;RELEASE;NETSTANDARD;ENABLE_UNSAFE_MSGPACK</DefineConstants>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
+        <DefineConstants>TRACE;DEBUG;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

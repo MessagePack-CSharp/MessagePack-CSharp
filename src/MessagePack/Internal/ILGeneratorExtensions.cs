@@ -40,6 +40,16 @@ namespace MessagePack.Internal
             }
         }
 
+        public void EmitLdarg()
+        {
+            il.EmitLdarg(i);
+        }
+
+        public void EmitLdarga()
+        {
+            il.EmitLdarga(i);
+        }
+
         public void EmitStore()
         {
             il.EmitStarg(i);

@@ -12,14 +12,14 @@
         <releaseNotes>update dependency.</releaseNotes>
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, aspnetcore, aspnetcoremvc</tags>
         <dependencies>
-            <group targetFramework=".NETStandard1.4">
+            <group targetFramework=".NETStandard2.0">
                 <dependency id="MessagePack" version="1.6.2" />
                 <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.2.0" />
             </group>
         </dependencies>
     </metadata>
     <files>
-        <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.dll" target="lib\netstandard1.4" />
-        <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard1.4\MessagePack.AspNetCoreMvcFormatter.xml" target="lib\netstandard1.4" />
+        <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard2.0\MessagePack.AspNetCoreMvcFormatter.dll" target="lib\netstandard2.0" />
+        <file src="..\src\MessagePack.AspNetCoreMvcFormatter\bin\Release\netstandard2.0\MessagePack.AspNetCoreMvcFormatter.xml" target="lib\netstandard2.0" />
     </files>
 </package>

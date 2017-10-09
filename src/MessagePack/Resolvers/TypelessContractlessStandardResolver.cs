@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD1_4
+﻿#if NETSTANDARD
 using MessagePack.Formatters;
 
 namespace MessagePack.Resolvers

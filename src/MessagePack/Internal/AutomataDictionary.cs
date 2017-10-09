@@ -19,7 +19,7 @@ namespace MessagePack.Internal
             root = new AutomataNode(0);
         }
 
-#if NETSTANDARD1_4
+#if NETSTANDARD
         public unsafe void Add(string str, int value)
         {
             var bytes = Encoding.UTF8.GetBytes(str);

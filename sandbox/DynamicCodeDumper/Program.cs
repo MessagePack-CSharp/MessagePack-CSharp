@@ -28,12 +28,12 @@ namespace DynamicCodeDumper
                 //DynamicObjectResolver.Instance.GetFormatter<Version0>();
                 //DynamicObjectResolver.Instance.GetFormatter<Version1>();
                 //DynamicObjectResolver.Instance.GetFormatter<Version2>();
-                DynamicObjectResolver.Instance.GetFormatter<SimpleIntKeyData>();
-                DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
-                DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
-                DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
-                DynamicObjectResolver.Instance.GetFormatter<LongestString>();
-                DynamicObjectResolver.Instance.GetFormatter<Dup>();
+                //DynamicObjectResolver.Instance.GetFormatter<SimpleIntKeyData>();
+                //DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData>();
+                //DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
+                //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
+                //DynamicObjectResolver.Instance.GetFormatter<LongestString>();
+                var f = DynamicObjectResolver.Instance.GetFormatter<Callback2_2>();
                 //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
                 //DynamicObjectResolver.Instance.GetFormatter<Callback1>();
                 //DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
@@ -53,6 +53,10 @@ namespace DynamicCodeDumper
                 //DynamicContractlessObjectResolver.Instance.GetFormatter<Contractless2>();
 
                 //DynamicContractlessObjectResolver.Instance.GetFormatter<EntityBase>();
+
+                byte[] b = null;
+                f.Serialize(ref b, 0, default(Callback2_2), null);
+
             }
             catch (Exception ex)
             {
@@ -89,6 +93,41 @@ namespace DynamicCodeDumper
                 var data = p.StandardOutput.ReadToEnd();
                 Console.WriteLine(data);
             }
+        }
+    }
+
+    [MessagePackObject(true)]
+    public struct Callback2_2 : IMessagePackSerializationCallbackReceiver
+    {
+        [Key(0)]
+        public int X { get; set; }
+
+        public static bool CalledAfter = false;
+
+
+        public Callback2_2(int x)
+            : this(x, () => { }, () => { })
+        {
+
+        }
+
+        Action onBefore;
+        Action onAfter;
+        public Callback2_2(int x, Action onBefore, Action onAfter)
+        {
+            this.X = x;
+            this.onBefore = onBefore;
+            this.onAfter = onAfter;
+        }
+
+        void IMessagePackSerializationCallbackReceiver.OnBeforeSerialize()
+        {
+            onBefore();
+        }
+
+        void IMessagePackSerializationCallbackReceiver.OnAfterDeserialize()
+        {
+            CalledAfter = true;
         }
     }
 

@@ -24,7 +24,7 @@
                 <dependency id="MessagePack" version="1.6.2" />
                 <dependency id="ReactiveProperty" version="3.5.1" />
             </group>
-            <group targetFramework=".NETStandard1.4">
+            <group targetFramework=".NETStandard2.0">
                 <dependency id="MessagePack" version="1.6.2" />
                 <dependency id="ReactiveProperty" version="3.5.1" />
             </group>
@@ -32,10 +32,10 @@
     </metadata>
     <files>
         <file src="..\src\MessagePack.ReactiveProperty\bin\Release\net45\MessagePack.ReactiveProperty.dll" target="lib\net45" />
-        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\net45" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard2.0\MessagePack.ReactiveProperty.xml" target="lib\net45" />
         <file src="..\src\MessagePack.ReactiveProperty\bin\Release\net47\MessagePack.ReactiveProperty.dll" target="lib\net47" />
-        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\net47" />
-        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.dll" target="lib\netstandard1.4" />
-        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.4\MessagePack.ReactiveProperty.xml" target="lib\netstandard1.4" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard2.0\MessagePack.ReactiveProperty.xml" target="lib\net47" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard2.0\MessagePack.ReactiveProperty.dll" target="lib\netstandard2.0" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard2.0\MessagePack.ReactiveProperty.xml" target="lib\netstandard2.0" />
     </files>
 </package>

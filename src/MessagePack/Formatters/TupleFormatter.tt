@@ -4,7 +4,7 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
-#if NETSTANDARD1_4
+#if NETSTANDARD
 
 using System;
 

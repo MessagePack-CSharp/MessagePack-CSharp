@@ -24,7 +24,7 @@
                 <dependency id="MessagePack" version="1.6.2" />
                 <dependency id="System.Collections.Immutable" version="1.3.1" />
             </group>
-            <group targetFramework=".NETStandard1.4">
+            <group targetFramework=".NETStandard2.0">
                 <dependency id="MessagePack" version="1.6.2" />
                 <dependency id="System.Collections.Immutable" version="1.3.1" />
             </group>
@@ -32,10 +32,10 @@
     </metadata>
     <files>
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\net47\MessagePack.ImmutableCollection.dll" target="lib\net47" />
-        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard1.4\MessagePack.ImmutableCollection.xml" target="lib\net47" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\net47" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\net45\MessagePack.ImmutableCollection.dll" target="lib\net45" />
-        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard1.4\MessagePack.ImmutableCollection.xml" target="lib\net45" />
-        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard1.4\MessagePack.ImmutableCollection.dll" target="lib\netstandard1.4" />
-        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard1.4\MessagePack.ImmutableCollection.xml" target="lib\netstandard1.4" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\net45" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.dll" target="lib\netstandard2.0" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\netstandard2.0" />
     </files>
 </package>

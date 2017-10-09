@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard1.4;net45;net47</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;net45;net47</TargetFrameworks>
         <AssemblyName>MessagePack</AssemblyName>
         <SignAssembly>True</SignAssembly>
         <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
@@ -10,32 +10,32 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(TargetFramework)' != 'net45'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
+        <DefineConstants>TRACE;DEBUG;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
         <LangVersion>7</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' != 'net45'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DocumentationFile>bin\Release\netstandard1.4\MessagePack.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.xml</DocumentationFile>
         <NoWarn>1701;1702;1705;1591</NoWarn>
-        <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
+        <DefineConstants>TRACE;RELEASE;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
         <LangVersion>7</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(TargetFramework)' == 'net45'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DefineConstants>TRACE;DEBUG;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
+        <DefineConstants>TRACE;DEBUG;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
         <LangVersion>7</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' == 'net45'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DocumentationFile>bin\Release\netstandard1.4\MessagePack.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.xml</DocumentationFile>
         <NoWarn>1701;1702;1705;1591</NoWarn>
-        <DefineConstants>TRACE;RELEASE;NETSTANDARD1_4;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
+        <DefineConstants>TRACE;RELEASE;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
         <LangVersion>7</LangVersion>
     </PropertyGroup>
@@ -53,7 +53,7 @@
         <None Include="MessagePackSerializer.Typeless.cs" />
     </ItemGroup>
 
-    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.4' ">
+    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
         <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
         <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
         <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />

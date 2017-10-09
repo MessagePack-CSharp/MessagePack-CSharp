@@ -169,7 +169,7 @@ namespace MessagePack
 
             if (!readStrict)
             {
-#if NETSTANDARD1_4 && !NET45
+#if NETSTANDARD && !NET45
 
                 var ms = stream as MemoryStream;
                 if (ms != null)
