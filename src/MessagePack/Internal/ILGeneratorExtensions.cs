@@ -7,6 +7,45 @@ using System.Reflection.Emit;
 
 namespace MessagePack.Internal
 {
+    internal struct ArgumentField
+    {
+        readonly int i;
+        readonly bool @ref;
+        readonly ILGenerator il;
+
+        public ArgumentField(ILGenerator il, int i, bool @ref = false)
+        {
+            this.il = il;
+            this.i = i;
+            this.@ref = @ref;
+        }
+
+        public ArgumentField(ILGenerator il, int i, Type type)
+        {
+            this.il = il;
+            this.i = i;
+            var ti = type.GetTypeInfo();
+            this.@ref = (ti.IsClass || ti.IsInterface || ti.IsAbstract) ? false : true;
+        }
+
+        public void EmitLoad()
+        {
+            if (@ref)
+            {
+                il.EmitLdarga(i);
+            }
+            else
+            {
+                il.EmitLdarg(i);
+            }
+        }
+
+        public void EmitStore()
+        {
+            il.EmitStarg(i);
+        }
+    }
+
     /// <summary>
     /// Provides optimized generation code and helpers.
     /// </summary>
@@ -46,7 +85,7 @@ namespace MessagePack.Internal
 
         public static void EmitLdloc(this ILGenerator il, LocalBuilder local)
         {
-            il.Emit(OpCodes.Ldloc, local);
+            EmitLdloc(il, local.LocalIndex);
         }
 
         /// <summary>
@@ -83,7 +122,7 @@ namespace MessagePack.Internal
 
         public static void EmitStloc(this ILGenerator il, LocalBuilder local)
         {
-            il.Emit(OpCodes.Stloc, local);
+            EmitStloc(il, local.LocalIndex);
         }
 
         /// <summary>
@@ -103,7 +142,22 @@ namespace MessagePack.Internal
 
         public static void EmitLdloca(this ILGenerator il, LocalBuilder local)
         {
-            il.Emit(OpCodes.Ldloca, local);
+            EmitLdloca(il, local.LocalIndex);
+        }
+
+        public static void EmitTrue(this ILGenerator il)
+        {
+            EmitBoolean(il, true);
+        }
+
+        public static void EmitFalse(this ILGenerator il)
+        {
+            EmitBoolean(il, false);
+        }
+
+        public static void EmitBoolean(this ILGenerator il, bool value)
+        {
+            EmitLdc_I4(il, value ? 1 : 0);
         }
 
         /// <summary>
@@ -156,6 +210,26 @@ namespace MessagePack.Internal
             }
         }
 
+        public static void EmitUnboxOrCast(this ILGenerator il, Type type)
+        {
+            if (type.GetTypeInfo().IsValueType)
+            {
+                il.Emit(OpCodes.Unbox_Any, type);
+            }
+            else
+            {
+                il.Emit(OpCodes.Castclass, type);
+            }
+        }
+
+        public static void EmitBoxOrDoNothing(this ILGenerator il, Type type)
+        {
+            if (type.GetTypeInfo().IsValueType)
+            {
+                il.Emit(OpCodes.Box, type);
+            }
+        }
+
         public static void EmitLdarg(this ILGenerator il, int index)
         {
             switch (index)
@@ -199,18 +273,6 @@ namespace MessagePack.Internal
             else
             {
                 il.Emit(OpCodes.Ldarga, index);
-            }
-        }
-
-        public static void EmitLoadArg(this ILGenerator il, TypeInfo info, int index)
-        {
-            if (info.IsClass)
-            {
-                EmitLdarg(il, index);
-            }
-            else
-            {
-                EmitLdarga(il, index);
             }
         }
 
@@ -281,63 +343,6 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ldc_I8, unchecked((long)value));
         }
 
-        // bool、byte、char、double、float、int、long、short、string
-        // object, type, enum, or its array
-        public static void EmitConstant(this ILGenerator il, object value)
-        {
-            if (value == null) return;
-
-            if (value is string)
-            {
-                il.Emit(OpCodes.Ldstr, (string)value);
-            }
-            else if (value is bool)
-            {
-                EmitLdc_I4(il, ((bool)value) ? 1 : 0);
-            }
-            else if (value is byte)
-            {
-                EmitLdc_I4(il, (int)(byte)value);
-            }
-            else if (value is char)
-            {
-                EmitLdc_I4(il, (int)(char)value);
-            }
-            else if (value is double)
-            {
-                il.Emit(OpCodes.Ldc_R8, (double)value);
-            }
-            else if (value is float)
-            {
-                il.Emit(OpCodes.Ldc_R4, (float)value);
-            }
-            else if (value is int)
-            {
-                il.Emit(OpCodes.Ldc_I4, (int)value);
-            }
-            else if (value is long)
-            {
-                il.Emit(OpCodes.Ldc_I8, (long)value);
-            }
-            else if (value is short)
-            {
-                EmitLdc_I4(il, (int)(short)value);
-            }
-            else if (value is Type)
-            {
-                // TODO:
-                throw new NotImplementedException("TODO:Not Implemented");
-            }
-            else if (value.GetType().GetTypeInfo().IsEnum)
-            {
-                throw new NotImplementedException("TODO:Not Implemented");
-            }
-            else if (value.GetType().GetTypeInfo().IsArray)
-            {
-                throw new NotImplementedException("TODO:Not Implemented");
-            }
-        }
-
         public static void EmitThrowNotimplemented(this ILGenerator il)
         {
             il.Emit(OpCodes.Newobj, typeof(System.NotImplementedException).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0));
@@ -372,6 +377,7 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Blt, loopBegin);
         }
     }
+
 }
 
 #endif
