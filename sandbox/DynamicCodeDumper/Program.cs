@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MessagePack.Formatters;
 using MessagePack.Internal;
 using MessagePack.Resolvers;
 using SharedData;
@@ -33,7 +34,7 @@ namespace DynamicCodeDumper
                 //DynamicObjectResolver.Instance.GetFormatter<SimlpeStringKeyData2>();
                 //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
                 //DynamicObjectResolver.Instance.GetFormatter<LongestString>();
-                var f = DynamicObjectResolver.Instance.GetFormatter<Callback2_2>();
+                var f = DynamicObjectResolver.Instance.GetFormatter<MyClass>();
                 //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
                 //DynamicObjectResolver.Instance.GetFormatter<Callback1>();
                 //DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
@@ -55,7 +56,7 @@ namespace DynamicCodeDumper
                 //DynamicContractlessObjectResolver.Instance.GetFormatter<EntityBase>();
 
                 byte[] b = null;
-                f.Serialize(ref b, 0, default(Callback2_2), null);
+                f.Serialize(ref b, 0, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, null);
 
             }
             catch (Exception ex)
@@ -93,6 +94,42 @@ namespace DynamicCodeDumper
                 var data = p.StandardOutput.ReadToEnd();
                 Console.WriteLine(data);
             }
+        }
+    }
+    [MessagePackObject]
+    public class MyClass
+    {
+        [Key(0)]
+        [MessagePackFormatter(typeof(Int_x10Formatter))]
+        public int MyProperty1 { get; set; }
+        [Key(1)]
+        [MessagePackFormatter(typeof(String_x2Formatter))]
+        public string MyProperty2 { get; set; }
+    }
+    public class Int_x10Formatter : IMessagePackFormatter<int>
+    {
+        public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            return MessagePackBinary.ReadInt32(bytes, offset, out readSize) * 10;
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+        {
+            return MessagePackBinary.WriteInt32(ref bytes, offset, value * 10);
+        }
+    }
+
+    public class String_x2Formatter : IMessagePackFormatter<string>
+    {
+        public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            var s = MessagePackBinary.ReadString(bytes, offset, out readSize);
+            return s + s;
+        }
+
+        public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
+        {
+            return MessagePackBinary.WriteString(ref bytes, offset, value + value);
         }
     }
 
