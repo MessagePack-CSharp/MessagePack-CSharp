@@ -98,11 +98,6 @@ namespace MessagePack.Formatters
     {
         public static readonly OldSpecStringFormatter Instance = new OldSpecStringFormatter();
 
-        OldSpecStringFormatter()
-        {
-
-        }
-
         // Old spec does not exists str 8 format.
         public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
         {
@@ -178,11 +173,6 @@ namespace MessagePack.Formatters
     public sealed class OldSpecBinaryFormatter : IMessagePackFormatter<byte[]>
     {
         public static readonly OldSpecBinaryFormatter Instance = new OldSpecBinaryFormatter();
-
-        OldSpecBinaryFormatter()
-        {
-
-        }
 
         public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
         {
