@@ -9,11 +9,6 @@ namespace MessagePack.Formatters
     {
         public static readonly NativeDateTimeFormatter Instance = new NativeDateTimeFormatter();
 
-        NativeDateTimeFormatter()
-        {
-
-        }
-
         public int Serialize(ref byte[] bytes, int offset, DateTime value, IFormatterResolver formatterResolver)
         {
             var dateData = value.ToBinary();
@@ -35,11 +30,6 @@ namespace MessagePack.Formatters
     public sealed class NativeDateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
     {
         public static readonly NativeDateTimeArrayFormatter Instance = new NativeDateTimeArrayFormatter();
-
-        NativeDateTimeArrayFormatter()
-        {
-
-        }
 
         public int Serialize(ref byte[] bytes, int offset, DateTime[] value, IFormatterResolver formatterResolver)
         {
