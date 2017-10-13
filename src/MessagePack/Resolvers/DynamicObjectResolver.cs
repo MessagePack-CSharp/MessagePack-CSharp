@@ -461,7 +461,7 @@ namespace MessagePack.Internal
                 }, 2);  // 0, 1 is parameter.
             }
 
-            if (serializationInfo.BestmatchConstructor != null)
+            if (serializationInfo.IsStruct || serializationInfo.BestmatchConstructor != null)
             {
                 deserialize = new DynamicMethod("Deserialize", type, new[] { typeof(object[]), typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() }, type, true);
 
@@ -482,7 +482,7 @@ namespace MessagePack.Internal
             }
 
             object serializeDelegate = serialize.CreateDelegate(typeof(AnonymousSerializeFunc<>).MakeGenericType(type));
-            object deserializeDelegate = (serializationInfo.BestmatchConstructor == null)
+            object deserializeDelegate = (deserialize == null)
                 ? (object)null
                 : (object)deserialize.CreateDelegate(typeof(AnonymousDeserializeFunc<>).MakeGenericType(type));
             var resultFormatter = Activator.CreateInstance(typeof(AnonymousSerializableFormatter<>).MakeGenericType(type),

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MessagePack.Resolvers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -128,6 +129,13 @@ namespace MessagePack.Tests
             }
         }
 
+        [MessagePackObject]
+        public struct EmptyConstructorStruct
+        {
+            [Key(0)]
+            public int X;
+        }
+
         [Fact]
         public void AllowPrivate()
         {
@@ -193,5 +201,11 @@ namespace MessagePack.Tests
             }
         }
 
+        [Fact]
+        public void Empty()
+        {
+            var x = MessagePackSerializer.Serialize(new EmptyConstructorStruct { X = 99 }, StandardResolverAllowPrivate.Instance);
+            MessagePackSerializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Instance);
+        }
     }
 }
