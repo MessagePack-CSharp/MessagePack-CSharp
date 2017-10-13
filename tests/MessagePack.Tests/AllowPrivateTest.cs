@@ -205,7 +205,7 @@ namespace MessagePack.Tests
         public void Empty()
         {
             var x = MessagePackSerializer.Serialize(new EmptyConstructorStruct { X = 99 }, StandardResolverAllowPrivate.Instance);
-            MessagePackSerializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Instance);
+            MessagePackSerializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Instance).X.Is(99);
         }
     }
 }
