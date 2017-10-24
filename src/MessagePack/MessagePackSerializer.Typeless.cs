@@ -32,6 +32,11 @@ namespace MessagePack
                 MessagePackSerializer.Serialize(stream, obj, defaultResolver);
             }
 
+            public static System.Threading.Tasks.Task SerializeAsync(Stream stream, object obj)
+            {
+                return MessagePackSerializer.SerializeAsync(stream, obj, defaultResolver);
+            }
+
             public static object Deserialize(byte[] bytes)
             {
                 return MessagePackSerializer.Deserialize<object>(bytes, defaultResolver);
@@ -45,6 +50,11 @@ namespace MessagePack
             public static object Deserialize(Stream stream, bool readStrict)
             {
                 return MessagePackSerializer.Deserialize<object>(stream, defaultResolver, readStrict);
+            }
+
+            public static System.Threading.Tasks.Task<object> DeserializeAsync(Stream stream)
+            {
+                return MessagePackSerializer.DeserializeAsync<object>(stream, defaultResolver);
             }
 
             class CompositeResolver : IFormatterResolver
