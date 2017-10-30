@@ -113,6 +113,7 @@
     <Compile Include="MessagePackFormatterPerField.cs" />
     <Compile Include="NewGuidFormatterTest.cs" />
     <Compile Include="NonGenericCollectionTest.cs" />
+    <Compile Include="ReadLargeStreamTest.cs" />
     <Compile Include="StreamStrictTest.cs" />
     <Compile Include="ThreadsafeHashtableTest.cs" />
     <Compile Include="TypelessContractlessStandardResolverTest.cs" />

@@ -2328,7 +2328,7 @@ namespace MessagePack
 
             var code = (byte)byteCode;
 
-            MessagePackBinary.EnsureCapacity(ref bytes, offset, 0);
+            MessagePackBinary.EnsureCapacity(ref bytes, offset, 1);
             bytes[offset] = code;
 
             var type = MessagePackCode.ToMessagePackType(code);
