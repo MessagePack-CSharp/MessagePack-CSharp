@@ -235,6 +235,8 @@ namespace MessagePack.Internal
                 return v;
             }
 
+#if NETSTANDARD
+
             public unsafe AutomataNode SearchNext(ref byte* p, ref int rest)
             {
                 var key = AutomataKeyGen.GetKey(ref p, ref rest);
@@ -262,7 +264,9 @@ namespace MessagePack.Internal
                 return null;
             }
 
-            public unsafe AutomataNode SearchNextSafe(byte[] p, ref int offset, ref int rest)
+#endif
+
+            public AutomataNode SearchNextSafe(byte[] p, ref int offset, ref int rest)
             {
                 var key = AutomataKeyGen.GetKeySafe(p, ref offset, ref rest);
                 if (count < 4)
@@ -453,6 +457,8 @@ namespace MessagePack.Internal
         public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKey", new[] { typeof(byte*).MakeByRefType(), typeof(int).MakeByRefType() });
         // public static readonly MethodInfo GetKeySafeMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKeySafe", new[] { typeof(byte[]), typeof(int).MakeByRefType(), typeof(int).MakeByRefType() });
 
+#if NETSTANDARD
+
         public static unsafe ulong GetKey(ref byte* p, ref int rest)
         {
             int readSize;
@@ -530,6 +536,8 @@ namespace MessagePack.Internal
                 return key;
             }
         }
+
+#endif
 
         public static ulong GetKeySafe(byte[] bytes, ref int offset, ref int rest)
         {
