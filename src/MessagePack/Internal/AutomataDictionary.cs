@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
-using System.Reflection.Emit;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Text;
 
 namespace MessagePack.Internal
 {
@@ -457,7 +457,7 @@ namespace MessagePack.Internal
         public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKey", new[] { typeof(byte*).MakeByRefType(), typeof(int).MakeByRefType() });
         // public static readonly MethodInfo GetKeySafeMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKeySafe", new[] { typeof(byte[]), typeof(int).MakeByRefType(), typeof(int).MakeByRefType() });
 
-#if NETSTANDARD
+        //#if NETSTANDARD
 
         public static unsafe ulong GetKey(ref byte* p, ref int rest)
         {
@@ -537,7 +537,7 @@ namespace MessagePack.Internal
             }
         }
 
-#endif
+        //#endif
 
         public static ulong GetKeySafe(byte[] bytes, ref int offset, ref int rest)
         {

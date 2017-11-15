@@ -1,16 +1,15 @@
 ﻿#if !UNITY_WSA
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using MessagePack.Formatters;
-using MessagePack.Internal;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Runtime.Serialization;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
+using MessagePack.Formatters;
+using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
@@ -1338,15 +1337,16 @@ typeof(int), typeof(int) });
                     if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
                     if (item.IsIndexer()) continue;
 
-                    var getMethod = item.GetGetMethod(true);
-                    var setMethod = item.GetSetMethod(true);
+                    var getMethod = item.GetGetMethodEx(type);
+                    var setMethod = item.GetSetMethodEx(type);
 
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,
                         IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
                         IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
-                        StringKey = item.Name
+                        StringKey = item.Name,
+                        ObjectType = type
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
                     member.IntKey = hiddenIntKey++;
@@ -1371,7 +1371,8 @@ typeof(int), typeof(int) });
                         FieldInfo = item,
                         IsReadable = allowPrivate || item.IsPublic,
                         IsWritable = allowPrivate || (item.IsPublic && !item.IsInitOnly),
-                        StringKey = item.Name
+                        StringKey = item.Name,
+                        ObjectType = type
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
                     member.IntKey = hiddenIntKey++;
@@ -1405,6 +1406,7 @@ typeof(int), typeof(int) });
                         PropertyInfo = item,
                         IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
                         IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
+                        ObjectType = type,
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
@@ -1486,6 +1488,7 @@ typeof(int), typeof(int) });
                         FieldInfo = item,
                         IsReadable = allowPrivate || item.IsPublic,
                         IsWritable = allowPrivate || (item.IsPublic && !item.IsInitOnly),
+                        ObjectType = type
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
@@ -1719,6 +1722,7 @@ typeof(int), typeof(int) });
             public Type Type { get { return IsField ? FieldInfo.FieldType : PropertyInfo.PropertyType; } }
             public FieldInfo FieldInfo { get; set; }
             public PropertyInfo PropertyInfo { get; set; }
+            public Type ObjectType { get; set; }
 
             public string Name
             {
@@ -1753,7 +1757,7 @@ typeof(int), typeof(int) });
             {
                 if (IsProperty)
                 {
-                    il.EmitCall(PropertyInfo.GetGetMethod(true));
+                    il.EmitCall(PropertyInfo.GetGetMethodEx(ObjectType));
                 }
                 else
                 {
@@ -1765,7 +1769,7 @@ typeof(int), typeof(int) });
             {
                 if (IsProperty)
                 {
-                    il.EmitCall(PropertyInfo.GetSetMethod(true));
+                    il.EmitCall(PropertyInfo.GetSetMethodEx(ObjectType));
                 }
                 else
                 {

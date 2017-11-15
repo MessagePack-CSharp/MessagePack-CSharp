@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.IO;
-using Xunit;
+using System.Linq;
 using System.Text;
+using Xunit;
 
 namespace MessagePack.Tests
 {

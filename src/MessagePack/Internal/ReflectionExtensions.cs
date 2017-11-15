@@ -1,10 +1,8 @@
 ﻿#if !UNITY_WSA
 
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace MessagePack.Internal
 {
@@ -33,24 +31,32 @@ namespace MessagePack.Internal
             return propertyInfo.GetIndexParameters().Length > 0;
         }
 
-#if NETSTANDARD
+        // #if NETSTANDARD
 
         public static bool IsConstructedGenericType(this System.Reflection.TypeInfo type)
         {
             return type.AsType().IsConstructedGenericType;
         }
 
-        public static MethodInfo GetGetMethod(this PropertyInfo propInfo)
+        public static MethodInfo GetGetMethodEx(this PropertyInfo propInfo, Type targetType)
         {
             return propInfo.GetMethod;
         }
 
-        public static MethodInfo GetSetMethod(this PropertyInfo propInfo)
+        public static MethodInfo GetSetMethodEx(this PropertyInfo propInfo, Type targetType)
         {
-            return propInfo.SetMethod;
+            if (propInfo.CanWrite)
+            {
+                return propInfo.SetMethod;
+            }
+            else
+            {
+                var declaringProp = propInfo.DeclaringType.GetProperty(propInfo.Name, propInfo.PropertyType);
+                return declaringProp.GetSetMethod(true);
+            }
         }
 
-#endif
+        //#endif
     }
 }
 
