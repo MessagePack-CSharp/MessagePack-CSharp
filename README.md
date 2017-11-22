@@ -498,7 +498,7 @@ Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core 
 
 Before creating this library, I implemented a fast fast serializer with [ZeroFormatter#Performance](https://github.com/neuecc/ZeroFormatter#performance). And this is a further evolved implementation. MessagePack for C# is always fast, optimized for all types(primitive, small struct, large object, any collections).
 
-Deserialize Perfomrance per options
+Deserialize Performance per options
 ---
 Performance varies depending on options. This is a micro benchamark with [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet). Target object has 9 members(`MyProperty1` ~ `MyProperty9`), value are zero.
 
