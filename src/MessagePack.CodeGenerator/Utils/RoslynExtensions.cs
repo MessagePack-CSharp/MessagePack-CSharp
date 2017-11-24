@@ -53,13 +53,21 @@ namespace MessagePack.CodeGenerator
                 }
             }
 
+            EnvironmentHelper.Setup();
+
             var workspace = MSBuildWorkspace.Create();
+            workspace.WorkspaceFailed += WorkSpaceFailed;
             var project = await workspace.OpenProjectAsync(csprojPath).ConfigureAwait(false);
             project = project.AddMetadataReferences(externalReferences); // workaround:)
             project = project.WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols));
 
             var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
             return compilation;
+        }
+
+        private static void WorkSpaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
+        {
+            Console.WriteLine(e);
         }
 
         public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
