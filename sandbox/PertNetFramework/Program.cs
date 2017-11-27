@@ -1,13 +1,18 @@
-﻿using System;
+﻿using MessagePack;
+using System.Linq;
+using MessagePack.Formatters;
+using MessagePack.Resolvers;
+using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
-using ProtoBuf;
 using ZeroFormatter;
-using MessagePack;
+using System.Collections.Generic;
+using MessagePack.Internal;
+using ProtoBuf;
+using System.Collections;
+using Newtonsoft.Json;
+using System.Text;
+using System.IO.Compression;
 
 namespace PerfnetFramework
 {
@@ -60,8 +65,8 @@ namespace PerfnetFramework
                 Sex = Sex.Male,
             };
 
-            var rand = new Random(1000);
-            Person[] l = Enumerable.Range(1, 1000)
+            var rand = new Random(100);
+            Person[] l = Enumerable.Range(1, 100)
                 .Select(x => new Person
                 {
                     Age = x,
@@ -78,7 +83,7 @@ namespace PerfnetFramework
 
         static void Benchmark<T>(T target)
         {
-            const int Iteration = 10000; // 10000
+            const int Iteration = 1000000; // 10000
 
             var jsonSerializer = new JsonSerializer();
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
@@ -285,9 +290,9 @@ namespace PerfnetFramework
             label = "MessagePack-CSharp"; Console.WriteLine($"{label,20}   {data0.Length} Byte");
             label = "MessagePack(LZ4)"; Console.WriteLine($"{label,20}   {data3.Length} Byte");
             label = "ZeroFormatter"; Console.WriteLine($"{label,20}   {data1.Length} Byte");
+            label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
             label = "JsonNet"; Console.WriteLine($"{label,20}   {dataJson.Length} Byte");
             label = "JsonNet+GZip"; Console.WriteLine($"{label,20}   {dataGzipJson.Length} Byte");
-            label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
 
             Console.WriteLine();
             Console.WriteLine();
