@@ -1,13 +1,19 @@
 ﻿
-using MessagePack.Formatters;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using MessagePack.Formatters;
 
 namespace MessagePack
 {
     public interface IFormatterResolver
     {
         IMessagePackFormatter<T> GetFormatter<T>();
+    }
+
+    public interface IFormatterResolverWithValueSkip : IFormatterResolver
+    {
+        IMessagePackFormatter<T> GetFormatter<T>(IEnumerable<string> propertySkip);
     }
 
     public static class FormatterResolverExtensions

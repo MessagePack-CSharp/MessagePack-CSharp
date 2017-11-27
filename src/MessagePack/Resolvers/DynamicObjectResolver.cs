@@ -1,6 +1,7 @@
 ﻿#if !UNITY_WSA
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -16,7 +17,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// ObjectResolver by dynamic code generation.
     /// </summary>
-    public sealed class DynamicObjectResolver : IFormatterResolver
+    public sealed class DynamicObjectResolver : IFormatterResolverWithValueSkip
     {
         public static readonly DynamicObjectResolver Instance = new DynamicObjectResolver();
 
@@ -43,20 +44,42 @@ namespace MessagePack.Resolvers
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.DefaultMessagePackFormatter;
         }
 
-        static class FormatterCache<T>
+        public IMessagePackFormatter<T> GetFormatter<T>(IEnumerable<string> fieldPropertyValueSkipMap)
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            return FormatterCache<T>.GetMessagePackFormatter(fieldPropertyValueSkipMap);
+        }
+
+        private static class FormatterCache<T>
+        {
+            public static readonly IMessagePackFormatter<T> DefaultMessagePackFormatter;
+
+            private static readonly ConcurrentDictionary<long, IMessagePackFormatter<T>> formatters = new ConcurrentDictionary<long, IMessagePackFormatter<T>>();
 
             static FormatterCache()
+            {
+                DefaultMessagePackFormatter = BuildMessagePackFormatter(Enumerable.Empty<string>());
+            }
+
+            public static IMessagePackFormatter<T> GetMessagePackFormatter(IEnumerable<string> fieldPropertyValueSkipMap)
+            {
+                if (fieldPropertyValueSkipMap == null || fieldPropertyValueSkipMap.Count() == 0)
+                {
+                    return DefaultMessagePackFormatter;
+                }
+
+                return formatters.GetOrAdd(fieldPropertyValueSkipMap.GetHashcode<T>(), BuildMessagePackFormatter(fieldPropertyValueSkipMap));
+            }
+
+            private static IMessagePackFormatter<T> BuildMessagePackFormatter(IEnumerable<string> fieldPropertyValueSkipMap)
             {
                 var ti = typeof(T).GetTypeInfo();
 
                 if (ti.IsInterface)
                 {
-                    return;
+                    return null;
                 }
 
                 if (ti.IsNullable())
@@ -66,22 +89,21 @@ namespace MessagePack.Resolvers
                     var innerFormatter = DynamicObjectResolver.Instance.GetFormatterDynamic(ti.AsType());
                     if (innerFormatter == null)
                     {
-                        return;
+                        return null;
                     }
-                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
-                    return;
+
+                    return (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
                 }
 
                 if (ti.IsAnonymous())
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
-                    return;
+                    return (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false, fieldPropertyValueSkipMap);
                 }
 
-                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), false, false);
-                if (formatterTypeInfo == null) return;
+                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), false, false, fieldPropertyValueSkipMap);
+                if (formatterTypeInfo == null) return null;
 
-                formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
+                return (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
             }
         }
     }
@@ -89,7 +111,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// ObjectResolver by dynamic code generation, allow private member.
     /// </summary>
-    public sealed class DynamicObjectResolverAllowPrivate : IFormatterResolver
+    public sealed class DynamicObjectResolverAllowPrivate : IFormatterResolverWithValueSkip
     {
         public static readonly DynamicObjectResolverAllowPrivate Instance = new DynamicObjectResolverAllowPrivate();
 
@@ -100,20 +122,42 @@ namespace MessagePack.Resolvers
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.DefaultMessagePackFormatter;
         }
 
-        static class FormatterCache<T>
+        public IMessagePackFormatter<T> GetFormatter<T>(IEnumerable<string> fieldPropertyValueSkipMap)
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            return FormatterCache<T>.GetMessagePackFormatter(fieldPropertyValueSkipMap);
+        }
+
+        private static class FormatterCache<T>
+        {
+            public static readonly IMessagePackFormatter<T> DefaultMessagePackFormatter;
+
+            private static readonly ConcurrentDictionary<long, IMessagePackFormatter<T>> formatters = new ConcurrentDictionary<long, IMessagePackFormatter<T>>();
 
             static FormatterCache()
+            {
+                DefaultMessagePackFormatter = BuildMessagePackFormatter(Enumerable.Empty<string>());
+            }
+
+            public static IMessagePackFormatter<T> GetMessagePackFormatter(IEnumerable<string> fieldPropertyValueSkipMap)
+            {
+                if (fieldPropertyValueSkipMap == null || fieldPropertyValueSkipMap.Count() == 0)
+                {
+                    return DefaultMessagePackFormatter;
+                }
+
+                return formatters.GetOrAdd(fieldPropertyValueSkipMap.GetHashcode<T>(), BuildMessagePackFormatter(fieldPropertyValueSkipMap));
+            }
+
+            private static IMessagePackFormatter<T> BuildMessagePackFormatter(IEnumerable<string> fieldPropertyValueSkipMap)
             {
                 var ti = typeof(T).GetTypeInfo();
 
                 if (ti.IsInterface)
                 {
-                    return;
+                    return null;
                 }
 
                 if (ti.IsNullable())
@@ -123,19 +167,18 @@ namespace MessagePack.Resolvers
                     var innerFormatter = DynamicObjectResolverAllowPrivate.Instance.GetFormatterDynamic(ti.AsType());
                     if (innerFormatter == null)
                     {
-                        return;
+                        return null;
                     }
-                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
-                    return;
+                    return (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
                 }
 
                 if (ti.IsAnonymous())
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
+                    return (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false, fieldPropertyValueSkipMap);
                 }
                 else
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), false, false, true);
+                    return (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), false, false, true, fieldPropertyValueSkipMap);
                 }
             }
         }
@@ -144,7 +187,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// ObjectResolver by dynamic code generation, no needs MessagePackObject attribute and serialized key as string.
     /// </summary>
-    public sealed class DynamicContractlessObjectResolver : IFormatterResolver
+    public sealed class DynamicContractlessObjectResolver : IFormatterResolverWithValueSkip
     {
         public static readonly DynamicContractlessObjectResolver Instance = new DynamicContractlessObjectResolver();
 
@@ -171,25 +214,47 @@ namespace MessagePack.Resolvers
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.DefaultMessagePackFormatter;
+        }
+
+        public IMessagePackFormatter<T> GetFormatter<T>(IEnumerable<string> fieldPropertyValueSkipMap)
+        {
+            return FormatterCache<T>.GetMessagePackFormatter(fieldPropertyValueSkipMap);
         }
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> DefaultMessagePackFormatter;
+
+            private static readonly ConcurrentDictionary<long, IMessagePackFormatter<T>> formatters = new ConcurrentDictionary<long, IMessagePackFormatter<T>>();
 
             static FormatterCache()
             {
+                DefaultMessagePackFormatter = BuildMessagePackFormatter(Enumerable.Empty<string>());
+            }
+
+            public static IMessagePackFormatter<T> GetMessagePackFormatter(IEnumerable<string> fieldPropertyValueSkipMap)
+            {
+                if (fieldPropertyValueSkipMap == null || fieldPropertyValueSkipMap.Count() == 0)
+                {
+                    return DefaultMessagePackFormatter;
+                }
+
+                return formatters.GetOrAdd(fieldPropertyValueSkipMap.GetHashcode<T>(), BuildMessagePackFormatter(fieldPropertyValueSkipMap));
+            }
+
+            private static IMessagePackFormatter<T> BuildMessagePackFormatter(IEnumerable<string> fieldPropertyValueSkipMap)
+            {
                 if (typeof(T) == typeof(object))
                 {
-                    return;
+                    return null;
                 }
 
                 var ti = typeof(T).GetTypeInfo();
 
                 if (ti.IsInterface)
                 {
-                    return;
+                    return null;
                 }
 
                 if (ti.IsNullable())
@@ -199,22 +264,21 @@ namespace MessagePack.Resolvers
                     var innerFormatter = DynamicContractlessObjectResolver.Instance.GetFormatterDynamic(ti.AsType());
                     if (innerFormatter == null)
                     {
-                        return;
+                        return null;
                     }
-                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
-                    return;
+
+                    return (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
                 }
 
                 if (ti.IsAnonymous())
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
-                    return;
+                    return (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false, fieldPropertyValueSkipMap);
                 }
 
-                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), true, true);
-                if (formatterTypeInfo == null) return;
+                var formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(assembly, typeof(T), true, true, fieldPropertyValueSkipMap);
+                if (formatterTypeInfo == null) return null;
 
-                formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
+                return (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
             }
         }
     }
@@ -222,31 +286,53 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// ObjectResolver by dynamic code generation, no needs MessagePackObject attribute and serialized key as string, allow private member.
     /// </summary>
-    public sealed class DynamicContractlessObjectResolverAllowPrivate : IFormatterResolver
+    public sealed class DynamicContractlessObjectResolverAllowPrivate : IFormatterResolverWithValueSkip
     {
         public static readonly DynamicContractlessObjectResolverAllowPrivate Instance = new DynamicContractlessObjectResolverAllowPrivate();
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.DefaultMessagePackFormatter;
         }
 
-        static class FormatterCache<T>
+        public IMessagePackFormatter<T> GetFormatter<T>(IEnumerable<string> fieldPropertyValueSkipMap)
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            return FormatterCache<T>.GetMessagePackFormatter(fieldPropertyValueSkipMap);
+        }
+
+        private static class FormatterCache<T>
+        {
+            public static readonly IMessagePackFormatter<T> DefaultMessagePackFormatter;
+
+            private static readonly ConcurrentDictionary<long, IMessagePackFormatter<T>> formatters = new ConcurrentDictionary<long, IMessagePackFormatter<T>>();
 
             static FormatterCache()
             {
+                DefaultMessagePackFormatter = BuildMessagePackFormatter(Enumerable.Empty<string>());
+            }
+
+            public static IMessagePackFormatter<T> GetMessagePackFormatter(IEnumerable<string> fieldPropertyValueSkipMap)
+            {
+                if (fieldPropertyValueSkipMap == null || fieldPropertyValueSkipMap.Count() == 0)
+                {
+                    return DefaultMessagePackFormatter;
+                }
+
+                return formatters.GetOrAdd(fieldPropertyValueSkipMap.GetHashcode<T>(), BuildMessagePackFormatter(fieldPropertyValueSkipMap));
+            }
+
+            private static IMessagePackFormatter<T> BuildMessagePackFormatter(IEnumerable<string> fieldPropertyValueSkipMap)
+            {
                 if (typeof(T) == typeof(object))
                 {
-                    return;
+                    return null;
                 }
 
                 var ti = typeof(T).GetTypeInfo();
 
                 if (ti.IsInterface)
                 {
-                    return;
+                    return null;
                 }
 
                 if (ti.IsNullable())
@@ -256,20 +342,37 @@ namespace MessagePack.Resolvers
                     var innerFormatter = DynamicContractlessObjectResolverAllowPrivate.Instance.GetFormatterDynamic(ti.AsType());
                     if (innerFormatter == null)
                     {
-                        return;
+                        return null;
                     }
-                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
-                    return;
+
+                    return (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
                 }
 
                 if (ti.IsAnonymous())
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
+                    return (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false, fieldPropertyValueSkipMap);
                 }
                 else
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, true);
+                    return (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, true, fieldPropertyValueSkipMap);
                 }
+            }
+        }
+    }
+
+    internal static class HashcodeBuilder
+    {
+        public static long GetHashcode<T>(this IEnumerable<string> values)
+        {
+            unchecked
+            {
+                var result = typeof(T).FullName.ToLowerInvariant().GetHashCode();
+                foreach (var value in values)
+                {
+                    result = (result * 397) ^ value.ToLowerInvariant().GetHashCode();
+                }
+
+                return result;
             }
         }
     }
@@ -311,7 +414,7 @@ namespace MessagePack.Internal
             {typeof(MessagePack.Nil)},
         };
 
-        public static TypeInfo BuildType(DynamicAssembly assembly, Type type, bool forceStringKey, bool contractless)
+        public static TypeInfo BuildType(DynamicAssembly assembly, Type type, bool forceStringKey, bool contractless, IEnumerable<string> fieldPropertyValueSkipMap)
         {
             if (ignoreTypes.Contains(type)) return null;
 
@@ -323,6 +426,9 @@ namespace MessagePack.Internal
 
             FieldBuilder stringByteKeysField = null;
             Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> customFormatterLookup = null;
+
+            IEnumerable<string> skipFieldsProperties = fieldPropertyValueSkipMap != null && fieldPropertyValueSkipMap.Count() > 0 ? fieldPropertyValueSkipMap : null;
+            serializationInfo.Members = skipFieldsProperties == null ? serializationInfo.Members : serializationInfo.Members.Where(row => !skipFieldsProperties.Contains(row.Name, StringComparer.Ordinal)).ToArray();
 
             // string key needs string->int mapper for deserialize switch statement
             if (serializationInfo.IsStringKey)
@@ -390,7 +496,7 @@ namespace MessagePack.Internal
             return typeBuilder.CreateTypeInfo();
         }
 
-        public static object BuildFormatterToDynamicMethod(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        public static object BuildFormatterToDynamicMethod(Type type, bool forceStringKey, bool contractless, bool allowPrivate, IEnumerable<string> fieldPropertyValueSkipMap)
         {
             var serializationInfo = ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, allowPrivate);
             if (serializationInfo == null) return null;
@@ -404,6 +510,8 @@ namespace MessagePack.Internal
             List<object> serializeCustomFormatters = new List<object>();
             List<object> deserializeCustomFormatters = new List<object>();
 
+            IEnumerable<string> skipFieldsProperties = fieldPropertyValueSkipMap != null && fieldPropertyValueSkipMap.Count() > 0 ? fieldPropertyValueSkipMap : null;
+            serializationInfo.Members = skipFieldsProperties == null ? serializationInfo.Members : serializationInfo.Members.Where(row => !skipFieldsProperties.Contains(row.Name, StringComparer.Ordinal)).ToArray();
             if (serializationInfo.IsStringKey)
             {
                 var i = 0;
