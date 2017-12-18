@@ -75,14 +75,9 @@ namespace MessagePack.Formatters
             typeof(Double?),
         };
 
-        public Func<string, Type> BindToType { get; set; }
+        public static Func<string, Type> BindToType { get; set; }
 
-        public TypelessFormatter()
-        {
-            BindToType = DefaultBindToType;
-        }
-
-        Type DefaultBindToType(string typeName)
+        static Type DefaultBindToType(string typeName)
         {
             return Type.GetType(typeName, false);
         }
@@ -111,6 +106,8 @@ namespace MessagePack.Formatters
                 p5 = 0;
                 return new object();
             }));
+
+            BindToType = DefaultBindToType;
         }
 
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
