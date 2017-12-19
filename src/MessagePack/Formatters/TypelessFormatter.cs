@@ -75,6 +75,13 @@ namespace MessagePack.Formatters
             typeof(Double?),
         };
 
+        public static Func<string, Type> BindToType { get; set; }
+
+        static Type DefaultBindToType(string typeName)
+        {
+            return Type.GetType(typeName, false);
+        }
+
         // mscorlib or System.Private.CoreLib
         static bool isMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
 
@@ -99,6 +106,8 @@ namespace MessagePack.Formatters
                 p5 = 0;
                 return new object();
             }));
+
+            BindToType = DefaultBindToType;
         }
 
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
@@ -251,7 +260,7 @@ namespace MessagePack.Formatters
                 var buffer = new byte[typeName.Count];
                 Buffer.BlockCopy(typeName.Array, typeName.Offset, buffer, 0, buffer.Length);
                 var str = StringEncoding.UTF8.GetString(buffer);
-                type = Type.GetType(str, false);
+                type = BindToType(str);
                 if (type == null)
                 {
                     if (isMscorlib && str.Contains("System.Private.CoreLib"))
@@ -318,6 +327,7 @@ namespace MessagePack.Formatters
             return formatterAndDelegate.Value(formatterAndDelegate.Key, bytes, offset, formatterResolver, out readSize);
         }
     }
+
 }
 
 #endif
