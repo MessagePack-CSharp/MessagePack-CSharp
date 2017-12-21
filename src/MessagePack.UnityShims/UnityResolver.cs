@@ -48,6 +48,31 @@ namespace MessagePack.Unity
             {typeof(Color?),new StaticNullableFormatter<Color>(new ColorFormatter())},
             {typeof(Bounds?),new StaticNullableFormatter<Bounds>(new BoundsFormatter())},
             {typeof(Rect?),new StaticNullableFormatter<Rect>(new RectFormatter())},
+            
+            //// TODO:
+
+            //// new
+            //{typeof(global::UnityEngine.Keyframe[]), 0 },
+            //{typeof(global::UnityEngine.GradientColorKey[]), 1 },
+            //{typeof(global::UnityEngine.GradientAlphaKey[]), 2 },
+            //{typeof(global::UnityEngine.WrapMode), 3 },
+            //{typeof(global::UnityEngine.GradientMode), 4 },
+            //{typeof(global::UnityEngine.Keyframe), 5 },
+            //{typeof(global::UnityEngine.AnimationCurve), 6 },
+            //{typeof(global::UnityEngine.Matrix4x4), 7 },
+            //{typeof(global::UnityEngine.GradientColorKey), 8 },
+            //{typeof(global::UnityEngine.GradientAlphaKey), 9 },
+            //{typeof(global::UnityEngine.Gradient), 10 },
+            //{typeof(global::UnityEngine.Color32), 11 },
+            //{typeof(global::UnityEngine.RectOffset), 12 },
+            //{typeof(global::UnityEngine.LayerMask), 13 },
+
+            //// Unity 2017.2
+            //{typeof(global::UnityEngine.Vector2Int), 14 },
+            //{typeof(global::UnityEngine.Vector3Int), 15 },
+            //{typeof(global::UnityEngine.RangeInt), 16 },
+            //{typeof(global::UnityEngine.RectInt), 17 },
+            //{typeof(global::UnityEngine.BoundsInt), 18 },
         };
 
         internal static object GetFormatter(Type t)
