@@ -23,6 +23,13 @@
                 <dependency id="System.ValueTuple" version="4.3.0" />
                 <dependency id="System.Threading.Tasks.Extensions" version="4.3.0" />
             </group>
+            <group targetFramework=".NETStandard1.6">
+                <dependency id="System.Reflection.Emit" version="4.3.0" />
+                <dependency id="System.Reflection.Emit.Lightweight" version="4.3.0" />
+                <dependency id="System.ValueTuple" version="4.3.0" />
+                <dependency id="System.Threading.Tasks.Extensions" version="4.3.0" />
+                <dependency id="System.Runtime.Serialization.Primitives" version="4.3.0" />
+            </group>
             <group targetFramework=".NETStandard2.0">
                 <dependency id="System.Reflection.Emit" version="4.3.0" />
                 <dependency id="System.Reflection.Emit.Lightweight" version="4.3.0" />
@@ -39,5 +46,7 @@
         <file src="..\src\MessagePack\bin\Release\netstandard2.0\MessagePack.xml" target="lib\net47" />
         <file src="..\src\MessagePack\bin\Release\netstandard2.0\MessagePack.dll" target="lib\netstandard2.0" />
         <file src="..\src\MessagePack\bin\Release\netstandard2.0\MessagePack.xml" target="lib\netstandard2.0" />
+        <file src="..\src\MessagePack\bin\Release\netstandard1.6\MessagePack.dll" target="lib\netstandard1.6" />
+        <file src="..\src\MessagePack\bin\Release\netstandard2.0\MessagePack.xml" target="lib\netstandard1.6" />
     </files>
 </package>

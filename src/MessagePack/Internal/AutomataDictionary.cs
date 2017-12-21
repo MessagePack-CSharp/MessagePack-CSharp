@@ -485,9 +485,9 @@ namespace MessagePack.Internal
 
                         var il = dm.GetILGenerator();
 
-                        var readSize = il.DeclareLocal(typeof(int));
-                        var key = il.DeclareLocal(typeof(ulong));
-                        var _local = il.DeclareLocal(typeof(int));
+                        il.DeclareLocal(typeof(int)); // var readSize
+                        il.DeclareLocal(typeof(ulong)); // var key = 
+                        il.DeclareLocal(typeof(int)); // var _local = 
 
                         var elseLabel = il.DefineLabel();
                         var endLabel = il.DefineLabel();
