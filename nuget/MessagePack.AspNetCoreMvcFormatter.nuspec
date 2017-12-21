@@ -9,7 +9,6 @@
         <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>ASP.NET Core MVC Input/Output MessagePack formatter.</description>
-        <releaseNotes>Support .NETStandard 2.0.</releaseNotes>
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, aspnetcore, aspnetcoremvc</tags>
         <dependencies>
             <group targetFramework=".NETStandard1.6">

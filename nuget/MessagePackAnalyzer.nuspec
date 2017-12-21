@@ -9,7 +9,6 @@
     <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Analyzer of MessagePack for C#, verify rule for [MessagePackObject] and code fix for [Key].</description>
-    <releaseNotes>Supports System.Runtime.Serialization.IgnoreDataMemberAttribtue.</releaseNotes>
     <tags>MsgPack, MessagePack, Serialization, Formatter, Analyzer</tags>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework="" />

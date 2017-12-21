@@ -9,7 +9,6 @@
         <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for System.Collections.Immutable.</description>
-        <releaseNotes>Support .NETStandard 2.0.</releaseNotes>
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer</tags>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
