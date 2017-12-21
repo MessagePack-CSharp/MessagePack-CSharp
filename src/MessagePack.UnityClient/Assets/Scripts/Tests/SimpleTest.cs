@@ -99,20 +99,41 @@ namespace MessagePack.UnityClient.Tests
     }
 
 
+    [Serializable]
+    public class Wrap
+    {
+        public List<MyKeyValuePair> Value;
+    }
+
+    [Serializable]
+    public class MyKeyValuePair
+    {
+        public string Key;
+        public int Value;
+    }
+
     public class SimpleTest
     {
-        public void Hello()
+        public void TestJsonSerialize()
         {
+            var json = JsonUtility.ToJson(new List<MyKeyValuePair> { new MyKeyValuePair { Key = "foo", Value = 10 } });
+            UnityEngine.Debug.Log(json); // 空
+
+            // ルートはオブジェクトにする入れる。
+            var json2 = JsonUtility.ToJson(new Wrap { Value = new List<MyKeyValuePair> { new MyKeyValuePair { Key = "foo", Value = 10 } } });
+            UnityEngine.Debug.Log(json2); // OK.
+
+
             //try
             //{
 
-            var so = new NonSerializableObject(1, "hoge", 1.342f, true);
+            // var so = new NonSerializableObject(1, "hoge", 1.342f, true);
 
-            var bin = MessagePackSerializer.Serialize(so);
+            //var bin = MessagePackSerializer.Serialize(so);
 
-            var s = MessagePackSerializer.ToJson(bin);
+            //var s = MessagePackSerializer.ToJson(bin);
 
-            UnityEngine.Debug.Log(s);
+            //UnityEngine.Debug.Log(s);
 
             //TestObject to = TestObject.TestBuild();
 

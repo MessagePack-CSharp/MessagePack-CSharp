@@ -19,6 +19,9 @@ namespace DynamicCodeDumper
         {
             try
             {
+                // var mi = AutomataKeyGen.GetGetKeyMethod();
+                // mi.Invoke(null, new[] { 
+
                 //DynamicObjectResolver.Instance.GetFormatter<ArrayOptimizeClass>();
                 //DynamicObjectResolver.Instance.GetFormatter<Empty1>();
                 //DynamicObjectResolver.Instance.GetFormatter<Empty2>();
@@ -69,8 +72,9 @@ namespace DynamicCodeDumper
                 var a2 = DynamicUnionResolver.Instance.Save();
                 var a3 = DynamicEnumResolver.Instance.Save();
                 var a4 = DynamicContractlessObjectResolver.Instance.Save();
+                //var a5 = AutomataKeyGen.Save();
 
-                Verify(a1);
+                //Verify(a5);
             }
             //Verify(a1, a2, a3, a4);
         }
@@ -312,98 +316,98 @@ namespace DynamicCodeDumper
         }
     }
 
-    public class SimulateDup : MessagePack.Formatters.IMessagePackFormatter<Dup>
-    {
-        public unsafe Dup Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
-        {
-            if (MessagePackBinary.IsNil(bytes, offset))
-            {
-                readSize = 1;
-                return null;
-            }
+    //public class SimulateDup : MessagePack.Formatters.IMessagePackFormatter<Dup>
+    //{
+    //    public unsafe Dup Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+    //    {
+    //        if (MessagePackBinary.IsNil(bytes, offset))
+    //        {
+    //            readSize = 1;
+    //            return null;
+    //        }
 
-            var startOffset = offset;
+    //        var startOffset = offset;
 
-            var len = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-            offset += readSize;
+    //        var len = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+    //        offset += readSize;
 
 
-            int aBCDEFGH = 0;
-            int aBCDEFGHIJKL = 0;
-            int aBCDEFGHIJKO = 0;
+    //        int aBCDEFGH = 0;
+    //        int aBCDEFGHIJKL = 0;
+    //        int aBCDEFGHIJKO = 0;
 
-            // ---isStringKey
+    //        // ---isStringKey
 
-            ulong key;
-            ArraySegment<byte> arraySegment;
-            byte* p;
-            int rest;
+    //        ulong key;
+    //        ArraySegment<byte> arraySegment;
+    //        byte* p;
+    //        int rest;
 
-            fixed (byte* buffer = &bytes[0])
-            {
-                for (int i = 0; i < len; i++)
-                {
-                    arraySegment = MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
-                    offset += readSize;
+    //        fixed (byte* buffer = &bytes[0])
+    //        {
+    //            for (int i = 0; i < len; i++)
+    //            {
+    //                arraySegment = MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+    //                offset += readSize;
 
-                    p = buffer + arraySegment.Offset;
-                    rest = arraySegment.Count;
+    //                p = buffer + arraySegment.Offset;
+    //                rest = arraySegment.Count;
 
-                    if (rest == 0) goto LOOP_END;
+    //                if (rest == 0) goto LOOP_END;
 
-                    key = AutomataKeyGen.GetKey(ref p, ref rest);
-                    if (rest == 0)
-                    {
-                        if (key == 5208208757389214273L)
-                        {
-                            aBCDEFGH = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                            goto LOOP_END;
-                        }
+    //                key = AutomataKeyGen.GetKey(ref p, ref rest);
+    //                if (rest == 0)
+    //                {
+    //                    if (key == 5208208757389214273L)
+    //                    {
+    //                        aBCDEFGH = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+    //                        goto LOOP_END;
+    //                    }
 
-                        goto READ_NEXT;
-                    }
+    //                    goto READ_NEXT;
+    //                }
 
-                    if (key == 5208208757389214273L)
-                    {
-                        key = AutomataKeyGen.GetKey(ref p, ref rest);
-                        if (rest == 0)
-                        {
-                            if (key == 1280002633L)
-                            {
-                                aBCDEFGHIJKL = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                                goto LOOP_END;
-                            }
+    //                if (key == 5208208757389214273L)
+    //                {
+    //                    key = AutomataKeyGen.GetKey(ref p, ref rest);
+    //                    if (rest == 0)
+    //                    {
+    //                        if (key == 1280002633L)
+    //                        {
+    //                            aBCDEFGHIJKL = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+    //                            goto LOOP_END;
+    //                        }
 
-                            if (key == 1330334281L)
-                            {
-                                aBCDEFGHIJKO = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                                goto LOOP_END;
-                            }
-                        }
-                    }
+    //                        if (key == 1330334281L)
+    //                        {
+    //                            aBCDEFGHIJKO = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+    //                            goto LOOP_END;
+    //                        }
+    //                    }
+    //                }
 
-                    READ_NEXT:
-                    readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
+    //                READ_NEXT:
+    //                readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
 
-                    LOOP_END:
-                    offset += readSize;
-                    continue;
-                }
-            }
+    //                LOOP_END:
+    //                offset += readSize;
+    //                continue;
+    //            }
+    //        }
 
-            // --- end
+    //        // --- end
 
-            return new Dup
-            {
-                ABCDEFGH = aBCDEFGH,
-                ABCDEFGHIJKL = aBCDEFGHIJKL,
-                ABCDEFGHIJKO = aBCDEFGHIJKO
-            };
-        }
+    //        return new Dup
+    //        {
+    //            ABCDEFGH = aBCDEFGH,
+    //            ABCDEFGHIJKL = aBCDEFGHIJKL,
+    //            ABCDEFGHIJKO = aBCDEFGHIJKO
+    //        };
+    //    }
 
-        public int Serialize(ref byte[] bytes, int offset, Dup value, IFormatterResolver formatterResolver)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    //    public int Serialize(ref byte[] bytes, int offset, Dup value, IFormatterResolver formatterResolver)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+    //}
 }

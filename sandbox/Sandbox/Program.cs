@@ -286,38 +286,90 @@ namespace Sandbox
         public MethodBase MyProperty { get; set; }
     }
 
+    [MessagePackObject]
+    public class Callback1 : IMessagePackSerializationCallbackReceiver
+    {
+        [Key(0)]
+        public int X { get; set; }
+        [IgnoreMember]
+        public bool CalledBefore { get; private set; }
+        [IgnoreMember]
+        public bool CalledAfter { get; private set; }
+
+        public Callback1(int x)
+        {
+
+        }
+
+        public void OnBeforeSerialize()
+        {
+            CalledBefore = true;
+        }
+
+        public void OnAfterDeserialize()
+        {
+            CalledAfter = true;
+        }
+    }
+
+    [MessagePackObject]
+    public class SimpleIntKeyData
+    {
+        [Key(0)]
+        //[MessagePackFormatter(typeof(OreOreFormatter))]
+        public int Prop1 { get; set; }
+        [Key(1)]
+        public ByteEnum Prop2 { get; set; }
+        [Key(2)]
+        public string Prop3 { get; set; }
+        [Key(3)]
+        public SimlpeStringKeyData Prop4 { get; set; }
+        [Key(4)]
+        public SimpleStructIntKeyData Prop5 { get; set; }
+        [Key(5)]
+        public SimpleStructStringKeyData Prop6 { get; set; }
+        [Key(6)]
+        public byte[] BytesSpecial { get; set; }
+        //[Key(7)]
+        //[MessagePackFormatter(typeof(OreOreFormatter2), 100, "hogehoge")]
+        //[MessagePackFormatter(typeof(OreOreFormatter))]
+        //public int Prop7 { get; set; }
+    }
+
+
 
     class Program
     {
         static void Main(string[] args)
         {
-            try
+            var o = new SimpleIntKeyData()
             {
-                throw new InvalidOperationException("foo bar");
-            }
-            catch (Exception ex)
-            {
-                // var ex = new Dummy___();
+                Prop1 = 100,
+                Prop2 = ByteEnum.C,
+                Prop3 = "abcde",
+                Prop4 = new SimlpeStringKeyData
+                {
+                    Prop1 = 99999,
+                    Prop2 = ByteEnum.E,
+                    Prop3 = 3
+                },
+                Prop5 = new SimpleStructIntKeyData
+                {
+                    X = 100,
+                    Y = 300,
+                    BytesSpecial = new byte[] { 9, 99, 122 }
+                },
+                Prop6 = new SimpleStructStringKeyData
+                {
+                    X = 9999,
+                    Y = new[] { 1, 10, 100 }
+                },
+                BytesSpecial = new byte[] { 1, 4, 6 }
+            };
 
-                // CompositeResolver can set custom formatter.
-                MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
-                    new IMessagePackFormatter[] 
-                    {
-                        // for example, register reflection infos(can not serialize in default)
-                        new IgnoreFormatter<MethodBase>(),
-                        new IgnoreFormatter<MethodInfo>(),
-                        new IgnoreFormatter<PropertyInfo>(),
-                        new IgnoreFormatter<FieldInfo>()
-                    },
-                    new IFormatterResolver[] 
-                    {
-                        ContractlessStandardResolver.Instance
-                    });
+            MessagePackSerializer.Serialize(o);
 
-                var bin = MessagePack.MessagePackSerializer.Serialize(ex);
 
-                Console.WriteLine(MessagePack.MessagePackSerializer.ToJson(bin));
-            }
         }
 
         static void Benchmark<T>(T target)

@@ -340,7 +340,11 @@ namespace MessagePack.Internal
                 // key = AutomataKeyGen.GetKey(ref p, ref rest);
                 il.EmitLdloca(p);
                 il.EmitLdloca(rest);
+#if NETSTANDARD
                 il.EmitCall(AutomataKeyGen.GetKeyMethod);
+#else
+                il.EmitCall(AutomataKeyGen.GetGetKeyMethod());
+#endif
                 il.EmitStloc(key);
 
                 // match children.
@@ -454,8 +458,229 @@ namespace MessagePack.Internal
 
     public static class AutomataKeyGen
     {
-        public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKey", new[] { typeof(byte*).MakeByRefType(), typeof(int).MakeByRefType() });
-        // public static readonly MethodInfo GetKeySafeMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKeySafe", new[] { typeof(byte[]), typeof(int).MakeByRefType(), typeof(int).MakeByRefType() });
+        public delegate ulong PointerDelegate<T>(ref T p, ref int rest);
+
+#if NETSTANDARD
+        public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKey", new[] { typeof(byte).MakePointerType().MakeByRefType(), typeof(int).MakeByRefType() });
+#endif
+
+#if !NETSTANDARD
+
+        static MethodInfo dynamicGetKeyMethod;
+        static readonly object gate = new object();
+        static DynamicAssembly dynamicAssembly;
+
+        public static MethodInfo GetGetKeyMethod()
+        {
+            if (dynamicGetKeyMethod == null)
+            {
+                lock (gate)
+                {
+                    if (dynamicGetKeyMethod == null)
+                    {
+                        dynamicAssembly = new DynamicAssembly("AutomataKeyGenHelper");
+                        var helperType = dynamicAssembly.ModuleBuilder.DefineType("AutomataKeyGen", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract, null);
+
+                        var dm = helperType.DefineMethod("GetKey", MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig, typeof(ulong), new[] { typeof(byte).MakePointerType().MakeByRefType(), typeof(int).MakeByRefType() });
+
+                        var il = dm.GetILGenerator();
+
+                        var readSize = il.DeclareLocal(typeof(int));
+                        var key = il.DeclareLocal(typeof(ulong));
+                        var _local = il.DeclareLocal(typeof(int));
+
+                        var elseLabel = il.DefineLabel();
+                        var endLabel = il.DefineLabel();
+                        var case0 = il.DefineLabel();
+                        var case1 = il.DefineLabel();
+                        var case2 = il.DefineLabel();
+                        var case3 = il.DefineLabel();
+                        var case4 = il.DefineLabel();
+                        var case5 = il.DefineLabel();
+                        var case6 = il.DefineLabel();
+                        var case7 = il.DefineLabel();
+
+                        il.Emit(OpCodes.Ldarg_1);
+                        il.Emit(OpCodes.Ldind_I4);
+                        il.Emit(OpCodes.Ldc_I4_8);
+                        il.Emit(OpCodes.Blt_S, elseLabel);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldind_I8);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Ldc_I4_8);
+                        il.Emit(OpCodes.Stloc_0);
+                        il.Emit(OpCodes.Br, endLabel);
+
+                        il.MarkLabel(elseLabel);
+                        il.Emit(OpCodes.Ldarg_1);
+                        il.Emit(OpCodes.Ldind_I4);
+                        il.Emit(OpCodes.Stloc_2);
+                        il.Emit(OpCodes.Ldloc_2);
+                        il.Emit(OpCodes.Switch, new[] { case0, case1, case2, case3, case4, case5, case6, case7 });
+                        il.Emit(OpCodes.Br, case0); // default
+
+                        il.MarkLabel(case1);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldind_U1);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Ldc_I4_1);
+                        il.Emit(OpCodes.Stloc_0);
+                        il.Emit(OpCodes.Br, endLabel);
+
+                        il.MarkLabel(case2);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldind_U2);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Ldc_I4_2);
+                        il.Emit(OpCodes.Stloc_0);
+                        il.Emit(OpCodes.Br, endLabel);
+
+                        il.MarkLabel(case3);
+                        il.DeclareLocal(typeof(ushort)); // _3
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldind_U1);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldc_I4_1);
+                        il.Emit(OpCodes.Add);
+                        il.Emit(OpCodes.Ldind_U2);
+                        il.Emit(OpCodes.Stloc_3);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Ldloc_3);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Ldc_I4_8);
+                        il.Emit(OpCodes.Shl);
+                        il.Emit(OpCodes.Or);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Ldc_I4_3);
+                        il.Emit(OpCodes.Stloc_0);
+                        il.Emit(OpCodes.Br, endLabel);
+
+                        il.MarkLabel(case4);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldind_U4);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Ldc_I4_4);
+                        il.Emit(OpCodes.Stloc_0);
+                        il.Emit(OpCodes.Br, endLabel);
+
+                        il.MarkLabel(case5);
+                        il.DeclareLocal(typeof(uint)); // _4
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldind_U1);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldc_I4_1);
+                        il.Emit(OpCodes.Add);
+                        il.Emit(OpCodes.Ldind_U4);
+                        il.Emit(OpCodes.Stloc_S, 4);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Ldloc_S, 4);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Ldc_I4_8);
+                        il.Emit(OpCodes.Shl);
+                        il.Emit(OpCodes.Or);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Ldc_I4_5);
+                        il.Emit(OpCodes.Stloc_0);
+                        il.Emit(OpCodes.Br, endLabel);
+
+                        il.MarkLabel(case6);
+                        il.DeclareLocal(typeof(ulong)); // _5
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldind_U2);
+                        il.Emit(OpCodes.Conv_U8); // [x]
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldc_I4_2);
+                        il.Emit(OpCodes.Add); // [x, y]
+                        il.Emit(OpCodes.Ldind_U4);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Stloc_S, 5); // [x]
+                        il.Emit(OpCodes.Ldloc_S, 5);
+                        il.Emit(OpCodes.Ldc_I4_S, 16);
+                        il.Emit(OpCodes.Shl);
+                        il.Emit(OpCodes.Or);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Ldc_I4_6);
+                        il.Emit(OpCodes.Stloc_0);
+                        il.Emit(OpCodes.Br, endLabel);
+
+                        il.MarkLabel(case7);
+                        il.DeclareLocal(typeof(ushort)); // _6
+                        il.DeclareLocal(typeof(uint)); // _7
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldind_U1);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldc_I4_1);
+                        il.Emit(OpCodes.Add);
+                        il.Emit(OpCodes.Ldind_U2);
+                        il.Emit(OpCodes.Stloc_S, 6);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldc_I4_3);
+                        il.Emit(OpCodes.Add);
+                        il.Emit(OpCodes.Ldind_U4);
+                        il.Emit(OpCodes.Stloc_S, 7);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Ldloc_S, 6);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Ldc_I4_8);
+                        il.Emit(OpCodes.Shl);
+                        il.Emit(OpCodes.Or);
+                        il.Emit(OpCodes.Ldloc_S, 7);
+                        il.Emit(OpCodes.Conv_U8);
+                        il.Emit(OpCodes.Ldc_I4_S, 24);
+                        il.Emit(OpCodes.Shl);
+                        il.Emit(OpCodes.Or);
+                        il.Emit(OpCodes.Stloc_1);
+                        il.Emit(OpCodes.Ldc_I4_7);
+                        il.Emit(OpCodes.Stloc_0);
+                        il.Emit(OpCodes.Br, endLabel);
+
+                        il.MarkLabel(case0);
+                        il.Emit(OpCodes.Ldstr, "Not Supported Length");
+                        il.Emit(OpCodes.Newobj, typeof(InvalidOperationException).GetConstructor(new[] { typeof(string) }));
+                        il.Emit(OpCodes.Throw);
+
+                        il.MarkLabel(endLabel);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldind_I);
+                        il.Emit(OpCodes.Ldloc_0);
+                        il.Emit(OpCodes.Add);
+                        il.Emit(OpCodes.Stind_I);
+                        il.Emit(OpCodes.Ldarg_1);
+                        il.Emit(OpCodes.Ldarg_1);
+                        il.Emit(OpCodes.Ldind_I4);
+                        il.Emit(OpCodes.Ldloc_0);
+                        il.Emit(OpCodes.Sub);
+                        il.Emit(OpCodes.Stind_I4);
+                        il.Emit(OpCodes.Ldloc_1);
+                        il.Emit(OpCodes.Ret);
+
+                        var genereatedType = helperType.CreateTypeInfo().AsType();
+                        dynamicGetKeyMethod = genereatedType.GetMethods().First();
+                    }
+                }
+            }
+            
+            return dynamicGetKeyMethod;
+        }
+        
+#endif
 
 #if NETSTANDARD
 
