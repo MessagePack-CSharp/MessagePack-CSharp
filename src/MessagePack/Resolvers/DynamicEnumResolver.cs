@@ -84,7 +84,7 @@ namespace MessagePack.Resolvers
             var underlyingType = Enum.GetUnderlyingType(enumType);
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(enumType);
 
-            var typeBuilder = assembly.ModuleBuilder.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+            var typeBuilder = assembly.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
             // int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver);
             {

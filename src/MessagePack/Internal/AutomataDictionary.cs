@@ -479,7 +479,7 @@ namespace MessagePack.Internal
                     if (dynamicGetKeyMethod == null)
                     {
                         dynamicAssembly = new DynamicAssembly("AutomataKeyGenHelper");
-                        var helperType = dynamicAssembly.ModuleBuilder.DefineType("AutomataKeyGen", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract, null);
+                        var helperType = dynamicAssembly.DefineType("AutomataKeyGen", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract, null);
 
                         var dm = helperType.DefineMethod("GetKey", MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig, typeof(ulong), new[] { typeof(byte).MakePointerType().MakeByRefType(), typeof(int).MakeByRefType() });
 
