@@ -53,6 +53,8 @@ namespace MessagePack.CodeGenerator
                 }
             }
 
+            EnvironmentHelper.Setup();
+
             var workspace = MSBuildWorkspace.Create();
             workspace.WorkspaceFailed += Workspace_WorkspaceFailed;
 
@@ -66,6 +68,7 @@ namespace MessagePack.CodeGenerator
 
         private static void Workspace_WorkspaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
         {
+            Console.WriteLine(e);
             // throw new Exception(e.Diagnostic.ToString());
         }
 
