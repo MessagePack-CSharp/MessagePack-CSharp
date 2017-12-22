@@ -68,7 +68,7 @@ namespace MessagePack.CodeGenerator
 
         private static void Workspace_WorkspaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
         {
-            Console.WriteLine(e);
+            Console.WriteLine(e.Diagnostic.ToString());
             // throw new Exception(e.Diagnostic.ToString());
         }
 
