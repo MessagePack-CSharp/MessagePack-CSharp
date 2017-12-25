@@ -185,7 +185,7 @@ namespace UnityEngine
         }
     }
 
-    // additional from 1.7.3
+    // additional from 1.7.3.1
 
     [MessagePackObject]
     public sealed class AnimationCurve
