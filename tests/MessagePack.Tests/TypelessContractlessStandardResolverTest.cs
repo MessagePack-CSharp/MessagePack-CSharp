@@ -199,5 +199,43 @@ namespace MessagePack.Tests
             var b = MessagePackSerializer.Typeless.Deserialize(e);
             b.GetType().Is(typeof(GlobalMyEnum));
         }
+
+        [Fact]
+        public void MyTestMethod()
+        {
+            var sampleMessage = new InternalSampleMessageType
+            {
+                DateProp = new DateTime(2016, 10, 8, 1, 2, 3, DateTimeKind.Utc),
+                GuidProp = Guid.NewGuid(),
+                IntProp = 123,
+                StringProp = "Hello World"
+            };
+
+            {
+                var serializedMessage = MessagePackSerializer.Typeless.Serialize(sampleMessage);
+                var r2 = (InternalSampleMessageType)MessagePackSerializer.Typeless.Deserialize(serializedMessage);
+                r2.DateProp.Is(sampleMessage.DateProp);
+                r2.GuidProp.Is(sampleMessage.GuidProp);
+                r2.IntProp.Is(sampleMessage.IntProp);
+                r2.StringProp.Is(sampleMessage.StringProp);
+            }
+
+            //{
+            //    var serializedMessage = LZ4MessagePackSerializer.Typeless.Serialize(sampleMessage);
+            //    var r2 = (InternalSampleMessageType)LZ4MessagePackSerializer.Typeless.Deserialize(serializedMessage);
+            //    r2.DateProp.Is(sampleMessage.DateProp);
+            //    r2.GuidProp.Is(sampleMessage.GuidProp);
+            //    r2.IntProp.Is(sampleMessage.IntProp);
+            //    r2.StringProp.Is(sampleMessage.StringProp);
+            //}
+        }
+    }
+
+    internal class InternalSampleMessageType
+    {
+        public string StringProp { get; set; }
+        public int IntProp { get; set; }
+        public Guid GuidProp { get; set; }
+        public DateTime DateProp { get; set; }
     }
 }
