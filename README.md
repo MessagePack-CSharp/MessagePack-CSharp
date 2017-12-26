@@ -12,7 +12,7 @@ Install
 ---
 The library provides in NuGet except for Unity.
 
-Standard library for .NET Framework 4.5 and .NET Standard 2.0(.NET Core, Xamarin).
+Standard library for .NET Framework 4.5, .NET Standard 1.6 and .NET Standard 2.0(.NET Core, Xamarin).
 
 ```
 Install-Package MessagePack
