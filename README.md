@@ -1238,7 +1238,7 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 );
 ```
 
-> Note: mpc.exe is currently only run on Windows. It is .NET Core's Roslyn workspace API limitation and [not supported yet](https://github.com/dotnet/roslyn/issues/17439). But I want to implements to all platforms...
+> Note: mpc.exe is basically run on only Windows. But you can run on [Mono](http://www.mono-project.com/), that supports Mac and Linux.
 
 RPC
 ---
