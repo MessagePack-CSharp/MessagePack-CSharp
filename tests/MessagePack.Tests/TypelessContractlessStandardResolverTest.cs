@@ -220,15 +220,48 @@ namespace MessagePack.Tests
                 r2.StringProp.Is(sampleMessage.StringProp);
             }
 
-            //{
-            //    var serializedMessage = LZ4MessagePackSerializer.Typeless.Serialize(sampleMessage);
-            //    var r2 = (InternalSampleMessageType)LZ4MessagePackSerializer.Typeless.Deserialize(serializedMessage);
-            //    r2.DateProp.Is(sampleMessage.DateProp);
-            //    r2.GuidProp.Is(sampleMessage.GuidProp);
-            //    r2.IntProp.Is(sampleMessage.IntProp);
-            //    r2.StringProp.Is(sampleMessage.StringProp);
-            //}
+            {
+                var serializedMessage = LZ4MessagePackSerializer.Typeless.Serialize(sampleMessage);
+                var r2 = (InternalSampleMessageType)LZ4MessagePackSerializer.Typeless.Deserialize(serializedMessage);
+                r2.DateProp.Is(sampleMessage.DateProp);
+                r2.GuidProp.Is(sampleMessage.GuidProp);
+                r2.IntProp.Is(sampleMessage.IntProp);
+                r2.StringProp.Is(sampleMessage.StringProp);
+            }
         }
+
+        [Fact]
+        public void SaveArrayType()
+        {
+            {
+                string[] array = new[] { "test1", "test2" };
+                byte[] bytes = MessagePackSerializer.Typeless.Serialize(array);
+                object obj = MessagePackSerializer.Typeless.Deserialize(bytes);
+
+                var obj2 = obj as string[];
+                obj2.Is("test1", "test2");
+            }
+            {
+                var objRaw = new SomeClass
+                {
+                    Obj = new string[] { "asd", "asd" }
+                };
+
+                var objSer = MessagePackSerializer.Serialize(objRaw, TypelessContractlessStandardResolver.Instance);
+
+                var objDes = MessagePackSerializer.Deserialize<SomeClass>(objSer, TypelessContractlessStandardResolver.Instance);
+
+                var expectedTrue = objDes.Obj is string[];
+                expectedTrue.IsTrue();
+            }
+        }
+    }
+
+
+
+    public class SomeClass
+    {
+        public object Obj { get; set; }
     }
 
     internal class InternalSampleMessageType
