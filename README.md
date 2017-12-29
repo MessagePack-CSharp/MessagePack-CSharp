@@ -12,7 +12,7 @@ Install
 ---
 The library provides in NuGet except for Unity.
 
-Standard library for .NET Framework 4.5 and .NET Standard 2.0(.NET Core, Xamarin).
+Standard library for .NET Framework 4.5, .NET Standard 1.6 and .NET Standard 2.0(.NET Core, Xamarin).
 
 ```
 Install-Package MessagePack
@@ -1238,7 +1238,7 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 );
 ```
 
-> Note: mpc.exe is currently only run on Windows. It is .NET Core's Roslyn workspace API limitation and [not supported yet](https://github.com/dotnet/roslyn/issues/17439). But I want to implements to all platforms...
+> Note: mpc.exe is basically run on only Windows. But you can run on [Mono](http://www.mono-project.com/), that supports Mac and Linux.
 
 RPC
 ---
