@@ -108,7 +108,7 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\r\n}\r\n\r\n#pragma warning disable 168\r\n#pragma warning restore 414\r\n#pragma warning " +
+            this.Write("\r\n}\r\n\r\n#pragma warning restore 168\r\n#pragma warning restore 414\r\n#pragma warning " +
                     "restore 618\r\n#pragma warning restore 612");
             return this.GenerationEnvironment.ToString();
         }

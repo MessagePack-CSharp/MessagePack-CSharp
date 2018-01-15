@@ -172,6 +172,17 @@ namespace System.Reflection
             return type.GetProperty(name);
         }
 
+        public  FieldInfo GetField(string name, BindingFlags flags)
+        {
+            return type.GetField(name, flags);
+        }
+
+        public  PropertyInfo GetProperty(string name, BindingFlags flags)
+        {
+            return type.GetProperty(name, flags);
+        }
+
+
         public T GetCustomAttribute<T>(bool inherit = true)
             where T : Attribute
         {

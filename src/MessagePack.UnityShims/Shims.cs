@@ -184,4 +184,366 @@ namespace UnityEngine
             this.height = source.height;
         }
     }
+
+    // additional from 1.7.3.2
+
+    [MessagePackObject]
+    public sealed class AnimationCurve
+    {
+        [Key(0)]
+        public Keyframe[] keys { get; set; }
+
+        [IgnoreMember]
+        public int length { get { return keys.Length; } }
+
+        [Key(1)]
+        public WrapMode postWrapMode { get; set; }
+
+        [Key(2)]
+        public WrapMode preWrapMode { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct Keyframe
+    {
+        private float m_Time;
+        private float m_Value;
+        private float m_InTangent;
+        private float m_OutTangent;
+
+
+        [Key(0)]
+        public float time
+        {
+            get
+            {
+                return this.m_Time;
+            }
+            set
+            {
+                this.m_Time = value;
+            }
+        }
+        [Key(1)]
+        public float value
+        {
+            get
+            {
+                return this.m_Value;
+            }
+            set
+            {
+                this.m_Value = value;
+            }
+        }
+
+        [Key(2)]
+        public float inTangent
+        {
+            get
+            {
+                return this.m_InTangent;
+            }
+            set
+            {
+                this.m_InTangent = value;
+            }
+        }
+
+        [Key(3)]
+        public float outTangent
+        {
+            get
+            {
+                return this.m_OutTangent;
+            }
+            set
+            {
+                this.m_OutTangent = value;
+            }
+        }
+
+        public Keyframe(float time, float value)
+        {
+            this.m_Time = time;
+            this.m_Value = value;
+            this.m_InTangent = 0f;
+            this.m_OutTangent = 0f;
+        }
+
+        [SerializationConstructor]
+        public Keyframe(float time, float value, float inTangent, float outTangent)
+        {
+            this.m_Time = time;
+            this.m_Value = value;
+            this.m_InTangent = inTangent;
+            this.m_OutTangent = outTangent;
+        }
+    }
+
+    public enum WrapMode
+    {
+        Once = 1,
+        Loop,
+        PingPong = 4,
+        Default = 0,
+        ClampForever = 8,
+        Clamp = 1
+    }
+
+    [MessagePackObject]
+    public struct Matrix4x4
+    {
+        [Key(0)]
+        public float m00;
+        [Key(1)]
+        public float m10;
+        [Key(2)]
+        public float m20;
+        [Key(3)]
+        public float m30;
+        [Key(4)]
+        public float m01;
+        [Key(5)]
+        public float m11;
+        [Key(6)]
+        public float m21;
+        [Key(7)]
+        public float m31;
+        [Key(8)]
+        public float m02;
+        [Key(9)]
+        public float m12;
+        [Key(10)]
+        public float m22;
+        [Key(11)]
+        public float m32;
+        [Key(12)]
+        public float m03;
+        [Key(13)]
+        public float m13;
+        [Key(14)]
+        public float m23;
+        [Key(15)]
+        public float m33;
+    }
+
+    [MessagePackObject]
+    public sealed class Gradient
+    {
+        [Key(0)]
+        public GradientColorKey[] colorKeys { get; set; }
+        [Key(1)]
+        public GradientAlphaKey[] alphaKeys { get; set; }
+        [Key(2)]
+        public GradientMode mode { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct GradientColorKey
+    {
+        [Key(0)]
+        public Color color;
+        [Key(1)]
+        public float time;
+
+        public GradientColorKey(Color col, float time)
+        {
+            this.color = col;
+            this.time = time;
+        }
+    }
+
+    [MessagePackObject]
+    public struct GradientAlphaKey
+    {
+        [Key(0)]
+        public float alpha;
+        [Key(1)]
+        public float time;
+
+        public GradientAlphaKey(float alpha, float time)
+        {
+            this.alpha = alpha;
+            this.time = time;
+        }
+    }
+
+    public enum GradientMode
+    {
+        Blend,
+        Fixed
+    }
+
+    [MessagePackObject]
+    public struct Color32
+    {
+        [Key(0)]
+        public byte r;
+        [Key(1)]
+        public byte g;
+        [Key(2)]
+        public byte b;
+        [Key(3)]
+        public byte a;
+
+        public Color32(byte r, byte g, byte b, byte a)
+        {
+            this.r = r;
+            this.g = g;
+            this.b = b;
+            this.a = a;
+        }
+    }
+
+    [MessagePackObject]
+    public sealed class RectOffset
+    {
+        [Key(0)]
+        public int left { get; set; }
+
+        [Key(1)]
+        public int right { get; set; }
+
+        [Key(2)]
+        public int top { get; set; }
+
+        [Key(3)]
+        public int bottom { get; set; }
+
+        public RectOffset()
+        {
+
+        }
+
+        public RectOffset(int left, int right, int top, int bottom)
+        {
+            this.left = left;
+            this.right = right;
+            this.top = top;
+            this.bottom = bottom;
+        }
+    }
+
+    [MessagePackObject]
+    public struct LayerMask
+    {
+        [Key(0)]
+        public int value { get; set; }
+    }
+
+    // from Unity2017.2
+
+    [MessagePackObject]
+    public struct Vector2Int
+    {
+        [Key(0)]
+        public int x;
+        [Key(1)]
+        public int y;
+
+        [SerializationConstructor]
+        public Vector2Int(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    [MessagePackObject]
+    public struct Vector3Int
+    {
+        [Key(0)]
+        public int x;
+        [Key(1)]
+        public int y;
+        [Key(2)]
+        public int z;
+
+        [SerializationConstructor]
+        public Vector3Int(int x, int y, int z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public static Vector3Int operator *(Vector3Int a, int d)
+        {
+            return new Vector3Int(a.x * d, a.y * d, a.z * d);
+        }
+    }
+
+    [MessagePackObject]
+    public struct RangeInt
+    {
+        [Key(0)]
+        public int start;
+        [Key(1)]
+        public int length;
+
+        public RangeInt(int start, int length)
+        {
+            this.start = start;
+            this.length = length;
+        }
+    }
+
+    [MessagePackObject]
+    public struct RectInt
+    {
+        [Key(0)]
+        public int x { get; set; }
+
+        [Key(1)]
+        public int y { get; set; }
+
+        [Key(2)]
+        public int width { get; set; }
+
+        [Key(3)]
+        public int height { get; set; }
+
+        [SerializationConstructor]
+        public RectInt(int x, int y, int width, int height)
+        {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+
+        public RectInt(Vector2Int position, Vector2Int size)
+        {
+            this.x = position.x;
+            this.y = position.y;
+            this.width = size.x;
+            this.height = size.y;
+        }
+
+        public RectInt(RectInt source)
+        {
+            this.x = source.x;
+            this.y = source.y;
+            this.width = source.width;
+            this.height = source.height;
+        }
+    }
+
+    [MessagePackObject]
+    public struct BoundsInt
+    {
+        [Key(0)]
+        public Vector3Int position { get; set; }
+
+        [Key(1)]
+        public Vector3Int size { get; set; }
+
+        [SerializationConstructor]
+        public BoundsInt(Vector3Int position, Vector3Int size)
+        {
+            this.position = position;
+            this.size = size;
+        }
+    }
 }

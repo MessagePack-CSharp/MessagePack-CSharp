@@ -31,7 +31,7 @@ namespace <#= Namespace #>
 
 }
 
-#pragma warning disable 168
+#pragma warning restore 168
 #pragma warning restore 414
 #pragma warning restore 618
 #pragma warning restore 612

@@ -118,7 +118,7 @@ namespace MessagePack.Resolvers
 
         static IMessagePackFormatter<object> fallbackFormatter = new DynamicObjectTypeFallbackFormatter(
             ForceSizePrimitiveObjectResolver.Instance,
-            ContractlessStandardResolverCore.Instance);
+            ContractlessStandardResolverAllowPrivateCore.Instance);
 
         TypelessFormatterFallbackResolver()
         {

@@ -172,7 +172,7 @@ namespace MessagePack.CodeGenerator.Generator
             #line default
             #line hidden
             this.Write("                default: return null;\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n#pra" +
-                    "gma warning disable 168\r\n#pragma warning restore 414\r\n#pragma warning restore 61" +
+                    "gma warning restore 168\r\n#pragma warning restore 414\r\n#pragma warning restore 61" +
                     "8\r\n#pragma warning restore 612");
             return this.GenerationEnvironment.ToString();
         }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net45;net47</TargetFrameworks>
+        <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
         <AssemblyName>MessagePack</AssemblyName>
         <SignAssembly>True</SignAssembly>
         <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
@@ -33,7 +33,6 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' == 'net45'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.xml</DocumentationFile>
         <NoWarn>1701;1702;1705;1591</NoWarn>
         <DefineConstants>TRACE;RELEASE;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
@@ -53,7 +52,7 @@
         <None Include="MessagePackSerializer.Typeless.cs" />
     </ItemGroup>
 
-    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard1.6' ">
         <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
         <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
         <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />

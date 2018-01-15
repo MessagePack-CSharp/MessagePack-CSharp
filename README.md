@@ -1,5 +1,6 @@
 MessagePack for C#(.NET, .NET Core, Unity, Xamarin)
 ===
+[![AppVeyor](https://img.shields.io/appveyor/ci/neuecc/messagepack-csharp/master.svg?label=appveyor)](https://ci.appveyor.com/project/neuecc/messagepack-csharp/branch/master) 
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/neuecc/MessagePack-CSharp/releases)
 
 Extremely fast [MessagePack](http://msgpack.org/) serializer for C#, x10 faster than MsgPack-Cli and acquires best performance compared with all the other C# serializers. MessagePack for C# has built-in LZ4 compression which can achieve super fast and small binary size.  Performance is always important! for Game, Distributed computing, Microservices, Store data to Redis, etc.
@@ -12,7 +13,7 @@ Install
 ---
 The library provides in NuGet except for Unity.
 
-Standard library for .NET Framework 4.5 and .NET Standard 2.0(.NET Core, Xamarin).
+Standard library for .NET Framework 4.5, .NET Standard 1.6 and .NET Standard 2.0(.NET Core, Xamarin).
 
 ```
 Install-Package MessagePack
@@ -474,6 +475,36 @@ Type information is serialized by mspgack `ext` format, typecode is 100.
 
 `MessagePackSerializer.Typeless` is shortcut of `Serialize/Deserialize<object>(TypelessContractlessStandardResolver.Instance)`. If you want to configure default typeless resolver, you can set by `MessagePackSerializer.Typeless.RegisterDefaultResolver`.
 
+TypelessFormatter can use standalone and combinate with existing resolvers.
+
+``csharp
+// replace `object` uses typeless
+MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
+    new[] { MessagePack.Formatters.TypelessFormatter.Instance },
+    new[] { MessagePack.Resolvers.StandardResolver.Instance });
+
+public class Foo
+{
+    // use Typeless(this field only)
+    [MessagePackFormatter(typeof(TypelessFormatter))]
+    public object Bar;
+}
+```
+
+If type name was changed, can not deserialize. If you need to typename fallback, you can use `TypelessFormatter.BindToType`.
+
+```csharp
+MessagePack.Formatters.TypelessFormatter.BindToType = typeName =>
+{
+    if (typeName.StartsWith("SomeNamespace"))
+    {
+        typeName = typeName.Replace("SomeNamespace", "AnotherNamespace");
+    }
+    
+    return Type.GetType(typeName, false);
+};
+```
+
 Performance
 ---
 Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and there [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config), ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) has infinitely fast deserializer so ignore deserialize performance.
@@ -498,7 +529,7 @@ Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core 
 
 Before creating this library, I implemented a fast fast serializer with [ZeroFormatter#Performance](https://github.com/neuecc/ZeroFormatter#performance). And this is a further evolved implementation. MessagePack for C# is always fast, optimized for all types(primitive, small struct, large object, any collections).
 
-Deserialize Perfomrance per options
+Deserialize Performance per options
 ---
 Performance varies depending on options. This is a micro benchamark with [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet). Target object has 9 members(`MyProperty1` ~ `MyProperty9`), value are zero.
 
@@ -663,7 +694,7 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 `MessagePack.ReactiveProperty` package add support for [ReactiveProperty](https://github.com/runceel/ReactiveProperty) library. It adds `ReactiveProperty<>`, `IReactiveProperty<>`, `IReadOnlyReactiveProperty<>`, `ReactiveCollection<>`, `Unit` serialization support. It is useful for save viewmodel state.
 
-`MessagePack.UnityShims` package provides shim of [Unity](https://unity3d.com/)'s standard struct(`Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`) and there formatter. It can enable to commnicate between server and Unity client.
+`MessagePack.UnityShims` package provides shim of [Unity](https://unity3d.com/)'s standard struct(`Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt`) and there formatter. It can enable to commnicate between server and Unity client.
 
 After install, extension package must enable by configuration. Here is sample of enable all extension.
 
@@ -1108,7 +1139,7 @@ for Unity
 ---
 You can install by package and includes source code. If build target as PC, you can use as is but if build target uses IL2CPP, you can not use `Dynamic***Resolver` so use pre-code generation. Please see [pre-code generation section](https://github.com/neuecc/MessagePack-CSharp#pre-code-generationunityxamarin-supports).
 
-In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Quaternion`, `Color`, `Bounds`, `Rect` and there nullable by built-in extension `UnityResolver`. It is included StandardResolver by default.
+In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and there nullable, there array, there list by built-in extension `UnityResolver`. It is included StandardResolver by default.
 
 MessagePack for C# has additional unsafe extension.  `UnsafeBlitResolver` is special resolver for extremely fast unsafe serialization/deserialization for struct array.
 
@@ -1208,7 +1239,7 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 );
 ```
 
-> Note: mpc.exe is currently only run on Windows. It is .NET Core's Roslyn workspace API limitation and [not supported yet](https://github.com/dotnet/roslyn/issues/17439). But I want to implements to all platforms...
+> Note: mpc.exe is basically run on only Windows. But you can run on [Mono](http://www.mono-project.com/), that supports Mac and Linux.
 
 RPC
 ---

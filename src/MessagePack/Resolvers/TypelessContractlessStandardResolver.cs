@@ -22,7 +22,7 @@ namespace MessagePack.Resolvers
             DynamicUnionResolver.Instance, // Try Union(Interface)
             DynamicObjectResolver.Instance, // Try Object
 #endif
-            DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
+            DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
             TypelessObjectResolver.Instance
         };
 

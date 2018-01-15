@@ -2,14 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack.ImmutableCollection</id>
-        <version>1.7.2</version>
+        <version>1.7.3.2</version>
         <title>MessagePack for C# Extension Support for ImmutableCollection</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
         <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for System.Collections.Immutable.</description>
-        <releaseNotes>Support .NETStandard 2.0.</releaseNotes>
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer</tags>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
@@ -17,15 +16,19 @@
         </frameworkAssemblies>
         <dependencies>
             <group targetFramework=".NETFramework4.7">
-                <dependency id="MessagePack" version="1.7.2" />
+                <dependency id="MessagePack" version="1.7.3.2" />
                 <dependency id="System.Collections.Immutable" version="1.3.1" />
             </group>
             <group targetFramework=".NETFramework4.5">
-                <dependency id="MessagePack" version="1.7.2" />
+                <dependency id="MessagePack" version="1.7.3.2" />
+                <dependency id="System.Collections.Immutable" version="1.3.1" />
+            </group>
+            <group targetFramework=".NETStandard1.6">
+                <dependency id="MessagePack" version="1.7.3.2" />
                 <dependency id="System.Collections.Immutable" version="1.3.1" />
             </group>
             <group targetFramework=".NETStandard2.0">
-                <dependency id="MessagePack" version="1.7.2" />
+                <dependency id="MessagePack" version="1.7.3.2" />
                 <dependency id="System.Collections.Immutable" version="1.3.1" />
             </group>
         </dependencies>
@@ -35,6 +38,8 @@
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\net47" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\net45\MessagePack.ImmutableCollection.dll" target="lib\net45" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\net45" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard1.6\MessagePack.ImmutableCollection.dll" target="lib\netstandard1.6" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\netstandard1.6" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.dll" target="lib\netstandard2.0" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\netstandard2.0" />
     </files>

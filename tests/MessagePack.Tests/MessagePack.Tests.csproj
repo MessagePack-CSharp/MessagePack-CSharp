@@ -110,6 +110,7 @@
     <Compile Include="CollectionTest.cs" />
     <Compile Include="DataContractTest.cs" />
     <Compile Include="DynamicObjectFallbackTest.cs" />
+    <Compile Include="DynamicObjectResolverOrderTest.cs" />
     <Compile Include="MessagePackFormatterPerField.cs" />
     <Compile Include="NewGuidFormatterTest.cs" />
     <Compile Include="NonGenericCollectionTest.cs" />

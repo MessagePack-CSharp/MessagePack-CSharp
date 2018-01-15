@@ -2,14 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>MessagePack.ReactiveProperty</id>
-        <version>1.7.2</version>
+        <version>1.7.3.2</version>
         <title>MessagePack for C# Extension Support for ReactiveProperty</title>
         <authors>neuecc</authors>
         <owners>neuecc</owners>
         <projectUrl>https://github.com/neuecc/MessagePack-CSharp/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for ReactiveProperty.</description>
-        <releaseNotes>Support .NETStandard 2.0.</releaseNotes>
         <tags>MsgPack, MessagePack, Serialization, Formatter, Serializer, ReactiveProperty</tags>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
@@ -17,15 +16,19 @@
         </frameworkAssemblies>
         <dependencies>
             <group targetFramework=".NETFramework4.7">
-                <dependency id="MessagePack" version="1.7.2" />
+                <dependency id="MessagePack" version="1.7.3.2" />
                 <dependency id="ReactiveProperty" version="3.5.1" />
             </group>
             <group targetFramework=".NETFramework4.5">
-                <dependency id="MessagePack" version="1.7.2" />
+                <dependency id="MessagePack" version="1.7.3.2" />
+                <dependency id="ReactiveProperty" version="3.5.1" />
+            </group>
+            <group targetFramework=".NETStandard1.6">
+                <dependency id="MessagePack" version="1.7.3.2" />
                 <dependency id="ReactiveProperty" version="3.5.1" />
             </group>
             <group targetFramework=".NETStandard2.0">
-                <dependency id="MessagePack" version="1.7.2" />
+                <dependency id="MessagePack" version="1.7.3.2" />
                 <dependency id="ReactiveProperty" version="3.5.1" />
             </group>
         </dependencies>
@@ -37,5 +40,7 @@
         <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard2.0\MessagePack.ReactiveProperty.xml" target="lib\net47" />
         <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard2.0\MessagePack.ReactiveProperty.dll" target="lib\netstandard2.0" />
         <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard2.0\MessagePack.ReactiveProperty.xml" target="lib\netstandard2.0" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard1.6\MessagePack.ReactiveProperty.dll" target="lib\netstandard1.6" />
+        <file src="..\src\MessagePack.ReactiveProperty\bin\Release\netstandard2.0\MessagePack.ReactiveProperty.xml" target="lib\netstandard1.6" />
     </files>
 </package>
