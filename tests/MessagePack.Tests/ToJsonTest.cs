@@ -49,5 +49,16 @@ namespace MessagePack.Tests
             var json = MessagePackSerializer.ToJson(xs);
             json.Is("3.33");
         }
+
+        [Theory]
+        [InlineData(@"{""Amount"":1.0E-6}", @"{""Amount"":1E-06}")]
+        [InlineData(@"{""Amount"":1.0E-06}", @"{""Amount"":1E-06}")]
+        [InlineData(@"{""Amount"":1E-6}", @"{""Amount"":1E-06}")]
+        [InlineData(@"{""Amount"":1E-06}", @"{""Amount"":1E-06}")]
+        public void ScientificFloatJsonRoundTrip(string inputJson, string expectedRoundTripJson)
+        {
+            JsonConvert(inputJson).Is(expectedRoundTripJson);
+            JsonConvertLZ4(inputJson).Is(expectedRoundTripJson);
+        }
     }
 }

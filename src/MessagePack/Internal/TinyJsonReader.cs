@@ -240,7 +240,7 @@ namespace MessagePack
             {
                 var c = ReadChar();
                 numberWord.Append(c);
-                if (c == '.') isDouble = true;
+                if (c == '.' || c == 'e' || c == 'E') isDouble = true;
                 intChar = reader.Peek();
             }
 
