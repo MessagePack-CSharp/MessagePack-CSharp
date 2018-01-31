@@ -3,13 +3,13 @@ MessagePack for C#(.NET, .NET Core, Unity, Xamarin)
 [![AppVeyor](https://img.shields.io/appveyor/ci/neuecc/messagepack-csharp/master.svg?label=appveyor)](https://ci.appveyor.com/project/neuecc/messagepack-csharp/branch/master) 
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/neuecc/MessagePack-CSharp/releases)
 
-Extremely fast [MessagePack](http://msgpack.org/) serializer for C#, x10 faster than MsgPack-Cli and acquires best performance compared with all the other C# serializers. MessagePack for C# has built-in LZ4 compression which can achieve super fast and small binary size.  Performance is always important! for Game, Distributed computing, Microservices, Store data to Redis, etc.
+The extremely fast [MessagePack](http://msgpack.org/) serializer for C#. It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and performs the best when compared with other C# serializers. MessagePack for C# also has built-in, super-quick LZ4 compression. Performance is important, particularly in applications like game development, distributed computing, microservice architecture, and caching.
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23835716/89c8ab08-07af-11e7-9183-9e9415bdc87f.png)
 
 MessagePack has compact binary size and full set of general purpose expression. Please see the [comparison with JSON, protobuf, ZeroFormatter section](https://github.com/neuecc/MessagePack-CSharp#compare-with-protobuf-json-zeroformatter). If you want to know why MessagePack C# is fastest, please see [performance section](https://github.com/neuecc/MessagePack-CSharp#performance).
 
-Install
+Installation
 ---
 The library provides in NuGet except for Unity.
 
