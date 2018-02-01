@@ -1,9 +1,9 @@
-MessagePack for C#(.NET, .NET Core, Unity, Xamarin)
+MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
 ===
 [![AppVeyor](https://img.shields.io/appveyor/ci/neuecc/messagepack-csharp/master.svg?label=appveyor)](https://ci.appveyor.com/project/neuecc/messagepack-csharp/branch/master) 
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/neuecc/MessagePack-CSharp/releases)
 
-The extremely fast [MessagePack](http://msgpack.org/) serializer for C#. It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and performs the best when compared with other C# serializers. MessagePack for C# also has built-in, super-quick LZ4 compression. Performance is important, particularly in applications like game development, distributed computing, microservice architecture, and caching.
+The extremely fast [MessagePack](http://msgpack.org/) serializer for C#. It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and outperforms other C# serializers. MessagePack for C# also ships with built-in support for LZ4 compression - an extremely fast compression algorithm. Performance is important, particularly in applications like game development, distributed computing, microservice architecture, and caching.
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23835716/89c8ab08-07af-11e7-9183-9e9415bdc87f.png)
 
