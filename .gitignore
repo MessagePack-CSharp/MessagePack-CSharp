@@ -275,3 +275,10 @@ nuget/tools/*
 nuget/unity/tools/*
 nuget/unity*
 /nuget/*.unitypackage
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
