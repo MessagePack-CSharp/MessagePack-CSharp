@@ -1036,9 +1036,9 @@ internal static class SampleCustomResolverGetFormatterHelper
 }
 ```
 
-MessaegPackFormatterAttribute
+MessagePackFormatterAttribute
 ---
-MessaegPackFormatterAttribute is lightweight extension point of class, struct, interface, enum and property/field. This is like JSON.NET's JsonConverterAttribute. For example, serialize private field, serialize x10 formatter.
+MessagePackFormatterAttribute is lightweight extension point of class, struct, interface, enum and property/field. This is like JSON.NET's JsonConverterAttribute. For example, serialize private field, serialize x10 formatter.
 
 ```csharp
 [MessagePackFormatter(typeof(CustomObjectFormatter))]
