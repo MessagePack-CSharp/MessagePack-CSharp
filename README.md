@@ -477,7 +477,7 @@ Type information is serialized by mspgack `ext` format, typecode is 100.
 
 TypelessFormatter can use standalone and combinate with existing resolvers.
 
-``csharp
+```csharp
 // replace `object` uses typeless
 MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
     new[] { MessagePack.Formatters.TypelessFormatter.Instance },
