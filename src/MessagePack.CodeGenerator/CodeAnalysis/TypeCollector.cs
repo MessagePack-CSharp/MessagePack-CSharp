@@ -294,12 +294,13 @@ namespace MessagePack.CodeGenerator
                 return;
             }
 
-            if (type.Locations[0].IsInMetadata)
+			//removed to include symbols defined in the references
+			/*if (type.Locations[0].IsInMetadata)
             {
                 return;
-            }
+            }*/
 
-            if (type.TypeKind == TypeKind.Interface || (type.TypeKind == TypeKind.Class && type.IsAbstract))
+			if (type.TypeKind == TypeKind.Interface || (type.TypeKind == TypeKind.Class && type.IsAbstract))
             {
                 CollectUnion(type);
                 return;
