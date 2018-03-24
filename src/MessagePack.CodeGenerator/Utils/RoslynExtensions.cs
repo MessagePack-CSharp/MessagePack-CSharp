@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Microsoft.Build.Execution;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -17,75 +18,92 @@ namespace MessagePack.CodeGenerator
     {
         public static async Task<Compilation> GetCompilationFromProject(string csprojPath, params string[] preprocessorSymbols)
         {
-            // fucking workaround of resolve reference...
-            var externalReferences = new List<PortableExecutableReference>();
-            {
-                var locations = new List<string>();
-                locations.Add(typeof(object).Assembly.Location); // mscorlib
-                locations.Add(typeof(System.Linq.Enumerable).Assembly.Location); // core
-
-                var xElem = XElement.Load(csprojPath);
-                var ns = xElem.Name.Namespace;
-
-                var csProjRoot = Path.GetDirectoryName(csprojPath);
-                var framworkRoot = Path.GetDirectoryName(typeof(object).Assembly.Location);
-
-                foreach (var item in xElem.Descendants(ns + "Reference"))
-                {
-                    var hintPath = item.Element(ns + "HintPath")?.Value;
-                    if (hintPath == null)
-                    {
-                        var path = Path.Combine(framworkRoot, item.Attribute("Include").Value + ".dll");
-                        locations.Add(path);
-                    }
-                    else
-                    {
-                        locations.Add(Path.Combine(csProjRoot, hintPath));
-                    }
-                }
-
-                foreach (var item in locations.Distinct())
-                {
-                    if (File.Exists(item))
-                    {
-                        externalReferences.Add(MetadataReference.CreateFromFile(item));
-                    }
-                }
-            }
-
-            EnvironmentHelper.Setup();
-
             var workspace = MSBuildWorkspace.Create();
-            workspace.WorkspaceFailed += Workspace_WorkspaceFailed;
+
+            workspace.WorkspaceFailed += (sender,eventArgs) =>
+            {
+                Console.WriteLine($"{eventArgs.Diagnostic.Kind}: {eventArgs.Diagnostic.Message}");
+            };
 
             var project = await workspace.OpenProjectAsync(csprojPath).ConfigureAwait(false);
-            project = project.AddMetadataReferences(externalReferences); // workaround:)
+            project = WithAssemblyReferences(project); // workaround:)*/
             project = project.WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols));
 
             var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
             return compilation;
         }
 
-        private static void Workspace_WorkspaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
+        //The project references don't get compiled correctly
+        //Remove them and load compiled assemblies
+        private static Project WithAssemblyReferences(Project project)
         {
-            Console.WriteLine(e.Diagnostic.ToString());
-            // throw new Exception(e.Diagnostic.ToString());
+            var allAsmRefs = GetProjectReferences(project.FilePath);
+
+            var addExtRefs = allAsmRefs.GroupJoin(project.MetadataReferences.Select(x => x.Display),o => o,i => i,
+              (o,i) => new { OuterItem = o,InnerItems = i.DefaultIfEmpty() })
+              .SelectMany(x => x.InnerItems,(x,innerItem) => new { x.OuterItem,innerItem })
+              .Where(x => x.innerItem == null)
+              .Select(x => MetadataReference.CreateFromFile(x.OuterItem));
+
+            var projRefs = project.AllProjectReferences;
+
+            foreach (var p in projRefs)
+            {
+                project = project.RemoveProjectReference(p);
+            }
+
+            return project.AddMetadataReferences(addExtRefs);
+        }
+
+        private static IEnumerable<string> GetProjectReferences(string projectFileName)
+        {
+            var projectInstance = new ProjectInstance(projectFileName);
+            var result = BuildManager.DefaultBuildManager.Build(
+              new BuildParameters(),
+              new BuildRequestData(projectInstance,new[]
+            {
+                "ResolveProjectReferences",
+                "ResolveAssemblyReferences"
+            }));
+
+            IEnumerable<string> GetResultItems(string targetName)
+            {
+                var buildResult = result.ResultsByTarget[targetName];
+                var buildResultItems = buildResult.Items;
+
+                return buildResultItems.Select(item => item.ItemSpec);
+            }
+
+            return GetResultItems("ResolveProjectReferences")
+              .Concat(GetResultItems("ResolveAssemblyReferences"));
         }
 
         public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
         {
+            var symbols = new HashSet<INamedTypeSymbol>();
+
             foreach (var syntaxTree in compilation.SyntaxTrees)
             {
                 var semModel = compilation.GetSemanticModel(syntaxTree);
 
                 foreach (var item in syntaxTree.GetRoot()
                     .DescendantNodes()
-                    .Select(x => semModel.GetDeclaredSymbol(x))
+                    .Select(x =>
+                    {
+                        //include symbols defined in the references
+                        var sym = semModel.GetSymbolInfo(x).Symbol;
+
+                        if (sym != null && sym.Kind != SymbolKind.NamedType)
+                            return null;
+
+                        return sym ?? semModel.GetDeclaredSymbol(x);
+                    })
                     .Where(x => x != null))
                 {
                     var namedType = item as INamedTypeSymbol;
-                    if (namedType != null)
+                    if (namedType != null && !symbols.Contains(item))
                     {
+						symbols.Add(namedType);
                         yield return namedType;
                     }
                 }
