@@ -1801,6 +1801,30 @@ typeof(int), typeof(int) });
                     il.Emit(OpCodes.Stfld, FieldInfo);
                 }
             }
+
+            public object ReflectionLoadValue(object value)
+            {
+                if (IsProperty)
+                {
+                    return PropertyInfo.GetValue(value);
+                }
+                else
+                {
+                    return FieldInfo.GetValue(value);
+                }
+            }
+
+            public void ReflectionStoreValue(object obj, object value)
+            {
+                if (IsProperty)
+                {
+                    PropertyInfo.SetValue(obj, value);
+                }
+                else
+                {
+                    FieldInfo.SetValue(obj, value);
+                }
+            }
         }
     }
 

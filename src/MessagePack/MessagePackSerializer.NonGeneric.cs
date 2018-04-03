@@ -13,6 +13,9 @@ namespace MessagePack
     {
         public static class NonGeneric
         {
+            delegate int RawFormatterSerialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
+            delegate object RawFormatterDeserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize);
+
             static readonly Func<Type, CompiledMethods> CreateCompiledMethods;
             static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
 
@@ -39,6 +42,11 @@ namespace MessagePack
             public static void Serialize(Type type, Stream stream, object obj, IFormatterResolver resolver)
             {
                 GetOrAdd(type).serialize4.Invoke(stream, obj, resolver);
+            }
+
+            public static int Serialize(Type type, ref byte[] bytes, int offset, object value, IFormatterResolver resolver)
+            {
+                return GetOrAdd(type).serialize5.Invoke(ref bytes, offset, value, resolver);
             }
 
             public static object Deserialize(Type type, byte[] bytes)
@@ -81,6 +89,11 @@ namespace MessagePack
                 return GetOrAdd(type).deserialize8.Invoke(bytes, resolver);
             }
 
+            public static object Deserialize(Type type, byte[] bytes, int offset, IFormatterResolver resolver, out int readSize)
+            {
+                return GetOrAdd(type).deserialize9.Invoke(bytes, offset, resolver, out readSize);
+            }
+
             static CompiledMethods GetOrAdd(Type type)
             {
                 return serializes.GetOrAdd(type, CreateCompiledMethods);
@@ -92,6 +105,7 @@ namespace MessagePack
                 public readonly Func<object, IFormatterResolver, byte[]> serialize2;
                 public readonly Action<Stream, object> serialize3;
                 public readonly Action<Stream, object, IFormatterResolver> serialize4;
+                public readonly RawFormatterSerialize serialize5;
 
                 public readonly Func<byte[], object> deserialize1;
                 public readonly Func<byte[], IFormatterResolver, object> deserialize2;
@@ -102,6 +116,7 @@ namespace MessagePack
 
                 public readonly Func<ArraySegment<byte>, object> deserialize7;
                 public readonly Func<ArraySegment<byte>, IFormatterResolver, object> deserialize8;
+                public readonly RawFormatterDeserialize deserialize9;
 
                 public CompiledMethods(Type type)
                 {
@@ -161,7 +176,22 @@ namespace MessagePack
 
                         this.serialize4 = lambda;
                     }
+                    {
+                        // delegate int RawFormatterSerialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
+                        var serialize = GetMethod(type, new Type[] { typeof(byte[]).MakeByRefType(), typeof(int), null, typeof(IFormatterResolver) });
 
+                        var param1 = Expression.Parameter(typeof(byte[]).MakeByRefType(), "bytes");
+                        var param2 = Expression.Parameter(typeof(int), "offset");
+                        var param3 = Expression.Parameter(typeof(object), "value");
+                        var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
+
+                        var body = Expression.Call(serialize, param1, param2, ti.IsValueType
+                            ? Expression.Unbox(param3, type)
+                            : Expression.Convert(param3, type), param4);
+                        var lambda = Expression.Lambda<RawFormatterSerialize>(body, param1, param2, param3, param4).Compile();
+
+                        this.serialize5 = lambda;
+                    }
                     {
                         // public static T Deserialize<T>(byte[] bytes)
                         var deserialize = GetMethod(type, new Type[] { typeof(byte[]) });
@@ -248,6 +278,19 @@ namespace MessagePack
                         var lambda = Expression.Lambda<Func<ArraySegment<byte>, IFormatterResolver, object>>(body, param1, param2).Compile();
 
                         this.deserialize8 = lambda;
+                    }
+                    {
+                        // public static T Deserialize<T>(byte[] bytes, int offset, IFormatterResolver resolver, out int readSize)
+                        var deserialize = GetMethod(type, new Type[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() });
+
+                        var param1 = Expression.Parameter(typeof(byte[]), "bytes");
+                        var param2 = Expression.Parameter(typeof(int), "offset");
+                        var param3 = Expression.Parameter(typeof(IFormatterResolver), "resolver");
+                        var param4 = Expression.Parameter(typeof(int).MakeByRefType(), "readSize");
+                        var body = Expression.Convert(Expression.Call(deserialize, param1, param2, param3, param4), typeof(object));
+                        var lambda = Expression.Lambda<RawFormatterDeserialize>(body, param1, param2, param3, param4).Compile();
+
+                        this.deserialize9 = lambda;
                     }
                 }
 
