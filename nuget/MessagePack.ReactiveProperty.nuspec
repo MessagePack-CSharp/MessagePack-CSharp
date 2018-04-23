@@ -17,19 +17,19 @@
         <dependencies>
             <group targetFramework=".NETFramework4.7">
                 <dependency id="MessagePack" version="1.7.3.4" />
-                <dependency id="ReactiveProperty" version="3.5.1" />
+                <dependency id="ReactiveProperty" version="4.2.2" />
             </group>
             <group targetFramework=".NETFramework4.5">
                 <dependency id="MessagePack" version="1.7.3.4" />
-                <dependency id="ReactiveProperty" version="3.5.1" />
+                <dependency id="ReactiveProperty" version="4.2.2" />
             </group>
             <group targetFramework=".NETStandard1.6">
                 <dependency id="MessagePack" version="1.7.3.4" />
-                <dependency id="ReactiveProperty" version="3.5.1" />
+                <dependency id="ReactiveProperty" version="4.2.2" />
             </group>
             <group targetFramework=".NETStandard2.0">
                 <dependency id="MessagePack" version="1.7.3.4" />
-                <dependency id="ReactiveProperty" version="3.5.1" />
+                <dependency id="ReactiveProperty" version="4.2.2" />
             </group>
         </dependencies>
     </metadata>
