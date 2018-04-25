@@ -40,6 +40,7 @@ namespace MessagePack.ReactivePropertyExtension
               {typeof(IReactiveProperty<>), typeof(InterfaceReactivePropertyFormatter<>)},
               {typeof(IReadOnlyReactiveProperty<>), typeof(InterfaceReadOnlyReactivePropertyFormatter<>)},
               {typeof(ReactiveCollection<>), typeof(ReactiveCollectionFormatter<>)},
+              {typeof(ReactivePropertySlim<>), typeof(ReactivePropertySlimFormatter<>)},
         };
 
         internal static object GetFormatter(Type t)
