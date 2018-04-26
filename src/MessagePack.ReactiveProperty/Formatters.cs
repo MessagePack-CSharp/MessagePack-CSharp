@@ -84,6 +84,20 @@ namespace MessagePack.ReactivePropertyExtension
 
             return (int)mode;
         }
+
+        internal static int ToReactivePropertySlimModeInt<T>(global::Reactive.Bindings.ReactivePropertySlim<T> reactiveProperty)
+        {
+            var mode = ReactivePropertyMode.None;
+            if (reactiveProperty.IsDistinctUntilChanged)
+            {
+                mode |= ReactivePropertyMode.DistinctUntilChanged;
+            }
+            if (reactiveProperty.IsRaiseLatestValueOnSubscribe)
+            {
+                mode |= ReactivePropertyMode.RaiseLatestValueOnSubscribe;
+            }
+            return (int)mode;
+        }
     }
 
     // [Mode, SchedulerId, Value] : length should be three.
@@ -153,19 +167,35 @@ namespace MessagePack.ReactivePropertyExtension
                 return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref bytes, offset, rxProp, formatterResolver);
             }
 
+            var slimProp = value as ReactivePropertySlim<T>;
+            if (slimProp != null)
+            {
+                return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref bytes, offset, slimProp, formatterResolver);
+            }
+
             if (value == null)
             {
                 return MessagePackBinary.WriteNil(ref bytes, offset);
             }
             else
             {
-                throw new InvalidOperationException("Serializer only supports ReactiveProperty<T>. If serialize is ReadOnlyReactiveProperty, should mark [Ignore] and restore on IMessagePackSerializationCallbackReceiver.OnAfterDeserialize. Type:" + value.GetType().Name);
+                throw new InvalidOperationException("Serializer only supports ReactiveProperty<T> or ReactivePropertySlim<T>. If serialize is ReadOnlyReactiveProperty, should mark [Ignore] and restore on IMessagePackSerializationCallbackReceiver.OnAfterDeserialize. Type:" + value.GetType().Name);
             }
         }
 
         public IReactiveProperty<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
-            return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+            var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+
+            switch (length)
+            {
+                case 2:
+                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                case 3:
+                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                default:
+                    throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+            }
         }
     }
 
@@ -179,19 +209,35 @@ namespace MessagePack.ReactivePropertyExtension
                 return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref bytes, offset, rxProp, formatterResolver);
             }
 
+            var slimProp = value as ReactivePropertySlim<T>;
+            if (slimProp != null)
+            {
+                return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref bytes, offset, slimProp, formatterResolver);
+            }
+
             if (value == null)
             {
                 return MessagePackBinary.WriteNil(ref bytes, offset);
             }
             else
             {
-                throw new InvalidOperationException("Serializer only supports ReactiveProperty<T>. If serialize is ReadOnlyReactiveProperty, should mark [Ignore] and restore on IMessagePackSerializationCallbackReceiver.OnAfterDeserialize. Type:" + value.GetType().Name);
+                throw new InvalidOperationException("Serializer only supports ReactiveProperty<T> or ReactivePropertySlim<T>. If serialize is ReadOnlyReactiveProperty, should mark [Ignore] and restore on IMessagePackSerializationCallbackReceiver.OnAfterDeserialize. Type:" + value.GetType().Name);
             }
         }
 
         public IReadOnlyReactiveProperty<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
-            return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+            var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+
+            switch (length)
+            {
+                case 2:
+                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                case 3:
+                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                default:
+                    throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+            }
         }
     }
 
@@ -261,6 +307,57 @@ namespace MessagePack.ReactivePropertyExtension
             {
                 throw new InvalidOperationException("Invalid Data type. Code:" + MessagePackCode.ToFormatName(bytes[offset]));
             }
+        }
+    }
+
+    // [Mode, Value]
+    public class ReactivePropertySlimFormatter<T> : IMessagePackFormatter<ReactivePropertySlim<T>>
+    {
+        public int Serialize(ref byte[] bytes, int offset, ReactivePropertySlim<T> value, IFormatterResolver formatterResolver)
+        {
+            if (value == null)
+            {
+                return MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+            else
+            {
+                var startOffset = offset;
+
+                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
+
+                offset += MessagePackBinary.WriteInt32(ref bytes, offset, ReactivePropertySchedulerMapper.ToReactivePropertySlimModeInt(value));
+                offset += formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
+
+                return offset - startOffset;
+            }
+        }
+
+        public ReactivePropertySlim<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (MessagePackBinary.IsNil(bytes, offset))
+            {
+                readSize = 1;
+                return null;
+            }
+            else
+            {
+                var startOffset = offset;
+
+                var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                offset += readSize;
+                if (length != 2) throw new InvalidOperationException("Invalid ReactivePropertySlim data.");
+
+                var mode = (ReactivePropertyMode)MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
+
+                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
+
+                readSize = offset - startOffset;
+
+                return new ReactivePropertySlim<T>(v, mode);
+            }
+
         }
     }
 }
