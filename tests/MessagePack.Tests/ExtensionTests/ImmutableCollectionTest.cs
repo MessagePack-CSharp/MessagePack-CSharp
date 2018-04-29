@@ -28,8 +28,8 @@ namespace MessagePack.Tests.ExtensionTests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, resolver), resolver);
         }
 
-        public static object collectionTestData = new object[]
-        {
+        public static IEnumerable<object[]> collectionTestData = new List<object[]>
+		{
             new object[]{ ImmutableList<int>.Empty.AddRange(new[] { 1, 10, 100 }) , null },
             new object[]{ ImmutableDictionary<int,int>.Empty.AddRange(new Dictionary<int,int> { { 1, 10 },{ 2, 10 }, { 3, 100 } }) , null },
             new object[]{ ImmutableHashSet<int>.Empty.Add(1).Add(10).Add(100) , null },

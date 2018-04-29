@@ -137,7 +137,7 @@ namespace Xunit
         {
             if (expected == null)
             {
-                Assert.Null(actual);
+                Assert.Null((object)actual);
                 return;
             }
 
@@ -152,8 +152,9 @@ namespace Xunit
             Assert.Equal(expected, actual);
         }
 
-        /// <summary>Assert.True(predicate(value))</summary>
-        public static void Is<T>(this T value, Expression<Func<T, bool>> predicate, string message = "")
+
+		/// <summary>Assert.True(predicate(value))</summary>
+		public static void Is<T>(this T value, Expression<Func<T, bool>> predicate, string message = "")
         {
             var condition = predicate.Compile().Invoke(value);
 
@@ -255,13 +256,13 @@ namespace Xunit
         /// <summary>Assert.Null</summary>
         public static void IsNull<T>(this T value)
         {
-            Assert.Null(value);
+            Assert.Null((object)value);
         }
 
         /// <summary>Assert.NotNull</summary>
         public static void IsNotNull<T>(this T value)
-        {
-            Assert.NotNull(value);
+		{
+            Assert.NotNull((object)value);
         }
 
         /// <summary>Is(true)</summary>
@@ -277,14 +278,14 @@ namespace Xunit
         }
 
         /// <summary>Assert.Same</summary>
-        public static void IsSameReferenceAs<T>(this T actual, T expected)
+        public static void IsSameReferenceAs<T>(this T actual, T expected) where T : class
         {
             Assert.Same(expected, actual);
         }
 
         /// <summary>Assert.NotSame</summary>
-        public static void IsNotSameReferenceAs<T>(this T actual, T notExpected)
-        {
+        public static void IsNotSameReferenceAs<T>(this T actual, T notExpected) where T : class
+		{
             Assert.NotSame(notExpected, actual);
         }
 

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;netstandard1.6;net45;net461;net47</TargetFrameworks>
         <AssemblyName>MessagePack</AssemblyName>
         <SignAssembly>True</SignAssembly>
         <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
@@ -17,7 +17,7 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' != 'net45'">
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.xml</DocumentationFile>
+        <DocumentationFile></DocumentationFile>
         <NoWarn>1701;1702;1705;1591</NoWarn>
         <DefineConstants>TRACE;RELEASE;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
@@ -39,6 +39,10 @@
         <LangVersion>7</LangVersion>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.6|AnyCPU'">
+      <DocumentationFile></DocumentationFile>
+    </PropertyGroup>
+
     <ItemGroup>
         <None Remove="*.meta" />
         <None Remove="Resolvers\*.meta" />
@@ -52,23 +56,12 @@
         <None Include="MessagePackSerializer.Typeless.cs" />
     </ItemGroup>
 
-    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard1.6' ">
+     <ItemGroup>
         <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
         <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
         <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.3.0" />
-        <PackageReference Include="System.ValueTuple" Version="4.3.0" />
-    </ItemGroup>
-
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net47' ">
-        <Reference Include="System" />
-        <Reference Include="System.Core" />
-        <Reference Include="Microsoft.CSharp" />
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.3.0" />
-    </ItemGroup>
-
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
-        <PackageReference Include="System.ValueTuple" Version="4.3.0" />
+        <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.4.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -124,5 +117,9 @@
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Update="NETStandard.Library" Version="2.0.2" />
     </ItemGroup>
 </Project>

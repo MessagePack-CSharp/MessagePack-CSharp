@@ -17,7 +17,7 @@ namespace MessagePack.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object[] unionData = new object[]
+        public static IEnumerable<object[]> unionData = new List<object[]>
         {
             new object[]{new MySubUnion1 { One = 23 },     new MySubUnion1 { One = 23 }},
             new object[]{new MySubUnion2 { Two = 233 },    new MySubUnion2 { Two = 233 }},

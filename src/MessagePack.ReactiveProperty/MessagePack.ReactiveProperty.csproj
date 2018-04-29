@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;netstandard2.0;net46;net47</TargetFrameworks>
+    <TargetFrameworks>netstandard1.6;netstandard2.0;net461;net47</TargetFrameworks>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -13,40 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="ReactivePropertySlimResolver.cs" />
-    <Compile Remove="SlimFormatter.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="ReactiveProperty" Version="4.2.2" />
     <PackageReference Include="System.Reactive.PlatformServices" Version="3.1.1" />
+    <PackageReference Update="NETStandard.Library" Version="2.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net47'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
   </ItemGroup>
 
 </Project>
