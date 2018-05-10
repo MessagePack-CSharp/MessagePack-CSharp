@@ -612,7 +612,19 @@ var rawJson = MessagePackSerializer.ToJson(lz4Bytes);
 Console.WriteLine(rawJson);
 ```
 
-built-in LZ4 support uses primitive LZ4 API. The LZ4 API is more efficient if you know the size of original source length. Therefore, size is written on the top.
+built-in LZ4 support uses primitive LZ4 API. The LZ4 API is more efficient if you know the size of original source length. Therefore, size is written on the top as a MsgPack header. To decompress with a different LZ4 implementation you may need to manually seek past the MsgPack header.
+
+You can directly use the LZ4 support on binary for compression.
+
+```csharp
+//sufficiently large enough byte array
+byte[] myByteArray = Encoding.Default.GetBytes("".PadLeft(128, 'a'));
+
+byte[] compressed = LZ4MessagePackSerializer.Serialize(myByteArray)
+
+byte[] clonedOriginal = LZ4MessagePackSerializer.Deserialize<byte[]>(compressed)
+```
+Note the deserialization type provided of `byte[]`.
 
 > Compression speed is not always fast. Depending on the target binary, it may be short or longer. However, even at worst, it is about twice, but it is still often faster than other uncompressed serializers.
 
