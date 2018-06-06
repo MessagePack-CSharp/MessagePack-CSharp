@@ -737,9 +737,11 @@ Author is creating other extension packages, too.
 
 You can make your own extension serializers or integrate with framework, let's create them and share it!
 
-* [pocketberserker/MessagePack.FSharpExtensions](https://github.com/pocketberserker/MessagePack.FSharpExtensions) - supports F# list,set,map,unit,option,discriminated union
+* [MessagePack.FSharpExtensions](https://github.com/pocketberserker/MessagePack.FSharpExtensions) - supports F# list,set,map,unit,option,discriminated union
+* [MessagePack.NodaTime](https://github.com/ARKlab/MessagePack) - 
+Support for NodaTime types to MessagePack C#
 * [WebApiContrib.Core.Formatter.MessagePack](https://github.com/WebApiContrib/WebAPIContrib.Core#formatters) - supports ASP.NET Core MVC([details in blog post](https://www.strathweb.com/2017/06/using-messagepack-with-asp-net-core-mvc/))
-* [sketch7/MessagePack.MediaTypeFormatter](https://github.com/sketch7/MessagePack.MediaTypeFormatter) - MessagePack MediaTypeFormatter
+* [MessagePack.MediaTypeFormatter](https://github.com/sketch7/MessagePack.MediaTypeFormatter) - MessagePack MediaTypeFormatter
 
 High-Level API(MessagePackSerializer)
 ---
