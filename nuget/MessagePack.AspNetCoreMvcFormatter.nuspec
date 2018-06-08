@@ -13,11 +13,11 @@
         <dependencies>
             <group targetFramework=".NETStandard1.6">
                 <dependency id="MessagePack" version="1.7.3.4" />
-                <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.2.0" />
+                <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="[1.2.0, 2.0.0)" />
             </group>
             <group targetFramework=".NETStandard2.0">
                 <dependency id="MessagePack" version="1.7.3.4" />
-                <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="1.2.0" />
+                <dependency id="Microsoft.AspNetCore.Mvc.Abstractions" version="[2.0.0, 3.0.0)" />
             </group>
         </dependencies>
     </metadata>

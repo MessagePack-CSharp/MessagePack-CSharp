@@ -7,12 +7,18 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.AspNetCoreMvcFormatter.xml</DocumentationFile>
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <DocumentationFile>bin\Release\$(TargetFramework)\MessagePack.AspNetCoreMvcFormatter.xml</DocumentationFile>
     </PropertyGroup>
 
-    <ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="1.1.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="1.1.2" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.0.0" />
     </ItemGroup>
 
     <ItemGroup>
