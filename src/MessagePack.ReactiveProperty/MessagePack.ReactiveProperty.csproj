@@ -12,9 +12,17 @@
     <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netstandard1.6' " >
+    <PackageReference Include="ReactiveProperty" Version="5.0.0" />
+    <PackageReference Include="System.Reactive.PlatformServices" Version="4.0.0" />    
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
     <PackageReference Include="ReactiveProperty" Version="4.2.2" />
-    <PackageReference Include="System.Reactive.PlatformServices" Version="3.1.1" />
+    <PackageReference Include="System.Reactive.PlatformServices" Version="3.1.1" />    
+  </ItemGroup>
+
+  <ItemGroup>    
     <PackageReference Update="NETStandard.Library" Version="2.0.2" />
   </ItemGroup>
 
