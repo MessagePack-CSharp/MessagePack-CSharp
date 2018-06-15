@@ -104,7 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\sandbox\SharedData\SharedData.csproj">
-      <Project>{3abc5c4c-2ce4-459e-8666-f2b181c3def3}</Project>
+      <Project>{3163628e-17a7-41a5-8fa3-9100614a81bb}</Project>
       <Name>SharedData</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\MessagePack.ImmutableCollection\MessagePack.ImmutableCollection.csproj">
