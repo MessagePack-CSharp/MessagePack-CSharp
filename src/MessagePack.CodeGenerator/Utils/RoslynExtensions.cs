@@ -5,45 +5,59 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace MessagePack.CodeGenerator
 {
     // Utility and Extension methods for Roslyn
     internal static class RoslynExtensions
     {
-        public static async Task<Compilation> GetCompilationFromProject(string csprojPath, params string[] preprocessorSymbols)
+        public static async Task<Compilation> GetCompilationFromProject(string csprojPath, string framework, bool quiet, params string[] preprocessorSymbols)
         {
-            var workspace = MSBuildWorkspace.Create();
+            var projectInstance = CreateProjectInstance(csprojPath,ref framework);
 
-            workspace.WorkspaceFailed += (sender,eventArgs) =>
+            using (var workspace = CreateWorkspace(framework))
             {
-                Console.WriteLine($"{eventArgs.Diagnostic.Kind}: {eventArgs.Diagnostic.Message}");
-            };
+                if (!quiet)
+                {
+                    workspace.WorkspaceFailed += (sender,eventArgs) =>
+                    {
+                        Console.WriteLine($"{eventArgs.Diagnostic.Kind}: {eventArgs.Diagnostic.Message}");
+                    };
+                }
 
-            var project = await workspace.OpenProjectAsync(csprojPath).ConfigureAwait(false);
-            project = WithAssemblyReferences(project); // workaround:)*/
-            project = project.WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols));
+                workspace.LoadMetadataForReferencedProjects = true;
 
-            var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
-            return compilation;
+                var project = await workspace.OpenProjectAsync(csprojPath).ConfigureAwait(false);
+                project = WithAssemblyReferences(project,projectInstance); // workaround
+                project = project.WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols));
+
+                var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
+                return compilation;
+            }
         }
+
+        private static MSBuildWorkspace CreateWorkspace(string framework) =>
+            string.IsNullOrWhiteSpace(framework)
+            ? MSBuildWorkspace.Create()
+            : MSBuildWorkspace.Create(new Dictionary<string,string> {
+                { PropertyNames.TargetFramework, framework },
+            });
 
         //The project references don't get compiled correctly
         //Remove them and load compiled assemblies
-        private static Project WithAssemblyReferences(Project project)
+        private static Project WithAssemblyReferences(Project project,ProjectInstance projectInstance)
         {
-            var allAsmRefs = GetProjectReferences(project.FilePath);
+            var allAsmRefs = GetProjectReferences(projectInstance);
 
             var addExtRefs = allAsmRefs.GroupJoin(project.MetadataReferences.Select(x => x.Display),o => o,i => i,
               (o,i) => new { OuterItem = o,InnerItems = i.DefaultIfEmpty() })
               .SelectMany(x => x.InnerItems,(x,innerItem) => new { x.OuterItem,innerItem })
               .Where(x => x.innerItem == null)
-              .Select(x => MetadataReference.CreateFromFile(x.OuterItem));
+              .Select(x => x.OuterItem)
+              .Distinct()
+              .Select(x => MetadataReference.CreateFromFile(x));
 
             var projRefs = project.AllProjectReferences;
 
@@ -55,27 +69,76 @@ namespace MessagePack.CodeGenerator
             return project.AddMetadataReferences(addExtRefs);
         }
 
-        private static IEnumerable<string> GetProjectReferences(string projectFileName)
+        private static ProjectInstance CreateProjectInstance(string projectFileName,ref string framework) =>
+            string.IsNullOrWhiteSpace(framework)
+                ? SetTargetFrameworkIfNeeded(new ProjectInstance(projectFileName),ref framework)
+                : new ProjectInstance(projectFileName,new Dictionary<string,string>
+                {
+                    { PropertyNames.TargetFramework, framework },
+                },null);
+
+        private static IEnumerable<string> GetProjectReferences(ProjectInstance projectInstance)
         {
-            var projectInstance = new ProjectInstance(projectFileName);
             var result = BuildManager.DefaultBuildManager.Build(
-              new BuildParameters(),
-              new BuildRequestData(projectInstance,new[]
-            {
-                "ResolveProjectReferences",
-                "ResolveAssemblyReferences"
-            }));
+                new BuildParameters(),
+                new BuildRequestData(projectInstance,new[]
+                {
+                    PropertyNames.ResolveProjectReferences,
+                    PropertyNames.ResolveAssemblyReferences
+                }));
 
             IEnumerable<string> GetResultItems(string targetName)
             {
-                var buildResult = result.ResultsByTarget[targetName];
-                var buildResultItems = buildResult.Items;
+                if (result.ResultsByTarget.TryGetValue(targetName,out TargetResult buildResult))
+                {
+                    var buildResultItems = buildResult.Items;
+                    return buildResultItems.Select(item => item.ItemSpec);
+                }
 
-                return buildResultItems.Select(item => item.ItemSpec);
+                return Array.Empty<string>();
             }
 
-            return GetResultItems("ResolveProjectReferences")
-              .Concat(GetResultItems("ResolveAssemblyReferences"));
+            return GetResultItems(PropertyNames.ResolveProjectReferences)
+              .Concat(GetResultItems(PropertyNames.ResolveAssemblyReferences));
+        }
+
+        private static ProjectInstance SetTargetFrameworkIfNeeded(ProjectInstance project,ref string framework)
+        {
+            var target = project.GetPropertyValue(PropertyNames.TargetFramework);
+
+            // If the project supports multiple target frameworks and specific framework isn't
+            // selected, we must pick one before execution. Otherwise, the ResolveReferences
+            // target might not be available to us.
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                var frameworks = project.GetPropertyValue(PropertyNames.TargetFrameworks).Split(new char[] { ';' },StringSplitOptions.RemoveEmptyEntries);
+
+                if (frameworks.Length > 0)
+                {
+                    framework = frameworks[0];
+
+                    return new ProjectInstance(project.ProjectFileLocation.LocationString,
+                        new Dictionary<string,string> { [PropertyNames.TargetFramework] = framework },null);
+                }
+            }
+
+            return project;
+        }
+
+        internal static class PropertyNames
+        {
+            public const string ResolveProjectReferences = nameof(ResolveProjectReferences);
+            public const string ResolveAssemblyReferences = nameof(ResolveAssemblyReferences);
+            public const string _ResolveReferenceDependencies = nameof(_ResolveReferenceDependencies);
+            public const string TargetFramework = nameof(TargetFramework);
+            public const string TargetFrameworks = nameof(TargetFrameworks);
+            public const string PreprocessorSymbols = "DefineConstants";
+            public const string LangVersion = nameof(LangVersion);
+            public const string CheckForSystemRuntimeDependency = nameof(CheckForSystemRuntimeDependency);
+            public const string DesignTimeBuild = nameof(DesignTimeBuild);
+            public const string BuildProjectReferences = nameof(BuildProjectReferences);
+            public const string BuildingInsideVisualStudio = nameof(BuildingInsideVisualStudio);
+            public const string Configuration = nameof(Configuration);
         }
 
         public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
@@ -100,10 +163,9 @@ namespace MessagePack.CodeGenerator
                     })
                     .Where(x => x != null))
                 {
-                    var namedType = item as INamedTypeSymbol;
-                    if (namedType != null && !symbols.Contains(item))
+                    if (item is INamedTypeSymbol namedType && !symbols.Contains(item))
                     {
-						symbols.Add(namedType);
+                        symbols.Add(namedType);
                         yield return namedType;
                     }
                 }

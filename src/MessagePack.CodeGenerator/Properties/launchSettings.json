@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MessagePack.CodeGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "-i=\"..\\..\\..\\..\\..\\sandbox\\Sandbox\\Sandbox.csproj\" -o=\"MessagePackGenerated.cs\""
+    }
+  }
+}

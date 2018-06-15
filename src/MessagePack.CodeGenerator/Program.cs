@@ -18,6 +18,8 @@ namespace MessagePack.CodeGenerator
         public string ResolverName { get; private set; }
         public string NamespaceRoot { get; private set; }
         public bool IsUseMap { get; private set; }
+        public string TargetFramework { get; private set; }
+        public bool Quiet { get; private set; } = true;
 
         public bool IsParsed { get; set; }
 
@@ -36,6 +38,8 @@ namespace MessagePack.CodeGenerator
                 { "r|resolvername=", "[optional, default=GeneratedResolver]Set resolver name", x => { ResolverName = x; } },
                 { "n|namespace=", "[optional, default=MessagePack]Set namespace root name", x => { NamespaceRoot = x; } },
                 { "m|usemapmode", "[optional, default=false]Force use map mode serialization", x => { IsUseMap = true; } },
+                { "f|framework=", "[optional, default=first target framework]TargetFramework in the multi-target project", x => { TargetFramework = x; } },
+                { "q|quiet=", "[optional, default=true]Quiet display option for workspace failures", (bool x) => { Quiet = x; } },
             };
             if (args.Length == 0)
             {
@@ -71,7 +75,7 @@ namespace MessagePack.CodeGenerator
 
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var cmdArgs = new CommandlineArguments(args);
             if (!cmdArgs.IsParsed)
@@ -84,9 +88,10 @@ namespace MessagePack.CodeGenerator
             var sw = Stopwatch.StartNew();
             Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
 
-            var collector = new TypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
+            var collector = await TypeCollector.CreateTypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true,
+                cmdArgs.IsUseMap, cmdArgs.TargetFramework, cmdArgs.Quiet);
 
-            Console.WriteLine("Project Compilation Complete:" + sw.Elapsed.ToString());
+            Console.WriteLine("Project Compilation Complete: " + sw.Elapsed.ToString());
             Console.WriteLine();
 
             sw.Restart();
@@ -94,7 +99,7 @@ namespace MessagePack.CodeGenerator
 
             var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
 
-            Console.WriteLine("Method Collect Complete:" + sw.Elapsed.ToString());
+            Console.WriteLine("Method Collect Complete: " + sw.Elapsed.ToString());
 
             Console.WriteLine("Output Generation Start");
             sw.Restart();
@@ -157,7 +162,7 @@ namespace MessagePack.CodeGenerator
 
             Output(cmdArgs.OutputPath, sb.ToString());
 
-            Console.WriteLine("String Generation Complete:" + sw.Elapsed.ToString());
+            Console.WriteLine("String Generation Complete: " + sw.Elapsed.ToString());
         }
 
         static void Output(string path, string text)
