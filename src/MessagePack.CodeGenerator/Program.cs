@@ -88,7 +88,7 @@ namespace MessagePack.CodeGenerator
             var sw = Stopwatch.StartNew();
             Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
 
-            var collector = await TypeCollector.CreateTypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true,
+            var collector = await TypeCollector.CreateCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true,
                 cmdArgs.IsUseMap, cmdArgs.TargetFramework, cmdArgs.Quiet);
 
             Console.WriteLine("Project Compilation Complete: " + sw.Elapsed.ToString());

@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "MessagePackAnalyzer.Vsix": {
+      "commandName": "Executable",
+      "executablePath": "devenv.exe",
+      "commandLineArgs": "/rootsuffix Roslyn"
+    }
+  }
+}

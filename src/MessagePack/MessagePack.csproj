@@ -61,7 +61,7 @@
         <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
         <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
         <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.0" />
+        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -117,9 +117,5 @@
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
       </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Update="NETStandard.Library" Version="2.0.2" />
     </ItemGroup>
 </Project>

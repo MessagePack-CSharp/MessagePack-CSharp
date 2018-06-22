@@ -238,7 +238,7 @@ namespace MessagePack.CodeGenerator
                 .ToArray();
         }
 
-        public static async Task<TypeCollector> CreateTypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, 
+        public static async Task<TypeCollector> CreateCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, 
 			bool isForceUseMap, string framework, bool quiet)
         {
             MSBuildLocator.RegisterDefaults();
