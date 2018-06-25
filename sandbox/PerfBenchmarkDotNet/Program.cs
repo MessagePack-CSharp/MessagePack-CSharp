@@ -309,7 +309,9 @@ namespace PerfBenchmarkDotNet
         static newmsgpack::MessagePack.IFormatterResolver mpcGenFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedAutomata());
         static newmsgpack::MessagePack.IFormatterResolver mpcGenDictFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedDictionary());
 
-        static DeserializeBenchmark()
+		static byte[] utf8JsonObj = Utf8Json.JsonSerializer.Serialize(new IntKeySerializerTarget());
+
+		static DeserializeBenchmark()
         {
             using (var ms = new MemoryStream())
             {
@@ -422,11 +424,15 @@ namespace PerfBenchmarkDotNet
                 return Jil.JSON.Deserialize<IntKeySerializerTarget>(sr);
             }
         }
-    }
 
+		[Benchmark]
+		public IntKeySerializerTarget Utf8JsonSerializer()
+		{
+			return Utf8Json.JsonSerializer.Deserialize<IntKeySerializerTarget>(utf8JsonObj);
+		}
+	}
 
-
-    [Config(typeof(BenchmarkConfig))]
+	[Config(typeof(BenchmarkConfig))]
     public class SerializeBenchmark
     {
         static MsgPack.Serialization.SerializationContext mapContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Map };
@@ -538,7 +544,13 @@ namespace PerfBenchmarkDotNet
                 return ms.ToArray();
             }
         }
-    }
+
+		[Benchmark]
+		public byte[] Utf8JsonSerializer()
+		{
+			return Utf8Json.JsonSerializer.Serialize(intData);
+		}
+	}
 
     [Config(typeof(BenchmarkConfig))]
     public class DictionaryLookupCompare

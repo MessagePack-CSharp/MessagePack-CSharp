@@ -106,7 +106,9 @@ namespace PerfnetFramework
             byte[] data3 = null;
             byte[] dataJson = null;
             byte[] dataGzipJson = null;
-            using (new Measure("MsgPack-Cli"))
+			byte[] dataJson2 = null;
+
+			using (new Measure("MsgPack-Cli"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
@@ -176,7 +178,15 @@ namespace PerfnetFramework
                 }
             }
 
-            using (var ms = new MemoryStream())
+			using (new Measure("Utf8Json"))
+			{
+				for (int i = 0; i < Iteration; i++)
+				{
+					dataJson2 =  Utf8Json.JsonSerializer.Serialize(target);
+				}
+			}
+
+			using (var ms = new MemoryStream())
             {
                 ProtoBuf.Serializer.Serialize(ms, target);
                 data2 = ms.ToArray();
@@ -283,7 +293,15 @@ namespace PerfnetFramework
                 }
             }
 
-            Console.WriteLine();
+			using (new Measure("Utf8Json"))
+			{
+				for (int i = 0; i < Iteration; i++)
+				{
+					Utf8Json.JsonSerializer.Deserialize<T>(dataJson2);					
+				}
+			}
+
+			Console.WriteLine();
             Console.WriteLine("FileSize::");
             var label = "";
             label = "MsgPack-Cli"; Console.WriteLine($"{label,20}   {data.Length} Byte");
@@ -293,8 +311,9 @@ namespace PerfnetFramework
             label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
             label = "JsonNet"; Console.WriteLine($"{label,20}   {dataJson.Length} Byte");
             label = "JsonNet+GZip"; Console.WriteLine($"{label,20}   {dataGzipJson.Length} Byte");
+			label = "Utf8Json"; Console.WriteLine($"{label,20}   {dataJson2.Length} Byte");
 
-            Console.WriteLine();
+			Console.WriteLine();
             Console.WriteLine();
         }
 
