@@ -35,7 +35,7 @@ namespace <#= Namespace #>
             {
 <# foreach(var x in objInfo.Members.Where(x => x.IsReadable)) { #>
                 global::MessagePack.MessagePackBinary.GetEncodedStringBytes("<#= x.StringKey #>"),
-<# } #>                
+<# } #>
             };
         }
 
@@ -48,7 +48,7 @@ namespace <#= Namespace #>
             {
                 return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             }
-<# } #>            
+<# } #>
 <#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
             ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>

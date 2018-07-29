@@ -60,7 +60,7 @@ namespace <#= Namespace #>
 
             return MessagePackBinary.WriteNil(ref bytes, offset);
         }
-        
+
         public <#= info.FullName #> Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
         {
             if (MessagePackBinary.IsNil(bytes, offset))
@@ -98,9 +98,9 @@ namespace <#= Namespace #>
                     offset += MessagePackBinary.ReadNextBlock(bytes, offset);
                     break;
             }
-            
+
             readSize = offset - startOffset;
-            
+
             return result;
         }
     }
