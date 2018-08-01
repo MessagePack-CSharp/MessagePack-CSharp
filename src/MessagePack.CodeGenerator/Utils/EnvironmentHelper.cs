@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Microsoft.Build.MSBuildLocator;
+using Microsoft.Build.Locator;
 
 namespace MessagePack.CodeGenerator
 {
@@ -117,6 +117,7 @@ namespace MessagePack.CodeGenerator
             var msbuildPath = Environment.GetEnvironmentVariable("MSBUILD_EXE_PATH");
             if (!string.IsNullOrEmpty(msbuildPath) && File.Exists(msbuildPath))
             {
+                MSBuildLocator.RegisterMSBuildPath(Path.GetDirectoryName(msbuildPath));
                 return;
             }
             msbuildPath = getMsBuildPathFunc();
@@ -127,6 +128,7 @@ namespace MessagePack.CodeGenerator
                     "Please set MSBUILD_EXE_PATH to point at MSBuild.dll.");
             }
             Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", msbuildPath);
+            MSBuildLocator.RegisterMSBuildPath(Path.GetDirectoryName(msbuildPath));
         }
     }
 }
