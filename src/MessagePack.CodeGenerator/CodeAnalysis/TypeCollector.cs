@@ -9,11 +9,11 @@ namespace MessagePack.CodeGenerator
     {
         public readonly INamedTypeSymbol Task;
         public readonly INamedTypeSymbol TaskOfT;
-        public readonly INamedTypeSymbol MessagePackObjectAttribnute;
+        public readonly INamedTypeSymbol MessagePackObjectAttribute;
         public readonly INamedTypeSymbol UnionAttribute;
         public readonly INamedTypeSymbol SerializationConstructorAttribute;
-        public readonly INamedTypeSymbol KeyAttribnute;
-        public readonly INamedTypeSymbol IgnoreAttribnute;
+        public readonly INamedTypeSymbol KeyAttribute;
+        public readonly INamedTypeSymbol IgnoreAttribute;
         public readonly INamedTypeSymbol IgnoreDataMemberAttribute;
         public readonly INamedTypeSymbol IMessagePackSerializationCallbackReceiver;
 
@@ -21,11 +21,11 @@ namespace MessagePack.CodeGenerator
         {
             TaskOfT = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task`1");
             Task = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task");
-            MessagePackObjectAttribnute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute");
+            MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute");
             UnionAttribute = compilation.GetTypeByMetadataName("MessagePack.UnionAttribute");
             SerializationConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.SerializationConstructorAttribute");
-            KeyAttribnute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute");
-            IgnoreAttribnute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute");
+            KeyAttribute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute");
+            IgnoreAttribute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute");
             IgnoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
             IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver");
         }
@@ -228,8 +228,8 @@ namespace MessagePack.CodeGenerator
                 .Where(x =>
                        ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
                     || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
-                    || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribnute))
-                    || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribnute))
+                    || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribute))
+                    || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribute))
                     )
                 .ToArray();
         }
@@ -463,7 +463,7 @@ namespace MessagePack.CodeGenerator
         {
             var isClass = !type.IsValueType;
 
-            var contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.MessagePackObjectAttribnute);
+            var contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.MessagePackObjectAttribute);
             if (contractAttr == null)
             {
                 throw new MessagePackGeneratorResolveFailedException("Serialization Object must mark MessagePackObjectAttribute." + " type: " + type.Name);
@@ -482,7 +482,7 @@ namespace MessagePack.CodeGenerator
 
                 foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>().Where(x => !x.IsOverride))
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
 
                     var member = new MemberSerializationInfo
                     {
@@ -503,7 +503,7 @@ namespace MessagePack.CodeGenerator
                 }
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
                     if (item.IsImplicitlyDeclared) continue;
 
                     var member = new MemberSerializationInfo
@@ -531,7 +531,7 @@ namespace MessagePack.CodeGenerator
 
                 foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
 
                     var member = new MemberSerializationInfo
                     {
@@ -545,7 +545,7 @@ namespace MessagePack.CodeGenerator
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
-                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
+                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribute)?.ConstructorArguments[0];
                     if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.Name + " member:" + item.Name);
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
@@ -587,7 +587,7 @@ namespace MessagePack.CodeGenerator
                 foreach (var item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
                     if (item.IsImplicitlyDeclared) continue;
-                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribnute)) continue;
+                    if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute)) continue;
 
                     var member = new MemberSerializationInfo
                     {
@@ -601,7 +601,7 @@ namespace MessagePack.CodeGenerator
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
-                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
+                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribute)?.ConstructorArguments[0];
                     if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.Name + " member:" + item.Name);
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
