@@ -73,8 +73,8 @@ namespace MessagePackAnalyzer
 
             if (
                ((declaredSymbol.TypeKind == TypeKind.Interface) && declaredSymbol.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
-            || ((declaredSymbol.TypeKind == TypeKind.Class) && declaredSymbol.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribnute))
-            || ((declaredSymbol.TypeKind == TypeKind.Struct) && declaredSymbol.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribnute))
+            || ((declaredSymbol.TypeKind == TypeKind.Class) && declaredSymbol.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribute))
+            || ((declaredSymbol.TypeKind == TypeKind.Struct) && declaredSymbol.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribute))
             )
             {
                 var reportContext = new DiagnosticsReportContext(context);
@@ -89,10 +89,10 @@ namespace MessagePackAnalyzer
     {
         public readonly INamedTypeSymbol Task;
         public readonly INamedTypeSymbol TaskOfT;
-        public readonly INamedTypeSymbol MessagePackObjectAttribnute;
+        public readonly INamedTypeSymbol MessagePackObjectAttribute;
         public readonly INamedTypeSymbol UnionAttribute;
         public readonly INamedTypeSymbol SerializationConstructorAttribute;
-        public readonly INamedTypeSymbol KeyAttribnute;
+        public readonly INamedTypeSymbol KeyAttribute;
         public readonly INamedTypeSymbol IgnoreAttribute;
         public readonly INamedTypeSymbol IgnoreDataMemberAttribute;
         public readonly INamedTypeSymbol IMessagePackSerializationCallbackReceiver;
@@ -101,10 +101,10 @@ namespace MessagePackAnalyzer
         {
             TaskOfT = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task`1");
             Task = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task");
-            MessagePackObjectAttribnute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute");
+            MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute");
             UnionAttribute = compilation.GetTypeByMetadataName("MessagePack.UnionAttribute");
             SerializationConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.SerializationConstructorAttribute");
-            KeyAttribnute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute");
+            KeyAttribute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute");
             IgnoreAttribute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute");
             IgnoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
             IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver");
@@ -296,7 +296,7 @@ namespace MessagePackAnalyzer
         {
             var isClass = !type.IsValueType;
 
-            var contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.MessagePackObjectAttribnute);
+            var contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.MessagePackObjectAttribute);
             if (contractAttr == null)
             {
                 var location = callerSymbol != null ? callerSymbol.Locations[0] : type.Locations[0];
@@ -356,7 +356,7 @@ namespace MessagePackAnalyzer
                     var Name = item.Name;
                     if (!IsReadable && !IsWritable) continue;
 
-                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
+                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribute)?.ConstructorArguments[0];
                     if (key == null)
                     {
                         var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -420,7 +420,7 @@ namespace MessagePackAnalyzer
                     var Name = item.Name;
                     if (!IsReadable && !IsWritable) continue;
 
-                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribnute)?.ConstructorArguments[0];
+                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribute)?.ConstructorArguments[0];
                     if (key == null)
                     {
                         var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
