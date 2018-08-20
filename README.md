@@ -714,18 +714,36 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 
 Configuration details, see:[Extension Point section](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
 
-`MessagePack.AspNetCoreMvcFormatter` is add-on of [ASP.NET Core MVC](https://github.com/aspnet/Mvc)'s serialization to boostup performance. This is configuration sample.
+`MessagePack.AspNetCoreMvcFormatter` is add-on of [ASP.NET Core MVC](https://github.com/aspnet/Mvc)'s serialization to boostup performance. 
+Examples below show how to add MessagePack to WebAPI and MVC application [AddMvcCore vs AddMvc](https://stackoverflow.com/questions/40097229/should-i-use-addmvc-or-addmvccore-for-asp-net-core-mvc-development)
 
+**WebAPI**
+
+Following code registers JSON, XML and MsgPack formatters. JSON will be used bt default
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddMvc().AddMvcOptions(option =>
-    {
-        option.OutputFormatters.Clear();
-        option.OutputFormatters.Add(new MessagePackOutputFormatter(ContractlessStandardResolver.Instance));
-        option.InputFormatters.Clear();
-        option.InputFormatters.Add(new MessagePackInputFormatter(ContractlessStandardResolver.Instance));
-    });
+    services.AddMvcCore()
+		.AddJsonFormatters()
+		.AddXmlSerializerFormatters()
+		.AddMsgPackFormatters(msgPackConfig =>
+			{
+				// specify custom resolver, by default `MessagePackSerializer.DefaultResolver` will be used.
+				msgPackConfig.FormatterResolver = DynamicContractlessObjectResolverAllowPrivate.Instance;
+			});
+}
+```
+
+**MVC**
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddMvc()
+		.AddMsgPackFormatters(msgPackConfig =>
+			{
+				// specify custom resolver, by default `MessagePackSerializer.DefaultResolver` will be used.
+				msgPackConfig.FormatterResolver = DynamicContractlessObjectResolverAllowPrivate.Instance;
+			});
 }
 ```
 
