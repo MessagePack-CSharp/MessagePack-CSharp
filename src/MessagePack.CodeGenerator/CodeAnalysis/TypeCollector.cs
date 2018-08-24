@@ -203,6 +203,7 @@ namespace MessagePack.CodeGenerator
         List<EnumSerializationInfo> collectedEnumInfo;
         List<GenericSerializationInfo> collectedGenericInfo;
         List<UnionSerializationInfo> collectedUnionInfo;
+        IAssemblySymbol assembly;
 
         // --- 
 
@@ -210,6 +211,7 @@ namespace MessagePack.CodeGenerator
         {
             this.csProjPath = csProjPath;
             var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
+            this.assembly = compilation.Assembly;
             this.typeReferences = new ReferenceSymbols(compilation);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
@@ -282,6 +284,11 @@ namespace MessagePack.CodeGenerator
 
             var type = typeSymbol as INamedTypeSymbol;
 
+            if (!type.ContainingAssembly.Equals(assembly))
+            {
+              return;
+            }
+
             if (typeSymbol.TypeKind == TypeKind.Enum)
             {
                 CollectEnum(type);
@@ -293,12 +300,7 @@ namespace MessagePack.CodeGenerator
                 CollectGeneric(type);
                 return;
             }
-
-            if (type.Locations[0].IsInMetadata)
-            {
-                return;
-            }
-
+            
             if (type.TypeKind == TypeKind.Interface || (type.TypeKind == TypeKind.Class && type.IsAbstract))
             {
                 CollectUnion(type);
