@@ -12,7 +12,7 @@ namespace MessagePack.CodeGenerator
 {
     class CommandlineArguments
     {
-        public string InputPath { get; private set; }
+        public List<string> InputPaths { get; private set; }
         public string OutputPath { get; private set; }
         public List<string> ConditionalSymbols { get; private set; }
         public string ResolverName { get; private set; }
@@ -23,6 +23,7 @@ namespace MessagePack.CodeGenerator
 
         public CommandlineArguments(string[] args)
         {
+            InputPaths = new List<string>();
             ConditionalSymbols = new List<string>();
             NamespaceRoot = "MessagePack";
             ResolverName = "GeneratedResolver";
@@ -30,7 +31,7 @@ namespace MessagePack.CodeGenerator
 
             var option = new OptionSet()
             {
-                { "i|input=", "[required]Input path of analyze csproj", x => { InputPath = x; } },
+                { "i|input=", "[required]Input path of analyze csproj", x => { InputPaths.Add(x); } },
                 { "o|output=", "[required]Output file path", x => { OutputPath = x; } },
                 { "c|conditionalsymbol=", "[optional, default=empty]conditional compiler symbol", x => { ConditionalSymbols.AddRange(x.Split(',')); } },
                 { "r|resolvername=", "[optional, default=GeneratedResolver]Set resolver name", x => { ResolverName = x; } },
@@ -45,7 +46,7 @@ namespace MessagePack.CodeGenerator
             {
                 option.Parse(args);
 
-                if (InputPath == null || OutputPath == null)
+                if (!InputPaths.Any() || OutputPath == null)
                 {
                     Console.WriteLine("Invalid Argument:" + string.Join(" ", args));
                     Console.WriteLine();
@@ -80,25 +81,30 @@ namespace MessagePack.CodeGenerator
             }
 
             // Generator Start...
+            var sw = new Stopwatch();
+            var collectedInfo = new TypeCollectedInfo();
 
-            var sw = Stopwatch.StartNew();
-            Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
+            foreach(var inputPath in cmdArgs.InputPaths) {
+                sw.Restart();
+                Console.WriteLine("Project Compilation Start:" + inputPath);
 
-            var collector = new TypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
+                var collector = new TypeCollector(inputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
 
-            Console.WriteLine("Project Compilation Complete:" + sw.Elapsed.ToString());
-            Console.WriteLine();
+                Console.WriteLine("Project Compilation Complete:" + sw.Elapsed.ToString());
 
-            sw.Restart();
-            Console.WriteLine("Method Collect Start");
+                sw.Restart();
+                Console.WriteLine("Method Collect Start");
 
-            var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
+                collector.Collect(collectedInfo);
 
-            Console.WriteLine("Method Collect Complete:" + sw.Elapsed.ToString());
+                Console.WriteLine("Method Collect Complete:" + sw.Elapsed.ToString());
+                Console.WriteLine();
+            }
 
             Console.WriteLine("Output Generation Start");
             sw.Restart();
 
+            var objectInfo = collectedInfo.ObjectInfo.ToArray();
             var objectFormatterTemplates = objectInfo
                 .GroupBy(x => x.Namespace)
                 .Select(x => new FormatterTemplate()
@@ -108,6 +114,7 @@ namespace MessagePack.CodeGenerator
                 })
                 .ToArray();
 
+            var enumInfo = collectedInfo.EnumInfo.ToArray();
             var enumFormatterTemplates = enumInfo
                 .GroupBy(x => x.Namespace)
                 .Select(x => new EnumTemplate()
@@ -117,6 +124,7 @@ namespace MessagePack.CodeGenerator
                 })
                 .ToArray();
 
+            var unionInfo = collectedInfo.UnionInfo.ToArray();
             var unionFormatterTemplates = unionInfo
                 .GroupBy(x => x.Namespace)
                 .Select(x => new UnionTemplate()
@@ -126,6 +134,7 @@ namespace MessagePack.CodeGenerator
                 })
                 .ToArray();
 
+            var genericInfo = collectedInfo.GenericInfo.Distinct().ToArray();
             var resolverTemplate = new ResolverTemplate()
             {
                 Namespace = cmdArgs.GetNamespaceDot() + "Resolvers",

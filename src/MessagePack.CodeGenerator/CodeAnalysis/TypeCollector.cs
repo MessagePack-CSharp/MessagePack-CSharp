@@ -31,6 +31,24 @@ namespace MessagePack.CodeGenerator
         }
     }
 
+    public class TypeCollectedInfo
+    {
+        public HashSet<string> AlreadyCollected { get; }
+        public List<ObjectSerializationInfo> ObjectInfo { get; }
+        public List<EnumSerializationInfo> EnumInfo { get; }
+        public List<GenericSerializationInfo> GenericInfo { get; }
+        public List<UnionSerializationInfo> UnionInfo { get; }
+
+        public TypeCollectedInfo()
+        {
+            AlreadyCollected = new HashSet<string>();
+            ObjectInfo = new List<ObjectSerializationInfo>();
+            EnumInfo = new List<EnumSerializationInfo>();
+            GenericInfo = new List<GenericSerializationInfo>();
+            UnionInfo = new List<UnionSerializationInfo>();
+        }
+    }
+
     public class TypeCollector
     {
         const string CodegeneratorOnlyPreprocessorSymbol = "INCLUDE_ONLY_CODE_GENERATION";
@@ -197,14 +215,7 @@ namespace MessagePack.CodeGenerator
 
         readonly bool disallowInternal;
 
-        // visitor workspace:
-        HashSet<ITypeSymbol> alreadyCollected;
-        List<ObjectSerializationInfo> collectedObjectInfo;
-        List<EnumSerializationInfo> collectedEnumInfo;
-        List<GenericSerializationInfo> collectedGenericInfo;
-        List<UnionSerializationInfo> collectedUnionInfo;
-
-        // --- 
+        TypeCollectedInfo collectedInfo;
 
         public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
         {
@@ -234,32 +245,21 @@ namespace MessagePack.CodeGenerator
                 .ToArray();
         }
 
-        void ResetWorkspace()
-        {
-            alreadyCollected = new HashSet<ITypeSymbol>();
-            collectedObjectInfo = new List<ObjectSerializationInfo>();
-            collectedEnumInfo = new List<EnumSerializationInfo>();
-            collectedGenericInfo = new List<GenericSerializationInfo>();
-            collectedUnionInfo = new List<UnionSerializationInfo>();
-        }
-
         // EntryPoint
-        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo) Collect()
+        public void Collect(TypeCollectedInfo collectedInfo)
         {
-            ResetWorkspace();
+            this.collectedInfo = collectedInfo;
 
             foreach (var item in targetTypes)
             {
                 CollectCore(item);
             }
-
-            return (collectedObjectInfo.ToArray(), collectedEnumInfo.ToArray(), collectedGenericInfo.Distinct().ToArray(), collectedUnionInfo.ToArray());
         }
 
         // Gate of recursive collect
         void CollectCore(ITypeSymbol typeSymbol)
         {
-            if (!alreadyCollected.Add(typeSymbol))
+            if (!collectedInfo.AlreadyCollected.Add(typeSymbol.ToString()))
             {
                 return;
             }
@@ -319,7 +319,7 @@ namespace MessagePack.CodeGenerator
                 UnderlyingType = type.EnumUnderlyingType.ToDisplayString(binaryWriteFormat)
             };
 
-            collectedEnumInfo.Add(info);
+            collectedInfo.EnumInfo.Add(info);
         }
 
         void CollectUnion(INamedTypeSymbol type)
@@ -343,7 +343,7 @@ namespace MessagePack.CodeGenerator
                 }).OrderBy(x => x.Key).ToArray()
             };
 
-            collectedUnionInfo.Add(info);
+            collectedInfo.UnionInfo.Add(info);
         }
 
         void CollectArray(IArrayTypeSymbol array)
@@ -377,7 +377,7 @@ namespace MessagePack.CodeGenerator
                 throw new InvalidOperationException("does not supports array dimention, " + info.FullName);
             }
 
-            collectedGenericInfo.Add(info);
+            collectedInfo.GenericInfo.Add(info);
 
             return;
         }
@@ -407,7 +407,7 @@ namespace MessagePack.CodeGenerator
                         FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     };
 
-                    collectedGenericInfo.Add(info);
+                    collectedInfo.GenericInfo.Add(info);
                 }
                 return;
             }
@@ -429,7 +429,7 @@ namespace MessagePack.CodeGenerator
                     FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 };
 
-                collectedGenericInfo.Add(info);
+                collectedInfo.GenericInfo.Add(info);
 
                 if (genericTypeString == "System.Linq.ILookup<,>")
                 {
@@ -442,7 +442,7 @@ namespace MessagePack.CodeGenerator
                         FullName = $"global::System.Linq.IGrouping<{typeArgs}>",
                     };
 
-                    collectedGenericInfo.Add(groupingInfo);
+                    collectedInfo.GenericInfo.Add(groupingInfo);
 
                     formatter = knownGenericTypes["System.Collections.Generic.IEnumerable<>"];
                     typeArgs = type.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -454,7 +454,7 @@ namespace MessagePack.CodeGenerator
                         FullName = $"global::System.Collections.Generic.IEnumerable<{typeArgs}>",
                     };
 
-                    collectedGenericInfo.Add(enumerableInfo);
+                    collectedInfo.GenericInfo.Add(enumerableInfo);
                 }
             }
         }
@@ -787,7 +787,7 @@ namespace MessagePack.CodeGenerator
                 NeedsCastOnAfter = needsCastOnAfter,
                 NeedsCastOnBefore = needsCastOnBefore
             };
-            collectedObjectInfo.Add(info);
+            collectedInfo.ObjectInfo.Add(info);
         }
 
         static bool TryGetNextConstructor(IEnumerator<IMethodSymbol> ctorEnumerator, ref IMethodSymbol ctor)
