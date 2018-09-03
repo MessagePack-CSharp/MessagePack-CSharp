@@ -708,7 +708,7 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
     MessagePack.Unity.UnityResolver.Instance,
 
     // finaly use standard(default) resolver
-    StandardResolver.Instance);
+    StandardResolver.Instance
 );
 ```
 
