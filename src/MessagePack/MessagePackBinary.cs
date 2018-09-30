@@ -179,8 +179,12 @@ namespace MessagePack
                 stringDecoders[i] = Decoders.FixString.Instance;
                 stringSegmentDecoders[i] = Decoders.FixStringSegment.Instance;
                 readNextDecoders[i] = Decoders.ReadNextFixStr.Instance;
+                bytesDecoders[i] = Decoders.FixBytes.Instance;
             }
 
+            stringDecoders[MessagePackCode.Bin8] = Decoders.Str8String.Instance;
+            stringDecoders[MessagePackCode.Bin16] = Decoders.Str16String.Instance;
+            stringDecoders[MessagePackCode.Bin32] = Decoders.Str32String.Instance;
             stringDecoders[MessagePackCode.Str8] = Decoders.Str8String.Instance;
             stringDecoders[MessagePackCode.Str16] = Decoders.Str16String.Instance;
             stringDecoders[MessagePackCode.Str32] = Decoders.Str32String.Instance;
@@ -206,6 +210,9 @@ namespace MessagePack
             bytesDecoders[MessagePackCode.Bin8] = Decoders.Bin8Bytes.Instance;
             bytesDecoders[MessagePackCode.Bin16] = Decoders.Bin16Bytes.Instance;
             bytesDecoders[MessagePackCode.Bin32] = Decoders.Bin32Bytes.Instance;
+            bytesDecoders[MessagePackCode.Str8] = Decoders.Bin8Bytes.Instance;
+            bytesDecoders[MessagePackCode.Str16] = Decoders.Bin16Bytes.Instance;
+            bytesDecoders[MessagePackCode.Str32] = Decoders.Bin32Bytes.Instance;
             bytesSegmentDecoders[MessagePackCode.Bin8] = Decoders.Bin8BytesSegment.Instance;
             bytesSegmentDecoders[MessagePackCode.Bin16] = Decoders.Bin16BytesSegment.Instance;
             bytesSegmentDecoders[MessagePackCode.Bin32] = Decoders.Bin32BytesSegment.Instance;
@@ -3655,6 +3662,26 @@ namespace MessagePack.Decoders
         {
             readSize = 1;
             return null;
+        }
+    }
+
+    internal sealed class FixBytes : IBytesDecoder
+    {
+        internal static readonly IBytesDecoder Instance = new FixBytes();
+
+        FixBytes()
+        {
+
+        }
+
+        public byte[] Read(byte[] bytes, int offset, out int readSize)
+        {
+            var length = bytes[offset] & 0x1F;
+            var newBytes = new byte[length];
+            Buffer.BlockCopy(bytes, offset + 1, newBytes, 0, length);
+
+            readSize = length + 1;
+            return newBytes;
         }
     }
 

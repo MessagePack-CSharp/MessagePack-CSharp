@@ -543,6 +543,33 @@ namespace MessagePack.Tests
 
         [Theory]
         [MemberData(nameof(stringTestData))]
+        public void ImplicitStringBytesConversion(string target)
+        {
+            var targetBytes = Encoding.UTF8.GetBytes(target);
+            {
+                byte[] bytes = null;
+
+                var writtenBytes = MessagePackBinary.WriteString(ref bytes, 0, target);
+                int readBytes;
+                var result = MessagePackBinary.ReadBytes(bytes, 0, out readBytes);
+
+                readBytes.Is(writtenBytes);
+                result.Is(targetBytes);
+            }
+            {
+                byte[] bytes = null;
+
+                var writtenBytes = MessagePackBinary.WriteBytes(ref bytes, 0, targetBytes);
+                int readBytes;
+                var result = MessagePackBinary.ReadString(bytes, 0, out readBytes);
+
+                readBytes.Is(writtenBytes);
+                result.Is(target);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(stringTestData))]
         public void StringSegmentTest(string target)
         {
             (var stream, var packer) = CreateReferencePacker();
