@@ -34,7 +34,7 @@ namespace MessagePack
         String
     }
 
-    internal class TinyJsonException : Exception
+    public class TinyJsonException : Exception
     {
         public TinyJsonException(string message) : base(message)
         {
