@@ -126,7 +126,7 @@
     <Compile Include="ExtensionTests\UnityShimTest.cs" />
     <Compile Include="FloatConversionTest.cs" />
     <Compile Include="FormatterTest.cs" />
-    <Compile Include="GenericFormatters.cs" />
+    <Compile Include="GenericFormattersTest.cs" />
     <Compile Include="IgnoreTest.cs" />
     <Compile Include="MessagePackBinaryStream.cs" />
     <Compile Include="MessagePackBinaryTest.cs" />
@@ -145,7 +145,6 @@
     <Compile Include="Utils\ChainingAssertion.Ext.cs" />
     <Compile Include="Utils\ChainingAssertion.Xunit.cs" />
     <Compile Include="EnumAsStringTest.cs" />
-    <Compile Include="ValueTupleTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

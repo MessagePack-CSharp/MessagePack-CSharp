@@ -214,6 +214,10 @@ namespace MessagePack.Internal
 
                     return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
                 }
+                else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition().FullName.StartsWith("System.ValueTuple"))
+                {
+                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
+                }
 
 #endif
 
