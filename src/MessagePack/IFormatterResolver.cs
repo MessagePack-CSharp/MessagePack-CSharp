@@ -2,6 +2,7 @@
 using MessagePack.Formatters;
 using System;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace MessagePack
 {
@@ -27,7 +28,8 @@ namespace MessagePack
                     inner = inner.InnerException;
                 }
 
-                throw inner;
+                ExceptionDispatchInfo.Capture(inner).Throw(); // rethrow
+                throw inner; // this is never called
             }
 
             if (formatter == null)
