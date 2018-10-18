@@ -14,7 +14,7 @@ namespace MessagePack.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object[] tupleTestData = new object[]
+        public static IEnumerable<object[]> tupleTestData = new List<object[]>
         {
             new object[] { Tuple.Create(1) },
             new object[] { Tuple.Create(1,2) },
@@ -33,7 +33,7 @@ namespace MessagePack.Tests
             Convert(data).IsStructuralEqual(data);
         }
 
-        public static object[] valueTupleTestData = new object[]
+        public static IEnumerable<object[]> valueTupleTestData = new List<object[]>
         {
             new object[] { ValueTuple.Create(1),null },
             new object[] { ValueTuple.Create(1,2),null },
@@ -47,14 +47,14 @@ namespace MessagePack.Tests
 
         [Theory(Skip = "AppVeyor Testing")]
         [MemberData(nameof(tupleTestData))]
-        public void TupleTest<T>(T data, T? @null)
+        public void TupleTest2<T>(T data, T? @null)
             where T : struct
         {
             Convert(data).IsStructuralEqual(data);
             Convert(@null).IsNull();
         }
 
-        public static object[] keyValuePairData = new object[]
+        public static IEnumerable<object[]> keyValuePairData = new List<object[]>
         {
             new object[] { new KeyValuePair<int, int>(1,2), null },
             new object[] { new KeyValuePair<int, int>(3,4), new KeyValuePair<int, int>(5,6) },
@@ -69,7 +69,7 @@ namespace MessagePack.Tests
             Convert(t2).IsStructuralEqual(t2);
         }
 
-        public static object[] byteArraySegementData = new object[]
+        public static IEnumerable<object[]> byteArraySegementData = new List<object[]>
         {
             new object[] { new ArraySegment<byte>(new byte[] { 0, 0, 1, 2, 3 }, 2, 3), null, new byte[] { 1, 2, 3 }  },
             new object[] { new ArraySegment<byte>(new byte[0], 0, 0), null, new byte[0] },

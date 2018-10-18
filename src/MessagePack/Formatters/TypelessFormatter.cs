@@ -112,18 +112,23 @@ namespace MessagePack.Formatters
         }
 
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
-        // subtract Version, Culture and PublicKeyToken from AssemblyQualifiedName 
+        // subtract Version, Culture and PublicKeyToken from AssemblyQualifiedName
         static string BuildTypeName(Type type)
         {
             if (RemoveAssemblyVersion)
             {
-                string full = type.AssemblyQualifiedName;
+                var shortened = type.ToString();
 
-                var shortened = SubtractFullNameRegex.Replace(full, "");
                 if (Type.GetType(shortened, false) == null)
                 {
-                    // if type cannot be found with shortened name - use full name
-                    shortened = full;
+                    string full = type.AssemblyQualifiedName;
+
+                    shortened = SubtractFullNameRegex.Replace(full, "");
+                    if (Type.GetType(shortened, false) == null)
+                    {
+                        // if type cannot be found with shortened name - use full name
+                        shortened = full;
+                    }
                 }
 
                 return shortened;

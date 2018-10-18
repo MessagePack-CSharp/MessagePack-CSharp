@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;netstandard2.0;net46;net47</TargetFrameworks>
+    <TargetFrameworks>netstandard1.6;netstandard2.0;net461;net47</TargetFrameworks>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -12,41 +12,18 @@
     <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="ReactivePropertySlimResolver.cs" />
-    <Compile Remove="SlimFormatter.cs" />
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netstandard1.6' ">
+    <PackageReference Include="ReactiveProperty" Version="5.1.1" />
+    <PackageReference Include="System.Reactive.PlatformServices" Version="4.0.0" />    
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Reactive.PlatformServices" Version="3.1.1" />
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
+    <PackageReference Include="ReactiveProperty" Version="4.2.2" />
+    <PackageReference Include="System.Reactive.PlatformServices" Version="3.1.1" />    
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net47'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
   </ItemGroup>
 
 </Project>

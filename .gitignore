@@ -266,6 +266,10 @@ src/MessagePack.UnityClient/Library/*
 src/MessagePack.UnityClient/obj/*
 src/MessagePack.UnityClient/Temp/*
 
+# mpc
+
+src/MessagePack.CodeGenerator/Generator/*Template.cs
+
 # Project Specified
 
 nuget/mpc.exe

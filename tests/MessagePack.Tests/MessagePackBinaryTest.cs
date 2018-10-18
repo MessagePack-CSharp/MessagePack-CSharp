@@ -3,6 +3,7 @@ using System.Linq;
 using System.IO;
 using Xunit;
 using System.Text;
+using System.Collections.Generic;
 
 namespace MessagePack.Tests
 {
@@ -31,7 +32,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteNil(ref bytes, 0).Is(1);
 
-            packer.PackNull().Position.Is(bytes.Length);
+			packer.PackNull();
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -51,8 +53,10 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteBoolean(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+			//packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
+			stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
             MessagePackBinary.ReadBoolean(bytes, 0, out readSize).Is(target);
@@ -73,8 +77,10 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteByte(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+			//packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
+			stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
             MessagePackBinary.ReadByte(bytes, 0, out readSize).Is(target);
@@ -83,7 +89,7 @@ namespace MessagePack.Tests
             CreateUnpackedReference(bytes).AsByte().Is(target);
         }
 
-        public static object[] bytesTestData = new object[]
+        public static IEnumerable<object[]>  bytesTestData = new List<object[]>
         {
             new object[]{ (byte[])null, 1 },
             new object[]{ new byte[] { }, 2 },
@@ -102,8 +108,10 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteBytes(ref bytes, 0, target).Is(length);
 
-            packer.PackBinary(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+			//packer.PackBinary(target).Position.Is(bytes.Length);
+			packer.PackBinary(target);
+			stream.Position.Is(bytes.Length);
+			stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
             MessagePackBinary.ReadBytes(bytes, 0, out readSize).Is(target);
@@ -131,7 +139,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteSByte(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -158,7 +167,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteSingle(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -185,7 +195,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteDouble(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -218,7 +229,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteInt16(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
             // stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -259,15 +271,18 @@ namespace MessagePack.Tests
             // bug of msgpack-cli
             if (target == 255)
             {
-                packer.Pack((byte)255).Position.Is(bytes.Length);
+				packer.Pack((byte)255);
+				stream.Position.Is(bytes.Length);
             }
             else if (target == 50000)
             {
-                packer.Pack((ushort)50000).Position.Is(bytes.Length);
+				packer.Pack((ushort)50000);
+				stream.Position.Is(bytes.Length);
             }
             else
             {
-                packer.Pack(target).Position.Is(bytes.Length);
+				packer.Pack(target);
+				stream.Position.Is(bytes.Length);
             }
             // stream.ToArray().SequenceEqual(bytes).IsTrue();
 
@@ -314,19 +329,23 @@ namespace MessagePack.Tests
             // bug of msgpack-cli
             if (target == 255)
             {
-                packer.Pack((byte)255).Position.Is(bytes.Length);
+				packer.Pack((byte)255);
+				stream.Position.Is(bytes.Length);
             }
             else if (target == 50000)
             {
-                packer.Pack((ushort)50000).Position.Is(bytes.Length);
+				packer.Pack((ushort)50000);
+				stream.Position.Is(bytes.Length);
             }
             else if (target == uint.MaxValue)
             {
-                packer.Pack(uint.MaxValue).Position.Is(bytes.Length);
+				packer.Pack(uint.MaxValue);
+				stream.Position.Is(bytes.Length);
             }
             else
             {
-                packer.Pack(target).Position.Is(bytes.Length);
+				packer.Pack(target);
+				stream.Position.Is(bytes.Length);
             }
             // stream.ToArray().SequenceEqual(bytes).IsTrue();
 
@@ -358,7 +377,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteMapHeader(ref bytes, 0, target).Is(length);
 
-            packer.PackMapHeader((int)target).Position.Is(bytes.Length);
+			packer.PackMapHeader((int)target);
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -393,7 +413,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteArrayHeader(ref bytes, 0, target).Is(length);
 
-            packer.PackArrayHeader((int)target).Position.Is(bytes.Length);
+			packer.PackArrayHeader((int)target);
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -425,7 +446,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteUInt16(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -454,7 +476,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteUInt32(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -487,7 +510,8 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             MessagePackBinary.WriteUInt64(ref bytes, 0, target).Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
+			packer.Pack(target);
+			stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -498,7 +522,7 @@ namespace MessagePack.Tests
         }
 
 
-        public static object[] stringTestData = new object[]
+        public static IEnumerable<object[]> stringTestData = new List<object[]>
         {
             new object[]{ "a"},
             new object[]{ "abc" },
@@ -532,7 +556,7 @@ namespace MessagePack.Tests
             var returnLength = MessagePackBinary.WriteString(ref bytes, 0, target);
 
             var referencePacked = packer.PackString(target);
-            referencePacked.Position.Is(returnLength);
+            stream.Position.Is(returnLength);
             stream.ToArray().SequenceEqual(bytes.Take(returnLength).ToArray()).IsTrue();
 
             int readSize;
@@ -551,7 +575,7 @@ namespace MessagePack.Tests
             var returnLength = MessagePackBinary.WriteString(ref bytes, 0, target);
 
             var referencePacked = packer.PackString(target);
-            referencePacked.Position.Is(returnLength);
+            stream.Position.Is(returnLength);
             stream.ToArray().SequenceEqual(bytes.Take(returnLength).ToArray()).IsTrue();
 
             int readSize;
@@ -575,8 +599,8 @@ namespace MessagePack.Tests
             var returnLength = MessagePackBinary.WriteChar(ref bytes, 0, target);
 
             var referencePacked = packer.Pack(target);
-            referencePacked.Position.Is(returnLength);
-            referencePacked.Position.Is(bytes.Length);
+            stream.Position.Is(returnLength);
+            stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -586,7 +610,7 @@ namespace MessagePack.Tests
         }
 
 
-        public static object[] extTestData = new object[]
+        public static IEnumerable<object[]> extTestData = new List<object[]>
         {
             new object[]{ 0,  Enumerable.Repeat((byte)1, 0).ToArray() },
             new object[]{ 1,  Enumerable.Repeat((byte)1, 1).ToArray() },
@@ -630,8 +654,8 @@ namespace MessagePack.Tests
             var returnLength = MessagePackBinary.WriteExtensionFormat(ref bytes, 0, typeCode, target);
 
             var referencePacked = packer.PackExtendedTypeValue((byte)typeCode, target);
-            referencePacked.Position.Is(returnLength);
-            referencePacked.Position.Is(bytes.Length);
+            stream.Position.Is(returnLength);
+            stream.Position.Is(bytes.Length);
             stream.ToArray().SequenceEqual(bytes).IsTrue();
 
             int readSize;
@@ -648,7 +672,7 @@ namespace MessagePack.Tests
         // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
         // FixExt8(-1) => nanoseconds + seconds | [1970-01-01 00:00:00.000000000 UTC, 2514-05-30 01:53:04.000000000 UTC) range
         // Ext8(12,-1) => nanoseconds + seconds | [-584554047284-02-23 16:59:44 UTC, 584554051223-11-09 07:00:16.000000000 UTC) range
-        public static object[] dateTimeTestData = new object[]
+        public static IEnumerable<object[]> dateTimeTestData = new List<object[]>
         {
             new object[]{ new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 6},
             new object[]{ new DateTime(2010, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 6},

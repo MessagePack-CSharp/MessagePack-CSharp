@@ -1,91 +1,171 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Microsoft.Build.Execution;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace MessagePack.CodeGenerator
 {
     // Utility and Extension methods for Roslyn
     internal static class RoslynExtensions
     {
-        public static async Task<Compilation> GetCompilationFromProject(string csprojPath, params string[] preprocessorSymbols)
+        public static async Task<Compilation> GetCompilationFromProject(string csprojPath, string framework, bool quiet, params string[] preprocessorSymbols)
         {
-            // fucking workaround of resolve reference...
-            var externalReferences = new List<PortableExecutableReference>();
+            var projectInstance = CreateProjectInstance(csprojPath,ref framework);
+
+            using (var workspace = CreateWorkspace(framework))
             {
-                var locations = new List<string>();
-                locations.Add(typeof(object).Assembly.Location); // mscorlib
-                locations.Add(typeof(System.Linq.Enumerable).Assembly.Location); // core
-
-                var xElem = XElement.Load(csprojPath);
-                var ns = xElem.Name.Namespace;
-
-                var csProjRoot = Path.GetDirectoryName(csprojPath);
-                var framworkRoot = Path.GetDirectoryName(typeof(object).Assembly.Location);
-
-                foreach (var item in xElem.Descendants(ns + "Reference"))
+                if (!quiet)
                 {
-                    var hintPath = item.Element(ns + "HintPath")?.Value;
-                    if (hintPath == null)
+                    workspace.WorkspaceFailed += (sender,eventArgs) =>
                     {
-                        var path = Path.Combine(framworkRoot, item.Attribute("Include").Value + ".dll");
-                        locations.Add(path);
-                    }
-                    else
-                    {
-                        locations.Add(Path.Combine(csProjRoot, hintPath));
-                    }
+                        Console.WriteLine($"{eventArgs.Diagnostic.Kind}: {eventArgs.Diagnostic.Message}");
+                    };
                 }
 
-                foreach (var item in locations.Distinct())
+                workspace.LoadMetadataForReferencedProjects = true;
+
+                var project = await workspace.OpenProjectAsync(csprojPath).ConfigureAwait(false);
+                project = WithAssemblyReferences(project,projectInstance); // workaround
+                project = project.WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols));
+
+                var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
+                return compilation;
+            }
+        }
+
+        private static MSBuildWorkspace CreateWorkspace(string framework) =>
+            string.IsNullOrWhiteSpace(framework)
+            ? MSBuildWorkspace.Create()
+            : MSBuildWorkspace.Create(new Dictionary<string,string> {
+                { PropertyNames.TargetFramework, framework },
+            });
+
+        //The project references don't get compiled correctly
+        //Remove them and load compiled assemblies
+        private static Project WithAssemblyReferences(Project project,ProjectInstance projectInstance)
+        {
+            var allAsmRefs = GetProjectReferences(projectInstance);
+
+            var addExtRefs = allAsmRefs.GroupJoin(project.MetadataReferences.Select(x => x.Display),o => o,i => i,
+              (o,i) => new { OuterItem = o,InnerItems = i.DefaultIfEmpty() })
+              .SelectMany(x => x.InnerItems,(x,innerItem) => new { x.OuterItem,innerItem })
+              .Where(x => x.innerItem == null)
+              .Select(x => x.OuterItem)
+              .Distinct()
+              .Select(x => MetadataReference.CreateFromFile(x));
+
+            var projRefs = project.AllProjectReferences;
+
+            foreach (var p in projRefs)
+            {
+                project = project.RemoveProjectReference(p);
+            }
+
+            return project.AddMetadataReferences(addExtRefs);
+        }
+
+        private static ProjectInstance CreateProjectInstance(string projectFileName,ref string framework) =>
+            string.IsNullOrWhiteSpace(framework)
+                ? SetTargetFrameworkIfNeeded(new ProjectInstance(projectFileName),ref framework)
+                : new ProjectInstance(projectFileName,new Dictionary<string,string>
                 {
-                    if (File.Exists(item))
-                    {
-                        externalReferences.Add(MetadataReference.CreateFromFile(item));
-                    }
+                    { PropertyNames.TargetFramework, framework },
+                },null);
+
+        private static IEnumerable<string> GetProjectReferences(ProjectInstance projectInstance)
+        {
+            var result = BuildManager.DefaultBuildManager.Build(
+                new BuildParameters(),
+                new BuildRequestData(projectInstance,new[]
+                {
+                    PropertyNames.ResolveProjectReferences,
+                    PropertyNames.ResolveAssemblyReferences
+                }));
+
+            IEnumerable<string> GetResultItems(string targetName)
+            {
+                if (result.ResultsByTarget.TryGetValue(targetName,out TargetResult buildResult))
+                {
+                    var buildResultItems = buildResult.Items;
+                    return buildResultItems.Select(item => item.ItemSpec);
+                }
+
+                return Array.Empty<string>();
+            }
+
+            return GetResultItems(PropertyNames.ResolveProjectReferences)
+              .Concat(GetResultItems(PropertyNames.ResolveAssemblyReferences));
+        }
+
+        private static ProjectInstance SetTargetFrameworkIfNeeded(ProjectInstance project,ref string framework)
+        {
+            var target = project.GetPropertyValue(PropertyNames.TargetFramework);
+
+            // If the project supports multiple target frameworks and specific framework isn't
+            // selected, we must pick one before execution. Otherwise, the ResolveReferences
+            // target might not be available to us.
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                var frameworks = project.GetPropertyValue(PropertyNames.TargetFrameworks).Split(new char[] { ';' },StringSplitOptions.RemoveEmptyEntries);
+
+                if (frameworks.Length > 0)
+                {
+                    framework = frameworks[0];
+
+                    return new ProjectInstance(project.ProjectFileLocation.LocationString,
+                        new Dictionary<string,string> { [PropertyNames.TargetFramework] = framework },null);
                 }
             }
 
-            EnvironmentHelper.Setup();
-
-            var workspace = MSBuildWorkspace.Create();
-            workspace.WorkspaceFailed += Workspace_WorkspaceFailed;
-
-            var project = await workspace.OpenProjectAsync(csprojPath).ConfigureAwait(false);
-            project = project.AddMetadataReferences(externalReferences); // workaround:)
-            project = project.WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols));
-
-            var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
-            return compilation;
+            return project;
         }
 
-        private static void Workspace_WorkspaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
+        internal static class PropertyNames
         {
-            Console.WriteLine(e.Diagnostic.ToString());
-            // throw new Exception(e.Diagnostic.ToString());
+            public const string ResolveProjectReferences = nameof(ResolveProjectReferences);
+            public const string ResolveAssemblyReferences = nameof(ResolveAssemblyReferences);
+            public const string _ResolveReferenceDependencies = nameof(_ResolveReferenceDependencies);
+            public const string TargetFramework = nameof(TargetFramework);
+            public const string TargetFrameworks = nameof(TargetFrameworks);
+            public const string PreprocessorSymbols = "DefineConstants";
+            public const string LangVersion = nameof(LangVersion);
+            public const string CheckForSystemRuntimeDependency = nameof(CheckForSystemRuntimeDependency);
+            public const string DesignTimeBuild = nameof(DesignTimeBuild);
+            public const string BuildProjectReferences = nameof(BuildProjectReferences);
+            public const string BuildingInsideVisualStudio = nameof(BuildingInsideVisualStudio);
+            public const string Configuration = nameof(Configuration);
         }
 
         public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
         {
+            var symbols = new HashSet<INamedTypeSymbol>();
+
             foreach (var syntaxTree in compilation.SyntaxTrees)
             {
                 var semModel = compilation.GetSemanticModel(syntaxTree);
 
                 foreach (var item in syntaxTree.GetRoot()
                     .DescendantNodes()
-                    .Select(x => semModel.GetDeclaredSymbol(x))
+                    .Select(x =>
+                    {
+                        //include symbols defined in the references
+                        var sym = semModel.GetSymbolInfo(x).Symbol;
+
+                        if (sym != null && sym.Kind != SymbolKind.NamedType)
+                            return null;
+
+                        return sym ?? semModel.GetDeclaredSymbol(x);
+                    })
                     .Where(x => x != null))
                 {
-                    var namedType = item as INamedTypeSymbol;
-                    if (namedType != null)
+                    if (item is INamedTypeSymbol namedType && !symbols.Contains(item))
                     {
+                        symbols.Add(namedType);
                         yield return namedType;
                     }
                 }

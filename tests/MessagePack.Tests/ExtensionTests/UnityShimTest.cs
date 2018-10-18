@@ -36,8 +36,8 @@ namespace MessagePack.Tests.ExtensionTests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, UnityResolver.Instance), UnityResolver.Instance);
         }
 
-        public static object[] testData = new object[]
-        {
+        public static IEnumerable<object[]> testData = new List<object[]>
+		{
             new object[]{ BlitContainer<Vector2>.Create(Enumerable.Range(1, 123).Select(x => new Vector2(x, x)))},
             new object[]{ BlitContainer<Vector3>.Create(Enumerable.Range(1, 123).Select(x => new Vector3(x,x, x)))},
             new object[]{ BlitContainer<Vector4>.Create(Enumerable.Range(1, 123).Select(x => new Vector4(x,x,x, x)))},
@@ -62,8 +62,8 @@ namespace MessagePack.Tests.ExtensionTests
             ConvertBlit(blit).Array.IsNull();
         }
 
-        public static object[] testStandardData = new object[]
-        {
+        public static IEnumerable<object[]> testStandardData = new List<object[]>
+		{
             new object[]{ new Vector2(10,20) },
             new object[]{ new Vector3(10,20, 30) },
             new object[]{ new Vector4(10,20,30, 40) },

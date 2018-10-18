@@ -1,7 +1,9 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Microsoft.Build.Locator;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MessagePack.CodeGenerator
 {
@@ -72,7 +74,7 @@ namespace MessagePack.CodeGenerator
             "MessagePack.Nil",
 
             // and arrays
-            
+
             "short[]",
             "int[]",
             "long[]",
@@ -204,12 +206,14 @@ namespace MessagePack.CodeGenerator
         List<GenericSerializationInfo> collectedGenericInfo;
         List<UnionSerializationInfo> collectedUnionInfo;
 
-        // --- 
+        // ---
 
-        public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
+        protected TypeCollector(string csProjPath,bool disallowInternal,bool isForceUseMap,Compilation compilation)
         {
             this.csProjPath = csProjPath;
-            var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
+            this.disallowInternal = disallowInternal;
+            this.isForceUseMap = isForceUseMap;
+
             this.typeReferences = new ReferenceSymbols(compilation);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
@@ -232,6 +236,17 @@ namespace MessagePack.CodeGenerator
                     || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribnute))
                     )
                 .ToArray();
+        }
+
+        public static async Task<TypeCollector> CreateCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, 
+			bool isForceUseMap, string framework, bool quiet)
+        {
+            MSBuildLocator.RegisterDefaults();
+
+            var compilation = await RoslynExtensions.GetCompilationFromProject(csProjPath, framework, quiet,
+				conditinalSymbols.Union(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray());
+
+            return new TypeCollector(csProjPath,disallowInternal,isForceUseMap,compilation);
         }
 
         void ResetWorkspace()
@@ -294,10 +309,11 @@ namespace MessagePack.CodeGenerator
                 return;
             }
 
-            if (type.Locations[0].IsInMetadata)
+            //removed to include symbols defined in the references
+            /*if (type.Locations[0].IsInMetadata)
             {
                 return;
-            }
+            }*/
 
             if (type.TypeKind == TypeKind.Interface || (type.TypeKind == TypeKind.Class && type.IsAbstract))
             {

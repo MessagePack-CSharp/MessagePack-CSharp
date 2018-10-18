@@ -16,7 +16,7 @@ namespace MessagePack.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object collectionTestData = new object[]
+        public static IEnumerable<object[]> collectionTestData = new List<object[]>
         {
             new object[]{ new int[]{ 1,10, 100 } , null },
             new object[]{ new List<int>{ 1,10, 100 } , null },
@@ -31,7 +31,7 @@ namespace MessagePack.Tests
         [Theory]
         [MemberData(nameof(collectionTestData))]
         public void ConcreteCollectionTest<T>(T x, T y)
-        {
+		{
             Convert(x).IsStructuralEqual(x);
             Convert(y).IsStructuralEqual(y);
         }

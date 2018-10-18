@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Microsoft.Build.MSBuildLocator;
+using Microsoft.Build.Locator;
 
 namespace MessagePack.CodeGenerator
 {

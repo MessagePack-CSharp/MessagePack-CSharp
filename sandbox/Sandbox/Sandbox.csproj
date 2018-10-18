@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFrameworks>netcoreapp2.1;net461</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -11,11 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
-    <PackageReference Include="MsgPack.Cli" Version="0.7.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.1-beta1" />
-    <PackageReference Include="protobuf-net" Version="2.1.0" />
-    <PackageReference Include="ZeroFormatter" Version="1.6.2" />
+    <Compile Remove="Generated.cs" />
+    <Compile Remove="MessagePackGenerated.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.2" />
+    <PackageReference Include="MsgPack.Cli" Version="1.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="protobuf-net" Version="2.3.13" />
+    <PackageReference Include="ZeroFormatter" Version="1.6.4" />
   </ItemGroup>
 
   <ItemGroup>
