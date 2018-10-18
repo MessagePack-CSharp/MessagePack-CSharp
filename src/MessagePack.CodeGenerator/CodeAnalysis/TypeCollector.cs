@@ -496,6 +496,8 @@ namespace MessagePack.CodeGenerator
                         ShortTypeName = item.Type.ToDisplayString(binaryWriteFormat)
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
+                    if (stringMembers.ContainsKey(member.StringKey))
+                        throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type + " member:" + item.Name);
                     member.IntKey = hiddenIntKey++;
                     stringMembers.Add(member.StringKey, member);
 
