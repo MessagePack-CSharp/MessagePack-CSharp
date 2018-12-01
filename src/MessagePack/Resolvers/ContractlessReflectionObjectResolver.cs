@@ -20,6 +20,7 @@ namespace MessagePack.Resolvers
             const bool ForceStringKey = false;
             const bool Contractless = false;
             const bool AllowPrivate = false;
+            const bool SimulateDataContractSerializer = false;
 
             public IMessagePackFormatter<T> GetFormatter<T>()
             {
@@ -32,7 +33,7 @@ namespace MessagePack.Resolvers
 
                 static Cache()
                 {
-                    var metaInfo = ObjectSerializationInfo.CreateOrNull(typeof(T), ForceStringKey, Contractless, AllowPrivate);
+                    var metaInfo = ObjectSerializationInfo.CreateOrNull(typeof(T), ForceStringKey, Contractless, AllowPrivate, SimulateDataContractSerializer);
                     if (metaInfo != null)
                     {
                         formatter = new ReflectionObjectFormatter<T>(metaInfo);
@@ -46,6 +47,7 @@ namespace MessagePack.Resolvers
             const bool ForceStringKey = false;
             const bool Contractless = true;
             const bool AllowPrivate = false;
+            const bool SimulateDataContractSerializer = false;
 
             public IMessagePackFormatter<T> GetFormatter<T>()
             {
@@ -58,7 +60,7 @@ namespace MessagePack.Resolvers
 
                 static Cache()
                 {
-                    var metaInfo = ObjectSerializationInfo.CreateOrNull(typeof(T), ForceStringKey, Contractless, AllowPrivate);
+                    var metaInfo = ObjectSerializationInfo.CreateOrNull(typeof(T), ForceStringKey, Contractless, AllowPrivate, SimulateDataContractSerializer);
                     if (metaInfo != null)
                     {
                         formatter = new ReflectionObjectFormatter<T>(metaInfo);
@@ -72,6 +74,7 @@ namespace MessagePack.Resolvers
             const bool ForceStringKey = true;
             const bool Contractless = true;
             const bool AllowPrivate = false;
+            const bool SimulateDataContractSerializer = false;
 
             public IMessagePackFormatter<T> GetFormatter<T>()
             {
@@ -84,7 +87,7 @@ namespace MessagePack.Resolvers
 
                 static Cache()
                 {
-                    var metaInfo = ObjectSerializationInfo.CreateOrNull(typeof(T), ForceStringKey, Contractless, AllowPrivate);
+                    var metaInfo = ObjectSerializationInfo.CreateOrNull(typeof(T), ForceStringKey, Contractless, AllowPrivate, SimulateDataContractSerializer);
                     if (metaInfo != null)
                     {
                         formatter = new ReflectionObjectFormatter<T>(metaInfo);

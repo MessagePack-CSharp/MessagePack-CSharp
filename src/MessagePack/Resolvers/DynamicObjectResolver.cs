@@ -75,7 +75,7 @@ namespace MessagePack.Resolvers
 
                 if (ti.IsAnonymous())
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
+                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false, false);
                     return;
                 }
 
@@ -132,11 +132,11 @@ namespace MessagePack.Resolvers
 
                 if (ti.IsAnonymous())
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
+                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false, false);
                 }
                 else
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), false, false, true);
+                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), false, false, true, false);
                 }
             }
         }
@@ -208,7 +208,7 @@ namespace MessagePack.Resolvers
 
                 if (ti.IsAnonymous())
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
+                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false, false);
                     return;
                 }
 
@@ -265,11 +265,39 @@ namespace MessagePack.Resolvers
 
                 if (ti.IsAnonymous())
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
+                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false, false);
                 }
                 else
                 {
-                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, true);
+                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, true, false);
+                }
+            }
+        }
+    }
+
+    public sealed class DataContractSerializerResolver : IFormatterResolver
+    {
+        public static readonly DataContractSerializerResolver Instance = new DataContractSerializerResolver();
+
+        const string ModuleName = "MessagePack.Resolvers.DataContractSerializerResolver";
+
+        internal static readonly DynamicAssembly assembly = new DynamicAssembly(ModuleName);
+
+        DataContractSerializerResolver() { }
+
+        public IMessagePackFormatter<T> GetFormatter<T>() => FormatterCache<T>.formatter;
+
+        static class FormatterCache<T>
+        {
+            public static readonly IMessagePackFormatter<T> formatter;
+
+            static FormatterCache()
+            {
+                var ti = typeof(T).GetTypeInfo();
+                if (ti.IsInterface) return;
+                if (ti.IsDefined(typeof(DataContractAttribute)))
+                {
+                    formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), false, false, false, true);
                 }
             }
         }
@@ -316,7 +344,7 @@ namespace MessagePack.Internal
         {
             if (ignoreTypes.Contains(type)) return null;
 
-            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, false);
+            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, false, false);
             if (serializationInfo == null) return null;
 
             var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
@@ -391,9 +419,9 @@ namespace MessagePack.Internal
             return typeBuilder.CreateTypeInfo();
         }
 
-        public static object BuildFormatterToDynamicMethod(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        public static object BuildFormatterToDynamicMethod(Type type, bool forceStringKey, bool contractless, bool allowPrivate, bool simulateDataContractSerializer)
         {
-            var serializationInfo = ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, allowPrivate);
+            var serializationInfo = ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, allowPrivate, simulateDataContractSerializer);
             if (serializationInfo == null) return null;
 
             // internal delegate int AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, ref byte[] bytes, int offset, T value, IFormatterResolver resolver);
@@ -1310,7 +1338,7 @@ typeof(int), typeof(int) });
 
         }
 
-        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate, bool simulateDataContractSerializer)
         {
             var ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
@@ -1399,19 +1427,23 @@ typeof(int), typeof(int) });
 
                     var getMethod = item.GetGetMethod(true);
                     var setMethod = item.GetSetMethod(true);
-
-                    var member = new EmittableMember
-                    {
-                        PropertyInfo = item,
-                        IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
-                        IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
-                    };
-                    if (!member.IsReadable && !member.IsWritable) continue;
+                    if (getMethod != null && getMethod.IsStatic) getMethod = null;
+                    if (setMethod != null && setMethod.IsStatic) setMethod = null;
+                    if (getMethod == null && setMethod == null) continue;
 
                     KeyAttribute key;
                     if (contractAttr != null)
                     {
                         // MessagePackObjectAttribute
+
+                        // if !allowPrivate, skip when without any public getter or setter
+                        if (!allowPrivate)
+                        {
+                            if (getMethod != null && !getMethod.IsPublic) getMethod = null;
+                            if (setMethod != null && !setMethod.IsPublic) setMethod = null;
+                            if (getMethod == null && setMethod == null) continue;
+                        }
+
                         key = item.GetCustomAttribute<KeyAttribute>(true);
                         if (key == null)
                         {
@@ -1423,9 +1455,20 @@ typeof(int), typeof(int) });
                     else
                     {
                         // DataContractAttribute
+
+                        // if allowPrivate, same original behavior, include private member. then throw exception when without DataMemberAttribute
+                        // if !allowPrivate and !simulateDataContractSerializer, same original behavior, skip private member. then throw exception when without DataMemberAttribute
+                        // if !allowPrivate and simulateDataContractSerializer, include all member with DataMemberAttribute
+                        if (!allowPrivate && !simulateDataContractSerializer)
+                        {
+                            if (getMethod != null && !getMethod.IsPublic) getMethod = null;
+                            if (setMethod != null && !setMethod.IsPublic) setMethod = null;
+                            if (getMethod == null && setMethod == null) continue;
+                        }
                         var pseudokey = item.GetCustomAttribute<DataMemberAttribute>(true);
                         if (pseudokey == null)
                         {
+                            if (!allowPrivate && simulateDataContractSerializer) continue;
                             throw new MessagePackDynamicObjectResolverException("all public members must mark DataMemberAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
                         }
 
@@ -1457,6 +1500,8 @@ typeof(int), typeof(int) });
                         }
                     }
 
+                    var member = new EmittableMember { PropertyInfo = item, IsReadable = getMethod != null, IsWritable = setMethod != null };
+
                     if (isIntKey)
                     {
                         member.IntKey = key.IntKey.Value;
@@ -1481,18 +1526,20 @@ typeof(int), typeof(int) });
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 
-                    var member = new EmittableMember
-                    {
-                        FieldInfo = item,
-                        IsReadable = allowPrivate || item.IsPublic,
-                        IsWritable = allowPrivate || (item.IsPublic && !item.IsInitOnly),
-                    };
-                    if (!member.IsReadable && !member.IsWritable) continue;
+                    // default IsReadable = IsWritable = true, maybe change to false late
+                    var member = new EmittableMember { FieldInfo = item, IsReadable = true, IsWritable = true };
 
                     KeyAttribute key;
                     if (contractAttr != null)
                     {
                         // MessagePackObjectAttribute
+                        if (!allowPrivate)
+                        {
+                            member.IsReadable = item.IsPublic;
+                            member.IsWritable = item.IsPublic && !item.IsInitOnly;
+                            if (!member.IsReadable && !member.IsWritable) continue;
+                        }
+
                         key = item.GetCustomAttribute<KeyAttribute>(true);
                         if (key == null)
                         {
@@ -1504,9 +1551,20 @@ typeof(int), typeof(int) });
                     else
                     {
                         // DataContractAttribute
+
+                        // if allowPrivate, same original behavior, include private member. then throw exception when without DataMemberAttribute
+                        // if !allowPrivate and !simulateDataContractSerializer, same original behavior, skip private member. then throw exception when without DataMemberAttribute
+                        // if !allowPrivate and simulateDataContractSerializer, include all member with DataMemberAttribute
+                        if (!allowPrivate && !simulateDataContractSerializer)
+                        {
+                            member.IsReadable = item.IsPublic;
+                            member.IsWritable = item.IsPublic && !item.IsInitOnly;
+                            if (!member.IsReadable && !member.IsWritable) continue;
+                        }
                         var pseudokey = item.GetCustomAttribute<DataMemberAttribute>(true);
                         if (pseudokey == null)
                         {
+                            if (!allowPrivate && simulateDataContractSerializer) continue;
                             throw new MessagePackDynamicObjectResolverException("all public members must mark DataMemberAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
                         }
 
