@@ -17,7 +17,7 @@ namespace MessagePack.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object[] primitiveFormatterTestData = new object[]
+        public static object[][] primitiveFormatterTestData = new object[][]
         {
             new object[] { Int16.MinValue, Int16.MaxValue },
             new object[] { (Int16?)100, null },
@@ -56,7 +56,7 @@ namespace MessagePack.Tests
             Convert(y).Is(y);
         }
 
-        public static object[] enumFormatterTestData = new object[]
+        public static object[][] enumFormatterTestData = new object[][]
         {
             new object[] { ByteEnum.A, ByteEnum.B },
             new object[] { (ByteEnum?)ByteEnum.C, null },
@@ -92,7 +92,7 @@ namespace MessagePack.Tests
             Convert((Nil?)null).Is(Nil.Default);
         }
 
-        public static object[] standardStructFormatterTestData = new object[]
+        public static object[][] standardStructFormatterTestData = new object[][]
         {
             new object[] { decimal.MaxValue, decimal.MinValue, null },
             new object[] { TimeSpan.MaxValue, TimeSpan.MinValue, null },
@@ -115,15 +115,19 @@ namespace MessagePack.Tests
 
         [Theory]
         [MemberData(nameof(standardStructFormatterTestData))]
-        public void StandardClassLibraryStructFormatterTest<T>(T x, T? y, T? z)
-            where T : struct
+        public void StandardClassLibraryStructFormatterTest(object x, object y, object z)
         {
-            Convert(x).Is(x);
-            Convert(y).Is(y);
-            Convert(z).Is(z);
+            var helper = typeof(FormatterTest).GetMethod(nameof(StandardClassLibraryStructFormatterTest_Helper), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var helperClosedGeneric = helper.MakeGenericMethod(x.GetType());
+
+            helperClosedGeneric.Invoke(this, new object[] { x });
+            helperClosedGeneric.Invoke(this, new object[] { y });
+            helperClosedGeneric.Invoke(this, new object[] { z });
         }
 
-        public static object[] standardClassFormatterTestData = new object[]
+        private void StandardClassLibraryStructFormatterTest_Helper<T>(T? value) where T : struct => Convert(value).Is(value);
+
+        public static object[][] standardClassFormatterTestData = new object[][]
         {
             new object[] { new byte[] { 1, 10, 100 }, new byte[0] { }, null },
             new object[] { "aaa", "", null },

@@ -83,7 +83,7 @@ namespace MessagePack.Tests
             CreateUnpackedReference(bytes).AsByte().Is(target);
         }
 
-        public static object[] bytesTestData = new object[]
+        public static object[][] bytesTestData = new object[][]
         {
             new object[]{ (byte[])null, 1 },
             new object[]{ new byte[] { }, 2 },
@@ -498,7 +498,7 @@ namespace MessagePack.Tests
         }
 
 
-        public static object[] stringTestData = new object[]
+        public static object[][] stringTestData = new object[][]
         {
             new object[]{ "a"},
             new object[]{ "abc" },
@@ -586,7 +586,7 @@ namespace MessagePack.Tests
         }
 
 
-        public static object[] extTestData = new object[]
+        public static object[][] extTestData = new object[][]
         {
             new object[]{ 0,  Enumerable.Repeat((byte)1, 0).ToArray() },
             new object[]{ 1,  Enumerable.Repeat((byte)1, 1).ToArray() },
@@ -648,7 +648,7 @@ namespace MessagePack.Tests
         // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
         // FixExt8(-1) => nanoseconds + seconds | [1970-01-01 00:00:00.000000000 UTC, 2514-05-30 01:53:04.000000000 UTC) range
         // Ext8(12,-1) => nanoseconds + seconds | [-584554047284-02-23 16:59:44 UTC, 584554051223-11-09 07:00:16.000000000 UTC) range
-        public static object[] dateTimeTestData = new object[]
+        public static object[][] dateTimeTestData = new object[][]
         {
             new object[]{ new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 6},
             new object[]{ new DateTime(2010, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 6},

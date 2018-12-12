@@ -27,7 +27,11 @@
     <PackageReference Include="System.Reactive.PlatformServices" version="3.1.1" />
     <PackageReference Include="System.Reactive.Windows.Threading" version="3.1.1" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" version="4.3.0" />
-    <PackageReference Include="xunit" version="2.2.0" />
-    <PackageReference Include="xunit.runner.visualstudio" version="2.2.0" />
+    <PackageReference Include="xunit" version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" version="2.4.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
   </ItemGroup>
 </Project>
