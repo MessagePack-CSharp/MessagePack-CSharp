@@ -2,7 +2,11 @@
 
 namespace MessagePack.Internal
 {
-    // Safe for multiple-read, single-write.
+    /// <summary>
+    /// A dictionary where <see cref="Type"/> is the key, and a configurable <typeparamref name="TValue"/> type
+    /// that is thread-safe, allowing concurrent reads and exclusive writes.
+    /// </summary>
+    /// <typeparam name="TValue">The type of value stored in the dictionary.</typeparam>
     internal class ThreadsafeTypeKeyHashTable<TValue>
     {
         Entry[] buckets;

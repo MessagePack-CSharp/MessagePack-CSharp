@@ -1,107 +1,100 @@
 ﻿using MessagePack.Formatters;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace MessagePack.Resolvers
 {
+    /// <summary>
+    /// Represents a collection of formatters and resolvers acting as one.
+    /// </summary>
     public sealed class CompositeResolver : IFormatterResolver
     {
-        public static readonly CompositeResolver Instance = new CompositeResolver();
+        private readonly Dictionary<Type, object> formattersByType = new Dictionary<Type, object>();
+        private readonly List<IFormatterResolver> subResolvers = new List<IFormatterResolver>();
 
-        static bool isFreezed = false;
-        static IMessagePackFormatter[] formatters = new IMessagePackFormatter[0];
-        static IFormatterResolver[] resolvers = new IFormatterResolver[0];
-
-        CompositeResolver()
+        public void RegisterResolver(IFormatterResolver resolver)
         {
-        }
-
-        public static void Register(params IFormatterResolver[] resolvers)
-        {
-            if (isFreezed)
+            if (resolver == null)
             {
-                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
+                throw new ArgumentNullException(nameof(resolver));
             }
 
-            CompositeResolver.resolvers = resolvers;
+            lock (this.subResolvers)
+            {
+                this.subResolvers.Add(resolver);
+            }
         }
 
-        public static void Register(params IMessagePackFormatter[] formatters)
+        /// <summary>
+        /// Adds a formatter to this composite resolver.
+        /// </summary>
+        /// <param name="formatter">an object that implements <see cref="IMessagePackFormatter{T}"/> one or more times</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="formatter"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="formatter"/> does not implement any <see cref="IMessagePackFormatter{T}"/> interfaces.</exception>
+        public void RegisterFormatter(object formatter)
         {
-            if (isFreezed)
+            if (formatter == null)
             {
-                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
+                throw new ArgumentNullException(nameof(formatter));
             }
 
-            CompositeResolver.formatters = formatters;
-        }
-
-        public static void Register(IMessagePackFormatter[] formatters, IFormatterResolver[] resolvers)
-        {
-            if (isFreezed)
+            bool foundAny = false;
+            foreach (var implInterface in formatter.GetType().GetTypeInfo().ImplementedInterfaces)
             {
-                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
+                var ti = implInterface.GetTypeInfo();
+                if (ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IMessagePackFormatter<>))
+                {
+                    foundAny = true;
+                    lock (this.formattersByType)
+                    {
+                        if (!this.formattersByType.ContainsKey(ti.GenericTypeArguments[0]))
+                        {
+                            this.formattersByType.Add(ti.GenericTypeArguments[0], formatter);
+                        }
+                    }
+                }
             }
 
-            CompositeResolver.resolvers = resolvers;
-            CompositeResolver.formatters = formatters;
-        }
-
-        public static void RegisterAndSetAsDefault(params IFormatterResolver[] resolvers)
-        {
-            Register(resolvers);
-            MessagePack.MessagePackSerializer.SetDefaultResolver(CompositeResolver.Instance);
-        }
-
-        public static void RegisterAndSetAsDefault(params IMessagePackFormatter[] formatters)
-        {
-            Register(formatters);
-            MessagePack.MessagePackSerializer.SetDefaultResolver(CompositeResolver.Instance);
-        }
-
-        public static void RegisterAndSetAsDefault(IMessagePackFormatter[] formatters, IFormatterResolver[] resolvers)
-        {
-            Register(formatters);
-            Register(resolvers);
-            MessagePack.MessagePackSerializer.SetDefaultResolver(CompositeResolver.Instance);
+            if (!foundAny)
+            {
+                throw new ArgumentException("No formatters found on this object.", nameof(formatter));
+            }
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
-        }
-
-        static class FormatterCache<T>
-        {
-            public static readonly IMessagePackFormatter<T> formatter;
-
-            static FormatterCache()
+            object formatter;
+            lock (this.formattersByType)
             {
-                isFreezed = true;
-
-                foreach (var item in formatters)
+                if (this.formattersByType.TryGetValue(typeof(T), out formatter))
                 {
-                    foreach (var implInterface in item.GetType().GetTypeInfo().ImplementedInterfaces)
-                    {
-                        var ti = implInterface.GetTypeInfo();
-                        if (ti.IsGenericType && ti.GenericTypeArguments[0] == typeof(T))
-                        {
-                            formatter = (IMessagePackFormatter<T>)item;
-                            return;
-                        }
-                    }
+                    return (IMessagePackFormatter<T>)formatter;
                 }
+            }
 
-                foreach (var item in resolvers)
+            lock (this.subResolvers)
+            {
+                foreach (var resolver in this.subResolvers)
                 {
-                    var f = item.GetFormatter<T>();
-                    if (f != null)
+                    formatter = resolver.GetFormatter<T>();
+                    if (formatter != null)
                     {
-                        formatter = f;
-                        return;
+                        break;
                     }
                 }
             }
+
+            // Remember the answer for next time.
+            lock (this.formattersByType)
+            {
+                if (!this.formattersByType.ContainsKey(typeof(T)))
+                {
+                    this.formattersByType.Add(typeof(T), formatter);
+                }
+            }
+
+            return (IMessagePackFormatter<T>)formatter;
         }
     }
 }

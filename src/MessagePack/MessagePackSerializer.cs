@@ -9,50 +9,20 @@ namespace MessagePack
     /// </summary>
     public static partial class MessagePackSerializer
     {
-        static IFormatterResolver defaultResolver;
-
         /// <summary>
-        /// FormatterResolver that used resolver less overloads. If does not set it, used StandardResolver.
+        /// Gets the default <see cref="IFormatterResolver"/> instance to use when one is not specified.
         /// </summary>
-        public static IFormatterResolver DefaultResolver
-        {
-            get
-            {
-                if (defaultResolver == null)
-                {
-                    defaultResolver = MessagePack.Resolvers.StandardResolver.Instance;
-                }
-
-                return defaultResolver;
-            }
-        }
-
-        /// <summary>
-        /// Is resolver decided?
-        /// </summary>
-        public static bool IsInitialized
-        {
-            get
-            {
-                return defaultResolver != null;
-            }
-        }
-
-        /// <summary>
-        /// Set default resolver of MessagePackSerializer APIs.
-        /// </summary>
-        /// <param name="resolver"></param>
-        public static void SetDefaultResolver(IFormatterResolver resolver)
-        {
-            defaultResolver = resolver;
-        }
+        /// <value>
+        /// This is the <see cref="Resolvers.StandardResolver"/>.
+        /// </value>
+        public static IFormatterResolver DefaultResolver => Resolvers.StandardResolver.Instance;
 
         /// <summary>
         /// Serialize to binary with default resolver.
         /// </summary>
         public static byte[] Serialize<T>(T obj)
         {
-            return Serialize(obj, defaultResolver);
+            return Serialize(obj, DefaultResolver);
         }
 
         /// <summary>
@@ -76,7 +46,7 @@ namespace MessagePack
         /// </summary>
         public static ArraySegment<byte> SerializeUnsafe<T>(T obj)
         {
-            return SerializeUnsafe(obj, defaultResolver);
+            return SerializeUnsafe(obj, DefaultResolver);
         }
 
         /// <summary>
@@ -100,7 +70,7 @@ namespace MessagePack
         /// </summary>
         public static void Serialize<T>(Stream stream, T obj)
         {
-            Serialize(stream, obj, defaultResolver);
+            Serialize(stream, obj, DefaultResolver);
         }
 
         /// <summary>
@@ -134,7 +104,7 @@ namespace MessagePack
         /// </summary>
         public static System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj)
         {
-            return SerializeAsync(stream, obj, defaultResolver);
+            return SerializeAsync(stream, obj, DefaultResolver);
         }
 
         /// <summary>
@@ -164,7 +134,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(byte[] bytes)
         {
-            return Deserialize<T>(bytes, defaultResolver);
+            return Deserialize<T>(bytes, DefaultResolver);
         }
 
         public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
@@ -178,7 +148,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(ArraySegment<byte> bytes)
         {
-            return Deserialize<T>(bytes, defaultResolver);
+            return Deserialize<T>(bytes, DefaultResolver);
         }
 
         public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
@@ -192,7 +162,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(Stream stream)
         {
-            return Deserialize<T>(stream, defaultResolver);
+            return Deserialize<T>(stream, DefaultResolver);
         }
 
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
@@ -202,7 +172,7 @@ namespace MessagePack
 
         public static T Deserialize<T>(Stream stream, bool readStrict)
         {
-            return Deserialize<T>(stream, defaultResolver, readStrict);
+            return Deserialize<T>(stream, DefaultResolver, readStrict);
         }
 
         public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
@@ -258,7 +228,7 @@ namespace MessagePack
 
         public static System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream)
         {
-            return DeserializeAsync<T>(stream, defaultResolver);
+            return DeserializeAsync<T>(stream, DefaultResolver);
         }
 
         // readStrict async read is too slow(many Task garbage) so I don't provide async option.

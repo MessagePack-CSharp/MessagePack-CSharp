@@ -1,5 +1,8 @@
 ﻿#if NETSTANDARD || NETFRAMEWORK
+using System;
+using System.Collections.Generic;
 using MessagePack.Formatters;
+using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
@@ -9,9 +12,11 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class TypelessContractlessStandardResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new TypelessContractlessStandardResolver();
-
-        static readonly IFormatterResolver[] resolvers = new[]
+        /// <summary>
+        /// A *private* list of resolvers. If we ever want to expose any of these (so the user can adjust settings, etc.)
+        /// then we must make this an instance collection instead of a static collection so that each consumer can have their own settings.
+        /// </summary>
+        private static readonly IReadOnlyList<IFormatterResolver> resolvers = new[]
         {
             NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
             BuiltinResolver.Instance, // Try Builtin
@@ -23,35 +28,37 @@ namespace MessagePack.Resolvers
             DynamicObjectResolver.Instance, // Try Object
 #endif
             DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
-            TypelessObjectResolver.Instance
+            new TypelessObjectResolver(),
         };
 
-        TypelessContractlessStandardResolver()
-        {
-        }
+        private readonly ResolverCache resolverCache = new ResolverCache(resolvers);
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.formatter;
-        }
+        public IMessagePackFormatter<T> GetFormatter<T>() => this.resolverCache.GetFormatter<T>();
 
-        static class FormatterCache<T>
+        private class ResolverCache : CachingFormatterResolver
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            private readonly IReadOnlyList<IFormatterResolver> resolvers;
 
-            static FormatterCache()
+            internal ResolverCache(IReadOnlyList<IFormatterResolver> resolvers)
+            {
+                this.resolvers = resolvers ?? throw new ArgumentNullException(nameof(resolvers));
+            }
+
+            protected override IMessagePackFormatter<T> GetFormatterCore<T>()
             {
                 foreach (var item in resolvers)
                 {
                     var f = item.GetFormatter<T>();
                     if (f != null)
                     {
-                        formatter = f;
-                        return;
+                        return f;
                     }
                 }
+
+                return null;
             }
         }
     }
 }
+
 #endif

@@ -213,13 +213,13 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_primitive()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessPrimitiveType, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessPrimitiveType, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
         }
 
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_complex()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessComplexType, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessComplexType, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
         }
     }
 
@@ -233,8 +233,8 @@ namespace PerfBenchmarkDotNet
 
         private byte[] NewStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractType("John", new ContractType("Jack", null)), newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
         private byte[] NewContractlessStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractlessType("John", new ContractlessType("Jack", null)), newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-        private byte[] NewTypelessContractlessStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
-        private byte[] NewTypelessContractlessStandardResolverComplexBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        private byte[] NewTypelessContractlessStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
+        private byte[] NewTypelessContractlessStandardResolverComplexBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
 
         [Benchmark]
         public ContractType Old_MessagePackSerializer_Deserialize_StandardResolver()
@@ -275,13 +275,13 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
         }
 
         [Benchmark]
         public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverComplexBytes, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverComplexBytes, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
         }
     }
 
