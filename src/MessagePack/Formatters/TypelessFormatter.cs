@@ -23,12 +23,10 @@ namespace MessagePack.Formatters
         delegate int SerializeMethod(object dynamicContractlessFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
         delegate object DeserializeMethod(object dynamicContractlessFormatter, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize);
 
-        public static readonly IMessagePackFormatter<object> Instance = new TypelessFormatter();
-
-        static readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
-        static readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>> deserializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>>();
-        static readonly ThreadsafeTypeKeyHashTable<byte[]> typeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
-        static readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> typeCache = new AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type>(new StringArraySegmentByteAscymmetricEqualityComparer());
+        readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
+        readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>> deserializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>>();
+        readonly ThreadsafeTypeKeyHashTable<byte[]> typeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
+        readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> typeCache = new AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type>(new StringArraySegmentByteAscymmetricEqualityComparer());
 
         static readonly HashSet<string> blacklistCheck;
         static readonly HashSet<Type> useBuiltinTypes = new HashSet<Type>()
@@ -76,15 +74,10 @@ namespace MessagePack.Formatters
             typeof(Double?),
         };
 
-        public static Func<string, Type> BindToType { get; set; }
-
-        static Type DefaultBindToType(string typeName)
-        {
-            return Type.GetType(typeName, false);
-        }
+        public Func<string, Type> BindToType { get; set; } = (string typeName) => Type.GetType(typeName, false);
 
         // mscorlib or System.Private.CoreLib
-        static bool isMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
+        static readonly bool isMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
 
         /// <summary>
         /// When type name does not have Version, Culture, Public token - sometimes can not find type, example - ExpandoObject
@@ -100,15 +93,16 @@ namespace MessagePack.Formatters
                 "System.IO.FileSystemInfo",
                 "System.Management.IWbemClassObjectFreeThreaded"
             };
+        }
 
+        public TypelessFormatter()
+        {
             serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, ref byte[] p2, int p3, object p4, IFormatterResolver p5) => 0));
             deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object, DeserializeMethod>(null, (object p1, byte[] p2, int p3, IFormatterResolver p4, out int p5) =>
             {
                 p5 = 0;
                 return new object();
             }));
-
-            BindToType = DefaultBindToType;
         }
 
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx

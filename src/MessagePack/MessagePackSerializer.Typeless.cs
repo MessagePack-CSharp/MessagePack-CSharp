@@ -14,7 +14,7 @@ namespace MessagePack
     {
         public static class Typeless
         {
-            static IFormatterResolver defaultResolver = MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance;
+            static IFormatterResolver defaultResolver = new TypelessContractlessStandardResolver();
 
             public static void RegisterDefaultResolver(params IFormatterResolver[] resolvers)
             {
