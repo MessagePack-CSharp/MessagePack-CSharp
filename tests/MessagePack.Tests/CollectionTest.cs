@@ -16,7 +16,7 @@ namespace MessagePack.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object collectionTestData = new object[]
+        public static object[][] collectionTestData = new object[][]
         {
             new object[]{ new int[]{ 1,10, 100 } , null },
             new object[]{ new List<int>{ 1,10, 100 } , null },

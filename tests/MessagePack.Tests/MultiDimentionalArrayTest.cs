@@ -18,7 +18,6 @@ namespace MessagePack.Tests
         [InlineData(100, 100, 10, 5)]
         [InlineData(10, 20, 15, 5)]
         [InlineData(3, 5, 10, 15)]
-        [InlineData(3, 5, 10, 15)]
         public void MultiDimentional(int dataI, int dataJ, int dataK, int dataL)
         {
             var two = new ValueTuple<int, int>[dataI, dataJ];

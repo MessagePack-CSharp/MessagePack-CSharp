@@ -29,7 +29,7 @@ namespace MessagePack.Tests
 
     public class EnumAsStringTest
     {
-        public static object enumData = new object[]
+        public static object[][] enumData = new object[][]
         {
             // simple
             new object[] { AsString.Foo, null, "Foo", "null" },

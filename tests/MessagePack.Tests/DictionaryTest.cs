@@ -16,7 +16,7 @@ namespace MessagePack.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object dictionaryTestData = new object[]
+        public static object[][] dictionaryTestData = new object[][]
         {
             new object[]{ new Dictionary<int, int>() { { 1, 100 } }, null },
             new object[]{ new ReadOnlyDictionary<int,int>(new Dictionary<int, int>() { { 1, 100 } }), null },
