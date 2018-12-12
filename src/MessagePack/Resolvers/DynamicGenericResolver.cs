@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Collections.ObjectModel;
 using System.Collections;
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 using System.Threading.Tasks;
 #endif
 
@@ -62,7 +62,7 @@ namespace MessagePack.Internal
               {typeof(SortedList<,>), typeof(SortedListFormatter<,>)},
               {typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>)},
               {typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>)},
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
               {typeof(ObservableCollection<>), typeof(ObservableCollectionFormatter<>)},
               {typeof(ReadOnlyObservableCollection<>),(typeof(ReadOnlyObservableCollectionFormatter<>))},
               {typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>)},
@@ -129,7 +129,7 @@ namespace MessagePack.Internal
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
                 }
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 
                 // ValueTask
                 else if (genericType == typeof(ValueTask<>))

@@ -1,7 +1,7 @@
 MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
 ===
-[![AppVeyor](https://img.shields.io/appveyor/ci/neuecc/messagepack-csharp/master.svg?label=appveyor)](https://ci.appveyor.com/project/neuecc/messagepack-csharp/branch/master) 
-[![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/neuecc/MessagePack-CSharp/releases)
+
+[![Build Status](https://dev.azure.com/andrewarnott/OSS/_apis/build/status/MessagePack)](https://dev.azure.com/andrewarnott/OSS/_build/latest?definitionId=24)
 
 The extremely fast [MessagePack](http://msgpack.org/) serializer for C#. It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and outperforms other C# serializers. MessagePack for C# also ships with built-in support for LZ4 compression - an extremely fast compression algorithm. Performance is important, particularly in applications like game development, distributed computing, microservice architecture, and caching.
 
@@ -96,7 +96,7 @@ If you want to allow a specific type (for example, when registering a custom typ
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23837427/8a8d507c-07cb-11e7-9277-5a566eb0bfde.png)
 
-This is a sample of the contents of MessagePackAnalyzer.json. 
+This is a sample of the contents of MessagePackAnalyzer.json.
 
 ```
 [ "MyNamespace.FooClass", "MyNameSpace.BarStruct" ]
@@ -500,7 +500,7 @@ MessagePack.Formatters.TypelessFormatter.BindToType = typeName =>
     {
         typeName = typeName.Replace("SomeNamespace", "AnotherNamespace");
     }
-    
+
     return Type.GetType(typeName, false);
 };
 ```
@@ -669,7 +669,7 @@ using (var ms = new MemoryStream())
 
 protobuf(-net) can not handle null and empty collection correctly. Because protobuf has no `null` representation( [this](http://stackoverflow.com/questions/21631428/protobuf-net-deserializes-empty-collection-to-null-when-the-collection-is-a-prop) is the protobuf-net authors answer).
 
-[MessagePack specification](https://github.com/msgpack/msgpack/blob/master/spec.md) can completely serialize C# type system. This is the reason to recommend MessagePack over protobuf. 
+[MessagePack specification](https://github.com/msgpack/msgpack/blob/master/spec.md) can completely serialize C# type system. This is the reason to recommend MessagePack over protobuf.
 
 Protocol Buffers has good IDL and [gRPC](http://www.grpc.io/), that is a much good point than MessagePack. If you want to use IDL, I recommend [Google.Protobuf](https://github.com/google/protobuf/tree/master/csharp/src/Google.Protobuf) than MessagePack.
 
@@ -738,7 +738,7 @@ Author is creating other extension packages, too.
 You can make your own extension serializers or integrate with framework, let's create them and share it!
 
 * [MessagePack.FSharpExtensions](https://github.com/pocketberserker/MessagePack.FSharpExtensions) - supports F# list,set,map,unit,option,discriminated union
-* [MessagePack.NodaTime](https://github.com/ARKlab/MessagePack) - 
+* [MessagePack.NodaTime](https://github.com/ARKlab/MessagePack) -
 Support for NodaTime types to MessagePack C#
 * [WebApiContrib.Core.Formatter.MessagePack](https://github.com/WebApiContrib/WebAPIContrib.Core#formatters) - supports ASP.NET Core MVC([details in blog post](https://www.strathweb.com/2017/06/using-messagepack-with-asp-net-core-mvc/))
 * [MessagePack.MediaTypeFormatter](https://github.com/sketch7/MessagePack.MediaTypeFormatter) - MessagePack MediaTypeFormatter
@@ -824,7 +824,7 @@ Primitive API(MessagePackBinary)
 | --- | --- |
 | ReadNext | Skip MessagePackFormat binary block, returns read size. |
 | ReadNextBlock | Skip MessagePackFormat binary block with sub structures(array/map), returns read size. This is useful for create deserializer. |
-| ReadMessageBlockFromStreamUnsafe | Read binary block from Stream, if readOnlySingleMessage = false then read sub structures(array/map). | 
+| ReadMessageBlockFromStreamUnsafe | Read binary block from Stream, if readOnlySingleMessage = false then read sub structures(array/map). |
 | ReadStringSegment | Read string format but do not decode UTF8, returns `ArraySegment<byte>`. |
 | ReadBytesSegment | Read binary format but do not copy bytes, returns `ArraySegment<byte>`. |
 | Write/ReadMapHeader | Write/Read map format header(element length). |
@@ -937,7 +937,7 @@ public class CustomCompositeResolver : IFormatterResolver
         ReactivePropertyResolver.Instance,
         MessagePack.Unity.Extension.UnityBlitResolver.Instance,
         MessagePack.Unity.UnityResolver.Instance,
-            
+
         // finaly use standard resolver
         StandardResolver.Instance
     };
@@ -1104,7 +1104,7 @@ IgnoreFormatter
 ```csharp
 // CompositeResolver can set custom formatter.
 MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
-    new IMessagePackFormatter[] 
+    new IMessagePackFormatter[]
     {
         // for example, register reflection infos(can not serialize in default)
         new IgnoreFormatter<MethodBase>(),
@@ -1112,7 +1112,7 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
         new IgnoreFormatter<PropertyInfo>(),
         new IgnoreFormatter<FieldInfo>()
     },
-    new IFormatterResolver[] 
+    new IFormatterResolver[]
     {
         ContractlessStandardResolver.Instance
     });
@@ -1256,15 +1256,15 @@ Unity Project is using symbolic link. At first, run `make_unity_symlink.bat` so 
 
 Author Info
 ---
-Yoshifumi Kawai(a.k.a. neuecc) is a software developer in Japan.  
-He is the Director/CTO at Grani, Inc.  
-Grani is a mobile game developer company in Japan and well known for using C#.  
-He is awarding Microsoft MVP for Visual C# since 2011.  
-He is known as the creator of [UniRx](http://github.com/neuecc/UniRx/)(Reactive Extensions for Unity)  
+Yoshifumi Kawai(a.k.a. neuecc) is a software developer in Japan.
+He is the Director/CTO at Grani, Inc.
+Grani is a mobile game developer company in Japan and well known for using C#.
+He is awarding Microsoft MVP for Visual C# since 2011.
+He is known as the creator of [UniRx](http://github.com/neuecc/UniRx/)(Reactive Extensions for Unity)
 
-Blog: [https://medium.com/@neuecc](https://medium.com/@neuecc) (English)  
-Blog: [http://neue.cc/](http://neue.cc/) (Japanese)  
-Twitter: [https://twitter.com/neuecc](https://twitter.com/neuecc) (Japanese)   
+Blog: [https://medium.com/@neuecc](https://medium.com/@neuecc) (English)
+Blog: [http://neue.cc/](http://neue.cc/) (Japanese)
+Twitter: [https://twitter.com/neuecc](https://twitter.com/neuecc) (Japanese)
 
 License
 ---

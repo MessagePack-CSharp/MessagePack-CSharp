@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 using System.Threading.Tasks;
 #endif
 
@@ -404,7 +404,7 @@ namespace MessagePack.Formatters
         }
     }
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 
     public sealed class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
     {

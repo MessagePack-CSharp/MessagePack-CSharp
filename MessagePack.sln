@@ -9,51 +9,49 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack", "src\MessageP
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{19FE674A-AC94-4E7E-B24C-2285D1D04CDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Tests", "tests\MessagePack.Tests\MessagePack.Tests.csproj", "{9E1A55CA-711D-4F58-A332-735960E3434C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Tests", "tests\MessagePack.Tests\MessagePack.Tests.csproj", "{9E1A55CA-711D-4F58-A332-735960E3434C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8761-4552-A70A-B34DC19F39C4}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		azure-pipelines.yml = azure-pipelines.yml
+		azure-pipelines\build.yml = azure-pipelines\build.yml
+		Directory.Build.props = Directory.Build.props
+		global.json = global.json
 		LICENSE = LICENSE
 		make_unity_symlink.bat = make_unity_symlink.bat
-		nuget\MessagePack.AspNetCoreMvcFormatter.nuspec = nuget\MessagePack.AspNetCoreMvcFormatter.nuspec
-		nuget\MessagePack.ImmutableCollection.nuspec = nuget\MessagePack.ImmutableCollection.nuspec
-		nuget\MessagePack.nuspec = nuget\MessagePack.nuspec
-		nuget\MessagePack.ReactiveProperty.nuspec = nuget\MessagePack.ReactiveProperty.nuspec
-		nuget\MessagePack.UnityShims.nuspec = nuget\MessagePack.UnityShims.nuspec
-		nuget\MessagePackAnalyzer.nuspec = nuget\MessagePackAnalyzer.nuspec
-		nuget\pack.bat = nuget\pack.bat
-		nuget\push.bat = nuget\push.bat
+		nuget.config = nuget.config
 		README.md = README.md
+		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sandbox", "sandbox", "{BF4C4202-5015-4FBD-80E6-D0F36A06F700}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "sandbox\Sandbox\Sandbox.csproj", "{ED43BDA5-947C-4769-A47A-F07D3C6142AE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "sandbox\Sandbox\Sandbox.csproj", "{ED43BDA5-947C-4769-A47A-F07D3C6142AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.CodeGenerator", "src\MessagePack.CodeGenerator\MessagePack.CodeGenerator.csproj", "{D8B195AC-9E93-438E-8331-EF3A1F613D0B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.CodeGenerator", "src\MessagePack.CodeGenerator\MessagePack.CodeGenerator.csproj", "{D8B195AC-9E93-438E-8331-EF3A1F613D0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicCodeDumper", "sandbox\DynamicCodeDumper\DynamicCodeDumper.csproj", "{8E511130-F838-4B47-842B-0FB27AD175B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicCodeDumper", "sandbox\DynamicCodeDumper\DynamicCodeDumper.csproj", "{8E511130-F838-4B47-842B-0FB27AD175B5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedData", "sandbox\SharedData\SharedData.csproj", "{3ABC5C4C-2CE4-459E-8666-F2B181C3DEF3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharedData", "sandbox\SharedData\SharedData.csproj", "{3ABC5C4C-2CE4-459E-8666-F2B181C3DEF3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.UnityShims", "src\MessagePack.UnityShims\MessagePack.UnityShims.csproj", "{C01E1407-7FEC-4C1D-B0B4-74D95A317AA6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.UnityShims", "src\MessagePack.UnityShims\MessagePack.UnityShims.csproj", "{C01E1407-7FEC-4C1D-B0B4-74D95A317AA6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.ReactiveProperty", "src\MessagePack.ReactiveProperty\MessagePack.ReactiveProperty.csproj", "{166A16C0-B89F-41AF-956A-235C6CA62C25}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.ReactiveProperty", "src\MessagePack.ReactiveProperty\MessagePack.ReactiveProperty.csproj", "{166A16C0-B89F-41AF-956A-235C6CA62C25}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.ImmutableCollection", "src\MessagePack.ImmutableCollection\MessagePack.ImmutableCollection.csproj", "{E066F547-7261-4561-AEFC-E64DBFD874F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePackAnalyzer", "src\MessagePackAnalyzer\MessagePackAnalyzer.csproj", "{2F9A6E0C-DE95-4460-96B7-EB72BBEAEE9E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePackAnalyzer", "src\MessagePackAnalyzer\MessagePackAnalyzer.csproj", "{2F9A6E0C-DE95-4460-96B7-EB72BBEAEE9E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePackAnalyzer.Vsix", "src\MessagePackAnalyzer.Vsix\MessagePackAnalyzer.Vsix.csproj", "{09B87BEB-D9A3-4EEB-B56A-ED53D27DF1A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PertNetFramework", "sandbox\PertNetFramework\PertNetFramework.csproj", "{014A3DCE-50A6-4774-A4C1-C66EEAB67133}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerfNetFramework", "sandbox\PerfNetFramework\PerfNetFramework.csproj", "{014A3DCE-50A6-4774-A4C1-C66EEAB67133}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.AspNetCoreMvcFormatter", "src\MessagePack.AspNetCoreMvcFormatter\MessagePack.AspNetCoreMvcFormatter.csproj", "{17831017-C29C-4A48-B159-849BCE5079FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.AspNetCoreMvcFormatter", "src\MessagePack.AspNetCoreMvcFormatter\MessagePack.AspNetCoreMvcFormatter.csproj", "{17831017-C29C-4A48-B159-849BCE5079FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerfBenchmarkDotNet", "sandbox\PerfBenchmarkDotNet\PerfBenchmarkDotNet.csproj", "{814F94D6-1413-4ACB-B1B5-A3488CAA1E6B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerfBenchmarkDotNet", "sandbox\PerfBenchmarkDotNet\PerfBenchmarkDotNet.csproj", "{814F94D6-1413-4ACB-B1B5-A3488CAA1E6B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestData2", "sandbox\TestData2\TestData2.csproj", "{2A32A538-BA26-4D89-85D0-E4249AFA0837}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestData2", "sandbox\TestData2\TestData2.csproj", "{2A32A538-BA26-4D89-85D0-E4249AFA0837}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -265,5 +263,8 @@ Global
 		{17831017-C29C-4A48-B159-849BCE5079FB} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{814F94D6-1413-4ACB-B1B5-A3488CAA1E6B} = {BF4C4202-5015-4FBD-80E6-D0F36A06F700}
 		{2A32A538-BA26-4D89-85D0-E4249AFA0837} = {BF4C4202-5015-4FBD-80E6-D0F36A06F700}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}
 	EndGlobalSection
 EndGlobal

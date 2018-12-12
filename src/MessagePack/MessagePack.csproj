@@ -1,134 +1,87 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
-        <AssemblyName>MessagePack</AssemblyName>
-        <SignAssembly>True</SignAssembly>
-        <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
+    <NoWarn>$(NoWarn);CS0649</NoWarn>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK</DefineConstants>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(TargetFramework)' != 'net45'">
-        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DefineConstants>TRACE;DEBUG;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
-        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>7</LangVersion>
-    </PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Title>MessagePack for C#</Title>
+    <Description>Extremely Fast MessagePack(MsgPack) Serializer for C#(.NET, .NET Core, Unity, Xamarin).</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' != 'net45'">
-        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.xml</DocumentationFile>
-        <NoWarn>1701;1702;1705;1591</NoWarn>
-        <DefineConstants>TRACE;RELEASE;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
-        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>7</LangVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(TargetFramework)' == 'net45'">
-        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DefineConstants>TRACE;DEBUG;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
-        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>7</LangVersion>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'  AND '$(TargetFramework)' == 'net45'">
-        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <NoWarn>1701;1702;1705;1591</NoWarn>
-        <DefineConstants>TRACE;RELEASE;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;NET45;</DefineConstants>
-        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <LangVersion>7</LangVersion>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Remove="*.meta" />
-        <None Remove="Resolvers\*.meta" />
-        <None Remove="Internal\*.meta" />
-        <None Remove="Formatters\*.meta" />
-        <None Remove="LZ4\Codec\*.meta" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="LZ4\Codec\LZ4Codec.Safe.cs" />
-        <None Include="MessagePackSerializer.Typeless.cs" />
-    </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.3.0" />
+  <ItemGroup>
+    <None Remove="*.meta" />
+    <None Remove="Resolvers\*.meta" />
+    <None Remove="Internal\*.meta" />
+    <None Remove="Formatters\*.meta" />
+    <None Remove="LZ4\Codec\*.meta" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6' ">
+  <ItemGroup>
+    <None Include="LZ4\Codec\LZ4Codec.Safe.cs" />
+    <None Include="MessagePackSerializer.Typeless.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.1" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.3.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.3.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net47' ">
-        <Reference Include="System" />
-        <Reference Include="System.Core" />
-        <Reference Include="Microsoft.CSharp" />
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.3.0" />
-    </ItemGroup>
+  <ItemGroup>
+    <None Update="Formatters\ForceSizePrimitiveFormatter.tt">
+      <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="Formatters\PrimitiveFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
+    </None>
+    <None Update="Formatters\TupleFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>TupleFormatter.cs</LastGenOutput>
+    </None>
+    <None Update="Formatters\ValueTupleFormatter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
+    </None>
+    <None Update="Internal\UnsafeMemory.tt">
+      <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+  </ItemGroup>
 
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
-        <PackageReference Include="System.ValueTuple" Version="4.3.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Update="Formatters\ForceSizePrimitiveFormatter.tt">
-          <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
-          <Generator>TextTemplatingFileGenerator</Generator>
-        </None>
-        <None Update="Formatters\PrimitiveFormatter.tt">
-            <Generator>TextTemplatingFileGenerator</Generator>
-            <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
-        </None>
-        <None Update="Formatters\TupleFormatter.tt">
-            <Generator>TextTemplatingFileGenerator</Generator>
-            <LastGenOutput>TupleFormatter.cs</LastGenOutput>
-        </None>
-        <None Update="Formatters\ValueTupleFormatter.tt">
-            <Generator>TextTemplatingFileGenerator</Generator>
-            <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
-        </None>
-        <None Update="Internal\UnsafeMemory.tt">
-          <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
-          <Generator>TextTemplatingFileGenerator</Generator>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Update="Formatters\ForceSizePrimitiveFormatter.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>ForceSizePrimitiveFormatter.tt</DependentUpon>
-      </Compile>
-      <Compile Update="Formatters\PrimitiveFormatter.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
-      </Compile>
-      <Compile Update="Formatters\TupleFormatter.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>TupleFormatter.tt</DependentUpon>
-      </Compile>
-      <Compile Update="Formatters\ValueTupleFormatter.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
-      </Compile>
-      <Compile Update="Internal\UnsafeMemory.cs">
-        <DependentUpon>UnsafeMemory.tt</DependentUpon>
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-      </Compile>
-    </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Formatters\ForceSizePrimitiveFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ForceSizePrimitiveFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Formatters\PrimitiveFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Formatters\TupleFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TupleFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Formatters\ValueTupleFormatter.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Internal\UnsafeMemory.cs">
+      <DependentUpon>UnsafeMemory.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+  </ItemGroup>
 </Project>

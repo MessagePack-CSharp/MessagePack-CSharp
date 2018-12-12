@@ -33,7 +33,7 @@ namespace MessagePack.Resolvers
         }
 
 
-#if NET_35
+#if NETFRAMEWORK
         public AssemblyBuilder Save()
         {
             return assembly.Save();

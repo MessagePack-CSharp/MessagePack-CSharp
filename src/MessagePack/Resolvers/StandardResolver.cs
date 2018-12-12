@@ -12,7 +12,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly IFormatterResolver Instance = new StandardResolver();
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverCore.Instance);
 #endif
 
@@ -34,7 +34,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
                     formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
@@ -52,7 +52,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly IFormatterResolver Instance = new ContractlessStandardResolver();
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverCore.Instance);
 #endif
 
@@ -74,7 +74,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
                     formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
@@ -92,7 +92,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly IFormatterResolver Instance = new StandardResolverAllowPrivate();
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverAllowPrivateCore.Instance);
 #endif
 
@@ -114,7 +114,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
                     formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
@@ -132,7 +132,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly IFormatterResolver Instance = new ContractlessStandardResolverAllowPrivate();
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverAllowPrivateCore.Instance);
 #endif
 
@@ -154,7 +154,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
                     formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
@@ -178,7 +178,7 @@ namespace MessagePack.Internal
             BuiltinResolver.Instance, // Try Builtin
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
 
-#if !NETSTANDARD
+#if !(NETSTANDARD || NETFRAMEWORK)
             MessagePack.Unity.UnityResolver.Instance,
 #endif
 

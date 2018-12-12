@@ -127,7 +127,7 @@ namespace MessagePack
             return resolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value, resolver);
         }
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 
         /// <summary>
         /// Serialize to stream(async).
@@ -254,7 +254,7 @@ namespace MessagePack
             return resolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, resolver, out readSize);
         }
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 
         public static System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream)
         {

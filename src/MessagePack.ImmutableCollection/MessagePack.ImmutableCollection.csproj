@@ -1,23 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
-        <SignAssembly>True</SignAssembly>
-        <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml</DocumentationFile>
-        <NoWarn>1701;1702;1705;1591</NoWarn>
-    </PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Title>MessagePack for C# Extension Support for ImmutableCollection</Title>
+    <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for System.Collections.Immutable.</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer</PackageTags>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
 
 </Project>
