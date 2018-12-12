@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <ProjectGuid>{9E1A55CA-711D-4F58-A332-735960E3434C}</ProjectGuid>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFrameworks>net461;net47;netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsTestProject>true</IsTestProject>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <NoWarn>$(NoWarn);CS1701</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\sandbox\SharedData\SharedData.csproj" />
@@ -21,12 +21,6 @@
     <PackageReference Include="MsgPack.Cli" version="0.9.0-beta2" />
     <PackageReference Include="ReactiveProperty" version="4.2.2" />
     <PackageReference Include="System.Collections.Immutable" version="1.3.1" />
-    <PackageReference Include="System.Reactive.Core" version="3.1.1" />
-    <PackageReference Include="System.Reactive.Interfaces" version="3.1.1" />
-    <PackageReference Include="System.Reactive.Linq" version="3.1.1" />
-    <PackageReference Include="System.Reactive.PlatformServices" version="3.1.1" />
-    <PackageReference Include="System.Reactive.Windows.Threading" version="3.1.1" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" version="4.3.0" />
     <PackageReference Include="xunit" version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" version="2.4.1">
       <PrivateAssets>all</PrivateAssets>

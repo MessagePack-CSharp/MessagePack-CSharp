@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -117,7 +118,7 @@ namespace MessagePack.Tests
         [MemberData(nameof(standardStructFormatterTestData))]
         public void StandardClassLibraryStructFormatterTest(object x, object y, object z)
         {
-            var helper = typeof(FormatterTest).GetMethod(nameof(StandardClassLibraryStructFormatterTest_Helper), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var helper = typeof(FormatterTest).GetTypeInfo().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).Single(m => m.Name == nameof(StandardClassLibraryStructFormatterTest_Helper));
             var helperClosedGeneric = helper.MakeGenericMethod(x.GetType());
 
             helperClosedGeneric.Invoke(this, new object[] { x });
@@ -132,7 +133,7 @@ namespace MessagePack.Tests
             new object[] { new byte[] { 1, 10, 100 }, new byte[0] { }, null },
             new object[] { "aaa", "", null },
             new object[] { new Uri("Http://hogehoge.com"), new Uri("Https://hugahuga.com"), null },
-            new object[] { new Version(), new Version(1,2,3), new Version(255,100,30) },
+            new object[] { new Version(0,0), new Version(1,2,3), new Version(255,100,30) },
             new object[] { new Version(1,2), new Version(100, 200,300,400), null },
             new object[] { new BitArray(new[] { true, false, true }), new BitArray(1), null },
         };
@@ -230,7 +231,7 @@ namespace MessagePack.Tests
         [Fact]
         public void DecimalLang()
         {
-            var estonian = CultureInfo.GetCultureInfo("et-EE");
+            var estonian = new CultureInfo("et-EE");
             CultureInfo.CurrentCulture = estonian;
 
             var b = MessagePackSerializer.Serialize(12345.6789M);
