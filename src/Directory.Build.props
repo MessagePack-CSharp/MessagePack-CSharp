@@ -1,7 +1,0 @@
-<Project>
-  <Import Project="..\Directory.Build.props" />
-  <PropertyGroup Condition=" '$(MSBuildProjectFileName)' != 'Assembly-CSharp.csproj' ">
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\opensource.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-</Project>
