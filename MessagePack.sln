@@ -14,15 +14,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8761-4552-A70A-B34DC19F39C4}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
-		azure-pipelines.yml = azure-pipelines.yml
-		azure-pipelines\build.yml = azure-pipelines\build.yml
-		Directory.Build.props = Directory.Build.props
-		global.json = global.json
 		LICENSE = LICENSE
 		make_unity_symlink.bat = make_unity_symlink.bat
-		nuget.config = nuget.config
 		README.md = README.md
-		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sandbox", "sandbox", "{BF4C4202-5015-4FBD-80E6-D0F36A06F700}"
@@ -52,6 +46,16 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerfBenchmarkDotNet", "sandbox\PerfBenchmarkDotNet\PerfBenchmarkDotNet.csproj", "{814F94D6-1413-4ACB-B1B5-A3488CAA1E6B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestData2", "sandbox\TestData2\TestData2.csproj", "{2A32A538-BA26-4D89-85D0-E4249AFA0837}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{301F812B-8AEE-4DC2-8009-4510F02294AD}"
+	ProjectSection(SolutionItems) = preProject
+		azure-pipelines.yml = azure-pipelines.yml
+		azure-pipelines\build.yml = azure-pipelines\build.yml
+		Directory.Build.props = Directory.Build.props
+		global.json = global.json
+		nuget.config = nuget.config
+		version.json = version.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
