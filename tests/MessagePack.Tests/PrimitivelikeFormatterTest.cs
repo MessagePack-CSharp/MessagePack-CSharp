@@ -82,6 +82,8 @@ namespace MessagePack.Tests
 
     public class PrimitivelikeFormatterTest
     {
+        private MessagePackSerializer defaultSerializer = new MessagePackSerializer();
+
         [Fact]
         public void CanResolve()
         {
@@ -89,17 +91,17 @@ namespace MessagePack.Tests
 
             Assert.Throws<NotImplementedException>(() =>
             {
-                MessagePackSerializer.Serialize(new MyDateTimeResolverTest1() { MyProperty1 = DateTime.Now }, resolver);
+                defaultSerializer.Serialize(new MyDateTimeResolverTest1() { MyProperty1 = DateTime.Now }, resolver);
             });
 
             Assert.Throws<NotImplementedException>(() =>
             {
-                MessagePackSerializer.Serialize(new MyDateTimeResolverTest2() { MyProperty1 = "aaa" }, resolver);
+                defaultSerializer.Serialize(new MyDateTimeResolverTest2() { MyProperty1 = "aaa" }, resolver);
             });
 
             Assert.Throws<NotImplementedException>(() =>
             {
-                MessagePackSerializer.Serialize(new MyDateTimeResolverTest3() { MyProperty1 = new byte[] { 0, 1, 2 } }, resolver);
+                defaultSerializer.Serialize(new MyDateTimeResolverTest3() { MyProperty1 = new byte[] { 0, 1, 2 } }, resolver);
             });
         }
 
@@ -115,12 +117,12 @@ namespace MessagePack.Tests
 
             var serializer = referenceContext.GetSerializer<DateTime>();
 
-            var a = MessagePackSerializer.Serialize(now, NativeDateTimeResolver.Instance);
+            var a = defaultSerializer.Serialize(now, NativeDateTimeResolver.Instance);
             var b = serializer.PackSingleObject(now);
 
             a.Is(b);
 
-            var dt1 = MessagePackSerializer.Deserialize<DateTime>(a, NativeDateTimeResolver.Instance);
+            var dt1 = defaultSerializer.Deserialize<DateTime>(a, NativeDateTimeResolver.Instance);
             var dt2 = serializer.UnpackSingleObject(b);
 
             dt1.Is(dt2);
@@ -138,12 +140,12 @@ namespace MessagePack.Tests
 
             var serializer = referenceContext.GetSerializer<string>();
 
-            var a = MessagePackSerializer.Serialize(data, OldSpecResolver.Instance);
+            var a = defaultSerializer.Serialize(data, OldSpecResolver.Instance);
             var b = serializer.PackSingleObject(data);
 
             a.Is(b);
 
-            var r1 = MessagePackSerializer.Deserialize<string>(a, OldSpecResolver.Instance);
+            var r1 = defaultSerializer.Deserialize<string>(a, OldSpecResolver.Instance);
             var r2 = serializer.UnpackSingleObject(b);
 
             r1.Is(r2);
@@ -162,12 +164,12 @@ namespace MessagePack.Tests
 
             var serializer = referenceContext.GetSerializer<byte[]>();
 
-            var a = MessagePackSerializer.Serialize(data, OldSpecResolver.Instance);
+            var a = defaultSerializer.Serialize(data, OldSpecResolver.Instance);
             var b = serializer.PackSingleObject(data);
 
             a.Is(b);
 
-            var r1 = MessagePackSerializer.Deserialize<byte[]>(a, OldSpecResolver.Instance);
+            var r1 = defaultSerializer.Deserialize<byte[]>(a, OldSpecResolver.Instance);
             var r2 = serializer.UnpackSingleObject(b);
 
             r1.Is(r2);

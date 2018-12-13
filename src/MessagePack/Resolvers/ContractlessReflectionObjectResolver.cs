@@ -1,10 +1,10 @@
 ﻿#if NETSTANDARD || NETFRAMEWORK
 
-using MessagePack.Formatters;
-using MessagePack.Internal;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using MessagePack.Formatters;
+using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
@@ -15,18 +15,18 @@ namespace MessagePack.Resolvers
         public static readonly IFormatterResolver Contractless = new ContractlessResolver();
         public static readonly IFormatterResolver ContractlessForceStringKey = new ContractlessForceStringResolver();
 
-        class DefaultResolver : IFormatterResolver
+        private class DefaultResolver : IFormatterResolver
         {
-            const bool ForceStringKey = false;
-            const bool Contractless = false;
-            const bool AllowPrivate = false;
+            private const bool ForceStringKey = false;
+            private const bool Contractless = false;
+            private const bool AllowPrivate = false;
 
             public IMessagePackFormatter<T> GetFormatter<T>()
             {
                 return Cache<T>.formatter;
             }
 
-            static class Cache<T>
+            private static class Cache<T>
             {
                 public static readonly IMessagePackFormatter<T> formatter;
 
@@ -41,18 +41,18 @@ namespace MessagePack.Resolvers
             }
         }
 
-        class ContractlessResolver : IFormatterResolver
+        private class ContractlessResolver : IFormatterResolver
         {
-            const bool ForceStringKey = false;
-            const bool Contractless = true;
-            const bool AllowPrivate = false;
+            private const bool ForceStringKey = false;
+            private const bool Contractless = true;
+            private const bool AllowPrivate = false;
 
             public IMessagePackFormatter<T> GetFormatter<T>()
             {
                 return Cache<T>.formatter;
             }
 
-            static class Cache<T>
+            private static class Cache<T>
             {
                 public static readonly IMessagePackFormatter<T> formatter;
 
@@ -67,18 +67,18 @@ namespace MessagePack.Resolvers
             }
         }
 
-        class ContractlessForceStringResolver : IFormatterResolver
+        private class ContractlessForceStringResolver : IFormatterResolver
         {
-            const bool ForceStringKey = true;
-            const bool Contractless = true;
-            const bool AllowPrivate = false;
+            private const bool ForceStringKey = true;
+            private const bool Contractless = true;
+            private const bool AllowPrivate = false;
 
             public IMessagePackFormatter<T> GetFormatter<T>()
             {
                 return Cache<T>.formatter;
             }
 
-            static class Cache<T>
+            private static class Cache<T>
             {
                 public static readonly IMessagePackFormatter<T> formatter;
 
@@ -92,22 +92,21 @@ namespace MessagePack.Resolvers
                 }
             }
         }
-
     }
-
 
     public class ReflectionObjectFormatter<T> : IMessagePackFormatter<T>
     {
-        readonly ObjectSerializationInfo metaInfo;
+        private readonly MessagePackSerializer.NonGeneric serializer = new MessagePackSerializer.NonGeneric(new MessagePackSerializer());
+        private readonly ObjectSerializationInfo metaInfo;
 
         // for write
-        readonly byte[][] writeMemberNames;
-        readonly ObjectSerializationInfo.EmittableMember[] writeMembers;
+        private readonly byte[][] writeMemberNames;
+        private readonly ObjectSerializationInfo.EmittableMember[] writeMembers;
 
         // for read
-        readonly int[] constructorParameterIndexes;
-        readonly AutomataDictionary mapMemberDictionary;
-        readonly ObjectSerializationInfo.EmittableMember[] readMembers;
+        private readonly int[] constructorParameterIndexes;
+        private readonly AutomataDictionary mapMemberDictionary;
+        private readonly ObjectSerializationInfo.EmittableMember[] readMembers;
 
 
         internal ReflectionObjectFormatter(ObjectSerializationInfo metaInfo)
@@ -152,23 +151,20 @@ namespace MessagePack.Resolvers
             // reduce generic method size, avoid write code in <T> type.
             if (metaInfo.IsIntKey)
             {
-                return ReflectionObjectFormatterHelper.WriteArraySerialize(metaInfo, writeMembers, ref bytes, offset, value, formatterResolver);
+                return WriteArraySerialize(metaInfo, writeMembers, ref bytes, offset, value, formatterResolver);
             }
             else
             {
-                return ReflectionObjectFormatterHelper.WriteMapSerialize(metaInfo, writeMembers, writeMemberNames, ref bytes, offset, value, formatterResolver);
+                return WriteMapSerialize(metaInfo, writeMembers, writeMemberNames, ref bytes, offset, value, formatterResolver);
             }
         }
 
         public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
-            return (T)ReflectionObjectFormatterHelper.Deserialize(metaInfo, readMembers, constructorParameterIndexes, mapMemberDictionary, bytes, offset, formatterResolver, out readSize);
+            return (T)Deserialize(metaInfo, readMembers, constructorParameterIndexes, mapMemberDictionary, bytes, offset, formatterResolver, out readSize);
         }
-    }
 
-    internal static class ReflectionObjectFormatterHelper
-    {
-        internal static int WriteArraySerialize(ObjectSerializationInfo metaInfo, ObjectSerializationInfo.EmittableMember[] writeMembers, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        internal int WriteArraySerialize(ObjectSerializationInfo metaInfo, ObjectSerializationInfo.EmittableMember[] writeMembers, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
         {
             var startOffset = offset;
 
@@ -182,14 +178,14 @@ namespace MessagePack.Resolvers
                 else
                 {
                     var memberValue = item.ReflectionLoadValue(value);
-                    offset += MessagePackSerializer.NonGeneric.Serialize(item.Type, ref bytes, offset, memberValue, formatterResolver);
+                    offset += serializer.Serialize(item.Type, ref bytes, offset, memberValue, formatterResolver);
                 }
             }
 
             return offset - startOffset;
         }
 
-        internal static int WriteMapSerialize(ObjectSerializationInfo metaInfo, ObjectSerializationInfo.EmittableMember[] writeMembers, byte[][] memberNames, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        internal int WriteMapSerialize(ObjectSerializationInfo metaInfo, ObjectSerializationInfo.EmittableMember[] writeMembers, byte[][] memberNames, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
         {
             var startOffset = offset;
 
@@ -199,13 +195,13 @@ namespace MessagePack.Resolvers
             {
                 offset += MessagePackBinary.WriteStringBytes(ref bytes, offset, memberNames[i]);
                 var memberValue = writeMembers[i].ReflectionLoadValue(value);
-                offset += MessagePackSerializer.NonGeneric.Serialize(writeMembers[i].Type, ref bytes, offset, memberValue, formatterResolver);
+                offset += serializer.Serialize(writeMembers[i].Type, ref bytes, offset, memberValue, formatterResolver);
             }
 
             return offset - startOffset;
         }
 
-        internal static object Deserialize(ObjectSerializationInfo metaInfo, ObjectSerializationInfo.EmittableMember[] readMembers, int[] constructorParameterIndexes, AutomataDictionary mapMemberDictionary, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        internal object Deserialize(ObjectSerializationInfo metaInfo, ObjectSerializationInfo.EmittableMember[] readMembers, int[] constructorParameterIndexes, AutomataDictionary mapMemberDictionary, byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
         {
             var startOffset = offset;
             object[] parameters = null;
@@ -228,7 +224,7 @@ namespace MessagePack.Resolvers
                     var info = readMembers[i];
                     if (info != null)
                     {
-                        parameters[i] = MessagePackSerializer.NonGeneric.Deserialize(info.Type, bytes, offset, formatterResolver, out readSize);
+                        parameters[i] = serializer.Deserialize(info.Type, bytes, offset, formatterResolver, out readSize);
                         offset += readSize;
                     }
                     else
@@ -253,7 +249,7 @@ namespace MessagePack.Resolvers
                     if (mapMemberDictionary.TryGetValue(rawPropName.Array, rawPropName.Offset, rawPropName.Count, out index))
                     {
                         var info = readMembers[index];
-                        parameters[index] = MessagePackSerializer.NonGeneric.Deserialize(info.Type, bytes, offset, formatterResolver, out readSize);
+                        parameters[index] = serializer.Deserialize(info.Type, bytes, offset, formatterResolver, out readSize);
                         offset += readSize;
                     }
                     else

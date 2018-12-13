@@ -9,9 +9,11 @@ namespace MessagePack.Tests
 {
     public class MultiDimentionalArrayTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
         [Theory]

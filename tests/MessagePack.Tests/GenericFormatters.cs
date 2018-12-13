@@ -9,9 +9,11 @@ namespace MessagePack.Tests
 {
     public class GenericFormatters
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
         public static object[][] tupleTestData = new object[][]
@@ -79,9 +81,9 @@ namespace MessagePack.Tests
         [MemberData(nameof(byteArraySegementData))]
         public void ByteArraySegmentTest(ArraySegment<byte> t, ArraySegment<byte>? t2, byte[] reference)
         {
-            MessagePackSerializer.Serialize(t).Is(MessagePackSerializer.Serialize(reference));
+            serializer.Serialize(t).Is(serializer.Serialize(reference));
             Convert(t).Array.Is(reference);
-            MessagePackBinary.IsNil(MessagePackSerializer.Serialize(t2), 0).IsTrue();
+            MessagePackBinary.IsNil(serializer.Serialize(t2), 0).IsTrue();
         }
 
 

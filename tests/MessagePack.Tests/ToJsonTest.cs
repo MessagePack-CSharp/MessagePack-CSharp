@@ -9,14 +9,17 @@ namespace MessagePack.Tests
 {
     public class ToJsonTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+        private LZ4MessagePackSerializer lz4Serializer = new LZ4MessagePackSerializer();
+
         string JsonConvert(string json)
         {
-            return MessagePackSerializer.ToJson(MessagePackSerializer.FromJson(json));
+            return serializer.ToJson(serializer.FromJson(json));
         }
 
         string JsonConvertLZ4(string json)
         {
-            return LZ4MessagePackSerializer.ToJson(LZ4MessagePackSerializer.FromJson(json));
+            return lz4Serializer.ToJson(lz4Serializer.FromJson(json));
         }
 
         [Theory]
@@ -45,8 +48,8 @@ namespace MessagePack.Tests
         public void FloatJson()
         {
             var f = 3.33f;
-            var xs = MessagePackSerializer.Serialize(f);
-            var json = MessagePackSerializer.ToJson(xs);
+            var xs = serializer.Serialize(f);
+            var json = serializer.ToJson(xs);
             json.Is("3.33");
         }
 

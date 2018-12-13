@@ -13,9 +13,11 @@ namespace MessagePack.Tests
 {
     public class FormatterTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
         public static object[][] primitiveFormatterTestData = new object[][]
@@ -196,8 +198,8 @@ namespace MessagePack.Tests
         public void DateTimeOffsetTest()
         {
             DateTimeOffset now = new DateTime(DateTime.UtcNow.Ticks + TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time").BaseUtcOffset.Ticks, DateTimeKind.Local);
-            var binary = MessagePackSerializer.Serialize(now);
-            MessagePackSerializer.Deserialize<DateTimeOffset>(binary).Is(now);
+            var binary = serializer.Serialize(now);
+            serializer.Deserialize<DateTimeOffset>(binary).Is(now);
         }
 
         [Fact]
@@ -234,8 +236,8 @@ namespace MessagePack.Tests
             var estonian = new CultureInfo("et-EE");
             CultureInfo.CurrentCulture = estonian;
 
-            var b = MessagePackSerializer.Serialize(12345.6789M);
-            var d = MessagePackSerializer.Deserialize<decimal>(b);
+            var b = serializer.Serialize(12345.6789M);
+            var d = serializer.Deserialize<decimal>(b);
 
             d.Is(12345.6789M);
         }

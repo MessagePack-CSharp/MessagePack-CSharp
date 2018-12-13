@@ -10,6 +10,8 @@ namespace MessagePack.Tests
 {
     public class NewGuidFormatterTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         // GuidBits is internal...
 
         //[Fact]
@@ -49,7 +51,7 @@ namespace MessagePack.Tests
             }
             {
                 var c = new InClass() { MyProperty = 3414141, Guid = Guid.NewGuid() };
-                var c2 = MessagePackSerializer.Deserialize<InClass>(MessagePackSerializer.Serialize(c));
+                var c2 = serializer.Deserialize<InClass>(serializer.Serialize(c));
                 c.MyProperty.Is(c2.MyProperty);
                 c.Guid.Is(c2.Guid);
             }

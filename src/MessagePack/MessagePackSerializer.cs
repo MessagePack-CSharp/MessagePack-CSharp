@@ -7,28 +7,49 @@ namespace MessagePack
     /// <summary>
     /// High-Level API of MessagePack for C#.
     /// </summary>
-    public static partial class MessagePackSerializer
+    public partial class MessagePackSerializer
     {
         /// <summary>
-        /// Gets the default <see cref="IFormatterResolver"/> instance to use when one is not specified.
+        /// Backing field for the <see cref="DefaultResolver"/> property.
         /// </summary>
-        /// <value>
-        /// This is the <see cref="Resolvers.StandardResolver"/>.
-        /// </value>
-        public static IFormatterResolver DefaultResolver => Resolvers.StandardResolver.Instance;
+        private IFormatterResolver defaultResolver;
 
         /// <summary>
-        /// Serialize to binary with default resolver.
+        /// Initializes a new instance of the <see cref="MessagePackSerializer"/> class
+        /// initialized with the <see cref="Resolvers.StandardResolver"/>.
         /// </summary>
-        public static byte[] Serialize<T>(T obj)
+        public MessagePackSerializer()
+            : this(Resolvers.StandardResolver.Instance)
         {
-            return Serialize(obj, DefaultResolver);
         }
 
         /// <summary>
-        /// Serialize to binary with specified resolver.
+        /// Initializes a new instance of the <see cref="MessagePackSerializer"/> class
         /// </summary>
-        public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
+        /// <param name="defaultResolver">The resolver to use.</param>
+        public MessagePackSerializer(IFormatterResolver defaultResolver)
+        {
+            this.defaultResolver = defaultResolver ?? throw new ArgumentNullException(nameof(defaultResolver));
+        }
+
+        /// <summary>
+        /// Gets or sets the resolver to use when one is not explicitly specified.
+        /// </summary>
+        public IFormatterResolver DefaultResolver
+        {
+            get => this.defaultResolver;
+            ////set => this.defaultResolver = value ?? throw new ArgumentNullException(nameof(value));
+        }
+
+        /// <summary>
+        /// Serialize to binary.
+        /// </summary>
+        public byte[] Serialize<T>(T obj) => this.Serialize<T>(obj, this.DefaultResolver);
+
+        /// <summary>
+        /// Serialize to binary.
+        /// </summary>
+        public virtual byte[] Serialize<T>(T obj, IFormatterResolver resolver)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
@@ -44,15 +65,7 @@ namespace MessagePack
         /// <summary>
         /// Serialize to binary. Get the raw memory pool byte[]. The result can not share across thread and can not hold, so use quickly.
         /// </summary>
-        public static ArraySegment<byte> SerializeUnsafe<T>(T obj)
-        {
-            return SerializeUnsafe(obj, DefaultResolver);
-        }
-
-        /// <summary>
-        /// Serialize to binary with specified resolver. Get the raw memory pool byte[]. The result can not share across thread and can not hold, so use quickly.
-        /// </summary>
-        public static ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver)
+        protected ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
@@ -68,16 +81,18 @@ namespace MessagePack
         /// <summary>
         /// Serialize to stream.
         /// </summary>
-        public static void Serialize<T>(Stream stream, T obj)
-        {
-            Serialize(stream, obj, DefaultResolver);
-        }
+        public void Serialize<T>(Stream stream, T obj) => this.Serialize<T>(stream, obj, DefaultResolver);
 
         /// <summary>
-        /// Serialize to stream with specified resolver.
+        /// Serialize to stream.
         /// </summary>
-        public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
+        public virtual void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
         {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
 
@@ -92,8 +107,9 @@ namespace MessagePack
         /// <summary>
         /// Reflect of resolver.GetFormatterWithVerify[T].Serialize.
         /// </summary>
-        public static int Serialize<T>(ref byte[] bytes, int offset, T value, IFormatterResolver resolver)
+        public int Serialize<T>(ref byte[] bytes, int offset, T value, IFormatterResolver resolver)
         {
+            if (resolver == null) resolver = DefaultResolver;
             return resolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value, resolver);
         }
 
@@ -102,15 +118,12 @@ namespace MessagePack
         /// <summary>
         /// Serialize to stream(async).
         /// </summary>
-        public static System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj)
-        {
-            return SerializeAsync(stream, obj, DefaultResolver);
-        }
+        public System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj) => SerializeAsync<T>(stream, obj, DefaultResolver);
 
         /// <summary>
-        /// Serialize to stream(async) with specified resolver.
+        /// Serialize to stream(async).
         /// </summary>
-        public static async System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj, IFormatterResolver resolver)
+        public async System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj, IFormatterResolver resolver)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
@@ -132,50 +145,27 @@ namespace MessagePack
 
 #endif
 
-        public static T Deserialize<T>(byte[] bytes)
-        {
-            return Deserialize<T>(bytes, DefaultResolver);
-        }
+        public T Deserialize<T>(byte[] bytes) => Deserialize<T>(bytes, DefaultResolver);
 
-        public static T Deserialize<T>(byte[] bytes, IFormatterResolver resolver)
-        {
-            if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
+        public T Deserialize<T>(byte[] bytes, IFormatterResolver resolver) => Deserialize<T>(new ArraySegment<byte>(bytes), resolver);
 
-            int readSize;
-            return formatter.Deserialize(bytes, 0, resolver, out readSize);
-        }
+        public T Deserialize<T>(ArraySegment<byte> bytes) => Deserialize<T>(bytes, DefaultResolver);
 
-        public static T Deserialize<T>(ArraySegment<byte> bytes)
-        {
-            return Deserialize<T>(bytes, DefaultResolver);
-        }
+        public T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver) => Deserialize<T>(bytes, resolver, out int readSize);
 
-        public static T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver)
+        public virtual T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver, out int readSize)
         {
             if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            int readSize;
-            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize);
+            return resolver.GetFormatterWithVerify<T>().Deserialize(bytes.Array, bytes.Offset, resolver, out readSize);
         }
 
-        public static T Deserialize<T>(Stream stream)
-        {
-            return Deserialize<T>(stream, DefaultResolver);
-        }
+        public T Deserialize<T>(Stream stream) => Deserialize<T>(stream, DefaultResolver, readStrict: false);
 
-        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
-        {
-            return Deserialize<T>(stream, resolver, false);
-        }
+        public T Deserialize<T>(Stream stream, IFormatterResolver resolver) => Deserialize<T>(stream, resolver, readStrict: false);
 
-        public static T Deserialize<T>(Stream stream, bool readStrict)
-        {
-            return Deserialize<T>(stream, DefaultResolver, readStrict);
-        }
+        public T Deserialize<T>(Stream stream, bool readStrict) => Deserialize<T>(stream, DefaultResolver, readStrict);
 
-        public static T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
+        public virtual T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
         {
             if (resolver == null) resolver = DefaultResolver;
             var formatter = resolver.GetFormatterWithVerify<T>();
@@ -219,22 +209,17 @@ namespace MessagePack
         /// <summary>
         /// Reflect of resolver.GetFormatterWithVerify[T].Deserialize.
         /// </summary>
-        public static T Deserialize<T>(byte[] bytes, int offset, IFormatterResolver resolver, out int readSize)
-        {
-            return resolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, resolver, out readSize);
-        }
+        public T Deserialize<T>(byte[] bytes, int offset, IFormatterResolver resolver, out int readSize) => Deserialize<T>(new ArraySegment<byte>(bytes, offset, bytes.Length - offset), resolver, out readSize);
 
 #if NETSTANDARD || NETFRAMEWORK
 
-        public static System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream)
-        {
-            return DeserializeAsync<T>(stream, DefaultResolver);
-        }
+        public System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream) => DeserializeAsync<T>(stream, DefaultResolver);
 
         // readStrict async read is too slow(many Task garbage) so I don't provide async option.
 
-        public static async System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream, IFormatterResolver resolver)
+        public async System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream, IFormatterResolver resolver)
         {
+            if (resolver == null) resolver = DefaultResolver;
             var rentBuffer = BufferPool.Default.Rent();
             var buf = rentBuffer;
             try

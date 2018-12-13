@@ -11,6 +11,8 @@ namespace MessagePack.Tests
 {
     public class UnsafeMemoryTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         delegate int WriteDelegate(ref byte[] xs, int offset, byte[] ys);
 
         [Theory]
@@ -24,7 +26,7 @@ namespace MessagePack.Tests
         {
             var s = new string(c, count);
             var bin1 = MessagePackBinary.GetEncodedStringBytes(s);
-            var bin2 = MessagePackSerializer.Serialize(s);
+            var bin2 = serializer.Serialize(s);
             byte[] bin3 = null;
             var size = MessagePackBinary.WriteRaw(ref bin3, 0, bin1);
             MessagePackBinary.FastResize(ref bin3, size);

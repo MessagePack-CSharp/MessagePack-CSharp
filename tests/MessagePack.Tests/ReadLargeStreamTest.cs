@@ -10,6 +10,8 @@ namespace MessagePack.Tests
 {
     public class ReadLargeStreamTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         [Fact]
         public void Large()
         {
@@ -23,10 +25,10 @@ namespace MessagePack.Tests
                 bytesC[i] = 1;
             }
 
-            var bin = MessagePackSerializer.Serialize(new[] { bytesA, bytesB, bytesC });
+            var bin = serializer.Serialize(new[] { bytesA, bytesB, bytesC });
             var ms = new MemoryStream(bin, 0, bin.Length, false, false);
 
-            var foo = MessagePackSerializer.Deserialize<byte[][]>(ms, true);
+            var foo = serializer.Deserialize<byte[][]>(ms, true);
 
             for (int i = 0; i < foo[0].Length; i++)
             {

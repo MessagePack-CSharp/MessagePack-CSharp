@@ -1,18 +1,18 @@
-﻿using MessagePack;
-using System.Linq;
-using MessagePack.Formatters;
-using MessagePack.Resolvers;
-using System;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using ZeroFormatter;
-using System.Collections.Generic;
-using MessagePack.Internal;
-using ProtoBuf;
-using System.Collections;
-using Newtonsoft.Json;
-using System.Text;
 using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using MessagePack;
+using MessagePack.Formatters;
+using MessagePack.Internal;
+using MessagePack.Resolvers;
+using Newtonsoft.Json;
+using ProtoBuf;
+using ZeroFormatter;
 
 namespace PerfnetFramework
 {
@@ -53,9 +53,9 @@ namespace PerfnetFramework
         Unknown, Male, Female,
     }
 
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             var p = new Person
             {
@@ -81,15 +81,18 @@ namespace PerfnetFramework
             Benchmark(l);
         }
 
-        static void Benchmark<T>(T target)
+        internal static readonly MessagePack.MessagePackSerializer DefaultSerializer = new MessagePackSerializer();
+        internal static readonly MessagePack.LZ4MessagePackSerializer LZ4Serializer = new LZ4MessagePackSerializer();
+
+        private static void Benchmark<T>(T target)
         {
             const int Iteration = 1000000; // 10000
 
             var jsonSerializer = new JsonSerializer();
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
-            MessagePack.MessagePackSerializer.Serialize(target);
-            LZ4MessagePackSerializer.Serialize(target);
+            DefaultSerializer.Serialize(target);
+            LZ4Serializer.Serialize(target);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
@@ -118,7 +121,7 @@ namespace PerfnetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data0 = MessagePack.MessagePackSerializer.Serialize(target);
+                    data0 = DefaultSerializer.Serialize(target);
                 }
             }
 
@@ -126,7 +129,7 @@ namespace PerfnetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data3 = LZ4MessagePackSerializer.Serialize(target);
+                    data3 = LZ4Serializer.Serialize(target);
                 }
             }
 
@@ -204,10 +207,10 @@ namespace PerfnetFramework
 
 
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
-            MessagePack.MessagePackSerializer.Deserialize<T>(data0);
+            DefaultSerializer.Deserialize<T>(data0);
             //ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
-            LZ4MessagePackSerializer.Deserialize<T>(data3);
+            LZ4Serializer.Deserialize<T>(data3);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
@@ -225,7 +228,7 @@ namespace PerfnetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    MessagePack.MessagePackSerializer.Deserialize<T>(data0);
+                    DefaultSerializer.Deserialize<T>(data0);
                 }
             }
 
@@ -233,7 +236,7 @@ namespace PerfnetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    LZ4MessagePackSerializer.Deserialize<T>(data3);
+                    LZ4Serializer.Deserialize<T>(data3);
                 }
             }
 
@@ -298,47 +301,70 @@ namespace PerfnetFramework
             Console.WriteLine();
         }
 
-
-        static string ToHumanReadableSize(long size)
+        private static string ToHumanReadableSize(long size)
         {
             return ToHumanReadableSize(new Nullable<long>(size));
         }
 
-        static string ToHumanReadableSize(long? size)
+        private static string ToHumanReadableSize(long? size)
         {
-            if (size == null) return "NULL";
+            if (size == null)
+            {
+                return "NULL";
+            }
 
             double bytes = size.Value;
 
-            if (bytes <= 1024) return bytes.ToString("f2") + " B";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " B";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " KB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " KB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " MB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " MB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " GB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " GB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " TB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " TB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " PB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " PB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " EB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " EB";
+            }
 
             bytes = bytes / 1024;
             return bytes + " ZB";
         }
     }
 
-    struct Measure : IDisposable
+    internal struct Measure : IDisposable
     {
-        string label;
-        Stopwatch sw;
+        private string label;
+        private Stopwatch sw;
 
         public Measure(string label)
         {

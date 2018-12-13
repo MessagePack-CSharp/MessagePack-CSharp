@@ -340,6 +340,9 @@ namespace Sandbox
 
     class Program
     {
+        internal static readonly MessagePack.MessagePackSerializer DefaultSerializer = new MessagePackSerializer();
+        internal static readonly MessagePack.LZ4MessagePackSerializer LZ4Serializer = new LZ4MessagePackSerializer();
+
         static void Main(string[] args)
         {
             var o = new SimpleIntKeyData()
@@ -367,9 +370,7 @@ namespace Sandbox
                 BytesSpecial = new byte[] { 1, 4, 6 }
             };
 
-            MessagePackSerializer.Serialize(o);
-
-
+            DefaultSerializer.Serialize(o);
         }
 
         static void Benchmark<T>(T target)
@@ -379,8 +380,8 @@ namespace Sandbox
             var jsonSerializer = new JsonSerializer();
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
-            MessagePack.MessagePackSerializer.Serialize(target);
-            LZ4MessagePackSerializer.Serialize(target);
+            DefaultSerializer.Serialize(target);
+            LZ4Serializer.Serialize(target);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
@@ -409,7 +410,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data0 = MessagePack.MessagePackSerializer.Serialize(target);
+                    data0 = DefaultSerializer.Serialize(target);
                 }
             }
 
@@ -417,7 +418,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data3 = LZ4MessagePackSerializer.Serialize(target);
+                    data3 = LZ4Serializer.Serialize(target);
                 }
             }
 
@@ -495,10 +496,10 @@ namespace Sandbox
 
 
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
-            MessagePack.MessagePackSerializer.Deserialize<T>(data0);
+            DefaultSerializer.Deserialize<T>(data0);
             ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
-            LZ4MessagePackSerializer.Deserialize<T>(data3);
+            LZ4Serializer.Deserialize<T>(data3);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
@@ -516,7 +517,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    MessagePack.MessagePackSerializer.Deserialize<T>(data0);
+                    DefaultSerializer.Deserialize<T>(data0);
                 }
             }
 
@@ -524,7 +525,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    LZ4MessagePackSerializer.Deserialize<T>(data3);
+                    LZ4Serializer.Deserialize<T>(data3);
                 }
             }
 
@@ -588,7 +589,6 @@ namespace Sandbox
             Console.WriteLine();
             Console.WriteLine();
         }
-
 
         static string ToHumanReadableSize(long size)
         {

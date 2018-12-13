@@ -9,28 +9,12 @@ using System.Text;
 namespace MessagePack
 {
     // JSON API
-    public static partial class LZ4MessagePackSerializer
+    public partial class LZ4MessagePackSerializer
     {
-        /// <summary>
-        /// Dump to JSON string.
-        /// </summary>
-        public static string ToJson<T>(T obj)
-        {
-            return ToJson(Serialize(obj));
-        }
-
-        /// <summary>
-        /// Dump to JSON string.
-        /// </summary>
-        public static string ToJson<T>(T obj, IFormatterResolver resolver)
-        {
-            return ToJson(Serialize(obj, resolver));
-        }
-
         /// <summary>
         /// Dump message-pack binary to JSON string.
         /// </summary>
-        public static string ToJson(byte[] bytes)
+        public override string ToJson(byte[] bytes)
         {
             if (bytes == null || bytes.Length == 0) return "";
 
@@ -63,18 +47,10 @@ namespace MessagePack
             return sb.ToString();
         }
 
-        public static byte[] FromJson(string str)
-        {
-            using (var sr = new StringReader(str))
-            {
-                return FromJson(sr);
-            }
-        }
-
         /// <summary>
         /// From Json String to LZ4MessagePack binary
         /// </summary>
-        public static byte[] FromJson(TextReader reader)
+        public override byte[] FromJson(TextReader reader)
         {
             var buffer = MessagePackSerializer.FromJsonUnsafe(reader); // offset is guranteed from 0
             return LZ4MessagePackSerializer.ToLZ4Binary(buffer);
