@@ -8,12 +8,12 @@ using System.Text;
 namespace MessagePack
 {
     // JSON API
-    public static partial class MessagePackSerializer
+    public partial class MessagePackSerializer
     {
         /// <summary>
         /// Dump to JSON string.
         /// </summary>
-        public static string ToJson<T>(T obj)
+        public string ToJson<T>(T obj)
         {
             return ToJson(Serialize(obj));
         }
@@ -21,7 +21,7 @@ namespace MessagePack
         /// <summary>
         /// Dump to JSON string.
         /// </summary>
-        public static string ToJson<T>(T obj, IFormatterResolver resolver)
+        public string ToJson<T>(T obj, IFormatterResolver resolver)
         {
             return ToJson(Serialize(obj, resolver));
         }
@@ -29,7 +29,7 @@ namespace MessagePack
         /// <summary>
         /// Dump message-pack binary to JSON string.
         /// </summary>
-        public static string ToJson(byte[] bytes)
+        public virtual string ToJson(byte[] bytes)
         {
             if (bytes == null || bytes.Length == 0) return "";
 
@@ -38,7 +38,7 @@ namespace MessagePack
             return sb.ToString();
         }
 
-        public static byte[] FromJson(string str)
+        public byte[] FromJson(string str)
         {
             using (var sr = new StringReader(str))
             {
@@ -49,7 +49,7 @@ namespace MessagePack
         /// <summary>
         /// From Json String to MessagePack binary
         /// </summary>
-        public static byte[] FromJson(TextReader reader)
+        public virtual byte[] FromJson(TextReader reader)
         {
             var offset = 0;
             byte[] binary = null;

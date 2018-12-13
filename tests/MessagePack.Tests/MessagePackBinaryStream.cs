@@ -11,6 +11,11 @@ namespace MessagePack.Tests
 {
     public class MessagePackBinaryStream
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+        private MessagePackSerializer.NonGeneric nonGenericSerializer = new MessagePackSerializer.NonGeneric();
+        private LZ4MessagePackSerializer lz4Serializer = new LZ4MessagePackSerializer();
+        private LZ4MessagePackSerializer.NonGeneric lz4nonGenericSerializer = new LZ4MessagePackSerializer.NonGeneric();
+
         delegate int RefAction(ref byte[] bytes, int offset);
 
         [Fact]
@@ -236,7 +241,7 @@ namespace MessagePack.Tests
 
             {
                 var block = new object[] { 1, new[] { 1, 10, 100 }, 100 };
-                var bytes = MessagePackSerializer.Serialize(block);
+                var bytes = serializer.Serialize(block);
                 var stream = new MemoryStream(bytes);
                 MessagePackBinary.ReadNext(stream); // array(first)
                 MessagePackBinary.ReadNext(stream); // int
@@ -245,7 +250,7 @@ namespace MessagePack.Tests
             }
             {
                 var block = new object[] { 1, new Dictionary<int, int> { { 1, 10 }, { 111, 200 } }, 100 };
-                var bytes = MessagePackSerializer.Serialize(block);
+                var bytes = serializer.Serialize(block);
                 var stream = new MemoryStream(bytes);
                 MessagePackBinary.ReadNext(stream);
                 MessagePackBinary.ReadNext(stream);
@@ -283,7 +288,7 @@ namespace MessagePack.Tests
             };
 
 
-            var bytes = MessagePackSerializer.Serialize(o);
+            var bytes = serializer.Serialize(o);
             var ms = new MemoryStream(bytes);
 
             MessagePackBinary.ReadArrayHeader(ms).Is(7);
@@ -320,13 +325,13 @@ namespace MessagePack.Tests
         public void ReadStrictDeserialize()
         {
             var ms = new MemoryStream();
-            MessagePackSerializer.Serialize(ms, new SimlpeStringKeyData
+            serializer.Serialize(ms, new SimlpeStringKeyData
             {
                 Prop1 = 99999,
                 Prop2 = ByteEnum.E,
                 Prop3 = 3
             });
-            MessagePackSerializer.Serialize(ms, new SimpleStructStringKeyData
+            serializer.Serialize(ms, new SimpleStructStringKeyData
             {
                 X = 9999,
                 Y = new[] { 1, 10, 100 }
@@ -334,10 +339,10 @@ namespace MessagePack.Tests
 
             ms.Position = 0;
 
-            var d = MessagePackSerializer.Deserialize<SimlpeStringKeyData>(ms, readStrict: true);
+            var d = serializer.Deserialize<SimlpeStringKeyData>(ms, readStrict: true);
             d.Prop1.Is(99999); d.Prop2.Is(ByteEnum.E); d.Prop3.Is(3);
 
-            var d2 = (SimpleStructStringKeyData)MessagePackSerializer.NonGeneric.Deserialize(typeof(SimpleStructStringKeyData), ms, readStrict: true);
+            var d2 = (SimpleStructStringKeyData)nonGenericSerializer.Deserialize(typeof(SimpleStructStringKeyData), ms, readStrict: true);
             d2.X.Is(9999); d2.Y.Is(new[] { 1, 10, 100 });
         }
 
@@ -345,14 +350,14 @@ namespace MessagePack.Tests
         public void ReadStrictDeserializeLZ4()
         {
             var ms = new MemoryStream();
-            LZ4MessagePackSerializer.Serialize(ms, new SimlpeStringKeyData
+            lz4Serializer.Serialize(ms, new SimlpeStringKeyData
             {
                 Prop1 = 99999,
                 Prop2 = ByteEnum.E,
                 Prop3 = 3
             });
-            LZ4MessagePackSerializer.Serialize(ms, new string('a', 100000));
-            LZ4MessagePackSerializer.Serialize(ms, new SimpleStructStringKeyData
+            lz4Serializer.Serialize(ms, new string('a', 100000));
+            lz4Serializer.Serialize(ms, new SimpleStructStringKeyData
             {
                 X = 9999,
                 Y = new[] { 1, 10, 100 }
@@ -360,13 +365,13 @@ namespace MessagePack.Tests
 
             ms.Position = 0;
 
-            var d = LZ4MessagePackSerializer.Deserialize<SimlpeStringKeyData>(ms, readStrict: true);
+            var d = lz4Serializer.Deserialize<SimlpeStringKeyData>(ms, readStrict: true);
             d.Prop1.Is(99999); d.Prop2.Is(ByteEnum.E); d.Prop3.Is(3);
 
-            var ds = LZ4MessagePackSerializer.Deserialize<string>(ms, readStrict: true);
+            var ds = lz4Serializer.Deserialize<string>(ms, readStrict: true);
             ds.Is(new string('a', 100000));
 
-            var d2 = (SimpleStructStringKeyData)LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(SimpleStructStringKeyData), ms, readStrict: true);
+            var d2 = (SimpleStructStringKeyData)lz4nonGenericSerializer.Deserialize(typeof(SimpleStructStringKeyData), ms, readStrict: true);
             d2.X.Is(9999); d2.Y.Is(new[] { 1, 10, 100 });
         }
     }

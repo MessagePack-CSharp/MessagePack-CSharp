@@ -11,9 +11,11 @@ namespace MessagePack.Tests
 {
     public class ObjectResolverTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
 
@@ -53,16 +55,16 @@ namespace MessagePack.Tests
         public void Null()
         {
             SimpleIntKeyData n = null;
-            var bytes = MessagePackSerializer.Serialize(n);
+            var bytes = serializer.Serialize(n);
             MessagePackBinary.IsNil(bytes, 0).IsTrue();
             bytes.Length.Is(1);
 
-            MessagePackSerializer.Deserialize<SimpleIntKeyData>(bytes).IsNull();
+            serializer.Deserialize<SimpleIntKeyData>(bytes).IsNull();
 
             // deserialize from nil
             Xunit.Assert.Throws<InvalidOperationException>(() =>
             {
-                MessagePackSerializer.Deserialize<SimpleStructIntKeyData>(bytes);
+                serializer.Deserialize<SimpleStructIntKeyData>(bytes);
             });
         }
 
@@ -132,19 +134,19 @@ namespace MessagePack.Tests
                 MyProperty1 = 100,
             };
 
-            var v1Bytes = MessagePackSerializer.Serialize(v1);
-            var v2Bytes = MessagePackSerializer.Serialize(v2);
-            var v0Bytes = MessagePackSerializer.Serialize(v0);
+            var v1Bytes = serializer.Serialize(v1);
+            var v2Bytes = serializer.Serialize(v2);
+            var v0Bytes = serializer.Serialize(v0);
 
-            var a = MessagePackSerializer.ToJson(v1Bytes);
-            var b = MessagePackSerializer.ToJson(v2Bytes);
-            var c = MessagePackSerializer.ToJson(v0Bytes);
-            MessagePackSerializer.Deserialize<Version1>(v1Bytes).IsNotStructuralEqual(v1Bytes);
-            MessagePackSerializer.Deserialize<Version2>(v2Bytes).IsNotStructuralEqual(v2Bytes);
-            MessagePackSerializer.Deserialize<Version0>(v0Bytes).IsNotStructuralEqual(v0Bytes);
+            var a = serializer.ToJson(v1Bytes);
+            var b = serializer.ToJson(v2Bytes);
+            var c = serializer.ToJson(v0Bytes);
+            serializer.Deserialize<Version1>(v1Bytes).IsNotStructuralEqual(v1Bytes);
+            serializer.Deserialize<Version2>(v2Bytes).IsNotStructuralEqual(v2Bytes);
+            serializer.Deserialize<Version0>(v0Bytes).IsNotStructuralEqual(v0Bytes);
 
             // smaller than schema
-            var v2_ = MessagePackSerializer.Deserialize<Version2>(v1Bytes);
+            var v2_ = serializer.Deserialize<Version2>(v1Bytes);
             v2_.MyProperty1.Is(v1.MyProperty1);
             v2_.MyProperty2.Is(v1.MyProperty2);
             v2_.MyProperty3.Is(v1.MyProperty3);
@@ -152,7 +154,7 @@ namespace MessagePack.Tests
 
             // larger than schema
 
-            var v0_ = MessagePackSerializer.Deserialize<Version0>(v1Bytes);
+            var v0_ = serializer.Deserialize<Version0>(v1Bytes);
             v0_.MyProperty1.Is(v1.MyProperty1);
         }
 
@@ -191,12 +193,12 @@ namespace MessagePack.Tests
                 After = 1999
             };
 
-            var v1Bytes = MessagePackSerializer.Serialize(v1);
-            var v2Bytes = MessagePackSerializer.Serialize(v2);
-            var v0Bytes = MessagePackSerializer.Serialize(v0);
+            var v1Bytes = serializer.Serialize(v1);
+            var v2Bytes = serializer.Serialize(v2);
+            var v0Bytes = serializer.Serialize(v0);
 
             // smaller than schema
-            var v2_ = MessagePackSerializer.Deserialize<HolderV2>(v1Bytes);
+            var v2_ = serializer.Deserialize<HolderV2>(v1Bytes);
             v2_.MyProperty1.MyProperty1.Is(v1.MyProperty1.MyProperty1);
             v2_.MyProperty1.MyProperty2.Is(v1.MyProperty1.MyProperty2);
             v2_.MyProperty1.MyProperty3.Is(v1.MyProperty1.MyProperty3);
@@ -204,8 +206,8 @@ namespace MessagePack.Tests
             v2_.After.Is(9999);
 
             // larger than schema
-            var v1Json = MessagePackSerializer.ToJson(v1Bytes);
-            var v0_ = MessagePackSerializer.Deserialize<HolderV0>(v1Bytes);
+            var v1Json = serializer.ToJson(v1Bytes);
+            var v0_ = serializer.Deserialize<HolderV0>(v1Bytes);
             v0_.MyProperty1.MyProperty1.Is(v1.MyProperty1.MyProperty1);
             v0_.After.Is(9999);
         }
@@ -215,35 +217,35 @@ namespace MessagePack.Tests
         {
             {
                 var c1 = new Callback1(0);
-                var d = MessagePackSerializer.Serialize(c1);
+                var d = serializer.Serialize(c1);
                 c1.CalledBefore.IsTrue();
-                MessagePackSerializer.Deserialize<Callback1>(d).CalledAfter.IsTrue();
+                serializer.Deserialize<Callback1>(d).CalledAfter.IsTrue();
             }
             {
                 var before = false;
 
                 var c1 = new Callback2(0, () => before = true, () => { });
-                var d = MessagePackSerializer.Serialize(c1);
+                var d = serializer.Serialize(c1);
                 before.IsTrue();
                 Callback2.CalledAfter.IsFalse();
-                MessagePackSerializer.Deserialize<Callback2>(d);
+                serializer.Deserialize<Callback2>(d);
                 Callback2.CalledAfter.IsTrue();
             }
             {
                 var c1 = new Callback1_2(0);
-                var d = MessagePackSerializer.Serialize(c1);
+                var d = serializer.Serialize(c1);
                 c1.CalledBefore.IsTrue();
-                MessagePackSerializer.Deserialize<Callback1_2>(d).CalledAfter.IsTrue();
+                serializer.Deserialize<Callback1_2>(d).CalledAfter.IsTrue();
             }
             {
                 var before = false;
 
                 var c1 = new Callback2_2(0, () => before = true, () => { });
-                var d = MessagePackSerializer.Serialize(c1);
+                var d = serializer.Serialize(c1);
                 before.IsTrue();
 
                 Callback2_2.CalledAfter.IsFalse();
-                MessagePackSerializer.Deserialize<Callback2_2>(d);
+                serializer.Deserialize<Callback2_2>(d);
                 Callback2_2.CalledAfter.IsTrue();
             }
         }
@@ -269,9 +271,9 @@ namespace MessagePack.Tests
         [Fact]
         public void Versioning3()
         {
-            var binary = MessagePackSerializer.Serialize(new VersionBlockTest { MyProperty = 10, MyProperty2 = 99, UnknownBlock = new MyClass { MyProperty1 = 1, MyProperty2 = 99, MyProperty3 = 999 } });
+            var binary = serializer.Serialize(new VersionBlockTest { MyProperty = 10, MyProperty2 = 99, UnknownBlock = new MyClass { MyProperty1 = 1, MyProperty2 = 99, MyProperty3 = 999 } });
 
-            var unversion = MessagePackSerializer.Deserialize<UnVersionBlockTest>(binary);
+            var unversion = serializer.Deserialize<UnVersionBlockTest>(binary);
             // MessagePackBinary.
             unversion.MyProperty.Is(10);
             unversion.MyProperty2.Is(99);
@@ -285,18 +287,18 @@ namespace MessagePack.Tests
             var ne1 = new NonEmpty1();
             var ne2 = new NonEmpty2();
 
-            MessagePackSerializer.ToJson(e1).Is("[]");
-            MessagePackSerializer.ToJson(e2).Is("{}");
-            MessagePackSerializer.ToJson(ne1).Is("[0]");
-            MessagePackSerializer.ToJson(ne2).Is(@"{""MyProperty"":0}");
+            serializer.ToJson(e1).Is("[]");
+            serializer.ToJson(e2).Is("{}");
+            serializer.ToJson(ne1).Is("[0]");
+            serializer.ToJson(ne2).Is(@"{""MyProperty"":0}");
         }
 
         [Fact]
         public void Contractless()
         {
             var data = new ContractlessConstructorCheck(10, "hogehoge");
-            var bin = MessagePackSerializer.Serialize(data, ContractlessStandardResolver.Instance);
-            var re = MessagePackSerializer.Deserialize<ContractlessConstructorCheck>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var bin = serializer.Serialize(data, ContractlessStandardResolver.Instance);
+            var re = serializer.Deserialize<ContractlessConstructorCheck>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             re.MyProperty1.Is(10);
             re.MyProperty2.Is("hogehoge");
@@ -306,8 +308,8 @@ namespace MessagePack.Tests
         public void FindingConstructor()
         {
             var data = new FindingConstructorCheck(10, "hogehoge");
-            var bin = MessagePackSerializer.Serialize(data, ContractlessStandardResolver.Instance);
-            var re = MessagePackSerializer.Deserialize<FindingConstructorCheck>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var bin = serializer.Serialize(data, ContractlessStandardResolver.Instance);
+            var re = serializer.Deserialize<FindingConstructorCheck>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             re.MyProperty1.Is(10);
             re.MyProperty2.Is("hogehoge");
@@ -318,8 +320,8 @@ namespace MessagePack.Tests
         {
             {
                 var data = new NestParent.NestContract() { MyProperty = 1000 };
-                var bin = MessagePackSerializer.Serialize(data, StandardResolver.Instance);
-                var re = MessagePackSerializer.Deserialize<NestParent.NestContract>(bin, StandardResolver.Instance);
+                var bin = serializer.Serialize(data, StandardResolver.Instance);
+                var re = serializer.Deserialize<NestParent.NestContract>(bin, StandardResolver.Instance);
 
                 re.MyProperty.Is(1000);
             }
@@ -330,8 +332,8 @@ namespace MessagePack.Tests
         {
             {
                 var data = new NestParent.NestContractless() { MyProperty = 1000 };
-                var bin = MessagePackSerializer.Serialize(data, ContractlessStandardResolver.Instance);
-                var re = MessagePackSerializer.Deserialize<NestParent.NestContractless>(bin, ContractlessStandardResolver.Instance);
+                var bin = serializer.Serialize(data, ContractlessStandardResolver.Instance);
+                var re = serializer.Deserialize<NestParent.NestContractless>(bin, ContractlessStandardResolver.Instance);
 
                 re.MyProperty.Is(1000);
             }
@@ -345,8 +347,8 @@ namespace MessagePack.Tests
                 Data1 = 15,
                 Data2 = "15"
             };
-            var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.StandardResolver.Instance);
-            var v = MessagePackSerializer.Deserialize<WithIndexer>(bin, MessagePack.Resolvers.StandardResolver.Instance);
+            var bin = serializer.Serialize(o, MessagePack.Resolvers.StandardResolver.Instance);
+            var v = serializer.Deserialize<WithIndexer>(bin, MessagePack.Resolvers.StandardResolver.Instance);
 
             v.IsStructuralEqual(o);
         }
@@ -359,8 +361,8 @@ namespace MessagePack.Tests
                 Data1 = 15,
                 Data2 = "15"
             };
-            var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v = MessagePackSerializer.Deserialize<WithIndexerContractless>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var bin = serializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v = serializer.Deserialize<WithIndexerContractless>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             v.IsStructuralEqual(o);
         }

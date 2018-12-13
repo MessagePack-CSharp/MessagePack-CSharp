@@ -9,6 +9,7 @@ namespace MessagePack.Tests
 {
     public class PrimitiveResolverTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
 
         [Theory]
         [InlineData((bool)true)]
@@ -26,11 +27,11 @@ namespace MessagePack.Tests
         [InlineData(new byte[] { 1, 10, 100 })]
         public void PrimitiveObjectTest<T>(T x)
         {
-            var bin = MessagePackSerializer.Serialize<object>(x);
-            var bin2 = MessagePackSerializer.Serialize<T>(x);
+            var bin = serializer.Serialize<object>(x);
+            var bin2 = serializer.Serialize<T>(x);
 
             bin.Is(bin2);
-            //var re1 = MessagePackSerializer.Deserialize<object>(bin);
+            //var re1 = serializer.Deserialize<object>(bin);
             //((T)re1).Is(x);
         }
 
@@ -39,27 +40,27 @@ namespace MessagePack.Tests
         {
             {
                 var x = DateTime.UtcNow;
-                var bin = MessagePackSerializer.Serialize<object>(x);
-                var re1 = MessagePackSerializer.Deserialize<object>(bin);
+                var bin = serializer.Serialize<object>(x);
+                var re1 = serializer.Deserialize<object>(bin);
                 (re1).Is(x);
             }
             {
                 var x = 'あ';
-                var bin = MessagePackSerializer.Serialize<object>(x);
-                var re1 = MessagePackSerializer.Deserialize<object>(bin);
+                var bin = serializer.Serialize<object>(x);
+                var re1 = serializer.Deserialize<object>(bin);
                 ((char)(ushort)re1).Is(x);
             }
             {
                 var x = SharedData.IntEnum.C;
-                var bin = MessagePackSerializer.Serialize<object>(x);
-                var re1 = MessagePackSerializer.Deserialize<object>(bin);
+                var bin = serializer.Serialize<object>(x);
+                var re1 = serializer.Deserialize<object>(bin);
                 ((SharedData.IntEnum)(int)(byte)re1).Is(x);
             }
             {
                 var x = new object[] { 1, 10, 1000, new[] { 999, 424 }, new Dictionary<string, int> { { "hoge", 100 }, { "foo", 999 } }, true };
 
-                var bin = MessagePackSerializer.Serialize<object>(x);
-                var re1 = (object[])MessagePackSerializer.Deserialize<object>(bin);
+                var bin = serializer.Serialize<object>(x);
+                var re1 = (object[])serializer.Deserialize<object>(bin);
 
                 x[0].Is((int)(byte)re1[0]);
                 x[1].Is((int)(byte)re1[1]);

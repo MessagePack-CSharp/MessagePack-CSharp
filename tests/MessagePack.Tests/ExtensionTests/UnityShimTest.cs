@@ -25,15 +25,17 @@ namespace MessagePack.Tests.ExtensionTests
 
     public class UnityShimTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T ConvertBlit<T>(T value)
         {
             var resolver = new WithUnityBlitResolver();
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, resolver), resolver);
+            return serializer.Deserialize<T>(serializer.Serialize(value, resolver), resolver);
         }
 
         T ConvertStandard<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, UnityResolver.Instance), UnityResolver.Instance);
+            return serializer.Deserialize<T>(serializer.Serialize(value, UnityResolver.Instance), UnityResolver.Instance);
         }
 
         public static object[][] testData = new object[][]

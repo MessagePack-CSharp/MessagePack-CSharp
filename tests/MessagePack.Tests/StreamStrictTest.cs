@@ -11,6 +11,8 @@ namespace MessagePack.Tests
 {
     public class StreamStrictTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         static void SerializeWithLengthPrefixExt<T>(Stream stream, T data, IFormatterResolver resolver)
         {
             const int ExtTypeCode = 111; // sample ext code
@@ -47,14 +49,14 @@ namespace MessagePack.Tests
             }
         }
 
-        static T DeserializeWithLengthPrefixExt2<T>(Stream stream, IFormatterResolver resolver)
+        T DeserializeWithLengthPrefixExt2<T>(Stream stream, IFormatterResolver resolver)
         {
             const int ExtTypeCode = 111; // sample ext code
 
             var header = MessagePackBinary.ReadExtensionFormat(stream);
             if (header.TypeCode == ExtTypeCode)
             {
-                return MessagePackSerializer.Deserialize<T>(header.Data, resolver);
+                return serializer.Deserialize<T>(header.Data, resolver);
             }
             else
             {

@@ -9,6 +9,8 @@ namespace MessagePack.Tests
 {
     public class FloatConversionTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         [Theory]
         [InlineData(-10)]
         [InlineData(-120)]
@@ -24,8 +26,8 @@ namespace MessagePack.Tests
         [InlineData(ulong.MaxValue)]
         public void FloatTest<T>(T value)
         {
-            var bin = MessagePackSerializer.Serialize(value);
-            MessagePackSerializer.Deserialize<float>(bin).Is(Convert.ToSingle(value));
+            var bin = serializer.Serialize(value);
+            serializer.Deserialize<float>(bin).Is(Convert.ToSingle(value));
         }
 
         [Theory]
@@ -43,8 +45,8 @@ namespace MessagePack.Tests
         [InlineData(ulong.MaxValue)]
         public void DoubleTest<T>(T value)
         {
-            var bin = MessagePackSerializer.Serialize(value);
-            MessagePackSerializer.Deserialize<double>(bin).Is(Convert.ToDouble(value));
+            var bin = serializer.Serialize(value);
+            serializer.Deserialize<double>(bin).Is(Convert.ToDouble(value));
         }
     }
 }

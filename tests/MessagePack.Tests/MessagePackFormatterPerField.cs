@@ -11,6 +11,8 @@ namespace MessagePack.Tests
 {
     public class MessagePackFormatterPerFieldTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         [MessagePackObject]
         public class MyClass
         {
@@ -73,22 +75,22 @@ namespace MessagePack.Tests
         public void FooBar()
         {
             {
-                var bin = MessagePack.MessagePackSerializer.Serialize(new MyClass { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
-                var json = MessagePackSerializer.ToJson(bin);
+                var bin = serializer.Serialize(new MyClass { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
+                var json = serializer.ToJson(bin);
                 json.Is("[1000,9,\"foofoo\",\"bar\"]");
 
-                var r2 = MessagePackSerializer.Deserialize<MyClass>(bin);
+                var r2 = serializer.Deserialize<MyClass>(bin);
                 r2.MyProperty1.Is(10000);
                 r2.MyProperty2.Is(9);
                 r2.MyProperty3.Is("foofoofoofoo");
                 r2.MyProperty4.Is("bar");
             }
             {
-                var bin = MessagePack.MessagePackSerializer.Serialize(new MyStruct { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
-                var json = MessagePackSerializer.ToJson(bin);
+                var bin = serializer.Serialize(new MyStruct { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
+                var json = serializer.ToJson(bin);
                 json.Is("[1000,9,\"foofoo\",\"bar\"]");
 
-                var r2 = MessagePackSerializer.Deserialize<MyStruct>(bin);
+                var r2 = serializer.Deserialize<MyStruct>(bin);
                 r2.MyProperty1.Is(10000);
                 r2.MyProperty2.Is(9);
                 r2.MyProperty3.Is("foofoofoofoo");

@@ -29,6 +29,8 @@ namespace MessagePack.Tests
 
     public class EnumAsStringTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         public static object[][] enumData = new object[][]
         {
             // simple
@@ -51,13 +53,13 @@ namespace MessagePack.Tests
         public void EnumTest<T>(T x, T? y, string xName, string yName)
             where T : struct
         {
-            var bin = MessagePackSerializer.Serialize(x, DynamicEnumAsStringResolver.Instance);
-            MessagePackSerializer.ToJson(bin).Trim('\"').Is(xName);
-            MessagePackSerializer.Deserialize<T>(bin, DynamicEnumAsStringResolver.Instance).Is(x);
+            var bin = serializer.Serialize(x, DynamicEnumAsStringResolver.Instance);
+            serializer.ToJson(bin).Trim('\"').Is(xName);
+            serializer.Deserialize<T>(bin, DynamicEnumAsStringResolver.Instance).Is(x);
 
-            var bin2 = MessagePackSerializer.Serialize(y, DynamicEnumAsStringResolver.Instance);
-            MessagePackSerializer.ToJson(bin2).Trim('\"').Is(yName);
-            MessagePackSerializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.Instance).Is(y);
+            var bin2 = serializer.Serialize(y, DynamicEnumAsStringResolver.Instance);
+            serializer.ToJson(bin2).Trim('\"').Is(yName);
+            serializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.Instance).Is(y);
         }
     }
 }

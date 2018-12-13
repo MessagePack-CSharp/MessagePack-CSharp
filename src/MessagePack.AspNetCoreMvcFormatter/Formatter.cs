@@ -8,16 +8,21 @@ namespace MessagePack.AspNetCoreMvcFormatter
         const string ContentType = "application/x-msgpack";
         static readonly string[] SupportedContentTypes = new[] { ContentType };
 
-        readonly IFormatterResolver resolver;
+        readonly MessagePackSerializer.NonGeneric serializer;
 
         public MessagePackOutputFormatter()
-            : this(null)
+            : this((IFormatterResolver)null)
         {
-
         }
+
         public MessagePackOutputFormatter(IFormatterResolver resolver)
+            : this(new MessagePackSerializer.NonGeneric(new MessagePackSerializer(resolver)))
         {
-            this.resolver = resolver ?? MessagePackSerializer.DefaultResolver;
+        }
+
+        public MessagePackOutputFormatter(MessagePackSerializer.NonGeneric serializer)
+        {
+            this.serializer = serializer ?? new MessagePackSerializer.NonGeneric(new MessagePackSerializer());
         }
 
         //public IReadOnlyList<string> GetSupportedContentTypes(string contentType, Type objectType)
@@ -45,13 +50,13 @@ namespace MessagePack.AspNetCoreMvcFormatter
                 else
                 {
                     // use concrete type.
-                    MessagePackSerializer.NonGeneric.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, resolver);
+                    serializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object);
                     return Task.CompletedTask;
                 }
             }
             else
             {
-                MessagePackSerializer.NonGeneric.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, resolver);
+                serializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object);
                 return Task.CompletedTask;
             }
         }
@@ -62,17 +67,21 @@ namespace MessagePack.AspNetCoreMvcFormatter
         const string ContentType = "application/x-msgpack";
         static readonly string[] SupportedContentTypes = new[] { ContentType };
 
-        readonly IFormatterResolver resolver;
+        readonly MessagePackSerializer.NonGeneric serializer;
 
         public MessagePackInputFormatter()
-            : this(null)
+            : this((IFormatterResolver)null)
         {
-
         }
 
         public MessagePackInputFormatter(IFormatterResolver resolver)
+            : this(new MessagePackSerializer.NonGeneric(new MessagePackSerializer(resolver)))
         {
-            this.resolver = resolver ?? MessagePackSerializer.DefaultResolver;
+        }
+
+        public MessagePackInputFormatter(MessagePackSerializer.NonGeneric serializer)
+        {
+            this.serializer = serializer ?? new MessagePackSerializer.NonGeneric(new MessagePackSerializer());
         }
 
         //public IReadOnlyList<string> GetSupportedContentTypes(string contentType, Type objectType)
@@ -88,7 +97,7 @@ namespace MessagePack.AspNetCoreMvcFormatter
         public Task<InputFormatterResult> ReadAsync(InputFormatterContext context)
         {
             var request = context.HttpContext.Request;
-            var result = MessagePackSerializer.NonGeneric.Deserialize(context.ModelType, request.Body, resolver);
+            var result = serializer.Deserialize(context.ModelType, request.Body);
             return InputFormatterResult.SuccessAsync(result);
         }
     }

@@ -12,6 +12,8 @@ namespace MessagePack.Tests
 {
     public class OldSpecBinaryFormatterTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         [Theory]
         [InlineData(10)] // fixstr
         [InlineData(1000)] // str 16
@@ -53,7 +55,7 @@ namespace MessagePack.Tests
                 Id = 123,
                 Value = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte) i)).ToArray() // long byte array
             };
-            byte[] messagePackBytes = MessagePackSerializer.Serialize(foo);
+            byte[] messagePackBytes = serializer.Serialize(foo);
             Assert.NotEmpty(messagePackBytes);
 
             var deserializedFoo = DeserializeByClassicMsgPack<Foo>(messagePackBytes, MsgPack.Serialization.SerializationMethod.Map);
@@ -97,7 +99,7 @@ namespace MessagePack.Tests
             };
             var messagePackBytes = SerializeByClassicMsgPack(foo, MsgPack.Serialization.SerializationMethod.Map);
 
-            var deserializedFoo = MessagePackSerializer.Deserialize<Foo>(messagePackBytes);
+            var deserializedFoo = serializer.Deserialize<Foo>(messagePackBytes);
             Assert.NotNull(deserializedFoo);
             Assert.Equal(foo.Id, deserializedFoo.Id);
             Assert.Equal(foo.Value, deserializedFoo.Value);
