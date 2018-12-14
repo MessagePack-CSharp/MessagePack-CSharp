@@ -2,7 +2,7 @@
 
 namespace MessagePack.LZ4
 {
-    public static partial class LZ4Codec
+    partial class LZ4Codec
     {
 #if NETSTANDARD
 
