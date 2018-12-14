@@ -32,7 +32,7 @@ using System;
 namespace MessagePack.LZ4
 {
     /// <summary>Unsafe LZ4 codec.</summary>
-    public static partial class LZ4Codec
+    partial class LZ4Codec
     {
         /// <summary>Copies block of memory.</summary>
         /// <param name="src">The source.</param>

@@ -31,7 +31,7 @@ using System;
 
 namespace MessagePack.LZ4
 {
-    public static partial class LZ4Codec
+    internal static partial class LZ4Codec
     {
         #region configuration
 

@@ -34,7 +34,7 @@ using System.Diagnostics;
 namespace MessagePack.LZ4
 {
     /// <summary>Safe LZ4 codec.</summary>
-    public static partial class LZ4Codec
+    partial class LZ4Codec
     {
         #region Helper
 

@@ -70,7 +70,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace MessagePack.LZ4
 {
-    public static partial class LZ4Codec
+    partial class LZ4Codec
     {
         #region LZ4_compressCtx_32
 
