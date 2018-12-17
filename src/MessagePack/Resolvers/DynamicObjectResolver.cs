@@ -1,4 +1,5 @@
 ﻿#if !UNITY_WSA
+#if !NET_STANDARD_2_0
 
 using System;
 using System.Linq;
@@ -1802,29 +1803,29 @@ typeof(int), typeof(int) });
                 }
             }
 
-            public object ReflectionLoadValue(object value)
-            {
-                if (IsProperty)
-                {
-                    return PropertyInfo.GetValue(value);
-                }
-                else
-                {
-                    return FieldInfo.GetValue(value);
-                }
-            }
+            //public object ReflectionLoadValue(object value)
+            //{
+            //    if (IsProperty)
+            //    {
+            //        return PropertyInfo.GetValue(value);
+            //    }
+            //    else
+            //    {
+            //        return FieldInfo.GetValue(value);
+            //    }
+            //}
 
-            public void ReflectionStoreValue(object obj, object value)
-            {
-                if (IsProperty)
-                {
-                    PropertyInfo.SetValue(obj, value);
-                }
-                else
-                {
-                    FieldInfo.SetValue(obj, value);
-                }
-            }
+            //public void ReflectionStoreValue(object obj, object value)
+            //{
+            //    if (IsProperty)
+            //    {
+            //        PropertyInfo.SetValue(obj, value);
+            //    }
+            //    else
+            //    {
+            //        FieldInfo.SetValue(obj, value);
+            //    }
+            //}
         }
     }
 
@@ -1838,4 +1839,5 @@ typeof(int), typeof(int) });
     }
 }
 
+#endif
 #endif

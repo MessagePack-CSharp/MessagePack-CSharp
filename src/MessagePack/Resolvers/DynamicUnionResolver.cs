@@ -11,6 +11,7 @@ using System.Threading;
 namespace MessagePack.Resolvers
 {
 #if !UNITY_WSA
+#if !NET_STANDARD_2_0
 
     /// <summary>
     /// UnionResolver by dynamic code generation.
@@ -478,6 +479,7 @@ namespace MessagePack.Resolvers
     }
 
 #endif
+#endif
 }
 
 namespace MessagePack.Internal
@@ -513,3 +515,4 @@ namespace MessagePack.Internal
         }
     }
 }
+
