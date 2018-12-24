@@ -28,8 +28,13 @@ namespace MessagePack.Formatters
         readonly ThreadsafeTypeKeyHashTable<byte[]> typeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
         readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> typeCache = new AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type>(new StringArraySegmentByteAscymmetricEqualityComparer());
 
-        static readonly HashSet<string> blacklistCheck;
-        static readonly HashSet<Type> useBuiltinTypes = new HashSet<Type>()
+        static readonly HashSet<string> blacklistCheck = new HashSet<string>
+        {
+            "System.CodeDom.Compiler.TempFileCollection",
+            "System.IO.FileSystemInfo",
+            "System.Management.IWbemClassObjectFreeThreaded"
+        };
+        static readonly HashSet<Type> useBuiltinTypes = new HashSet<Type>
         {
             typeof(Boolean),
             // typeof(Char),
@@ -84,16 +89,6 @@ namespace MessagePack.Formatters
         /// </summary>
         /// <value>The default value is <c>true</c>.</value>
         public bool RemoveAssemblyVersion { get; set; } = true;
-
-        static TypelessFormatter()
-        {
-            blacklistCheck = new HashSet<string>()
-            {
-                "System.CodeDom.Compiler.TempFileCollection",
-                "System.IO.FileSystemInfo",
-                "System.Management.IWbemClassObjectFreeThreaded"
-            };
-        }
 
         public TypelessFormatter()
         {
