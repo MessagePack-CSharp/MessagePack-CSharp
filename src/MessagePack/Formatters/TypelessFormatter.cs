@@ -28,8 +28,13 @@ namespace MessagePack.Formatters
         readonly ThreadsafeTypeKeyHashTable<byte[]> typeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
         readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> typeCache = new AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type>(new StringArraySegmentByteAscymmetricEqualityComparer());
 
-        static readonly HashSet<string> blacklistCheck;
-        static readonly HashSet<Type> useBuiltinTypes = new HashSet<Type>()
+        static readonly HashSet<string> blacklistCheck = new HashSet<string>
+        {
+            "System.CodeDom.Compiler.TempFileCollection",
+            "System.IO.FileSystemInfo",
+            "System.Management.IWbemClassObjectFreeThreaded"
+        };
+        static readonly HashSet<Type> useBuiltinTypes = new HashSet<Type>
         {
             typeof(Boolean),
             // typeof(Char),
@@ -80,20 +85,10 @@ namespace MessagePack.Formatters
         static readonly bool isMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
 
         /// <summary>
-        /// When type name does not have Version, Culture, Public token - sometimes can not find type, example - ExpandoObject
-        /// In that can set to `false`
+        /// Gets or sets a value indicating whether to exclude assembly qualifiers from type names.
         /// </summary>
-        public static volatile bool RemoveAssemblyVersion = true;
-
-        static TypelessFormatter()
-        {
-            blacklistCheck = new HashSet<string>()
-            {
-                "System.CodeDom.Compiler.TempFileCollection",
-                "System.IO.FileSystemInfo",
-                "System.Management.IWbemClassObjectFreeThreaded"
-            };
-        }
+        /// <value>The default value is <c>true</c>.</value>
+        public bool RemoveAssemblyVersion { get; set; } = true;
 
         public TypelessFormatter()
         {
@@ -107,7 +102,7 @@ namespace MessagePack.Formatters
 
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
         // subtract Version, Culture and PublicKeyToken from AssemblyQualifiedName 
-        static string BuildTypeName(Type type)
+        private string BuildTypeName(Type type)
         {
             if (RemoveAssemblyVersion)
             {
