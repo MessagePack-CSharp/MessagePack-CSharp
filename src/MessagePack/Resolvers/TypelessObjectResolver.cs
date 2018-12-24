@@ -114,9 +114,9 @@ namespace MessagePack.Resolvers
 
     internal sealed class TypelessFormatterFallbackResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new TypelessFormatterFallbackResolver();
+        public readonly static IFormatterResolver Instance = new TypelessFormatterFallbackResolver();
 
-        static IMessagePackFormatter<object> fallbackFormatter = new DynamicObjectTypeFallbackFormatter(
+        static readonly IMessagePackFormatter<object> fallbackFormatter = new DynamicObjectTypeFallbackFormatter(
             ForceSizePrimitiveObjectResolver.Instance,
             ContractlessStandardResolverAllowPrivateCore.Instance);
 
