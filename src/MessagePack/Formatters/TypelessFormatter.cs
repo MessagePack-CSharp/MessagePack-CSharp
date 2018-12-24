@@ -80,10 +80,10 @@ namespace MessagePack.Formatters
         static readonly bool isMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
 
         /// <summary>
-        /// When type name does not have Version, Culture, Public token - sometimes can not find type, example - ExpandoObject
-        /// In that can set to `false`
+        /// Gets or sets a value indicating whether to exclude assembly qualifiers from type names.
         /// </summary>
-        public static volatile bool RemoveAssemblyVersion = true;
+        /// <value>The default value is <c>true</c>.</value>
+        public bool RemoveAssemblyVersion { get; set; } = true;
 
         static TypelessFormatter()
         {
@@ -107,7 +107,7 @@ namespace MessagePack.Formatters
 
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
         // subtract Version, Culture and PublicKeyToken from AssemblyQualifiedName 
-        static string BuildTypeName(Type type)
+        private string BuildTypeName(Type type)
         {
             if (RemoveAssemblyVersion)
             {
