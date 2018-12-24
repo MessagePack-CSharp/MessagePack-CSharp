@@ -12,7 +12,7 @@ namespace MessagePack.Tests
 {
     public class TypelessContractlessStandardResolverTest
     {
-        private MessagePackSerializer defaultSerializer = new MessagePackSerializer();
+        private MessagePackSerializer defaultSerializer = new MessagePackSerializer(new TypelessContractlessStandardResolver());
         private MessagePackSerializer.Typeless typeless = new MessagePackSerializer.Typeless();
 
         public class Address
@@ -44,11 +44,11 @@ namespace MessagePack.Tests
                     }
             };
 
-            var result = defaultSerializer.Serialize(p, new TypelessContractlessStandardResolver());
+            var result = defaultSerializer.Serialize(p);
 
             defaultSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
 
-            var p2 = defaultSerializer.Deserialize<Person>(result, new TypelessContractlessStandardResolver());
+            var p2 = defaultSerializer.Deserialize<Person>(result);
             p2.Name.Is("John");
             var addresses = p2.Addresses as IList;
             var d1 = addresses[0] as IDictionary;
@@ -70,9 +70,9 @@ namespace MessagePack.Tests
                 }
             };
 
-            var result = defaultSerializer.Serialize(p, new TypelessContractlessStandardResolver());
+            var result = defaultSerializer.Serialize(p);
 
-            var p2 = defaultSerializer.Deserialize<Person>(result, new TypelessContractlessStandardResolver());
+            var p2 = defaultSerializer.Deserialize<Person>(result);
             p.IsStructuralEqual(p2);
 
             defaultSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
@@ -91,9 +91,9 @@ namespace MessagePack.Tests
                 }
             };
 
-            var result = defaultSerializer.Serialize(p, new TypelessContractlessStandardResolver());
+            var result = defaultSerializer.Serialize(p);
 
-            var p2 = defaultSerializer.Deserialize<Person>(result, new TypelessContractlessStandardResolver());
+            var p2 = defaultSerializer.Deserialize<Person>(result);
             p.IsStructuralEqual(p2);
 
 #if NETFRAMEWORK
@@ -110,7 +110,7 @@ namespace MessagePack.Tests
         public void TypelessContractlessTest()
         {
             object obj = new B() { Nested = new A() { Id = 1 } };
-            var result = defaultSerializer.Serialize(obj, new TypelessContractlessStandardResolver());
+            var result = defaultSerializer.Serialize(obj);
             defaultSerializer.ToJson(result).Is(@"{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+B, MessagePack.Tests"",""Nested"":{""Id"":1}}");
         }
 
@@ -123,7 +123,7 @@ namespace MessagePack.Tests
         public void TypelessAttributedTest()
         {
             object obj = new BC() { Nested = new AC() { Id = 1 }, Name = "Zed" };
-            var result = defaultSerializer.Serialize(obj, new TypelessContractlessStandardResolver());
+            var result = defaultSerializer.Serialize(obj);
             defaultSerializer.ToJson(result).Is(@"[""MessagePack.Tests.TypelessContractlessStandardResolverTest+BC, MessagePack.Tests"",[1],""Zed""]");
         }
 
@@ -135,9 +135,9 @@ namespace MessagePack.Tests
                 { (byte)1, "a"},
                 { (byte)2, new object[] { "level2", new object[] { "level3", new Person() { Name = "Peter", Addresses = new object[] { new Address() { Street = "St." }, new DateTime(2017,6,26,14,58,0) } } } } }
             };
-            var result = defaultSerializer.Serialize(arr, new TypelessContractlessStandardResolver());
+            var result = defaultSerializer.Serialize(arr);
 
-            var deser = defaultSerializer.Deserialize<Dictionary<object, object>>(result, new TypelessContractlessStandardResolver());
+            var deser = defaultSerializer.Deserialize<Dictionary<object, object>>(result);
             deser.IsStructuralEqual(arr);
 
 #if NETFRAMEWORK
@@ -151,8 +151,8 @@ namespace MessagePack.Tests
         public void PreservingCollectionTypeTest()
         {
             var arr = new object[] { (byte)1, new object[] { (byte)2, new LinkedList<object>(new object[] { "a", (byte)42 }) } };
-            var result = defaultSerializer.Serialize(arr, new TypelessContractlessStandardResolver());
-            var deser = defaultSerializer.Deserialize<object[]>(result, new TypelessContractlessStandardResolver());
+            var result = defaultSerializer.Serialize(arr);
+            var deser = defaultSerializer.Deserialize<object[]>(result);
             deser.IsStructuralEqual(arr);
 
 #if NETFRAMEWORK
@@ -263,9 +263,9 @@ namespace MessagePack.Tests
                     Obj = new string[] { "asd", "asd" }
                 };
 
-                var objSer = defaultSerializer.Serialize(objRaw, new TypelessContractlessStandardResolver());
+                var objSer = defaultSerializer.Serialize(objRaw);
 
-                var objDes = defaultSerializer.Deserialize<SomeClass>(objSer, new TypelessContractlessStandardResolver());
+                var objDes = defaultSerializer.Deserialize<SomeClass>(objSer);
 
                 var expectedTrue = objDes.Obj is string[];
                 expectedTrue.IsTrue();
