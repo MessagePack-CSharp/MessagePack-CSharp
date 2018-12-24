@@ -9,7 +9,7 @@ using System.Text;
 
 namespace System.Reflection
 {
-#if !NET_4_6
+#if !NET_4_6 && !NET_STANDARD_2_0
 
     public class TypeInfo
     {
@@ -200,7 +200,7 @@ namespace System.Reflection
     public static class ReflectionExtensions
     {
 
-#if !NET_4_6
+#if !NET_4_6 && !NET_STANDARD_2_0
 
         public static TypeInfo GetTypeInfo(this Type type)
         {
@@ -266,6 +266,7 @@ namespace System.Reflection
         }
 
 #else
+
 
         public static bool IsConstructedGenericType(this TypeInfo type)
         {
