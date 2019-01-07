@@ -46,6 +46,12 @@ namespace MessagePack
             this.Key = key;
             this.SubType = subType;
         }
+
+        public UnionAttribute(int key, string subType)
+        {
+            this.Key = key;
+            this.SubType = Type.GetType(subType);
+        }
     }
 
     [AttributeUsage(AttributeTargets.Constructor, AllowMultiple = false, Inherited = true)]
