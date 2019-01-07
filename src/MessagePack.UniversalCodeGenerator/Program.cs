@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MessagePack.CodeGenerator
 {
@@ -56,7 +55,7 @@ namespace MessagePack.CodeGenerator
                 return;
             }
 
-            SHOW_HELP:
+        SHOW_HELP:
             Console.WriteLine("mpc arguments help:");
             option.WriteOptionDescriptions(Console.Out);
             IsParsed = false;
@@ -71,93 +70,102 @@ namespace MessagePack.CodeGenerator
 
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
-            var cmdArgs = new CommandlineArguments(args);
-            if (!cmdArgs.IsParsed)
+            try
             {
-                return;
-            }
-
-            // Generator Start...
-
-            var sw = Stopwatch.StartNew();
-            Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
-
-            var collector = new TypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
-
-            Console.WriteLine("Project Compilation Complete:" + sw.Elapsed.ToString());
-            Console.WriteLine();
-
-            sw.Restart();
-            Console.WriteLine("Method Collect Start");
-
-            var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
-
-            Console.WriteLine("Method Collect Complete:" + sw.Elapsed.ToString());
-
-            Console.WriteLine("Output Generation Start");
-            sw.Restart();
-
-            var objectFormatterTemplates = objectInfo
-                .GroupBy(x => x.Namespace)
-                .Select(x => new FormatterTemplate()
+                var cmdArgs = new CommandlineArguments(args);
+                if (!cmdArgs.IsParsed)
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
-                    objectSerializationInfos = x.ToArray(),
-                })
-                .ToArray();
+                    return 0;
+                }
 
-            var enumFormatterTemplates = enumInfo
-                .GroupBy(x => x.Namespace)
-                .Select(x => new EnumTemplate()
+                // Generator Start...
+
+                var sw = Stopwatch.StartNew();
+                Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
+
+                var collector = new TypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
+
+                Console.WriteLine("Project Compilation Complete:" + sw.Elapsed.ToString());
+                Console.WriteLine();
+
+                sw.Restart();
+                Console.WriteLine("Method Collect Start");
+
+                var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
+
+                Console.WriteLine("Method Collect Complete:" + sw.Elapsed.ToString());
+
+                Console.WriteLine("Output Generation Start");
+                sw.Restart();
+
+                var objectFormatterTemplates = objectInfo
+                    .GroupBy(x => x.Namespace)
+                    .Select(x => new FormatterTemplate()
+                    {
+                        Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
+                        objectSerializationInfos = x.ToArray(),
+                    })
+                    .ToArray();
+
+                var enumFormatterTemplates = enumInfo
+                    .GroupBy(x => x.Namespace)
+                    .Select(x => new EnumTemplate()
+                    {
+                        Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
+                        enumSerializationInfos = x.ToArray()
+                    })
+                    .ToArray();
+
+                var unionFormatterTemplates = unionInfo
+                    .GroupBy(x => x.Namespace)
+                    .Select(x => new UnionTemplate()
+                    {
+                        Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
+                        unionSerializationInfos = x.ToArray()
+                    })
+                    .ToArray();
+
+                var resolverTemplate = new ResolverTemplate()
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
-                    enumSerializationInfos = x.ToArray()
-                })
-                .ToArray();
+                    Namespace = cmdArgs.GetNamespaceDot() + "Resolvers",
+                    FormatterNamespace = cmdArgs.GetNamespaceDot() + "Formatters",
+                    ResolverName = cmdArgs.ResolverName,
+                    registerInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray()
+                };
 
-            var unionFormatterTemplates = unionInfo
-                .GroupBy(x => x.Namespace)
-                .Select(x => new UnionTemplate()
+                var sb = new StringBuilder();
+                sb.AppendLine(resolverTemplate.TransformText());
+                sb.AppendLine();
+                foreach (var item in enumFormatterTemplates)
                 {
-                    Namespace = cmdArgs.GetNamespaceDot() + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
-                    unionSerializationInfos = x.ToArray()
-                })
-                .ToArray();
+                    var text = item.TransformText();
+                    sb.AppendLine(text);
+                }
+                sb.AppendLine();
+                foreach (var item in unionFormatterTemplates)
+                {
+                    var text = item.TransformText();
+                    sb.AppendLine(text);
+                }
+                sb.AppendLine();
+                foreach (var item in objectFormatterTemplates)
+                {
+                    var text = item.TransformText();
+                    sb.AppendLine(text);
+                }
 
-            var resolverTemplate = new ResolverTemplate()
-            {
-                Namespace = cmdArgs.GetNamespaceDot() + "Resolvers",
-                FormatterNamespace = cmdArgs.GetNamespaceDot() + "Formatters",
-                ResolverName = cmdArgs.ResolverName,
-                registerInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray()
-            };
+                Output(cmdArgs.OutputPath, sb.ToString());
 
-            var sb = new StringBuilder();
-            sb.AppendLine(resolverTemplate.TransformText());
-            sb.AppendLine();
-            foreach (var item in enumFormatterTemplates)
-            {
-                var text = item.TransformText();
-                sb.AppendLine(text);
+                Console.WriteLine("String Generation Complete:" + sw.Elapsed.ToString());
+                return 0;
             }
-            sb.AppendLine();
-            foreach (var item in unionFormatterTemplates)
+            catch (Exception ex)
             {
-                var text = item.TransformText();
-                sb.AppendLine(text);
+                Console.WriteLine("Unhandled Error:" + ex);
+                return 1;
             }
-            sb.AppendLine();
-            foreach (var item in objectFormatterTemplates)
-            {
-                var text = item.TransformText();
-                sb.AppendLine(text);
-            }
-
-            Output(cmdArgs.OutputPath, sb.ToString());
-
-            Console.WriteLine("String Generation Complete:" + sw.Elapsed.ToString());
         }
 
         static void Output(string path, string text)
