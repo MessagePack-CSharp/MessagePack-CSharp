@@ -23,7 +23,7 @@ namespace MessagePack.UnityClient.Tests
                     Prop1 = 100,
                     Prop2 = ByteEnum.C,
                     Prop3 = "abcde",
-                    Prop4 = new SimlpeStringKeyData
+                    Prop4 = new SimpleStringKeyData
                     {
                         Prop1 = 99999,
                         Prop2 = ByteEnum.E,
