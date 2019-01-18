@@ -7,7 +7,7 @@
 <#
     var Max = 31;
 #>
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 
 using System.Runtime.CompilerServices;
 
