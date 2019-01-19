@@ -327,7 +327,7 @@ namespace MessagePack.CodeGenerator
             var unionAttrs = type.GetAttributes().Where(x => x.AttributeClass == typeReferences.UnionAttribute).Select(x => x.ConstructorArguments).ToArray();
             if (unionAttrs.Length == 0)
             {
-                throw new MessagePackGeneratorResolveFailedException("Serialization Type must mark UnionAttribute." + " type: " + type.Name);
+                throw new MessagePackGeneratorResolveFailedException("Serialization Type must mark UnionAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
             }
 
             // 0, Int  1, SubType
@@ -466,7 +466,7 @@ namespace MessagePack.CodeGenerator
             var contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.MessagePackObjectAttribute);
             if (contractAttr == null)
             {
-                throw new MessagePackGeneratorResolveFailedException("Serialization Object must mark MessagePackObjectAttribute." + " type: " + type.Name);
+                throw new MessagePackGeneratorResolveFailedException("Serialization Object must mark MessagePackObjectAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
             }
 
             var isIntKey = true;
@@ -546,11 +546,11 @@ namespace MessagePack.CodeGenerator
                     if (!member.IsReadable && !member.IsWritable) continue;
 
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribute)?.ConstructorArguments[0];
-                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.Name + " member:" + item.Name);
+                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
                     var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : (string)null;
-                    if (intKey == null && stringKey == null) throw new MessagePackGeneratorResolveFailedException("both IntKey and StringKey are null." + " type: " + type.Name + " member:" + item.Name);
+                    if (intKey == null && stringKey == null) throw new MessagePackGeneratorResolveFailedException("both IntKey and StringKey are null." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                     if (searchFirst)
                     {
@@ -561,21 +561,21 @@ namespace MessagePack.CodeGenerator
                     {
                         if ((isIntKey && intKey == null) || (!isIntKey && stringKey == null))
                         {
-                            throw new MessagePackGeneratorResolveFailedException("all members key type must be same." + " type: " + type.Name + " member:" + item.Name);
+                            throw new MessagePackGeneratorResolveFailedException("all members key type must be same." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
                         }
                     }
 
                     if (isIntKey)
                     {
                         member.IntKey = (int)intKey;
-                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.Name + " member:" + item.Name);
+                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                         intMemebrs.Add(member.IntKey, member);
                     }
                     else
                     {
                         member.StringKey = (string)stringKey;
-                        if (stringMembers.ContainsKey(member.StringKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.Name + " member:" + item.Name);
+                        if (stringMembers.ContainsKey(member.StringKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                         member.IntKey = hiddenIntKey++;
                         stringMembers.Add(member.StringKey, member);
@@ -602,11 +602,11 @@ namespace MessagePack.CodeGenerator
                     if (!member.IsReadable && !member.IsWritable) continue;
 
                     var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == typeReferences.KeyAttribute)?.ConstructorArguments[0];
-                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.Name + " member:" + item.Name);
+                    if (key == null) throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
                     var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : (string)null;
-                    if (intKey == null && stringKey == null) throw new MessagePackGeneratorResolveFailedException("both IntKey and StringKey are null." + " type: " + type.Name + " member:" + item.Name);
+                    if (intKey == null && stringKey == null) throw new MessagePackGeneratorResolveFailedException("both IntKey and StringKey are null." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                     if (searchFirst)
                     {
@@ -624,14 +624,14 @@ namespace MessagePack.CodeGenerator
                     if (isIntKey)
                     {
                         member.IntKey = (int)intKey;
-                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.Name + " member:" + item.Name);
+                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                         intMemebrs.Add(member.IntKey, member);
                     }
                     else
                     {
                         member.StringKey = (string)stringKey;
-                        if (stringMembers.ContainsKey(member.StringKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.Name + " member:" + item.Name);
+                        if (stringMembers.ContainsKey(member.StringKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                         member.IntKey = hiddenIntKey++;
                         stringMembers.Add(member.StringKey, member);
@@ -658,7 +658,7 @@ namespace MessagePack.CodeGenerator
             }
 
             // struct allows null ctor
-            if (ctor == null && isClass) throw new MessagePackGeneratorResolveFailedException("can't find public constructor. type:" + type.Name);
+            if (ctor == null && isClass) throw new MessagePackGeneratorResolveFailedException("can't find public constructor. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
 
             var constructorParameters = new List<MemberSerializationInfo>();
             if (ctor != null)
@@ -688,7 +688,7 @@ namespace MessagePack.CodeGenerator
                                     }
                                     else
                                     {
-                                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.Name + " parameterIndex:" + ctorParamIndex + " paramterType:" + item.Type.Name);
+                                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterIndex:" + ctorParamIndex + " paramterType:" + item.Type.Name);
                                     }
                                 }
                             }
@@ -701,7 +701,7 @@ namespace MessagePack.CodeGenerator
                                 }
                                 else
                                 {
-                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.Name + " parameterIndex:" + ctorParamIndex);
+                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterIndex:" + ctorParamIndex);
                                 }
                             }
                         }
@@ -720,7 +720,7 @@ namespace MessagePack.CodeGenerator
                                     }
                                     else
                                     {
-                                        throw new MessagePackGeneratorResolveFailedException("duplicate matched constructor parameter name:" + type.Name + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
+                                        throw new MessagePackGeneratorResolveFailedException("duplicate matched constructor parameter name:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
                                     }
                                 }
 
@@ -738,7 +738,7 @@ namespace MessagePack.CodeGenerator
                                     }
                                     else
                                     {
-                                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.Name + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
+                                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
                                     }
                                 }
                             }
@@ -751,7 +751,7 @@ namespace MessagePack.CodeGenerator
                                 }
                                 else
                                 {
-                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.Name + " parameterName:" + item.Name);
+                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name);
                                 }
                             }
                         }
@@ -761,7 +761,7 @@ namespace MessagePack.CodeGenerator
 
                 if (ctor == null)
                 {
-                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor. type:" + type.Name);
+                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                 }
             }
 
