@@ -323,7 +323,7 @@ namespace Sandbox
         [Key(2)]
         public string Prop3 { get; set; }
         [Key(3)]
-        public SimlpeStringKeyData Prop4 { get; set; }
+        public SimpleStringKeyData Prop4 { get; set; }
         [Key(4)]
         public SimpleStructIntKeyData Prop5 { get; set; }
         [Key(5)]
@@ -347,7 +347,7 @@ namespace Sandbox
                 Prop1 = 100,
                 Prop2 = ByteEnum.C,
                 Prop3 = "abcde",
-                Prop4 = new SimlpeStringKeyData
+                Prop4 = new SimpleStringKeyData
                 {
                     Prop1 = 99999,
                     Prop2 = ByteEnum.E,

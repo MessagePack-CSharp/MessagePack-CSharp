@@ -262,7 +262,7 @@ namespace MessagePack.Tests
                 Prop1 = 100,
                 Prop2 = ByteEnum.C,
                 Prop3 = "abcde",
-                Prop4 = new SimlpeStringKeyData
+                Prop4 = new SimpleStringKeyData
                 {
                     Prop1 = 99999,
                     Prop2 = ByteEnum.E,
@@ -320,7 +320,7 @@ namespace MessagePack.Tests
         public void ReadStrictDeserialize()
         {
             var ms = new MemoryStream();
-            MessagePackSerializer.Serialize(ms, new SimlpeStringKeyData
+            MessagePackSerializer.Serialize(ms, new SimpleStringKeyData
             {
                 Prop1 = 99999,
                 Prop2 = ByteEnum.E,
@@ -334,7 +334,7 @@ namespace MessagePack.Tests
 
             ms.Position = 0;
 
-            var d = MessagePackSerializer.Deserialize<SimlpeStringKeyData>(ms, readStrict: true);
+            var d = MessagePackSerializer.Deserialize<SimpleStringKeyData>(ms, readStrict: true);
             d.Prop1.Is(99999); d.Prop2.Is(ByteEnum.E); d.Prop3.Is(3);
 
             var d2 = (SimpleStructStringKeyData)MessagePackSerializer.NonGeneric.Deserialize(typeof(SimpleStructStringKeyData), ms, readStrict: true);
@@ -345,7 +345,7 @@ namespace MessagePack.Tests
         public void ReadStrictDeserializeLZ4()
         {
             var ms = new MemoryStream();
-            LZ4MessagePackSerializer.Serialize(ms, new SimlpeStringKeyData
+            LZ4MessagePackSerializer.Serialize(ms, new SimpleStringKeyData
             {
                 Prop1 = 99999,
                 Prop2 = ByteEnum.E,
@@ -360,7 +360,7 @@ namespace MessagePack.Tests
 
             ms.Position = 0;
 
-            var d = LZ4MessagePackSerializer.Deserialize<SimlpeStringKeyData>(ms, readStrict: true);
+            var d = LZ4MessagePackSerializer.Deserialize<SimpleStringKeyData>(ms, readStrict: true);
             d.Prop1.Is(99999); d.Prop2.Is(ByteEnum.E); d.Prop3.Is(3);
 
             var ds = LZ4MessagePackSerializer.Deserialize<string>(ms, readStrict: true);
