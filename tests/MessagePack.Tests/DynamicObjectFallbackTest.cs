@@ -36,7 +36,7 @@ namespace MessagePack.Tests
                 new DynamicObjectFallbackTestContainer
                 {
                     MyProperty = 300,
-                    MoreObject = new SharedData.SimlpeStringKeyData
+                    MoreObject = new SharedData.SimpleStringKeyData
                     {
                         Prop1 = 10,
                         Prop2 = SharedData.ByteEnum.C,

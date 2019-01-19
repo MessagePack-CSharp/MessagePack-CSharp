@@ -267,7 +267,7 @@ namespace MessagePack.Tests
                 Prop1 = 100,
                 Prop2 = ByteEnum.C,
                 Prop3 = "abcde",
-                Prop4 = new SimlpeStringKeyData
+                Prop4 = new SimpleStringKeyData
                 {
                     Prop1 = 99999,
                     Prop2 = ByteEnum.E,
@@ -325,7 +325,7 @@ namespace MessagePack.Tests
         public void ReadStrictDeserialize()
         {
             var ms = new MemoryStream();
-            serializer.Serialize(ms, new SimlpeStringKeyData
+            serializer.Serialize(ms, new SimpleStringKeyData
             {
                 Prop1 = 99999,
                 Prop2 = ByteEnum.E,
@@ -339,7 +339,7 @@ namespace MessagePack.Tests
 
             ms.Position = 0;
 
-            var d = serializer.Deserialize<SimlpeStringKeyData>(ms, readStrict: true);
+            var d = serializer.Deserialize<SimpleStringKeyData>(ms, readStrict: true);
             d.Prop1.Is(99999); d.Prop2.Is(ByteEnum.E); d.Prop3.Is(3);
 
             var d2 = (SimpleStructStringKeyData)nonGenericSerializer.Deserialize(typeof(SimpleStructStringKeyData), ms, readStrict: true);
@@ -350,7 +350,7 @@ namespace MessagePack.Tests
         public void ReadStrictDeserializeLZ4()
         {
             var ms = new MemoryStream();
-            lz4Serializer.Serialize(ms, new SimlpeStringKeyData
+            lz4Serializer.Serialize(ms, new SimpleStringKeyData
             {
                 Prop1 = 99999,
                 Prop2 = ByteEnum.E,
@@ -365,7 +365,7 @@ namespace MessagePack.Tests
 
             ms.Position = 0;
 
-            var d = lz4Serializer.Deserialize<SimlpeStringKeyData>(ms, readStrict: true);
+            var d = lz4Serializer.Deserialize<SimpleStringKeyData>(ms, readStrict: true);
             d.Prop1.Is(99999); d.Prop2.Is(ByteEnum.E); d.Prop3.Is(3);
 
             var ds = lz4Serializer.Deserialize<string>(ms, readStrict: true);
