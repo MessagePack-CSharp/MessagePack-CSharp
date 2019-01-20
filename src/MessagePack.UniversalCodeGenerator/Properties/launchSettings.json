@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "MessagePack.UniversalCodeGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "-i .\\sandbox\\shareddata\\shareddata.csproj -o .\\sandbox\\Sandbox\\Generated.cs",
+      "workingDirectory": "D:\\git\\MessagePack-CSharp"
+    }
+  }
+}
