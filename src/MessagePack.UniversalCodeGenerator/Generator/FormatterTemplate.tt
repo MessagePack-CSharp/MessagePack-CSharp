@@ -1,0 +1,158 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+#pragma warning disable 618
+#pragma warning disable 612
+#pragma warning disable 414
+#pragma warning disable 168
+
+namespace <#= Namespace #>
+{
+    using System;
+    using MessagePack;
+
+<# foreach(var objInfo in objectSerializationInfos) { #>
+
+    public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+    {
+<# if( objInfo.IsStringKey) { #>
+
+        readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
+        readonly byte[][] ____stringByteKeys;
+
+        public <#= objInfo.Name #>Formatter()
+        {
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
+            {
+<# foreach(var x in objInfo.Members) { #>
+                { "<#= x.StringKey #>", <#= x.IntKey #>},
+<# } #>
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+<# foreach(var x in objInfo.Members.Where(x => x.IsReadable)) { #>
+                global::MessagePack.MessagePackBinary.GetEncodedStringBytes("<#= x.StringKey #>"),
+<# } #>                
+            };
+        }
+
+<# } #>
+
+        public int Serialize(ref byte[] bytes, int offset, <#= objInfo.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
+        {
+<# if( objInfo.IsClass) { #>
+            if (value == null)
+            {
+                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            }
+<# } #>            
+<#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
+            ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
+<# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+            value.OnBeforeSerialize();
+<# } #>
+            var startOffset = offset;
+<# if( objInfo.IsIntKey) { if( (objInfo.MaxKey + 1) <= 15) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
+<# } else { #>
+            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
+<# } } else if( objInfo.WriteCount <= 15) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, <#= objInfo.WriteCount #>);
+<# } else { #>
+            offset += global::MessagePack.MessagePackBinary.WriteMapHeader(ref bytes, offset, <#= objInfo.WriteCount #>);
+<# } #>
+<# if(objInfo.IsIntKey) { #>
+<# for(var i =0; i<= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); #>
+<# if( member == null) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+<# } else { #>
+            offset += <#= member.GetSerializeMethodString() #>;
+<# } } } else { #>
+<# var index = 0; foreach(var x in objInfo.Members) { #>
+            offset += global::MessagePack.MessagePackBinary.WriteRaw(ref bytes, offset, this.____stringByteKeys[<#= index++ #>]);
+            offset += <#= x.GetSerializeMethodString() #>;
+<# } } #>
+            return offset - startOffset;
+        }
+
+        public <#= objInfo.FullName #> Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        {
+            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            {
+<# if( objInfo.IsClass) { #>
+                readSize = 1;
+                return null;
+<# } else { #>
+                throw new InvalidOperationException("typecode is null, struct not supported");
+<# } #>
+            }
+
+            var startOffset = offset;
+<# if(objInfo.IsStringKey) { #>
+            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+<# } else { #>
+            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+<# } #>
+            offset += readSize;
+
+<# foreach(var x in objInfo.Members) { #>
+            var __<#= x.Name #>__ = default(<#= x.Type #>);
+<# } #>
+
+            for (int i = 0; i < length; i++)
+            {
+<# if(objInfo.IsStringKey) { #>
+                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                offset += readSize;
+                int key;
+                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                {
+                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                    goto NEXT_LOOP;
+                }
+<# } else { #>
+                var key = i;
+<# } #>
+
+                switch (key)
+                {
+<# foreach(var x in objInfo.Members) { #>
+                    case <#= x.IntKey #>:
+                        __<#= x.Name #>__ = <#= x.GetDeserializeMethodString() #>;
+                        break;
+<# } #>
+                    default:
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+<# if(objInfo.IsStringKey) { #>                
+                NEXT_LOOP:
+<# } #>
+                offset += readSize;
+            }
+
+            readSize = offset - startOffset;
+
+            var ____result = new <#= objInfo.GetConstructorString()  #>;
+<# foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { #>
+            ____result.<#= x.Name #> = __<#= x.Name #>__;
+<# } #>
+<#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAfter) { #>
+            ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+<# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+            ____result.OnAfterDeserialize();
+<# } #>
+            return ____result;
+        }
+    }
+
+<# } #>
+}
+
+#pragma warning restore 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
