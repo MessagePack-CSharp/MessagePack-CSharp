@@ -27,6 +27,7 @@ namespace MessagePack
         Null,
         True,
         False,
+        Float,
         Double,
         Long,
         ULong,
@@ -51,6 +52,7 @@ namespace MessagePack
         public TinyJsonToken TokenType { get; private set; }
         public ValueType ValueType { get; private set; }
         public double DoubleValue { get; private set; }
+        public float FloatValue { get; private set; }
         public long LongValue { get; private set; }
         public ulong ULongValue { get; private set; }
         public decimal DecimalValue { get; private set; }
@@ -234,14 +236,20 @@ namespace MessagePack
                 numberWord.Length = 0; // Clear
             }
 
+            var isFloat = false;
             var isDouble = false;
             var intChar = reader.Peek();
             while (intChar != -1 && !IsWordBreak((char)intChar))
             {
                 var c = ReadChar();
                 numberWord.Append(c);
-                if (c == '.' || c == 'e' || c == 'E') isDouble = true;
+                if (c == '.') isFloat = true;
+                if (c == 'e' || c == 'E') isDouble = true;
                 intChar = reader.Peek();
+            }
+            if (isFloat && !isDouble && numberWord.Length > 8)
+            {
+                isDouble = true;
             }
 
             var number = numberWord.ToString();
@@ -251,6 +259,13 @@ namespace MessagePack
                 Double.TryParse(number, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent, System.Globalization.CultureInfo.InvariantCulture, out parsedDouble);
                 ValueType = ValueType.Double;
                 DoubleValue = parsedDouble;
+            }
+            else if (isFloat)
+            {
+                float parsedFloat;
+                float.TryParse(number, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent, System.Globalization.CultureInfo.InvariantCulture, out parsedFloat);
+                ValueType = ValueType.Float;
+                FloatValue = parsedFloat;
             }
             else
             {

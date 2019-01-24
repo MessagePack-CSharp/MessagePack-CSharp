@@ -113,6 +113,10 @@ namespace MessagePack
                         {
                             offset += MessagePackBinary.WriteDouble(ref binary, offset, jr.DoubleValue);
                         }
+                        if (v == ValueType.Float)
+                        {
+                            offset += MessagePackBinary.WriteSingle(ref binary, offset, jr.FloatValue);
+                        }
                         else if (v == ValueType.Long)
                         {
                             offset += MessagePackBinary.WriteInt64(ref binary, offset, jr.LongValue);
