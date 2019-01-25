@@ -37,6 +37,26 @@ namespace MessagePack.Tests
             public string MyProperty2;
         }
 
+        [DataContract]
+        public class ClassWithPublicMembersWithoutAttributes
+        {
+            [DataMember]
+            public int AttributedProperty { get; set; }
+
+            public int UnattributedProperty { get; set; }
+
+            [IgnoreDataMember]
+            public int IgnoredProperty { get; set; }
+
+            [DataMember]
+            public int AttributedField;
+
+            public int UnattributedField;
+
+            [IgnoreDataMember]
+            public int IgnoredField;
+        }
+
         [Fact]
         public void SerializeOrder()
         {
@@ -78,6 +98,32 @@ namespace MessagePack.Tests
             mc.MyProperty2.Is(mc2.MyProperty2);
 
             MessagePackSerializer.ToJson(bin).Is(@"{""MyProperty1"":100,""MyProperty2"":""foobar""}");
+        }
+
+        [Fact]
+        public void Serialize_WithVariousAttributes()
+        {
+            var mc = new ClassWithPublicMembersWithoutAttributes {
+                AttributedProperty = 1,
+                UnattributedProperty = 2,
+                IgnoredProperty = 3,
+                AttributedField = 4,
+                UnattributedField = 5,
+                IgnoredField = 6,
+            };
+
+            var bin = serializer.Serialize(mc);
+            var mc2 = serializer.Deserialize<ClassWithPublicMembersWithoutAttributes>(bin);
+
+            mc2.AttributedProperty.Is(mc.AttributedProperty);
+            mc2.AttributedField.Is(mc.AttributedField);
+
+            mc2.UnattributedProperty.Is(0);
+            mc2.IgnoredProperty.Is(0);
+            mc2.UnattributedField.Is(0);
+            mc2.IgnoredField.Is(0);
+
+            serializer.ToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
         }
     }
 }
