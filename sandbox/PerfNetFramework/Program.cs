@@ -86,7 +86,8 @@ namespace PerfnetFramework
 
         private static void Benchmark<T>(T target)
         {
-            const int Iteration = 1000000; // 10000
+            const int Iteration = 10000;
+            Console.WriteLine("Running {0} iterations...", Iteration);
 
             var jsonSerializer = new JsonSerializer();
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
@@ -109,6 +110,23 @@ namespace PerfnetFramework
             byte[] data3 = null;
             byte[] dataJson = null;
             byte[] dataGzipJson = null;
+
+            using (new Measure("MessagePack for C#"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    data0 = DefaultSerializer.Serialize(target);
+                }
+            }
+
+            using (new Measure("MessagePack for C# (LZ4)"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    data3 = LZ4Serializer.Serialize(target);
+                }
+            }
+
             using (new Measure("MsgPack-Cli"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -117,19 +135,14 @@ namespace PerfnetFramework
                 }
             }
 
-            using (new Measure("MessagePack-CSharp"))
+            using (new Measure("protobuf-net"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data0 = DefaultSerializer.Serialize(target);
-                }
-            }
-
-            using (new Measure("MessagePack(LZ4)"))
-            {
-                for (int i = 0; i < Iteration; i++)
-                {
-                    data3 = LZ4Serializer.Serialize(target);
+                    using (var ms = new MemoryStream())
+                    {
+                        ProtoBuf.Serializer.Serialize(ms, target);
+                    }
                 }
             }
 
@@ -141,7 +154,7 @@ namespace PerfnetFramework
                 }
             }
 
-            using (new Measure("JsonNet"))
+            using (new Measure("Json.NET"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
@@ -154,7 +167,7 @@ namespace PerfnetFramework
                 }
             }
 
-            using (new Measure("JsonNet+Gzip"))
+            using (new Measure("Json.NET(+GZip)"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
@@ -164,17 +177,6 @@ namespace PerfnetFramework
                     using (var jw = new JsonTextWriter(sw))
                     {
                         jsonSerializer.Serialize(jw, target);
-                    }
-                }
-            }
-
-            using (new Measure("protobuf-net"))
-            {
-                for (int i = 0; i < Iteration; i++)
-                {
-                    using (var ms = new MemoryStream())
-                    {
-                        ProtoBuf.Serializer.Serialize(ms, target);
                     }
                 }
             }
@@ -216,15 +218,7 @@ namespace PerfnetFramework
             Console.WriteLine();
             Console.WriteLine("Deserialize::");
 
-            using (new Measure("MsgPack-Cli"))
-            {
-                for (int i = 0; i < Iteration; i++)
-                {
-                    msgpack.GetSerializer<T>().UnpackSingleObject(data);
-                }
-            }
-
-            using (new Measure("MessagePack-CSharp"))
+            using (new Measure("MessagePack for C#"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
@@ -232,7 +226,7 @@ namespace PerfnetFramework
                 }
             }
 
-            using (new Measure("MessagePack(LZ4)"))
+            using (new Measure("MessagePack for C# (LZ4)"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
@@ -240,38 +234,11 @@ namespace PerfnetFramework
                 }
             }
 
-            using (new Measure("ZeroFormatter"))
+            using (new Measure("MsgPack-Cli"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    ZeroFormatterSerializer.Deserialize<T>(data1);
-                }
-            }
-
-            using (new Measure("JsonNet"))
-            {
-                for (int i = 0; i < Iteration; i++)
-                {
-                    using (var ms = new MemoryStream(dataJson))
-                    using (var sr = new StreamReader(ms, Encoding.UTF8))
-                    using (var jr = new JsonTextReader(sr))
-                    {
-                        jsonSerializer.Deserialize<T>(jr);
-                    }
-                }
-            }
-
-            using (new Measure("JsonNet+Gzip"))
-            {
-                for (int i = 0; i < Iteration; i++)
-                {
-                    using (var ms = new MemoryStream(dataGzipJson))
-                    using (var gzip = new GZipStream(ms, CompressionMode.Decompress))
-                    using (var sr = new StreamReader(gzip, Encoding.UTF8))
-                    using (var jr = new JsonTextReader(sr))
-                    {
-                        jsonSerializer.Deserialize<T>(jr);
-                    }
+                    msgpack.GetSerializer<T>().UnpackSingleObject(data);
                 }
             }
 
@@ -286,16 +253,51 @@ namespace PerfnetFramework
                 }
             }
 
+            using (new Measure("ZeroFormatter"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    ZeroFormatterSerializer.Deserialize<T>(data1);
+                }
+            }
+
+            using (new Measure("Json.NET"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    using (var ms = new MemoryStream(dataJson))
+                    using (var sr = new StreamReader(ms, Encoding.UTF8))
+                    using (var jr = new JsonTextReader(sr))
+                    {
+                        jsonSerializer.Deserialize<T>(jr);
+                    }
+                }
+            }
+
+            using (new Measure("Json.NET(+GZip)"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    using (var ms = new MemoryStream(dataGzipJson))
+                    using (var gzip = new GZipStream(ms, CompressionMode.Decompress))
+                    using (var sr = new StreamReader(gzip, Encoding.UTF8))
+                    using (var jr = new JsonTextReader(sr))
+                    {
+                        jsonSerializer.Deserialize<T>(jr);
+                    }
+                }
+            }
+
             Console.WriteLine();
             Console.WriteLine("FileSize::");
             var label = "";
-            label = "MsgPack-Cli"; Console.WriteLine($"{label,20}   {data.Length} Byte");
-            label = "MessagePack-CSharp"; Console.WriteLine($"{label,20}   {data0.Length} Byte");
-            label = "MessagePack(LZ4)"; Console.WriteLine($"{label,20}   {data3.Length} Byte");
-            label = "ZeroFormatter"; Console.WriteLine($"{label,20}   {data1.Length} Byte");
-            label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
-            label = "JsonNet"; Console.WriteLine($"{label,20}   {dataJson.Length} Byte");
-            label = "JsonNet+GZip"; Console.WriteLine($"{label,20}   {dataGzipJson.Length} Byte");
+            label = "MessagePack for C#"; Console.WriteLine($"{label,-25} {data0.Length,14} byte");
+            label = "MessagePack for C# (LZ4)"; Console.WriteLine($"{label,-25} {data3.Length,14} byte");
+            label = "MsgPack-Cli"; Console.WriteLine($"{label,-25} {data.Length,14} byte");
+            label = "protobuf-net"; Console.WriteLine($"{label,-25} {data2.Length,14} byte");
+            label = "ZeroFormatter"; Console.WriteLine($"{label,-25} {data1.Length,14} byte");
+            label = "Json.NET"; Console.WriteLine($"{label,-25} {dataJson.Length,14} byte");
+            label = "Json.NET(+GZip)"; Console.WriteLine($"{label,-25} {dataGzipJson.Length,14} byte");
 
             Console.WriteLine();
             Console.WriteLine();
@@ -376,7 +378,7 @@ namespace PerfnetFramework
         public void Dispose()
         {
             sw.Stop();
-            Console.WriteLine($"{ label,20}   {sw.Elapsed.TotalMilliseconds} ms");
+            Console.WriteLine($"{label,-25}   {sw.Elapsed.TotalMilliseconds,12:F2} ms");
 
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
         }
