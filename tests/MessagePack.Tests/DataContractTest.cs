@@ -112,8 +112,8 @@ namespace MessagePack.Tests
                 IgnoredField = 6,
             };
 
-            var bin = serializer.Serialize(mc);
-            var mc2 = serializer.Deserialize<ClassWithPublicMembersWithoutAttributes>(bin);
+            var bin = MessagePackSerializer.Serialize(mc);
+            var mc2 = MessagePackSerializer.Deserialize<ClassWithPublicMembersWithoutAttributes>(bin);
 
             mc2.AttributedProperty.Is(mc.AttributedProperty);
             mc2.AttributedField.Is(mc.AttributedField);
@@ -123,7 +123,7 @@ namespace MessagePack.Tests
             mc2.UnattributedField.Is(0);
             mc2.IgnoredField.Is(0);
 
-            serializer.ToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
+            MessagePackSerializer.ToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
         }
     }
 }
