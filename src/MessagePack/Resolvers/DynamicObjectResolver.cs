@@ -1427,7 +1427,9 @@ typeof(int), typeof(int) });
                         var pseudokey = item.GetCustomAttribute<DataMemberAttribute>(true);
                         if (pseudokey == null)
                         {
-                            throw new MessagePackDynamicObjectResolverException("all public members must mark DataMemberAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
+                            // This member has no DataMemberAttribute nor IgnoreMemberAttribute.
+                            // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
+                            continue;
                         }
 
                         // use Order first
@@ -1508,7 +1510,9 @@ typeof(int), typeof(int) });
                         var pseudokey = item.GetCustomAttribute<DataMemberAttribute>(true);
                         if (pseudokey == null)
                         {
-                            throw new MessagePackDynamicObjectResolverException("all public members must mark DataMemberAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
+                            // This member has no DataMemberAttribute nor IgnoreMemberAttribute.
+                            // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
+                            continue;
                         }
 
                         // use Order first
