@@ -30,6 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Formatters\ForceSizePrimitiveFormatter.tt">
       <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
