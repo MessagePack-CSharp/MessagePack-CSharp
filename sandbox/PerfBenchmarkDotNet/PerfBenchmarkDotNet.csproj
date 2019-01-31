@@ -35,6 +35,9 @@
     <Content Include="MessagePack_1_6_0_3.dll" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj">
+      <Aliases>newmsgpack</Aliases>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">
       <Aliases>newmsgpack</Aliases>
     </ProjectReference>
