@@ -5,6 +5,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>mpc</AssemblyName>
     <RootNamespace>MessagePack.CodeGenerator</RootNamespace>
+    <CodeAnalysisRuleSet>MessagePack.UniversalCodeGenerator.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <ItemGroup>

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 using System.Collections.Concurrent;
 #endif
 
@@ -235,7 +235,7 @@ namespace MessagePack.Formatters
                         {
                             while (e.MoveNext())
                             {
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
                                 offset += formatter.Serialize(ref bytes, offset, e.Current, formatterResolver);
 #else
                                 offset += formatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver);
@@ -266,7 +266,7 @@ namespace MessagePack.Formatters
                             while (e.MoveNext())
                             {
                                 count++;
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
                                 var writeSize = formatter.Serialize(ref bytes, offset, e.Current, formatterResolver);
 #else
                                 var writeSize = formatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver);
@@ -332,7 +332,7 @@ namespace MessagePack.Formatters
             {
                 return collection.Count;
             }
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
             else
             {
                 var c2 = sequence as IReadOnlyCollection<TElement>;
@@ -921,7 +921,7 @@ namespace MessagePack.Formatters
         }
     }
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 
     public sealed class ObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>>
     {

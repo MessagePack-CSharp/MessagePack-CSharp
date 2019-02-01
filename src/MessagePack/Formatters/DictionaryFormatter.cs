@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 using System.Collections.Concurrent;
 #endif
 
 namespace MessagePack.Formatters
 {
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
 
     // unfortunately, can't use IDictionary<KVP> because supports IReadOnlyDictionary.
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary> : IMessagePackFormatter<TDictionary>

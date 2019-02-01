@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/AArnott/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
+  "version": "1.8-alpha",
+  "assemblyVersion": {
+      "precision": "revision"
+  },
+  "publicReleaseRefSpec": [
+    "^refs/heads/master$", // we release out of master
+    "^refs/heads/v\\d+(?:.\\d+)?$" // we also release out of vNN branches
+  ]
+}

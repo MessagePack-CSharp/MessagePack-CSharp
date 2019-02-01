@@ -93,7 +93,11 @@ namespace MessagePack.Tests
             var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Instance);
             p.IsStructuralEqual(p2);
 
+#if NETFRAMEWORK
             MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, mscorlib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+#else
+            MessagePackSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, System.Private.CoreLib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+#endif
         }
 
         public class A { public int Id; }
@@ -133,7 +137,11 @@ namespace MessagePack.Tests
             var deser = MessagePackSerializer.Deserialize<Dictionary<object, object>>(result, TypelessContractlessStandardResolver.Instance);
             deser.IsStructuralEqual(arr);
 
+#if NETFRAMEWORK
             MessagePackSerializer.ToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], mscorlib"",""level2"",[""System.Object[], mscorlib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, mscorlib"",636340858800000000}]}]]}");
+#else
+            MessagePackSerializer.ToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], System.Private.CoreLib"",""level2"",[""System.Object[], System.Private.CoreLib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, System.Private.CoreLib"",636340858800000000}]}]]}");
+#endif
         }
 
         [Fact]
@@ -144,7 +152,11 @@ namespace MessagePack.Tests
             var deser = MessagePackSerializer.Deserialize<object[]>(result, TypelessContractlessStandardResolver.Instance);
             deser.IsStructuralEqual(arr);
 
+#if NETFRAMEWORK
             MessagePackSerializer.ToJson(result).Is(@"[1,[""System.Object[], mscorlib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"",""a"",42]]]");
+#else
+            MessagePackSerializer.ToJson(result).Is(@"[1,[""System.Object[], System.Private.CoreLib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, System.Private.CoreLib]], System.Collections"",""a"",42]]]");
+#endif
         }
 
         [Theory]

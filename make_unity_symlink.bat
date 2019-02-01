@@ -1,4 +1,14 @@
-cd /d %~dp0
+:: Generally this script isn't necessary, since git records the symlinks.
+:: But when creating new links, one could update this script, or just create the sym link and record it in git.
+
+pushd %~dp0
+
+:: Create the directories within which links will be created
+md src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4
+md src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity
+md src\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnsafeExtensions
+
+:: Create the links and junctions themselves
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Attributes.cs" "..\..\..\..\MessagePack\Attributes.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\FloatBits.cs" "..\..\..\..\MessagePack\FloatBits.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\IFormatterResolver.cs" "..\..\..\..\MessagePack\IFormatterResolver.cs"
@@ -22,3 +32,4 @@ mklink /D ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4\Codec" "
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.cs" "..\..\..\..\..\MessagePack\LZ4\LZ4MessagePackSerializer.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.JSON.cs" "..\..\..\..\..\MessagePack\LZ4\LZ4MessagePackSerializer.JSON.cs"
 mklink ".\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\LZ4\LZ4MessagePackSerializer.NonGeneric.cs" "..\..\..\..\..\MessagePack\LZ4\LZ4MessagePackSerializer.NonGeneric.cs"
+popd
