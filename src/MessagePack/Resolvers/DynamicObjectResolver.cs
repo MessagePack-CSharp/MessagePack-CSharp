@@ -462,7 +462,6 @@ namespace MessagePack.Internal
                 }, 2);  // 0, 1 is parameter.
             }
 
-            if (serializationInfo.IsStruct || serializationInfo.BestmatchConstructor != null)
             {
                 deserialize = new DynamicMethod("Deserialize", type, new[] { typeof(object[]), typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() }, type, true);
 
@@ -1119,14 +1118,26 @@ namespace MessagePack.Internal
         {
             if (info.IsClass)
             {
-                foreach (var item in info.ConstructorParameters)
-                {
-                    var local = members.First(x => x.MemberInfo == item);
-                    il.EmitLdloc(local.LocalField);
-                }
-                il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
+				if (info.BestmatchConstructor is object) {
+					foreach (var item in info.ConstructorParameters) {
+						var local = members.First(x => x.MemberInfo == item);
+						il.EmitLdloc(local.LocalField);
+					}
+					il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
+				}
+				else {
+//#if NET_STANDARD_2_0 || NETFRAMEWORK
+					// use System.Runtime.Serialization.FormatterServices.GetUninitializedObject instead of object constructor
+					il.Emit(OpCodes.Ldtoken, info.Type);
+					il.EmitCall(EmitInfo.GetTypeFromHandle);
+					il.EmitCall(EmitInfo.GetUninitializedObject);
+					il.Emit(OpCodes.Isinst, info.Type);
+//#else
+//                    throw new MessagePackDynamicObjectResolverException("can't find matched constructor. type:" + info.Type.FullName);
+//#endif
+				}
 
-                foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
+				foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
                 {
                     il.Emit(OpCodes.Dup);
                     il.EmitLdloc(item.LocalField);
@@ -1246,8 +1257,11 @@ typeof(int), typeof(int) });
             public static readonly MethodInfo TypeGetField = ExpressionUtility.GetMethodInfo((Type t) => t.GetTypeInfo().GetField(default(string), default(BindingFlags)));
             public static readonly MethodInfo GetCustomAttributeMessagePackFormatterAttribute = ExpressionUtility.GetMethodInfo(() => CustomAttributeExtensions.GetCustomAttribute<MessagePackFormatterAttribute>(default(MemberInfo), default(bool)));
             public static readonly MethodInfo ActivatorCreateInstance = ExpressionUtility.GetMethodInfo(() => Activator.CreateInstance(default(Type), default(object[])));
+//#if NET_STANDARD_2_0 || NETFRAMEWORK
+			public static readonly MethodInfo GetUninitializedObject = ExpressionUtility.GetMethodInfo(() => FormatterServices.GetUninitializedObject(default(Type)));
+//#endif
 
-            internal static class MessagePackFormatterAttr
+			internal static class MessagePackFormatterAttr
             {
                 internal static readonly MethodInfo FormatterType = ExpressionUtility.GetPropertyInfo((MessagePackFormatterAttribute attr) => attr.FormatterType).GetGetMethod();
                 internal static readonly MethodInfo Arguments = ExpressionUtility.GetPropertyInfo((MessagePackFormatterAttribute attr) => attr.Arguments).GetGetMethod();
@@ -1575,8 +1589,6 @@ typeof(int), typeof(int) });
                     ctor = ctorEnumerator.Current;
                 }
             }
-            // struct allows null ctor
-            if (ctor == null && isClass) throw new MessagePackDynamicObjectResolverException("can't find public constructor. type:" + type.FullName);
 
             var constructorParameters = new List<EmittableMember>();
             if (ctor != null)
@@ -1676,11 +1688,6 @@ typeof(int), typeof(int) });
                         ctorParamIndex++;
                     }
                 } while (TryGetNextConstructor(ctorEnumerator, ref ctor));
-
-                if (ctor == null)
-                {
-                    throw new MessagePackDynamicObjectResolverException("can't find matched constructor. type:" + type.FullName);
-                }
             }
 
             EmittableMember[] members;
