@@ -1241,7 +1241,7 @@ MessagePack.Resolvers.CompositeResolver.RegisterAndSetAsDefault(
 
     // finally, use builtin/primitive resolver(don't use StandardResolver, it includes dynamic generation)
     MessagePack.Resolvers.BuiltinResolver.Instance,
-    AttributeFormatterResolver.Instance,
+    MessagePack.Resolvers.AttributeFormatterResolver.Instance,
     MessagePack.Resolvers.PrimitiveObjectResolver.Instance
 );
 ```
