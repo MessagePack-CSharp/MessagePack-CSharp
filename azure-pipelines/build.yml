@@ -89,7 +89,7 @@ steps:
     ArtifactName: projectAssetsJson
     ArtifactType: Container
   displayName: Publish projectAssetsJson artifacts
-  condition: and(succeededOrFailed(), ne(variables['system.pullrequest.isfork'], true))
+  condition: succeededOrFailed()
 
 - task: PublishBuildArtifacts@1
   inputs:
@@ -97,7 +97,7 @@ steps:
     ArtifactName: build_logs
     ArtifactType: Container
   displayName: Publish build_logs artifacts
-  condition: and(succeededOrFailed(), ne(variables['system.pullrequest.isfork'], true))
+  condition: succeededOrFailed()
 
 ## The rest of these steps are for deployment and skipped for PR builds
 
@@ -106,7 +106,7 @@ steps:
 #    PathtoPublish: $(build.sourcesdirectory)/bin
 #    ArtifactName: bin
 #    ArtifactType: Container
-#  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), ne(variables['system.pullrequest.isfork'], true))
+#  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
 - ${{ if eq(variables['system.collectionId'], '011b8bdf-6d56-4f87-be0d-0092136884d9') }}:
   - template: azure-pipeline.microbuild.after.yml
@@ -126,4 +126,4 @@ steps:
     ArtifactName: deployables
     ArtifactType: Container
   displayName: Publish deployables artifacts
-  condition: and(succeededOrFailed(), ne(variables['system.pullrequest.isfork'], true))
+  condition: succeededOrFailed()
