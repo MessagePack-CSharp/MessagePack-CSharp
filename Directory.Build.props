@@ -14,7 +14,7 @@
     <Authors>neuecc</Authors>
     <Owners>neuecc</Owners>
     <Copyright>© Yoshifumi Kawai. All rights reserved.</Copyright>
-    <PackageProjectUrl>https://github.com/AArnott/MessagePack-CSharp</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/neuecc/MessagePack-CSharp</PackageProjectUrl>
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
