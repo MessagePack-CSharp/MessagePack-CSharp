@@ -20,14 +20,46 @@ namespace MessagePack.CodeGenerator
         public ReferenceSymbols(Compilation compilation)
         {
             TaskOfT = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task`1");
+            if(TaskOfT == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of System.Threading.Tasks.Task`1");
+            }
             Task = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task");
+            if (Task == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of System.Threading.Tasks.Task");
+            }
             MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute");
+            if (MessagePackObjectAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.MessagePackObjectAttribute");
+            }
             UnionAttribute = compilation.GetTypeByMetadataName("MessagePack.UnionAttribute");
+            if (UnionAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.UnionAttribute");
+            }
             SerializationConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.SerializationConstructorAttribute");
+            if (SerializationConstructorAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.SerializationConstructorAttribute");
+            }
             KeyAttribute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute");
+            if (KeyAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.KeyAttribute");
+            }
             IgnoreAttribute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute");
+            if (IgnoreAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.IgnoreMemberAttribute");
+            }
             IgnoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
             IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver");
+            if (IMessagePackSerializationCallbackReceiver == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.IMessagePackSerializationCallbackReceiver");
+            }
         }
     }
 
