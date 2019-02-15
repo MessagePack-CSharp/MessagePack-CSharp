@@ -563,6 +563,7 @@ namespace MessagePack.CodeGenerator
 
                 foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
+                    if (item.IsIndexer) continue; // .tt files don't generate good code for this yet: https://github.com/neuecc/MessagePack-CSharp/issues/390
                     if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
 
                     var member = new MemberSerializationInfo
