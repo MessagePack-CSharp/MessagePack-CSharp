@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using System.Text;
 using System.IO.Compression;
 
-namespace PerfnetFramework
+namespace PerfNetFramework
 {
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
@@ -55,6 +55,8 @@ namespace PerfnetFramework
 
     class Program
     {
+        internal static bool deserializing;
+
         static void Main(string[] args)
         {
             var p = new Person
@@ -76,9 +78,14 @@ namespace PerfnetFramework
                 })
                 .ToArray();
 
+            BenchmarkEventSource.Instance.Session(1);
             Benchmark(p);
+            BenchmarkEventSource.Instance.SessionEnd();
+
             Console.WriteLine();
+            BenchmarkEventSource.Instance.Session(l.Length);
             Benchmark(l);
+            BenchmarkEventSource.Instance.SessionEnd();
         }
 
         static void Benchmark<T>(T target)
@@ -99,6 +106,8 @@ namespace PerfnetFramework
             Console.WriteLine();
 
             Console.WriteLine("Serialize::");
+            deserializing = false;
+
             byte[] data = null;
             byte[] data0 = null;
             byte[] data1 = null;
@@ -212,6 +221,7 @@ namespace PerfnetFramework
 
             Console.WriteLine();
             Console.WriteLine("Deserialize::");
+            deserializing = true;
 
             using (new Measure("MsgPack-Cli"))
             {
@@ -344,12 +354,30 @@ namespace PerfnetFramework
         {
             this.label = label;
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+            if (!Program.deserializing)
+            {
+                BenchmarkEventSource.Instance.Serialize(label);
+            }
+            else
+            {
+                BenchmarkEventSource.Instance.Deserialize(label);
+            }
+
             this.sw = Stopwatch.StartNew();
         }
 
         public void Dispose()
         {
             sw.Stop();
+            if (!Program.deserializing)
+            {
+                BenchmarkEventSource.Instance.SerializeEnd();
+            }
+            else
+            {
+                BenchmarkEventSource.Instance.DeserializeEnd();
+            }
+
             Console.WriteLine($"{ label,20}   {sw.Elapsed.TotalMilliseconds} ms");
 
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
