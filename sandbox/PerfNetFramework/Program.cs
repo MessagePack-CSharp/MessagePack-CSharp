@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using ProtoBuf;
 using ZeroFormatter;
 
-namespace PerfnetFramework
+namespace PerfNetFramework
 {
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
@@ -55,6 +55,8 @@ namespace PerfnetFramework
 
     internal class Program
     {
+        internal static bool deserializing;
+
         private static void Main(string[] args)
         {
             var p = new Person
@@ -76,9 +78,14 @@ namespace PerfnetFramework
                 })
                 .ToArray();
 
+            BenchmarkEventSource.Instance.Session(1);
             Benchmark(p);
+            BenchmarkEventSource.Instance.SessionEnd();
+
             Console.WriteLine();
+            BenchmarkEventSource.Instance.Session(l.Length);
             Benchmark(l);
+            BenchmarkEventSource.Instance.SessionEnd();
         }
 
         internal static readonly MessagePack.MessagePackSerializer DefaultSerializer = new MessagePackSerializer();
@@ -103,6 +110,8 @@ namespace PerfnetFramework
             Console.WriteLine();
 
             Console.WriteLine("Serialize::");
+            deserializing = false;
+
             byte[] data = null;
             byte[] data0 = null;
             byte[] data1 = null;
@@ -217,6 +226,7 @@ namespace PerfnetFramework
 
             Console.WriteLine();
             Console.WriteLine("Deserialize::");
+            deserializing = true;
 
             using (new Measure("MessagePack for C#"))
             {
@@ -372,12 +382,30 @@ namespace PerfnetFramework
         {
             this.label = label;
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+            if (!Program.deserializing)
+            {
+                BenchmarkEventSource.Instance.Serialize(label);
+            }
+            else
+            {
+                BenchmarkEventSource.Instance.Deserialize(label);
+            }
+
             this.sw = Stopwatch.StartNew();
         }
 
         public void Dispose()
         {
             sw.Stop();
+            if (!Program.deserializing)
+            {
+                BenchmarkEventSource.Instance.SerializeEnd();
+            }
+            else
+            {
+                BenchmarkEventSource.Instance.DeserializeEnd();
+            }
+
             Console.WriteLine($"{label,-25}   {sw.Elapsed.TotalMilliseconds,12:F2} ms");
 
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);

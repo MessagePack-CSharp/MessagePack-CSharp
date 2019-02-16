@@ -1,7 +1,7 @@
 MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
 ===
 
-[![Build Status](https://dev.azure.com/andrewarnott/OSS/_apis/build/status/MessagePack)](https://dev.azure.com/andrewarnott/OSS/_build/latest?definitionId=24)
+[![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2)
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/neuecc/MessagePack-CSharp/releases)
  
