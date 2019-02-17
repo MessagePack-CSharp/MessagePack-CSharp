@@ -2,6 +2,7 @@
 using MessagePack.Formatters;
 using System;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace MessagePack
 {
@@ -21,13 +22,11 @@ namespace MessagePack
             }
             catch (TypeInitializationException ex)
             {
-                Exception inner = ex;
-                while (inner.InnerException != null)
-                {
-                    inner = inner.InnerException;
-                }
-
-                throw inner;
+                // The fact that we're using static constructors to initialize this is an internal detail.
+                // Rethrow the inner exception if there is one.
+                // Do it carefully so as to not stomp on the original callstack.
+                ExceptionDispatchInfo.Capture(ex.InnerException ?? ex).Throw();
+                throw new InvalidOperationException("Unreachable"); // keep the compiler happy
             }
 
             if (formatter == null)
