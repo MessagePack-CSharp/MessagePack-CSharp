@@ -747,7 +747,16 @@ namespace MessagePack
         {
             checked
             {
-                return (int)mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+                int count = (int)mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
+                if (count * 2 > bytes.Length - offset)
+                {
+                    ThrowNotEnoughBytesException();
+                }
+
+                return count;
             }
         }
 
@@ -759,7 +768,16 @@ namespace MessagePack
 #endif
         public static uint ReadMapHeaderRaw(byte[] bytes, int offset, out int readSize)
         {
-            return mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+            uint count = mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
+            if (count * 2 > bytes.Length - offset)
+            {
+                ThrowNotEnoughBytesException();
+            }
+
+            return count;
         }
 
 #if NETSTANDARD
@@ -879,9 +897,20 @@ namespace MessagePack
         {
             checked
             {
-                return (int)arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+                int count = (int)arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                // We allow for each primitive to be the minimal 1 byte in size.
+                // Formatters that know each element is larger can double-check our work.
+                if (count > bytes.Length - offset)
+                {
+                    ThrowNotEnoughBytesException();
+                }
+
+                return count;
             }
         }
+
 
         /// <summary>
         /// Return array count.
@@ -891,7 +920,17 @@ namespace MessagePack
 #endif
         public static uint ReadArrayHeaderRaw(byte[] bytes, int offset, out int readSize)
         {
-            return arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+            uint count = arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            // We allow for each primitive to be the minimal 1 byte in size.
+            // Formatters that know each element is larger can double-check our work.
+            if (count > bytes.Length - offset)
+            {
+                ThrowNotEnoughBytesException();
+            }
+
+            return count;
         }
 
 #if NETSTANDARD
@@ -2282,6 +2321,12 @@ namespace MessagePack
         {
             return dateTimeDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
+
+        /// <summary>
+        /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
+        /// the promised data.
+        /// </summary>
+        private static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
     }
 
     // Stream Overload
