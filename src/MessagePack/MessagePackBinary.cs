@@ -2326,7 +2326,7 @@ namespace MessagePack
         /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
         /// the promised data.
         /// </summary>
-        private static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
+        internal static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
     }
 
     // Stream Overload
@@ -3715,6 +3715,13 @@ namespace MessagePack.Decoders
         public byte[] Read(byte[] bytes, int offset, out int readSize)
         {
             var length = bytes[offset + 1];
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            if (length > bytes.Length - offset)
+            {
+                MessagePackBinary.ThrowNotEnoughBytesException();
+            }
+
             var newBytes = new byte[length];
             Buffer.BlockCopy(bytes, offset + 2, newBytes, 0, length);
 
@@ -3735,6 +3742,13 @@ namespace MessagePack.Decoders
         public byte[] Read(byte[] bytes, int offset, out int readSize)
         {
             var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            if (length > bytes.Length - offset)
+            {
+                MessagePackBinary.ThrowNotEnoughBytesException();
+            }
+
             var newBytes = new byte[length];
             Buffer.BlockCopy(bytes, offset + 3, newBytes, 0, length);
 
@@ -3755,6 +3769,13 @@ namespace MessagePack.Decoders
         public byte[] Read(byte[] bytes, int offset, out int readSize)
         {
             var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            if (length > bytes.Length - offset)
+            {
+                MessagePackBinary.ThrowNotEnoughBytesException();
+            }
+
             var newBytes = new byte[length];
             Buffer.BlockCopy(bytes, offset + 5, newBytes, 0, length);
 
@@ -5417,6 +5438,12 @@ namespace MessagePack.Decoders
                 var length = bytes[offset + 1];
                 var typeCode = unchecked((sbyte)bytes[offset + 2]);
 
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                if (length > bytes.Length - offset)
+                {
+                    MessagePackBinary.ThrowNotEnoughBytesException();
+                }
+
                 var body = new byte[length];
                 readSize = (int)length + 3;
                 Buffer.BlockCopy(bytes, offset + 3, body, 0, (int)length);
@@ -5441,6 +5468,12 @@ namespace MessagePack.Decoders
                 var length = (int)((UInt16)(bytes[offset + 1] << 8) | (UInt16)bytes[offset + 2]);
                 var typeCode = unchecked((sbyte)bytes[offset + 3]);
 
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                if (length > bytes.Length - offset)
+                {
+                    MessagePackBinary.ThrowNotEnoughBytesException();
+                }
+
                 var body = new byte[length];
                 readSize = length + 4;
                 Buffer.BlockCopy(bytes, offset + 4, body, 0, (int)length);
@@ -5464,6 +5497,12 @@ namespace MessagePack.Decoders
             {
                 var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) | (UInt32)(bytes[offset + 2] << 16) | (UInt32)(bytes[offset + 3] << 8) | (UInt32)bytes[offset + 4]);
                 var typeCode = unchecked((sbyte)bytes[offset + 5]);
+
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                if (length > bytes.Length - offset)
+                {
+                    MessagePackBinary.ThrowNotEnoughBytesException();
+                }
 
                 var body = new byte[length];
                 checked
