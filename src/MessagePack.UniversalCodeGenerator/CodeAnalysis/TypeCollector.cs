@@ -242,6 +242,11 @@ namespace MessagePack.CodeGenerator
         {
             this.csProjPath = csProjPath;
             var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
+            var compilationErrors = compilation.GetDiagnostics().Where(x => x.Severity == DiagnosticSeverity.Error).ToArray();
+            if(compilationErrors.Length != 0)
+            {
+                throw new InvalidOperationException($"detect compilation error:{string.Join("\n", compilationErrors.Select(x => x.ToString()))}");
+            }
             this.typeReferences = new ReferenceSymbols(compilation);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;

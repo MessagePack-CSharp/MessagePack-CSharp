@@ -9,48 +9,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Buildalyzer.Workspaces" Version="2.2.0" />
+    <PackageReference Include="MSBuild.StructuredLogger" Version="2.0.68"/>
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="2.10.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Generator\EnumTemplate.cs">
+    <Compile Update="Generator\*.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>EnumTemplate.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Generator\FormatterTemplate.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>FormatterTemplate.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Generator\ResolverTemplate.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ResolverTemplate.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Generator\UnionTemplate.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>UnionTemplate.tt</DependentUpon>
+      <DependentUpon>%(FileName).tt</DependentUpon>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Generator\EnumTemplate.tt">
+    <None Update="Generator\*.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
-      <LastGenOutput>EnumTemplate.cs</LastGenOutput>
-    </None>
-    <None Update="Generator\FormatterTemplate.tt">
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-      <LastGenOutput>FormatterTemplate.cs</LastGenOutput>
-    </None>
-    <None Update="Generator\ResolverTemplate.tt">
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-      <LastGenOutput>ResolverTemplate.cs</LastGenOutput>
-    </None>
-    <None Update="Generator\UnionTemplate.tt">
-      <Generator>TextTemplatingFilePreprocessor</Generator>
-      <LastGenOutput>UnionTemplate.cs</LastGenOutput>
+      <LastGenOutput>%(FileName).cs</LastGenOutput>
     </None>
   </ItemGroup>
 
