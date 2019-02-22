@@ -47,7 +47,7 @@ namespace MessagePack.Tests
 
             var data1 = serializer.Serialize(testData);
 
-            var json = serializer.ToJson(data1);
+            var json = serializer.ConvertToJson(data1);
 
             json.Is(@"[[100,[""a"",""b"",""c""]],[300,{""Prop1"":10,""Prop2"":2,""Prop3"":99999}]]");
 

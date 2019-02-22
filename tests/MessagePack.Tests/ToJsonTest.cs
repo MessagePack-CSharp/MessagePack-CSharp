@@ -14,12 +14,12 @@ namespace MessagePack.Tests
 
         string JsonConvert(string json)
         {
-            return serializer.ToJson(serializer.FromJson(json));
+            return serializer.ConvertToJson(serializer.ConvertFromJson(json));
         }
 
         string JsonConvertLZ4(string json)
         {
-            return lz4Serializer.ToJson(lz4Serializer.FromJson(json));
+            return lz4Serializer.ConvertToJson(lz4Serializer.ConvertFromJson(json));
         }
 
         [Theory]
@@ -49,7 +49,7 @@ namespace MessagePack.Tests
         {
             var f = 3.33f;
             var xs = serializer.Serialize(f);
-            var json = serializer.ToJson(xs);
+            var json = serializer.ConvertToJson(xs);
             json.Is("3.33");
         }
 

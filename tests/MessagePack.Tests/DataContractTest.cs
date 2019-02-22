@@ -70,7 +70,7 @@ namespace MessagePack.Tests
             mc.MyProperty1.Is(mc2.MyProperty1);
             mc.MyProperty2.Is(mc2.MyProperty2);
 
-            serializer.ToJson(bin).Is(@"[100,""foobar""]");
+            serializer.ConvertToJson(bin).Is(@"[100,""foobar""]");
         }
 
         [Fact]
@@ -80,7 +80,7 @@ namespace MessagePack.Tests
 
             var bin = serializer.Serialize(mc);
 
-            serializer.ToJson(bin).Is(@"{""mp1"":100,""mp2"":""foobar""}");
+            serializer.ConvertToJson(bin).Is(@"{""mp1"":100,""mp2"":""foobar""}");
 
             var mc2 = serializer.Deserialize<MyClass1>(bin);
 
@@ -99,7 +99,7 @@ namespace MessagePack.Tests
             mc.MyProperty1.Is(mc2.MyProperty1);
             mc.MyProperty2.Is(mc2.MyProperty2);
 
-            serializer.ToJson(bin).Is(@"{""MyProperty1"":100,""MyProperty2"":""foobar""}");
+            serializer.ConvertToJson(bin).Is(@"{""MyProperty1"":100,""MyProperty2"":""foobar""}");
         }
 
         [Fact]
@@ -125,7 +125,7 @@ namespace MessagePack.Tests
             mc2.UnattributedField.Is(0);
             mc2.IgnoredField.Is(0);
 
-            serializer.ToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
+            serializer.ConvertToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
         }
     }
 }

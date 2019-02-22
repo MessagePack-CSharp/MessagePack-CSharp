@@ -44,7 +44,7 @@ namespace MessagePack.Tests.ExtensionTests
             deserialized.Prop4.Value.Is(60);
 
             // dump serialized
-            var data = serializer.ToJson(vm, new WithRxPropDefaultResolver());
+            var data = serializer.SerializeToJson(vm, new WithRxPropDefaultResolver());
 
             //  3 = ReactivePropertyMode.DistinctUntilChanged | ReactivePropertyMode.RaiseLatestValueOnSubscribe
             // -1 = UIDispatcherScheduler.Default
