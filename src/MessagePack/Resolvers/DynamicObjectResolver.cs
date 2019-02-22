@@ -281,7 +281,7 @@ namespace MessagePack.Internal
 {
     internal static class DynamicObjectTypeBuilder
     {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 #else
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
@@ -677,7 +677,7 @@ namespace MessagePack.Internal
                         il.Emit(OpCodes.Ldelem_Ref);
 
                         // Optimize, WriteRaw(Unity, large) or UnsafeMemory32/64.WriteRawX
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
                         var valueLen = MessagePackBinary.GetEncodedStringBytes(item.StringKey).Length;
                         if (valueLen <= MessagePackRange.MaxFixStringLength)
                         {

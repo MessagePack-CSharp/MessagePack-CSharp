@@ -128,7 +128,7 @@ namespace MessagePack.Internal
             { typeof(ArraySegment<byte>), ByteArraySegmentFormatter.Instance },
             { typeof(ArraySegment<byte>?),new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance) },
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
             {typeof(System.Numerics.BigInteger), BigIntegerFormatter.Instance},
             {typeof(System.Numerics.BigInteger?), new StaticNullableFormatter<System.Numerics.BigInteger>(BigIntegerFormatter.Instance)},
             {typeof(System.Numerics.Complex), ComplexFormatter.Instance},

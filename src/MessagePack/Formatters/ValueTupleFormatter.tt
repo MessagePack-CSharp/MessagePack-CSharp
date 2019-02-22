@@ -4,7 +4,7 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
 using System;
 
 namespace MessagePack.Formatters
