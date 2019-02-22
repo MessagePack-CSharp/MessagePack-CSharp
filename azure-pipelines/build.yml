@@ -1,9 +1,9 @@
 steps:
 - task: DotNetCoreInstaller@0
-  displayName: Install .NET Core SDK 2.1.500
+  displayName: Install .NET Core SDK 2.2.104
   inputs:
     packageType: sdk
-    version: 2.1.500
+    version: 2.2.104
 - script: dotnet --info
   displayName: Show dotnet SDK info
 
