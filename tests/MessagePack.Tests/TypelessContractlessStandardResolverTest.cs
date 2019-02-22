@@ -46,7 +46,7 @@ namespace MessagePack.Tests
 
             var result = defaultSerializer.Serialize(p);
 
-            defaultSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
+            defaultSerializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
 
             var p2 = defaultSerializer.Deserialize<Person>(result);
             p2.Name.Is("John");
@@ -75,7 +75,7 @@ namespace MessagePack.Tests
             var p2 = defaultSerializer.Deserialize<Person>(result);
             p.IsStructuralEqual(p2);
 
-            defaultSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+            defaultSerializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
         }
 
         [Fact]
@@ -97,9 +97,9 @@ namespace MessagePack.Tests
             p.IsStructuralEqual(p2);
 
 #if NETFRAMEWORK
-            defaultSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, mscorlib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+            defaultSerializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, mscorlib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
 #else
-            defaultSerializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, System.Private.CoreLib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+            defaultSerializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, System.Private.CoreLib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
 #endif
         }
 
@@ -111,7 +111,7 @@ namespace MessagePack.Tests
         {
             object obj = new B() { Nested = new A() { Id = 1 } };
             var result = defaultSerializer.Serialize(obj);
-            defaultSerializer.ToJson(result).Is(@"{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+B, MessagePack.Tests"",""Nested"":{""Id"":1}}");
+            defaultSerializer.ConvertToJson(result).Is(@"{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+B, MessagePack.Tests"",""Nested"":{""Id"":1}}");
         }
 
         [MessagePackObject]
@@ -124,7 +124,7 @@ namespace MessagePack.Tests
         {
             object obj = new BC() { Nested = new AC() { Id = 1 }, Name = "Zed" };
             var result = defaultSerializer.Serialize(obj);
-            defaultSerializer.ToJson(result).Is(@"[""MessagePack.Tests.TypelessContractlessStandardResolverTest+BC, MessagePack.Tests"",[1],""Zed""]");
+            defaultSerializer.ConvertToJson(result).Is(@"[""MessagePack.Tests.TypelessContractlessStandardResolverTest+BC, MessagePack.Tests"",[1],""Zed""]");
         }
 
         [Fact]
@@ -141,9 +141,9 @@ namespace MessagePack.Tests
             deser.IsStructuralEqual(arr);
 
 #if NETFRAMEWORK
-            defaultSerializer.ToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], mscorlib"",""level2"",[""System.Object[], mscorlib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, mscorlib"",636340858800000000}]}]]}");
+            defaultSerializer.ConvertToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], mscorlib"",""level2"",[""System.Object[], mscorlib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, mscorlib"",636340858800000000}]}]]}");
 #else
-            defaultSerializer.ToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], System.Private.CoreLib"",""level2"",[""System.Object[], System.Private.CoreLib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, System.Private.CoreLib"",636340858800000000}]}]]}");
+            defaultSerializer.ConvertToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], System.Private.CoreLib"",""level2"",[""System.Object[], System.Private.CoreLib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, System.Private.CoreLib"",636340858800000000}]}]]}");
 #endif
         }
 
@@ -156,9 +156,9 @@ namespace MessagePack.Tests
             deser.IsStructuralEqual(arr);
 
 #if NETFRAMEWORK
-            defaultSerializer.ToJson(result).Is(@"[1,[""System.Object[], mscorlib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"",""a"",42]]]");
+            defaultSerializer.ConvertToJson(result).Is(@"[1,[""System.Object[], mscorlib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"",""a"",42]]]");
 #else
-            defaultSerializer.ToJson(result).Is(@"[1,[""System.Object[], System.Private.CoreLib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, System.Private.CoreLib]], System.Collections"",""a"",42]]]");
+            defaultSerializer.ConvertToJson(result).Is(@"[1,[""System.Object[], System.Private.CoreLib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, System.Private.CoreLib]], System.Collections"",""a"",42]]]");
 #endif
         }
 

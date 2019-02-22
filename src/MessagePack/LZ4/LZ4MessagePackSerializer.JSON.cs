@@ -14,7 +14,7 @@ namespace MessagePack
         /// <summary>
         /// Dump message-pack binary to JSON string.
         /// </summary>
-        public override string ToJson(byte[] bytes)
+        public override string ConvertToJson(byte[] bytes)
         {
             if (bytes == null || bytes.Length == 0) return "";
 
@@ -50,7 +50,7 @@ namespace MessagePack
         /// <summary>
         /// From Json String to LZ4MessagePack binary
         /// </summary>
-        public override byte[] FromJson(TextReader reader)
+        public override byte[] ConvertFromJson(TextReader reader)
         {
             var buffer = MessagePackSerializer.FromJsonUnsafe(reader); // offset is guranteed from 0
             return LZ4MessagePackSerializer.ToLZ4Binary(buffer);

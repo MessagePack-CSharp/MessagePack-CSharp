@@ -146,7 +146,7 @@ namespace MessagePack.Tests
                 p.SetPrivate(99, "bar");
 
                 var bin = serializer.Serialize(p, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
-                var json = serializer.ToJson(bin);
+                var json = serializer.ConvertToJson(bin);
 
                 json.Is("[99,100,\"bar\",\"foo\"]");
 
@@ -161,7 +161,7 @@ namespace MessagePack.Tests
                 p.SetPrivate(99, "bar");
 
                 var bin = serializer.Serialize(p, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
-                var json = serializer.ToJson(bin);
+                var json = serializer.ConvertToJson(bin);
 
                 json.Is("[99,100,\"bar\",\"foo\"]");
 
@@ -176,7 +176,7 @@ namespace MessagePack.Tests
                 p.SetPrivate(99, "bar");
 
                 var bin = serializer.Serialize(p, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
-                var json = serializer.ToJson(bin);
+                var json = serializer.ConvertToJson(bin);
 
                 json.Is("{\"PublicKey\":100,\"privateKeyS\":\"bar\",\"PublicKeyS\":\"foo\",\"privateKey\":99}");
 
@@ -191,7 +191,7 @@ namespace MessagePack.Tests
                 p.SetPrivate(99, "bar");
 
                 var bin = serializer.Serialize(p, MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Instance);
-                var json = serializer.ToJson(bin);
+                var json = serializer.ConvertToJson(bin);
 
                 json.Is("{\"PublicKey\":100,\"privateKeyS\":\"bar\",\"PublicKeyS\":\"foo\",\"privateKey\":99}");
 

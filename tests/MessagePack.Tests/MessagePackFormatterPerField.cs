@@ -76,7 +76,7 @@ namespace MessagePack.Tests
         {
             {
                 var bin = serializer.Serialize(new MyClass { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
-                var json = serializer.ToJson(bin);
+                var json = serializer.ConvertToJson(bin);
                 json.Is("[1000,9,\"foofoo\",\"bar\"]");
 
                 var r2 = serializer.Deserialize<MyClass>(bin);
@@ -87,7 +87,7 @@ namespace MessagePack.Tests
             }
             {
                 var bin = serializer.Serialize(new MyStruct { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
-                var json = serializer.ToJson(bin);
+                var json = serializer.ConvertToJson(bin);
                 json.Is("[1000,9,\"foofoo\",\"bar\"]");
 
                 var r2 = serializer.Deserialize<MyStruct>(bin);

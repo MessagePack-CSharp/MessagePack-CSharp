@@ -138,9 +138,9 @@ namespace MessagePack.Tests
             var v2Bytes = serializer.Serialize(v2);
             var v0Bytes = serializer.Serialize(v0);
 
-            var a = serializer.ToJson(v1Bytes);
-            var b = serializer.ToJson(v2Bytes);
-            var c = serializer.ToJson(v0Bytes);
+            var a = serializer.ConvertToJson(v1Bytes);
+            var b = serializer.ConvertToJson(v2Bytes);
+            var c = serializer.ConvertToJson(v0Bytes);
             serializer.Deserialize<Version1>(v1Bytes).IsNotStructuralEqual(v1Bytes);
             serializer.Deserialize<Version2>(v2Bytes).IsNotStructuralEqual(v2Bytes);
             serializer.Deserialize<Version0>(v0Bytes).IsNotStructuralEqual(v0Bytes);
@@ -206,7 +206,7 @@ namespace MessagePack.Tests
             v2_.After.Is(9999);
 
             // larger than schema
-            var v1Json = serializer.ToJson(v1Bytes);
+            var v1Json = serializer.ConvertToJson(v1Bytes);
             var v0_ = serializer.Deserialize<HolderV0>(v1Bytes);
             v0_.MyProperty1.MyProperty1.Is(v1.MyProperty1.MyProperty1);
             v0_.After.Is(9999);
@@ -287,10 +287,10 @@ namespace MessagePack.Tests
             var ne1 = new NonEmpty1();
             var ne2 = new NonEmpty2();
 
-            serializer.ToJson(e1).Is("[]");
-            serializer.ToJson(e2).Is("{}");
-            serializer.ToJson(ne1).Is("[0]");
-            serializer.ToJson(ne2).Is(@"{""MyProperty"":0}");
+            serializer.SerializeToJson(e1).Is("[]");
+            serializer.SerializeToJson(e2).Is("{}");
+            serializer.SerializeToJson(ne1).Is("[0]");
+            serializer.SerializeToJson(ne2).Is(@"{""MyProperty"":0}");
         }
 
         [Fact]

@@ -11,25 +11,25 @@ namespace MessagePack
     public partial class MessagePackSerializer
     {
         /// <summary>
-        /// Dump to JSON string.
+        /// Serialize an object to JSON string.
         /// </summary>
-        public string ToJson<T>(T obj)
+        public string SerializeToJson<T>(T obj)
         {
-            return ToJson(Serialize(obj));
+            return ConvertToJson(Serialize(obj));
         }
 
         /// <summary>
-        /// Dump to JSON string.
+        /// Serialize an object to JSON string.
         /// </summary>
-        public string ToJson<T>(T obj, IFormatterResolver resolver)
+        public string SerializeToJson<T>(T obj, IFormatterResolver resolver)
         {
-            return ToJson(Serialize(obj, resolver));
+            return ConvertToJson(Serialize(obj, resolver));
         }
 
         /// <summary>
         /// Dump message-pack binary to JSON string.
         /// </summary>
-        public virtual string ToJson(byte[] bytes)
+        public virtual string ConvertToJson(byte[] bytes)
         {
             if (bytes == null || bytes.Length == 0) return "";
 
@@ -38,18 +38,18 @@ namespace MessagePack
             return sb.ToString();
         }
 
-        public byte[] FromJson(string str)
+        public byte[] ConvertFromJson(string str)
         {
             using (var sr = new StringReader(str))
             {
-                return FromJson(sr);
+                return ConvertFromJson(sr);
             }
         }
 
         /// <summary>
         /// From Json String to MessagePack binary
         /// </summary>
-        public virtual byte[] FromJson(TextReader reader)
+        public virtual byte[] ConvertFromJson(TextReader reader)
         {
             var offset = 0;
             byte[] binary = null;

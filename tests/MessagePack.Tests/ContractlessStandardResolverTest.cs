@@ -93,7 +93,7 @@ namespace MessagePack.Tests
 
             var result = serializer.Serialize(p, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
-            serializer.ToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
+            serializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
 
             var p2 = serializer.Deserialize<Person>(result, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
             p2.Name.Is("John");

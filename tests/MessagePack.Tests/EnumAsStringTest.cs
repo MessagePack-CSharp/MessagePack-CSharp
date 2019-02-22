@@ -54,11 +54,11 @@ namespace MessagePack.Tests
             where T : struct
         {
             var bin = serializer.Serialize(x, DynamicEnumAsStringResolver.Instance);
-            serializer.ToJson(bin).Trim('\"').Is(xName);
+            serializer.ConvertToJson(bin).Trim('\"').Is(xName);
             serializer.Deserialize<T>(bin, DynamicEnumAsStringResolver.Instance).Is(x);
 
             var bin2 = serializer.Serialize(y, DynamicEnumAsStringResolver.Instance);
-            serializer.ToJson(bin2).Trim('\"').Is(yName);
+            serializer.ConvertToJson(bin2).Trim('\"').Is(yName);
             serializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.Instance).Is(y);
         }
     }
