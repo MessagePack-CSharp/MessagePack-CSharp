@@ -284,3 +284,6 @@ nuget/unity*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# BenchmarkDotNet results
+BenchmarkDotNet.Artifacts/
