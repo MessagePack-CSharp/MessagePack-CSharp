@@ -1,5 +1,6 @@
 ﻿#if !UNITY
 
+using MessagePack.Internal;
 using System;
 using System.Buffers;
 using System.Collections;
@@ -9,7 +10,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using MessagePack.Internal;
 
 namespace MessagePack.Formatters
 {
@@ -197,13 +197,16 @@ namespace MessagePack.Formatters
             }
 
             // mark will be written at the end, when size is known
-            var scratchWriter = writer.Clone();
-            scratchWriter.WriteString(typeName);
-            formatterAndDelegate.Value(formatterAndDelegate.Key, ref scratchWriter, value, resolver);
-            scratchWriter.Flush();
+            using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+            {
+                var scratchWriter = writer.Clone(scratch);
+                scratchWriter.WriteString(typeName);
+                formatterAndDelegate.Value(formatterAndDelegate.Key, ref scratchWriter, value, resolver);
+                scratchWriter.Flush();
 
-            // mark as extension with code 100
-            writer.WriteExtensionFormat(new ExtensionResult((sbyte)TypelessFormatter.ExtensionTypeCode, scratchWriter.WrittenBytes));
+                // mark as extension with code 100
+                writer.WriteExtensionFormat(new ExtensionResult((sbyte)TypelessFormatter.ExtensionTypeCode, scratch.AsReadOnlySequence));
+            }
         }
 
         public object Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
@@ -308,10 +311,7 @@ namespace MessagePack.Formatters
 
                         Expression body = deserialize;
                         if (ti.IsValueType)
-                        {
                             body = Expression.Convert(deserialize, typeof(object));
-                        }
-
                         var lambda = Expression.Lambda<DeserializeMethod>(body, param0, param1, param2).Compile();
 
                         formatterAndDelegate = new KeyValuePair<object, DeserializeMethod>(formatter, lambda);

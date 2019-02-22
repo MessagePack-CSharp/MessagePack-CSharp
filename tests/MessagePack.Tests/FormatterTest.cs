@@ -212,30 +212,34 @@ namespace MessagePack.Tests
             var c = new String('あ', 130);
             var d = new String('あ', 40000);
 
-            var sequenceAWriter = new MessagePackWriter();
+            var sequenceA = new Sequence<byte>();
+            var sequenceAWriter = new MessagePackWriter(sequenceA);
             sequenceAWriter.Write(a);
             sequenceAWriter.Flush();
-            sequenceAWriter.WrittenBytes.Length.Is(Encoding.UTF8.GetByteCount(a) + 1);
+            sequenceA.Length.Is(Encoding.UTF8.GetByteCount(a) + 1);
 
-            var sequenceBWriter = new MessagePackWriter();
+            var sequenceB = new Sequence<byte>();
+            var sequenceBWriter = new MessagePackWriter(sequenceB);
             sequenceBWriter.Write(b);
             sequenceBWriter.Flush();
-            sequenceBWriter.WrittenBytes.Length.Is(Encoding.UTF8.GetByteCount(b) + 2);
+            sequenceB.Length.Is(Encoding.UTF8.GetByteCount(b) + 2);
 
-            var sequenceCWriter = new MessagePackWriter();
+            var sequenceC = new Sequence<byte>();
+            var sequenceCWriter = new MessagePackWriter(sequenceC);
             sequenceCWriter.Write(c);
             sequenceCWriter.Flush();
-            sequenceCWriter.WrittenBytes.Length.Is(Encoding.UTF8.GetByteCount(c) + 3);
+            sequenceC.Length.Is(Encoding.UTF8.GetByteCount(c) + 3);
 
-            var sequenceDWriter = new MessagePackWriter();
+            var sequenceD = new Sequence<byte>();
+            var sequenceDWriter = new MessagePackWriter(sequenceD);
             sequenceDWriter.Write(d);
             sequenceDWriter.Flush();
-            sequenceDWriter.WrittenBytes.Length.Is(Encoding.UTF8.GetByteCount(d) + 5);
+            sequenceD.Length.Is(Encoding.UTF8.GetByteCount(d) + 5);
 
-            var readerA = new MessagePackReader(sequenceAWriter.WrittenBytes);
-            var readerB = new MessagePackReader(sequenceBWriter.WrittenBytes);
-            var readerC = new MessagePackReader(sequenceCWriter.WrittenBytes);
-            var readerD = new MessagePackReader(sequenceDWriter.WrittenBytes);
+            var readerA = new MessagePackReader(sequenceA.AsReadOnlySequence);
+            var readerB = new MessagePackReader(sequenceB.AsReadOnlySequence);
+            var readerC = new MessagePackReader(sequenceC.AsReadOnlySequence);
+            var readerD = new MessagePackReader(sequenceD.AsReadOnlySequence);
             readerA.ReadString().Is(a);
             readerB.ReadString().Is(b);
             readerC.ReadString().Is(c);

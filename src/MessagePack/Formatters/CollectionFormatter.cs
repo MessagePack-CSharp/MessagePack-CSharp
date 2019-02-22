@@ -228,29 +228,32 @@ namespace MessagePack.Formatters
                     }
                     else
                     {
-                        var scratchWriter = writer.Clone();
-                        var count = 0;
-                        var e = GetSourceEnumerator(value);
-                        try
+                        using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                         {
-                            while (e.MoveNext())
+                            var scratchWriter = writer.Clone(scratch);
+                            var count = 0;
+                            var e = GetSourceEnumerator(value);
+                            try
                             {
-                                count++;
+                                while (e.MoveNext())
+                                {
+                                    count++;
 #if !UNITY
-                                formatter.Serialize(ref scratchWriter, e.Current, resolver);
+                                    formatter.Serialize(ref scratchWriter, e.Current, resolver);
 #else
-                                formatter.Serialize(ref scratchWriter, (TElement)e.Current, (IFormatterResolver)resolver);
+                                    formatter.Serialize(ref scratchWriter, (TElement)e.Current, (IFormatterResolver)resolver);
 #endif
+                                }
                             }
-                        }
-                        finally
-                        {
-                            e.Dispose();
-                        }
+                            finally
+                            {
+                                e.Dispose();
+                            }
 
-                        scratchWriter.Flush();
-                        writer.WriteArrayHeader(count);
-                        writer.WriteRaw(scratchWriter.WrittenBytes);
+                            scratchWriter.Flush();
+                            writer.WriteArrayHeader(count);
+                            writer.WriteRaw(scratch.AsReadOnlySequence);
+                        }
                     }
                 }
             }
