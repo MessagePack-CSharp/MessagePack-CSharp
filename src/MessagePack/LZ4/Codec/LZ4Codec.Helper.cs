@@ -4,7 +4,7 @@ namespace MessagePack.LZ4
 {
     partial class LZ4Codec
     {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
 
         public static int Encode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
         {

@@ -84,7 +84,7 @@ namespace MessagePack.Internal
             if (entry == null) goto NOT_FOUND;
 
             {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
                 ref var v = ref entry[0];
 #else
                 var v = entry[0];
@@ -98,7 +98,7 @@ namespace MessagePack.Internal
 
             for (int i = 1; i < entry.Length; i++)
             {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
                 ref var v = ref entry[i];
 #else
                 var v = entry[i];
@@ -115,16 +115,16 @@ namespace MessagePack.Internal
             return false;
         }
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
         static readonly bool Is32Bit = (IntPtr.Size == 4);
 #endif
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
         static ulong ByteArrayGetHashCode(byte[] x, int offset, int count)
         {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
             // FarmHash https://github.com/google/farmhash
             if (x == null) return 0;
 

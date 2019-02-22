@@ -113,7 +113,7 @@ namespace MessagePack
             return resolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value, resolver);
         }
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
 
         /// <summary>
         /// Serialize to stream(async).
@@ -211,7 +211,7 @@ namespace MessagePack
         /// </summary>
         public T Deserialize<T>(byte[] bytes, int offset, IFormatterResolver resolver, out int readSize) => Deserialize<T>(new ArraySegment<byte>(bytes, offset, bytes.Length - offset), resolver, out readSize);
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
 
         public System.Threading.Tasks.Task<T> DeserializeAsync<T>(Stream stream) => DeserializeAsync<T>(stream, DefaultResolver);
 

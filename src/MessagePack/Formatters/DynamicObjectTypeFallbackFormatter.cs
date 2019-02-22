@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD || NETFRAMEWORK
+﻿#if !UNITY
 
 using MessagePack.Resolvers;
 using System;

@@ -185,7 +185,7 @@ namespace MessagePack.Internal
 
         static void VolatileWrite(ref Entry location, Entry value)
         {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
             System.Threading.Volatile.Write(ref location, value);
 #elif UNITY_WSA || NET_4_6
             System.Threading.Volatile.Write(ref location, value);
@@ -197,7 +197,7 @@ namespace MessagePack.Internal
 
         static void VolatileWrite(ref Entry[] location, Entry[] value)
         {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
             System.Threading.Volatile.Write(ref location, value);
 #elif UNITY_WSA || NET_4_6
             System.Threading.Volatile.Write(ref location, value);

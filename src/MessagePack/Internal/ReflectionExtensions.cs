@@ -33,7 +33,7 @@ namespace MessagePack.Internal
             return propertyInfo.GetIndexParameters().Length > 0;
         }
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
 
         public static bool IsConstructedGenericType(this System.Reflection.TypeInfo type)
         {
