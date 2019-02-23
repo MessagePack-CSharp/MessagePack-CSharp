@@ -502,7 +502,7 @@ namespace MessagePack.CodeGenerator
             }
 
             var isIntKey = true;
-            var intMemebrs = new Dictionary<int, MemberSerializationInfo>();
+            var intMembers = new Dictionary<int, MemberSerializationInfo>();
             var stringMembers = new Dictionary<string, MemberSerializationInfo>();
 
             if (isForceUseMap || (bool)contractAttr.ConstructorArguments[0].Value)
@@ -563,6 +563,7 @@ namespace MessagePack.CodeGenerator
 
                 foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
+                    if (item.IsIndexer) continue; // .tt files don't generate good code for this yet: https://github.com/neuecc/MessagePack-CSharp/issues/390
                     if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
 
                     var member = new MemberSerializationInfo
@@ -600,9 +601,9 @@ namespace MessagePack.CodeGenerator
                     if (isIntKey)
                     {
                         member.IntKey = (int)intKey;
-                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                        if (intMembers.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
-                        intMemebrs.Add(member.IntKey, member);
+                        intMembers.Add(member.IntKey, member);
                     }
                     else
                     {
@@ -656,9 +657,9 @@ namespace MessagePack.CodeGenerator
                     if (isIntKey)
                     {
                         member.IntKey = (int)intKey;
-                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                        if (intMembers.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
-                        intMemebrs.Add(member.IntKey, member);
+                        intMembers.Add(member.IntKey, member);
                     }
                     else
                     {
@@ -705,7 +706,7 @@ namespace MessagePack.CodeGenerator
                         MemberSerializationInfo paramMember;
                         if (isIntKey)
                         {
-                            if (intMemebrs.TryGetValue(ctorParamIndex, out paramMember))
+                            if (intMembers.TryGetValue(ctorParamIndex, out paramMember))
                             {
                                 if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
                                 {
@@ -811,7 +812,7 @@ namespace MessagePack.CodeGenerator
                 IsClass = isClass,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = (isIntKey) ? intMemebrs.Values.ToArray() : stringMembers.Values.ToArray(),
+                Members = (isIntKey) ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
                 Name = type.ToDisplayString(shortTypeNameFormat).Replace(".", "_"),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
