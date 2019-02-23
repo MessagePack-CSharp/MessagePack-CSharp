@@ -103,23 +103,19 @@ namespace MessagePack.ReactivePropertyExtension
     // [Mode, SchedulerId, Value] : length should be three.
     public class ReactivePropertyFormatter<T> : IMessagePackFormatter<ReactiveProperty<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, ReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, ReactiveProperty<T> value, IFormatterResolver formatterResolver)
         {
             if (value == null)
             {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
             }
             else
             {
-                var startOffset = offset;
+                writer.WriteArrayHeader(3);
 
-                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
-
-                offset += MessagePackBinary.WriteInt32(ref bytes, offset, ReactivePropertySchedulerMapper.ToReactivePropertyModeInt(value));
-                offset += MessagePackBinary.WriteInt32(ref bytes, offset, ReactivePropertySchedulerMapper.GetSchedulerId(value.RaiseEventScheduler));
-                offset += formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
-
-                return offset - startOffset;
+                writer.Write(ReactivePropertySchedulerMapper.ToReactivePropertyModeInt(value));
+                writer.Write(ReactivePropertySchedulerMapper.GetSchedulerId(value.RaiseEventScheduler));
+                formatterResolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, formatterResolver);
             }
         }
 
@@ -150,23 +146,25 @@ namespace MessagePack.ReactivePropertyExtension
 
     public class InterfaceReactivePropertyFormatter<T> : IMessagePackFormatter<IReactiveProperty<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, IReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, IReactiveProperty<T> value, IFormatterResolver formatterResolver)
         {
             var rxProp = value as ReactiveProperty<T>;
             if (rxProp != null)
             {
-                return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref bytes, offset, rxProp, formatterResolver);
+                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref writer, rxProp, formatterResolver);
+                return;
             }
 
             var slimProp = value as ReactivePropertySlim<T>;
             if (slimProp != null)
             {
-                return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref bytes, offset, slimProp, formatterResolver);
+                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref writer, slimProp, formatterResolver);
+                return;
             }
 
             if (value == null)
             {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
             }
             else
             {
@@ -192,23 +190,25 @@ namespace MessagePack.ReactivePropertyExtension
 
     public class InterfaceReadOnlyReactivePropertyFormatter<T> : IMessagePackFormatter<IReadOnlyReactiveProperty<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, IReadOnlyReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, IReadOnlyReactiveProperty<T> value, IFormatterResolver formatterResolver)
         {
             var rxProp = value as ReactiveProperty<T>;
             if (rxProp != null)
             {
-                return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref bytes, offset, rxProp, formatterResolver);
+                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref writer, rxProp, formatterResolver);
+                return;
             }
 
             var slimProp = value as ReactivePropertySlim<T>;
             if (slimProp != null)
             {
-                return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref bytes, offset, slimProp, formatterResolver);
+                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref writer, slimProp, formatterResolver);
+                return;
             }
 
             if (value == null)
             {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
             }
             else
             {
@@ -254,9 +254,9 @@ namespace MessagePack.ReactivePropertyExtension
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, Unit value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, Unit value, IFormatterResolver formatterResolver)
         {
-            return MessagePackBinary.WriteNil(ref bytes, offset);
+            writer.WriteNil();
         }
 
         public Unit Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
@@ -281,9 +281,9 @@ namespace MessagePack.ReactivePropertyExtension
 
         }
 
-        public int Serialize(ref byte[] bytes, int offset, Unit? value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, Unit? value, IFormatterResolver formatterResolver)
         {
-            return MessagePackBinary.WriteNil(ref bytes, offset);
+            writer.WriteNil();
         }
 
         public Unit? Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
@@ -302,22 +302,18 @@ namespace MessagePack.ReactivePropertyExtension
     // [Mode, Value]
     public class ReactivePropertySlimFormatter<T> : IMessagePackFormatter<ReactivePropertySlim<T>>
     {
-        public int Serialize(ref byte[] bytes, int offset, ReactivePropertySlim<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, ReactivePropertySlim<T> value, IFormatterResolver formatterResolver)
         {
             if (value == null)
             {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
             }
             else
             {
-                var startOffset = offset;
+                writer.WriteArrayHeader(2);
 
-                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-
-                offset += MessagePackBinary.WriteInt32(ref bytes, offset, ReactivePropertySchedulerMapper.ToReactivePropertySlimModeInt(value));
-                offset += formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
-
-                return offset - startOffset;
+                writer.Write(ReactivePropertySchedulerMapper.ToReactivePropertySlimModeInt(value));
+                formatterResolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, formatterResolver);
             }
         }
 

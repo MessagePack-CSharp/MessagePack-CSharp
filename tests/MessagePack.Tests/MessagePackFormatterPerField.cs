@@ -51,9 +51,9 @@ namespace MessagePack.Tests
                 return reader.ReadInt32() * 10;
             }
 
-            public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, int value, IFormatterResolver formatterResolver)
             {
-                return MessagePackBinary.WriteInt32(ref bytes, offset, value * 10);
+                writer.Write(value * 10);
             }
         }
 
@@ -65,9 +65,9 @@ namespace MessagePack.Tests
                 return s + s;
             }
 
-            public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, string value, IFormatterResolver formatterResolver)
             {
-                return MessagePackBinary.WriteString(ref bytes, offset, value + value);
+                writer.Write(value + value);
             }
         }
 

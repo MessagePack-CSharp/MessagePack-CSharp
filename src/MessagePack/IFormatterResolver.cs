@@ -1,8 +1,7 @@
-﻿
-using MessagePack.Formatters;
-using System;
+﻿using System;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using MessagePack.Formatters;
 
 namespace MessagePack
 {

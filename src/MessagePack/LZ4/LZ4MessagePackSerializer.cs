@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using MessagePack.Formatters;
-using MessagePack.Internal;
 using MessagePack.LZ4;
 using Microsoft;
 
@@ -46,105 +44,12 @@ namespace MessagePack
         /// <summary>
         /// Serialize to binary with default resolver.
         /// </summary>
-        public override byte[] Serialize<T>(T obj, IFormatterResolver resolver)
+        public override void Serialize<T>(ref MessagePackWriter writer, T value, IFormatterResolver resolver = null)
         {
-            var buffer = SerializeCore(obj, resolver);
-
-            return MessagePackBinary.FastCloneWithResize(buffer.Array, buffer.Count);
-        }
-
-        /// <summary>
-        /// Serialize to stream.
-        /// </summary>
-        public override void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
-        {
-            if (stream == null)
-            {
-                throw new ArgumentNullException(nameof(stream));
-            }
-
-            var buffer = SerializeCore(obj, resolver);
-
-            stream.Write(buffer.Array, 0, buffer.Count);
-        }
-
-        public int SerializeToBlock<T>(ref byte[] bytes, int offset, T obj, IFormatterResolver resolver)
-        {
-            var serializedData = this.SerializeUnsafe(obj, resolver);
-
-            if (serializedData.Count < NotCompressionSize)
-            {
-                // can't write direct, shoganai...
-                MessagePackBinary.EnsureCapacity(ref bytes, offset, serializedData.Count);
-                Buffer.BlockCopy(serializedData.Array, serializedData.Offset, bytes, offset, serializedData.Count);
-                return serializedData.Count;
-            }
-            else
-            {
-                var maxOutCount = LZ4Codec.MaximumOutputLength(serializedData.Count);
-
-                MessagePackBinary.EnsureCapacity(ref bytes, offset, 6 + 5 + maxOutCount); // (ext header size + fixed length size)
-
-                // acquire ext header position
-                var extHeaderOffset = offset;
-                offset += (6 + 5);
-
-                // write body
-                var lz4Length = LZ4Codec.Encode(serializedData, bytes.AsSpan(offset, bytes.Length - offset));
-
-                // write extension header(always 6 bytes)
-                extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, extHeaderOffset, ExtensionTypeCode, lz4Length + 5);
-
-                // write length(always 5 bytes)
-                MessagePackBinary.WriteInt32ForceInt32Block(ref bytes, extHeaderOffset, serializedData.Count);
-
-                return 6 + 5 + lz4Length;
-            }
-        }
-
-        public static byte[] ToLZ4Binary(ArraySegment<byte> messagePackBinary)
-        {
-            var buffer = ToLZ4BinaryCore(messagePackBinary);
-            return MessagePackBinary.FastCloneWithResize(buffer.Array, buffer.Count);
-        }
-
-        private ArraySegment<byte> SerializeCore<T>(T obj, IFormatterResolver resolver)
-        {
-            var serializedData = this.SerializeUnsafe(obj, resolver);
-            return ToLZ4BinaryCore(serializedData);
-        }
-
-        private static ArraySegment<byte> ToLZ4BinaryCore(ArraySegment<byte> serializedData)
-        {
-            if (serializedData.Count < NotCompressionSize)
-            {
-                return serializedData;
-            }
-            else
-            {
-                var offset = 0;
-                var buffer = LZ4MemoryPool.GetBuffer();
-                var maxOutCount = LZ4Codec.MaximumOutputLength(serializedData.Count);
-                if (buffer.Length + 6 + 5 < maxOutCount) // (ext header size + fixed length size)
-                {
-                    buffer = new byte[6 + 5 + maxOutCount];
-                }
-
-                // acquire ext header position
-                var extHeaderOffset = offset;
-                offset += (6 + 5);
-
-                // write body
-                var lz4Length = LZ4Codec.Encode(serializedData, buffer.AsSpan(offset, buffer.Length - offset));
-
-                // write extension header(always 6 bytes)
-                extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref buffer, extHeaderOffset, ExtensionTypeCode, lz4Length + 5);
-
-                // write length(always 5 bytes)
-                MessagePackBinary.WriteInt32ForceInt32Block(ref buffer, extHeaderOffset, serializedData.Count);
-
-                return new ArraySegment<byte>(buffer, 0, 6 + 5 + lz4Length);
-            }
+            var scratchWriter = writer.Clone();
+            base.Serialize(ref scratchWriter, value, resolver);
+            scratchWriter.Flush();
+            ToLZ4BinaryCore(scratchWriter.WrittenBytes, ref writer);
         }
 
         public override T Deserialize<T>(ref MessagePackReader reader, IFormatterResolver resolver = null)
@@ -229,23 +134,31 @@ namespace MessagePack
 
             return false;
         }
-    }
-}
 
-namespace MessagePack.Internal
-{
-    internal static class LZ4MemoryPool
-    {
-        [ThreadStatic]
-        private static byte[] lz4buffer = null;
-
-        public static byte[] GetBuffer()
+        private static void ToLZ4BinaryCore(ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer)
         {
-            if (lz4buffer == null)
+            if (msgpackUncompressedData.Length < NotCompressionSize)
             {
-                lz4buffer = new byte[LZ4.LZ4Codec.MaximumOutputLength(65536)];
+                writer.WriteRaw(msgpackUncompressedData);
             }
-            return lz4buffer;
+            else
+            {
+                var maxCompressedLength = LZ4Codec.MaximumOutputLength((int)msgpackUncompressedData.Length);
+                var lz4Span = ArrayPool<byte>.Shared.Rent(maxCompressedLength);
+                try
+                {
+                    int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4Codec.Encode);
+
+                    const int LengthOfUncompressedDataSizeHeader = 5;
+                    writer.WriteExtensionFormatHeader(new ExtensionHeader(ExtensionTypeCode, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
+                    writer.WriteInt32((int)msgpackUncompressedData.Length);
+                    writer.WriteRaw(lz4Span.AsSpan(0, lz4Length));
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(lz4Span);
+                }
+            }
         }
     }
 }

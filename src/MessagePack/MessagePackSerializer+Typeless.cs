@@ -30,7 +30,7 @@ namespace MessagePack
 
             public void Serialize(Stream stream, object obj) => serializer.Serialize(stream, obj);
 
-            public System.Threading.Tasks.Task SerializeAsync(Stream stream, object obj) => serializer.SerializeAsync(stream, obj);
+            public ValueTask SerializeAsync(Stream stream, object obj, CancellationToken cancellationToken) => serializer.SerializeAsync(stream, obj, cancellationToken: cancellationToken);
 
             public object Deserialize(byte[] bytes) => serializer.Deserialize<object>(bytes);
 

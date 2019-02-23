@@ -36,7 +36,7 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\r\n{\r\n    using System;\r\n    using System.Buffers;\r\n    using MessagePack;\r\n\r\n");
+            this.Write("\r\n{\r\n    using System;\r\n\tusing System.Buffers;\r\n    using MessagePack;\r\n\r\n");
             
             #line 17 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\EnumTemplate.tt"
  foreach(var info in enumSerializationInfos) { 
@@ -57,7 +57,7 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(">\r\n    {\r\n        public int Serialize(ref byte[] bytes, int offset, ");
+            this.Write(">\r\n    {\r\n        public void Serialize(ref MessagePackWriter writer, ");
             
             #line 20 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
@@ -65,14 +65,7 @@ namespace MessagePack.CodeGenerator.Generator
             #line default
             #line hidden
             this.Write(" value, global::MessagePack.IFormatterResolver formatterResolver)\r\n        {\r\n   " +
-                    "         return MessagePackBinary.Write");
-            
-            #line 22 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\EnumTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
-            
-            #line default
-            #line hidden
-            this.Write("(ref bytes, offset, (");
+                    "         writer.Write((");
             
             #line 22 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\EnumTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));

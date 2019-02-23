@@ -47,108 +47,88 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Serialize to binary.
+        /// Serializes a given value with the specified buffer writer.
         /// </summary>
-        public byte[] Serialize<T>(T obj) => this.Serialize<T>(obj, this.DefaultResolver);
-
-        /// <summary>
-        /// Serialize to binary.
-        /// </summary>
-        public virtual byte[] Serialize<T>(T obj, IFormatterResolver resolver)
+        /// <param name="writer">The buffer writer to serialize with.</param>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        public void Serialize<T>(IBufferWriter<byte> writer, T value, IFormatterResolver resolver = null)
         {
-            if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            var buffer = InternalMemoryPool.GetBuffer();
-
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver);
-
-            // do not return MemoryPool.Buffer.
-            return MessagePackBinary.FastCloneWithResize(buffer, len);
-        }
-
-        /// <summary>
-        /// Serialize to binary. Get the raw memory pool byte[]. The result can not share across thread and can not hold, so use quickly.
-        /// </summary>
-        protected ArraySegment<byte> SerializeUnsafe<T>(T obj, IFormatterResolver resolver)
-        {
-            if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            var buffer = InternalMemoryPool.GetBuffer();
-
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver);
-
-            // return raw memory pool, unsafe!
-            return new ArraySegment<byte>(buffer, 0, len);
-        }
-
-        /// <summary>
-        /// Serialize to stream.
-        /// </summary>
-        public void Serialize<T>(Stream stream, T obj) => this.Serialize<T>(stream, obj, DefaultResolver);
-
-        /// <summary>
-        /// Serialize to stream.
-        /// </summary>
-        public virtual void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
-        {
-            if (stream == null)
+            if (writer == null)
             {
-                throw new ArgumentNullException(nameof(stream));
+                throw new ArgumentNullException(nameof(writer));
             }
 
-            if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            var buffer = InternalMemoryPool.GetBuffer();
-
-            var len = formatter.Serialize(ref buffer, 0, obj, resolver);
-
-            // do not need resize.
-            stream.Write(buffer, 0, len);
-        }
-
-        /// <summary>
-        /// Reflect of resolver.GetFormatterWithVerify[T].Serialize.
-        /// </summary>
-        public int Serialize<T>(ref byte[] bytes, int offset, T value, IFormatterResolver resolver)
-        {
-            if (resolver == null) resolver = DefaultResolver;
-            return resolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value, resolver);
-        }
-
-#if !UNITY
-
-        /// <summary>
-        /// Serialize to stream(async).
-        /// </summary>
-        public System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj) => SerializeAsync<T>(stream, obj, DefaultResolver);
-
-        /// <summary>
-        /// Serialize to stream(async).
-        /// </summary>
-        public async System.Threading.Tasks.Task SerializeAsync<T>(Stream stream, T obj, IFormatterResolver resolver)
-        {
-            if (resolver == null) resolver = DefaultResolver;
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            var rentBuffer = ArrayPool<byte>.Shared.Rent(65535);
-            try
+            if (resolver == null)
             {
-                var buffer = rentBuffer;
-                var len = formatter.Serialize(ref buffer, 0, obj, resolver);
-
-                // do not need resize.
-                await stream.WriteAsync(buffer, 0, len).ConfigureAwait(false);
+                resolver = this.DefaultResolver;
             }
-            finally
+
+            var fastWriter = new MessagePackWriter();
+            this.Serialize(ref fastWriter, value, resolver);
+            fastWriter.Flush();
+            writer.Write(fastWriter.WrittenBytes.ToArray());
+        }
+
+        /// <summary>
+        /// Serializes a given value with the specified buffer writer.
+        /// </summary>
+        /// <param name="writer">The buffer writer to serialize with.</param>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        public virtual void Serialize<T>(ref MessagePackWriter writer, T value, IFormatterResolver resolver = null)
+        {
+            resolver = resolver ?? this.DefaultResolver;
+            resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, resolver);
+        }
+
+        /// <summary>
+        /// Serializes a given value with the specified buffer writer.
+        /// </summary>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <returns>A byte array with the serialized value.</returns>
+        public byte[] Serialize<T>(T value, IFormatterResolver resolver = null)
+        {
+            using (var sequence = new Sequence<byte>())
             {
-                ArrayPool<byte>.Shared.Return(rentBuffer);
+                this.Serialize(sequence, value, resolver);
+                return sequence.AsReadOnlySequence.ToArray();
             }
         }
 
-#endif
+        /// <summary>
+        /// Serializes a given value to the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream to serialize to.</param>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        public void Serialize<T>(Stream stream, T value, IFormatterResolver resolver = null)
+        {
+            using (var sequence = new Sequence<byte>())
+            {
+                this.Serialize<T>(sequence, value, resolver);
+                foreach (var segment in sequence.AsReadOnlySequence)
+                {
+                    stream.Write(segment.Span);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Serializes a given value to the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream to serialize to.</param>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>A task that completes with the result of the async serialization operation.</returns>
+        public async ValueTask SerializeAsync<T>(Stream stream, T value, IFormatterResolver resolver = null, CancellationToken cancellationToken = default)
+        {
+            System.IO.Pipelines.PipeWriter writer = stream.UseStrictPipeWriter();
+            this.Serialize(writer, value, resolver);
+            await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
 
         /// <summary>
         /// Deserializes a value of a given type from a sequence of bytes.
@@ -276,24 +256,6 @@ namespace MessagePack
 
                 return this.Deserialize<T>(sequence.AsReadOnlySequence, resolver);
             }
-        }
-    }
-}
-
-namespace MessagePack.Internal
-{
-    internal static class InternalMemoryPool
-    {
-        [ThreadStatic]
-        static byte[] buffer = null;
-
-        public static byte[] GetBuffer()
-        {
-            if (buffer == null)
-            {
-                buffer = new byte[65536];
-            }
-            return buffer;
         }
     }
 }
