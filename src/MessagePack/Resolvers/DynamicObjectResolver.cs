@@ -888,16 +888,8 @@ namespace MessagePack.Internal
                 }
 
                 var buffer = il.DeclareLocal(typeof(byte).MakeByRefType(), true);
-                var keyArraySegment = il.DeclareLocal(typeof(ArraySegment<byte>));
+                var keySpan = il.DeclareLocal(typeof(ReadOnlySpan<byte>));
                 var longKey = il.DeclareLocal(typeof(ulong));
-                var p = il.DeclareLocal(typeof(byte*));
-                var rest = il.DeclareLocal(typeof(int));
-
-                // fixed (byte* buffer = &bytes[0]) {
-                argBytes.EmitLoad();
-                il.EmitLdc_I4(0);
-                il.Emit(OpCodes.Ldelema, typeof(byte));
-                il.EmitStloc(buffer);
 
                 // for (int i = 0; i < len; i++)
                 il.EmitIncrementFor(length, forILocal =>
@@ -909,28 +901,17 @@ namespace MessagePack.Internal
                     argOffset.EmitLoad();
                     argReadSize.EmitLoad();
                     il.EmitCall(MessagePackBinaryTypeInfo.ReadStringSegment);
-                    il.EmitStloc(keyArraySegment);
+                    il.EmitCall(ReadOnlySpanFromArraySegment);
+                    il.EmitStloc(keySpan);
                     EmitOffsetPlusReadSize(il, argOffset, argReadSize);
 
-                    // p = buffer + arraySegment.Offset
-                    il.EmitLdloc(buffer);
-                    il.Emit(OpCodes.Conv_I);
-                    il.EmitLdloca(keyArraySegment);
-                    il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Offset").GetGetMethod());
-                    il.Emit(OpCodes.Add);
-                    il.EmitStloc(p);
-
-                    // rest = arraySegment.Count
-                    il.EmitLdloca(keyArraySegment);
-                    il.EmitCall(typeof(ArraySegment<byte>).GetRuntimeProperty("Count").GetGetMethod());
-                    il.EmitStloc(rest);
-
                     // if(rest == 0) goto End
-                    il.EmitLdloc(rest);
+                    il.EmitLdloca(keySpan);
+                    il.EmitCall(ReadOnlySpanLength);
                     il.Emit(OpCodes.Brfalse, readNext);
 
                     // gen automata name lookup
-                    automata.EmitMatch(il, p, rest, longKey, x =>
+                    automata.EmitMatch(il, keySpan, longKey, x =>
                     {
                         var i = x.Value;
                         if (infoList[i].MemberInfo != null)
@@ -1201,6 +1182,9 @@ namespace MessagePack.Internal
         // static readonly MethodInfo dictionaryAdd = typeof(ByteArrayStringHashTable).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
         // static readonly MethodInfo dictionaryTryGetValue = typeof(ByteArrayStringHashTable).GetRuntimeMethod("TryGetValue", new[] { typeof(ArraySegment<byte>), refInt });
         static readonly ConstructorInfo invalidOperationExceptionConstructor = typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(string); });
+
+        static readonly MethodInfo ReadOnlySpanFromArraySegment = typeof(ReadOnlySpan<byte>).GetRuntimeMethod("op_Implicit", new[] { typeof(ArraySegment<byte>) });
+        static readonly MethodInfo ReadOnlySpanLength = typeof(ReadOnlySpan<byte>).GetRuntimeProperty(nameof(ReadOnlySpan<byte>.Length)).GetMethod;
 
         static readonly MethodInfo onBeforeSerialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnBeforeSerialize", Type.EmptyTypes);
         static readonly MethodInfo onAfterDeserialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod("OnAfterDeserialize", Type.EmptyTypes);

@@ -31,6 +31,9 @@
     <Compile Include="..\..\src\MessagePack\Internal\ByteArrayStringHashTable.cs">
       <Link>Code\ByteArrayStringHashTable.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\CodeGenHelpers.cs">
+      <Link>Code\CodeGenHelpers.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\DynamicAssembly.cs">
       <Link>Code\DynamicAssembly.cs</Link>
     </Compile>
@@ -76,5 +79,8 @@
     <Compile Include="..\SharedData\Class1.cs">
       <Link>Class1.cs</Link>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.2" />
   </ItemGroup>
 </Project>
