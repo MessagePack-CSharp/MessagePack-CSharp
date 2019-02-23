@@ -34,7 +34,7 @@ namespace MessagePack.Internal
 
         public bool Equals(byte[] x, ArraySegment<byte> y)
         {
-            return ByteArrayComparer.Equals(y.Array, y.Offset, y.Count, x);
+            return ByteArrayComparer.Equals(y, x);
         }
 
         public int GetHashCode(byte[] key1)
@@ -48,11 +48,11 @@ namespace MessagePack.Internal
             {
                 if (Is32Bit)
                 {
-                    return (int)FarmHash.Hash32(key2.Array, key2.Offset, key2.Count);
+                    return (int)FarmHash.Hash32(key2);
                 }
                 else
                 {
-                    return (int)FarmHash.Hash64(key2.Array, key2.Offset, key2.Count);
+                    return (int)FarmHash.Hash64(key2);
                 }
             }
         }

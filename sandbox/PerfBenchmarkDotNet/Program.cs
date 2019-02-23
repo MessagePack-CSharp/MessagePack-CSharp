@@ -570,7 +570,7 @@ namespace PerfBenchmarkDotNet
         {
             for (int i = 0; i < keys.Length; i++)
             {
-                automata.TryGetValue(keys[i], 0, keys[i].Length, out _);
+                automata.TryGetValue(keys[i], out _);
             }
         }
 
@@ -1025,7 +1025,7 @@ namespace GeneratedFormatter
                 {
                     int num4;
                     var segment = MessagePackBinary.ReadStringSegment(bytes, num, out ptr);
-                    bool arg_47_0 = this.keyMapping.TryGetValueSafe(segment, out num4);
+                    bool arg_47_0 = this.keyMapping.TryGetValue(segment, out num4);
                     num += ptr;
                     if (!arg_47_0)
                     {
@@ -1155,7 +1155,7 @@ namespace GeneratedFormatter
                     var stringKey = newmsgpack::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                     offset += readSize;
                     int key;
-                    if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                    if (!____keyMapping.TryGetValue(stringKey, out key))
                     {
                         readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                         goto NEXT_LOOP;

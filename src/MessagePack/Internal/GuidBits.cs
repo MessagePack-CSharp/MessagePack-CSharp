@@ -55,104 +55,101 @@ namespace MessagePack.Internal
         }
 
         // 4-pattern, lower/upper and '-' or no
-        public GuidBits(ArraySegment<byte> utf8string)
+        public GuidBits(ReadOnlySpan<byte> utf8string)
         {
             this = default(GuidBits);
 
-            var array = utf8string.Array;
-            var offset = utf8string.Offset;
-
             // 32
-            if (utf8string.Count == 32)
+            if (utf8string.Length == 32)
             {
                 if (BitConverter.IsLittleEndian)
                 {
-                    this.Byte0 = Parse(array, offset + 6);
-                    this.Byte1 = Parse(array, offset + 4);
-                    this.Byte2 = Parse(array, offset + 2);
-                    this.Byte3 = Parse(array, offset + 0);
+                    this.Byte0 = Parse(utf8string, 6);
+                    this.Byte1 = Parse(utf8string, 4);
+                    this.Byte2 = Parse(utf8string, 2);
+                    this.Byte3 = Parse(utf8string, 0);
 
-                    this.Byte4 = Parse(array, offset + 10);
-                    this.Byte5 = Parse(array, offset + 8);
+                    this.Byte4 = Parse(utf8string, 10);
+                    this.Byte5 = Parse(utf8string, 8);
 
-                    this.Byte6 = Parse(array, offset + 14);
-                    this.Byte7 = Parse(array, offset + 12);
+                    this.Byte6 = Parse(utf8string, 14);
+                    this.Byte7 = Parse(utf8string, 12);
                 }
                 else
                 {
-                    this.Byte0 = Parse(array, offset + 0);
-                    this.Byte1 = Parse(array, offset + 2);
-                    this.Byte2 = Parse(array, offset + 4);
-                    this.Byte3 = Parse(array, offset + 6);
+                    this.Byte0 = Parse(utf8string, 0);
+                    this.Byte1 = Parse(utf8string, 2);
+                    this.Byte2 = Parse(utf8string, 4);
+                    this.Byte3 = Parse(utf8string, 6);
 
-                    this.Byte4 = Parse(array, offset + 8);
-                    this.Byte5 = Parse(array, offset + 10);
+                    this.Byte4 = Parse(utf8string, 8);
+                    this.Byte5 = Parse(utf8string, 10);
 
-                    this.Byte6 = Parse(array, offset + 12);
-                    this.Byte7 = Parse(array, offset + 14);
+                    this.Byte6 = Parse(utf8string, 12);
+                    this.Byte7 = Parse(utf8string, 14);
                 }
-                this.Byte8 = Parse(array, offset + 16);
-                this.Byte9 = Parse(array, offset + 18);
+                this.Byte8 = Parse(utf8string, 16);
+                this.Byte9 = Parse(utf8string, 18);
 
-                this.Byte10 = Parse(array, offset + 20);
-                this.Byte11 = Parse(array, offset + 22);
-                this.Byte12 = Parse(array, offset + 24);
-                this.Byte13 = Parse(array, offset + 26);
-                this.Byte14 = Parse(array, offset + 28);
-                this.Byte15 = Parse(array, offset + 30);
+                this.Byte10 = Parse(utf8string, 20);
+                this.Byte11 = Parse(utf8string, 22);
+                this.Byte12 = Parse(utf8string, 24);
+                this.Byte13 = Parse(utf8string, 26);
+                this.Byte14 = Parse(utf8string, 28);
+                this.Byte15 = Parse(utf8string, 30);
                 return;
             }
-            else if (utf8string.Count == 36)
+            else if (utf8string.Length == 36)
             {
                 // '-' => 45
                 if (BitConverter.IsLittleEndian)
                 {
-                    this.Byte0 = Parse(array, offset + 6);
-                    this.Byte1 = Parse(array, offset + 4);
-                    this.Byte2 = Parse(array, offset + 2);
-                    this.Byte3 = Parse(array, offset + 0);
+                    this.Byte0 = Parse(utf8string, 6);
+                    this.Byte1 = Parse(utf8string, 4);
+                    this.Byte2 = Parse(utf8string, 2);
+                    this.Byte3 = Parse(utf8string, 0);
 
-                    if (array[offset + 8] != '-') goto ERROR;
+                    if (utf8string[8] != '-') goto ERROR;
 
-                    this.Byte4 = Parse(array, offset + 11);
-                    this.Byte5 = Parse(array, offset + 9);
+                    this.Byte4 = Parse(utf8string, 11);
+                    this.Byte5 = Parse(utf8string, 9);
 
-                    if (array[offset + 13] != '-') goto ERROR;
+                    if (utf8string[13] != '-') goto ERROR;
 
-                    this.Byte6 = Parse(array, offset + 16);
-                    this.Byte7 = Parse(array, offset + 14);
+                    this.Byte6 = Parse(utf8string, 16);
+                    this.Byte7 = Parse(utf8string, 14);
                 }
                 else
                 {
-                    this.Byte0 = Parse(array, offset + 0);
-                    this.Byte1 = Parse(array, offset + 2);
-                    this.Byte2 = Parse(array, offset + 4);
-                    this.Byte3 = Parse(array, offset + 6);
+                    this.Byte0 = Parse(utf8string, 0);
+                    this.Byte1 = Parse(utf8string, 2);
+                    this.Byte2 = Parse(utf8string, 4);
+                    this.Byte3 = Parse(utf8string, 6);
 
-                    if (array[offset + 8] != '-') goto ERROR;
+                    if (utf8string[8] != '-') goto ERROR;
 
-                    this.Byte4 = Parse(array, offset + 9);
-                    this.Byte5 = Parse(array, offset + 11);
+                    this.Byte4 = Parse(utf8string, 9);
+                    this.Byte5 = Parse(utf8string, 11);
 
-                    if (array[offset + 13] != '-') goto ERROR;
+                    if (utf8string[13] != '-') goto ERROR;
 
-                    this.Byte6 = Parse(array, offset + 14);
-                    this.Byte7 = Parse(array, offset + 16);
+                    this.Byte6 = Parse(utf8string, 14);
+                    this.Byte7 = Parse(utf8string, 16);
                 }
 
-                if (array[offset + 18] != '-') goto ERROR;
+                if (utf8string[18] != '-') goto ERROR;
 
-                this.Byte8 = Parse(array, offset + 19);
-                this.Byte9 = Parse(array, offset + 21);
+                this.Byte8 = Parse(utf8string, 19);
+                this.Byte9 = Parse(utf8string, 21);
 
-                if (array[offset + 23] != '-') goto ERROR;
+                if (utf8string[23] != '-') goto ERROR;
 
-                this.Byte10 = Parse(array, offset + 24);
-                this.Byte11 = Parse(array, offset + 26);
-                this.Byte12 = Parse(array, offset + 28);
-                this.Byte13 = Parse(array, offset + 30);
-                this.Byte14 = Parse(array, offset + 32);
-                this.Byte15 = Parse(array, offset + 34);
+                this.Byte10 = Parse(utf8string, 24);
+                this.Byte11 = Parse(utf8string, 26);
+                this.Byte12 = Parse(utf8string, 28);
+                this.Byte13 = Parse(utf8string, 30);
+                this.Byte14 = Parse(utf8string, 32);
+                this.Byte15 = Parse(utf8string, 34);
                 return;
             }
 
@@ -163,7 +160,7 @@ namespace MessagePack.Internal
 #if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        static byte Parse(byte[] bytes, int highOffset)
+        static byte Parse(ReadOnlySpan<byte> bytes, int highOffset)
         {
             return unchecked((byte)(SwitchParse(bytes[highOffset]) * 16 + SwitchParse(bytes[highOffset + 1])));
         }
@@ -290,83 +287,83 @@ namespace MessagePack.Internal
         }
 
         // 4(x2) - 2(x2) - 2(x2) - 2(x2) - 6(x2)
-        public void Write(byte[] buffer, int offset)
+        public void Write(Span<byte> buffer)
         {
             if (BitConverter.IsLittleEndian)
             {
                 // int(_a)
-                buffer[offset + 6] = byteToHexStringHigh[Byte0];
-                buffer[offset + 7] = byteToHexStringLow[Byte0];
-                buffer[offset + 4] = byteToHexStringHigh[Byte1];
-                buffer[offset + 5] = byteToHexStringLow[Byte1];
-                buffer[offset + 2] = byteToHexStringHigh[Byte2];
-                buffer[offset + 3] = byteToHexStringLow[Byte2];
-                buffer[offset + 0] = byteToHexStringHigh[Byte3];
-                buffer[offset + 1] = byteToHexStringLow[Byte3];
+                buffer[6] = byteToHexStringHigh[Byte0];
+                buffer[7] = byteToHexStringLow[Byte0];
+                buffer[4] = byteToHexStringHigh[Byte1];
+                buffer[5] = byteToHexStringLow[Byte1];
+                buffer[2] = byteToHexStringHigh[Byte2];
+                buffer[3] = byteToHexStringLow[Byte2];
+                buffer[0] = byteToHexStringHigh[Byte3];
+                buffer[1] = byteToHexStringLow[Byte3];
 
-                buffer[offset + 8] = (byte)'-';
+                buffer[8] = (byte)'-';
 
                 // short(_b)
-                buffer[offset + 11] = byteToHexStringHigh[Byte4];
-                buffer[offset + 12] = byteToHexStringLow[Byte4];
-                buffer[offset + 9] = byteToHexStringHigh[Byte5];
-                buffer[offset + 10] = byteToHexStringLow[Byte5];
+                buffer[11] = byteToHexStringHigh[Byte4];
+                buffer[12] = byteToHexStringLow[Byte4];
+                buffer[9] = byteToHexStringHigh[Byte5];
+                buffer[10] = byteToHexStringLow[Byte5];
 
-                buffer[offset + 13] = (byte)'-';
+                buffer[13] = (byte)'-';
 
                 // short(_c)
-                buffer[offset + 16] = byteToHexStringHigh[Byte6];
-                buffer[offset + 17] = byteToHexStringLow[Byte6];
-                buffer[offset + 14] = byteToHexStringHigh[Byte7];
-                buffer[offset + 15] = byteToHexStringLow[Byte7];
+                buffer[16] = byteToHexStringHigh[Byte6];
+                buffer[17] = byteToHexStringLow[Byte6];
+                buffer[14] = byteToHexStringHigh[Byte7];
+                buffer[15] = byteToHexStringLow[Byte7];
             }
             else
             {
-                buffer[offset + 0] = byteToHexStringHigh[Byte0];
-                buffer[offset + 1] = byteToHexStringLow[Byte0];
-                buffer[offset + 2] = byteToHexStringHigh[Byte1];
-                buffer[offset + 3] = byteToHexStringLow[Byte1];
-                buffer[offset + 4] = byteToHexStringHigh[Byte2];
-                buffer[offset + 5] = byteToHexStringLow[Byte2];
-                buffer[offset + 6] = byteToHexStringHigh[Byte3];
-                buffer[offset + 7] = byteToHexStringLow[Byte3];
+                buffer[0] = byteToHexStringHigh[Byte0];
+                buffer[1] = byteToHexStringLow[Byte0];
+                buffer[2] = byteToHexStringHigh[Byte1];
+                buffer[3] = byteToHexStringLow[Byte1];
+                buffer[4] = byteToHexStringHigh[Byte2];
+                buffer[5] = byteToHexStringLow[Byte2];
+                buffer[6] = byteToHexStringHigh[Byte3];
+                buffer[7] = byteToHexStringLow[Byte3];
 
-                buffer[offset + 8] = (byte)'-';
+                buffer[8] = (byte)'-';
 
-                buffer[offset + 9] = byteToHexStringHigh[Byte4];
-                buffer[offset + 10] = byteToHexStringLow[Byte4];
-                buffer[offset + 11] = byteToHexStringHigh[Byte5];
-                buffer[offset + 12] = byteToHexStringLow[Byte5];
+                buffer[9] = byteToHexStringHigh[Byte4];
+                buffer[10] = byteToHexStringLow[Byte4];
+                buffer[11] = byteToHexStringHigh[Byte5];
+                buffer[12] = byteToHexStringLow[Byte5];
 
-                buffer[offset + 13] = (byte)'-';
+                buffer[13] = (byte)'-';
 
-                buffer[offset + 14] = byteToHexStringHigh[Byte6];
-                buffer[offset + 15] = byteToHexStringLow[Byte6];
-                buffer[offset + 16] = byteToHexStringHigh[Byte7];
-                buffer[offset + 17] = byteToHexStringLow[Byte7];
+                buffer[14] = byteToHexStringHigh[Byte6];
+                buffer[15] = byteToHexStringLow[Byte6];
+                buffer[16] = byteToHexStringHigh[Byte7];
+                buffer[17] = byteToHexStringLow[Byte7];
             }
 
-            buffer[offset + 18] = (byte)'-';
+            buffer[18] = (byte)'-';
 
-            buffer[offset + 19] = byteToHexStringHigh[Byte8];
-            buffer[offset + 20] = byteToHexStringLow[Byte8];
-            buffer[offset + 21] = byteToHexStringHigh[Byte9];
-            buffer[offset + 22] = byteToHexStringLow[Byte9];
+            buffer[19] = byteToHexStringHigh[Byte8];
+            buffer[20] = byteToHexStringLow[Byte8];
+            buffer[21] = byteToHexStringHigh[Byte9];
+            buffer[22] = byteToHexStringLow[Byte9];
 
-            buffer[offset + 23] = (byte)'-';
+            buffer[23] = (byte)'-';
 
-            buffer[offset + 24] = byteToHexStringHigh[Byte10];
-            buffer[offset + 25] = byteToHexStringLow[Byte10];
-            buffer[offset + 26] = byteToHexStringHigh[Byte11];
-            buffer[offset + 27] = byteToHexStringLow[Byte11];
-            buffer[offset + 28] = byteToHexStringHigh[Byte12];
-            buffer[offset + 29] = byteToHexStringLow[Byte12];
-            buffer[offset + 30] = byteToHexStringHigh[Byte13];
-            buffer[offset + 31] = byteToHexStringLow[Byte13];
-            buffer[offset + 32] = byteToHexStringHigh[Byte14];
-            buffer[offset + 33] = byteToHexStringLow[Byte14];
-            buffer[offset + 34] = byteToHexStringHigh[Byte15];
-            buffer[offset + 35] = byteToHexStringLow[Byte15];
+            buffer[24] = byteToHexStringHigh[Byte10];
+            buffer[25] = byteToHexStringLow[Byte10];
+            buffer[26] = byteToHexStringHigh[Byte11];
+            buffer[27] = byteToHexStringLow[Byte11];
+            buffer[28] = byteToHexStringHigh[Byte12];
+            buffer[29] = byteToHexStringLow[Byte12];
+            buffer[30] = byteToHexStringHigh[Byte13];
+            buffer[31] = byteToHexStringLow[Byte13];
+            buffer[32] = byteToHexStringHigh[Byte14];
+            buffer[33] = byteToHexStringLow[Byte14];
+            buffer[34] = byteToHexStringHigh[Byte15];
+            buffer[35] = byteToHexStringLow[Byte15];
         }
     }
 }

@@ -13,15 +13,15 @@ namespace MessagePack.Internal
         static readonly bool Is32Bit = (IntPtr.Size == 4);
 
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetHashCode(byte[] bytes, int offset, int count)
+        public static int GetHashCode(ReadOnlySpan<byte> bytes)
         {
             if (Is32Bit)
             {
-                return unchecked((int)FarmHash.Hash32(bytes, offset, count));
+                return unchecked((int)FarmHash.Hash32(bytes));
             }
             else
             {
-                return unchecked((int)FarmHash.Hash64(bytes, offset, count));
+                return unchecked((int)FarmHash.Hash64(bytes));
             }
         }
 
@@ -30,25 +30,17 @@ namespace MessagePack.Internal
 #if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static unsafe bool Equals(byte[] xs, int xsOffset, int xsCount, byte[] ys)
+        public static unsafe bool Equals(ReadOnlySpan<byte> xs, ReadOnlySpan<byte> ys)
         {
-            return Equals(xs, xsOffset, xsCount, ys, 0, ys.Length);
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static unsafe bool Equals(byte[] xs, int xsOffset, int xsCount, byte[] ys, int ysOffset, int ysCount)
-        {
-            if (xs == null || ys == null || xsCount != ysCount)
+            if (xs.Length != ys.Length)
             {
                 return false;
             }
 
-            fixed (byte* p1 = &xs[xsOffset])
-            fixed (byte* p2 = &ys[ysOffset])
+            fixed (byte* p1 = xs)
+            fixed (byte* p2 = ys)
             {
-                switch (xsCount)
+                switch (xs.Length)
                 {
                     case 0:
                         return true;
@@ -76,8 +68,8 @@ namespace MessagePack.Internal
                             var x1 = p1;
                             var x2 = p2;
 
-                            byte* xEnd = p1 + xsCount - 8;
-                            byte* yEnd = p2 + ysCount - 8;
+                            byte* xEnd = p1 + xs.Length - 8;
+                            byte* yEnd = p2 + ys.Length - 8;
 
                             while (x1 < xEnd)
                             {
@@ -100,34 +92,16 @@ namespace MessagePack.Internal
 #if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static bool Equals(byte[] xs, int xsOffset, int xsCount, byte[] ys)
+        public static bool Equals(ReadOnlySpan<byte> xs, ReadOnlySpan<byte> ys)
         {
-            if (xs == null || ys == null || xsCount != ys.Length)
+            if (xs.Length != ys.Length)
             {
                 return false;
             }
 
             for (int i = 0; i < ys.Length; i++)
             {
-                if (xs[xsOffset++] != ys[i]) return false;
-            }
-
-            return true;
-        }
-
-#if !UNITY
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static bool Equals(byte[] xs, int xsOffset, int xsCount, byte[] ys, int ysOffset, int ysCount)
-        {
-            if (xs == null || ys == null || xsCount != ysCount)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < xsCount; i++)
-            {
-                if (xs[xsOffset++] != ys[ysOffset++]) return false;
+                if (xs[i] != ys[i]) return false;
             }
 
             return true;

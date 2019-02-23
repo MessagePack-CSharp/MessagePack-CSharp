@@ -1018,7 +1018,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -1171,7 +1171,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -1994,7 +1994,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -2074,7 +2074,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -2809,7 +2809,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -2943,7 +2943,7 @@ namespace MessagePack.Formatters.SharedData
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -4017,7 +4017,7 @@ namespace MessagePack.Formatters
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -4144,7 +4144,7 @@ namespace MessagePack.Formatters
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;
@@ -4301,7 +4301,7 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
                 var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
                 offset += readSize;
                 int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
                     readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
                     goto NEXT_LOOP;

@@ -4042,7 +4042,7 @@ namespace MessagePack.Decoders
         public Single Read(byte[] bytes, int offset, out int readSize)
         {
             readSize = 5;
-            return new Float32Bits(bytes, offset + 1).Value;
+            return new Float32Bits(bytes.AsSpan(offset + 1)).Value;
         }
     }
 
@@ -4229,7 +4229,7 @@ namespace MessagePack.Decoders
         public Double Read(byte[] bytes, int offset, out int readSize)
         {
             readSize = 5;
-            return new Float32Bits(bytes, offset + 1).Value;
+            return new Float32Bits(bytes.AsSpan(offset + 1)).Value;
         }
     }
 
@@ -4245,7 +4245,7 @@ namespace MessagePack.Decoders
         public Double Read(byte[] bytes, int offset, out int readSize)
         {
             readSize = 9;
-            return new Float64Bits(bytes, offset + 1).Value;
+            return new Float64Bits(bytes.AsSpan(offset + 1)).Value;
         }
     }
 

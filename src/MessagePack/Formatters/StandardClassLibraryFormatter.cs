@@ -201,7 +201,7 @@ namespace MessagePack.Formatters
 
             bytes[offset] = MessagePackCode.Str8;
             bytes[offset + 1] = unchecked((byte)36);
-            new GuidBits(ref value).Write(bytes, offset + 2);
+            new GuidBits(ref value).Write(bytes.AsSpan(offset + 2));
             return 38;
         }
 
