@@ -1,9 +1,4 @@
 ﻿using MessagePack.Formatters;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -29,9 +24,9 @@ namespace MessagePack.Tests
 
             class NoObjectFormatter : IMessagePackFormatter<CustomClassObject>
             {
-                public CustomClassObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+                public CustomClassObject Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
                 {
-                    var r = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                    var r = reader.ReadInt32();
                     return new CustomClassObject(r);
                 }
 
@@ -59,9 +54,9 @@ namespace MessagePack.Tests
 
             class CustomStructObjectFormatter : IMessagePackFormatter<CustomStructObject>
             {
-                public CustomStructObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+                public CustomStructObject Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
                 {
-                    var r = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                    var r = reader.ReadInt32();
                     return new CustomStructObject(r);
                 }
 
@@ -80,9 +75,9 @@ namespace MessagePack.Tests
 
         class CustomEnumObjectFormatter : IMessagePackFormatter<CustomyEnumObject>
         {
-            public CustomyEnumObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public CustomyEnumObject Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                var r = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                var r = reader.ReadInt32();
                 if (r == 0)
                 {
                     return CustomyEnumObject.A;
@@ -108,9 +103,9 @@ namespace MessagePack.Tests
 
         class CustomInterfaceObjectFormatter : IMessagePackFormatter<ICustomInterfaceObject>
         {
-            public ICustomInterfaceObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public ICustomInterfaceObject Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                var r = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                var r = reader.ReadInt32();
                 return new InheritDefault(r);
             }
 
@@ -160,9 +155,9 @@ namespace MessagePack.Tests
                     this.x = x;
                 }
 
-                public CustomClassObjectWithArgument Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+                public CustomClassObjectWithArgument Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
                 {
-                    var r = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                    var r = reader.ReadInt32();
                     return new CustomClassObjectWithArgument(r);
                 }
 

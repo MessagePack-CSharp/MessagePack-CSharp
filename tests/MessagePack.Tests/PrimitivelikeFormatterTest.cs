@@ -1,10 +1,11 @@
-﻿using MessagePack.Formatters;
-using MessagePack.Resolvers;
-using System;
+﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Formatters;
+using MessagePack.Resolvers;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -22,7 +23,7 @@ namespace MessagePack.Tests
 
     public class DummyStringFormatter : IMessagePackFormatter<string>
     {
-        public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public string Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -35,7 +36,7 @@ namespace MessagePack.Tests
 
     public class DummyDateTimeFormatter : IMessagePackFormatter<DateTime>
     {
-        public DateTime Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public DateTime Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -48,7 +49,7 @@ namespace MessagePack.Tests
 
     public class DummyBinaryFormatter : IMessagePackFormatter<byte[]>
     {
-        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public byte[] Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -145,7 +146,8 @@ namespace MessagePack.Tests
 
             a.Is(b);
 
-            var r1 = defaultSerializer.Deserialize<string>(a, OldSpecResolver.Instance);
+            var oldSpecReader = new MessagePackReader(a);
+            var r1 = defaultSerializer.Deserialize<string>(ref oldSpecReader);
             var r2 = serializer.UnpackSingleObject(b);
 
             r1.Is(r2);
@@ -169,7 +171,8 @@ namespace MessagePack.Tests
 
             a.Is(b);
 
-            var r1 = defaultSerializer.Deserialize<byte[]>(a, OldSpecResolver.Instance);
+            var oldSpecReader = new MessagePackReader(a);
+            var r1 = defaultSerializer.Deserialize<byte[]>(ref oldSpecReader);
             var r2 = serializer.UnpackSingleObject(b);
 
             r1.Is(r2);

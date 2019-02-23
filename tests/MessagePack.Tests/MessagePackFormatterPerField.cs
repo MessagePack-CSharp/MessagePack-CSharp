@@ -1,6 +1,7 @@
 ﻿using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -45,9 +46,9 @@ namespace MessagePack.Tests
 
         public class Int_x10Formatter : IMessagePackFormatter<int>
         {
-            public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public int Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                return MessagePackBinary.ReadInt32(bytes, offset, out readSize) * 10;
+                return reader.ReadInt32() * 10;
             }
 
             public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
@@ -58,9 +59,9 @@ namespace MessagePack.Tests
 
         public class String_x2Formatter : IMessagePackFormatter<string>
         {
-            public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public string Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                var s = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var s = reader.ReadString();
                 return s + s;
             }
 

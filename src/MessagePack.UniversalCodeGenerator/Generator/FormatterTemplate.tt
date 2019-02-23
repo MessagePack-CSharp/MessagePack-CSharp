@@ -11,6 +11,7 @@
 namespace <#= Namespace #>
 {
     using System;
+    using System.Buffers;
     using MessagePack;
 
 <# foreach(var objInfo in objectSerializationInfos) { #>
@@ -48,7 +49,7 @@ namespace <#= Namespace #>
             {
                 return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
             }
-<# } #>            
+<# } #>
 <#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
             ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
@@ -78,25 +79,22 @@ namespace <#= Namespace #>
             return offset - startOffset;
         }
 
-        public <#= objInfo.FullName #> Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        public <#= objInfo.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)
         {
-            if (global::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
 <# if( objInfo.IsClass) { #>
-                readSize = 1;
                 return null;
 <# } else { #>
                 throw new InvalidOperationException("typecode is null, struct not supported");
 <# } #>
             }
 
-            var startOffset = offset;
 <# if(objInfo.IsStringKey) { #>
-            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
+            var length = reader.ReadMapHeader();
 <# } else { #>
-            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+            var length = reader.ReadArrayHeader();
 <# } #>
-            offset += readSize;
 
 <# foreach(var x in objInfo.Members) { #>
             var __<#= x.Name #>__ = default(<#= x.Type #>);
@@ -105,13 +103,12 @@ namespace <#= Namespace #>
             for (int i = 0; i < length; i++)
             {
 <# if(objInfo.IsStringKey) { #>
-                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
-                offset += readSize;
+                var stringKey = reader.ReadStringSegment();
                 int key;
                 if (!____keyMapping.TryGetValue(stringKey, out key))
                 {
-                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
-                    goto NEXT_LOOP;
+                    reader.Skip();
+                    continue;
                 }
 <# } else { #>
                 var key = i;
@@ -125,16 +122,10 @@ namespace <#= Namespace #>
                         break;
 <# } #>
                     default:
-                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        reader.Skip();
                         break;
                 }
-<# if(objInfo.IsStringKey) { #>                
-                NEXT_LOOP:
-<# } #>
-                offset += readSize;
             }
-
-            readSize = offset - startOffset;
 
             var ____result = new <#= objInfo.GetConstructorString()  #>;
 <# foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { #>

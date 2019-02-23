@@ -2,6 +2,7 @@
 
 using MessagePack.Resolvers;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -88,9 +89,9 @@ namespace MessagePack.Formatters
             return formatterAndDelegate.Value(formatterAndDelegate.Key, ref bytes, offset, value, formatterResolver);
         }
 
-        public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public object Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return PrimitiveObjectFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
+            return PrimitiveObjectFormatter.Instance.Deserialize(ref reader, resolver);
         }
     }
 }

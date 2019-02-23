@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 
 namespace MessagePack.Formatters
 {
@@ -15,9 +16,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteInt16ForceInt16Block(ref bytes, offset, value);
         }
 
-        public Int16 Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int16 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadInt16(bytes, offset, out readSize);
+            return reader.ReadInt16();
         }
     }
 
@@ -41,16 +42,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int16? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int16? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.ReadInt16(bytes, offset, out readSize);
+                return reader.ReadInt16();
             }
         }
     }
@@ -83,26 +83,20 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int16[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int16[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new Int16[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = MessagePackBinary.ReadInt16(bytes, offset, out readSize);
-                    offset += readSize;
+                    array[i] = reader.ReadInt16();
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -121,9 +115,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteInt32ForceInt32Block(ref bytes, offset, value);
         }
 
-        public Int32 Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int32 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+            return reader.ReadInt32();
         }
     }
 
@@ -147,16 +141,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int32? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int32? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                return reader.ReadInt32();
             }
         }
     }
@@ -189,26 +182,20 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int32[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int32[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new Int32[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                    offset += readSize;
+                    array[i] = reader.ReadInt32();
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -227,9 +214,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteInt64ForceInt64Block(ref bytes, offset, value);
         }
 
-        public Int64 Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int64 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadInt64(bytes, offset, out readSize);
+            return reader.ReadInt64();
         }
     }
 
@@ -253,16 +240,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int64? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int64? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.ReadInt64(bytes, offset, out readSize);
+                return reader.ReadInt64();
             }
         }
     }
@@ -295,26 +281,20 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int64[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Int64[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new Int64[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
-                    offset += readSize;
+                    array[i] = reader.ReadInt64();
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -333,9 +313,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteUInt16ForceUInt16Block(ref bytes, offset, value);
         }
 
-        public UInt16 Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt16 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadUInt16(bytes, offset, out readSize);
+            return reader.ReadUInt16();
         }
     }
 
@@ -359,16 +339,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt16? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt16? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.ReadUInt16(bytes, offset, out readSize);
+                return reader.ReadUInt16();
             }
         }
     }
@@ -401,26 +380,20 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt16[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt16[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new UInt16[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = MessagePackBinary.ReadUInt16(bytes, offset, out readSize);
-                    offset += readSize;
+                    array[i] = reader.ReadUInt16();
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -439,9 +412,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteUInt32ForceUInt32Block(ref bytes, offset, value);
         }
 
-        public UInt32 Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt32 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadUInt32(bytes, offset, out readSize);
+            return reader.ReadUInt32();
         }
     }
 
@@ -465,16 +438,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt32? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt32? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.ReadUInt32(bytes, offset, out readSize);
+                return reader.ReadUInt32();
             }
         }
     }
@@ -507,26 +479,20 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt32[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt32[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new UInt32[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = MessagePackBinary.ReadUInt32(bytes, offset, out readSize);
-                    offset += readSize;
+                    array[i] = reader.ReadUInt32();
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -545,9 +511,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteUInt64ForceUInt64Block(ref bytes, offset, value);
         }
 
-        public UInt64 Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt64 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadUInt64(bytes, offset, out readSize);
+            return reader.ReadUInt64();
         }
     }
 
@@ -571,16 +537,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt64? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt64? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.ReadUInt64(bytes, offset, out readSize);
+                return reader.ReadUInt64();
             }
         }
     }
@@ -613,26 +578,20 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt64[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public UInt64[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new UInt64[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = MessagePackBinary.ReadUInt64(bytes, offset, out readSize);
-                    offset += readSize;
+                    array[i] = reader.ReadUInt64();
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -651,9 +610,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteByteForceByteBlock(ref bytes, offset, value);
         }
 
-        public Byte Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Byte Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadByte(bytes, offset, out readSize);
+            return reader.ReadByte();
         }
     }
 
@@ -677,16 +636,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Byte? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public Byte? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.ReadByte(bytes, offset, out readSize);
+                return reader.ReadByte();
             }
         }
     }
@@ -705,9 +663,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteSByteForceSByteBlock(ref bytes, offset, value);
         }
 
-        public SByte Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public SByte Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadSByte(bytes, offset, out readSize);
+            return reader.ReadSByte();
         }
     }
 
@@ -731,16 +689,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public SByte? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public SByte? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.ReadSByte(bytes, offset, out readSize);
+                return reader.ReadSByte();
             }
         }
     }
@@ -773,26 +730,20 @@ namespace MessagePack.Formatters
             }
         }
 
-        public SByte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public SByte[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new SByte[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = MessagePackBinary.ReadSByte(bytes, offset, out readSize);
-                    offset += readSize;
+                    array[i] = reader.ReadSByte();
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }

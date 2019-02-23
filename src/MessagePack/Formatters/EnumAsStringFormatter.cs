@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 
 namespace MessagePack.Formatters
@@ -35,9 +36,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteString(ref bytes, offset, name);
         }
 
-        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            var name = MessagePackBinary.ReadString(bytes, offset, out readSize);
+            var name = reader.ReadString();
 
             T value;
             if (!nameValueMapping.TryGetValue(name, out value))

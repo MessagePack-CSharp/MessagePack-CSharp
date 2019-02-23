@@ -1,4 +1,5 @@
 ﻿using MessagePack.Formatters;
+using Nerdbank.Streams;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,9 +46,9 @@ namespace MessagePack.Tests
                 byte[] bytes = null;
                 GuidFormatter.Instance.Serialize(ref bytes, 0, original, null).Is(38);
 
-                int readSize;
-                GuidFormatter.Instance.Deserialize(bytes, 0, null, out readSize).Is(original);
-                readSize.Is(38);
+                var sequenceReader = new MessagePackReader(bytes);
+                GuidFormatter.Instance.Deserialize(ref sequenceReader, null).Is(original);
+                sequenceReader.End.IsTrue();
             }
             {
                 var c = new InClass() { MyProperty = 3414141, Guid = Guid.NewGuid() };

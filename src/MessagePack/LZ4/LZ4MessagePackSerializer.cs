@@ -1,13 +1,24 @@
 ﻿using System;
+using System.Buffers;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
+using MessagePack.Formatters;
 using MessagePack.Internal;
 using MessagePack.LZ4;
+using Microsoft;
 
 namespace MessagePack
 {
     /// <summary>
     /// LZ4 Compressed special serializer.
     /// </summary>
+    /// <remarks>
+    /// The spec for this is:
+    ///  Extension header: (typecode = 99)
+    ///  32-bit integer with length of *uncompressed* data (as a MessagePack Int32 entity)
+    ///  compressed data  (raw -- not as a raw/bytes MessagePack entity)
+    /// </remarks>
     public partial class LZ4MessagePackSerializer : MessagePackSerializer
     {
         public const sbyte ExtensionTypeCode = 99;
@@ -79,7 +90,7 @@ namespace MessagePack
                 offset += (6 + 5);
 
                 // write body
-                var lz4Length = LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, bytes, offset, bytes.Length - offset);
+                var lz4Length = LZ4Codec.Encode(serializedData, bytes.AsSpan(offset, bytes.Length - offset));
 
                 // write extension header(always 6 bytes)
                 extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, extHeaderOffset, ExtensionTypeCode, lz4Length + 5);
@@ -124,7 +135,7 @@ namespace MessagePack
                 offset += (6 + 5);
 
                 // write body
-                var lz4Length = LZ4Codec.Encode(serializedData.Array, serializedData.Offset, serializedData.Count, buffer, offset, buffer.Length - offset);
+                var lz4Length = LZ4Codec.Encode(serializedData, buffer.AsSpan(offset, buffer.Length - offset));
 
                 // write extension header(always 6 bytes)
                 extHeaderOffset += MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref buffer, extHeaderOffset, ExtensionTypeCode, lz4Length + 5);
@@ -136,188 +147,87 @@ namespace MessagePack
             }
         }
 
-        public override T Deserialize<T>(Stream stream, IFormatterResolver resolver, bool readStrict)
+        public override T Deserialize<T>(ref MessagePackReader reader, IFormatterResolver resolver = null)
         {
-            if (stream == null)
+            using (var msgPackUncompressed = new Nerdbank.Streams.Sequence<byte>())
             {
-                throw new ArgumentNullException(nameof(stream));
-            }
-
-            if (!readStrict)
-            {
-                var buffer = MessagePack.Internal.InternalMemoryPool.GetBuffer(); // use MessagePackSerializer.Pool!
-                var len = FillFromStream(stream, ref buffer);
-                return DeserializeCore<T>(new ArraySegment<byte>(buffer, 0, len), resolver, out int readSize);
-            }
-            else
-            {
-                int blockSize;
-                var bytes = MessagePackBinary.ReadMessageBlockFromStreamUnsafe(stream, false, out blockSize);
-                return DeserializeCore<T>(new ArraySegment<byte>(bytes, 0, blockSize), resolver, out int readSize);
-            }
-        }
-
-        public override T Deserialize<T>(ArraySegment<byte> bytes, IFormatterResolver resolver, out int readSize) => DeserializeCore<T>(bytes, resolver, out readSize);
-
-        public static byte[] Decode(Stream stream, bool readStrict = false)
-        {
-            if (!readStrict)
-            {
-                var buffer = MessagePack.Internal.InternalMemoryPool.GetBuffer(); // use MessagePackSerializer.Pool!
-                var len = FillFromStream(stream, ref buffer);
-                return Decode(new ArraySegment<byte>(buffer, 0, len));
-            }
-            else
-            {
-                int blockSize;
-                var bytes = MessagePackBinary.ReadMessageBlockFromStreamUnsafe(stream, false, out blockSize);
-                return Decode(new ArraySegment<byte>(bytes, 0, blockSize));
-            }
-        }
-
-        public static byte[] Decode(byte[] bytes)
-        {
-            return Decode(new ArraySegment<byte>(bytes, 0, bytes.Length));
-        }
-
-        public static byte[] Decode(ArraySegment<byte> bytes)
-        {
-            int readSize;
-            if (MessagePackBinary.GetMessagePackType(bytes.Array, bytes.Offset) == MessagePackType.Extension)
-            {
-                var header = MessagePackBinary.ReadExtensionFormatHeader(bytes.Array, bytes.Offset, out readSize);
-                if (header.TypeCode == ExtensionTypeCode)
+                if (TryDecompress(ref reader, msgPackUncompressed))
                 {
-                    // decode lz4
-                    var offset = bytes.Offset + readSize;
-                    var length = MessagePackBinary.ReadInt32(bytes.Array, offset, out readSize);
-                    offset += readSize;
-
-                    var buffer = new byte[length]; // use new buffer.
-
-                    // LZ4 Decode
-                    var len = bytes.Count + bytes.Offset - offset;
-                    LZ4Codec.Decode(bytes.Array, offset, len, buffer, 0, length);
-
-                    return buffer;
+                    var uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
+                    return base.Deserialize<T>(ref uncompressedReader, resolver);
+                }
+                else
+                {
+                    return base.Deserialize<T>(ref reader, resolver);
                 }
             }
-
-            if (bytes.Offset == 0 && bytes.Array.Length == bytes.Count)
-            {
-                // return same reference
-                return bytes.Array;
-            }
-            else
-            {
-                var result = new byte[bytes.Count];
-                Buffer.BlockCopy(bytes.Array, bytes.Offset, result, 0, result.Length);
-                return result;
-            }
         }
 
+        private delegate int LZ4Transform(ReadOnlySpan<byte> input, Span<byte> output);
 
         /// <summary>
-        /// Get the war memory pool byte[]. The result can not share across thread and can not hold and can not call LZ4Deserialize before use it.
+        /// Performs LZ4 compression or decompression.
         /// </summary>
-        public static byte[] DecodeUnsafe(byte[] bytes)
+        /// <param name="input">The input for the operation.</param>
+        /// <param name="output">The buffer to write the result of the operation.</param>
+        /// <param name="lz4Operation">The LZ4 codec transformation.</param>
+        /// <returns>The number of bytes written to the <paramref name="output"/>.</returns>
+        private static int LZ4Operation(ReadOnlySequence<byte> input, Span<byte> output, LZ4Transform lz4Operation)
         {
-            return DecodeUnsafe(new ArraySegment<byte>(bytes, 0, bytes.Length));
-        }
-
-        /// <summary>
-        /// Get the war memory pool byte[]. The result can not share across thread and can not hold and can not call LZ4Deserialize before use it.
-        /// </summary>
-        public static byte[] DecodeUnsafe(ArraySegment<byte> bytes)
-        {
-            int readSize;
-            if (MessagePackBinary.GetMessagePackType(bytes.Array, bytes.Offset) == MessagePackType.Extension)
+            ReadOnlySpan<byte> inputSpan;
+            byte[] rentedInputArray = null;
+            if (input.IsSingleSegment)
             {
-                var header = MessagePackBinary.ReadExtensionFormatHeader(bytes.Array, bytes.Offset, out readSize);
-                if (header.TypeCode == ExtensionTypeCode)
-                {
-                    // decode lz4
-                    var offset = bytes.Offset + readSize;
-                    var length = MessagePackBinary.ReadInt32(bytes.Array, offset, out readSize);
-                    offset += readSize;
-
-                    var buffer = LZ4MemoryPool.GetBuffer(); // use LZ4 Pool(Unsafe)
-                    if (buffer.Length < length)
-                    {
-                        buffer = new byte[length];
-                    }
-
-                    // LZ4 Decode
-                    var len = bytes.Count + bytes.Offset - offset;
-                    LZ4Codec.Decode(bytes.Array, offset, len, buffer, 0, length);
-
-                    return buffer; // return pooled bytes.
-                }
-            }
-
-            if (bytes.Offset == 0 && bytes.Array.Length == bytes.Count)
-            {
-                // return same reference
-                return bytes.Array;
+                inputSpan = input.First.Span;
             }
             else
             {
-                var result = new byte[bytes.Count];
-                Buffer.BlockCopy(bytes.Array, bytes.Offset, result, 0, result.Length);
-                return result;
+                rentedInputArray = ArrayPool<byte>.Shared.Rent((int)input.Length);
+                input.CopyTo(rentedInputArray);
+                inputSpan = rentedInputArray.AsSpan(0, (int)input.Length);
+            }
+
+            try
+            {
+                return lz4Operation(inputSpan, output);
+            }
+            finally
+            {
+                if (rentedInputArray != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedInputArray);
+                }
             }
         }
 
-        private T DeserializeCore<T>(ArraySegment<byte> bytes, IFormatterResolver resolver, out int readSize)
+        private static bool TryDecompress(ref MessagePackReader reader, IBufferWriter<byte> writer)
         {
-            if (resolver == null)
+            if (!reader.End && reader.NextMessagePackType == MessagePackType.Extension)
             {
-                resolver = DefaultResolver;
-            }
-
-            var formatter = resolver.GetFormatterWithVerify<T>();
-
-            if (MessagePackBinary.GetMessagePackType(bytes.Array, bytes.Offset) == MessagePackType.Extension)
-            {
-                var header = MessagePackBinary.ReadExtensionFormatHeader(bytes.Array, bytes.Offset, out readSize);
+                var peekReader = reader.CreatePeekReader();
+                var header = peekReader.ReadExtensionFormatHeader();
                 if (header.TypeCode == ExtensionTypeCode)
                 {
-                    // decode lz4
-                    var offset = bytes.Offset + readSize;
-                    var length = MessagePackBinary.ReadInt32(bytes.Array, offset, out readSize);
-                    offset += readSize;
+                    // Read the extension using the original reader, so we "consume" it.
+                    var extension = reader.ReadExtensionFormat();
+                    var extReader = new MessagePackReader(extension.Data);
 
-                    var buffer = LZ4MemoryPool.GetBuffer(); // use LZ4 Pool
-                    if (buffer.Length < length)
-                    {
-                        buffer = new byte[length];
-                    }
+                    // The first part of the extension payload is a MessagePack-encoded Int32 that
+                    // tells us the length the data will be AFTER decompression.
+                    int uncompressedLength = extReader.ReadInt32();
 
-                    // LZ4 Decode
-                    var len = bytes.Count + bytes.Offset - offset;
-                    LZ4Codec.Decode(bytes.Array, offset, len, buffer, 0, length);
+                    // The rest of the payload is the compressed data itself.
+                    var compressedData = extReader.Sequence.Slice(extReader.Position);
 
-                    return formatter.Deserialize(buffer, 0, resolver, out readSize);
+                    var uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
+                    int actualUncompressedLength = LZ4Operation(compressedData, uncompressedSpan, LZ4Codec.Decode);
+                    Debug.Assert(actualUncompressedLength == uncompressedLength);
+                    writer.Advance(actualUncompressedLength);
+                    return true;
                 }
             }
 
-            return formatter.Deserialize(bytes.Array, bytes.Offset, resolver, out readSize);
-        }
-
-        private static int FillFromStream(Stream input, ref byte[] buffer)
-        {
-            int length = 0;
-            int read;
-            while ((read = input.Read(buffer, length, buffer.Length - length)) > 0)
-            {
-                length += read;
-                if (length == buffer.Length)
-                {
-                    MessagePackBinary.FastResize(ref buffer, length * 2);
-                }
-            }
-
-            return length;
+            return false;
         }
     }
 }

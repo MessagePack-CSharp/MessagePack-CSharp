@@ -6,6 +6,7 @@
 <#@ output extension=".cs" #>
 #if !UNITY
 using System;
+using System.Buffers;
 
 namespace MessagePack.Formatters
 {
@@ -30,25 +31,21 @@ namespace MessagePack.Formatters
             return offset - startOffset;
         }
 
-        public <#= t #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t #> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.IsNil)
             {
                 throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
-                var startOffset = offset;
-                var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                var count = reader.ReadArrayHeader();
                 if (count != <#= i #>) throw new InvalidOperationException("Invalid ValueTuple count");
-                offset += readSize;
 
 <# for(var j = 1; j <= i; j++) { #>
-                var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                var item<#= j #> = resolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(ref reader, resolver);
 <# } #>
             
-                readSize = offset - startOffset;
                 return new ValueTuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
             }
         }

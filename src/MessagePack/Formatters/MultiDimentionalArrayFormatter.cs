@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Text;
 
@@ -38,30 +39,22 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T[,] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T[,] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
             else
             {
-                var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatter = resolver.GetFormatterWithVerify<T>();
 
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 if (len != ArrayLength) throw new InvalidOperationException("Invalid T[,] format");
 
-                var iLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var jLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var maxLen = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var iLength = reader.ReadInt32();
+                var jLength = reader.ReadInt32();
+                var maxLen = reader.ReadArrayHeader();
 
                 var array = new T[iLength, jLength];
 
@@ -79,11 +72,9 @@ namespace MessagePack.Formatters
                         i++;
                     }
 
-                    array[i, j] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                    array[i, j] = formatter.Deserialize(ref reader, resolver);
                 }
 
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -123,33 +114,23 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T[,,] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T[,,] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
             else
             {
-                var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatter = resolver.GetFormatterWithVerify<T>();
 
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 if (len != ArrayLength) throw new InvalidOperationException("Invalid T[,,] format");
 
-                var iLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var jLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var kLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var maxLen = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var iLength = reader.ReadInt32();
+                var jLength = reader.ReadInt32();
+                var kLength = reader.ReadInt32();
+                var maxLen = reader.ReadArrayHeader();
 
                 var array = new T[iLength, jLength, kLength];
 
@@ -174,11 +155,9 @@ namespace MessagePack.Formatters
                         i++;
                     }
 
-                    array[i, j, k] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                    array[i, j, k] = formatter.Deserialize(ref reader, resolver);
                 }
 
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -220,37 +199,23 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T[,,,] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T[,,,] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
             else
             {
-                var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatter = resolver.GetFormatterWithVerify<T>();
 
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 if (len != ArrayLength) throw new InvalidOperationException("Invalid T[,,,] format");
-
-                var iLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var jLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var kLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var lLength = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                offset += readSize;
-
-                var maxLen = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
-
+                var iLength = reader.ReadInt32();
+                var jLength = reader.ReadInt32();
+                var kLength = reader.ReadInt32();
+                var lLength = reader.ReadInt32();
+                var maxLen = reader.ReadArrayHeader();
                 var array = new T[iLength, jLength, kLength, lLength];
 
                 var i = 0;
@@ -282,11 +247,9 @@ namespace MessagePack.Formatters
                         i++;
                     }
 
-                    array[i, j, k, l] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                    array[i, j, k, l] = formatter.Deserialize(ref reader, resolver);
                 }
 
-                readSize = offset - startOffset;
                 return array;
             }
         }

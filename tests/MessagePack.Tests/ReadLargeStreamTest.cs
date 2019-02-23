@@ -28,7 +28,7 @@ namespace MessagePack.Tests
             var bin = serializer.Serialize(new[] { bytesA, bytesB, bytesC });
             var ms = new MemoryStream(bin, 0, bin.Length, false, false);
 
-            var foo = serializer.Deserialize<byte[][]>(ms, true);
+            var foo = serializer.Deserialize<byte[][]>(ms);
 
             for (int i = 0; i < foo[0].Length; i++)
             {

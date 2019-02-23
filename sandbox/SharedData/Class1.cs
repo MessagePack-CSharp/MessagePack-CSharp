@@ -1,6 +1,7 @@
 ﻿using MessagePack;
 using MessagePack.Formatters;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 
 namespace SharedData
@@ -51,7 +52,7 @@ namespace SharedData
 
     public class OreOreFormatter : IMessagePackFormatter<int>
     {
-        public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public int Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -69,7 +70,7 @@ namespace SharedData
 
         }
 
-        public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public int Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -689,12 +690,9 @@ namespace SharedData
             return offset - startOffset;
         }
 
-        public DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
-            var startOffset = offset;
-
-            var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-            offset += readSize;
+            var length = reader.ReadArrayHeader();
 
             var item1 = default1;
             var item2 = default2;
@@ -711,41 +709,38 @@ namespace SharedData
                 switch (i)
                 {
                     case 0:
-                        item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, formatterResolver);
                         break;
                     case 1:
-                        item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, formatterResolver);
                         break;
                     case 2:
-                        item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, formatterResolver);
                         break;
                     case 3:
-                        item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, formatterResolver);
                         break;
                     case 4:
-                        item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, formatterResolver);
                         break;
                     case 5:
-                        item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, formatterResolver);
                         break;
                     case 6:
-                        item7 = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item7 = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(ref reader, formatterResolver);
                         break;
                     case 7:
-                        item8 = formatterResolver.GetFormatterWithVerify<T8>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item8 = formatterResolver.GetFormatterWithVerify<T8>().Deserialize(ref reader, formatterResolver);
                         break;
                     case 8:
-                        item9 = formatterResolver.GetFormatterWithVerify<T9>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        item9 = formatterResolver.GetFormatterWithVerify<T9>().Deserialize(ref reader, formatterResolver);
                         break;
                     default:
-                        readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
+                        reader.Skip();
                         break;
                 }
-
-                offset += readSize;
             }
 
-            readSize = offset - startOffset;
             return new DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>(item1, item2, item3, item4, item5, item6, item7, item8, item9);
         }
     }

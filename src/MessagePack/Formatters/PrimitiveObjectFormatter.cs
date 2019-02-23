@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Reflection;
 using System.Collections.Generic;
 
@@ -156,87 +157,79 @@ namespace MessagePack.Formatters
             throw new InvalidOperationException("Not supported primitive object resolver. type:" + t.Name);
         }
 
-        public object Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public object Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            var type = MessagePackBinary.GetMessagePackType(bytes, offset);
+            var type = reader.NextMessagePackType;
             switch (type)
             {
                 case MessagePackType.Integer:
-                    var code = bytes[offset];
-                    if (MessagePackCode.MinNegativeFixInt <= code && code <= MessagePackCode.MaxNegativeFixInt) return MessagePackBinary.ReadSByte(bytes, offset, out readSize);
-                    else if (MessagePackCode.MinFixInt <= code && code <= MessagePackCode.MaxFixInt) return MessagePackBinary.ReadByte(bytes, offset, out readSize);
-                    else if (code == MessagePackCode.Int8) return MessagePackBinary.ReadSByte(bytes, offset, out readSize);
-                    else if (code == MessagePackCode.Int16) return MessagePackBinary.ReadInt16(bytes, offset, out readSize);
-                    else if (code == MessagePackCode.Int32) return MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                    else if (code == MessagePackCode.Int64) return MessagePackBinary.ReadInt64(bytes, offset, out readSize);
-                    else if (code == MessagePackCode.UInt8) return MessagePackBinary.ReadByte(bytes, offset, out readSize);
-                    else if (code == MessagePackCode.UInt16) return MessagePackBinary.ReadUInt16(bytes, offset, out readSize);
-                    else if (code == MessagePackCode.UInt32) return MessagePackBinary.ReadUInt32(bytes, offset, out readSize);
-                    else if (code == MessagePackCode.UInt64) return MessagePackBinary.ReadUInt64(bytes, offset, out readSize);
+                    var code = reader.NextCode;
+                    if (MessagePackCode.MinNegativeFixInt <= code && code <= MessagePackCode.MaxNegativeFixInt) return reader.ReadSByte();
+                    else if (MessagePackCode.MinFixInt <= code && code <= MessagePackCode.MaxFixInt) return reader.ReadByte();
+                    else if (code == MessagePackCode.Int8) return reader.ReadSByte();
+                    else if (code == MessagePackCode.Int16) return reader.ReadInt16();
+                    else if (code == MessagePackCode.Int32) return reader.ReadInt32();
+                    else if (code == MessagePackCode.Int64) return reader.ReadInt64();
+                    else if (code == MessagePackCode.UInt8) return reader.ReadByte();
+                    else if (code == MessagePackCode.UInt16) return reader.ReadUInt16();
+                    else if (code == MessagePackCode.UInt32) return reader.ReadUInt32();
+                    else if (code == MessagePackCode.UInt64) return reader.ReadUInt64();
                     throw new InvalidOperationException("Invalid primitive bytes.");
                 case MessagePackType.Boolean:
-                    return MessagePackBinary.ReadBoolean(bytes, offset, out readSize);
+                    return reader.ReadBoolean();
                 case MessagePackType.Float:
-                    if (MessagePackCode.Float32 == bytes[offset])
+                    if (MessagePackCode.Float32 == reader.NextCode)
                     {
-                        return MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        return reader.ReadSingle();
                     }
                     else
                     {
-                        return MessagePackBinary.ReadDouble(bytes, offset, out readSize);
+                        return reader.ReadDouble();
                     }
                 case MessagePackType.String:
-                    return MessagePackBinary.ReadString(bytes, offset, out readSize);
+                    return reader.ReadString();
                 case MessagePackType.Binary:
-                    return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
+                    return reader.ReadBytes();
                 case MessagePackType.Extension:
-                    var ext = MessagePackBinary.ReadExtensionFormatHeader(bytes, offset, out readSize);
+                    var ext = reader.ReadExtensionFormatHeader();
                     if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
                     {
-                        return MessagePackBinary.ReadDateTime(bytes, offset, out readSize);
+                        return reader.ReadDateTime(ext);
                     }
+
                     throw new InvalidOperationException("Invalid primitive bytes.");
                 case MessagePackType.Array:
                     {
-                        var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                        var startOffset = offset;
-                        offset += readSize;
+                        var length = reader.ReadArrayHeader();
 
-                        var objectFormatter = formatterResolver.GetFormatter<object>();
+                        var objectFormatter = resolver.GetFormatter<object>();
                         var array = new object[length];
                         for (int i = 0; i < length; i++)
                         {
-                            array[i] = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
+                            array[i] = objectFormatter.Deserialize(ref reader, resolver);
                         }
 
-                        readSize = offset - startOffset;
                         return array;
                     }
                 case MessagePackType.Map:
                     {
-                        var length = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-                        var startOffset = offset;
-                        offset += readSize;
+                        var length = reader.ReadMapHeader();
 
-                        var objectFormatter = formatterResolver.GetFormatter<object>();
+                        var objectFormatter = resolver.GetFormatter<object>();
                         var hash = new Dictionary<object, object>(length);
                         for (int i = 0; i < length; i++)
                         {
-                            var key = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
+                            var key = objectFormatter.Deserialize(ref reader, resolver);
 
-                            var value = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
+                            var value = objectFormatter.Deserialize(ref reader, resolver);
 
                             hash.Add(key, value);
                         }
 
-                        readSize = offset - startOffset;
                         return hash;
                     }
                 case MessagePackType.Nil:
-                    readSize = 1;
+                    reader.ReadNil();
                     return null;
                 default:
                     throw new InvalidOperationException("Invalid primitive bytes.");

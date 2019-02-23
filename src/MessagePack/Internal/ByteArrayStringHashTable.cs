@@ -187,7 +187,7 @@ namespace MessagePack.Internal
                 if (item == null) continue;
                 foreach (var item2 in item)
                 {
-                    yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key), item2.Value);
+                    yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key.Span), item2.Value);
                 }
             }
         }
@@ -205,7 +205,7 @@ namespace MessagePack.Internal
             // for debugging
             public override string ToString()
             {
-                return "(" + Encoding.UTF8.GetString(Key) + ", " + Value + ")";
+                return "(" + Encoding.UTF8.GetString(Key.Span) + ", " + Value + ")";
             }
         }
     }
