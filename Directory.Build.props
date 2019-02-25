@@ -15,20 +15,12 @@
     <Owners>neuecc</Owners>
     <Copyright>© Yoshifumi Kawai. All rights reserved.</Copyright>
     <PackageProjectUrl>https://github.com/neuecc/MessagePack-CSharp</PackageProjectUrl>
-
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="" />
-    <Compile Remove="bin\**" />
-    <Compile Remove="obj\**" />
-    <EmbeddedResource Remove="bin\**" />
-    <EmbeddedResource Remove="obj\**" />
-    <None Remove="*.meta" />
-    <None Remove="bin\**" />
-    <None Remove="obj\**" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" Version="2.2.33" PrivateAssets="all" />

@@ -1,8 +1,6 @@
-﻿using MessagePackCompiler;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.MSBuild;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,74 +9,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace MessagePack.CodeGenerator
+namespace MessagePackCompiler
 {
     // Utility and Extension methods for Roslyn
     internal static class RoslynExtensions
     {
-        public static async Task<Compilation> GetCompilationFromProject(string csprojPath, params string[] preprocessorSymbols)
-        {
-            // fucking workaround of resolve reference...
-            var externalReferences = new List<PortableExecutableReference>();
-            {
-                var locations = new List<string>();
-                locations.Add(typeof(object).Assembly.Location); // mscorlib
-                locations.Add(typeof(System.Linq.Enumerable).Assembly.Location); // core
-
-                var xElem = XElement.Load(csprojPath);
-                var ns = xElem.Name.Namespace;
-
-                var csProjRoot = Path.GetDirectoryName(csprojPath);
-                var framworkRoot = Path.GetDirectoryName(typeof(object).Assembly.Location);
-
-                foreach (var item in xElem.Descendants(ns + "Reference"))
-                {
-                    var hintPath = item.Element(ns + "HintPath")?.Value;
-                    if (hintPath == null)
-                    {
-                        var path = Path.Combine(framworkRoot, item.Attribute("Include").Value + ".dll");
-                        locations.Add(path);
-                    }
-                    else
-                    {
-                        locations.Add(Path.Combine(csProjRoot, hintPath));
-                    }
-                }
-
-                foreach (var item in locations.Distinct())
-                {
-                    if (File.Exists(item))
-                    {
-                        externalReferences.Add(MetadataReference.CreateFromFile(item));
-                    }
-                }
-            }
-
-            EnvironmentHelper.Setup();
-
-            
-            
-
-            var ms = MSBuildWorkspace.Create();
-            
-
-            var workspace = MSBuildWorkspace.Create();
-            workspace.WorkspaceFailed += Workspace_WorkspaceFailed;
-
-            var project = await workspace.OpenProjectAsync(csprojPath).ConfigureAwait(false);
-            project = project.AddMetadataReferences(externalReferences); // workaround:)
-            project = project.WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols));
-
-            var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
-            return compilation;
-        }
-
-        private static void Workspace_WorkspaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
-        {
-            Console.WriteLine(e.Diagnostic.ToString());
-            // throw new Exception(e.Diagnostic.ToString());
-        }
-
         public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
         {
             foreach (var syntaxTree in compilation.SyntaxTrees)

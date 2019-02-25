@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MessagePack.CodeGenerator
+namespace MessagePackCompiler
 {
     public class ReferenceSymbols
     {
@@ -20,14 +20,14 @@ namespace MessagePack.CodeGenerator
         public ReferenceSymbols(Compilation compilation)
         {
             TaskOfT = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task`1");
-            if(TaskOfT == null)
+            if (TaskOfT == null)
             {
-                throw new InvalidOperationException("failed to get metadata of System.Threading.Tasks.Task`1");
+                Console.WriteLine("failed to get metadata of System.Threading.Tasks.Task`1");
             }
             Task = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task");
             if (Task == null)
             {
-                throw new InvalidOperationException("failed to get metadata of System.Threading.Tasks.Task");
+                Console.WriteLine("failed to get metadata of System.Threading.Tasks.Task");
             }
             MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute");
             if (MessagePackObjectAttribute == null)
@@ -55,6 +55,10 @@ namespace MessagePack.CodeGenerator
                 throw new InvalidOperationException("failed to get metadata of MessagePack.IgnoreMemberAttribute");
             }
             IgnoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
+            if (IgnoreDataMemberAttribute == null)
+            {
+                Console.WriteLine("failed to get metadata of System.Runtime.Serialization.IgnoreDataMemberAttribute");
+            }
             IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver");
             if (IMessagePackSerializationCallbackReceiver == null)
             {
@@ -238,10 +242,37 @@ namespace MessagePack.CodeGenerator
 
         // --- 
 
-        public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
+        //public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
+        //{
+        //    this.csProjPath = csProjPath;
+        //    var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
+        //    this.typeReferences = new ReferenceSymbols(compilation);
+        //    this.disallowInternal = disallowInternal;
+        //    this.isForceUseMap = isForceUseMap;
+
+        //    targetTypes = compilation.GetNamedTypeSymbols()
+        //        .Where(x =>
+        //        {
+        //            if (x.DeclaredAccessibility == Accessibility.Public) return true;
+        //            if (!disallowInternal)
+        //            {
+        //                return (x.DeclaredAccessibility == Accessibility.Friend);
+        //            }
+
+        //            return false;
+        //        })
+        //        .Where(x =>
+        //               ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
+        //            || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
+        //            || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribute))
+        //            || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribute))
+        //            )
+        //        .ToArray();
+        //}
+
+        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap)
         {
-            this.csProjPath = csProjPath;
-            var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
+            this.csProjPath = "";
             this.typeReferences = new ReferenceSymbols(compilation);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
@@ -529,7 +560,7 @@ namespace MessagePack.CodeGenerator
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
                     member.IntKey = hiddenIntKey++;
-                    stringMembers.Add(member.StringKey, member);
+                    stringMembers[member.StringKey] = member;
 
                     CollectCore(item.Type); // recursive collect
                 }
@@ -551,7 +582,7 @@ namespace MessagePack.CodeGenerator
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
                     member.IntKey = hiddenIntKey++;
-                    stringMembers.Add(member.StringKey, member);
+                    stringMembers[member.StringKey] = member;
                     CollectCore(item.Type); // recursive collect
                 }
             }
