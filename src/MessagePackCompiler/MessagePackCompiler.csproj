@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="bin\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <None Remove="bin\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MicroBatchFramework" Version="0.3.1-beta3" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.0.0-beta3-final" />
     <PackageReference Include="System.CodeDom" Version="4.5.0" />
