@@ -417,7 +417,7 @@ namespace MessagePack.Internal
             }
             foreach (var item in serializationInfo.Members.Where(x => x.IsReadable))
             {
-                var attr = item.GetMessagePackFormatterAttribtue();
+                var attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
                     var formatter = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
@@ -430,7 +430,7 @@ namespace MessagePack.Internal
             }
             foreach (var item in serializationInfo.Members) // not only for writable because for use ctor.
             {
-                var attr = item.GetMessagePackFormatterAttribtue();
+                var attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
                     var formatter = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
@@ -520,7 +520,7 @@ namespace MessagePack.Internal
             Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> dict = new Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo>();
             foreach (var item in info.Members.Where(x => x.IsReadable || x.IsWritable))
             {
-                var attr = item.GetMessagePackFormatterAttribtue();
+                var attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
                     var f = builder.DefineField(item.Name + "_formatter", attr.FormatterType, FieldAttributes.Private | FieldAttributes.InitOnly);
@@ -1759,7 +1759,7 @@ typeof(int), typeof(int) });
                 }
             }
 
-            public MessagePackFormatterAttribute GetMessagePackFormatterAttribtue()
+            public MessagePackFormatterAttribute GetMessagePackFormatterAttribute()
             {
                 if (IsProperty)
                 {
