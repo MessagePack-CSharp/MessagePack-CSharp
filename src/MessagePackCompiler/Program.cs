@@ -23,7 +23,7 @@ namespace MessagePackCompiler
 
         public async Task RunAsync(
             [Option("i", "Input path of analyze csproj or directory, if input multiple csproj split with ','.")]string input,
-            [Option("o", "Output file path(.cs) or directory.")]string output,
+            [Option("o", "Output file path(.cs) or directory(multiple generate file).")]string output,
             [Option("c", "Conditional compiler symbols, split with ','.")]string conditionalSymbol = null,
             [Option("r", "Set resolver name.")]string resolverName = "GeneratedResolver",
             [Option("n", "Set namespace root name.")]string @namespace = "MessagePack",
