@@ -141,7 +141,7 @@ namespace MessagePackCompiler
                         };
 
                         var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name, multioutSymbol, text, Context.CancellationToken);
+                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, Context.CancellationToken);
                     }
 
                     foreach (var x in enumInfo)
@@ -153,7 +153,7 @@ namespace MessagePackCompiler
                         };
 
                         var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name, multioutSymbol, text, Context.CancellationToken);
+                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, Context.CancellationToken);
                     }
 
                     foreach (var x in unionInfo)
@@ -165,7 +165,7 @@ namespace MessagePackCompiler
                         };
 
                         var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name, multioutSymbol, text, Context.CancellationToken);
+                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, Context.CancellationToken);
                     }
 
                     var resolverTemplate = new ResolverTemplate()

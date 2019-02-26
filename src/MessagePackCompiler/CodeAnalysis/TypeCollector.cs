@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace MessagePackCompiler
@@ -79,7 +80,6 @@ namespace MessagePackCompiler
         static readonly SymbolDisplayFormat shortTypeNameFormat = new SymbolDisplayFormat(
                 typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypes);
 
-        readonly string csProjPath;
         readonly bool isForceUseMap;
         readonly ReferenceSymbols typeReferences;
         readonly INamedTypeSymbol[] targetTypes;
@@ -242,37 +242,8 @@ namespace MessagePackCompiler
 
         // --- 
 
-        //public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
-        //{
-        //    this.csProjPath = csProjPath;
-        //    var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
-        //    this.typeReferences = new ReferenceSymbols(compilation);
-        //    this.disallowInternal = disallowInternal;
-        //    this.isForceUseMap = isForceUseMap;
-
-        //    targetTypes = compilation.GetNamedTypeSymbols()
-        //        .Where(x =>
-        //        {
-        //            if (x.DeclaredAccessibility == Accessibility.Public) return true;
-        //            if (!disallowInternal)
-        //            {
-        //                return (x.DeclaredAccessibility == Accessibility.Friend);
-        //            }
-
-        //            return false;
-        //        })
-        //        .Where(x =>
-        //               ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
-        //            || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.UnionAttribute))
-        //            || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribute))
-        //            || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass == typeReferences.MessagePackObjectAttribute))
-        //            )
-        //        .ToArray();
-        //}
-
         public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap)
         {
-            this.csProjPath = "";
             this.typeReferences = new ReferenceSymbols(compilation);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
@@ -354,6 +325,12 @@ namespace MessagePackCompiler
             if (type.IsGenericType)
             {
                 CollectGeneric(type);
+                return;
+            }
+
+            if (type.TupleUnderlyingType != null)
+            {
+                CollectGeneric(type.TupleUnderlyingType);
                 return;
             }
 
