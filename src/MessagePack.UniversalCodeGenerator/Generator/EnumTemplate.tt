@@ -11,6 +11,7 @@
 namespace <#= Namespace #>
 {
     using System;
+    using System.Buffers;
     using MessagePack;
 
 <# foreach(var info in enumSerializationInfos) { #>
@@ -21,9 +22,9 @@ namespace <#= Namespace #>
             return MessagePackBinary.Write<#= info.UnderlyingType #>(ref bytes, offset, (<#= info.UnderlyingType #>)value);
         }
         
-        public <#= info.FullName #> Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        public <#= info.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)
         {
-            return (<#= info.FullName #>)MessagePackBinary.Read<#= info.UnderlyingType #>(bytes, offset, out readSize);
+            return (<#= info.FullName #>)reader.Read<#= info.UnderlyingType #>();
         }
     }
 

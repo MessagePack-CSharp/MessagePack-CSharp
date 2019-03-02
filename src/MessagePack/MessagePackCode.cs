@@ -179,6 +179,25 @@ namespace MessagePack
         {
             return formatNameTable[code];
         }
+
+        /// <summary>
+        /// Checks whether a given messagepack code represents an integer that might include a sign (i.e. might be a negative number).
+        /// </summary>
+        /// <param name="code">The messagepack code.</param>
+        /// <returns>A boolean value.</returns>
+        public static bool IsSignedInteger(byte code)
+        {
+            switch (code)
+            {
+                case Int8:
+                case Int16:
+                case Int32:
+                case Int64:
+                    return true;
+                default:
+                    return code >= MinNegativeFixInt && code <= MaxNegativeFixInt;
+            }
+        }
     }
 
     public static class ReservedMessagePackExtensionTypeCode

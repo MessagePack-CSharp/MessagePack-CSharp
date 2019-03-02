@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Buffers;
 
 namespace MessagePack.Formatters
 {
@@ -19,16 +17,16 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.IsNil)
             {
-                readSize = 1;
+                reader.ReadNil();
                 return null;
             }
             else
             {
-                return formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                return resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, resolver);
             }
         }
     }
@@ -55,16 +53,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
             else
             {
-                return underlyingFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                return underlyingFormatter.Deserialize(ref reader, resolver);
             }
         }
     }

@@ -29,7 +29,7 @@ namespace PerfBenchmarkDotNet
             Add(MarkdownExporter.GitHub);
             Add(MemoryDiagnoser.Default);
 
-            Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1));
+            Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1));
 
             //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
             //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
@@ -50,7 +50,8 @@ namespace PerfBenchmarkDotNet
                 typeof(StringKeyDeserializeCompare),
                 typeof(NewVsOld),
                 typeof(GuidImprov),
-                typeof(ImproveStringKeySerializeBenchmark)
+                typeof(ImproveStringKeySerializeBenchmark),
+                typeof(MessagePackReaderBenchmark),
             });
 
             // args = new[] { "0" };
@@ -736,6 +737,7 @@ namespace GeneratedFormatter
     using newmsgpack::MessagePack.Formatters;
     using PerfBenchmarkDotNet;
     using newmsgpack::MessagePack;
+    using System.Buffers;
 
     namespace MessagePack.Formatters
     {
@@ -829,16 +831,14 @@ namespace GeneratedFormatter
                 return num - num2;
             }
 
-            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr)
+            public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                if (MessagePackBinary.IsNil(bytes, num))
+                if (reader.TryReadNil())
                 {
-                    ptr = 1;
                     return null;
                 }
-                int num2 = num;
-                int num3 = MessagePackBinary.ReadMapHeader(bytes, num, out ptr);
-                num += ptr;
+
+                int num3 = reader.ReadMapHeader();
                 int myProperty = 0;
                 int myProperty2 = 0;
                 int myProperty3 = 0;
@@ -851,51 +851,49 @@ namespace GeneratedFormatter
                 for (int i = 0; i < num3; i++)
                 {
                     int num4;
-                    bool arg_47_0 = this.keyMapping.TryGetValue(MessagePackBinary.ReadStringSegment(bytes, num, out ptr), out num4);
-                    num += ptr;
+                    bool arg_47_0 = this.keyMapping.TryGetValue(reader.ReadStringSegment(), out num4);
                     if (!arg_47_0)
                     {
-                        ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                        reader.Skip();
                     }
                     else
                     {
                         switch (num4)
                         {
                             case 0:
-                                myProperty = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty = reader.ReadInt32();
                                 break;
                             case 1:
-                                myProperty2 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty2 = reader.ReadInt32();
                                 break;
                             case 2:
-                                myProperty3 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty3 = reader.ReadInt32();
                                 break;
                             case 3:
-                                myProperty4 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty4 = reader.ReadInt32();
                                 break;
                             case 4:
-                                myProperty5 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty5 = reader.ReadInt32();
                                 break;
                             case 5:
-                                myProperty6 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty6 = reader.ReadInt32();
                                 break;
                             case 6:
-                                myProperty7 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty7 = reader.ReadInt32();
                                 break;
                             case 7:
-                                myProperty8 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty8 = reader.ReadInt32();
                                 break;
                             case 8:
-                                myProperty9 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty9 = reader.ReadInt32();
                                 break;
                             default:
-                                ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                                reader.Skip();
                                 break;
                         }
                     }
-                    num += ptr;
                 }
-                ptr = num - num2;
+
                 return new StringKeySerializerTarget
                 {
                     MyProperty1 = myProperty,
@@ -1002,16 +1000,13 @@ namespace GeneratedFormatter
                 return num - num2;
             }
 
-            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr)
+            public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                if (MessagePackBinary.IsNil(bytes, num))
+                if (reader.TryReadNil())
                 {
-                    ptr = 1;
                     return null;
                 }
-                int num2 = num;
-                int num3 = MessagePackBinary.ReadMapHeader(bytes, num, out ptr);
-                num += ptr;
+                int num3 = reader.ReadMapHeader();
                 int myProperty = 0;
                 int myProperty2 = 0;
                 int myProperty3 = 0;
@@ -1024,52 +1019,50 @@ namespace GeneratedFormatter
                 for (int i = 0; i < num3; i++)
                 {
                     int num4;
-                    var segment = MessagePackBinary.ReadStringSegment(bytes, num, out ptr);
+                    var segment = reader.ReadStringSegment();
                     bool arg_47_0 = this.keyMapping.TryGetValue(segment, out num4);
-                    num += ptr;
                     if (!arg_47_0)
                     {
-                        ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                        reader.Skip();
                     }
                     else
                     {
                         switch (num4)
                         {
                             case 0:
-                                myProperty = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty = reader.ReadInt32();
                                 break;
                             case 1:
-                                myProperty2 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty2 = reader.ReadInt32();
                                 break;
                             case 2:
-                                myProperty3 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty3 = reader.ReadInt32();
                                 break;
                             case 3:
-                                myProperty4 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty4 = reader.ReadInt32();
                                 break;
                             case 4:
-                                myProperty5 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty5 = reader.ReadInt32();
                                 break;
                             case 5:
-                                myProperty6 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty6 = reader.ReadInt32();
                                 break;
                             case 6:
-                                myProperty7 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty7 = reader.ReadInt32();
                                 break;
                             case 7:
-                                myProperty8 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty8 = reader.ReadInt32();
                                 break;
                             case 8:
-                                myProperty9 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty9 = reader.ReadInt32();
                                 break;
                             default:
-                                ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                                reader.Skip();
                                 break;
                         }
                     }
-                    num += ptr;
                 }
-                ptr = num - num2;
+
                 return new StringKeySerializerTarget
                 {
                     MyProperty1 = myProperty,
@@ -1128,17 +1121,14 @@ namespace GeneratedFormatter
                 throw new NotImplementedException();
             }
 
-            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
             {
-                if (newmsgpack::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+                if (reader.TryReadNil())
                 {
-                    readSize = 1;
                     return null;
                 }
 
-                var startOffset = offset;
-                var length = newmsgpack::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var length = reader.ReadMapHeader();
 
                 var __MyProperty1__ = default(int);
                 var __MyProperty2__ = default(int);
@@ -1152,54 +1142,48 @@ namespace GeneratedFormatter
 
                 for (int i = 0; i < length; i++)
                 {
-                    var stringKey = newmsgpack::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
-                    offset += readSize;
+                    var stringKey = reader.ReadStringSegment();
                     int key;
                     if (!____keyMapping.TryGetValue(stringKey, out key))
                     {
-                        readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
-                        goto NEXT_LOOP;
+                        reader.Skip();
+                        continue;
                     }
 
                     switch (key)
                     {
                         case 0:
-                            __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty1__ = reader.ReadInt32();
                             break;
                         case 1:
-                            __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty2__ = reader.ReadInt32();
                             break;
                         case 2:
-                            __MyProperty3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty3__ = reader.ReadInt32();
                             break;
                         case 3:
-                            __MyProperty4__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty4__ = reader.ReadInt32();
                             break;
                         case 4:
-                            __MyProperty5__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty5__ = reader.ReadInt32();
                             break;
                         case 5:
-                            __MyProperty6__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty6__ = reader.ReadInt32();
                             break;
                         case 6:
-                            __MyProperty7__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty7__ = reader.ReadInt32();
                             break;
                         case 7:
-                            __MyProperty8__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty8__ = reader.ReadInt32();
                             break;
                         case 8:
-                            __MyProperty9__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty9__ = reader.ReadInt32();
                             break;
                         default:
-                            readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                            reader.Skip();
                             break;
                     }
-
-                    NEXT_LOOP:
-                    offset += readSize;
                 }
-
-                readSize = offset - startOffset;
 
                 var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget();
                 ____result.MyProperty1 = __MyProperty1__;
@@ -1257,17 +1241,14 @@ namespace GeneratedFormatter
                 throw new NotImplementedException();
             }
 
-            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
             {
-                if (newmsgpack::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+                if (reader.TryReadNil())
                 {
-                    readSize = 1;
                     return null;
                 }
 
-                var startOffset = offset;
-                var length = newmsgpack::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var length = reader.ReadMapHeader();
 
                 var __MyProperty1__ = default(int);
                 var __MyProperty2__ = default(int);
@@ -1281,54 +1262,48 @@ namespace GeneratedFormatter
 
                 for (int i = 0; i < length; i++)
                 {
-                    var stringKey = newmsgpack::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
-                    offset += readSize;
+                    var stringKey = reader.ReadStringSegment();
                     int key;
                     if (!____keyMapping.TryGetValue(stringKey, out key))
                     {
-                        readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
-                        goto NEXT_LOOP;
+                        reader.Skip();
+                        continue;
                     }
 
                     switch (key)
                     {
                         case 0:
-                            __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty1__ = reader.ReadInt32();
                             break;
                         case 1:
-                            __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty2__ = reader.ReadInt32();
                             break;
                         case 2:
-                            __MyProperty3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty3__ = reader.ReadInt32();
                             break;
                         case 3:
-                            __MyProperty4__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty4__ = reader.ReadInt32();
                             break;
                         case 4:
-                            __MyProperty5__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty5__ = reader.ReadInt32();
                             break;
                         case 5:
-                            __MyProperty6__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty6__ = reader.ReadInt32();
                             break;
                         case 6:
-                            __MyProperty7__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty7__ = reader.ReadInt32();
                             break;
                         case 7:
-                            __MyProperty8__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty8__ = reader.ReadInt32();
                             break;
                         case 8:
-                            __MyProperty9__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty9__ = reader.ReadInt32();
                             break;
                         default:
-                            readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                            reader.Skip();
                             break;
                     }
-
-                    NEXT_LOOP:
-                    offset += readSize;
                 }
-
-                readSize = offset - startOffset;
 
                 var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget();
                 ____result.MyProperty1 = __MyProperty1__;
@@ -1344,5 +1319,4 @@ namespace GeneratedFormatter
             }
         }
     }
-
 }

@@ -17,9 +17,9 @@ namespace MessagePack.Tests
             byte[] bin = null;
             BinaryGuidFormatter.Instance.Serialize(ref bin, 0, guid, null).Is(18);
 
-            int readSize;
-            var nguid = BinaryGuidFormatter.Instance.Deserialize(bin, 0, null, out readSize);
-            readSize.Is(18);
+            var sequenceReader = new MessagePackReader(bin);
+            var nguid = BinaryGuidFormatter.Instance.Deserialize(ref sequenceReader, null);
+            Assert.True(sequenceReader.End);
 
             guid.Is(nguid);
         }
@@ -31,9 +31,9 @@ namespace MessagePack.Tests
             byte[] bin = null;
             BinaryDecimalFormatter.Instance.Serialize(ref bin, 0, d, null).Is(18);
 
-            int readSize;
-            var nd = BinaryDecimalFormatter.Instance.Deserialize(bin, 0, null, out readSize);
-            readSize.Is(18);
+            var sequenceReader = new MessagePackReader(bin);
+            var nd = BinaryDecimalFormatter.Instance.Deserialize(ref sequenceReader, null);
+            Assert.True(sequenceReader.End);
 
             d.Is(nd);
         }

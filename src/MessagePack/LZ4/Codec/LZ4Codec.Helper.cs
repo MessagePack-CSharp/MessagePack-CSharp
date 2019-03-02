@@ -4,33 +4,7 @@ namespace MessagePack.LZ4
 {
     partial class LZ4Codec
     {
-#if !UNITY
-
-        public static int Encode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
-        {
-            if (IntPtr.Size == 4)
-            {
-                return LZ4Codec.Encode32Unsafe(input, inputOffset, inputLength, output, outputOffset, outputLength);
-            }
-            else
-            {
-                return LZ4Codec.Encode64Unsafe(input, inputOffset, inputLength, output, outputOffset, outputLength);
-            }
-        }
-
-        public static int Decode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
-        {
-            if (IntPtr.Size == 4)
-            {
-                return LZ4Codec.Decode32Unsafe(input, inputOffset, inputLength, output, outputOffset, outputLength);
-            }
-            else
-            {
-                return LZ4Codec.Decode64Unsafe(input, inputOffset, inputLength, output, outputOffset, outputLength);
-            }
-        }
-
-#else
+#if UNITY
 
         // use 'Safe' code for Unity because in IL2CPP gots strange behaviour.
 

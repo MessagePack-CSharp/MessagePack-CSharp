@@ -23,6 +23,7 @@
     };
 #>
 using System;
+using System.Buffers;
 
 namespace MessagePack.Formatters
 {
@@ -40,9 +41,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.Write<#= t.Name #>(ref bytes, offset, value);
         }
 
-        public <#= t.Name #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t.Name #> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+            return reader.Read<#= t.Name #>();
         }
     }
 
@@ -66,16 +67,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t.Name #>? Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t.Name #>? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                return MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+                return reader.Read<#= t.Name #>();
             }
         }
     }
@@ -109,26 +109,20 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t.Name #>[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t.Name #>[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new <#= t.Name #>[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
-                    offset += readSize;
+                    array[i] = reader.Read<#= t.Name #>();
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }

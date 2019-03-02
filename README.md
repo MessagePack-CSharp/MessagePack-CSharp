@@ -4,7 +4,7 @@ MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
 [![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2)
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/neuecc/MessagePack-CSharp/releases)
- 
+
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 The extremely fast [MessagePack](http://msgpack.org/) serializer for C#. It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and outperforms other C# serializers. MessagePack for C# also ships with built-in support for LZ4 compression - an extremely fast compression algorithm. Performance is important, particularly in applications like game development, distributed computing, microservice architecture, and caching.
@@ -781,7 +781,7 @@ IMessagePackFormatter is serializer by each type. For example `Int32Formatter : 
 public interface IMessagePackFormatter<T>
 {
     int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver);
-    T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize);
+    T Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver);
 }
 ```
 
@@ -801,15 +801,14 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
         return MessagePackBinary.WriteString(ref bytes, offset, value.FullName);
     }
 
-    public FileInfo Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+    public FileInfo Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
     {
-        if (MessagePackBinary.IsNil(bytes, offset))
+        if (reader.TryReadNil())
         {
-            readSize = 1;
             return null;
         }
 
-        var path = MessagePackBinary.ReadString(bytes, offset, out readSize);
+        var path = reader.ReadString();
         return new FileInfo(path);
     }
 }
@@ -850,7 +849,8 @@ Primitive API(MessagePackBinary)
 | FastResize | Buffer.BlockCopy version of Array.Resize. |
 | FastCloneWithResize | Same as FastResize but return copied byte[]. |
 
-Read API returns deserialized primitive and read size. Write API returns write size and guranteed auto ensure ref byte[]. Write/Read API has `byte[]` overload and `Stream` overload, basically the byte[] API is faster.
+The Read API returns deserialized primitive and advances a `ReadOnlySequence<byte>` to consume the deserialized bytes. The Write API uses an `IBufferWriter<byte>` for efficient writing and buffer management.
+Serialization methods include overloads for other common types such as `byte[]` and `Stream`, and have some small overhead over using the primitive types directly.
 
 DateTime is serialized to [MessagePack Timestamp format](https://github.com/msgpack/msgpack/blob/master/spec.md#formats-timestamp), it serialize/deserialize UTC and loses `Kind` info. If you use`NativeDateTimeResolver` serialized native DateTime binary format and it can keep `Kind` info but cannot communicate other platforms.
 
@@ -1066,9 +1066,9 @@ public class CustomObject
             return formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.internalId, formatterResolver);
         }
 
-        public CustomObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public CustomObject Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
-            var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+            var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, formatterResolver);
             return new CustomObject { internalId = id };
         }
     }
@@ -1078,9 +1078,9 @@ public class CustomObject
 
 public class Int_x10Formatter : IMessagePackFormatter<int>
 {
-    public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+    public int Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
     {
-        return MessagePackBinary.ReadInt32(bytes, offset, out readSize) * 10;
+        return reader.ReadInt32() * 10;
     }
 
     public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)

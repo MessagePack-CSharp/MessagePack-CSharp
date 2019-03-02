@@ -110,11 +110,11 @@ namespace MessagePack.CodeGenerator
         {
             if (primitiveTypes.Contains(Type))
             {
-                return $"MessagePackBinary.Read{ShortTypeName.Replace("[]", "s")}(bytes, offset, out readSize)";
+                return $"reader.Read{ShortTypeName.Replace("[]", "s")}()";
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Deserialize(bytes, offset, formatterResolver, out readSize)";
+                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Deserialize(ref reader, formatterResolver)";
             }
         }
     }

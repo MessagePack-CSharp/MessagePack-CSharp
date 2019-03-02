@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -83,9 +84,7 @@ namespace MessagePack.Tests
         {
             serializer.Serialize(t).Is(serializer.Serialize(reference));
             Convert(t).Array.Is(reference);
-            MessagePackBinary.IsNil(serializer.Serialize(t2), 0).IsTrue();
+            new MessagePackReader(serializer.Serialize(t2)).IsNil.IsTrue();
         }
-
-
     }
 }

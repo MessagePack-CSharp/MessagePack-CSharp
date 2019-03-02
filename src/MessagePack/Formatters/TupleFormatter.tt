@@ -4,17 +4,18 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
-#if NETSTANDARD
+#if !UNITY
 
 using System;
+using System.Buffers;
 
 namespace MessagePack.Formatters
 {
-<# for(var i = 1; i <= 8; i++) { 
+<# for(var i = 1; i <= 8; i++) {
     Func<int, string> toT = x => "T" + ((x == 8) ? "Rest" : x.ToString());
     Func<int, string> toItem = x => ((x == 8) ? "Rest" : "Item" + x);
-    var ts = string.Join(", ", Enumerable.Range(1, i).Select(x => toT(x))); 
-    var t = "Tuple<" + ts + ">"; 
+    var ts = string.Join(", ", Enumerable.Range(1, i).Select(x => toT(x)));
+    var t = "Tuple<" + ts + ">";
 #>
 
     public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
@@ -38,26 +39,21 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t #> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-                var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
+                var count = reader.ReadArrayHeader();
                 if (count != <#= i #>) throw new InvalidOperationException("Invalid Tuple count");
-                offset += readSize;
 
 <# for(var j = 1; j <= i; j++) { #>
-                var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                var item<#= j #> = resolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(ref reader, resolver);
 <# } #>
-            
-                readSize = offset - startOffset;
+
                 return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
             }
         }

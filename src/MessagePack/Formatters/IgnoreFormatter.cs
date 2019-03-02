@@ -1,4 +1,6 @@
-﻿namespace MessagePack.Formatters
+﻿using System.Buffers;
+
+namespace MessagePack.Formatters
 {
     public sealed class IgnoreFormatter<T> : IMessagePackFormatter<T>
     {
@@ -7,9 +9,9 @@
             return MessagePackBinary.WriteNil(ref bytes, offset);
         }
 
-        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
+            reader.Skip();
             return default(T);
         }
     }

@@ -2,6 +2,8 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MessagePack
 {
@@ -34,11 +36,9 @@ namespace MessagePack
 
             public object Deserialize(Stream stream) => serializer.Deserialize<object>(stream);
 
-            public object Deserialize(Stream stream, bool readStrict) => serializer.Deserialize<object>(stream, readStrict);
-
             public object Deserialize(ArraySegment<byte> bytes) => serializer.Deserialize<object>(bytes);
 
-            public System.Threading.Tasks.Task<object> DeserializeAsync(Stream stream) => serializer.DeserializeAsync<object>(stream);
+            public ValueTask<object> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default) => serializer.DeserializeAsync<object>(stream, cancellationToken: cancellationToken);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿#if !UNITY
 
 using System;
+using System.Buffers;
 
 namespace MessagePack.Formatters
 {
@@ -36,30 +37,20 @@ namespace MessagePack.Formatters
             return 18;
         }
 
-        public unsafe Guid Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public unsafe Guid Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
             if (!BitConverter.IsLittleEndian) throw new Exception("BinaryGuidFormatter only allows on little endian env.");
 
-            if (!(offset + 18 <= bytes.Length))
+            var valueSequence = reader.ReadBytes();
+            if (valueSequence.Length != sizeof(Guid))
             {
-                throw new ArgumentOutOfRangeException();
+                throw new InvalidOperationException("Invalid Guid Size.");
             }
 
-            fixed (byte* src = &bytes[offset])
-            {
-                if (src[0] != MessagePackCode.Bin8)
-                {
-                    throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
-                }
-                if (src[1] != 16)
-                {
-                    throw new InvalidOperationException("Invalid Guid Size.");
-                }
-
-                var target = *(Guid*)(src + 2);
-                readSize = 18;
-                return target;
-            }
+            Guid result;
+            var resultSpan = new Span<byte>(&result, sizeof(Guid));
+            valueSequence.CopyTo(resultSpan);
+            return result;
         }
     }
 
@@ -95,30 +86,20 @@ namespace MessagePack.Formatters
             return 18;
         }
 
-        public unsafe Decimal Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public unsafe Decimal Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
             if (!BitConverter.IsLittleEndian) throw new Exception("BinaryDecimalFormatter only allows on little endian env.");
 
-            if (!(offset + 18 <= bytes.Length))
+            var valueSequence = reader.ReadBytes();
+            if (valueSequence.Length != sizeof(decimal))
             {
-                throw new ArgumentOutOfRangeException();
+                throw new InvalidOperationException("Invalid decimal Size.");
             }
 
-            fixed (byte* src = &bytes[offset])
-            {
-                if (src[0] != MessagePackCode.Bin8)
-                {
-                    throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
-                }
-                if (src[1] != 16)
-                {
-                    throw new InvalidOperationException("Invalid Guid Size.");
-                }
-
-                var target = *(Decimal*)(src + 2);
-                readSize = 18;
-                return target;
-            }
+            decimal result;
+            var resultSpan = new Span<byte>(&result, sizeof(decimal));
+            valueSequence.CopyTo(resultSpan);
+            return result;
         }
     }
 }

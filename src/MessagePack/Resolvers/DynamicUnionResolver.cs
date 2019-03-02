@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Buffers;
 
 namespace MessagePack.Resolvers
 {
@@ -125,9 +126,9 @@ namespace MessagePack.Resolvers
                 BuildSerialize(type, unionAttrs, method, typeToKeyAndJumpMap, il);
             }
             {
-                var method = typeBuilder.DefineMethod("Deserialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
+                var method = typeBuilder.DefineMethod("Deserialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
                     type,
-                    new Type[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() });
+                    new Type[] { refMessagePackReader, typeof(IFormatterResolver) });
 
                 var il = method.GetILGenerator();
                 BuildDeserialize(type, unionAttrs, method, keyToJumpMap, il);
@@ -292,33 +293,25 @@ namespace MessagePack.Resolvers
             il.EmitStarg(2);
         }
 
-        // T Deserialize([arg:1]byte[] bytes, [arg:2]int offset, [arg:3]IFormatterResolver formatterResolver, [arg:4]out int readSize);
+        // T Deserialize([arg:1]ref MessagePackReader reader, [arg:2]IFormatterResolver formatterResolver);
         static void BuildDeserialize(Type type, UnionAttribute[] infos, MethodBuilder method, FieldBuilder keyToJumpMap, ILGenerator il)
         {
-            // if(MessagePackBinary.IsNil) readSize = 1, return null;
+            // if(MessagePackBinary.TryReadNil()) { return null; }
             var falseLabel = il.DefineLabel();
             il.EmitLdarg(1);
-            il.EmitLdarg(2);
-            il.EmitCall(MessagePackBinaryTypeInfo.IsNil);
+            il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
             il.Emit(OpCodes.Brfalse_S, falseLabel);
 
-            il.EmitLdarg(4);
-            il.EmitLdc_I4(1);
-            il.Emit(OpCodes.Stind_I4);
             il.Emit(OpCodes.Ldnull);
             il.Emit(OpCodes.Ret);
 
-            // read-array header and validate, ReadArrayHeader(bytes, offset, out readSize) != 2) throw;
+            // read-array header and validate, reader.ReadArrayHeader() != 2) throw;
             il.MarkLabel(falseLabel);
-            var startOffset = il.DeclareLocal(typeof(int));
-            il.EmitLdarg(2);
-            il.EmitStloc(startOffset);
 
             var rightLabel = il.DefineLabel();
-            il.EmitLdarg(1);
-            il.EmitLdarg(2);
-            il.EmitLdarg(4);
-            il.EmitCall(MessagePackBinaryTypeInfo.ReadArrayHeader);
+            var writer = new ArgumentField(il, 1);
+            writer.EmitLdarg();
+            il.EmitCall(MessagePackReaderTypeInfo.ReadArrayHeader);
             il.EmitLdc_I4(2);
             il.Emit(OpCodes.Beq_S, rightLabel);
             il.Emit(OpCodes.Ldstr, "Invalid Union data was detected. Type:" + type.FullName);
@@ -326,16 +319,12 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Throw);
 
             il.MarkLabel(rightLabel);
-            EmitOffsetPlusReadSize(il);
 
             // read key
             var key = il.DeclareLocal(typeof(int));
-            il.EmitLdarg(1);
-            il.EmitLdarg(2);
-            il.EmitLdarg(4);
-            il.EmitCall(MessagePackBinaryTypeInfo.ReadInt32);
+            writer.EmitLdarg();
+            il.EmitCall(MessagePackReaderTypeInfo.ReadInt32);
             il.EmitStloc(key);
-            EmitOffsetPlusReadSize(il);
 
             // is-sequential don't need else convert key to jump-table value
             if (!IsZeroStartSequential(infos))
@@ -364,41 +353,28 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Switch, switchLabels.Select(x => x.Label).ToArray());
 
             // default
-            il.EmitLdarg(2);
-            il.EmitLdarg(1);
-            il.EmitLdarg(2);
-            il.EmitCall(MessagePackBinaryTypeInfo.ReadNextBlock);
-            il.Emit(OpCodes.Add);
-            il.EmitStarg(2);
+            writer.EmitLdarg();
+            il.EmitCall(MessagePackReaderTypeInfo.Skip);
             il.Emit(OpCodes.Br, loopEnd);
 
             foreach (var item in switchLabels)
             {
                 il.MarkLabel(item.Label);
-                il.EmitLdarg(3);
+                il.EmitLdarg(2);
                 il.EmitCall(getFormatterWithVerify.MakeGenericMethod(item.Attr.SubType));
                 il.EmitLdarg(1);
                 il.EmitLdarg(2);
-                il.EmitLdarg(3);
-                il.EmitLdarg(4);
                 il.EmitCall(getDeserialize(item.Attr.SubType));
                 if (item.Attr.SubType.GetTypeInfo().IsValueType)
                 {
                     il.Emit(OpCodes.Box, item.Attr.SubType);
                 }
                 il.Emit(OpCodes.Stloc, result);
-                EmitOffsetPlusReadSize(il);
                 il.Emit(OpCodes.Br, loopEnd);
             }
 
             il.MarkLabel(loopEnd);
 
-            //// finish readSize = offset - startOffset;
-            il.EmitLdarg(4);
-            il.EmitLdarg(2);
-            il.EmitLdloc(startOffset);
-            il.Emit(OpCodes.Sub);
-            il.Emit(OpCodes.Stind_I4);
             il.Emit(OpCodes.Ldloc, result);
             il.Emit(OpCodes.Ret);
         }
@@ -412,24 +388,15 @@ namespace MessagePack.Resolvers
             return true;
         }
 
-        static void EmitOffsetPlusReadSize(ILGenerator il)
-        {
-            il.EmitLdarg(2);
-            il.EmitLdarg(4);
-            il.Emit(OpCodes.Ldind_I4);
-            il.Emit(OpCodes.Add);
-            il.EmitStarg(2);
-        }
-
         // EmitInfos...
 
         static readonly Type refByte = typeof(byte[]).MakeByRefType();
-        static readonly Type refInt = typeof(int).MakeByRefType();
+        static readonly Type refMessagePackReader = typeof(MessagePackReader).MakeByRefType();
         static readonly Type refKvp = typeof(KeyValuePair<int, int>).MakeByRefType();
         static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == "GetFormatterWithVerify");
 
         static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Serialize", new[] { refByte, typeof(int), t, typeof(IFormatterResolver) });
-        static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Deserialize", new[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), refInt });
+        static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Deserialize", new[] { typeof(MessagePackReader).MakeByRefType(), typeof(IFormatterResolver) });
 
         static readonly FieldInfo runtimeTypeHandleEqualityComparer = typeof(RuntimeTypeHandleEqualityComparer).GetRuntimeField("Default");
         static readonly ConstructorInfo intIntKeyValuePairConstructor = typeof(KeyValuePair<int, int>).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 2);
@@ -439,7 +406,7 @@ namespace MessagePack.Resolvers
 
         static readonly ConstructorInfo keyMapDictionaryConstructor = typeof(Dictionary<int, int>).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
         static readonly MethodInfo keyMapDictionaryAdd = typeof(Dictionary<int, int>).GetRuntimeMethod("Add", new[] { typeof(int), typeof(int) });
-        static readonly MethodInfo keyMapDictionaryTryGetValue = typeof(Dictionary<int, int>).GetRuntimeMethod("TryGetValue", new[] { typeof(int), refInt });
+        static readonly MethodInfo keyMapDictionaryTryGetValue = typeof(Dictionary<int, int>).GetRuntimeMethod("TryGetValue", new[] { typeof(int), typeof(int).MakeByRefType() });
 
         static readonly MethodInfo objectGetType = typeof(object).GetRuntimeMethod("GetType", Type.EmptyTypes);
         static readonly MethodInfo getTypeHandle = typeof(Type).GetRuntimeProperty("TypeHandle").GetGetMethod();
@@ -462,19 +429,24 @@ namespace MessagePack.Resolvers
             public static MethodInfo WriteInt32 = typeof(MessagePackBinary).GetRuntimeMethod("WriteInt32", new[] { refByte, typeof(int), typeof(int) });
             public static MethodInfo WriteBytes = typeof(MessagePackBinary).GetRuntimeMethod("WriteBytes", new[] { refByte, typeof(int), typeof(byte[]) });
             public static MethodInfo WriteNil = typeof(MessagePackBinary).GetRuntimeMethod("WriteNil", new[] { refByte, typeof(int) });
-            public static MethodInfo ReadBytes = typeof(MessagePackBinary).GetRuntimeMethod("ReadBytes", new[] { typeof(byte[]), typeof(int), refInt });
-            public static MethodInfo ReadInt32 = typeof(MessagePackBinary).GetRuntimeMethod("ReadInt32", new[] { typeof(byte[]), typeof(int), refInt });
-            public static MethodInfo ReadString = typeof(MessagePackBinary).GetRuntimeMethod("ReadString", new[] { typeof(byte[]), typeof(int), refInt });
-            public static MethodInfo IsNil = typeof(MessagePackBinary).GetRuntimeMethod("IsNil", new[] { typeof(byte[]), typeof(int) });
-            public static MethodInfo ReadNextBlock = typeof(MessagePackBinary).GetRuntimeMethod("ReadNextBlock", new[] { typeof(byte[]), typeof(int) });
             public static MethodInfo WriteStringUnsafe = typeof(MessagePackBinary).GetRuntimeMethod("WriteStringUnsafe", new[] { refByte, typeof(int), typeof(string), typeof(int) });
-
-            public static MethodInfo ReadArrayHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadArrayHeader", new[] { typeof(byte[]), typeof(int), refInt });
-            public static MethodInfo ReadMapHeader = typeof(MessagePackBinary).GetRuntimeMethod("ReadMapHeader", new[] { typeof(byte[]), typeof(int), refInt });
 
             static MessagePackBinaryTypeInfo()
             {
             }
+        }
+
+        static class MessagePackReaderTypeInfo
+        {
+            public static TypeInfo ReaderTypeInfo = typeof(MessagePackReader).GetTypeInfo();
+
+            public static MethodInfo ReadBytes = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadBytes), Type.EmptyTypes);
+            public static MethodInfo ReadInt32 = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadInt32), Type.EmptyTypes);
+            public static MethodInfo ReadString = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadString), Type.EmptyTypes);
+            public static MethodInfo TryReadNil = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.TryReadNil), Type.EmptyTypes);
+            public static MethodInfo Skip = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.Skip), Type.EmptyTypes);
+            public static MethodInfo ReadArrayHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadArrayHeader), Type.EmptyTypes);
+            public static MethodInfo ReadMapHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadMapHeader), Type.EmptyTypes);
         }
     }
 

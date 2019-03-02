@@ -1,6 +1,7 @@
-﻿using MessagePack.Formatters;
+﻿using System;
+using System.Buffers;
 using System.Collections.Immutable;
-using System;
+using MessagePack.Formatters;
 
 namespace MessagePack.ImmutableCollection
 {
@@ -29,28 +30,23 @@ namespace MessagePack.ImmutableCollection
             }
         }
 
-        public ImmutableArray<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public ImmutableArray<T> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return ImmutableArray<T>.Empty;
             }
             else
             {
-                var startOffset = offset;
                 var formatter = formatterResolver.GetFormatterWithVerify<T>();
 
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
 
                 var builder = ImmutableArray.CreateBuilder<T>(len);
                 for (int i = 0; i < len; i++)
                 {
-                    builder.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
-                    offset += readSize;
+                    builder.Add(formatter.Deserialize(ref reader, formatterResolver));
                 }
-                readSize = offset - startOffset;
 
                 return builder.ToImmutable();
             }

@@ -22,22 +22,16 @@ namespace MessagePack
             }
         }
 
-        internal static unsafe string GetString(this Encoding encoding, ReadOnlyMemory<byte> bytes)
+        internal static unsafe string GetString(this Encoding encoding, ReadOnlySpan<byte> bytes)
         {
             if (bytes.Length == 0)
             {
                 return string.Empty;
             }
 
-            if (MemoryMarshal.TryGetArray(bytes, out var segment))
+            fixed (byte* pBytes = bytes)
             {
-                return encoding.GetString(segment.Array, segment.Offset, segment.Count);
-            }
-            else
-            {
-                var tmp = new byte[bytes.Length];
-                bytes.CopyTo(tmp);
-                return encoding.GetString(tmp);
+                return encoding.GetString(pBytes, bytes.Length);
             }
         }
 

@@ -178,7 +178,7 @@ namespace MessagePack.Internal
             BuiltinResolver.Instance, // Try Builtin
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
 
-#if !(NETSTANDARD || NETFRAMEWORK)
+#if UNITY
             MessagePack.Unity.UnityResolver.Instance,
 #endif
 

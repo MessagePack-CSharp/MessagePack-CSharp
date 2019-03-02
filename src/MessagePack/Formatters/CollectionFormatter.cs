@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Buffers;
 
 #if !UNITY
 using System.Collections.Concurrent;
@@ -34,27 +35,22 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatter = resolver.GetFormatterWithVerify<T>();
 
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new T[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                    array[i] = formatter.Deserialize(ref reader, resolver);
                 }
-                readSize = offset - startOffset;
                 return array;
             }
         }
@@ -81,18 +77,15 @@ namespace MessagePack.Formatters
             }
         }
 
-        public ArraySegment<byte> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public ArraySegment<byte> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return default(ArraySegment<byte>);
+                return default;
             }
             else
             {
-                // use ReadBytesSegment? But currently straem api uses memory pool so can't save arraysegment...
-                var binary = MessagePackBinary.ReadBytes(bytes, offset, out readSize);
-                return new ArraySegment<byte>(binary, 0, binary.Length);
+                return new ArraySegment<byte>(reader.ReadBytes().ToArray());
             }
         }
     }
@@ -123,17 +116,16 @@ namespace MessagePack.Formatters
             }
         }
 
-        public ArraySegment<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public ArraySegment<T> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return default(ArraySegment<T>);
+                return default;
             }
             else
             {
-                var array = formatterResolver.GetFormatterWithVerify<T[]>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                return new ArraySegment<T>(array, 0, array.Length);
+                var array = resolver.GetFormatterWithVerify<T[]>().Deserialize(ref reader, resolver);
+                return new ArraySegment<T>(array);
             }
         }
     }
@@ -164,27 +156,23 @@ namespace MessagePack.Formatters
             }
         }
 
-        public List<T> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public List<T> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatter = resolver.GetFormatterWithVerify<T>();
 
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
-                var list = new List<T>(len);
+                var len = reader.ReadArrayHeader();
+                var list = new List<T>((int)len);
                 for (int i = 0; i < len; i++)
                 {
-                    list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
-                    offset += readSize;
+                    list.Add(formatter.Deserialize(ref reader, resolver));
                 }
-                readSize = offset - startOffset;
+
                 return list;
             }
         }
@@ -297,28 +285,23 @@ namespace MessagePack.Formatters
             }
         }
 
-        public TCollection Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public TCollection Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return default(TCollection);
             }
             else
             {
-                var startOffset = offset;
-                var formatter = formatterResolver.GetFormatterWithVerify<TElement>();
+                var formatter = resolver.GetFormatterWithVerify<TElement>();
 
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
 
                 var list = Create(len);
                 for (int i = 0; i < len; i++)
                 {
-                    Add(list, i, formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
-                    offset += readSize;
+                    Add(list, i, formatter.Deserialize(ref reader, resolver));
                 }
-                readSize = offset - startOffset;
 
                 return Complete(list);
             }
@@ -587,28 +570,23 @@ namespace MessagePack.Formatters
             }
         }
 
-        public IGrouping<TKey, TElement> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public IGrouping<TKey, TElement> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
             else
             {
-                var startOffset = offset;
-                var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var count = reader.ReadArrayHeader();
 
-                if (count != 2) throw new InvalidOperationException("Invalid Grouping format.");
+                if (count != 2)
+                {
+                    throw new InvalidOperationException("Invalid Grouping format.");
+                }
 
-                var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-
-                var value = formatterResolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-
-                readSize = offset - startOffset;
+                var key = resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, resolver);
+                var value = resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(ref reader, resolver);
                 return new Grouping<TKey, TElement>(key, value);
             }
         }
@@ -728,28 +706,23 @@ namespace MessagePack.Formatters
             return offset - startOffset;
         }
 
-        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return default(T);
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
-            var startOffset = offset;
+            var formatter = resolver.GetFormatterWithVerify<object>();
 
-            var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-            offset += readSize;
+            var count = reader.ReadArrayHeader();
 
             var list = new T();
             for (int i = 0; i < count; i++)
             {
-                list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
-                offset += readSize;
+                list.Add(formatter.Deserialize(ref reader, resolver));
             }
 
-            readSize = offset - startOffset;
             return list;
         }
     }
@@ -783,28 +756,23 @@ namespace MessagePack.Formatters
             return offset - startOffset;
         }
 
-        public IList Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public IList Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return default(IList);
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
-            var startOffset = offset;
+            var formatter = resolver.GetFormatterWithVerify<object>();
 
-            var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-            offset += readSize;
+            var count = reader.ReadArrayHeader();
 
             var list = new object[count];
             for (int i = 0; i < count; i++)
             {
-                list[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                list[i] = formatter.Deserialize(ref reader, resolver);
             }
 
-            readSize = offset - startOffset;
             return list;
         }
     }
@@ -833,31 +801,25 @@ namespace MessagePack.Formatters
             return offset - startOffset;
         }
 
-        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
-            var startOffset = offset;
+            var formatter = resolver.GetFormatterWithVerify<object>();
 
-            var count = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-            offset += readSize;
+            var count = reader.ReadMapHeader();
 
             var dict = new T();
             for (int i = 0; i < count; i++)
             {
-                var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                var key = formatter.Deserialize(ref reader, resolver);
+                var value = formatter.Deserialize(ref reader, resolver);
                 dict.Add(key, value);
             }
 
-            readSize = offset - startOffset;
             return dict;
         }
     }
@@ -892,31 +854,25 @@ namespace MessagePack.Formatters
             return offset - startOffset;
         }
 
-        public IDictionary Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public IDictionary Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
 
-            var formatter = formatterResolver.GetFormatterWithVerify<object>();
-            var startOffset = offset;
+            var formatter = resolver.GetFormatterWithVerify<object>();
 
-            var count = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-            offset += readSize;
+            var count = reader.ReadMapHeader();
 
             var dict = new Dictionary<object, object>(count);
             for (int i = 0; i < count; i++)
             {
-                var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                var key = formatter.Deserialize(ref reader, resolver);
+                var value = formatter.Deserialize(ref reader, resolver);
                 dict.Add(key, value);
             }
 
-            readSize = offset - startOffset;
             return dict;
         }
     }

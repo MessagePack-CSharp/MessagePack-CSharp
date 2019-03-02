@@ -1,4 +1,4 @@
-﻿#if ENABLE_UNSAFE_MSGPACK
+﻿#if !UNITY
 
 #region license
 
@@ -69,33 +69,28 @@ namespace MessagePack.LZ4
 
         /// <summary>Encodes the specified input.</summary>
         /// <param name="input">The input.</param>
-        /// <param name="inputOffset">The input offset.</param>
-        /// <param name="inputLength">Length of the input.</param>
         /// <param name="output">The output.</param>
-        /// <param name="outputOffset">The output offset.</param>
-        /// <param name="outputLength">Length of the output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static unsafe int Encode32Unsafe(
-            byte[] input,
-            int inputOffset,
-            int inputLength,
-            byte[] output,
-            int outputOffset,
-            int outputLength)
+        public static unsafe int Encode(ReadOnlySpan<byte> input, Span<byte> output)
         {
-            CheckArguments(input, inputOffset, inputLength, output, outputOffset, outputLength);
+            if (output.Length == 0) throw new ArgumentException("Output is empty.");
 
-            if (outputLength == 0) return 0;
-
-            fixed (byte* inputPtr = &input[inputOffset])
-            fixed (byte* outputPtr = &output[outputOffset])
+            fixed (byte* inputPtr = input)
+            fixed (byte* outputPtr = output)
             {
-                if (inputLength < LZ4_64KLIMIT)
+                if (input.Length < LZ4_64KLIMIT)
                 {
                     var uHashTable = HashTablePool.GetUShortHashTablePool();
                     fixed (ushort* hash1 = &uHashTable[0])
                     {
-                        return LZ4_compress64kCtx_32(hash1, inputPtr, outputPtr, inputLength, outputLength);
+                        if (IntPtr.Size == 4)
+                        {
+                            return LZ4_compress64kCtx_32(hash1, inputPtr, outputPtr, input.Length, output.Length);
+                        }
+                        else
+                        {
+                            return LZ4_compress64kCtx_64(hash1, inputPtr, outputPtr, input.Length, output.Length);
+                        }
                     }
                 }
                 else
@@ -103,7 +98,14 @@ namespace MessagePack.LZ4
                     var bHashTable = HashTablePool.GetUIntHashTablePool();
                     fixed (uint* hash2 = &bHashTable[0])
                     {
-                        return LZ4_compressCtx_32(hash2, inputPtr, outputPtr, inputLength, outputLength);
+                        if (IntPtr.Size == 4)
+                        {
+                            return LZ4_compressCtx_32(hash2, inputPtr, outputPtr, input.Length, output.Length);
+                        }
+                        else
+                        {
+                            return LZ4_compressCtx_64(hash2, inputPtr, outputPtr, input.Length, output.Length);
+                        }
                     }
                 }
             }
@@ -111,109 +113,28 @@ namespace MessagePack.LZ4
 
         /// <summary>Decodes the specified input.</summary>
         /// <param name="input">The input.</param>
-        /// <param name="inputOffset">The input offset.</param>
-        /// <param name="inputLength">Length of the input.</param>
         /// <param name="output">The output.</param>
-        /// <param name="outputOffset">The output offset.</param>
-        /// <param name="outputLength">Length of the output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static unsafe int Decode32Unsafe(
-            byte[] input,
-            int inputOffset,
-            int inputLength,
-            byte[] output,
-            int outputOffset,
-            int outputLength)
+        public static unsafe int Decode(ReadOnlySpan<byte> input, Span<byte> output)
         {
-            CheckArguments(
-                input, inputOffset, inputLength,
-                output, outputOffset, outputLength);
+            if (output.Length == 0) throw new ArgumentException("Output is empty.");
 
-            if (outputLength == 0) return 0;
-
-            fixed (byte* inputPtr = &input[inputOffset])
-            fixed (byte* outputPtr = &output[outputOffset])
+            fixed (byte* inputPtr = input)
+            fixed (byte* outputPtr = output)
             {
-                var length = LZ4_uncompress_32(inputPtr, outputPtr, outputLength);
-                if (length != inputLength)
-                    throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
-                return outputLength;
-            }
-        }
-
-        /// <summary>Encodes the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="inputOffset">The input offset.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <param name="output">The output.</param>
-        /// <param name="outputOffset">The output offset.</param>
-        /// <param name="outputLength">Length of the output.</param>
-        /// <returns>Number of bytes written.</returns>
-        public static unsafe int Encode64Unsafe(
-            byte[] input,
-            int inputOffset,
-            int inputLength,
-            byte[] output,
-            int outputOffset,
-            int outputLength)
-        {
-            CheckArguments(
-                input, inputOffset, inputLength,
-                output, outputOffset, outputLength);
-
-            if (outputLength == 0) return 0;
-
-            fixed (byte* inputPtr = &input[inputOffset])
-            fixed (byte* outputPtr = &output[outputOffset])
-            {
-                if (inputLength < LZ4_64KLIMIT)
+                int length;
+                if (IntPtr.Size == 4)
                 {
-                    var uHashTable = HashTablePool.GetUShortHashTablePool();
-                    fixed (ushort* h1 = &uHashTable[0])
-                    {
-                        return LZ4_compress64kCtx_64(h1, inputPtr, outputPtr, inputLength, outputLength);
-                    }
+                    length = LZ4_uncompress_32(inputPtr, outputPtr, output.Length);
                 }
                 else
                 {
-                    var uiHashTable = HashTablePool.GetUIntHashTablePool();
-                    fixed (uint* h2 = &uiHashTable[0])
-                    {
-                        return LZ4_compressCtx_64(h2, inputPtr, outputPtr, inputLength, outputLength);
-                    }
+                    length = LZ4_uncompress_64(inputPtr, outputPtr, output.Length);
                 }
-            }
-        }
 
-        /// <summary>Decode64s the specified input.</summary>
-        /// <param name="input">The input.</param>
-        /// <param name="inputOffset">The input offset.</param>
-        /// <param name="inputLength">Length of the input.</param>
-        /// <param name="output">The output.</param>
-        /// <param name="outputOffset">The output offset.</param>
-        /// <param name="outputLength">Length of the output.</param>
-        /// <returns>Number of bytes written.</returns>
-        public static unsafe int Decode64Unsafe(
-            byte[] input,
-            int inputOffset,
-            int inputLength,
-            byte[] output,
-            int outputOffset,
-            int outputLength)
-        {
-            CheckArguments(
-                input, inputOffset, inputLength,
-                output, outputOffset, outputLength);
-
-            if (outputLength == 0) return 0;
-
-            fixed (byte* inputPtr = &input[inputOffset])
-            fixed (byte* outputPtr = &output[outputOffset])
-            {
-                var length = LZ4_uncompress_64(inputPtr, outputPtr, outputLength);
-                if (length != inputLength)
+                if (length != input.Length)
                     throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
-                return outputLength;
+                return output.Length;
             }
         }
     }

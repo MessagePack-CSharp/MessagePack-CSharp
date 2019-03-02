@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 
 namespace MessagePack.Formatters
 {
@@ -15,15 +16,9 @@ namespace MessagePack.Formatters
             return MessagePackBinary.WriteInt64(ref bytes, offset, dateData);
         }
 
-        public DateTime Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public DateTime Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.GetMessagePackType(bytes, offset) == MessagePackType.Extension)
-            {
-                return DateTimeFormatter.Instance.Deserialize(bytes, offset, formatterResolver, out readSize);
-            }
-
-            var dateData = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
-            return DateTime.FromBinary(dateData);
+            return reader.ReadDateTime();
         }
     }
 
@@ -50,27 +45,21 @@ namespace MessagePack.Formatters
             }
         }
 
-        public DateTime[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public DateTime[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
             else
             {
-                var startOffset = offset;
-
-                var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var len = reader.ReadArrayHeader();
                 var array = new DateTime[len];
                 for (int i = 0; i < array.Length; i++)
                 {
-                    var dateData = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
-                    array[i] = DateTime.FromBinary(dateData);
-                    offset += readSize;
+                    var dateData = reader.ReadDateTime();
                 }
-                readSize = offset - startOffset;
+
                 return array;
             }
         }
@@ -151,9 +140,9 @@ namespace MessagePack.Formatters
             }
         }
 
-        public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public string Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return MessagePackBinary.ReadString(bytes, offset, out readSize);
+            return reader.ReadString();
         }
     }
 
@@ -202,59 +191,14 @@ namespace MessagePack.Formatters
             }
         }
 
-        public byte[] Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public byte[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            var type = MessagePackBinary.GetMessagePackType(bytes, offset);
-            if (type == MessagePackType.Nil)
+            if (reader.TryReadNil())
             {
-                readSize = 1;
                 return null;
             }
-            else if (type == MessagePackType.Binary)
-            {
-                return MessagePackBinary.ReadBytes(bytes, offset, out readSize);
-            }
-            else if (type == MessagePackType.String)
-            {
-                var code = bytes[offset];
-                unchecked
-                {
-                    if (MessagePackCode.MinFixStr <= code && code <= MessagePackCode.MaxFixStr)
-                    {
-                        var length = bytes[offset] & 0x1F;
-                        readSize = length + 1;
-                        var result = new byte[length];
-                        Buffer.BlockCopy(bytes, offset + 1, result, 0, result.Length);
-                        return result;
-                    }
-                    else if (code == MessagePackCode.Str8)
-                    {
-                        var length = (int)bytes[offset + 1];
-                        readSize = length + 2;
-                        var result = new byte[length];
-                        Buffer.BlockCopy(bytes, offset + 2, result, 0, result.Length);
-                        return result;
-                    }
-                    else if (code == MessagePackCode.Str16)
-                    {
-                        var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
-                        readSize = length + 3;
-                        var result = new byte[length];
-                        Buffer.BlockCopy(bytes, offset + 3, result, 0, result.Length);
-                        return result;
-                    }
-                    else if (code == MessagePackCode.Str32)
-                    {
-                        var length = (int)((uint)(bytes[offset + 1] << 24) | (uint)(bytes[offset + 2] << 16) | (uint)(bytes[offset + 3] << 8) | (uint)bytes[offset + 4]);
-                        readSize = length + 5;
-                        var result = new byte[length];
-                        Buffer.BlockCopy(bytes, offset + 5, result, 0, result.Length);
-                        return result;
-                    }
-                }
-            }
 
-            throw new InvalidOperationException(string.Format("code is invalid. code:{0} format:{1}", bytes[offset], MessagePackCode.ToFormatName(bytes[offset])));
+            return reader.ReadBytes().ToArray();
         }
     }
 }

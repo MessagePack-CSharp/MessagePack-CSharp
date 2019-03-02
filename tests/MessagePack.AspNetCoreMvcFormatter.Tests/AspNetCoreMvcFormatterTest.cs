@@ -57,7 +57,7 @@ namespace MessagePack.Tests.ExtensionTests
 
             using (var ms = new MemoryStream())
             {
-                body.CopyTo(ms);
+                await body.CopyToAsync(ms);
                 Assert.Equal(messagePackBinary, ms.ToArray());
             }
 
@@ -130,7 +130,7 @@ namespace MessagePack.Tests.ExtensionTests
 
             using (var ms = new MemoryStream())
             {
-                body.CopyTo(ms);
+                await body.CopyToAsync(ms);
                 var binary = ms.ToArray();
 
                 binary.IsNot(messagePackBinary);

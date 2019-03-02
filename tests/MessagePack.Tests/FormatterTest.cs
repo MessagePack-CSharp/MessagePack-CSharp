@@ -1,4 +1,5 @@
-﻿using SharedData;
+﻿using MessagePack.Formatters;
+using SharedData;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -222,11 +223,14 @@ namespace MessagePack.Tests
             byte[] bytesD = null;
             MessagePackBinary.WriteString(ref bytesD, 0, d).Is(Encoding.UTF8.GetByteCount(d) + 5);
 
-            int readSize = 0;
-            MessagePackBinary.ReadString(bytesA, 0, out readSize).Is(a);
-            MessagePackBinary.ReadString(bytesB, 0, out readSize).Is(b);
-            MessagePackBinary.ReadString(bytesC, 0, out readSize).Is(c);
-            MessagePackBinary.ReadString(bytesD, 0, out readSize).Is(d);
+            var readerA = new MessagePackReader(bytesA);
+            var readerB = new MessagePackReader(bytesB);
+            var readerC = new MessagePackReader(bytesC);
+            var readerD = new MessagePackReader(bytesD);
+            readerA.ReadString().Is(a);
+            readerB.ReadString().Is(b);
+            readerC.ReadString().Is(c);
+            readerD.ReadString().Is(d);
         }
 
         // https://github.com/neuecc/MessagePack-CSharp/issues/22

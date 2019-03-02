@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -38,7 +39,7 @@ namespace MessagePack.Tests
             var length = OldSpecBinaryFormatter.Instance.Serialize(ref messagePackBytes, 0, sourceBytes, StandardResolver.Instance);
             Assert.NotEmpty(messagePackBytes);
             Assert.Equal(length, messagePackBytes.Length);
-            Assert.Equal(MessagePackCode.Nil, messagePackBytes[0]); 
+            Assert.Equal(MessagePackCode.Nil, messagePackBytes[0]);
 
             var deserializedBytes = DeserializeByClassicMsgPack<byte[]>(messagePackBytes, MsgPack.Serialization.SerializationMethod.Array);
             Assert.Null(deserializedBytes);
@@ -70,9 +71,9 @@ namespace MessagePack.Tests
         public void DeserializeSimpleByteArray(int arrayLength)
         {
             var sourceBytes = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte) i)).ToArray(); // long byte array
-            var messagePackBytes = SerializeByClassicMsgPack(sourceBytes, MsgPack.Serialization.SerializationMethod.Array); 
-
-            var deserializedBytes = OldSpecBinaryFormatter.Instance.Deserialize(messagePackBytes, 0, StandardResolver.Instance, out var readSize);
+            var messagePackBytes = SerializeByClassicMsgPack(sourceBytes, MsgPack.Serialization.SerializationMethod.Array);
+            var messagePackBytesReader = new MessagePackReader(messagePackBytes);
+            var deserializedBytes = serializer.Deserialize<byte[]>(ref messagePackBytesReader);
             Assert.NotNull(deserializedBytes);
             Assert.Equal(sourceBytes, deserializedBytes);
         }
@@ -80,9 +81,9 @@ namespace MessagePack.Tests
         [Fact]
         public void DeserializeNil()
         {
-            var messagePackBytes = new byte[]{ MessagePackCode.Nil }; 
+            var messagePackReader = new MessagePackReader(new byte[] { MessagePackCode.Nil });
 
-            var deserializedObj = OldSpecBinaryFormatter.Instance.Deserialize(messagePackBytes, 0, StandardResolver.Instance, out var readSize);
+            var deserializedObj = serializer.Deserialize<byte[]>(ref messagePackReader);
             Assert.Null(deserializedObj);
         }
 
@@ -98,8 +99,8 @@ namespace MessagePack.Tests
                 Value = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte)i)).ToArray() // long byte array
             };
             var messagePackBytes = SerializeByClassicMsgPack(foo, MsgPack.Serialization.SerializationMethod.Map);
-
-            var deserializedFoo = serializer.Deserialize<Foo>(messagePackBytes);
+            var oldSpecReader = new MessagePackReader(messagePackBytes);
+            var deserializedFoo = serializer.Deserialize<Foo>(ref oldSpecReader);
             Assert.NotNull(deserializedFoo);
             Assert.Equal(foo.Id, deserializedFoo.Id);
             Assert.Equal(foo.Value, deserializedFoo.Value);
