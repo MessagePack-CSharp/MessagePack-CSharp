@@ -1,8 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Buildalyzer;
-using Buildalyzer.Workspaces;
+using Microsoft.CodeAnalysis.CSharp.Formatting;
+using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +10,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Buildalyzer.Environment;
+
+using StLogger = Microsoft.Build.Logging.StructuredLogger;
 
 namespace MessagePack.CodeGenerator
 {
@@ -20,18 +21,16 @@ namespace MessagePack.CodeGenerator
         static (string fname, string args) GetBuildCommandLine(string csprojPath, string tempPath, bool useDotNet)
         {
             string fname = "dotnet";
-            const string tasks = "ResolveAssemblyReferencesDesignTime;ResolveProjectReferencesDesignTime;ResolveComReferencesDesignTime;Compile";
+            const string tasks = "Restore;ResolveReferences";
             // from Buildalyzer implementation
             // https://github.com/daveaglick/Buildalyzer/blob/b42d2e3ba1b3673a8133fb41e72b507b01bce1d6/src/Buildalyzer/Environment/BuildEnvironment.cs#L86-L96
             Dictionary<string, string> properties = new Dictionary<string, string>()
                 {
-                    // trailing '\' may cause unexpected escape
-                    {"IntermediateOutputPath", tempPath + "/"},
                     {"ProviderCommandLineArgs", "true"},
                     {"GenerateResourceMSBuildArchitecture", "CurrentArchitecture"},
                     {"DesignTimeBuild", "true"},
                     {"BuildProjectReferences","false"},
-                    {"SkipCompilerExecution","true"},
+                    // {"SkipCompilerExecution","true"},
                     {"DisableRarCache", "true"},
                     {"AutoGenerateBindingRedirects", "false"},
                     {"CopyBuildOutputToOutputDirectory", "false"},
@@ -62,15 +61,20 @@ namespace MessagePack.CodeGenerator
             var (fname, args) = GetBuildCommandLine(csprojPath, tempPath, useDotNet);
             try
             {
+                var buildlogpath = Path.Combine(tempPath, "build.binlog");
+                if (File.Exists(buildlogpath))
+                {
+                    try
+                    {
+                        File.Delete(buildlogpath);
+                    }
+                    catch { }
+                }
                 using (var stdout = new MemoryStream())
                 using (var stderr = new MemoryStream())
                 {
                     var exitCode = await ProcessUtil.ExecuteProcessAsync(fname, args, stdout, stderr, null).ConfigureAwait(false);
-                    if (exitCode == 0)
-                    {
-                        return true;
-                    }
-                    else
+                    if (exitCode != 0)
                     {
                         // write process output to stdout and stderr when error.
                         using (var stdout2 = new MemoryStream(stdout.ToArray()))
@@ -81,8 +85,8 @@ namespace MessagePack.CodeGenerator
                             await stdout2.CopyToAsync(consoleStdout).ConfigureAwait(false);
                             await stderr2.CopyToAsync(consoleStderr).ConfigureAwait(false);
                         }
-                        return false;
                     }
+                    return File.Exists(buildlogpath);
                 }
             }
             catch (Exception e)
@@ -91,21 +95,46 @@ namespace MessagePack.CodeGenerator
                 return false;
             }
         }
-        static async Task<AnalyzerResult[]> GetAnalyzerResults(AnalyzerManager analyzerManager, string csprojPath, params string[] preprocessorSymbols)
+        static IEnumerable<StLogger.Error> FindAllErrors(StLogger.Build build)
         {
-            var tempPath = Path.Combine(new FileInfo(csprojPath).Directory.FullName, "__buildtemp");
+            var lst = new List<StLogger.Error>();
+            build.VisitAllChildren<StLogger.Error>(er => lst.Add(er));
+            return lst;
+        }
+        static (StLogger.Build, IEnumerable<StLogger.Error>) ProcessBuildLog(string tempPath)
+        {
+            var reader = new StLogger.BinLogReader();
+            var stlogger = new StLogger.StructuredLogger();
+            // prevent output temporary file
+            StLogger.StructuredLogger.SaveLogToDisk = false;
+            // never output, but if not set, throw exception when initializing
+            stlogger.Parameters = "tmp.buildlog";
+            stlogger.Initialize(reader);
+            reader.Replay(Path.Combine(tempPath, "build.binlog"));
+            stlogger.Shutdown();
+            var buildlog = stlogger.Construction.Build;
+            if (buildlog.Succeeded)
+            {
+                return (buildlog, null);
+            }
+            else
+            {
+                var errors = FindAllErrors(buildlog);
+                return (null, errors);
+            }
+        }
+        static async Task<(StLogger.Build, IEnumerable<StLogger.Error>)> TryGetBuildResultAsync(string csprojPath, string tempPath, bool useDotNet, params string[] preprocessorSymbols)
+        {
             try
             {
-                if (!await TryExecute(csprojPath, tempPath, true).ConfigureAwait(false))
+                if (!await TryExecute(csprojPath, tempPath, useDotNet).ConfigureAwait(false))
                 {
-                    Console.WriteLine("execute `dotnet msbuild` failed, retry with `msbuild`");
-                    if (!await TryExecute(csprojPath, tempPath, false).ConfigureAwait(false))
-                    {
-                        throw new Exception("failed to build project");
-                    }
+                    return (null, Array.Empty<StLogger.Error>());
                 }
-                // get results of analysis from binarylog
-                return analyzerManager.Analyze(Path.Combine(tempPath, "build.binlog")).ToArray();
+                else
+                {
+                    return ProcessBuildLog(tempPath);
+                }
             }
             finally
             {
@@ -115,64 +144,130 @@ namespace MessagePack.CodeGenerator
                 }
             }
         }
+        static async Task<StLogger.Build> GetBuildResult(string csprojPath, params string[] preprocessorSymbols)
+        {
+            var tempPath = Path.Combine(new FileInfo(csprojPath).Directory.FullName, "__buildtemp");
+            try
+            {
+                (StLogger.Build build, IEnumerable<StLogger.Error> errors) = await TryGetBuildResultAsync(csprojPath, tempPath, true, preprocessorSymbols).ConfigureAwait(false);
+                if (build == null)
+                {
+                    Console.WriteLine("execute `dotnet msbuild` failed, retry with `msbuild`");
+                    var dotnetException = new InvalidOperationException($"failed to build project with dotnet:{string.Join("\n", errors)}");
+                    (build, errors) = await TryGetBuildResultAsync(csprojPath, tempPath, false, preprocessorSymbols).ConfigureAwait(false);
+                    if (build == null)
+                    {
+                        throw new InvalidOperationException($"failed to build project: {string.Join("\n", errors)}");
+                    }
+                }
+                return build;
+            }
+            finally
+            {
+                if (Directory.Exists(tempPath))
+                {
+                    Directory.Delete(tempPath, true);
+                }
+            }
+        }
+        static Workspace GetWorkspaceFromBuild(this StLogger.Build build, params string[] preprocessorSymbols)
+        {
+            var csproj = build.Children.OfType<StLogger.Project>().FirstOrDefault();
+            if (csproj == null)
+            {
+                throw new InvalidOperationException("cannot find cs project build");
+            }
+            StLogger.Item[] compileItems = Array.Empty<StLogger.Item>();
+            var properties = new Dictionary<string, StLogger.Property>();
+            foreach (var folder in csproj.Children.OfType<StLogger.Folder>())
+            {
+                if (folder.Name == "Items")
+                {
+                    var compileFolder = folder.Children.OfType<StLogger.Folder>().FirstOrDefault(x => x.Name == "Compile");
+                    if (compileFolder == null)
+                    {
+                        throw new InvalidOperationException("failed to get compililation documents");
+                    }
+                    compileItems = compileFolder.Children.OfType<StLogger.Item>().ToArray();
+                }
+                else if (folder.Name == "Properties")
+                {
+                    properties = folder.Children.OfType<StLogger.Property>().ToDictionary(x => x.Name);
+                }
+            }
+            var assemblies = Array.Empty<StLogger.Item>();
+            foreach (var target in csproj.Children.OfType<StLogger.Target>())
+            {
+                if (target.Name == "ResolveReferences")
+                {
+                    var folder = target.Children.OfType<StLogger.Folder>().Where(x => x.Name == "TargetOutputs").FirstOrDefault();
+                    if (folder == null)
+                    {
+                        throw new InvalidOperationException("cannot find result of resolving assembly");
+                    }
+                    assemblies = folder.Children.OfType<StLogger.Item>().ToArray();
+                }
+            }
+            var ws = new AdhocWorkspace();
+            var roslynProject = ws.AddProject(Path.GetFileNameWithoutExtension(csproj.ProjectFile), Microsoft.CodeAnalysis.LanguageNames.CSharp);
+            var projectDir = properties["ProjectDir"].Value;
+            var pguid = properties.ContainsKey("ProjectGuid") ? Guid.Parse(properties["ProjectGuid"].Value) : Guid.NewGuid();
+            var projectGuid = ProjectId.CreateFromSerialized(pguid);
+            foreach (var compile in compileItems)
+            {
+                var filePath = compile.Text;
+                var absFilePath = Path.Combine(projectDir, filePath);
+                roslynProject = roslynProject.AddDocument(filePath, File.ReadAllText(absFilePath)).Project;
+            }
+            foreach (var asm in assemblies)
+            {
+                roslynProject = roslynProject.AddMetadataReference(MetadataReference.CreateFromFile(asm.Text));
+            }
+            var compopt = roslynProject.CompilationOptions as CSharpCompilationOptions;
+            compopt = roslynProject.CompilationOptions as CSharpCompilationOptions;
+            compopt = compopt ?? new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+            OutputKind kind;
+            switch (properties["OutputType"].Value)
+            {
+                case "Exe":
+                    kind = OutputKind.ConsoleApplication;
+                    break;
+                case "Library":
+                    kind = OutputKind.DynamicallyLinkedLibrary;
+                    break;
+                default:
+                    kind = OutputKind.DynamicallyLinkedLibrary;
+                    break;
+            }
+            roslynProject = roslynProject.WithCompilationOptions(compopt.WithOutputKind(kind).WithAllowUnsafe(true));
+            var parseopt = roslynProject.ParseOptions as CSharpParseOptions;
+            roslynProject = roslynProject.WithParseOptions(parseopt.WithPreprocessorSymbols(preprocessorSymbols));
+            if (!ws.TryApplyChanges(roslynProject.Solution))
+            {
+                throw new InvalidOperationException("failed to apply solution changes to workspace");
+            }
+            return ws;
+        }
         public static async Task<Compilation> GetCompilationFromProject(string csprojPath, params string[] preprocessorSymbols)
         {
-            var analyzerOptions = new AnalyzerManagerOptions();
-            // analyzerOptions.LogWriter = Console.Out;
+            var build = await GetBuildResult(csprojPath, preprocessorSymbols).ConfigureAwait(false);
 
-            var manager = new AnalyzerManager();
-            var projectAnalyzer = manager.GetProject(csprojPath); // addproj
-            // projectAnalyzer.AddBuildLogger(new Microsoft.Build.Logging.ConsoleLogger(Microsoft.Build.Framework.LoggerVerbosity.Minimal));
+            using (var workspace = GetWorkspaceFromBuild(build, preprocessorSymbols))
+            {
+                workspace.WorkspaceFailed += WorkSpaceFailed;
+                var project = workspace.CurrentSolution.Projects.First();
+                project = project
+                    .WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols))
+                    .WithCompilationOptions((project.CompilationOptions as CSharpCompilationOptions).WithAllowUnsafe(true));
 
-            var workspace = await manager.GetWorkspaceWithPreventBuildEventAsync().ConfigureAwait(false);
-
-            workspace.WorkspaceFailed += WorkSpaceFailed;
-            var project = workspace.CurrentSolution.Projects.First();
-            project = project
-                .WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols))
-                .WithCompilationOptions((project.CompilationOptions as CSharpCompilationOptions).WithAllowUnsafe(true));
-
-            var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
-            return compilation;
+                var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
+                return compilation;
+            }
         }
 
         private static void WorkSpaceFailed(object sender, WorkspaceDiagnosticEventArgs e)
         {
             Console.WriteLine(e);
-        }
-
-        // WIP function for getting Roslyn's workspace from csproj
-        public static async Task<AdhocWorkspace> GetWorkspaceWithPreventBuildEventAsync(this AnalyzerManager manager)
-        {
-            var projPath = manager.Projects.First().Value.ProjectFile.Path;
-            var ws = new AdhocWorkspace();
-            foreach (var result in await GetAnalyzerResults(manager, projPath))
-            {
-                // getting only successful build
-                if (result.Succeeded)
-                {
-                    result.AddToWorkspace(ws);
-                }
-            }
-            return ws;
-        }
-
-        public static AdhocWorkspace GetWorkspace(this AnalyzerManager manager, EnvironmentOptions envOptions)
-        {
-            // Run builds in parallel
-            List<AnalyzerResult> results = manager.Projects.Values
-                .AsParallel()
-                .Select(p => p.Build(envOptions).FirstOrDefault()) // with envoption
-                .Where(x => x != null)
-                .ToList();
-
-            // Add each result to a new workspace
-            AdhocWorkspace workspace = new AdhocWorkspace();
-            foreach (AnalyzerResult result in results)
-            {
-                result.AddToWorkspace(workspace);
-            }
-            return workspace;
         }
 
         public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
