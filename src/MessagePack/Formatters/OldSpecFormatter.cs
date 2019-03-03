@@ -18,7 +18,8 @@ namespace MessagePack.Formatters
 
         public DateTime Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            return reader.ReadDateTime();
+            var dateData = reader.ReadInt64();
+            return DateTime.FromBinary(dateData);
         }
     }
 
