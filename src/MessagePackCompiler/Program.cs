@@ -124,7 +124,7 @@ namespace MessagePackCompiler
                     }
                     else
                     {
-                        var fname = Path.GetFileNameWithoutExtension(output) + "." + multioutSymbol + ".cs";
+                        var fname = Path.GetFileNameWithoutExtension(output) + "." + MultiSymbolToSafeFilePath(multioutSymbol) + ".cs";
                         var text = $"#if {multioutSymbol}" + Environment.NewLine + sb.ToString() + Environment.NewLine + "#endif";
                         await OutputAsync(Path.Combine(Path.GetDirectoryName(output), fname), text, Context.CancellationToken);
                     }
@@ -192,7 +192,7 @@ namespace MessagePackCompiler
             else
             {
                 text = $"#if {multipleOutSymbol}" + Environment.NewLine + text + Environment.NewLine + "#endif";
-                return OutputAsync(Path.Combine(dir, multipleOutSymbol, $"{ns}_{name}".Replace(".", "_").Replace("global::", "") + ".cs"), text, cancellationToken);
+                return OutputAsync(Path.Combine(dir, MultiSymbolToSafeFilePath(multipleOutSymbol), $"{ns}_{name}".Replace(".", "_").Replace("global::", "") + ".cs"), text, cancellationToken);
             }
         }
 
@@ -210,6 +210,11 @@ namespace MessagePackCompiler
             }
 
             return System.IO.File.WriteAllTextAsync(path, text, Encoding.UTF8, cancellationToken);
+        }
+
+        static string MultiSymbolToSafeFilePath(string symbol)
+        {
+            return symbol.Replace("!", "NOT_").Replace("(", "").Replace(")", "").Replace("||", "_OR_").Replace("&&", "_AND_");
         }
     }
 }
