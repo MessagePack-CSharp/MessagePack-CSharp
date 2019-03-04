@@ -71,28 +71,28 @@ namespace MessagePack.Formatters
                         writer.Write((char)value);
                         return;
                     case 2:
-                        writer.Write((sbyte)value);
+                        writer.WriteInt8((sbyte)value);
                         return;
                     case 3:
-                        writer.Write((byte)value);
+                        writer.WriteUInt8((byte)value);
                         return;
                     case 4:
-                        writer.Write((Int16)value);
+                        writer.WriteInt16((Int16)value);
                         return;
                     case 5:
-                        writer.Write((UInt16)value);
+                        writer.WriteUInt16((UInt16)value);
                         return;
                     case 6:
-                        writer.Write((Int32)value);
+                        writer.WriteInt32((Int32)value);
                         return;
                     case 7:
-                        writer.Write((UInt32)value);
+                        writer.WriteUInt32((UInt32)value);
                         return;
                     case 8:
-                        writer.Write((Int64)value);
+                        writer.WriteInt64((Int64)value);
                         return;
                     case 9:
-                        writer.Write((UInt64)value);
+                        writer.WriteUInt64((UInt64)value);
                         return;
                     case 10:
                         writer.Write((Single)value);
@@ -126,28 +126,28 @@ namespace MessagePack.Formatters
                     switch (code2)
                     {
                         case 2:
-                            writer.Write((sbyte)value);
+                            writer.WriteInt8((sbyte)value);
                             return;
                         case 3:
-                            writer.Write((byte)value);
+                            writer.WriteUInt8((byte)value);
                             return;
                         case 4:
-                            writer.Write((Int16)value);
+                            writer.WriteInt16((Int16)value);
                             return;
                         case 5:
-                            writer.Write((UInt16)value);
+                            writer.WriteUInt16((UInt16)value);
                             return;
                         case 6:
-                            writer.Write((Int32)value);
+                            writer.WriteInt32((Int32)value);
                             return;
                         case 7:
-                            writer.Write((UInt32)value);
+                            writer.WriteUInt32((UInt32)value);
                             return;
                         case 8:
-                            writer.Write((Int64)value);
+                            writer.WriteInt64((Int64)value);
                             return;
                         case 9:
-                            writer.Write((UInt64)value);
+                            writer.WriteUInt64((UInt64)value);
                             return;
                         default:
                             break;
