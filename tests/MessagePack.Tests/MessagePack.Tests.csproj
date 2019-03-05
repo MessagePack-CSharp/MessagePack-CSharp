@@ -29,4 +29,20 @@
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="MessagePackReaderTests.ReadInt.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MessagePackReaderTests.ReadInt.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="MessagePackReaderTests.ReadInt.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MessagePackReaderTests.ReadInt.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>
