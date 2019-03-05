@@ -1052,27 +1052,23 @@ namespace MessagePack.Internal
 
         static bool IsOptimizeTargetType(Type type)
         {
-            if (type == typeof(Int16)
-             || type == typeof(Int32)
-             || type == typeof(Int64)
-             || type == typeof(UInt16)
-             || type == typeof(UInt32)
-             || type == typeof(UInt64)
-             || type == typeof(Single)
-             || type == typeof(Double)
-             || type == typeof(bool)
-             || type == typeof(byte)
-             || type == typeof(sbyte)
-             || type == typeof(char)
-             // not includes DateTime and String and Binary.
-             //|| type == typeof(DateTime)
-             //|| type == typeof(string)
-             //|| type == typeof(byte[])
-             )
-            {
-                return true;
-            }
-            return false;
+            return type == typeof(Int16)
+                || type == typeof(Int32)
+                || type == typeof(Int64)
+                || type == typeof(UInt16)
+                || type == typeof(UInt32)
+                || type == typeof(UInt64)
+                || type == typeof(Single)
+                || type == typeof(Double)
+                || type == typeof(bool)
+                || type == typeof(byte)
+                || type == typeof(sbyte)
+                || type == typeof(char)
+                || type == typeof(string)
+                || type == typeof(byte[])
+                // Do not include types that resolvers are allowed to modify.
+                ////|| type == typeof(DateTime) // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
+            ;
         }
 
         // EmitInfos...
