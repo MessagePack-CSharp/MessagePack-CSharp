@@ -5,15 +5,15 @@ namespace MessagePack.Formatters
     public sealed class NullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
-        public int Serialize(ref byte[] bytes, int offset, T? value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, T? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
             {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
             }
             else
             {
-                return formatterResolver.GetFormatterWithVerify<T>().Serialize(ref bytes, offset, value.Value, formatterResolver);
+                formatterResolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, formatterResolver);
             }
         }
 
@@ -41,15 +41,15 @@ namespace MessagePack.Formatters
             this.underlyingFormatter = underlyingFormatter;
         }
 
-        public int Serialize(ref byte[] bytes, int offset, T? value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, T? value, IFormatterResolver formatterResolver)
         {
             if (value == null)
             {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
             }
             else
             {
-                return underlyingFormatter.Serialize(ref bytes, offset, value.Value, formatterResolver);
+                underlyingFormatter.Serialize(ref writer, value.Value, formatterResolver);
             }
         }
 

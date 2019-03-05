@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using MessagePack.Formatters;
-using MessagePack.Internal;
+using Nerdbank.Streams;
 
 namespace MessagePack
 {
@@ -14,17 +14,23 @@ namespace MessagePack
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
-        public string SerializeToJson<T>(T obj)
+        public void SerializeToJson<T>(TextWriter textWriter, T obj, IFormatterResolver resolver = null)
         {
-            return ConvertToJson(Serialize(obj));
+            var msgpackWriter = new MessagePackWriter();
+            Serialize(ref msgpackWriter, obj, resolver);
+            msgpackWriter.Flush();
+            var msgpackReader = new MessagePackReader(msgpackWriter.WrittenBytes);
+            ConvertToJson(ref msgpackReader, textWriter);
         }
 
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
-        public string SerializeToJson<T>(T obj, IFormatterResolver resolver)
+        public string SerializeToJson<T>(T obj, IFormatterResolver resolver = null)
         {
-            return ConvertToJson(Serialize(obj, resolver));
+            var writer = new StringWriter();
+            SerializeToJson(writer, obj, resolver);
+            return writer.ToString();
         }
 
         /// <summary>
@@ -56,44 +62,29 @@ namespace MessagePack
             ToJsonCore(ref reader, jsonWriter);
         }
 
-        public byte[] ConvertFromJson(string str)
+        /// <summary>
+        /// From Json String to MessagePack binary
+        /// </summary>
+        public void ConvertFromJson(string str, ref MessagePackWriter writer)
         {
             using (var sr = new StringReader(str))
             {
-                return ConvertFromJson(sr);
+                ConvertFromJson(sr, ref writer);
             }
         }
 
         /// <summary>
         /// From Json String to MessagePack binary
         /// </summary>
-        public virtual byte[] ConvertFromJson(TextReader reader)
+        public virtual void ConvertFromJson(TextReader reader, ref MessagePackWriter writer)
         {
-            var offset = 0;
-            byte[] binary = null;
             using (var jr = new TinyJsonReader(reader, false))
             {
-                FromJsonCore(jr, ref binary, ref offset);
+                FromJsonCore(jr, ref writer);
             }
-            MessagePackBinary.FastResize(ref binary, offset);
-            return binary;
         }
 
-        /// <summary>
-        /// return buffer is from memory pool, be careful to use. 
-        /// </summary>
-        internal static ArraySegment<byte> FromJsonUnsafe(TextReader reader)
-        {
-            var offset = 0;
-            byte[] binary = InternalMemoryPool.GetBuffer();  // from memory pool.
-            using (var jr = new TinyJsonReader(reader, false))
-            {
-                FromJsonCore(jr, ref binary, ref offset);
-            }
-            return new ArraySegment<byte>(binary, 0, offset);
-        }
-
-        static uint FromJsonCore(TinyJsonReader jr, ref byte[] binary, ref int offset)
+        private static uint FromJsonCore(TinyJsonReader jr, ref MessagePackWriter writer)
         {
             uint count = 0;
             while (jr.Read())
@@ -103,62 +94,66 @@ namespace MessagePack
                     case TinyJsonToken.None:
                         break;
                     case TinyJsonToken.StartObject:
-                        {
-                            var startOffset = offset;
-                            offset += 5;
-                            var mapCount = FromJsonCore(jr, ref binary, ref offset);
-                            mapCount = mapCount / 2; // remove propertyname string count.
-                            MessagePackBinary.WriteMapHeaderForceMap32Block(ref binary, startOffset, mapCount);
-                            count++;
-                            break;
-                        }
+                        // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
+                        var scratchWriter = writer.Clone();
+                        var mapCount = FromJsonCore(jr, ref scratchWriter);
+                        scratchWriter.Flush();
+
+                        mapCount = mapCount / 2; // remove propertyname string count.
+                        writer.WriteMapHeader(mapCount);
+                        writer.WriteRaw(scratchWriter.WrittenBytes);
+
+                        count++;
+                        break;
                     case TinyJsonToken.EndObject:
                         return count; // break
                     case TinyJsonToken.StartArray:
-                        {
-                            var startOffset = offset;
-                            offset += 5;
-                            var arrayCount = FromJsonCore(jr, ref binary, ref offset);
-                            MessagePackBinary.WriteArrayHeaderForceArray32Block(ref binary, startOffset, arrayCount);
-                            count++;
-                            break;
-                        }
+                        // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
+                        scratchWriter = writer.Clone();
+                        var arrayCount = FromJsonCore(jr, ref scratchWriter);
+                        scratchWriter.Flush();
+
+                        writer.WriteArrayHeader(arrayCount);
+                        writer.WriteRaw(scratchWriter.WrittenBytes);
+
+                        count++;
+                        break;
                     case TinyJsonToken.EndArray:
                         return count; // break
                     case TinyJsonToken.Number:
                         var v = jr.ValueType;
                         if (v == ValueType.Double)
                         {
-                            offset += MessagePackBinary.WriteDouble(ref binary, offset, jr.DoubleValue);
+                            writer.Write(jr.DoubleValue);
                         }
                         else if (v == ValueType.Long)
                         {
-                            offset += MessagePackBinary.WriteInt64(ref binary, offset, jr.LongValue);
+                            writer.Write(jr.LongValue);
                         }
                         else if (v == ValueType.ULong)
                         {
-                            offset += MessagePackBinary.WriteUInt64(ref binary, offset, jr.ULongValue);
+                            writer.Write(jr.ULongValue);
                         }
                         else if (v == ValueType.Decimal)
                         {
-                            offset += DecimalFormatter.Instance.Serialize(ref binary, offset, jr.DecimalValue, null);
+                            DecimalFormatter.Instance.Serialize(ref writer, jr.DecimalValue, null);
                         }
                         count++;
                         break;
                     case TinyJsonToken.String:
-                        offset += MessagePackBinary.WriteString(ref binary, offset, jr.StringValue);
+                        writer.Write(jr.StringValue);
                         count++;
                         break;
                     case TinyJsonToken.True:
-                        offset += MessagePackBinary.WriteBoolean(ref binary, offset, true);
+                        writer.Write(true);
                         count++;
                         break;
                     case TinyJsonToken.False:
-                        offset += MessagePackBinary.WriteBoolean(ref binary, offset, false);
+                        writer.Write(false);
                         count++;
                         break;
                     case TinyJsonToken.Null:
-                        offset += MessagePackBinary.WriteNil(ref binary, offset);
+                        writer.WriteNil();
                         count++;
                         break;
                     default:

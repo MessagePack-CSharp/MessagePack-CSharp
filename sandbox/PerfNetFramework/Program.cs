@@ -113,7 +113,7 @@ namespace PerfNetFramework
             deserializing = false;
 
             byte[] data = null;
-            byte[] data0 = null;
+            var data0 = new Nerdbank.Streams.Sequence<byte>();
             byte[] data1 = null;
             byte[] data2 = null;
             byte[] data3 = null;
@@ -124,7 +124,8 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data0 = DefaultSerializer.Serialize(target);
+                    data0.Reset();
+                    DefaultSerializer.Serialize(data0, target);
                 }
             }
 

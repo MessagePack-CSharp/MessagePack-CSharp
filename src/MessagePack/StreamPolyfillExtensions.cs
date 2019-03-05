@@ -80,6 +80,30 @@ namespace MessagePack
                 }
             }
         }
+
+        /// <summary>
+        /// Writes a span to the stream.
+        /// </summary>
+        /// <param name="stream">The stream to write to.</param>
+        /// <param name="buffer">The buffer to write.</param>
+        internal static void Write(this Stream stream, ReadOnlySpan<byte> buffer)
+        {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+
+            var sharedBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
+            try
+            {
+                buffer.CopyTo(sharedBuffer);
+                stream.Write(sharedBuffer, 0, buffer.Length);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(sharedBuffer);
+            }
+        }
     }
 #endif
 }

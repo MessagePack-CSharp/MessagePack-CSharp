@@ -120,24 +120,6 @@ namespace MessagePack.Tests.ExtensionTests
             decompress6.IsStructuralEqual(originalData);
         }
 
-        [Fact]
-        public void SerializeToBlock()
-        {
-            var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();
-
-            byte[] bytes = null;
-
-            var len = lz4Serializer.SerializeToBlock(ref bytes, 0, originalData, lz4Serializer.DefaultResolver);
-            var lz4Data = lz4Serializer.Serialize(originalData);
-
-            len.Is(lz4Data.Length);
-
-            for (int i = 0; i < len; i++)
-            {
-                if (bytes[i] != lz4Data[i]) throw new AssertException("not same");
-            }
-        }
-
         private static MessagePackType PeekMessagePackType(byte[] msgpackBuffer)
         {
             var reader = new MessagePackReader(new ReadOnlySequence<byte>(msgpackBuffer));

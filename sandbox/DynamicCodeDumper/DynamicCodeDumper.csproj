@@ -16,6 +16,9 @@
     <Compile Include="..\..\src\MessagePack\Formatters\NullableFormatter.cs">
       <Link>Code\NullableFormatter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Formatters\DateTimeFormatters.cs">
+      <Link>Code\DateTimeFormatters.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\IFormatterResolver.cs">
       <Link>Code\IFormatterResolver.cs</Link>
     </Compile>
@@ -70,6 +73,9 @@
     <Compile Include="..\..\src\MessagePack\MessagePackReader.Integers.cs">
       <Link>Code\MessagePackReader.Integers.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
+      <Link>Code\MessagePackWriter.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\SequenceReader.cs">
       <Link>Code\SequenceReader.cs</Link>
     </Compile>
@@ -84,6 +90,9 @@
     </Compile>
     <Compile Include="..\..\src\MessagePack\Nil.cs">
       <Link>Code\Nil.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Utilities.cs">
+      <Link>Code\Utilities.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Resolvers\DynamicEnumResolver.cs">
       <Link>Code\DynamicEnumResolver.cs</Link>

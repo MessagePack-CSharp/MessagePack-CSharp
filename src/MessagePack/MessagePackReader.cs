@@ -476,22 +476,9 @@ namespace MessagePack
         /// <see cref="MessagePackCode.FixExt8"/>, or
         /// <see cref="MessagePackCode.Ext8"/>.
         /// Expects extension type code <see cref="ReservedMessagePackExtensionTypeCode.DateTime"/>.
-        /// If the reader is not positioned at an extension, a .NET native <see cref="DateTime"/> binary format will be read
-        /// as an integer (this format is written in old spec mode).
         /// </summary>
         /// <returns>The value.</returns>
-        public DateTime ReadDateTime()
-        {
-            if (this.NextMessagePackType != MessagePackType.Extension)
-            {
-                // OldSpec compatibility
-                return DateTime.FromBinary(this.ReadInt64());
-            }
-            else
-            {
-                return ReadDateTime(ReadExtensionFormatHeader());
-            }
-        }
+        public DateTime ReadDateTime() => ReadDateTime(ReadExtensionFormatHeader());
 
         /// <summary>
         /// Reads a <see cref="DateTime"/> from a value encoded with

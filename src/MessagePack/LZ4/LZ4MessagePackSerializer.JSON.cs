@@ -1,11 +1,4 @@
-﻿using MessagePack.Formatters;
-using MessagePack.Internal;
-using MessagePack.LZ4;
-using System;
-using System.Buffers;
-using System.Globalization;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 
 namespace MessagePack
 {
@@ -34,10 +27,12 @@ namespace MessagePack
         /// <summary>
         /// From Json String to LZ4MessagePack binary
         /// </summary>
-        public override byte[] ConvertFromJson(TextReader reader)
+        public override void ConvertFromJson(TextReader reader, ref MessagePackWriter writer)
         {
-            var buffer = MessagePackSerializer.FromJsonUnsafe(reader); // offset is guranteed from 0
-            return LZ4MessagePackSerializer.ToLZ4Binary(buffer);
+            var scratchWriter = writer.Clone();
+            base.ConvertFromJson(reader, ref scratchWriter);
+            scratchWriter.Flush();
+            ToLZ4BinaryCore(scratchWriter.WrittenBytes, ref writer);
         }
     }
 }
