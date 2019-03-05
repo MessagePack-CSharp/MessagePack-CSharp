@@ -16,11 +16,14 @@ namespace MessagePack
         /// </summary>
         public void SerializeToJson<T>(TextWriter textWriter, T obj, IFormatterResolver resolver = null)
         {
-            var msgpackWriter = new MessagePackWriter();
-            Serialize(ref msgpackWriter, obj, resolver);
-            msgpackWriter.Flush();
-            var msgpackReader = new MessagePackReader(msgpackWriter.WrittenBytes);
-            ConvertToJson(ref msgpackReader, textWriter);
+            using (var sequence = new Sequence<byte>())
+            {
+                var msgpackWriter = new MessagePackWriter(sequence);
+                Serialize(ref msgpackWriter, obj, resolver);
+                msgpackWriter.Flush();
+                var msgpackReader = new MessagePackReader(sequence.AsReadOnlySequence);
+                ConvertToJson(ref msgpackReader, textWriter);
+            }
         }
 
         /// <summary>
@@ -95,13 +98,16 @@ namespace MessagePack
                         break;
                     case TinyJsonToken.StartObject:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        var scratchWriter = writer.Clone();
-                        var mapCount = FromJsonCore(jr, ref scratchWriter);
-                        scratchWriter.Flush();
+                        using (var scratch = new Sequence<byte>())
+                        {
+                            var scratchWriter = writer.Clone(scratch);
+                            var mapCount = FromJsonCore(jr, ref scratchWriter);
+                            scratchWriter.Flush();
 
-                        mapCount = mapCount / 2; // remove propertyname string count.
-                        writer.WriteMapHeader(mapCount);
-                        writer.WriteRaw(scratchWriter.WrittenBytes);
+                            mapCount = mapCount / 2; // remove propertyname string count.
+                            writer.WriteMapHeader(mapCount);
+                            writer.WriteRaw(scratch.AsReadOnlySequence);
+                        }
 
                         count++;
                         break;
@@ -109,12 +115,15 @@ namespace MessagePack
                         return count; // break
                     case TinyJsonToken.StartArray:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        scratchWriter = writer.Clone();
-                        var arrayCount = FromJsonCore(jr, ref scratchWriter);
-                        scratchWriter.Flush();
+                        using (var scratch = new Sequence<byte>())
+                        {
+                            var scratchWriter = writer.Clone(scratch);
+                            var arrayCount = FromJsonCore(jr, ref scratchWriter);
+                            scratchWriter.Flush();
 
-                        writer.WriteArrayHeader(arrayCount);
-                        writer.WriteRaw(scratchWriter.WrittenBytes);
+                            writer.WriteArrayHeader(arrayCount);
+                            writer.WriteRaw(scratch.AsReadOnlySequence);
+                        }
 
                         count++;
                         break;

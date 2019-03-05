@@ -46,10 +46,13 @@ namespace MessagePack
         /// </summary>
         public override void Serialize<T>(ref MessagePackWriter writer, T value, IFormatterResolver resolver = null)
         {
-            var scratchWriter = writer.Clone();
-            base.Serialize(ref scratchWriter, value, resolver);
-            scratchWriter.Flush();
-            ToLZ4BinaryCore(scratchWriter.WrittenBytes, ref writer);
+            using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+            {
+                var scratchWriter = writer.Clone(scratch);
+                base.Serialize(ref scratchWriter, value, resolver);
+                scratchWriter.Flush();
+                ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+            }
         }
 
         public override T Deserialize<T>(ref MessagePackReader reader, IFormatterResolver resolver = null)

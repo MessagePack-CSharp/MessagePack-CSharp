@@ -60,9 +60,12 @@ namespace DynamicCodeDumper
 
                 //DynamicContractlessObjectResolver.Instance.GetFormatter<EntityBase>();
 
-                var sequenceWriter = new MessagePackWriter();
-                f.Serialize(ref sequenceWriter, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, null);
-                sequenceWriter.Flush();
+                using (var sequence = new Sequence<byte>())
+                {
+                    var sequenceWriter = new MessagePackWriter(sequence);
+                    f.Serialize(ref sequenceWriter, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, null);
+                    sequenceWriter.Flush();
+                }
             }
             catch (Exception ex)
             {

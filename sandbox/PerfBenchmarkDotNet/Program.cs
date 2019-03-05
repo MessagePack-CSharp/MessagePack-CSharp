@@ -53,6 +53,7 @@ namespace PerfBenchmarkDotNet
                 typeof(ImproveStringKeySerializeBenchmark),
                 typeof(MessagePackReaderBenchmark),
                 typeof(MessagePackWriterBenchmark),
+                typeof(SpanBenchmarks),
             });
 
             // args = new[] { "0" };

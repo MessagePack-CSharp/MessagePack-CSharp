@@ -1,12 +1,12 @@
-﻿using System;
+﻿using MessagePack.Formatters;
+using MessagePack.Resolvers;
+using Nerdbank.Streams;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MessagePack.Formatters;
-using MessagePack.Resolvers;
-using Nerdbank.Streams;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -154,19 +154,22 @@ namespace MessagePack.Tests
 
             var serializer = referenceContext.GetSerializer<string>();
 
-            var oldSpecWriter = new MessagePackWriter() { OldSpec = true };
-            defaultSerializer.Serialize(ref oldSpecWriter, data);
-            oldSpecWriter.Flush();
-            var a = oldSpecWriter.WrittenBytes.ToArray();
-            var b = serializer.PackSingleObject(data);
+            using (var sequence = new Sequence<byte>())
+            {
+                var oldSpecWriter = new MessagePackWriter(sequence) { OldSpec = true };
+                defaultSerializer.Serialize(ref oldSpecWriter, data);
+                oldSpecWriter.Flush();
+                var a = sequence.AsReadOnlySequence.ToArray();
+                var b = serializer.PackSingleObject(data);
 
-            a.Is(b);
+                a.Is(b);
 
-            var oldSpecReader = new MessagePackReader(oldSpecWriter.WrittenBytes);
-            var r1 = defaultSerializer.Deserialize<string>(ref oldSpecReader);
-            var r2 = serializer.UnpackSingleObject(b);
+                var oldSpecReader = new MessagePackReader(sequence.AsReadOnlySequence);
+                var r1 = defaultSerializer.Deserialize<string>(ref oldSpecReader);
+                var r2 = serializer.UnpackSingleObject(b);
 
-            r1.Is(r2);
+                r1.Is(r2);
+            }
         }
 
 
@@ -182,19 +185,22 @@ namespace MessagePack.Tests
 
             var serializer = referenceContext.GetSerializer<byte[]>();
 
-            var oldSpecWriter = new MessagePackWriter() { OldSpec = true };
-            defaultSerializer.Serialize(ref oldSpecWriter, data);
-            oldSpecWriter.Flush();
-            var a = oldSpecWriter.WrittenBytes.ToArray();
-            var b = serializer.PackSingleObject(data);
+            using (var sequence = new Sequence<byte>())
+            {
+                var oldSpecWriter = new MessagePackWriter(sequence) { OldSpec = true };
+                defaultSerializer.Serialize(ref oldSpecWriter, data);
+                oldSpecWriter.Flush();
+                var a = sequence.AsReadOnlySequence.ToArray();
+                var b = serializer.PackSingleObject(data);
 
-            a.Is(b);
+                a.Is(b);
 
-            var oldSpecReader = new MessagePackReader(oldSpecWriter.WrittenBytes);
-            var r1 = defaultSerializer.Deserialize<byte[]>(ref oldSpecReader);
-            var r2 = serializer.UnpackSingleObject(b);
+                var oldSpecReader = new MessagePackReader(sequence.AsReadOnlySequence);
+                var r1 = defaultSerializer.Deserialize<byte[]>(ref oldSpecReader);
+                var r2 = serializer.UnpackSingleObject(b);
 
-            r1.Is(r2);
+                r1.Is(r2);
+            }
         }
     }
 }

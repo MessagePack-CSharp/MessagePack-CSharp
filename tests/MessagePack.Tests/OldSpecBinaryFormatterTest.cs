@@ -23,12 +23,13 @@ namespace MessagePack.Tests
         public void SerializeSimpleByteArray(int arrayLength)
         {
             var sourceBytes = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte)i)).ToArray(); // long byte array
-            var messagePackBytesWriter = new MessagePackWriter() { OldSpec = true };
+            var messagePackBytes = new Sequence<byte>();
+            var messagePackBytesWriter = new MessagePackWriter(messagePackBytes) { OldSpec = true };
             serializer.Serialize(ref messagePackBytesWriter, sourceBytes);
             messagePackBytesWriter.Flush();
-            Assert.NotEqual(0, messagePackBytesWriter.WrittenBytes.Length);
+            Assert.NotEqual(0, messagePackBytes.Length);
 
-            var deserializedBytes = DeserializeByClassicMsgPack<byte[]>(messagePackBytesWriter.WrittenBytes.ToArray(), MsgPack.Serialization.SerializationMethod.Array);
+            var deserializedBytes = DeserializeByClassicMsgPack<byte[]>(messagePackBytes.AsReadOnlySequence.ToArray(), MsgPack.Serialization.SerializationMethod.Array);
             Assert.Equal(sourceBytes, deserializedBytes);
         }
 
@@ -36,13 +37,14 @@ namespace MessagePack.Tests
         public void SerializeNil()
         {
             byte[] sourceBytes = null;
-            var messagePackBytesWriter = new MessagePackWriter() { OldSpec = true };
+            var messagePackBytes = new Sequence<byte>();
+            var messagePackBytesWriter = new MessagePackWriter(messagePackBytes) { OldSpec = true };
             serializer.Serialize(ref messagePackBytesWriter, sourceBytes, StandardResolver.Instance);
             messagePackBytesWriter.Flush();
-            Assert.Equal(1, messagePackBytesWriter.WrittenBytes.Length);
-            Assert.Equal(MessagePackCode.Nil, messagePackBytesWriter.WrittenBytes.First.Span[0]); 
+            Assert.Equal(1, messagePackBytes.Length);
+            Assert.Equal(MessagePackCode.Nil, messagePackBytes.AsReadOnlySequence.First.Span[0]); 
 
-            var deserializedBytes = DeserializeByClassicMsgPack<byte[]>(messagePackBytesWriter.WrittenBytes.ToArray(), MsgPack.Serialization.SerializationMethod.Array);
+            var deserializedBytes = DeserializeByClassicMsgPack<byte[]>(messagePackBytes.AsReadOnlySequence.ToArray(), MsgPack.Serialization.SerializationMethod.Array);
             Assert.Null(deserializedBytes);
         }
 

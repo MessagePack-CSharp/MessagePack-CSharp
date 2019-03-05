@@ -29,10 +29,13 @@ namespace MessagePack
         /// </summary>
         public override void ConvertFromJson(TextReader reader, ref MessagePackWriter writer)
         {
-            var scratchWriter = writer.Clone();
-            base.ConvertFromJson(reader, ref scratchWriter);
-            scratchWriter.Flush();
-            ToLZ4BinaryCore(scratchWriter.WrittenBytes, ref writer);
+            using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+            {
+                var scratchWriter = writer.Clone(scratch);
+                base.ConvertFromJson(reader, ref scratchWriter);
+                scratchWriter.Flush();
+                ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+            }
         }
     }
 }
