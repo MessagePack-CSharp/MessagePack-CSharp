@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Numerics;
+using System.Buffers;
+using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -9,7 +10,7 @@ namespace MessagePack.Tests
     {
         private const sbyte ByteNegativeValue = -3;
         private const byte BytePositiveValue = 3;
-        private static readonly ReadOnlyMemory<byte> StringEncodedAsFixStr = Encode(b => MessagePackBinary.WriteString(ref b, 0, "hi"));
+        private static readonly ReadOnlySequence<byte> StringEncodedAsFixStr = Encode((ref MessagePackWriter w) => w.Write("hi"));
         private readonly ITestOutputHelper logger;
 
         public MessagePackReaderTests(ITestOutputHelper logger)
@@ -22,7 +23,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 Assert.Equal((float)(double)value, new MessagePackReader(encoded).ReadSingle());
             }
         }
@@ -30,15 +31,25 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadSingle_CanReadDouble()
         {
-            var reader = new MessagePackReader(Encode(b => MessagePackBinary.WriteDouble(ref b, 0, 1.23)));
+            var reader = new MessagePackReader(Encode((ref MessagePackWriter w) => w.Write(1.23)));
             Assert.Equal(1.23f, reader.ReadSingle());
         }
 
-        private static ReadOnlyMemory<byte> Encode(Func<byte[], int> writer)
+        private delegate void WriterEncoder(ref MessagePackWriter writer);
+
+        private static ReadOnlySequence<byte> Encode(WriterEncoder cb)
         {
-            byte[] bytes = new byte[100];
-            int byteCount = writer(bytes);
-            return bytes.AsMemory(0, byteCount);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            cb(ref writer);
+            writer.Flush();
+            return sequence.AsReadOnlySequence;
         }
+    }
+
+    internal static class MessagePackWriterExtensions
+    {
+        internal static void WriteByte(ref this MessagePackWriter writer, byte value) => writer.WriteUInt8(value);
+        internal static void WriteSByte(ref this MessagePackWriter writer, sbyte value) => writer.WriteInt8(value);
     }
 }
