@@ -345,15 +345,22 @@ namespace MessagePack
             switch (code)
             {
                 case MessagePackCode.Float32:
-                    byte* pScratch = stackalloc byte[4];
-                    Span<byte> scratch = new Span<byte>(pScratch, 4);
-                    ThrowInsufficientBufferUnless(this.reader.TryCopyTo(scratch));
+                    byte* pScratch32 = stackalloc byte[4];
+                    Span<byte> scratch32 = new Span<byte>(pScratch32, 4);
+                    ThrowInsufficientBufferUnless(this.reader.TryCopyTo(scratch32));
                     this.reader.Advance(4);
-                    var floatValue = new Float32Bits(scratch);
+                    var floatValue = new Float32Bits(scratch32);
                     return floatValue.Value;
+                case MessagePackCode.Float64:
+                    byte* pScratch64 = stackalloc byte[8];
+                    Span<byte> scratch64 = new Span<byte>(pScratch64, 8);
+                    ThrowInsufficientBufferUnless(this.reader.TryCopyTo(scratch64));
+                    this.reader.Advance(8);
+                    var doubleValue = new Float64Bits(scratch64);
+                    return (float)doubleValue.Value;
                 case MessagePackCode.Int8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteValue));
-                    return unchecked((sbyte)byteValue);
+                    ThrowInsufficientBufferUnless(this.reader.TryRead(out sbyte sbyteValue));
+                    return sbyteValue;
                 case MessagePackCode.Int16:
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortValue));
                     return shortValue;
@@ -364,17 +371,17 @@ namespace MessagePack
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longValue));
                     return longValue;
                 case MessagePackCode.UInt8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byteValue));
+                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteValue));
                     return byteValue;
                 case MessagePackCode.UInt16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out shortValue));
-                    return unchecked((ushort)shortValue);
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out ushort ushortValue));
+                    return ushortValue;
                 case MessagePackCode.UInt32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out intValue));
-                    return unchecked((uint)intValue);
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out uint uintValue));
+                    return uintValue;
                 case MessagePackCode.UInt64:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out longValue));
-                    return unchecked((ulong)longValue);
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out ulong ulongValue));
+                    return ulongValue;
                 default:
                     if (code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt)
                     {
