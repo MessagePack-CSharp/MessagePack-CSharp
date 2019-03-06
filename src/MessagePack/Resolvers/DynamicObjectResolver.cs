@@ -964,7 +964,7 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ret);
         }
 
-        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argByteSequence, ArgumentField argResolver)
+        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argReader, ArgumentField argResolver)
         {
             var member = info.MemberInfo;
             var t = member.Type;
@@ -972,27 +972,27 @@ namespace MessagePack.Internal
             if (emitter != null)
             {
                 emitter();
-                argByteSequence.EmitLdarg();
+                argReader.EmitLdarg();
                 argResolver.EmitLoad();
                 il.EmitCall(getDeserialize(t));
             }
             else if (IsOptimizeTargetType(t))
             {
-                argByteSequence.EmitLdarg();
+                argReader.EmitLdarg();
                 if (t == typeof(byte[]))
                 {
                     il.EmitCall(MessagePackReaderTypeInfo.ReadBytes);
                 }
                 else
                 {
-                    il.EmitCall(MessagePackReaderTypeInfo.TypeInfo.GetDeclaredMethods("Read" + t.Name).OrderByDescending(x => x.GetParameters().Length).First());
+                    il.EmitCall(MessagePackReaderTypeInfo.TypeInfo.GetDeclaredMethods("Read" + t.Name).First(x => x.GetParameters().Length == 0));
                 }
             }
             else
             {
                 argResolver.EmitLoad();
                 il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
-                argByteSequence.EmitLdarg();
+                argReader.EmitLdarg();
                 argResolver.EmitLoad();
                 il.EmitCall(getDeserialize(t));
             }
