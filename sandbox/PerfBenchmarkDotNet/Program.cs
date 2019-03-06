@@ -31,8 +31,8 @@ namespace PerfBenchmarkDotNet
 
             Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1));
 
-            //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
-            //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
+            //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1),
+            //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithIterationCount(1));
         }
     }
 
@@ -52,13 +52,14 @@ namespace PerfBenchmarkDotNet
                 typeof(GuidImprov),
                 typeof(ImproveStringKeySerializeBenchmark),
                 typeof(MessagePackReaderBenchmark),
+                typeof(MessagePackWriterBenchmark),
             });
 
             // args = new[] { "0" };
 #if !DEBUG
             switcher.Run(args);
 #else
-            // new TypelessBenchmark().MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes();
+            switcher.Run(args, new DebugInProcessConfig());
 #endif
         }
     }
@@ -430,8 +431,6 @@ namespace PerfBenchmarkDotNet
         }
     }
 
-
-
     [Config(typeof(BenchmarkConfig))]
     public class SerializeBenchmark
     {
@@ -802,33 +801,33 @@ namespace GeneratedFormatter
                 };
             }
 
-            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
             {
                 if (stringKeySerializerTarget == null)
                 {
-                    return MessagePackBinary.WriteNil(ref bytes, num);
+                    writer.WriteNil();
+                    return;
                 }
-                int num2 = num;
-                num += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, num, 9);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[0]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty1);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[1]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty2);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[2]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty3);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[3]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty4);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[4]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty5);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[5]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty6);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[6]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty7);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[7]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty8);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[8]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty9);
-                return num - num2;
+
+                writer.WriteMapHeader(9);
+                writer.WriteString(this.stringByteKeys[0]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty1);
+                writer.WriteString(this.stringByteKeys[1]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty2);
+                writer.WriteString(this.stringByteKeys[2]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty3);
+                writer.WriteString(this.stringByteKeys[3]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty4);
+                writer.WriteString(this.stringByteKeys[4]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty5);
+                writer.WriteString(this.stringByteKeys[5]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty6);
+                writer.WriteString(this.stringByteKeys[6]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty7);
+                writer.WriteString(this.stringByteKeys[7]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty8);
+                writer.WriteString(this.stringByteKeys[8]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty9);
             }
 
             public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
@@ -971,33 +970,33 @@ namespace GeneratedFormatter
                 };
             }
 
-            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
             {
                 if (stringKeySerializerTarget == null)
                 {
-                    return MessagePackBinary.WriteNil(ref bytes, num);
+                    writer.WriteNil();
+                    return;
                 }
-                int num2 = num;
-                num += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, num, 9);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[0]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty1);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[1]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty2);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[2]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty3);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[3]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty4);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[4]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty5);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[5]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty6);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[6]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty7);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[7]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty8);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[8]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty9);
-                return num - num2;
+
+                writer.WriteMapHeader(9);
+                writer.WriteString(this.stringByteKeys[0]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty1);
+                writer.WriteString(this.stringByteKeys[1]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty2);
+                writer.WriteString(this.stringByteKeys[2]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty3);
+                writer.WriteString(this.stringByteKeys[3]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty4);
+                writer.WriteString(this.stringByteKeys[4]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty5);
+                writer.WriteString(this.stringByteKeys[5]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty6);
+                writer.WriteString(this.stringByteKeys[6]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty7);
+                writer.WriteString(this.stringByteKeys[7]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty8);
+                writer.WriteString(this.stringByteKeys[8]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty9);
             }
 
             public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
@@ -1116,7 +1115,7 @@ namespace GeneratedFormatter
             }
 
 
-            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
             {
                 throw new NotImplementedException();
             }
@@ -1236,7 +1235,7 @@ namespace GeneratedFormatter
             }
 
 
-            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
             {
                 throw new NotImplementedException();
             }

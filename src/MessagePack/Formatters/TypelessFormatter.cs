@@ -22,7 +22,7 @@ namespace MessagePack.Formatters
 
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 
-        delegate int SerializeMethod(object dynamicContractlessFormatter, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
+        delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, IFormatterResolver resolver);
         delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, IFormatterResolver resolver);
 
         readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
@@ -94,7 +94,7 @@ namespace MessagePack.Formatters
 
         public TypelessFormatter()
         {
-            serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, ref byte[] p2, int p3, object p4, IFormatterResolver p5) => 0));
+            serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, ref MessagePackWriter p2, object p3, IFormatterResolver p4) => { }));
             deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object, DeserializeMethod>(null, (object p1, ref MessagePackReader p2, IFormatterResolver p3) => new object()));
         }
 
@@ -121,11 +121,12 @@ namespace MessagePack.Formatters
             }
         }
 
-        public int Serialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, object value, IFormatterResolver resolver)
         {
             if (value == null)
             {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
+                return;
             }
 
             var type = value.GetType();
@@ -152,7 +153,8 @@ namespace MessagePack.Formatters
 
             if (typeName == null)
             {
-                return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref bytes, offset, value, formatterResolver);
+                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref writer, value, resolver);
+                return;
             }
 
             // don't use GetOrAdd for avoid closure capture.
@@ -165,30 +167,28 @@ namespace MessagePack.Formatters
                     {
                         var ti = type.GetTypeInfo();
 
-                        var formatter = formatterResolver.GetFormatterDynamic(type);
+                        var formatter = resolver.GetFormatterDynamic(type);
                         if (formatter == null)
                         {
-                            throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolver:" + formatterResolver.GetType().Name);
+                            throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolver:" + resolver.GetType().Name);
                         }
 
                         var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                         var param0 = Expression.Parameter(typeof(object), "formatter");
-                        var param1 = Expression.Parameter(typeof(byte[]).MakeByRefType(), "bytes");
-                        var param2 = Expression.Parameter(typeof(int), "offset");
-                        var param3 = Expression.Parameter(typeof(object), "value");
-                        var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
+                        var param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
+                        var param2 = Expression.Parameter(typeof(object), "value");
+                        var param3 = Expression.Parameter(typeof(IFormatterResolver), "resolver");
 
-                        var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(byte[]).MakeByRefType(), typeof(int), type, typeof(IFormatterResolver) });
+                        var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(IFormatterResolver) });
 
                         var body = Expression.Call(
                             Expression.Convert(param0, formatterType),
                             serializeMethodInfo,
                             param1,
-                            param2,
-                            ti.IsValueType ? Expression.Unbox(param3, type) : Expression.Convert(param3, type),
-                            param4);
+                            ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                            param3);
 
-                        var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3, param4).Compile();
+                        var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
 
                         formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
                         serializers.TryAdd(type, formatterAndDelegate);
@@ -196,13 +196,14 @@ namespace MessagePack.Formatters
                 }
             }
 
+            // mark will be written at the end, when size is known
+            var scratchWriter = writer.Clone();
+            scratchWriter.WriteString(typeName);
+            formatterAndDelegate.Value(formatterAndDelegate.Key, ref scratchWriter, value, resolver);
+            scratchWriter.Flush();
+
             // mark as extension with code 100
-            var startOffset = offset;
-            offset += 6; // mark will be written at the end, when size is known
-            offset += MessagePackBinary.WriteStringBytes(ref bytes, offset, typeName);
-            offset += formatterAndDelegate.Value(formatterAndDelegate.Key, ref bytes, offset, value, formatterResolver);
-            MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block(ref bytes, startOffset, (sbyte)TypelessFormatter.ExtensionTypeCode, offset - startOffset - 6);
-            return offset - startOffset;
+            writer.WriteExtensionFormat(new ExtensionResult((sbyte)TypelessFormatter.ExtensionTypeCode, scratchWriter.WrittenBytes));
         }
 
         public object Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)

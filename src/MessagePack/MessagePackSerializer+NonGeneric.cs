@@ -16,8 +16,6 @@ namespace MessagePack
         /// </summary>
         public class NonGeneric
         {
-            private delegate int RawFormatterSerialize(MessagePackSerializer serializer, ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
-
             private static readonly Func<Type, CompiledMethods> CreateCompiledMethods;
             private static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
 
@@ -43,29 +41,14 @@ namespace MessagePack
             {
             }
 
-            public byte[] Serialize(Type type, object obj)
-            {
-                return GetOrAdd(type).serialize1.Invoke(this.serializer, obj);
-            }
-
-            public byte[] Serialize(Type type, object obj, IFormatterResolver resolver)
+            public byte[] Serialize(Type type, object obj, IFormatterResolver resolver = null)
             {
                 return GetOrAdd(type).serialize2.Invoke(this.serializer, obj, resolver);
             }
 
-            public void Serialize(Type type, Stream stream, object obj)
-            {
-                GetOrAdd(type).serialize3.Invoke(this.serializer, stream, obj);
-            }
-
-            public void Serialize(Type type, Stream stream, object obj, IFormatterResolver resolver)
+            public void Serialize(Type type, Stream stream, object obj, IFormatterResolver resolver = null)
             {
                 GetOrAdd(type).serialize4.Invoke(this.serializer, stream, obj, resolver);
-            }
-
-            public int Serialize(Type type, ref byte[] bytes, int offset, object value, IFormatterResolver resolver)
-            {
-                return GetOrAdd(type).serialize5.Invoke(this.serializer, ref bytes, offset, value, resolver);
             }
 
             public object Deserialize(Type type, byte[] bytes, int offset = 0, IFormatterResolver resolver = null)
@@ -90,11 +73,8 @@ namespace MessagePack
 
             private class CompiledMethods
             {
-                public readonly Func<MessagePackSerializer, object, byte[]> serialize1;
                 public readonly Func<MessagePackSerializer, object, IFormatterResolver, byte[]> serialize2;
-                public readonly Action<MessagePackSerializer, Stream, object> serialize3;
                 public readonly Action<MessagePackSerializer, Stream, object, IFormatterResolver> serialize4;
-                public readonly RawFormatterSerialize serialize5;
 
                 public readonly Func<MessagePackSerializer, byte[], int, IFormatterResolver, object> deserialize2;
                 public readonly Func<MessagePackSerializer, Stream, IFormatterResolver, object> deserialize4;
@@ -105,20 +85,6 @@ namespace MessagePack
                 {
                     var ti = type.GetTypeInfo();
                     var param0 = Expression.Parameter(typeof(MessagePackSerializer), "serializer");
-                    {
-                        // public static byte[] Serialize<T>(T obj)
-                        var serialize = GetMethod(type, new Type[] { null });
-
-                        var param1 = Expression.Parameter(typeof(object), "obj");
-
-                        var body = Expression.Call(
-                            param0,
-                            serialize,
-                            ti.IsValueType ? Expression.Unbox(param1, type) : Expression.Convert(param1, type));
-                        var lambda = Expression.Lambda<Func<MessagePackSerializer, object, byte[]>>(body, param0, param1).Compile();
-
-                        this.serialize1 = lambda;
-                    }
                     {
                         // public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
                         var serialize = GetMethod(type, new Type[] { null, typeof(IFormatterResolver) });
@@ -134,22 +100,6 @@ namespace MessagePack
                         var lambda = Expression.Lambda<Func<MessagePackSerializer, object, IFormatterResolver, byte[]>>(body, param0, param1, param2).Compile();
 
                         this.serialize2 = lambda;
-                    }
-                    {
-                        // public static void Serialize<T>(Stream stream, T obj)
-                        var serialize = GetMethod(type, new Type[] { typeof(Stream), null });
-
-                        var param1 = Expression.Parameter(typeof(Stream), "stream");
-                        var param2 = Expression.Parameter(typeof(object), "obj");
-
-                        var body = Expression.Call(
-                            param0,
-                            serialize,
-                            param1,
-                            ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type));
-                        var lambda = Expression.Lambda<Action<MessagePackSerializer, Stream, object>>(body, param0, param1, param2).Compile();
-
-                        this.serialize3 = lambda;
                     }
                     {
                         // public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
@@ -168,26 +118,6 @@ namespace MessagePack
                         var lambda = Expression.Lambda<Action<MessagePackSerializer, Stream, object, IFormatterResolver>>(body, param0, param1, param2, param3).Compile();
 
                         this.serialize4 = lambda;
-                    }
-                    {
-                        // delegate int RawFormatterSerialize(ref byte[] bytes, int offset, object value, IFormatterResolver formatterResolver);
-                        var serialize = GetMethod(type, new Type[] { typeof(byte[]).MakeByRefType(), typeof(int), null, typeof(IFormatterResolver) });
-
-                        var param1 = Expression.Parameter(typeof(byte[]).MakeByRefType(), "bytes");
-                        var param2 = Expression.Parameter(typeof(int), "offset");
-                        var param3 = Expression.Parameter(typeof(object), "value");
-                        var param4 = Expression.Parameter(typeof(IFormatterResolver), "formatterResolver");
-
-                        var body = Expression.Call(
-                            param0,
-                            serialize,
-                            param1,
-                            param2,
-                            ti.IsValueType ? Expression.Unbox(param3, type) : Expression.Convert(param3, type),
-                            param4);
-                        var lambda = Expression.Lambda<RawFormatterSerialize>(body, param0, param1, param2, param3, param4).Compile();
-
-                        this.serialize5 = lambda;
                     }
                     {
                         // public static T Deserialize<T>(byte[] bytes, int offset, IFormatterResolver resolver)
@@ -212,6 +142,7 @@ namespace MessagePack
 
                         this.deserialize4 = lambda;
                     }
+
                     {
                         // public static T Deserialize<T>(Memory<byte> bytes, IFormatterResolver resolver)
                         var deserialize = GetMethod(type, new Type[] { typeof(Memory<byte>), typeof(IFormatterResolver) });

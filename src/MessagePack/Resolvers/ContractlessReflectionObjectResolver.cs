@@ -149,7 +149,7 @@ namespace MessagePack.Resolvers
     //        }
     //    }
 
-    //    public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver)
+    //    public void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver resolver)
     //    {
     //        // reduce generic method size, avoid write code in <T> type.
     //        if (metaInfo.IsIntKey)

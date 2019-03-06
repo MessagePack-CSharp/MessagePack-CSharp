@@ -37,29 +37,28 @@ namespace <#= Namespace #>
             };
         }
 
-        public int Serialize(ref byte[] bytes, int offset, <#= info.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
         {
             KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
-                var startOffset = offset;
-                offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-                offset += MessagePackBinary.WriteInt32(ref bytes, offset, keyValuePair.Key);
+                writer.WriteFixedArrayHeaderUnsafe(2);
+                writer.WriteInt32(keyValuePair.Key);
                 switch (keyValuePair.Value)
                 {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
                     case <#= i #>:
-                        offset += formatterResolver.GetFormatterWithVerify<<#= item.Type #>>().Serialize(ref bytes, offset, (<#= item.Type #>)value, formatterResolver);
+                        formatterResolver.GetFormatterWithVerify<<#= item.Type #>>().Serialize(ref writer, (<#= item.Type #>)value, formatterResolver);
                         break;
 <# } #>
                     default:
                         break;
                 }
 
-                return offset - startOffset;
+                return;
             }
 
-            return MessagePackBinary.WriteNil(ref bytes, offset);
+            writer.WriteNil();
         }
 
         public <#= info.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)

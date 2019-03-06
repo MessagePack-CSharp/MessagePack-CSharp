@@ -11,7 +11,7 @@
 namespace <#= Namespace #>
 {
     using System;
-    using System.Buffers;
+	using System.Buffers;
     using MessagePack;
 
 <# foreach(var objInfo in objectSerializationInfos) { #>
@@ -35,19 +35,20 @@ namespace <#= Namespace #>
             this.____stringByteKeys = new byte[][]
             {
 <# foreach(var x in objInfo.Members.Where(x => x.IsReadable)) { #>
-                global::MessagePack.MessagePackBinary.GetEncodedStringBytes("<#= x.StringKey #>"),
-<# } #>                
+                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("<#= x.StringKey #>"),
+<# } #>
             };
         }
 
 <# } #>
 
-        public int Serialize(ref byte[] bytes, int offset, <#= objInfo.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
         {
 <# if( objInfo.IsClass) { #>
             if (value == null)
             {
-                return global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
+                return;
             }
 <# } #>
 <#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
@@ -55,28 +56,24 @@ namespace <#= Namespace #>
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
             value.OnBeforeSerialize();
 <# } #>
-            var startOffset = offset;
 <# if( objInfo.IsIntKey) { if( (objInfo.MaxKey + 1) <= 15) { #>
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
+            writer.WriteFixedArrayHeaderUnsafe(<#= objInfo.MaxKey + 1 #>);
 <# } else { #>
-            offset += global::MessagePack.MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= objInfo.MaxKey + 1 #>);
-<# } } else if( objInfo.WriteCount <= 15) { #>
-            offset += global::MessagePack.MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, offset, <#= objInfo.WriteCount #>);
-<# } else { #>
-            offset += global::MessagePack.MessagePackBinary.WriteMapHeader(ref bytes, offset, <#= objInfo.WriteCount #>);
+            writer.WriteArrayHeader(<#= objInfo.MaxKey + 1 #>);
+<# } } else { #>
+            writer.WriteMapHeader(<#= objInfo.WriteCount #>);
 <# } #>
 <# if(objInfo.IsIntKey) { #>
 <# for(var i =0; i<= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); #>
 <# if( member == null) { #>
-            offset += global::MessagePack.MessagePackBinary.WriteNil(ref bytes, offset);
+            writer.WriteNil();
 <# } else { #>
-            offset += <#= member.GetSerializeMethodString() #>;
+            <#= member.GetSerializeMethodString() #>;
 <# } } } else { #>
 <# var index = 0; foreach(var x in objInfo.Members) { #>
-            offset += global::MessagePack.MessagePackBinary.WriteRaw(ref bytes, offset, this.____stringByteKeys[<#= index++ #>]);
-            offset += <#= x.GetSerializeMethodString() #>;
+            writer.WriteRaw(this.____stringByteKeys[<#= index++ #>]);
+            <#= x.GetSerializeMethodString() #>;
 <# } } #>
-            return offset - startOffset;
         }
 
         public <#= objInfo.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)

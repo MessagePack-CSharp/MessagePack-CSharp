@@ -57,7 +57,7 @@ namespace SharedData
             throw new NotImplementedException();
         }
 
-        public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, int value, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -75,7 +75,7 @@ namespace SharedData
             throw new NotImplementedException();
         }
 
-        public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, int value, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -674,20 +674,18 @@ namespace SharedData
             this.default9 = default9;
         }
 
-        public int Serialize(ref byte[] bytes, int offset, DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> value, IFormatterResolver formatterResolver)
         {
-            var startOffset = offset;
-            offset += MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 9);
-            offset += formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref bytes, offset, value.Item1, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref bytes, offset, value.Item2, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<T3>().Serialize(ref bytes, offset, value.Item3, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<T4>().Serialize(ref bytes, offset, value.Item4, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<T5>().Serialize(ref bytes, offset, value.Item5, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<T6>().Serialize(ref bytes, offset, value.Item6, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<T7>().Serialize(ref bytes, offset, value.Item7, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<T8>().Serialize(ref bytes, offset, value.Item8, formatterResolver);
-            offset += formatterResolver.GetFormatterWithVerify<T9>().Serialize(ref bytes, offset, value.Item9, formatterResolver);
-            return offset - startOffset;
+            writer.WriteArrayHeader(9);
+            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<T5>().Serialize(ref writer, value.Item5, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<T6>().Serialize(ref writer, value.Item6, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<T7>().Serialize(ref writer, value.Item7, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<T8>().Serialize(ref writer, value.Item8, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<T9>().Serialize(ref writer, value.Item9, formatterResolver);
         }
 
         public DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
+using Nerdbank.Streams;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -14,9 +15,21 @@ namespace MessagePack.Tests
     {
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            if (typeof(T) == typeof(string)) return (IMessagePackFormatter<T>)(object)new DummyStringFormatter();
-            if (typeof(T) == typeof(DateTime)) return (IMessagePackFormatter<T>)(object)new DummyDateTimeFormatter();
-            if (typeof(T) == typeof(byte[])) return (IMessagePackFormatter<T>)(object)new DummyBinaryFormatter();
+            if (typeof(T) == typeof(string))
+            {
+                return (IMessagePackFormatter<T>)new DummyStringFormatter();
+            }
+
+            if (typeof(T) == typeof(DateTime))
+            {
+                return (IMessagePackFormatter<T>)new DummyDateTimeFormatter();
+            }
+
+            if (typeof(T) == typeof(byte[]))
+            {
+                return (IMessagePackFormatter<T>)new DummyBinaryFormatter();
+            }
+
             return StandardResolver.Instance.GetFormatter<T>();
         }
     }
@@ -28,7 +41,7 @@ namespace MessagePack.Tests
             throw new NotImplementedException();
         }
 
-        public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, string value, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -41,7 +54,7 @@ namespace MessagePack.Tests
             throw new NotImplementedException();
         }
 
-        public int Serialize(ref byte[] bytes, int offset, DateTime value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, DateTime value, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -54,7 +67,7 @@ namespace MessagePack.Tests
             throw new NotImplementedException();
         }
 
-        public int Serialize(ref byte[] bytes, int offset, byte[] value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, byte[] value, IFormatterResolver formatterResolver)
         {
             throw new NotImplementedException();
         }
@@ -141,12 +154,15 @@ namespace MessagePack.Tests
 
             var serializer = referenceContext.GetSerializer<string>();
 
-            var a = defaultSerializer.Serialize(data, OldSpecResolver.Instance);
+            var oldSpecWriter = new MessagePackWriter() { OldSpec = true };
+            defaultSerializer.Serialize(ref oldSpecWriter, data);
+            oldSpecWriter.Flush();
+            var a = oldSpecWriter.WrittenBytes.ToArray();
             var b = serializer.PackSingleObject(data);
 
             a.Is(b);
 
-            var oldSpecReader = new MessagePackReader(a);
+            var oldSpecReader = new MessagePackReader(oldSpecWriter.WrittenBytes);
             var r1 = defaultSerializer.Deserialize<string>(ref oldSpecReader);
             var r2 = serializer.UnpackSingleObject(b);
 
@@ -166,12 +182,15 @@ namespace MessagePack.Tests
 
             var serializer = referenceContext.GetSerializer<byte[]>();
 
-            var a = defaultSerializer.Serialize(data, OldSpecResolver.Instance);
+            var oldSpecWriter = new MessagePackWriter() { OldSpec = true };
+            defaultSerializer.Serialize(ref oldSpecWriter, data);
+            oldSpecWriter.Flush();
+            var a = oldSpecWriter.WrittenBytes.ToArray();
             var b = serializer.PackSingleObject(data);
 
             a.Is(b);
 
-            var oldSpecReader = new MessagePackReader(a);
+            var oldSpecReader = new MessagePackReader(oldSpecWriter.WrittenBytes);
             var r1 = defaultSerializer.Deserialize<byte[]>(ref oldSpecReader);
             var r2 = serializer.UnpackSingleObject(b);
 

@@ -11,15 +11,15 @@
 namespace <#= Namespace #>
 {
     using System;
-    using System.Buffers;
+	using System.Buffers;
     using MessagePack;
 
 <# foreach(var info in enumSerializationInfos) { #>
     public sealed class <#= info.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= info.FullName #>>
     {
-        public int Serialize(ref byte[] bytes, int offset, <#= info.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-            return MessagePackBinary.Write<#= info.UnderlyingType #>(ref bytes, offset, (<#= info.UnderlyingType #>)value);
+            writer.Write((<#= info.UnderlyingType #>)value);
         }
         
         public <#= info.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)
