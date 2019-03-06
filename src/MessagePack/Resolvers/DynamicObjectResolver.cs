@@ -698,6 +698,7 @@ namespace MessagePack.Internal
 
         static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argResolver)
         {
+            var endLabel = il.DefineLabel();
             var t = member.Type;
             var emitter = tryEmitLoadCustomFormatter(index, member);
             if (emitter != null)
@@ -711,9 +712,31 @@ namespace MessagePack.Internal
             }
             else if (IsOptimizeTargetType(t))
             {
-                argWriter.EmitLoad();
-                argValue.EmitLoad();
-                member.EmitLoadValue(il);
+                if (!t.GetTypeInfo().IsValueType)
+                {
+                    // As a nullable type (e.g. byte[] and string) we need to call WriteNil for null values.
+                    var writeNonNilValueLabel = il.DefineLabel();
+                    var memberValue = il.DeclareLocal(t);
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                    il.Emit(OpCodes.Dup);
+                    il.EmitStloc(memberValue);
+                    il.Emit(OpCodes.Brtrue, writeNonNilValueLabel);
+                    argWriter.EmitLoad();
+                    il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
+                    il.Emit(OpCodes.Br, endLabel);
+
+                    il.MarkLabel(writeNonNilValueLabel);
+                    argWriter.EmitLoad();
+                    il.EmitLdloc(memberValue);
+                }
+                else
+                {
+                    argWriter.EmitLoad();
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                }
+
                 if (t == typeof(byte[]))
                 {
                     il.EmitCall(ReadOnlySpanFromByteArray);
@@ -735,6 +758,8 @@ namespace MessagePack.Internal
                 argResolver.EmitLoad();
                 il.EmitCall(getSerialize(t));
             }
+
+            il.MarkLabel(endLabel);
         }
 
         // T Deserialize([arg:1]ref MessagePackReader reader, [arg:2]IFormatterResolver resolver);
@@ -964,39 +989,59 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ret);
         }
 
-        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argByteSequence, ArgumentField argResolver)
+        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argReader, ArgumentField argResolver)
         {
+            var storeLabel = il.DefineLabel();
             var member = info.MemberInfo;
             var t = member.Type;
             var emitter = tryEmitLoadCustomFormatter(index, member);
             if (emitter != null)
             {
                 emitter();
-                argByteSequence.EmitLdarg();
+                argReader.EmitLdarg();
                 argResolver.EmitLoad();
                 il.EmitCall(getDeserialize(t));
             }
             else if (IsOptimizeTargetType(t))
             {
-                argByteSequence.EmitLdarg();
+                if (!t.GetTypeInfo().IsValueType)
+                {
+                    // As a nullable type (e.g. byte[] and string) we need to first call TryReadNil
+                    // if (reader.TryReadNil())
+                    var readNonNilValueLabel = il.DefineLabel();
+                    argReader.EmitLdarg();
+                    il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
+                    il.Emit(OpCodes.Brfalse_S, readNonNilValueLabel);
+                    il.Emit(OpCodes.Ldnull);
+                    il.Emit(OpCodes.Br, storeLabel);
+
+                    il.MarkLabel(readNonNilValueLabel);
+                }
+
+                argReader.EmitLdarg();
                 if (t == typeof(byte[]))
                 {
+                    var local = il.DeclareLocal(typeof(ReadOnlySequence<byte>));
                     il.EmitCall(MessagePackReaderTypeInfo.ReadBytes);
+                    il.EmitStloc(local);
+                    il.EmitLdloca(local);
+                    il.EmitCall(ArrayFromReadOnlySequence);
                 }
                 else
                 {
-                    il.EmitCall(MessagePackReaderTypeInfo.TypeInfo.GetDeclaredMethods("Read" + t.Name).OrderByDescending(x => x.GetParameters().Length).First());
+                    il.EmitCall(MessagePackReaderTypeInfo.TypeInfo.GetDeclaredMethods("Read" + t.Name).First(x => x.GetParameters().Length == 0));
                 }
             }
             else
             {
                 argResolver.EmitLoad();
                 il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
-                argByteSequence.EmitLdarg();
+                argReader.EmitLdarg();
                 argResolver.EmitLoad();
                 il.EmitCall(getDeserialize(t));
             }
 
+            il.MarkLabel(storeLabel);
             il.EmitStloc(info.LocalField);
         }
 
@@ -1052,27 +1097,23 @@ namespace MessagePack.Internal
 
         static bool IsOptimizeTargetType(Type type)
         {
-            if (type == typeof(Int16)
-             || type == typeof(Int32)
-             || type == typeof(Int64)
-             || type == typeof(UInt16)
-             || type == typeof(UInt32)
-             || type == typeof(UInt64)
-             || type == typeof(Single)
-             || type == typeof(Double)
-             || type == typeof(bool)
-             || type == typeof(byte)
-             || type == typeof(sbyte)
-             || type == typeof(char)
-             // not includes DateTime and String and Binary.
-             //|| type == typeof(DateTime)
-             //|| type == typeof(string)
-             //|| type == typeof(byte[])
-             )
-            {
-                return true;
-            }
-            return false;
+            return type == typeof(Int16)
+                || type == typeof(Int32)
+                || type == typeof(Int64)
+                || type == typeof(UInt16)
+                || type == typeof(UInt32)
+                || type == typeof(UInt64)
+                || type == typeof(Single)
+                || type == typeof(Double)
+                || type == typeof(bool)
+                || type == typeof(byte)
+                || type == typeof(sbyte)
+                || type == typeof(char)
+                || type == typeof(string)
+                || type == typeof(byte[])
+                // Do not include types that resolvers are allowed to modify.
+                ////|| type == typeof(DateTime) // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
+            ;
         }
 
         // EmitInfos...
@@ -1081,6 +1122,7 @@ namespace MessagePack.Internal
 
         static readonly MethodInfo ReadOnlySpanFromByteArray = typeof(ReadOnlySpan<byte>).GetRuntimeMethod("op_Implicit", new[] { typeof(byte[]) });
         static readonly MethodInfo ReadOnlySpanFromReadOnlySequence = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.GetSpanFromSequence), new[] { typeof(ReadOnlySequence<byte>) });
+        static readonly MethodInfo ArrayFromReadOnlySequence = typeof(BuffersExtensions).GetRuntimeMethods().Single(m => m.Name == nameof(BuffersExtensions.ToArray) && Matches(m, 0, typeof(ReadOnlySequence<>).MakeByRefType())).MakeGenericMethod(typeof(byte));
 
         static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == nameof(FormatterResolverExtensions.GetFormatterWithVerify));
         static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Serialize), new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(IFormatterResolver) });
@@ -1094,6 +1136,18 @@ namespace MessagePack.Internal
         static readonly MethodInfo onAfterDeserialize = typeof(IMessagePackSerializationCallbackReceiver).GetRuntimeMethod(nameof(IMessagePackSerializationCallbackReceiver.OnAfterDeserialize), Type.EmptyTypes);
 
         static readonly ConstructorInfo objectCtor = typeof(object).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0);
+
+        /// <summary>
+        /// Helps match parameters when searching a method when the parameter is a generic type.
+        /// </summary>
+        private static bool Matches(MethodInfo m, int parameterIndex, Type desiredType)
+        {
+            var parameters = m.GetParameters();
+            return parameters.Length > parameterIndex
+                ////&& parameters[0].ParameterType.IsGenericType // returns false for some bizarre reason
+                && parameters[parameterIndex].ParameterType.Name == desiredType.Name
+                && parameters[parameterIndex].ParameterType.Namespace == desiredType.Namespace;
+        }
 
         internal static class MessagePackWriterTypeInfo
         {

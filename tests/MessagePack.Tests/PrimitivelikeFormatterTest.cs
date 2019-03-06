@@ -15,35 +15,12 @@ namespace MessagePack.Tests
     {
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            if (typeof(T) == typeof(string))
-            {
-                return (IMessagePackFormatter<T>)new DummyStringFormatter();
-            }
-
             if (typeof(T) == typeof(DateTime))
             {
                 return (IMessagePackFormatter<T>)new DummyDateTimeFormatter();
             }
 
-            if (typeof(T) == typeof(byte[]))
-            {
-                return (IMessagePackFormatter<T>)new DummyBinaryFormatter();
-            }
-
             return StandardResolver.Instance.GetFormatter<T>();
-        }
-    }
-
-    public class DummyStringFormatter : IMessagePackFormatter<string>
-    {
-        public string Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Serialize(ref MessagePackWriter writer, string value, IFormatterResolver formatterResolver)
-        {
-            throw new NotImplementedException();
         }
     }
 
@@ -60,38 +37,11 @@ namespace MessagePack.Tests
         }
     }
 
-    public class DummyBinaryFormatter : IMessagePackFormatter<byte[]>
-    {
-        public byte[] Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Serialize(ref MessagePackWriter writer, byte[] value, IFormatterResolver formatterResolver)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
     [MessagePackObject]
-    public class MyDateTimeResolverTest1
+    public class MyDateTimeResolverTest
     {
         [Key(0)]
         public DateTime MyProperty1 { get; set; }
-    }
-
-    [MessagePackObject]
-    public class MyDateTimeResolverTest2
-    {
-        [Key(0)]
-        public string MyProperty1 { get; set; }
-    }
-
-    [MessagePackObject]
-    public class MyDateTimeResolverTest3
-    {
-        [Key(0)]
-        public byte[] MyProperty1 { get; set; }
     }
 
     public class PrimitivelikeFormatterTest
@@ -105,17 +55,7 @@ namespace MessagePack.Tests
 
             Assert.Throws<NotImplementedException>(() =>
             {
-                defaultSerializer.Serialize(new MyDateTimeResolverTest1() { MyProperty1 = DateTime.Now }, resolver);
-            });
-
-            Assert.Throws<NotImplementedException>(() =>
-            {
-                defaultSerializer.Serialize(new MyDateTimeResolverTest2() { MyProperty1 = "aaa" }, resolver);
-            });
-
-            Assert.Throws<NotImplementedException>(() =>
-            {
-                defaultSerializer.Serialize(new MyDateTimeResolverTest3() { MyProperty1 = new byte[] { 0, 1, 2 } }, resolver);
+                defaultSerializer.Serialize(new MyDateTimeResolverTest() { MyProperty1 = DateTime.Now }, resolver);
             });
         }
 
