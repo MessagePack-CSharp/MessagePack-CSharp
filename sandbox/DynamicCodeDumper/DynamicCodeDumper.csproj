@@ -70,6 +70,9 @@
     <Compile Include="..\..\src\MessagePack\MessagePackReader.cs">
       <Link>Code\MessagePackReader.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackReader.Integers.cs">
+      <Link>Code\MessagePackReader.Integers.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
       <Link>Code\MessagePackWriter.cs</Link>
     </Compile>

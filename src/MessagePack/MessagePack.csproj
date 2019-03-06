@@ -56,6 +56,10 @@
       <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </None>
+    <None Update="MessagePackReader.Integers.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MessagePackReader.Integers.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -83,6 +87,11 @@
       <DependentUpon>UnsafeMemory.tt</DependentUpon>
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="MessagePackReader.Integers.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MessagePackReader.Integers.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 
