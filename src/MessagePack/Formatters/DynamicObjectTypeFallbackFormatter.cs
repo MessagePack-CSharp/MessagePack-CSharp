@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD || NETFRAMEWORK
+﻿#if (NETSTANDARD || NETFRAMEWORK) && REF_EMIT
 
 using MessagePack.Resolvers;
 using System;

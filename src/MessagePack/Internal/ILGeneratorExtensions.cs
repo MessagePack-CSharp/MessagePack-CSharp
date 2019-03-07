@@ -1,5 +1,5 @@
 ﻿#if !UNITY_WSA
-#if !NET_STANDARD_2_0
+#if !NET_STANDARD_2_0 && REF_EMIT
 
 using System;
 using System.Linq;

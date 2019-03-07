@@ -262,7 +262,7 @@ namespace MessagePack
                         builder.Append(dt.ToString("o", CultureInfo.InvariantCulture));
                         builder.Append("\"");
                     }
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && REF_EMIT
                     else if (extHeader.TypeCode == TypelessFormatter.ExtensionTypeCode)
                     {
                         int startOffset = offset;

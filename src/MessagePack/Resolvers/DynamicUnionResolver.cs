@@ -11,7 +11,7 @@ using System.Threading;
 namespace MessagePack.Resolvers
 {
 #if !UNITY_WSA
-#if !NET_STANDARD_2_0
+#if !NET_STANDARD_2_0 && REF_EMIT
 
     /// <summary>
     /// UnionResolver by dynamic code generation.
