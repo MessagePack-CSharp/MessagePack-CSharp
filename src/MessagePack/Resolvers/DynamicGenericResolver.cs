@@ -299,5 +299,4 @@ namespace MessagePack.Internal
         }
     }
 }
-
 #endif

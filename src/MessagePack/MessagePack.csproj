@@ -1,7 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<Project Sdk="MSBuild.Sdk.Extras/1.6.68">
+  <!-- Using MSBuild.Sdk.Extras from oren novotny to support uap.10 and xamarin.ios10 platform targets out of the box
+        see: https://github.com/onovotny/MSBuildSdkExtras -->
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
+    <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47;uap10.0;xamarin.ios10</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK</DefineConstants>
@@ -26,13 +27,33 @@
     <None Include="MessagePackSerializer.Typeless.cs" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!-- for all standard .net targets, change nothing -->
+  <ItemGroup Condition=" $(TargetFramework.StartsWith('net')) ">
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.1" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
+
+  <!-- for iOS and UWP (.NET Native) remove the IL nugets -->
+  <ItemGroup Condition=" $(TargetFramework) == 'uap10.0'">
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.1" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup Condition=" $(TargetFramework) == 'xamarin.ios10'">
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.1" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="System.Reflection" Version="4.3.0" />
+  </ItemGroup>
+  <!-- for iOS and UWP (.NET Native) remove the IL code using NO_IL_CODE flag -->
+  <PropertyGroup Condition=" $(TargetFramework) == 'uap10.0'">
+    <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK;NO_IL_CODE;NETSTANDARD</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" $(TargetFramework) == 'xamarin.ios10' ">
+    <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK;NO_IL_CODE;NETSTANDARD</DefineConstants>
+  </PropertyGroup>
+
 
   <ItemGroup>
     <None Update="Formatters\ForceSizePrimitiveFormatter.tt">

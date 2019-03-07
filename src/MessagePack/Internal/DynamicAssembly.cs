@@ -1,5 +1,5 @@
 ﻿#if !UNITY_WSA
-#if !NET_STANDARD_2_0
+#if !NET_STANDARD_2_0 && !NO_IL_CODE
 
 using System;
 using System.Reflection;
