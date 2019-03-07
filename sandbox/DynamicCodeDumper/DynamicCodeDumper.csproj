@@ -10,6 +10,9 @@
     <Compile Include="..\..\src\MessagePack\FloatBits.cs">
       <Link>Code\FloatBits.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\BufferWriter.cs">
+      <Link>Code\BufferWriter.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\Formatters\IMessagePackFormatter.cs">
       <Link>Code\IMessagePackFormatter.cs</Link>
     </Compile>
@@ -57,9 +60,6 @@
     </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\UnsafeMemory.Low.cs">
       <Link>Code\UnsafeMemory.Low.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\MessagePack\MessagePackBinary.cs">
-      <Link>Code\MessagePackBinary.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\ExtensionHeader.cs">
       <Link>Code\ExtensionHeader.cs</Link>

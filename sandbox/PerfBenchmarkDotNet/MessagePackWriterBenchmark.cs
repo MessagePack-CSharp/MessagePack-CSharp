@@ -12,6 +12,7 @@ namespace PerfBenchmarkDotNet
     public class MessagePackWriterBenchmark
     {
         private const int RepsOverArray = 300 * 1024;
+        private readonly Sequence<byte> sequence = new Sequence<byte>();
 
         private readonly int[] values = new int[newmsgpack::MessagePack.MessagePackCode.MaxFixInt];
         private readonly byte[] byteValues = new byte[newmsgpack::MessagePack.MessagePackCode.MaxFixInt];
@@ -34,11 +35,17 @@ namespace PerfBenchmarkDotNet
             }
         }
 
+        [IterationSetup]
+        public void IterationSetup() => this.sequence.GetSpan(bytes.Length);
+
+        [IterationCleanup]
+        public void IterationCleanup() => this.sequence.Reset();
+
         [Benchmark(OperationsPerInvoke = RepsOverArray * newmsgpack::MessagePack.MessagePackCode.MaxFixInt)]
         [BenchmarkCategory("2.0")]
         public void Write_Byte()
         {
-            var writer = new newmsgpack::MessagePack.MessagePackWriter(this.bytes);
+            var writer = new newmsgpack::MessagePack.MessagePackWriter(this.sequence);
             for (int j = 0; j < RepsOverArray; j++)
             {
                 for (int i = 0; i < byteValues.Length; i++)
@@ -66,7 +73,7 @@ namespace PerfBenchmarkDotNet
         [BenchmarkCategory("2.0")]
         public void Write_UInt32()
         {
-            var writer = new newmsgpack::MessagePack.MessagePackWriter(this.bytes);
+            var writer = new newmsgpack::MessagePack.MessagePackWriter(this.sequence);
             for (int j = 0; j < RepsOverArray; j++)
             {
                 for (int i = 0; i < values.Length; i++)
@@ -80,7 +87,7 @@ namespace PerfBenchmarkDotNet
         [BenchmarkCategory("2.0")]
         public void Write_Int32()
         {
-            var writer = new newmsgpack::MessagePack.MessagePackWriter(this.bytes);
+            var writer = new newmsgpack::MessagePack.MessagePackWriter(this.sequence);
             for (int j = 0; j < RepsOverArray; j++)
             {
                 for (int i = 0; i < values.Length; i++)
@@ -110,12 +117,14 @@ namespace PerfBenchmarkDotNet
         {
             for (int j = 0; j < 5; j++)
             {
-                var writer = new newmsgpack::MessagePack.MessagePackWriter(this.bytes);
+                var writer = new newmsgpack::MessagePack.MessagePackWriter(this.sequence);
                 for (int i = 0; i < 1000000; i++)
                 {
                     writer.Write("Hello!");
                 }
                 writer.Flush();
+                this.sequence.Reset();
+                this.sequence.GetSpan(bytes.Length);
             }
         }
 

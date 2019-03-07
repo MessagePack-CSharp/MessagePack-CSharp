@@ -64,10 +64,9 @@ namespace MessagePack
                 resolver = this.DefaultResolver;
             }
 
-            var fastWriter = new MessagePackWriter();
+            var fastWriter = new MessagePackWriter(writer);
             this.Serialize(ref fastWriter, value, resolver);
             fastWriter.Flush();
-            writer.Write(fastWriter.WrittenBytes.ToArray());
         }
 
         /// <summary>

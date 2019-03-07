@@ -2,6 +2,7 @@
 // CHANGE THE .tt FILE INSTEAD.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Numerics;
 using Xunit;
@@ -13,129 +14,129 @@ namespace MessagePack.Tests
         private const sbyte MinNegativeFixInt = unchecked((sbyte)MessagePackCode.MinNegativeFixInt);
         private const sbyte MaxNegativeFixInt = unchecked((sbyte)MessagePackCode.MaxNegativeFixInt);
 
-        private readonly IReadOnlyList<(BigInteger Value, ReadOnlyMemory<byte> Encoded)> IntegersOfInterest = new List<(BigInteger Value, ReadOnlyMemory<byte> Encoded)>
+        private readonly IReadOnlyList<(BigInteger Value, ReadOnlySequence<byte> Encoded)> IntegersOfInterest = new List<(BigInteger Value, ReadOnlySequence<byte> Encoded)>
         {
             // * FixInt
             // ** non-boundary
-            (3, Encode(b => MessagePackBinary.WriteByte(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteByteForceByteBlock(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteUInt16ForceUInt16Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteByte(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteByte(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteUInt16(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteUInt32(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteUInt64(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteSByte(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteInt16(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteInt32(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteInt64(3))),
 
-            (-3, Encode(b => MessagePackBinary.WriteSByte(ref b, 0, -3))),
-            (-3, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, -3))),
-            (-3, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, -3))),
-            (-3, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, -3))),
-            (-3, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, -3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteSByte(-3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteSByte(-3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteInt16(-3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteInt32(-3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteInt64(-3))),
 
             // ** Boundary conditions
             // *** MaxFixInt
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteByte(ref b, 0, MessagePackCode.MaxFixInt))),
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteByteForceByteBlock(ref b, 0, checked((Byte)MessagePackCode.MaxFixInt)))),
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteUInt16ForceUInt16Block(ref b, 0, checked((UInt16)MessagePackCode.MaxFixInt)))),
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, checked((UInt32)MessagePackCode.MaxFixInt)))),
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, checked((UInt64)MessagePackCode.MaxFixInt)))),
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, checked((SByte)MessagePackCode.MaxFixInt)))),
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, checked((Int16)MessagePackCode.MaxFixInt)))),
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, checked((Int32)MessagePackCode.MaxFixInt)))),
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, checked((Int64)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MaxFixInt))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(checked((Byte)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteUInt16(checked((UInt16)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteUInt32(checked((UInt32)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteUInt64(checked((UInt64)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteSByte(checked((SByte)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt16(checked((Int16)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(checked((Int32)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt64(checked((Int64)MessagePackCode.MaxFixInt)))),
             // *** MinFixInt
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteByte(ref b, 0, MessagePackCode.MinFixInt))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteByteForceByteBlock(ref b, 0, checked((Byte)MessagePackCode.MinFixInt)))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteUInt16ForceUInt16Block(ref b, 0, checked((UInt16)MessagePackCode.MinFixInt)))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, checked((UInt32)MessagePackCode.MinFixInt)))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, checked((UInt64)MessagePackCode.MinFixInt)))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, checked((SByte)MessagePackCode.MinFixInt)))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, checked((Int16)MessagePackCode.MinFixInt)))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, checked((Int32)MessagePackCode.MinFixInt)))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, checked((Int64)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MinFixInt))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(checked((Byte)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteUInt16(checked((UInt16)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteUInt32(checked((UInt32)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteUInt64(checked((UInt64)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteSByte(checked((SByte)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt16(checked((Int16)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(checked((Int32)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt64(checked((Int64)MessagePackCode.MinFixInt)))),
             // *** MinNegativeFixInt
-            (MinNegativeFixInt, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, MinNegativeFixInt))),
-            (MinNegativeFixInt, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, MinNegativeFixInt))),
-            (MinNegativeFixInt, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, MinNegativeFixInt))),
-            (MinNegativeFixInt, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, MinNegativeFixInt))),
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteSByte(MinNegativeFixInt))),
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt16(MinNegativeFixInt))),
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MinNegativeFixInt))),
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt64(MinNegativeFixInt))),
             // *** MaxNegativeFixInt
-            (MaxNegativeFixInt, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, MaxNegativeFixInt))),
-            (MaxNegativeFixInt, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, MaxNegativeFixInt))),
-            (MaxNegativeFixInt, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, MaxNegativeFixInt))),
-            (MaxNegativeFixInt, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, MaxNegativeFixInt))),
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteSByte(MaxNegativeFixInt))),
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt16(MaxNegativeFixInt))),
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MaxNegativeFixInt))),
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt64(MaxNegativeFixInt))),
 
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteInt32(ref b, 0, MessagePackCode.MaxFixInt))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteInt32(ref b, 0, MessagePackCode.MinFixInt))),
-            (MaxNegativeFixInt, Encode(b => MessagePackBinary.WriteInt32(ref b, 0, MaxNegativeFixInt))),
-            (MinNegativeFixInt, Encode(b => MessagePackBinary.WriteInt32(ref b, 0, MinNegativeFixInt))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MessagePackCode.MaxFixInt))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MessagePackCode.MinFixInt))),
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MaxNegativeFixInt))),
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MinNegativeFixInt))),
 
             // * Encoded as each type of at least 8 bits
             // ** Small positive value
-            (3, Encode(b => MessagePackBinary.WriteByteForceByteBlock(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteUInt16ForceUInt16Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, 3))),
-            (3, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteByte(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteUInt16(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteUInt32(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteUInt64(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteSByte(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteInt16(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteInt32(3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteInt64(3))),
 
             // ** Small negative value
-            (-3, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, -3))),
-            (-3, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, -3))),
-            (-3, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, -3))),
-            (-3, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, -3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteSByte(-3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteInt16(-3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteInt32(-3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteInt64(-3))),
 
             // ** Max values
             // *** Positive
-            (0x0ff, Encode(b => MessagePackBinary.WriteByteForceByteBlock(ref b, 0, 255))),
-            (0x0ff, Encode(b => MessagePackBinary.WriteUInt16ForceUInt16Block(ref b, 0, 255))),
-            (0x0ff, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, 255))),
-            (0x0ff, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 255))),
-            (0x0ff, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, 255))),
-            (0x0ff, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, 255))),
-            (0x0ff, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 255))),
-            (0x0ffff, Encode(b => MessagePackBinary.WriteUInt16ForceUInt16Block(ref b, 0, 65535))),
-            (0x0ffff, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, 65535))),
-            (0x0ffff, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 65535))),
-            (0x0ffff, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, 65535))),
-            (0x0ffff, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 65535))),
-            (0x0ffffffff, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, 4294967295))),
-            (0x0ffffffff, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 4294967295))),
-            (0x0ffffffff, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 4294967295))),
-            (0x0ffffffffffffffff, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 18446744073709551615))),
-            (0x7f, Encode(b => MessagePackBinary.WriteByteForceByteBlock(ref b, 0, 127))),
-            (0x7f, Encode(b => MessagePackBinary.WriteUInt16ForceUInt16Block(ref b, 0, 127))),
-            (0x7f, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, 127))),
-            (0x7f, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 127))),
-            (0x7f, Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, 127))),
-            (0x7f, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, 127))),
-            (0x7f, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, 127))),
-            (0x7f, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 127))),
-            (0x7fff, Encode(b => MessagePackBinary.WriteUInt16ForceUInt16Block(ref b, 0, 32767))),
-            (0x7fff, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, 32767))),
-            (0x7fff, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 32767))),
-            (0x7fff, Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, 32767))),
-            (0x7fff, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, 32767))),
-            (0x7fff, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 32767))),
-            (0x7fffffff, Encode(b => MessagePackBinary.WriteUInt32ForceUInt32Block(ref b, 0, 2147483647))),
-            (0x7fffffff, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 2147483647))),
-            (0x7fffffff, Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, 2147483647))),
-            (0x7fffffff, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 2147483647))),
-            (0x7fffffffffffffff, Encode(b => MessagePackBinary.WriteUInt64ForceUInt64Block(ref b, 0, 9223372036854775807))),
-            (0x7fffffffffffffff, Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, 9223372036854775807))),
+            (0x0ff, Encode((ref MessagePackWriter w) => w.WriteByte(255))),
+            (0x0ff, Encode((ref MessagePackWriter w) => w.WriteUInt16(255))),
+            (0x0ff, Encode((ref MessagePackWriter w) => w.WriteUInt32(255))),
+            (0x0ff, Encode((ref MessagePackWriter w) => w.WriteUInt64(255))),
+            (0x0ff, Encode((ref MessagePackWriter w) => w.WriteInt16(255))),
+            (0x0ff, Encode((ref MessagePackWriter w) => w.WriteInt32(255))),
+            (0x0ff, Encode((ref MessagePackWriter w) => w.WriteInt64(255))),
+            (0x0ffff, Encode((ref MessagePackWriter w) => w.WriteUInt16(65535))),
+            (0x0ffff, Encode((ref MessagePackWriter w) => w.WriteUInt32(65535))),
+            (0x0ffff, Encode((ref MessagePackWriter w) => w.WriteUInt64(65535))),
+            (0x0ffff, Encode((ref MessagePackWriter w) => w.WriteInt32(65535))),
+            (0x0ffff, Encode((ref MessagePackWriter w) => w.WriteInt64(65535))),
+            (0x0ffffffff, Encode((ref MessagePackWriter w) => w.WriteUInt32(4294967295))),
+            (0x0ffffffff, Encode((ref MessagePackWriter w) => w.WriteUInt64(4294967295))),
+            (0x0ffffffff, Encode((ref MessagePackWriter w) => w.WriteInt64(4294967295))),
+            (0x0ffffffffffffffff, Encode((ref MessagePackWriter w) => w.WriteUInt64(18446744073709551615))),
+            (0x7f, Encode((ref MessagePackWriter w) => w.WriteByte(127))),
+            (0x7f, Encode((ref MessagePackWriter w) => w.WriteUInt16(127))),
+            (0x7f, Encode((ref MessagePackWriter w) => w.WriteUInt32(127))),
+            (0x7f, Encode((ref MessagePackWriter w) => w.WriteUInt64(127))),
+            (0x7f, Encode((ref MessagePackWriter w) => w.WriteSByte(127))),
+            (0x7f, Encode((ref MessagePackWriter w) => w.WriteInt16(127))),
+            (0x7f, Encode((ref MessagePackWriter w) => w.WriteInt32(127))),
+            (0x7f, Encode((ref MessagePackWriter w) => w.WriteInt64(127))),
+            (0x7fff, Encode((ref MessagePackWriter w) => w.WriteUInt16(32767))),
+            (0x7fff, Encode((ref MessagePackWriter w) => w.WriteUInt32(32767))),
+            (0x7fff, Encode((ref MessagePackWriter w) => w.WriteUInt64(32767))),
+            (0x7fff, Encode((ref MessagePackWriter w) => w.WriteInt16(32767))),
+            (0x7fff, Encode((ref MessagePackWriter w) => w.WriteInt32(32767))),
+            (0x7fff, Encode((ref MessagePackWriter w) => w.WriteInt64(32767))),
+            (0x7fffffff, Encode((ref MessagePackWriter w) => w.WriteUInt32(2147483647))),
+            (0x7fffffff, Encode((ref MessagePackWriter w) => w.WriteUInt64(2147483647))),
+            (0x7fffffff, Encode((ref MessagePackWriter w) => w.WriteInt32(2147483647))),
+            (0x7fffffff, Encode((ref MessagePackWriter w) => w.WriteInt64(2147483647))),
+            (0x7fffffffffffffff, Encode((ref MessagePackWriter w) => w.WriteUInt64(9223372036854775807))),
+            (0x7fffffffffffffff, Encode((ref MessagePackWriter w) => w.WriteInt64(9223372036854775807))),
             // *** Negative
-            (unchecked((SByte)0x80), Encode(b => MessagePackBinary.WriteSByteForceSByteBlock(ref b, 0, -128))),
-            (unchecked((SByte)0x80), Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, -128))),
-            (unchecked((SByte)0x80), Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, -128))),
-            (unchecked((SByte)0x80), Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, -128))),
-            (unchecked((Int16)0x8000), Encode(b => MessagePackBinary.WriteInt16ForceInt16Block(ref b, 0, -32768))),
-            (unchecked((Int16)0x8000), Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, -32768))),
-            (unchecked((Int16)0x8000), Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, -32768))),
-            (unchecked((Int32)0x80000000), Encode(b => MessagePackBinary.WriteInt32ForceInt32Block(ref b, 0, -2147483648))),
-            (unchecked((Int32)0x80000000), Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, -2147483648))),
-            (unchecked((Int64)0x8000000000000000), Encode(b => MessagePackBinary.WriteInt64ForceInt64Block(ref b, 0, -9223372036854775808))),
+            (unchecked((SByte)0x80), Encode((ref MessagePackWriter w) => w.WriteSByte(-128))),
+            (unchecked((SByte)0x80), Encode((ref MessagePackWriter w) => w.WriteInt16(-128))),
+            (unchecked((SByte)0x80), Encode((ref MessagePackWriter w) => w.WriteInt32(-128))),
+            (unchecked((SByte)0x80), Encode((ref MessagePackWriter w) => w.WriteInt64(-128))),
+            (unchecked((Int16)0x8000), Encode((ref MessagePackWriter w) => w.WriteInt16(-32768))),
+            (unchecked((Int16)0x8000), Encode((ref MessagePackWriter w) => w.WriteInt32(-32768))),
+            (unchecked((Int16)0x8000), Encode((ref MessagePackWriter w) => w.WriteInt64(-32768))),
+            (unchecked((Int32)0x80000000), Encode((ref MessagePackWriter w) => w.WriteInt32(-2147483648))),
+            (unchecked((Int32)0x80000000), Encode((ref MessagePackWriter w) => w.WriteInt64(-2147483648))),
+            (unchecked((Int64)0x8000000000000000), Encode((ref MessagePackWriter w) => w.WriteInt64(-9223372036854775808))),
         };
 
         [Fact]
@@ -143,7 +144,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= Byte.MaxValue && value >= Byte.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).ReadByte());
@@ -166,7 +167,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= UInt16.MaxValue && value >= UInt16.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).ReadUInt16());
@@ -189,7 +190,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= UInt32.MaxValue && value >= UInt32.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).ReadUInt32());
@@ -212,7 +213,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= UInt64.MaxValue && value >= UInt64.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).ReadUInt64());
@@ -235,7 +236,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= SByte.MaxValue && value >= SByte.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).ReadSByte());
@@ -258,7 +259,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= Int16.MaxValue && value >= Int16.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).ReadInt16());
@@ -281,7 +282,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= Int32.MaxValue && value >= Int32.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).ReadInt32());
@@ -304,7 +305,7 @@ namespace MessagePack.Tests
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= Int64.MaxValue && value >= Int64.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).ReadInt64());

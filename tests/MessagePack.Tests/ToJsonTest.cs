@@ -15,10 +15,11 @@ namespace MessagePack.Tests
 
         string JsonConvert(string json, MessagePackSerializer serializer)
         {
-            var sequenceWriter = new MessagePackWriter();
+            var sequence = new Sequence<byte>();
+            var sequenceWriter = new MessagePackWriter(sequence);
             serializer.ConvertFromJson(json, ref sequenceWriter);
             sequenceWriter.Flush();
-            return serializer.ConvertToJson(sequenceWriter.WrittenBytes);
+            return serializer.ConvertToJson(sequence.AsReadOnlySequence);
         }
 
         [Theory]

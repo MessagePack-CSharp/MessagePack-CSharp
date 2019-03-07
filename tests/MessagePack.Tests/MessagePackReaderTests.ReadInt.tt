@@ -6,6 +6,7 @@
 // CHANGE THE .tt FILE INSTEAD.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Numerics;
 using Xunit;
@@ -38,54 +39,54 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
         private const sbyte MinNegativeFixInt = unchecked((sbyte)MessagePackCode.MinNegativeFixInt);
         private const sbyte MaxNegativeFixInt = unchecked((sbyte)MessagePackCode.MaxNegativeFixInt);
 
-        private readonly IReadOnlyList<(BigInteger Value, ReadOnlyMemory<byte> Encoded)> IntegersOfInterest = new List<(BigInteger Value, ReadOnlyMemory<byte> Encoded)>
+        private readonly IReadOnlyList<(BigInteger Value, ReadOnlySequence<byte> Encoded)> IntegersOfInterest = new List<(BigInteger Value, ReadOnlySequence<byte> Encoded)>
         {
             // * FixInt
             // ** non-boundary
-            (3, Encode(b => MessagePackBinary.WriteByte(ref b, 0, 3))),
+            (3, Encode((ref MessagePackWriter w) => w.WriteByte(3))),
 <# foreach (Type type in allTypes) { #>
-            (3, Encode(b => MessagePackBinary.Write<#=type.Name#>Force<#=type.Name#>Block(ref b, 0, 3))),
+            (3, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(3))),
 <# } #>
 
-            (-3, Encode(b => MessagePackBinary.WriteSByte(ref b, 0, -3))),
+            (-3, Encode((ref MessagePackWriter w) => w.WriteSByte(-3))),
 <# foreach (Type type in signedTypes) { #>
-            (-3, Encode(b => MessagePackBinary.Write<#=type.Name#>Force<#=type.Name#>Block(ref b, 0, -3))),
+            (-3, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(-3))),
 <# } #>
 
             // ** Boundary conditions
             // *** MaxFixInt
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteByte(ref b, 0, MessagePackCode.MaxFixInt))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MaxFixInt))),
 <# foreach (Type type in allTypes) { #>
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.Write<#=type.Name#>Force<#=type.Name#>Block(ref b, 0, checked((<#=type.Name#>)MessagePackCode.MaxFixInt)))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(checked((<#=type.Name#>)MessagePackCode.MaxFixInt)))),
 <# } #>
             // *** MinFixInt
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteByte(ref b, 0, MessagePackCode.MinFixInt))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MinFixInt))),
 <# foreach (Type type in allTypes) { #>
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.Write<#=type.Name#>Force<#=type.Name#>Block(ref b, 0, checked((<#=type.Name#>)MessagePackCode.MinFixInt)))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(checked((<#=type.Name#>)MessagePackCode.MinFixInt)))),
 <# } #>
             // *** MinNegativeFixInt
 <# foreach (Type type in signedTypes) { #>
-            (MinNegativeFixInt, Encode(b => MessagePackBinary.Write<#=type.Name#>Force<#=type.Name#>Block(ref b, 0, MinNegativeFixInt))),
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(MinNegativeFixInt))),
 <# } #>
             // *** MaxNegativeFixInt
 <# foreach (Type type in signedTypes) { #>
-            (MaxNegativeFixInt, Encode(b => MessagePackBinary.Write<#=type.Name#>Force<#=type.Name#>Block(ref b, 0, MaxNegativeFixInt))),
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(MaxNegativeFixInt))),
 <# } #>
 
-            (MessagePackCode.MaxFixInt, Encode(b => MessagePackBinary.WriteInt32(ref b, 0, MessagePackCode.MaxFixInt))),
-            (MessagePackCode.MinFixInt, Encode(b => MessagePackBinary.WriteInt32(ref b, 0, MessagePackCode.MinFixInt))),
-            (MaxNegativeFixInt, Encode(b => MessagePackBinary.WriteInt32(ref b, 0, MaxNegativeFixInt))),
-            (MinNegativeFixInt, Encode(b => MessagePackBinary.WriteInt32(ref b, 0, MinNegativeFixInt))),
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MessagePackCode.MaxFixInt))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MessagePackCode.MinFixInt))),
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MaxNegativeFixInt))),
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MinNegativeFixInt))),
 
             // * Encoded as each type of at least 8 bits
             // ** Small positive value
 <# foreach (Type t1 in allTypes) { #>
-            (3, Encode(b => MessagePackBinary.Write<#=t1.Name#>Force<#=t1.Name#>Block(ref b, 0, 3))),
+            (3, Encode((ref MessagePackWriter w) => w.Write<#=t1.Name#>(3))),
 <# } #>
 
             // ** Small negative value
 <# foreach (Type t1 in signedTypes) { #>
-            (-3, Encode(b => MessagePackBinary.Write<#=t1.Name#>Force<#=t1.Name#>Block(ref b, 0, -3))),
+            (-3, Encode((ref MessagePackWriter w) => w.Write<#=t1.Name#>(-3))),
 <# } #>
 
             // ** Max values
@@ -94,7 +95,7 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
     var maxValue = GetMaxValueAsInt(typeForMaxValue);
     foreach (var encodedType in allTypes) {
         if (GetMaxValueAsInt(encodedType) >= maxValue) { #>
-            (0x<#=maxValue.ToString("x")#>, Encode(b => MessagePackBinary.Write<#=encodedType.Name#>Force<#=encodedType.Name#>Block(ref b, 0, <#=maxValue#>))),
+            (0x<#=maxValue.ToString("x")#>, Encode((ref MessagePackWriter w) => w.Write<#=encodedType.Name#>(<#=maxValue#>))),
 <#      }
     }
 } #>
@@ -103,7 +104,7 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
     var minValue = GetMinValueAsInt(typeForMinValue);
     foreach (var encodedType in signedTypes) {
         if (GetMinValueAsInt(encodedType) <= minValue) { #>
-            (unchecked((<#=typeForMinValue.Name#>)0x<#=minValue.ToString("x")#>), Encode(b => MessagePackBinary.Write<#=encodedType.Name#>Force<#=encodedType.Name#>Block(ref b, 0, <#=minValue#>))),
+            (unchecked((<#=typeForMinValue.Name#>)0x<#=minValue.ToString("x")#>), Encode((ref MessagePackWriter w) => w.Write<#=encodedType.Name#>(<#=minValue#>))),
 <#      }
     }
 } #>
@@ -115,7 +116,7 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
         {
             foreach (var (value, encoded) in IntegersOfInterest)
             {
-                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.Span[0]));
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= <#=t1.Name#>.MaxValue && value >= <#=t1.Name#>.MinValue)
                 {
                     Assert.Equal(value, new MessagePackReader(encoded).Read<#=t1.Name#>());
