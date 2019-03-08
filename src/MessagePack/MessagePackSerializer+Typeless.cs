@@ -1,6 +1,7 @@
 ﻿#if !UNITY
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,17 +27,23 @@ namespace MessagePack
                 this.serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             }
 
+            public void Serialize(ref MessagePackWriter writer, object obj) => serializer.Serialize(ref writer, obj);
+
+            public void Serialize(IBufferWriter<byte> writer, object obj) => serializer.Serialize(writer, obj);
+
             public byte[] Serialize(object obj) => serializer.Serialize(obj);
 
             public void Serialize(Stream stream, object obj) => serializer.Serialize(stream, obj);
 
             public ValueTask SerializeAsync(Stream stream, object obj, CancellationToken cancellationToken) => serializer.SerializeAsync(stream, obj, cancellationToken: cancellationToken);
 
-            public object Deserialize(byte[] bytes) => serializer.Deserialize<object>(bytes);
+            public object Deserialize(ref MessagePackReader reader) => serializer.Deserialize<object>(ref reader);
+
+            public object Deserialize(ReadOnlySequence<byte> byteSequence) => serializer.Deserialize<object>(byteSequence);
 
             public object Deserialize(Stream stream) => serializer.Deserialize<object>(stream);
 
-            public object Deserialize(ArraySegment<byte> bytes) => serializer.Deserialize<object>(bytes);
+            public object Deserialize(Memory<byte> bytes) => serializer.Deserialize<object>(bytes);
 
             public ValueTask<object> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default) => serializer.DeserializeAsync<object>(stream, cancellationToken: cancellationToken);
         }
