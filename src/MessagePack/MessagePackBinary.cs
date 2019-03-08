@@ -248,6 +248,17 @@ namespace MessagePack
             dateTimeDecoders[MessagePackCode.Ext8] = Decoders.Ext8DateTime.Instance;
         }
 
+        /// <summary>
+        /// A maximum allowable element count for any array or map allocated by this class
+        /// when reading from non-seekable streams.
+        /// The default is <see cref="int.MaxValue"/>.
+        /// </summary>
+        /// <remarks>
+        /// When reading from a byte array or seekable streams, the actual length
+        /// of the remaining buffer or stream is used to calculate a safe limit.
+        /// </remarks>
+        public static int MaxArrayAllocationSize = int.MaxValue;
+
 #if NETSTANDARD
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
@@ -2627,7 +2638,8 @@ namespace MessagePack
         {
             // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
             // For streams, we can only predict length when the streams are seekable.
-            if (stream.CanSeek && length > stream.Length - stream.Position)
+            int upperLimit = stream.CanSeek ? checked((int)(stream.Length - stream.Position)) : MaxArrayAllocationSize;
+            if (stream.CanSeek && length > upperLimit)
             {
                 ThrowNotEnoughBytesException();
             }
