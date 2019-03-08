@@ -89,7 +89,7 @@ namespace MessagePack
         /// <returns>A byte array with the serialized value.</returns>
         public byte[] Serialize<T>(T value, IFormatterResolver resolver = null)
         {
-            using (var sequence = new Sequence<byte>())
+            using (var sequence = new Sequence<byte>(MemoryPoolWithMinSize.Instance))
             {
                 this.Serialize(sequence, value, resolver);
                 return sequence.AsReadOnlySequence.ToArray();
@@ -104,7 +104,7 @@ namespace MessagePack
         /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
         public void Serialize<T>(Stream stream, T value, IFormatterResolver resolver = null)
         {
-            using (var sequence = new Sequence<byte>())
+            using (var sequence = new Sequence<byte>(MemoryPoolWithMinSize.Instance))
             {
                 this.Serialize<T>(sequence, value, resolver);
                 foreach (var segment in sequence.AsReadOnlySequence)
