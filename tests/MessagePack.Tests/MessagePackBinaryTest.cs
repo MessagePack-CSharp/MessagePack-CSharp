@@ -3,6 +3,7 @@ using System.Linq;
 using System.IO;
 using Xunit;
 using System.Text;
+using System.Collections.Generic;
 
 namespace MessagePack.Tests
 {
@@ -763,6 +764,26 @@ namespace MessagePack.Tests
             byte[] bytes = null;
             int count = MessagePackBinary.WriteMapHeader(ref bytes, 0, 9999);
             Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadMapHeaderRaw(bytes, 0, out int readSize));
+        }
+
+        [Fact]
+        public void DeserializeLargeArray_Stream_WithLargePayload()
+        {
+            int[] expected = new int[128 * 1024];
+            byte[] buffer = MessagePackSerializer.Serialize(expected); // something larger than the 64KB default buffer size
+            MemoryStream ms = new MemoryStream(buffer);
+            var actual = MessagePackSerializer.Deserialize<int[]>(ms, readStrict: true);
+            Assert.Equal<int>(expected, actual);
+        }
+
+        [Fact]
+        public void DeserializeLargeMap_Stream_WithLargePayload()
+        {
+            var expected = Enumerable.Range(0, 128 * 1024).ToDictionary(n => n);
+            byte[] buffer = MessagePackSerializer.Serialize(expected); // something larger than the 64KB default buffer size
+            MemoryStream ms = new MemoryStream(buffer);
+            var actual = MessagePackSerializer.Deserialize<Dictionary<int, int>>(ms, readStrict: true);
+            Assert.Equal(expected.Count, actual.Count);
         }
     }
 }

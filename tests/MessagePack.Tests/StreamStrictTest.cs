@@ -105,7 +105,7 @@ namespace MessagePack.Tests
 
         public override bool CanRead => throw new NotImplementedException();
 
-        public override bool CanSeek => throw new NotImplementedException();
+        public override bool CanSeek => false;
 
         public override bool CanWrite => throw new NotImplementedException();
 
