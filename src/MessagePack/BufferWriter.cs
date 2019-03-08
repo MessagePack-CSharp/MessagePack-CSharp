@@ -50,7 +50,7 @@ namespace MessagePack
         {
             _buffered = 0;
             _bytesCommitted = 0;
-            _output = output;
+            _output = output ?? throw new ArgumentNullException(nameof(output));
 
             var memory = _output.GetMemory();
             MemoryMarshal.TryGetArray(memory, out _segment);

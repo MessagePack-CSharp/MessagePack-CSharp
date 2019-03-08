@@ -54,16 +54,6 @@ namespace MessagePack
         /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
         public void Serialize<T>(IBufferWriter<byte> writer, T value, IFormatterResolver resolver = null)
         {
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
-
-            if (resolver == null)
-            {
-                resolver = this.DefaultResolver;
-            }
-
             var fastWriter = new MessagePackWriter(writer);
             this.Serialize(ref fastWriter, value, resolver);
             fastWriter.Flush();
@@ -172,38 +162,13 @@ namespace MessagePack
         /// Deserializes a value of a given type from a sequence of bytes.
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="buffer">The array to deserialize from.</param>
-        /// <param name="offset">The position in the array to start deserialization.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
-        /// <returns>The deserialized value.</returns>
-        public T Deserialize<T>(byte[] buffer, int offset = 0, IFormatterResolver resolver = null)
-        {
-            if (buffer == null)
-            {
-                throw new ArgumentNullException(nameof(buffer));
-            }
-
-            var reader = new MessagePackReader(new ReadOnlySequence<byte>(buffer.AsMemory(offset)));
-            return Deserialize<T>(ref reader, resolver);
-        }
-
-        /// <summary>
-        /// Deserializes a value of a given type from a sequence of bytes.
-        /// </summary>
-        /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="buffer">The array to deserialize from.</param>
-        /// <param name="offset">The position in the array to start deserialization.</param>
+        /// <param name="buffer">The memory to deserialize from.</param>
         /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
         /// <param name="bytesRead">The number of bytes read.</param>
         /// <returns>The deserialized value.</returns>
-        public T Deserialize<T>(byte[] buffer, int offset, IFormatterResolver resolver, out int bytesRead)
+        public T Deserialize<T>(Memory<byte> buffer, IFormatterResolver resolver, out int bytesRead)
         {
-            if (buffer == null)
-            {
-                throw new ArgumentNullException(nameof(buffer));
-            }
-
-            var sequence = new ReadOnlySequence<byte>(buffer.AsMemory(offset));
+            var sequence = new ReadOnlySequence<byte>(buffer);
             var reader = new MessagePackReader(sequence);
             T result = Deserialize<T>(ref reader, resolver);
             bytesRead = (int)sequence.Slice(0, reader.Position).Length;

@@ -51,11 +51,6 @@ namespace MessagePack
                 GetOrAdd(type).serialize4.Invoke(this.serializer, stream, obj, resolver);
             }
 
-            public object Deserialize(Type type, byte[] bytes, int offset = 0, IFormatterResolver resolver = null)
-            {
-                return GetOrAdd(type).deserialize2.Invoke(this.serializer, bytes, offset, resolver);
-            }
-
             public object Deserialize(Type type, Stream stream, IFormatterResolver resolver = null)
             {
                 return GetOrAdd(type).deserialize4.Invoke(this.serializer, stream, resolver);
@@ -76,7 +71,6 @@ namespace MessagePack
                 public readonly Func<MessagePackSerializer, object, IFormatterResolver, byte[]> serialize2;
                 public readonly Action<MessagePackSerializer, Stream, object, IFormatterResolver> serialize4;
 
-                public readonly Func<MessagePackSerializer, byte[], int, IFormatterResolver, object> deserialize2;
                 public readonly Func<MessagePackSerializer, Stream, IFormatterResolver, object> deserialize4;
 
                 public readonly Func<MessagePackSerializer, Memory<byte>, IFormatterResolver, object> deserialize8;
@@ -118,18 +112,6 @@ namespace MessagePack
                         var lambda = Expression.Lambda<Action<MessagePackSerializer, Stream, object, IFormatterResolver>>(body, param0, param1, param2, param3).Compile();
 
                         this.serialize4 = lambda;
-                    }
-                    {
-                        // public static T Deserialize<T>(byte[] bytes, int offset, IFormatterResolver resolver)
-                        var deserialize = GetMethod(type, new Type[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver) });
-
-                        var param1 = Expression.Parameter(typeof(byte[]), "bytes");
-                        var param2 = Expression.Parameter(typeof(int), "offset");
-                        var param3 = Expression.Parameter(typeof(IFormatterResolver), "resolver");
-                        var body = Expression.Convert(Expression.Call(param0, deserialize, param1, param2, param3), typeof(object));
-                        var lambda = Expression.Lambda<Func<MessagePackSerializer, byte[], int, IFormatterResolver, object>>(body, param0, param1, param2, param3).Compile();
-
-                        this.deserialize2 = lambda;
                     }
                     {
                         // public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
