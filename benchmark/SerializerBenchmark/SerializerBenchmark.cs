@@ -30,7 +30,8 @@
             new SpanJson_(),
             new Utf8Json_(),
             new MsgPackCli(),
-            new FsPickler_()
+            new FsPickler_(),
+            new Ceras_(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
@@ -862,7 +863,8 @@
             new SpanJson_(),
             new Utf8Json_(),
             new MsgPackCli(),
-            new FsPickler_()
+            new FsPickler_(),
+            new Ceras_(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();

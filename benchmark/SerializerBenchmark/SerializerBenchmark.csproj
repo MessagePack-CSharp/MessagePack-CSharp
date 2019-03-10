@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.11.3" />
+    <PackageReference Include="Ceras" Version="4.0.27" />
     <PackageReference Include="FsPickler" Version="5.2.0" />
     <PackageReference Include="Hyperion" Version="0.9.8" />
     <PackageReference Include="Jil" Version="2.16.0" />
