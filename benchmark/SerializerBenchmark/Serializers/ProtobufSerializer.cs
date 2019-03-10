@@ -2,7 +2,7 @@
 using ProtoBuf;
 using System.IO;
 
-public class Protobuf : SerializerBase
+public class ProtobufNet : SerializerBase
 {
     public override T Deserialize<T>(object input)
     {
