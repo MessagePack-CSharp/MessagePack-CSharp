@@ -3,7 +3,7 @@ extern alias newmsgpack;
 
 using Benchmark.Serializers;
 
-public class MsgPack_v1 : SerializerBase
+public class MessagePack_v1 : SerializerBase
 {
     public override T Deserialize<T>(object input)
     {
@@ -16,7 +16,7 @@ public class MsgPack_v1 : SerializerBase
     }
 }
 
-public class MsgPack_v2 : SerializerBase
+public class MessagePack_v2 : SerializerBase
 {
     public override T Deserialize<T>(object input)
     {
@@ -29,7 +29,7 @@ public class MsgPack_v2 : SerializerBase
     }
 }
 
-public class MsgPackLz4_v1 : SerializerBase
+public class MessagePackLz4_v1 : SerializerBase
 {
     public override T Deserialize<T>(object input)
     {
@@ -42,7 +42,7 @@ public class MsgPackLz4_v1 : SerializerBase
     }
 }
 
-public class MsgPackLz4_v2 : SerializerBase
+public class MessagePackLz4_v2 : SerializerBase
 {
     public override T Deserialize<T>(object input)
     {

@@ -17,10 +17,10 @@
 
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
-            new MsgPack_v1(),
-            new MsgPack_v2(),
-            new MsgPackLz4_v1(),
-            new MsgPackLz4_v2(),
+            new MessagePack_v1(),
+            new MessagePack_v2(),
+            new MessagePackLz4_v1(),
+            new MessagePackLz4_v2(),
             new Protobuf(),
             new JsonNet(),
             new BinaryFormatter_(),
@@ -439,8 +439,8 @@
 
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
-            new MsgPack_v1(),
-            new MsgPack_v2(),
+            new MessagePack_v1(),
+            new MessagePack_v2(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
@@ -849,10 +849,10 @@
 
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
-            new MsgPack_v1(),
-            new MsgPack_v2(),
-            new MsgPackLz4_v1(),
-            new MsgPackLz4_v2(),
+            new MessagePack_v1(),
+            new MessagePack_v2(),
+            new MessagePackLz4_v1(),
+            new MessagePackLz4_v2(),
             new Protobuf(),
             new JsonNet(),
             new BinaryFormatter_(),
@@ -911,8 +911,8 @@
 
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
-            new MsgPack_v1(),
-            new MsgPack_v2(),
+            new MessagePack_v1(),
+            new MessagePack_v2(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
