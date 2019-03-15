@@ -12,10 +12,17 @@
     <Title>MessagePack for C#</Title>
     <Description>Extremely Fast MessagePack(MsgPack) Serializer for C#(.NET, .NET Core, Unity, Xamarin).</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
+    <AssemblyName>MessagePack</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="bin\**" />
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <EmbeddedResource Remove="obj\**" />
     <None Remove="*.meta" />
+    <None Remove="bin\**" />
+    <None Remove="obj\**" />
     <None Remove="Resolvers\*.meta" />
     <None Remove="Internal\*.meta" />
     <None Remove="Formatters\*.meta" />
