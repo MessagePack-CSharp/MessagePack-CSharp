@@ -154,7 +154,7 @@ namespace MessagePack
         /// <returns>The deserialized value.</returns>
         public T Deserialize<T>(ReadOnlyMemory<byte> buffer, IFormatterResolver resolver = null)
         {
-            var reader = new MessagePackReader(new ReadOnlySequence<byte>(buffer));
+            var reader = new MessagePackReader(buffer);
             return this.Deserialize<T>(ref reader, resolver);
         }
 
@@ -168,10 +168,9 @@ namespace MessagePack
         /// <returns>The deserialized value.</returns>
         public T Deserialize<T>(ReadOnlyMemory<byte> buffer, IFormatterResolver resolver, out int bytesRead)
         {
-            var sequence = new ReadOnlySequence<byte>(buffer);
-            var reader = new MessagePackReader(sequence);
+            var reader = new MessagePackReader(buffer);
             T result = Deserialize<T>(ref reader, resolver);
-            bytesRead = (int)sequence.Slice(0, reader.Position).Length;
+            bytesRead = buffer.Slice(0, (int)reader.Consumed).Length;
             return result;
         }
 

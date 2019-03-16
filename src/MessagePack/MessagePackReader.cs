@@ -52,6 +52,11 @@ namespace MessagePack
         public SequencePosition Position => this.reader.Position;
 
         /// <summary>
+        /// Gets the number of bytes consumed by the reader.
+        /// </summary>
+        public long Consumed => this.reader.Consumed;
+
+        /// <summary>
         /// Gets a value indicating whether the reader is at the end of the sequence.
         /// </summary>
         public bool End => this.reader.End;
