@@ -9,20 +9,53 @@ namespace System.Buffers
 {
     internal ref partial struct SequenceReader<T> where T : unmanaged, IEquatable<T>
     {
+        /// <summary>
+        /// A value indicating whether we're using <see cref="_sequence"/> (as opposed to <see cref="_memory"/>.
+        /// </summary>
+        private bool _usingSequence;
+
+        /// <summary>
+        /// Backing for the entire sequence when we're not using <see cref="_memory"/>.
+        /// </summary>
+        private ReadOnlySequence<T> _sequence;
+
+        /// <summary>
+        /// The position at the start of the <see cref="CurrentSpan"/>.
+        /// </summary>
         private SequencePosition _currentPosition;
+
+        /// <summary>
+        /// The position at the end of the <see cref="CurrentSpan"/>.
+        /// </summary>
         private SequencePosition _nextPosition;
+
+        /// <summary>
+        /// Backing for the entire sequence when we're not using <see cref="_sequence"/>.
+        /// </summary>
+        private ReadOnlyMemory<T> _memory;
+
+        /// <summary>
+        /// A value indicating whether there is unread data remaining.
+        /// </summary>
         private bool _moreData;
+
+        /// <summary>
+        /// The total number of elements in the sequence.
+        /// </summary>
         private long _length;
 
         /// <summary>
-        /// Create a <see cref="SequenceReader{T}"/> over the given <see cref="ReadOnlySequence{T}"/>.
+        /// Initializes a new instance of the <see cref="SequenceReader{T}"/> struct
+        /// over the given <see cref="ReadOnlySequence{T}"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public SequenceReader(ReadOnlySequence<T> sequence)
         {
+            _usingSequence = true;
             CurrentSpanIndex = 0;
             Consumed = 0;
-            Sequence = sequence;
+            _sequence = sequence;
+            _memory = default;
             _currentPosition = sequence.Start;
             _length = -1;
 
@@ -39,6 +72,25 @@ namespace System.Buffers
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SequenceReader{T}"/> struct
+        /// over the given <see cref="ReadOnlyMemory{T}"/>.
+        /// </summary>
+        public SequenceReader(ReadOnlyMemory<T> memory)
+        {
+            _usingSequence = false;
+            CurrentSpanIndex = 0;
+            Consumed = 0;
+            _memory = memory;
+            CurrentSpan = memory.Span;
+            _length = memory.Length;
+            _moreData = memory.Length > 0;
+
+            _currentPosition = default;
+            _nextPosition = default;
+            _sequence = default;
+        }
+
+        /// <summary>
         /// True when there is no more data in the <see cref="Sequence"/>.
         /// </summary>
         public bool End => !_moreData;
@@ -46,7 +98,22 @@ namespace System.Buffers
         /// <summary>
         /// The underlying <see cref="ReadOnlySequence{T}"/> for the reader.
         /// </summary>
-        public ReadOnlySequence<T> Sequence { get; }
+        public ReadOnlySequence<T> Sequence
+        {
+            get
+            {
+                if (_sequence.IsEmpty && !_memory.IsEmpty)
+                {
+                    // We're in memory mode (instead of sequence mode).
+                    // Lazily fill in the sequence data.
+                    _sequence = new ReadOnlySequence<T>(_memory);
+                    _currentPosition = _sequence.Start;
+                    _nextPosition = _sequence.End;
+                }
+
+                return _sequence;
+            }
+        }
 
         /// <summary>
         /// The current position in the <see cref="Sequence"/>.
@@ -140,7 +207,14 @@ namespace System.Buffers
 
             if (CurrentSpanIndex >= CurrentSpan.Length)
             {
-                GetNextSpan();
+                if (_usingSequence)
+                {
+                    GetNextSpan();
+                }
+                else
+                {
+                    _moreData = false;
+                }
             }
 
             return true;
@@ -164,22 +238,28 @@ namespace System.Buffers
                 CurrentSpanIndex -= (int)count;
                 _moreData = true;
             }
-            else
+            else if (_usingSequence)
             {
                 // Current segment doesn't have enough data, scan backward through segments
                 RetreatToPreviousSpan(Consumed);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException("Rewind went past the start of the memory.");
             }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void RetreatToPreviousSpan(long consumed)
         {
+            Debug.Assert(_usingSequence);
             ResetReader();
             Advance(consumed);
         }
 
         private void ResetReader()
         {
+            Debug.Assert(_usingSequence);
             CurrentSpanIndex = 0;
             Consumed = 0;
             _currentPosition = Sequence.Start;
@@ -213,6 +293,7 @@ namespace System.Buffers
         /// </summary>
         private void GetNextSpan()
         {
+            Debug.Assert(_usingSequence);
             if (!Sequence.IsSingleSegment)
             {
                 SequencePosition previousNextPosition = _nextPosition;
@@ -248,10 +329,20 @@ namespace System.Buffers
                 CurrentSpanIndex += (int)count;
                 Consumed += count;
             }
-            else
+            else if (_usingSequence)
             {
                 // Can't satisfy from the current span
                 AdvanceToNextSpan(count);
+            }
+            else if (CurrentSpan.Length - CurrentSpanIndex == (int)count)
+            {
+                CurrentSpanIndex += (int)count;
+                Consumed += count;
+                _moreData = false;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
             }
         }
 
@@ -265,7 +356,7 @@ namespace System.Buffers
 
             Consumed += count;
             CurrentSpanIndex += (int)count;
-            if (CurrentSpanIndex >= CurrentSpan.Length)
+            if (_usingSequence && CurrentSpanIndex >= CurrentSpan.Length)
                 GetNextSpan();
         }
 
@@ -286,6 +377,7 @@ namespace System.Buffers
 
         private void AdvanceToNextSpan(long count)
         {
+            Debug.Assert(_usingSequence);
             if (count < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(count));
