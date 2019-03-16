@@ -73,7 +73,7 @@ namespace MessagePack
 
                 public readonly Func<MessagePackSerializer, Stream, IFormatterResolver, object> deserialize4;
 
-                public readonly Func<MessagePackSerializer, Memory<byte>, IFormatterResolver, object> deserialize8;
+                public readonly Func<MessagePackSerializer, ReadOnlyMemory<byte>, IFormatterResolver, object> deserialize8;
 
                 public CompiledMethods(Type type)
                 {
@@ -126,13 +126,13 @@ namespace MessagePack
                     }
 
                     {
-                        // public static T Deserialize<T>(Memory<byte> bytes, IFormatterResolver resolver)
-                        var deserialize = GetMethod(type, new Type[] { typeof(Memory<byte>), typeof(IFormatterResolver) });
+                        // public static T Deserialize<T>(ReadOnlyMemory<byte> bytes, IFormatterResolver resolver)
+                        var deserialize = GetMethod(type, new Type[] { typeof(ReadOnlyMemory<byte>), typeof(IFormatterResolver) });
 
-                        var param1 = Expression.Parameter(typeof(Memory<byte>), "bytes");
+                        var param1 = Expression.Parameter(typeof(ReadOnlyMemory<byte>), "bytes");
                         var param2 = Expression.Parameter(typeof(IFormatterResolver), "resolver");
                         var body = Expression.Convert(Expression.Call(param0, deserialize, param1, param2), typeof(object));
-                        var lambda = Expression.Lambda<Func<MessagePackSerializer, Memory<byte>, IFormatterResolver, object>>(body, param0, param1, param2).Compile();
+                        var lambda = Expression.Lambda<Func<MessagePackSerializer, ReadOnlyMemory<byte>, IFormatterResolver, object>>(body, param0, param1, param2).Compile();
 
                         this.deserialize8 = lambda;
                     }
