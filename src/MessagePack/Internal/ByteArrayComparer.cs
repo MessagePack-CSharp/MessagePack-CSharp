@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MessagePack.Internal
 {
-    public static class ByteArrayComparer
+    internal static class ByteArrayComparer
     {
 #if ENABLE_UNSAFE_MSGPACK
 

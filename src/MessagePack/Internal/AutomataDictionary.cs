@@ -12,6 +12,10 @@ namespace MessagePack.Internal
 {
     // Key = long, Value = int for UTF8String Dictionary
 
+    /// <remarks>
+    /// This code is used by dynamically generated code as well as AOT generated code,
+    /// and thus must be public for the "C# generated and compiled into saved assembly" scenario.
+    /// </remarks>
     public class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
     {
         private readonly AutomataNode root;
@@ -422,6 +426,10 @@ namespace MessagePack.Internal
         }
     }
 
+    /// <remarks>
+    /// This is used by dynamically generated code. It can be made internal after we enable our dynamic assemblies to access internals.
+    /// But that trick may require net46, so maybe we should leave this as public.
+    /// </remarks>
     public static class AutomataKeyGen
     {
 #if !UNITY

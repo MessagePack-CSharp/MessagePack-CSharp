@@ -5,7 +5,13 @@ using System.Text;
 
 namespace MessagePack.Internal
 {
-    //[Obsolete("For use in dynamically generated code only.", error: true)]
+    /// <summary>
+    /// Helpers for generated code.
+    /// </summary>
+    /// <remarks>
+    /// This code is used by dynamically generated code as well as AOT generated code,
+    /// and thus must be public for the "C# generated and compiled into saved assembly" scenario.
+    /// </remarks>
     public static class CodeGenHelpers
     {
         public static byte[] GetEncodedStringBytes(string value)
