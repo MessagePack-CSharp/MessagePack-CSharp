@@ -172,31 +172,6 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void TaskTest()
-        {
-            var intTask = Task.Run(() => 100);
-            Convert(intTask).Result.Is(100);
-
-            Task<int> nullTask = null;
-            Convert(nullTask).IsNull();
-
-            Task unitTask = Task.Run(() => 100);
-            Convert(unitTask).Status.Is(TaskStatus.RanToCompletion);
-
-            Task nullUnitTask = null;
-            Convert(nullUnitTask).Status.Is(TaskStatus.RanToCompletion); // write to nil
-
-            ValueTask<int> valueTask = new ValueTask<int>(100);
-            Convert(valueTask).Result.Is(100);
-
-            ValueTask<int>? nullValueTask = new ValueTask<int>(100);
-            Convert(nullValueTask).Value.Result.Is(100);
-
-            ValueTask<int>? nullValueTask2 = null;
-            Convert(nullValueTask2).IsNull();
-        }
-
-        [Fact]
         public void DateTimeOffsetTest()
         {
             DateTimeOffset now = new DateTime(DateTime.UtcNow.Ticks + TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time").BaseUtcOffset.Ticks, DateTimeKind.Local);

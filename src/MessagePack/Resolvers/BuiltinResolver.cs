@@ -133,7 +133,6 @@ namespace MessagePack.Internal
             {typeof(System.Numerics.BigInteger?), new StaticNullableFormatter<System.Numerics.BigInteger>(BigIntegerFormatter.Instance)},
             {typeof(System.Numerics.Complex), ComplexFormatter.Instance},
             {typeof(System.Numerics.Complex?), new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance)},
-            {typeof(System.Threading.Tasks.Task), TaskUnitFormatter.Instance},
 #endif
         };
 

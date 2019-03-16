@@ -75,7 +75,6 @@ namespace MessagePack.Internal
               {typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>)},
               {typeof(System.Collections.Concurrent.ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>)},
               {typeof(Lazy<>), typeof(LazyFormatter<>)},
-              {typeof(Task<>), typeof(TaskValueFormatter<>)},
 #endif
         };
 
@@ -131,11 +130,6 @@ namespace MessagePack.Internal
 
 #if !UNITY
 
-                // ValueTask
-                else if (genericType == typeof(ValueTask<>))
-                {
-                    return CreateInstance(typeof(ValueTaskFormatter<>), ti.GenericTypeArguments);
-                }
                 else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
