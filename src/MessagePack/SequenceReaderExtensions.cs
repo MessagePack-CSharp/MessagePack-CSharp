@@ -16,7 +16,7 @@ namespace System.Buffers
         /// structs- see remarks for full details.
         /// </summary>
         /// <remarks>
-        /// IMPORTANT: The read is a straight copy of bits. If a struct depends on specific state of it's members to
+        /// IMPORTANT: The read is a straight copy of bits. If a struct depends on specific state of its members to
         /// behave correctly this can lead to exceptions, etc. If reading endian specific integers, use the explicit
         /// overloads such as <see cref="TryReadLittleEndian(ref SequenceReader{byte}, out short)"/>
         /// </remarks>
