@@ -15,7 +15,7 @@ namespace MessagePack
         /// <summary>
         /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
         /// </summary>
-        private static readonly Pool<Sequence<byte>> reusableSequenceWithMinSize = new Pool<Sequence<byte>>(Environment.ProcessorCount, () => new Sequence<byte> { MinimumSpanLength = 4096 }, seq => seq.Reset());
+        private static readonly SequencePool reusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount);
 
         /// <summary>
         /// Backing field for the <see cref="DefaultResolver"/> property.

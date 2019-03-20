@@ -1,34 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using Nerdbank.Streams;
 
 namespace MessagePack
 {
     /// <summary>
     /// A thread-safe, alloc-free reusable object pool.
     /// </summary>
-    /// <typeparam name="T">The type of object to share.</typeparam>
-    internal class Pool<T>
+    internal class SequencePool
     {
         private readonly int maxSize;
-        private readonly Func<T> valueFactory;
-        private readonly Action<T> cleanup;
-        private readonly Stack<T> pool = new Stack<T>();
+        private readonly Stack<Sequence<byte>> pool = new Stack<Sequence<byte>>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Pool{T}"/> class.
+        /// Initializes a new instance of the <see cref="SequencePool"/> class.
         /// </summary>
         /// <param name="maxSize">The maximum size to allow the pool to grow.</param>
-        /// <param name="valueFactory">The value factory to use to create a new instance of <typeparamref name="T"/> when a rental is requested and the pool is depleted.</param>
-        /// <param name="cleanup">An optional action to take on an instance of <typeparamref name="T"/> before returning to a pool.</param>
-        internal Pool(int maxSize, Func<T> valueFactory, Action<T> cleanup)
+        internal SequencePool(int maxSize)
         {
             this.maxSize = maxSize;
-            this.valueFactory = valueFactory ?? throw new ArgumentNullException(nameof(valueFactory));
-            this.cleanup = cleanup;
         }
 
         /// <summary>
-        /// Gets an instance of <typeparamref name="T"/>.
+        /// Gets an instance of <see cref="Sequence{T}"/>
         /// This is taken from the recycled pool if one is available; otherwise a new one is created.
         /// </summary>
         /// <returns>The rental tracker that provides access to the object as well as a means to return it.</returns>
@@ -42,12 +36,12 @@ namespace MessagePack
                 }
             }
 
-            return new Rental(this, this.valueFactory());
+            return new Rental(this, new Sequence<byte> { MinimumSpanLength = 4096 });
         }
 
-        private void Return(T value)
+        private void Return(Sequence<byte> value)
         {
-            this.cleanup?.Invoke(value);
+            value.Reset();
             lock (this.pool)
             {
                 if (this.pool.Count < this.maxSize)
@@ -59,9 +53,9 @@ namespace MessagePack
 
         internal struct Rental : IDisposable
         {
-            private readonly Pool<T> owner;
+            private readonly SequencePool owner;
 
-            internal Rental(Pool<T> owner, T value)
+            internal Rental(SequencePool owner, Sequence<byte> value)
             {
                 this.owner = owner;
                 this.Value = value;
@@ -70,7 +64,7 @@ namespace MessagePack
             /// <summary>
             /// Gets the recyclable object.
             /// </summary>
-            public T Value { get; }
+            public Sequence<byte> Value { get; }
 
             /// <summary>
             /// Returns the recyclable object to the pool.
