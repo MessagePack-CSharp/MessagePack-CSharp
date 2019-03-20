@@ -18,6 +18,7 @@ namespace MessagePack
     /// </remarks>
     public ref partial struct MessagePackReader
     {
+        #pragma warning disable CS0436 // Type conflicts with imported type
         /// <summary>
         /// The reader over the sequence.
         /// </summary>
@@ -29,7 +30,7 @@ namespace MessagePack
         /// <param name="memory">The buffer to read from.</param>
         public MessagePackReader(ReadOnlyMemory<byte> memory)
         {
-            this.reader = new SequenceReader<byte>(memory);
+            this.reader = new SequenceReader<byte>(new ReadOnlySequence<byte>(memory));
         }
 
         /// <summary>
@@ -40,6 +41,7 @@ namespace MessagePack
         {
             this.reader = new SequenceReader<byte>(readOnlySequence);
         }
+        #pragma warning restore CS0436 // Type conflicts with imported type
 
         /// <summary>
         /// Gets the <see cref="ReadOnlySequence{T}"/> originally supplied to the constructor.

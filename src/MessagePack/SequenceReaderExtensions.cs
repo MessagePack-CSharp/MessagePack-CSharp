@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace System.Buffers
 {
+    #pragma warning disable CS0436 // Type conflicts with imported type
     internal static partial class SequenceReaderExtensions
     {
         /// <summary>
@@ -237,4 +238,5 @@ namespace System.Buffers
             return false;
         }
     }
+    #pragma warning restore CS0436 // Type conflicts with imported type
 }

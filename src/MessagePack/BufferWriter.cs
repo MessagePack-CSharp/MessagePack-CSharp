@@ -140,6 +140,19 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Writes a sequence to the writer.
+        /// </summary>
+        /// <param name="source">The sequence to be copied.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Write(ReadOnlySequence<byte> source)
+        {
+            foreach (var segment in source)
+            {
+                Write(segment.Span);
+            }
+        }
+
+        /// <summary>
         /// Acquires a new buffer if necessary to ensure that some given number of bytes can be written to a single buffer.
         /// </summary>
         /// <param name="count">The number of bytes that must be allocated in a single buffer.</param>

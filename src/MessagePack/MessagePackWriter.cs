@@ -77,7 +77,7 @@ namespace MessagePack
         /// Copies bytes directly into the message pack writer.
         /// </summary>
         /// <param name="rawMessagePackBlock">The span of bytes to copy from.</param>
-        public void WriteRaw(ReadOnlySequence<byte> rawMessagePackBlock) => rawMessagePackBlock.CopyTo(ref writer);
+        public void WriteRaw(ReadOnlySequence<byte> rawMessagePackBlock) => writer.Write(rawMessagePackBlock);
 
         /// <summary>
         /// Write the length of the next array to be written in the most compact form of
