@@ -34,7 +34,7 @@
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.1.23-beta" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.1.28-beta" />
     <PackageReference Include="System.Memory" Version="4.5.2" />
   </ItemGroup>
 
