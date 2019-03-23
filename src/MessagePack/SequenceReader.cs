@@ -75,6 +75,7 @@ namespace System.Buffers
         /// Initializes a new instance of the <see cref="SequenceReader{T}"/> struct
         /// over the given <see cref="ReadOnlyMemory{T}"/>.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public SequenceReader(ReadOnlyMemory<T> memory)
         {
             _usingSequence = false;

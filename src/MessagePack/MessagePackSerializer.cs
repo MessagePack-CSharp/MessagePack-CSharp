@@ -3,8 +3,6 @@ using System.Buffers;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using MessagePack.Formatters;
-using MessagePack.Internal;
 using Nerdbank.Streams;
 
 namespace MessagePack
@@ -14,6 +12,11 @@ namespace MessagePack
     /// </summary>
     public partial class MessagePackSerializer
     {
+        /// <summary>
+        /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
+        /// </summary>
+        private static readonly SequencePool reusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount);
+
         /// <summary>
         /// Backing field for the <see cref="DefaultResolver"/> property.
         /// </summary>
@@ -79,10 +82,10 @@ namespace MessagePack
         /// <returns>A byte array with the serialized value.</returns>
         public byte[] Serialize<T>(T value, IFormatterResolver resolver = null)
         {
-            using (var sequence = new Sequence<byte>(MemoryPoolWithMinSize.Instance))
+            using (var sequenceRental = reusableSequenceWithMinSize.Rent())
             {
-                this.Serialize(sequence, value, resolver);
-                return sequence.AsReadOnlySequence.ToArray();
+                this.Serialize(sequenceRental.Value, value, resolver);
+                return sequenceRental.Value.AsReadOnlySequence.ToArray();
             }
         }
 
@@ -94,10 +97,10 @@ namespace MessagePack
         /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
         public void Serialize<T>(Stream stream, T value, IFormatterResolver resolver = null)
         {
-            using (var sequence = new Sequence<byte>(MemoryPoolWithMinSize.Instance))
+            using (var sequenceRental = reusableSequenceWithMinSize.Rent())
             {
-                this.Serialize<T>(sequence, value, resolver);
-                foreach (var segment in sequence.AsReadOnlySequence)
+                this.Serialize<T>(sequenceRental.Value, value, resolver);
+                foreach (var segment in sequenceRental.Value.AsReadOnlySequence)
                 {
                     stream.Write(segment.Span);
                 }
