@@ -37,6 +37,15 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct.
+        /// </summary>
+        internal MessagePackWriter(SequencePool sequencePool, byte[] array)
+        {
+            this.writer = new BufferWriter(sequencePool, array);
+            this.OldSpec = false;
+        }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to write in <see href="https://github.com/msgpack/msgpack/blob/master/spec-old.md">old spec</see> compatibility mode.
         /// </summary>
         public bool OldSpec { get; set; }
@@ -1103,6 +1112,21 @@ namespace MessagePack
         internal Span<byte> GetSpan(int length) => writer.GetSpan(length);
 
         internal void Advance(int length) => writer.Advance(length);
+
+        internal byte[] FlushAndGetArray()
+        {
+            if (this.writer.TryGetUncommittedSpan(out ReadOnlySpan<byte> span))
+            {
+                return span.ToArray();
+            }
+            else
+            {
+                this.Flush();
+                byte[] result = this.writer.SequenceRental.Value.AsReadOnlySequence.ToArray();
+                this.writer.SequenceRental.Dispose();
+                return result;
+            }
+        }
 
         private static void WriteBigEndian(short value, Span<byte> span) => WriteBigEndian(unchecked((ushort)value), span);
 

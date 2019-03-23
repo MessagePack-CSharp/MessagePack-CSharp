@@ -76,6 +76,9 @@
     <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
       <Link>Code\MessagePackWriter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\SequencePool.cs">
+      <Link>Code\SequencePool.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\SequenceReader.cs">
       <Link>Code\SequenceReader.cs</Link>
     </Compile>
