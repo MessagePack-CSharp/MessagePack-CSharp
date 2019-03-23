@@ -41,6 +41,10 @@ namespace MessagePack
         /// </summary>
         private long _bytesCommitted;
 
+        private SequencePool _sequencePool;
+
+        private SequencePool.Rental _rental;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BufferWriter"/> struct.
         /// </summary>
@@ -52,9 +56,30 @@ namespace MessagePack
             _bytesCommitted = 0;
             _output = output ?? throw new ArgumentNullException(nameof(output));
 
+            _sequencePool = default;
+            _rental = default;
+
             var memory = _output.GetMemory();
             MemoryMarshal.TryGetArray(memory, out _segment);
             _span = memory.Span;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BufferWriter"/> struct.
+        /// </summary>
+        /// <param name="sequencePool">The pool from which to draw an <see cref="IBufferWriter{T}"/> if required..</param>
+        /// <param name="array">An array to start with so we can avoid accessing the <paramref name="sequencePool"/> if possible.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal BufferWriter(SequencePool sequencePool, byte[] array)
+        {
+            _buffered = 0;
+            _bytesCommitted = 0;
+            _sequencePool = sequencePool ?? throw new ArgumentNullException(nameof(sequencePool));
+            _rental = default;
+            _output = null;
+
+            _segment = new ArraySegment<byte>(array);
+            _span = _segment.AsSpan();
         }
 
         /// <summary>
@@ -71,6 +96,8 @@ namespace MessagePack
         /// Gets the <see cref="IBufferWriter{T}"/> underlying this instance.
         /// </summary>
         internal IBufferWriter<byte> UnderlyingWriter => _output;
+
+        internal SequencePool.Rental SequenceRental => _rental; 
 
         public Span<byte> GetSpan(int sizeHint)
         {
@@ -103,6 +130,8 @@ namespace MessagePack
             var buffered = _buffered;
             if (buffered > 0)
             {
+                this.MigrateToSequence();
+
                 _bytesCommitted += buffered;
                 _buffered = 0;
                 _output.Advance(buffered);
@@ -153,6 +182,23 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Gets the span to the bytes written if they were never committed to the underlying buffer writer.
+        /// </summary>
+        /// <param name="span"></param>
+        /// <returns></returns>
+        internal bool TryGetUncommittedSpan(out ReadOnlySpan<byte> span)
+        {
+            if (this._sequencePool != null)
+            {
+                span = _segment.AsSpan(0, _buffered);
+                return true;
+            }
+
+            span = default;
+            return false;
+        }
+
+        /// <summary>
         /// Gets a fresh span to write to, with an optional minimum size.
         /// </summary>
         /// <param name="count">The minimum size for the next requested buffer.</param>
@@ -162,6 +208,10 @@ namespace MessagePack
             if (_buffered > 0)
             {
                 Commit();
+            }
+            else
+            {
+                this.MigrateToSequence();
             }
 
             var memory = _output.GetMemory(count);
@@ -186,6 +236,19 @@ namespace MessagePack
                 source.Slice(0, writable).CopyTo(_span);
                 source = source.Slice(writable);
                 Advance(writable);
+            }
+        }
+
+        private void MigrateToSequence()
+        {
+            if (this._sequencePool != null)
+            {
+                // We were writing to our private scratch memory, so we have to copy it into the actual writer.
+                _rental = _sequencePool.Rent();
+                _output = _rental.Value;
+                var realSpan = _output.GetSpan(_buffered);
+                _segment.AsSpan(0, _buffered).CopyTo(realSpan);
+                _sequencePool = null;
             }
         }
     }

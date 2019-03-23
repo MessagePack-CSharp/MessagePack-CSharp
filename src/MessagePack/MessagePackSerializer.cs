@@ -18,6 +18,12 @@ namespace MessagePack
         private static readonly SequencePool reusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount);
 
         /// <summary>
+        /// A recyclable array that may be used for short burts of code.
+        /// </summary>
+        [ThreadStatic]
+        private static byte[] scratchArray;
+
+        /// <summary>
         /// Backing field for the <see cref="DefaultResolver"/> property.
         /// </summary>
         private IFormatterResolver defaultResolver;
@@ -82,11 +88,15 @@ namespace MessagePack
         /// <returns>A byte array with the serialized value.</returns>
         public byte[] Serialize<T>(T value, IFormatterResolver resolver = null)
         {
-            using (var sequenceRental = reusableSequenceWithMinSize.Rent())
+            byte[] array = scratchArray;
+            if (array == null)
             {
-                this.Serialize(sequenceRental.Value, value, resolver);
-                return sequenceRental.Value.AsReadOnlySequence.ToArray();
+                scratchArray = array = new byte[65536];
             }
+
+            var msgpackWriter = new MessagePackWriter(reusableSequenceWithMinSize, array);
+            this.Serialize(ref msgpackWriter, value, resolver);
+            return msgpackWriter.FlushAndGetArray();
         }
 
         /// <summary>
