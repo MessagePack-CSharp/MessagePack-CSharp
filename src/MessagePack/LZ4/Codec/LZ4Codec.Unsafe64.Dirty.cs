@@ -1,4 +1,4 @@
-﻿#if ENABLE_UNSAFE_MSGPACK
+﻿#if ENABLE_UNSAFE_MSGPACK || true
 
 #region LZ4 original
 

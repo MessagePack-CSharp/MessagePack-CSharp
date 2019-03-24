@@ -8,9 +8,11 @@ namespace MessagePack.UnityClient.Tests
 {
     public class ObjectResolverTest
     {
+        private readonly MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
 
@@ -43,7 +45,7 @@ namespace MessagePack.UnityClient.Tests
                     BytesSpecial = new byte[] { 1, 4, 6 }
                 };
 
-                MessagePackSerializer.Serialize(o);
+                serializer.Serialize(o);
                 //var c = Convert(o);
 
                 //c.Prop1.Is(o.Prop1);
@@ -69,16 +71,16 @@ namespace MessagePack.UnityClient.Tests
         public void Null()
         {
             SimpleIntKeyData n = null;
-            var bytes = MessagePackSerializer.Serialize(n);
-            MessagePackBinary.IsNil(bytes, 0).IsTrue();
+            var bytes = serializer.Serialize(n);
+            new MessagePackReader(bytes).IsNil.IsTrue();
             bytes.Length.Is(1);
 
-            MessagePackSerializer.Deserialize<SimpleIntKeyData>(bytes).IsNull();
+            serializer.Deserialize<SimpleIntKeyData>(bytes).IsNull();
 
             // deserialize from nil
             Assert.Throws<InvalidOperationException>(() =>
             {
-                MessagePackSerializer.Deserialize<SimpleStructIntKeyData>(bytes);
+                serializer.Deserialize<SimpleStructIntKeyData>(bytes);
             });
         }
 
@@ -123,26 +125,26 @@ namespace MessagePack.UnityClient.Tests
                 MyProperty1 = 100,
             };
 
-            var v1Bytes = MessagePackSerializer.Serialize(v1);
-            var v2Bytes = MessagePackSerializer.Serialize(v2);
-            var v0Bytes = MessagePackSerializer.Serialize(v0);
+            var v1Bytes = serializer.Serialize(v1);
+            var v2Bytes = serializer.Serialize(v2);
+            var v0Bytes = serializer.Serialize(v0);
 
-            var a = MessagePackSerializer.Deserialize<Version1>(v1Bytes);
+            var a = serializer.Deserialize<Version1>(v1Bytes);
             a.MyProperty1.Is(100);
             a.MyProperty2.Is(200);
             a.MyProperty3.Is(300);
 
-            var b = MessagePackSerializer.Deserialize<Version2>(v2Bytes);
+            var b = serializer.Deserialize<Version2>(v2Bytes);
             b.MyProperty1.Is(100);
             b.MyProperty2.Is(200);
             b.MyProperty3.Is(300);
             b.MyProperty5.Is(500);
 
-            var c = MessagePackSerializer.Deserialize<Version0>(v0Bytes);
+            var c = serializer.Deserialize<Version0>(v0Bytes);
             c.MyProperty1.Is(100);
 
             // smaller than schema
-            var v2_ = MessagePackSerializer.Deserialize<Version2>(v1Bytes);
+            var v2_ = serializer.Deserialize<Version2>(v1Bytes);
             v2_.MyProperty1.Is(v1.MyProperty1);
             v2_.MyProperty2.Is(v1.MyProperty2);
             v2_.MyProperty3.Is(v1.MyProperty3);
@@ -150,7 +152,7 @@ namespace MessagePack.UnityClient.Tests
 
             // larger than schema
 
-            var v0_ = MessagePackSerializer.Deserialize<Version0>(v1Bytes);
+            var v0_ = serializer.Deserialize<Version0>(v1Bytes);
             v0_.MyProperty1.Is(v1.MyProperty1);
         }
 
@@ -188,12 +190,12 @@ namespace MessagePack.UnityClient.Tests
                 After = 1999
             };
 
-            var v1Bytes = MessagePackSerializer.Serialize(v1);
-            var v2Bytes = MessagePackSerializer.Serialize(v2);
-            var v0Bytes = MessagePackSerializer.Serialize(v0);
+            var v1Bytes = serializer.Serialize(v1);
+            var v2Bytes = serializer.Serialize(v2);
+            var v0Bytes = serializer.Serialize(v0);
 
             // smaller than schema
-            var v2_ = MessagePackSerializer.Deserialize<HolderV2>(v1Bytes);
+            var v2_ = serializer.Deserialize<HolderV2>(v1Bytes);
             v2_.MyProperty1.MyProperty1.Is(v1.MyProperty1.MyProperty1);
             v2_.MyProperty1.MyProperty2.Is(v1.MyProperty1.MyProperty2);
             v2_.MyProperty1.MyProperty3.Is(v1.MyProperty1.MyProperty3);
@@ -201,8 +203,8 @@ namespace MessagePack.UnityClient.Tests
             v2_.After.Is(9999);
 
             // larger than schema
-            var v1Json = MessagePackSerializer.ToJson(v1Bytes);
-            var v0_ = MessagePackSerializer.Deserialize<HolderV0>(v1Bytes);
+            var v1Json = serializer.ConvertToJson(v1Bytes);
+            var v0_ = serializer.Deserialize<HolderV0>(v1Bytes);
             v0_.MyProperty1.MyProperty1.Is(v1.MyProperty1.MyProperty1);
             v0_.After.Is(9999);
         }
@@ -213,27 +215,27 @@ namespace MessagePack.UnityClient.Tests
                 var before = false;
 
                 var c1 = new Callback2(0, () => before = true, () => { });
-                var d = MessagePackSerializer.Serialize(c1);
+                var d = serializer.Serialize(c1);
                 before.IsTrue();
                 Callback2.CalledAfter = false;
-                MessagePackSerializer.Deserialize<Callback2>(d);
+                serializer.Deserialize<Callback2>(d);
                 Callback2.CalledAfter.IsTrue();
             }
             {
                 var c1 = new Callback1_2(0);
-                var d = MessagePackSerializer.Serialize(c1);
+                var d = serializer.Serialize(c1);
                 c1.CalledBefore.IsTrue();
-                MessagePackSerializer.Deserialize<Callback1_2>(d).CalledAfter.IsTrue();
+                serializer.Deserialize<Callback1_2>(d).CalledAfter.IsTrue();
             }
             {
                 var before = false;
 
                 var c1 = new Callback2_2(0, () => before = true, () => { });
-                var d = MessagePackSerializer.Serialize(c1);
+                var d = serializer.Serialize(c1);
                 before.IsTrue();
 
                 Callback2.CalledAfter = false;
-                MessagePackSerializer.Deserialize<Callback2_2>(d);
+                serializer.Deserialize<Callback2_2>(d);
                 Callback2_2.CalledAfter.IsTrue();
             }
         }
