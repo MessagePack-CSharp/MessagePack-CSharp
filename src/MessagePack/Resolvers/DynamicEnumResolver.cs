@@ -1,5 +1,4 @@
 ﻿#if !UNITY_WSA
-#if !NET_STANDARD_2_0
 
 using System;
 using System.Buffers;
@@ -118,5 +117,4 @@ namespace MessagePack.Resolvers
     }
 }
 
-#endif
 #endif

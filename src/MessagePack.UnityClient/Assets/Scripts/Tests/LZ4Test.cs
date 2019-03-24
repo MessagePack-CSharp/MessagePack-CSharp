@@ -8,24 +8,26 @@ namespace MessagePack.UnityClient.Tests
 {
     public class LZ4Test
     {
+        private readonly MessagePackSerializer lz4Serializer = new LZ4MessagePackSerializer();
+
         public void TestSmall()
         {
-            MessagePackBinary.GetMessagePackType(LZ4MessagePackSerializer.Serialize(100), 0).Is(MessagePackType.Integer);
-            MessagePackBinary.GetMessagePackType(LZ4MessagePackSerializer.Serialize("test"), 0).Is(MessagePackType.String);
-            MessagePackBinary.GetMessagePackType(LZ4MessagePackSerializer.Serialize(false), 0).Is(MessagePackType.Boolean);
+            new MessagePackReader(lz4Serializer.Serialize(100)).NextMessagePackType.Is(MessagePackType.Integer);
+            new MessagePackReader(lz4Serializer.Serialize("test")).NextMessagePackType.Is(MessagePackType.String);
+            new MessagePackReader(lz4Serializer.Serialize(false)).NextMessagePackType.Is(MessagePackType.Boolean);
         }
 
         public void CompressionData()
         {
             var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();
-            var lz4Data = LZ4MessagePackSerializer.Serialize(originalData);
+            var lz4Data = lz4Serializer.Serialize(originalData);
 
-            MessagePackBinary.GetMessagePackType(lz4Data, 0).Is(MessagePackType.Extension);
-            int r;
-            var header = MessagePackBinary.ReadExtensionFormatHeader(lz4Data, 0, out r);
+            var reader = new MessagePackReader(lz4Data);
+            reader.NextMessagePackType.Is(MessagePackType.Extension);
+            var header = reader.ReadExtensionFormatHeader();
             header.TypeCode.Is((sbyte)LZ4MessagePackSerializer.ExtensionTypeCode);
 
-            var decompress = LZ4MessagePackSerializer.Deserialize<int[]>(lz4Data);
+            var decompress = lz4Serializer.Deserialize<int[]>(lz4Data);
             decompress.IsCollection(originalData);
 
 

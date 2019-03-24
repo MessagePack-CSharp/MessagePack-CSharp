@@ -109,22 +109,17 @@ namespace MessagePack.UnityClient.Tests
     public class TempVector3Formatter : global::MessagePack.Formatters.IMessagePackFormatter<Vector3>
     {
 
-        public int Serialize(ref byte[] bytes, int offset, Vector3 value, global::MessagePack.IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, Vector3 value, global::MessagePack.IFormatterResolver formatterResolver)
         {
-            var startOffset = offset;
-            offset += global::MessagePack.MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 3);
-            offset += global::MessagePack.MessagePackBinary.WriteSingle(ref bytes, offset, value.x);
-            offset += global::MessagePack.MessagePackBinary.WriteSingle(ref bytes, offset, value.y);
-            offset += global::MessagePack.MessagePackBinary.WriteSingle(ref bytes, offset, value.z);
-
-            return offset - startOffset;
+            writer.WriteFixedArrayHeaderUnsafe(3);
+            writer.Write(value.x);
+            writer.Write(value.y);
+            writer.Write(value.z);
         }
 
-        public Vector3 Deserialize(byte[] bytes, int offset, global::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+        public Vector3 Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)
         {
-            var startOffset = offset;
-            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-            offset += readSize;
+            var length = reader.ReadArrayHeader();
 
             var __MyProperty1__ = default(float);
             var __MyProperty2__ = default(float);
@@ -136,22 +131,19 @@ namespace MessagePack.UnityClient.Tests
                 switch (key)
                 {
                     case 0:
-                        __MyProperty1__ = global::MessagePack.MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        __MyProperty1__ = reader.ReadSingle();
                         break;
                     case 1:
-                        __MyProperty2__ = global::MessagePack.MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        __MyProperty2__ = reader.ReadSingle();
                         break;
                     case 2:
-                        __MyProperty3__ = global::MessagePack.MessagePackBinary.ReadSingle(bytes, offset, out readSize);
+                        __MyProperty3__ = reader.ReadSingle();
                         break;
                     default:
-                        readSize = global::MessagePack.MessagePackBinary.ReadNext(bytes, offset);
+                        reader.Skip();
                         break;
                 }
-                offset += readSize;
             }
-
-            readSize = offset - startOffset;
 
             return new Vector3(__MyProperty1__, __MyProperty2__, __MyProperty3__);
         }
@@ -162,6 +154,9 @@ namespace MessagePack.UnityClient.Tests
     public class PerformanceTest
     {
         const int Iteration = 500; // 500 iteration.
+
+        private readonly MessagePackSerializer serializer = new MessagePackSerializer(MsgPackUnsafeDefaultResolver.Instance);
+        private readonly MessagePackSerializer lz4Serializer = new LZ4MessagePackSerializer(MsgPackUnsafeDefaultResolver.Instance);
 
         Person p;
         Person[] l;
@@ -193,9 +188,6 @@ namespace MessagePack.UnityClient.Tests
         // Test Initialize:)
         public void _Init()
         {
-            // MessagePack Prepare
-            MessagePackSerializer.SetDefaultResolver(MsgPackUnsafeDefaultResolver.Instance);
-
             // MsgPack Prepare
             MsgPack.Serialization.MessagePackSerializer.PrepareType<Sex>();
             this.msgPackContext = new MsgPack.Serialization.SerializationContext();
@@ -220,11 +212,11 @@ namespace MessagePack.UnityClient.Tests
             this.l = Enumerable.Range(1000, 1000).Select(x => new Person { Age = x, FirstName = "Windows", LastName = "Server", Sex = Sex.Female }).ToArray();
             this.l2 = new PersonLikeVector { List = Enumerable.Range(1000, 1000).Select(x => new PersonLike { Age = x, FirstName = "Windows", LastName = "Server", Sex = Sex2.Female }).ToArray() };
 
-            msgPackCSharpFormatterSingleBytes = MessagePack.MessagePackSerializer.Serialize(p);
-            msgPackCSharpArrayBytes = MessagePack.MessagePackSerializer.Serialize(l);
+            msgPackCSharpFormatterSingleBytes = this.serializer.Serialize(p);
+            msgPackCSharpArrayBytes = this.serializer.Serialize(l);
 
-            msgPackCSharpLZ4FormatterSingleBytes = MessagePack.LZ4MessagePackSerializer.Serialize(p);
-            msgPackCSharpLZ4ArrayBytes = MessagePack.LZ4MessagePackSerializer.Serialize(l);
+            msgPackCSharpLZ4FormatterSingleBytes = this.lz4Serializer.Serialize(p);
+            msgPackCSharpLZ4ArrayBytes = this.lz4Serializer.Serialize(l);
 
             var serializer1 = this.msgPackContext.GetSerializer<Person>();
             msgpackSingleBytes = serializer1.PackSingleObject(p);
@@ -243,8 +235,8 @@ namespace MessagePack.UnityClient.Tests
             v3Array = Enumerable.Range(1, 100).Select(_ => new Vector3 { x = 12345.12345f, y = 3994.35226f, z = 325125.52426f }).ToArray();
             v3Wrapper = new Vector3ArrayWrapper { List = v3Array };
 
-            msgPackCSharpv3Bytes = MessagePack.MessagePackSerializer.Serialize(v3);
-            msgPackCSharpv3ArrayBytes = MessagePack.MessagePackSerializer.Serialize(v3Array);
+            msgPackCSharpv3Bytes = this.serializer.Serialize(v3);
+            msgPackCSharpv3ArrayBytes = this.serializer.Serialize(v3Array);
             var serializer3 = this.msgPackContext.GetSerializer<Vector3>();
             msgpackv3Bytes = serializer3.PackSingleObject(v3);
             var serializer4 = this.msgPackContext.GetSerializer<Vector3[]>();
@@ -264,7 +256,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.MessagePackSerializer.Serialize(p);
+                this.serializer.Serialize(p);
             }
         }
 
@@ -272,7 +264,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.MessagePackSerializer.Serialize(l);
+                this.serializer.Serialize(l);
             }
         }
 
@@ -280,7 +272,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.MessagePackSerializer.Deserialize<Person>(msgPackCSharpFormatterSingleBytes);
+                this.serializer.Deserialize<Person>(msgPackCSharpFormatterSingleBytes);
             }
         }
 
@@ -288,7 +280,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.MessagePackSerializer.Deserialize<Person[]>(msgPackCSharpArrayBytes);
+                this.serializer.Deserialize<Person[]>(msgPackCSharpArrayBytes);
             }
         }
 
@@ -298,7 +290,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.LZ4MessagePackSerializer.Serialize(p);
+                this.lz4Serializer.Serialize(p);
             }
         }
 
@@ -306,7 +298,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.LZ4MessagePackSerializer.Serialize(l);
+                this.lz4Serializer.Serialize(l);
             }
         }
 
@@ -314,7 +306,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.LZ4MessagePackSerializer.Deserialize<Person>(msgPackCSharpLZ4FormatterSingleBytes);
+                this.lz4Serializer.Deserialize<Person>(msgPackCSharpLZ4FormatterSingleBytes);
             }
         }
 
@@ -322,12 +314,9 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.LZ4MessagePackSerializer.Deserialize<Person[]>(msgPackCSharpLZ4ArrayBytes);
+                this.lz4Serializer.Deserialize<Person[]>(msgPackCSharpLZ4ArrayBytes);
             }
         }
-
-
-
 
         public void MsgPackSerializeSingle()
         {
@@ -408,7 +397,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.MessagePackSerializer.Serialize(v3);
+                this.serializer.Serialize(v3);
             }
         }
 
@@ -416,7 +405,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.MessagePackSerializer.Serialize(v3Array);
+                this.serializer.Serialize(v3Array);
             }
         }
 
@@ -424,7 +413,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.MessagePackSerializer.Deserialize<Vector3>(msgPackCSharpv3Bytes);
+                this.serializer.Deserialize<Vector3>(msgPackCSharpv3Bytes);
             }
         }
 
@@ -432,7 +421,7 @@ namespace MessagePack.UnityClient.Tests
         {
             for (int i = 0; i < Iteration; i++)
             {
-                MessagePack.MessagePackSerializer.Deserialize<Vector3[]>(msgPackCSharpv3ArrayBytes);
+                this.serializer.Deserialize<Vector3[]>(msgPackCSharpv3ArrayBytes);
             }
         }
 
