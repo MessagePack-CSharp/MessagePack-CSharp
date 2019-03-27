@@ -239,15 +239,20 @@ namespace MessagePack
             var isFloat = false;
             var isDouble = false;
             var intChar = reader.Peek();
+            var firstNumberIndex = -1;
             while (intChar != -1 && !IsWordBreak((char)intChar))
             {
                 var c = ReadChar();
                 numberWord.Append(c);
                 if (c == '.') isFloat = true;
-                if (c == 'e' || c == 'E') isDouble = true;
+                else if (c == 'e' || c == 'E') isDouble = true;
+                else if (firstNumberIndex == -1 && !(c == '-' || c == '0')) firstNumberIndex = numberWord.Length - 1;
                 intChar = reader.Peek();
             }
-            if (isFloat && !isDouble && numberWord.Length > 8)
+
+            // Length is total size minus initial zeroes and signs
+            var numberWordLength = numberWord.Length - firstNumberIndex;
+            if (isFloat && !isDouble && numberWordLength > 8)
             {
                 isDouble = true;
             }
