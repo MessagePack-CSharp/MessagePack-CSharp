@@ -1316,7 +1316,7 @@ typeof(int), typeof(int) });
             var ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
 
-            var contractAttr = ti.GetCustomAttribute<MessagePackObjectAttribute>();
+            var contractAttr = ti.GetCustomAttributes<MessagePackObjectAttribute>().FirstOrDefault();
             var dataContractAttr = ti.GetCustomAttribute<DataContractAttribute>();
             if (contractAttr == null && dataContractAttr == null && !forceStringKey && !contractless)
             {
