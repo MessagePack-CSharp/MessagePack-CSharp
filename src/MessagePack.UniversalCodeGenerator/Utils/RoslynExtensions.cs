@@ -216,7 +216,8 @@ namespace MessagePack.CodeGenerator
             foreach (var compile in compileItems)
             {
                 var filePath = compile.Text;
-                var absFilePath = Path.Combine(projectDir, filePath);
+                // normalize path separater char
+                var absFilePath = Path.Combine(projectDir, filePath).Replace('\\', Path.DirectorySeparatorChar);
                 roslynProject = roslynProject.AddDocument(filePath, File.ReadAllText(absFilePath)).Project;
             }
             foreach (var asm in assemblies)

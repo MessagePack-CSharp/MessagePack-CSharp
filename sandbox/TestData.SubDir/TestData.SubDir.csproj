@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MessagePack" Version="1.7.3.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Sub\*.cs"/>
+    <Compile Include="Sub\SubA.cs"/>
+  </ItemGroup>
+
+</Project>
