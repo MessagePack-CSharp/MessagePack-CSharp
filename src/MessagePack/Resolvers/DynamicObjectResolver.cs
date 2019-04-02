@@ -1593,7 +1593,9 @@ typeof(int), typeof(int) });
                         {
                             if (intMembers.TryGetValue(ctorParamIndex, out paramMember))
                             {
-                                if (item.ParameterType == paramMember.Type && paramMember.IsReadable)
+                                if ((item.ParameterType == paramMember.Type ||
+                                    item.ParameterType.GetTypeInfo().IsAssignableFrom(paramMember.Type))
+                                    && paramMember.IsReadable)
                                 {
                                     constructorParameters.Add(paramMember);
                                 }
