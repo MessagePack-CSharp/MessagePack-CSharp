@@ -43,7 +43,7 @@ namespace MessagePackCompiler
             var hasAnnotations = false;
             foreach (var file in sources.Distinct())
             {
-                var text = await File.ReadAllTextAsync(file, Encoding.UTF8, cancellationToken);
+                var text = await File.ReadAllTextAsync(file.Replace('\\', Path.DirectorySeparatorChar), Encoding.UTF8, cancellationToken);
                 var syntax = CSharpSyntaxTree.ParseText(text, parseOption);
                 syntaxTrees.Add(syntax);
                 if (Path.GetFileNameWithoutExtension(file) == "Attributes")
@@ -167,7 +167,7 @@ namespace MessagePackCompiler
             var syntaxTrees = new List<SyntaxTree>();
             foreach (var file in IterateCsFileWithoutBinObj(directoryRoot))
             {
-                var text = await File.ReadAllTextAsync(file, Encoding.UTF8, cancellationToken);
+                var text = await File.ReadAllTextAsync(file.Replace('\\', Path.DirectorySeparatorChar), Encoding.UTF8, cancellationToken);
                 var syntax = CSharpSyntaxTree.ParseText(text, parseOption);
                 syntaxTrees.Add(syntax);
                 if (Path.GetFileNameWithoutExtension(file) == "Attributes")
