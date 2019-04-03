@@ -7,9 +7,9 @@ using System.Reflection;
 
 namespace MessagePack.Resolvers
 {
-    public sealed class DynamicEnumAsStringResolver : IFormatterResolver
+    internal sealed class DynamicEnumAsStringResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new DynamicEnumAsStringResolver();
+        internal static readonly IFormatterResolver Instance = new DynamicEnumAsStringResolver();
 
         DynamicEnumAsStringResolver()
         {
@@ -23,7 +23,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {

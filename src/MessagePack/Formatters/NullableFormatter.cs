@@ -2,7 +2,7 @@
 
 namespace MessagePack.Formatters
 {
-    public sealed class NullableFormatter<T> : IMessagePackFormatter<T?>
+    internal sealed class NullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
         public void Serialize(ref MessagePackWriter writer, T? value, IFormatterResolver formatterResolver)
@@ -31,12 +31,12 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class StaticNullableFormatter<T> : IMessagePackFormatter<T?>
+    internal sealed class StaticNullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
         readonly IMessagePackFormatter<T> underlyingFormatter;
 
-        public StaticNullableFormatter(IMessagePackFormatter<T> underlyingFormatter)
+        internal StaticNullableFormatter(IMessagePackFormatter<T> underlyingFormatter)
         {
             this.underlyingFormatter = underlyingFormatter;
         }

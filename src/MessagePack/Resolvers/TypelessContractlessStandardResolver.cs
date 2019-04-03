@@ -10,7 +10,7 @@ namespace MessagePack.Resolvers
     /// Embed c# type names for `object` typed fields/collection items
     /// Preserve c# DateTime timezone
     /// </summary>
-    public sealed class TypelessContractlessStandardResolver : IFormatterResolver
+    internal sealed class TypelessContractlessStandardResolver : IFormatterResolver
     {
         /// <summary>
         /// A *private* list of resolvers. If we ever want to expose any of these (so the user can adjust settings, etc.)

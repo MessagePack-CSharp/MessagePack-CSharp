@@ -10,12 +10,12 @@ namespace MessagePack.Resolvers
 {
     // MEMO: Not completely implemented.
 
-    //public static class ContractlessReflectionObjectResolver
+    //internal static class ContractlessReflectionObjectResolver
     //{
     //    // TODO:CamelCase Option? AllowPrivate?
-    //    public static readonly IFormatterResolver Default = new DefaultResolver();
-    //    public static readonly IFormatterResolver Contractless = new ContractlessResolver();
-    //    public static readonly IFormatterResolver ContractlessForceStringKey = new ContractlessForceStringResolver();
+    //    internal static readonly IFormatterResolver Default = new DefaultResolver();
+    //    internal static readonly IFormatterResolver Contractless = new ContractlessResolver();
+    //    internal static readonly IFormatterResolver ContractlessForceStringKey = new ContractlessForceStringResolver();
 
     //    class DefaultResolver : IFormatterResolver
     //    {
@@ -30,7 +30,7 @@ namespace MessagePack.Resolvers
 
     //        static class Cache<T>
     //        {
-    //            public static readonly IMessagePackFormatter<T> formatter;
+    //            internal static readonly IMessagePackFormatter<T> formatter;
 
     //            static Cache()
     //            {
@@ -56,7 +56,7 @@ namespace MessagePack.Resolvers
 
     //        static class Cache<T>
     //        {
-    //            public static readonly IMessagePackFormatter<T> formatter;
+    //            internal static readonly IMessagePackFormatter<T> formatter;
 
     //            static Cache()
     //            {
@@ -82,7 +82,7 @@ namespace MessagePack.Resolvers
 
     //        static class Cache<T>
     //        {
-    //            public static readonly IMessagePackFormatter<T> formatter;
+    //            internal static readonly IMessagePackFormatter<T> formatter;
 
     //            static Cache()
     //            {
@@ -98,7 +98,7 @@ namespace MessagePack.Resolvers
     //}
 
 
-    //public class ReflectionObjectFormatter<T> : IMessagePackFormatter<T>
+    //internal class ReflectionObjectFormatter<T> : IMessagePackFormatter<T>
     //{
     //    readonly ObjectSerializationInfo metaInfo;
 

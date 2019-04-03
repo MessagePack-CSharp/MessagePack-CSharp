@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace MessagePack.Formatters
 {
     // Note:This implemenataion is 'not' fastest, should more improve.
-    public sealed class EnumAsStringFormatter<T> : IMessagePackFormatter<T>
+    internal sealed class EnumAsStringFormatter<T> : IMessagePackFormatter<T>
     {
         readonly Dictionary<string, T> nameValueMapping;
         readonly Dictionary<T, string> valueNameMapping;

@@ -7,7 +7,7 @@ namespace MessagePack
     /// <summary>
     /// https://github.com/msgpack/msgpack/blob/master/spec.md#serialization-type-to-format-conversion
     /// </summary>
-    public enum MessagePackType : byte
+    internal enum MessagePackType : byte
     {
         Unknown = 0,
 
@@ -25,7 +25,7 @@ namespace MessagePack
     /// <summary>
     /// https://github.com/msgpack/msgpack/blob/master/spec.md#overview
     /// </summary>
-    public static class MessagePackCode
+    internal static class MessagePackCode
     {
         public const byte MinFixInt = 0x00; // 0
         public const byte MaxFixInt = 0x7f; // 127
@@ -170,12 +170,12 @@ namespace MessagePack
             }
         }
 
-        public static MessagePackType ToMessagePackType(byte code)
+        internal static MessagePackType ToMessagePackType(byte code)
         {
             return typeLookupTable[code];
         }
 
-        public static string ToFormatName(byte code)
+        internal static string ToFormatName(byte code)
         {
             return formatNameTable[code];
         }
@@ -185,7 +185,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="code">The messagepack code.</param>
         /// <returns>A boolean value.</returns>
-        public static bool IsSignedInteger(byte code)
+        internal static bool IsSignedInteger(byte code)
         {
             switch (code)
             {
@@ -200,12 +200,12 @@ namespace MessagePack
         }
     }
 
-    public static class ReservedMessagePackExtensionTypeCode
+    internal static class ReservedMessagePackExtensionTypeCode
     {
         public const sbyte DateTime = -1;
     }
 
-    public static class MessagePackRange
+    internal static class MessagePackRange
     {
         public const int MinFixNegativeInt = -32;
         public const int MaxFixNegativeInt = -1;

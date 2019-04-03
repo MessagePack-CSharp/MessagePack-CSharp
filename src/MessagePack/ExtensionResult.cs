@@ -3,7 +3,7 @@ using System.Buffers;
 
 namespace MessagePack
 {
-    public struct ExtensionResult
+    internal struct ExtensionResult
     {
         public sbyte TypeCode { get; private set; }
 

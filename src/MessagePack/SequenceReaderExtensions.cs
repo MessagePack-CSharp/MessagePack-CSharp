@@ -61,7 +61,7 @@ namespace System.Buffers
         /// <param name="reader">The reader to read from.</param>
         /// <param name="value">Receives the value read.</param>
         /// <returns><c>true</c> if there was another byte in the sequence; <c>false</c> otherwise.</returns>
-        public static bool TryRead(ref this SequenceReader<byte> reader, out sbyte value)
+        internal static bool TryRead(ref this SequenceReader<byte> reader, out sbyte value)
         {
             if (TryRead(ref reader, out byte byteValue))
             {
@@ -77,7 +77,7 @@ namespace System.Buffers
         /// Reads an <see cref="Int16"/> as little endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int16"/>.</returns>
-        public static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out short value)
+        internal static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out short value)
         {
             if (BitConverter.IsLittleEndian)
             {
@@ -91,7 +91,7 @@ namespace System.Buffers
         /// Reads an <see cref="Int16"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int16"/>.</returns>
-        public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out short value)
+        internal static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out short value)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -105,7 +105,7 @@ namespace System.Buffers
         /// Reads an <see cref="UInt16"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="UInt16"/>.</returns>
-        public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out ushort value)
+        internal static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out ushort value)
         {
             if (TryReadBigEndian(ref reader, out short shortValue))
             {
@@ -132,7 +132,7 @@ namespace System.Buffers
         /// Reads an <see cref="Int32"/> as little endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int32"/>.</returns>
-        public static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out int value)
+        internal static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out int value)
         {
             if (BitConverter.IsLittleEndian)
             {
@@ -146,7 +146,7 @@ namespace System.Buffers
         /// Reads an <see cref="Int32"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int32"/>.</returns>
-        public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out int value)
+        internal static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out int value)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -160,7 +160,7 @@ namespace System.Buffers
         /// Reads an <see cref="UInt32"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="UInt32"/>.</returns>
-        public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out uint value)
+        internal static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out uint value)
         {
             if (TryReadBigEndian(ref reader, out int intValue))
             {
@@ -187,7 +187,7 @@ namespace System.Buffers
         /// Reads an <see cref="Int64"/> as little endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int64"/>.</returns>
-        public static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out long value)
+        internal static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out long value)
         {
             if (BitConverter.IsLittleEndian)
             {
@@ -201,7 +201,7 @@ namespace System.Buffers
         /// Reads an <see cref="Int64"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int64"/>.</returns>
-        public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out long value)
+        internal static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out long value)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -215,7 +215,7 @@ namespace System.Buffers
         /// Reads an <see cref="UInt64"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="UInt64"/>.</returns>
-        public static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out ulong value)
+        internal static bool TryReadBigEndian(ref this SequenceReader<byte> reader, out ulong value)
         {
             if (TryReadBigEndian(ref reader, out long longValue))
             {

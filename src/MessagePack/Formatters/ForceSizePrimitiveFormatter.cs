@@ -3,9 +3,9 @@ using System.Buffers;
 
 namespace MessagePack.Formatters
 {
-    public sealed class ForceInt16BlockFormatter : IMessagePackFormatter<Int16>
+    internal sealed class ForceInt16BlockFormatter : IMessagePackFormatter<Int16>
     {
-        public static readonly ForceInt16BlockFormatter Instance = new ForceInt16BlockFormatter();
+        internal static readonly ForceInt16BlockFormatter Instance = new ForceInt16BlockFormatter();
 
         ForceInt16BlockFormatter()
         {
@@ -22,9 +22,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableForceInt16BlockFormatter : IMessagePackFormatter<Int16?>
+    internal sealed class NullableForceInt16BlockFormatter : IMessagePackFormatter<Int16?>
     {
-        public static readonly NullableForceInt16BlockFormatter Instance = new NullableForceInt16BlockFormatter();
+        internal static readonly NullableForceInt16BlockFormatter Instance = new NullableForceInt16BlockFormatter();
 
         NullableForceInt16BlockFormatter()
         {
@@ -55,9 +55,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceInt16BlockArrayFormatter : IMessagePackFormatter<Int16[]>
+    internal sealed class ForceInt16BlockArrayFormatter : IMessagePackFormatter<Int16[]>
     {
-        public static readonly ForceInt16BlockArrayFormatter Instance = new ForceInt16BlockArrayFormatter();
+        internal static readonly ForceInt16BlockArrayFormatter Instance = new ForceInt16BlockArrayFormatter();
 
         ForceInt16BlockArrayFormatter()
         {
@@ -99,9 +99,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceInt32BlockFormatter : IMessagePackFormatter<Int32>
+    internal sealed class ForceInt32BlockFormatter : IMessagePackFormatter<Int32>
     {
-        public static readonly ForceInt32BlockFormatter Instance = new ForceInt32BlockFormatter();
+        internal static readonly ForceInt32BlockFormatter Instance = new ForceInt32BlockFormatter();
 
         ForceInt32BlockFormatter()
         {
@@ -118,9 +118,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableForceInt32BlockFormatter : IMessagePackFormatter<Int32?>
+    internal sealed class NullableForceInt32BlockFormatter : IMessagePackFormatter<Int32?>
     {
-        public static readonly NullableForceInt32BlockFormatter Instance = new NullableForceInt32BlockFormatter();
+        internal static readonly NullableForceInt32BlockFormatter Instance = new NullableForceInt32BlockFormatter();
 
         NullableForceInt32BlockFormatter()
         {
@@ -151,9 +151,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceInt32BlockArrayFormatter : IMessagePackFormatter<Int32[]>
+    internal sealed class ForceInt32BlockArrayFormatter : IMessagePackFormatter<Int32[]>
     {
-        public static readonly ForceInt32BlockArrayFormatter Instance = new ForceInt32BlockArrayFormatter();
+        internal static readonly ForceInt32BlockArrayFormatter Instance = new ForceInt32BlockArrayFormatter();
 
         ForceInt32BlockArrayFormatter()
         {
@@ -195,9 +195,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceInt64BlockFormatter : IMessagePackFormatter<Int64>
+    internal sealed class ForceInt64BlockFormatter : IMessagePackFormatter<Int64>
     {
-        public static readonly ForceInt64BlockFormatter Instance = new ForceInt64BlockFormatter();
+        internal static readonly ForceInt64BlockFormatter Instance = new ForceInt64BlockFormatter();
 
         ForceInt64BlockFormatter()
         {
@@ -214,9 +214,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableForceInt64BlockFormatter : IMessagePackFormatter<Int64?>
+    internal sealed class NullableForceInt64BlockFormatter : IMessagePackFormatter<Int64?>
     {
-        public static readonly NullableForceInt64BlockFormatter Instance = new NullableForceInt64BlockFormatter();
+        internal static readonly NullableForceInt64BlockFormatter Instance = new NullableForceInt64BlockFormatter();
 
         NullableForceInt64BlockFormatter()
         {
@@ -247,9 +247,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceInt64BlockArrayFormatter : IMessagePackFormatter<Int64[]>
+    internal sealed class ForceInt64BlockArrayFormatter : IMessagePackFormatter<Int64[]>
     {
-        public static readonly ForceInt64BlockArrayFormatter Instance = new ForceInt64BlockArrayFormatter();
+        internal static readonly ForceInt64BlockArrayFormatter Instance = new ForceInt64BlockArrayFormatter();
 
         ForceInt64BlockArrayFormatter()
         {
@@ -291,9 +291,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt16BlockFormatter : IMessagePackFormatter<UInt16>
+    internal sealed class ForceUInt16BlockFormatter : IMessagePackFormatter<UInt16>
     {
-        public static readonly ForceUInt16BlockFormatter Instance = new ForceUInt16BlockFormatter();
+        internal static readonly ForceUInt16BlockFormatter Instance = new ForceUInt16BlockFormatter();
 
         ForceUInt16BlockFormatter()
         {
@@ -310,9 +310,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableForceUInt16BlockFormatter : IMessagePackFormatter<UInt16?>
+    internal sealed class NullableForceUInt16BlockFormatter : IMessagePackFormatter<UInt16?>
     {
-        public static readonly NullableForceUInt16BlockFormatter Instance = new NullableForceUInt16BlockFormatter();
+        internal static readonly NullableForceUInt16BlockFormatter Instance = new NullableForceUInt16BlockFormatter();
 
         NullableForceUInt16BlockFormatter()
         {
@@ -343,9 +343,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt16BlockArrayFormatter : IMessagePackFormatter<UInt16[]>
+    internal sealed class ForceUInt16BlockArrayFormatter : IMessagePackFormatter<UInt16[]>
     {
-        public static readonly ForceUInt16BlockArrayFormatter Instance = new ForceUInt16BlockArrayFormatter();
+        internal static readonly ForceUInt16BlockArrayFormatter Instance = new ForceUInt16BlockArrayFormatter();
 
         ForceUInt16BlockArrayFormatter()
         {
@@ -387,9 +387,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt32BlockFormatter : IMessagePackFormatter<UInt32>
+    internal sealed class ForceUInt32BlockFormatter : IMessagePackFormatter<UInt32>
     {
-        public static readonly ForceUInt32BlockFormatter Instance = new ForceUInt32BlockFormatter();
+        internal static readonly ForceUInt32BlockFormatter Instance = new ForceUInt32BlockFormatter();
 
         ForceUInt32BlockFormatter()
         {
@@ -406,9 +406,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableForceUInt32BlockFormatter : IMessagePackFormatter<UInt32?>
+    internal sealed class NullableForceUInt32BlockFormatter : IMessagePackFormatter<UInt32?>
     {
-        public static readonly NullableForceUInt32BlockFormatter Instance = new NullableForceUInt32BlockFormatter();
+        internal static readonly NullableForceUInt32BlockFormatter Instance = new NullableForceUInt32BlockFormatter();
 
         NullableForceUInt32BlockFormatter()
         {
@@ -439,9 +439,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt32BlockArrayFormatter : IMessagePackFormatter<UInt32[]>
+    internal sealed class ForceUInt32BlockArrayFormatter : IMessagePackFormatter<UInt32[]>
     {
-        public static readonly ForceUInt32BlockArrayFormatter Instance = new ForceUInt32BlockArrayFormatter();
+        internal static readonly ForceUInt32BlockArrayFormatter Instance = new ForceUInt32BlockArrayFormatter();
 
         ForceUInt32BlockArrayFormatter()
         {
@@ -483,9 +483,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt64BlockFormatter : IMessagePackFormatter<UInt64>
+    internal sealed class ForceUInt64BlockFormatter : IMessagePackFormatter<UInt64>
     {
-        public static readonly ForceUInt64BlockFormatter Instance = new ForceUInt64BlockFormatter();
+        internal static readonly ForceUInt64BlockFormatter Instance = new ForceUInt64BlockFormatter();
 
         ForceUInt64BlockFormatter()
         {
@@ -502,9 +502,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableForceUInt64BlockFormatter : IMessagePackFormatter<UInt64?>
+    internal sealed class NullableForceUInt64BlockFormatter : IMessagePackFormatter<UInt64?>
     {
-        public static readonly NullableForceUInt64BlockFormatter Instance = new NullableForceUInt64BlockFormatter();
+        internal static readonly NullableForceUInt64BlockFormatter Instance = new NullableForceUInt64BlockFormatter();
 
         NullableForceUInt64BlockFormatter()
         {
@@ -535,9 +535,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt64BlockArrayFormatter : IMessagePackFormatter<UInt64[]>
+    internal sealed class ForceUInt64BlockArrayFormatter : IMessagePackFormatter<UInt64[]>
     {
-        public static readonly ForceUInt64BlockArrayFormatter Instance = new ForceUInt64BlockArrayFormatter();
+        internal static readonly ForceUInt64BlockArrayFormatter Instance = new ForceUInt64BlockArrayFormatter();
 
         ForceUInt64BlockArrayFormatter()
         {
@@ -579,9 +579,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceByteBlockFormatter : IMessagePackFormatter<Byte>
+    internal sealed class ForceByteBlockFormatter : IMessagePackFormatter<Byte>
     {
-        public static readonly ForceByteBlockFormatter Instance = new ForceByteBlockFormatter();
+        internal static readonly ForceByteBlockFormatter Instance = new ForceByteBlockFormatter();
 
         ForceByteBlockFormatter()
         {
@@ -598,9 +598,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableForceByteBlockFormatter : IMessagePackFormatter<Byte?>
+    internal sealed class NullableForceByteBlockFormatter : IMessagePackFormatter<Byte?>
     {
-        public static readonly NullableForceByteBlockFormatter Instance = new NullableForceByteBlockFormatter();
+        internal static readonly NullableForceByteBlockFormatter Instance = new NullableForceByteBlockFormatter();
 
         NullableForceByteBlockFormatter()
         {
@@ -632,9 +632,9 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class ForceSByteBlockFormatter : IMessagePackFormatter<SByte>
+    internal sealed class ForceSByteBlockFormatter : IMessagePackFormatter<SByte>
     {
-        public static readonly ForceSByteBlockFormatter Instance = new ForceSByteBlockFormatter();
+        internal static readonly ForceSByteBlockFormatter Instance = new ForceSByteBlockFormatter();
 
         ForceSByteBlockFormatter()
         {
@@ -651,9 +651,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableForceSByteBlockFormatter : IMessagePackFormatter<SByte?>
+    internal sealed class NullableForceSByteBlockFormatter : IMessagePackFormatter<SByte?>
     {
-        public static readonly NullableForceSByteBlockFormatter Instance = new NullableForceSByteBlockFormatter();
+        internal static readonly NullableForceSByteBlockFormatter Instance = new NullableForceSByteBlockFormatter();
 
         NullableForceSByteBlockFormatter()
         {
@@ -684,9 +684,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceSByteBlockArrayFormatter : IMessagePackFormatter<SByte[]>
+    internal sealed class ForceSByteBlockArrayFormatter : IMessagePackFormatter<SByte[]>
     {
-        public static readonly ForceSByteBlockArrayFormatter Instance = new ForceSByteBlockArrayFormatter();
+        internal static readonly ForceSByteBlockArrayFormatter Instance = new ForceSByteBlockArrayFormatter();
 
         ForceSByteBlockArrayFormatter()
         {

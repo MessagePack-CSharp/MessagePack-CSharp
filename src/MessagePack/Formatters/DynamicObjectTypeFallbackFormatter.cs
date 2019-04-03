@@ -10,7 +10,7 @@ using System.Reflection;
 
 namespace MessagePack.Formatters
 {
-    public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
+    internal sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
     {
         delegate void SerializeMethod(object dynamicFormatter, ref MessagePackWriter writer, object value, IFormatterResolver resolver);
 

@@ -2,9 +2,9 @@
 
 namespace MessagePack
 {
-    public struct Nil : IEquatable<Nil>
+    internal struct Nil : IEquatable<Nil>
     {
-        public static readonly Nil Default = new Nil();
+        internal static readonly Nil Default = new Nil();
 
         public override bool Equals(object obj)
         {

@@ -21,7 +21,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Get MethodInfo from Expression for Static(with result) method.
         /// </summary>
-        public static MethodInfo GetMethodInfo<T>(Expression<Func<T>> expression)
+        internal static MethodInfo GetMethodInfo<T>(Expression<Func<T>> expression)
         {
             return GetMethodInfoCore(expression);
         }
@@ -29,7 +29,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Get MethodInfo from Expression for Static(void) method.
         /// </summary>
-        public static MethodInfo GetMethodInfo(Expression<Action> expression)
+        internal static MethodInfo GetMethodInfo(Expression<Action> expression)
         {
             return GetMethodInfoCore(expression);
         }
@@ -37,7 +37,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Get MethodInfo from Expression for Instance(with result) method.
         /// </summary>
-        public static MethodInfo GetMethodInfo<T, TR>(Expression<Func<T, TR>> expression)
+        internal static MethodInfo GetMethodInfo<T, TR>(Expression<Func<T, TR>> expression)
         {
             return GetMethodInfoCore(expression);
         }
@@ -45,7 +45,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Get MethodInfo from Expression for Instance(void) method.
         /// </summary>
-        public static MethodInfo GetMethodInfo<T>(Expression<Action<T>> expression)
+        internal static MethodInfo GetMethodInfo<T>(Expression<Action<T>> expression)
         {
             return GetMethodInfoCore(expression);
         }
@@ -55,7 +55,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Get MethodInfo from Expression for Instance(with result) method.
         /// </summary>
-        public static MethodInfo GetMethodInfo<T, TArg1, TR>(Expression<Func<T, TArg1, TR>> expression)
+        internal static MethodInfo GetMethodInfo<T, TArg1, TR>(Expression<Func<T, TArg1, TR>> expression)
         {
             return GetMethodInfoCore(expression);
         }
@@ -73,14 +73,14 @@ namespace MessagePack.Internal
             return memberExpression.Member;
         }
 
-        public static PropertyInfo GetPropertyInfo<T, TR>(Expression<Func<T, TR>> expression)
+        internal static PropertyInfo GetPropertyInfo<T, TR>(Expression<Func<T, TR>> expression)
         {
             return GetMemberInfoCore(expression) as PropertyInfo;
         }
 
         // Field
 
-        public static FieldInfo GetFieldInfo<T, TR>(Expression<Func<T, TR>> expression)
+        internal static FieldInfo GetFieldInfo<T, TR>(Expression<Func<T, TR>> expression)
         {
             return GetMemberInfoCore(expression) as FieldInfo;
         }

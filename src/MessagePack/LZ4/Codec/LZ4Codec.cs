@@ -118,12 +118,12 @@ namespace MessagePack.LZ4
 
         #endregion
 
-        #region public interface (common)
+        #region internal interface (common)
 
         /// <summary>Gets maximum the length of the output.</summary>
         /// <param name="inputLength">Length of the input.</param>
         /// <returns>Maximum number of bytes needed for compressed buffer.</returns>
-        public static int MaximumOutputLength(int inputLength)
+        internal static int MaximumOutputLength(int inputLength)
         {
             return inputLength + (inputLength / 255) + 16;
         }

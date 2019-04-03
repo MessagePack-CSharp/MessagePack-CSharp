@@ -3,7 +3,7 @@
 namespace MessagePack
 {
     // JSON API
-    public partial class LZ4MessagePackSerializer
+    internal partial class LZ4MessagePackSerializer
     {
         /// <summary>
         /// Dump message-pack binary to JSON string.

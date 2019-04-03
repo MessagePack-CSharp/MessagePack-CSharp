@@ -6,7 +6,7 @@ using System.Buffers;
 namespace MessagePack.Formatters
 {
 
-    public sealed class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>>
+    internal sealed class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>>
     {
         public void Serialize(ref MessagePackWriter writer, Tuple<T1> value, IFormatterResolver resolver)
         {
@@ -41,7 +41,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>>
+    internal sealed class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>>
     {
         public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2> value, IFormatterResolver resolver)
         {
@@ -78,7 +78,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>>
+    internal sealed class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>>
     {
         public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3> value, IFormatterResolver resolver)
         {
@@ -117,7 +117,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>>
+    internal sealed class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>>
     {
         public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4> value, IFormatterResolver resolver)
         {
@@ -158,7 +158,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>>
+    internal sealed class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>>
     {
         public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5> value, IFormatterResolver resolver)
         {
@@ -201,7 +201,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>>
+    internal sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>>
     {
         public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6> value, IFormatterResolver resolver)
         {
@@ -246,7 +246,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>>
+    internal sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>>
     {
         public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7> value, IFormatterResolver resolver)
         {
@@ -293,7 +293,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>>
+    internal sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>>
     {
         public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7, TRest> value, IFormatterResolver resolver)
         {

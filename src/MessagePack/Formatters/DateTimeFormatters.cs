@@ -5,9 +5,9 @@ namespace MessagePack.Formatters
     /// <summary>
     /// Serialize by .NET native DateTime binary format.
     /// </summary>
-    public sealed class NativeDateTimeFormatter : IMessagePackFormatter<DateTime>
+    internal sealed class NativeDateTimeFormatter : IMessagePackFormatter<DateTime>
     {
-        public static readonly NativeDateTimeFormatter Instance = new NativeDateTimeFormatter();
+        internal static readonly NativeDateTimeFormatter Instance = new NativeDateTimeFormatter();
 
         public void Serialize(ref MessagePackWriter writer, DateTime value, IFormatterResolver resolver)
         {
@@ -22,9 +22,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NativeDateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
+    internal sealed class NativeDateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
     {
-        public static readonly NativeDateTimeArrayFormatter Instance = new NativeDateTimeArrayFormatter();
+        internal static readonly NativeDateTimeArrayFormatter Instance = new NativeDateTimeArrayFormatter();
 
         public void Serialize(ref MessagePackWriter writer, DateTime[] value, IFormatterResolver resolver)
         {

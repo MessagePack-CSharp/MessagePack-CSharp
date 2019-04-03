@@ -12,9 +12,9 @@ namespace MessagePack.Internal
     /// This code is used by dynamically generated code as well as AOT generated code,
     /// and thus must be public for the "C# generated and compiled into saved assembly" scenario.
     /// </remarks>
-    public static class CodeGenHelpers
+    internal static class CodeGenHelpers
     {
-        public static byte[] GetEncodedStringBytes(string value)
+        internal static byte[] GetEncodedStringBytes(string value)
         {
             var byteCount = StringEncoding.UTF8.GetByteCount(value);
             if (byteCount <= MessagePackRange.MaxFixStringLength)
@@ -54,7 +54,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public static ReadOnlySpan<byte> GetSpanFromSequence(ReadOnlySequence<byte> sequence)
+        internal static ReadOnlySpan<byte> GetSpanFromSequence(ReadOnlySequence<byte> sequence)
         {
             if (sequence.IsSingleSegment)
             {

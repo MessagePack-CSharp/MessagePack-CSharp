@@ -9,7 +9,7 @@ using Nerdbank.Streams;
 namespace MessagePack
 {
     // JSON API
-    public partial class MessagePackSerializer
+    internal partial class MessagePackSerializer
     {
         /// <summary>
         /// Serialize an object to JSON string.

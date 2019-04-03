@@ -2,7 +2,7 @@
 
 namespace MessagePack.Formatters
 {
-    public sealed class IgnoreFormatter<T> : IMessagePackFormatter<T>
+    internal sealed class IgnoreFormatter<T> : IMessagePackFormatter<T>
     {
         public void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver resolver)
         {

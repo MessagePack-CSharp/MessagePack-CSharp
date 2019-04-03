@@ -16,7 +16,7 @@ namespace MessagePack
     /// <remarks>
     /// <see href="https://github.com/msgpack/msgpack/blob/master/spec.md">The MessagePack spec.</see>
     /// </remarks>
-    public ref partial struct MessagePackReader
+    internal ref partial struct MessagePackReader
     {
         #pragma warning disable CS0436 // Type conflicts with imported type
         /// <summary>

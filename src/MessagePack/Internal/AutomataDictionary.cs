@@ -16,7 +16,7 @@ namespace MessagePack.Internal
     /// This code is used by dynamically generated code as well as AOT generated code,
     /// and thus must be public for the "C# generated and compiled into saved assembly" scenario.
     /// </remarks>
-    public class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
+    internal class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
     {
         private readonly AutomataNode root;
 
@@ -430,13 +430,13 @@ namespace MessagePack.Internal
     /// This is used by dynamically generated code. It can be made internal after we enable our dynamic assemblies to access internals.
     /// But that trick may require net46, so maybe we should leave this as public.
     /// </remarks>
-    public static class AutomataKeyGen
+    internal static class AutomataKeyGen
     {
 #if !UNITY
-        public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod(nameof(GetKey), new[] { typeof(ReadOnlySpan<byte>).MakeByRefType() });
+        internal static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod(nameof(GetKey), new[] { typeof(ReadOnlySpan<byte>).MakeByRefType() });
 #endif
 
-        public static ulong GetKey(ref ReadOnlySpan<byte> span)
+        internal static ulong GetKey(ref ReadOnlySpan<byte> span)
         {
             ulong key;
 

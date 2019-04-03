@@ -12,7 +12,7 @@ namespace MessagePack.Internal
         #region Hash32
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe uint Hash32(ReadOnlySpan<byte> bytes)
+        internal static unsafe uint Hash32(ReadOnlySpan<byte> bytes)
         {
             if (bytes.Length <= 4)
             {
@@ -195,7 +195,7 @@ namespace MessagePack.Internal
         // entry point
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe ulong Hash64(ReadOnlySpan<byte> bytes)
+        internal static unsafe ulong Hash64(ReadOnlySpan<byte> bytes)
         {
             fixed (byte* p = bytes)
             {

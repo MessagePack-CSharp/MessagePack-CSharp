@@ -8,7 +8,7 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// Represents a collection of formatters and resolvers acting as one.
     /// </summary>
-    public sealed class CompositeResolver : IFormatterResolver
+    internal sealed class CompositeResolver : IFormatterResolver
     {
         private readonly Dictionary<Type, object> formattersByType = new Dictionary<Type, object>();
         private readonly List<IFormatterResolver> subResolvers = new List<IFormatterResolver>();

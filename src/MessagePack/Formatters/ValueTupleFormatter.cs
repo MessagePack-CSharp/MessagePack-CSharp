@@ -5,7 +5,7 @@ using System.Buffers;
 namespace MessagePack.Formatters
 {
 
-    public sealed class ValueTupleFormatter<T1> : IMessagePackFormatter<ValueTuple<T1>>
+    internal sealed class ValueTupleFormatter<T1> : IMessagePackFormatter<ValueTuple<T1>>
     {
         public void Serialize(ref MessagePackWriter writer, ValueTuple<T1> value, IFormatterResolver resolver)
         {
@@ -33,7 +33,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class ValueTupleFormatter<T1, T2> : IMessagePackFormatter<ValueTuple<T1, T2>>
+    internal sealed class ValueTupleFormatter<T1, T2> : IMessagePackFormatter<ValueTuple<T1, T2>>
     {
         public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2> value, IFormatterResolver resolver)
         {
@@ -63,7 +63,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class ValueTupleFormatter<T1, T2, T3> : IMessagePackFormatter<ValueTuple<T1, T2, T3>>
+    internal sealed class ValueTupleFormatter<T1, T2, T3> : IMessagePackFormatter<ValueTuple<T1, T2, T3>>
     {
         public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3> value, IFormatterResolver resolver)
         {
@@ -95,7 +95,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class ValueTupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4>>
+    internal sealed class ValueTupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4>>
     {
         public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3, T4> value, IFormatterResolver resolver)
         {
@@ -129,7 +129,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5>>
+    internal sealed class ValueTupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5>>
     {
         public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3, T4, T5> value, IFormatterResolver resolver)
         {
@@ -165,7 +165,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5, T6>>
+    internal sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5, T6>>
     {
         public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6> value, IFormatterResolver resolver)
         {
@@ -203,7 +203,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7>>
+    internal sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7>>
     {
         public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6, T7> value, IFormatterResolver resolver)
         {
@@ -243,7 +243,7 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest>> where TRest : struct
+    internal sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest>> where TRest : struct
     {
         public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest> value, IFormatterResolver resolver)
         {

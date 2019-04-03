@@ -5,9 +5,9 @@ using System.Collections.Generic;
 
 namespace MessagePack.Formatters
 {
-    public sealed class PrimitiveObjectFormatter : IMessagePackFormatter<object>
+    internal sealed class PrimitiveObjectFormatter : IMessagePackFormatter<object>
     {
-        public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter();
+        internal static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter();
 
         static readonly Dictionary<Type, int> typeToJumpCode = new Dictionary<Type, int>()
         {
@@ -35,7 +35,7 @@ namespace MessagePack.Formatters
 
 #if !UNITY_WSA
 
-        public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
+        internal static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
         {
             if (value == null) return true;
             if (typeToJumpCode.ContainsKey(type)) return true;

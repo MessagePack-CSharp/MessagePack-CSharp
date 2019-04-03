@@ -15,9 +15,9 @@ namespace MessagePack.Formatters
     // NET40 -> BigInteger, Complex, Tuple
 
     // byte[] is special. represents bin type.
-    public sealed class ByteArrayFormatter : IMessagePackFormatter<byte[]>
+    internal sealed class ByteArrayFormatter : IMessagePackFormatter<byte[]>
     {
-        public static readonly ByteArrayFormatter Instance = new ByteArrayFormatter();
+        internal static readonly ByteArrayFormatter Instance = new ByteArrayFormatter();
 
         ByteArrayFormatter()
         {
@@ -48,9 +48,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableStringFormatter : IMessagePackFormatter<String>
+    internal sealed class NullableStringFormatter : IMessagePackFormatter<String>
     {
-        public static readonly NullableStringFormatter Instance = new NullableStringFormatter();
+        internal static readonly NullableStringFormatter Instance = new NullableStringFormatter();
 
         NullableStringFormatter()
         {
@@ -81,9 +81,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableStringArrayFormatter : IMessagePackFormatter<String[]>
+    internal sealed class NullableStringArrayFormatter : IMessagePackFormatter<String[]>
     {
-        public static readonly NullableStringArrayFormatter Instance = new NullableStringArrayFormatter();
+        internal static readonly NullableStringArrayFormatter Instance = new NullableStringArrayFormatter();
 
         NullableStringArrayFormatter()
         {
@@ -125,9 +125,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class DecimalFormatter : IMessagePackFormatter<Decimal>
+    internal sealed class DecimalFormatter : IMessagePackFormatter<Decimal>
     {
-        public static readonly DecimalFormatter Instance = new DecimalFormatter();
+        internal static readonly DecimalFormatter Instance = new DecimalFormatter();
 
         DecimalFormatter()
         {
@@ -146,9 +146,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TimeSpanFormatter : IMessagePackFormatter<TimeSpan>
+    internal sealed class TimeSpanFormatter : IMessagePackFormatter<TimeSpan>
     {
-        public static readonly IMessagePackFormatter<TimeSpan> Instance = new TimeSpanFormatter();
+        internal static readonly IMessagePackFormatter<TimeSpan> Instance = new TimeSpanFormatter();
 
         TimeSpanFormatter()
         {
@@ -167,9 +167,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class DateTimeOffsetFormatter : IMessagePackFormatter<DateTimeOffset>
+    internal sealed class DateTimeOffsetFormatter : IMessagePackFormatter<DateTimeOffset>
     {
-        public static readonly IMessagePackFormatter<DateTimeOffset> Instance = new DateTimeOffsetFormatter();
+        internal static readonly IMessagePackFormatter<DateTimeOffset> Instance = new DateTimeOffsetFormatter();
 
         DateTimeOffsetFormatter()
         {
@@ -199,9 +199,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class GuidFormatter : IMessagePackFormatter<Guid>
+    internal sealed class GuidFormatter : IMessagePackFormatter<Guid>
     {
-        public static readonly IMessagePackFormatter<Guid> Instance = new GuidFormatter();
+        internal static readonly IMessagePackFormatter<Guid> Instance = new GuidFormatter();
 
         GuidFormatter()
         {
@@ -239,9 +239,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UriFormatter : IMessagePackFormatter<Uri>
+    internal sealed class UriFormatter : IMessagePackFormatter<Uri>
     {
-        public static readonly IMessagePackFormatter<Uri> Instance = new UriFormatter();
+        internal static readonly IMessagePackFormatter<Uri> Instance = new UriFormatter();
 
 
         UriFormatter()
@@ -274,9 +274,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class VersionFormatter : IMessagePackFormatter<Version>
+    internal sealed class VersionFormatter : IMessagePackFormatter<Version>
     {
-        public static readonly IMessagePackFormatter<Version> Instance = new VersionFormatter();
+        internal static readonly IMessagePackFormatter<Version> Instance = new VersionFormatter();
 
         VersionFormatter()
         {
@@ -308,7 +308,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class KeyValuePairFormatter<TKey, TValue> : IMessagePackFormatter<KeyValuePair<TKey, TValue>>
+    internal sealed class KeyValuePairFormatter<TKey, TValue> : IMessagePackFormatter<KeyValuePair<TKey, TValue>>
     {
         public void Serialize(ref MessagePackWriter writer, KeyValuePair<TKey, TValue> value, IFormatterResolver resolver)
         {
@@ -330,9 +330,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class StringBuilderFormatter : IMessagePackFormatter<StringBuilder>
+    internal sealed class StringBuilderFormatter : IMessagePackFormatter<StringBuilder>
     {
-        public static readonly IMessagePackFormatter<StringBuilder> Instance = new StringBuilderFormatter();
+        internal static readonly IMessagePackFormatter<StringBuilder> Instance = new StringBuilderFormatter();
 
         StringBuilderFormatter()
         {
@@ -364,9 +364,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class BitArrayFormatter : IMessagePackFormatter<BitArray>
+    internal sealed class BitArrayFormatter : IMessagePackFormatter<BitArray>
     {
-        public static readonly IMessagePackFormatter<BitArray> Instance = new BitArrayFormatter();
+        internal static readonly IMessagePackFormatter<BitArray> Instance = new BitArrayFormatter();
 
         BitArrayFormatter()
         {
@@ -415,9 +415,9 @@ namespace MessagePack.Formatters
 
 #if !UNITY
 
-    public sealed class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
+    internal sealed class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
     {
-        public static readonly IMessagePackFormatter<System.Numerics.BigInteger> Instance = new BigIntegerFormatter();
+        internal static readonly IMessagePackFormatter<System.Numerics.BigInteger> Instance = new BigIntegerFormatter();
 
         BigIntegerFormatter()
         {
@@ -457,9 +457,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ComplexFormatter : IMessagePackFormatter<System.Numerics.Complex>
+    internal sealed class ComplexFormatter : IMessagePackFormatter<System.Numerics.Complex>
     {
-        public static readonly IMessagePackFormatter<System.Numerics.Complex> Instance = new ComplexFormatter();
+        internal static readonly IMessagePackFormatter<System.Numerics.Complex> Instance = new ComplexFormatter();
 
         ComplexFormatter()
         {
@@ -488,7 +488,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>>
+    internal sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>>
     {
         public void Serialize(ref MessagePackWriter writer, Lazy<T> value, IFormatterResolver resolver)
         {
@@ -519,9 +519,9 @@ namespace MessagePack.Formatters
 
 #pragma warning disable VSTHRD002 // This section will be removed when https://github.com/AArnott/MessagePack-CSharp/issues/29 is fixed
 
-    public sealed class TaskUnitFormatter : IMessagePackFormatter<Task>
+    internal sealed class TaskUnitFormatter : IMessagePackFormatter<Task>
     {
-        public static readonly IMessagePackFormatter<Task> Instance = new TaskUnitFormatter();
+        internal static readonly IMessagePackFormatter<Task> Instance = new TaskUnitFormatter();
         static readonly Task CompletedTask = Task.FromResult<object>(null);
 
         TaskUnitFormatter()
@@ -555,7 +555,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TaskValueFormatter<T> : IMessagePackFormatter<Task<T>>
+    internal sealed class TaskValueFormatter<T> : IMessagePackFormatter<Task<T>>
     {
         public void Serialize(ref MessagePackWriter writer, Task<T> value, IFormatterResolver resolver)
         {
@@ -584,7 +584,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ValueTaskFormatter<T> : IMessagePackFormatter<ValueTask<T>>
+    internal sealed class ValueTaskFormatter<T> : IMessagePackFormatter<ValueTask<T>>
     {
         public void Serialize(ref MessagePackWriter writer, ValueTask<T> value, IFormatterResolver resolver)
         {

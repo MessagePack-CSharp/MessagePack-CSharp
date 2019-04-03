@@ -19,7 +19,7 @@ namespace MessagePack
     /// <remarks>
     /// <see href="https://github.com/msgpack/msgpack/blob/master/spec.md">The MessagePack spec.</see>
     /// </remarks>
-    public ref struct MessagePackWriter
+    internal ref struct MessagePackWriter
     {
         /// <summary>
         /// The writer to use.

@@ -8,9 +8,9 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// Get formatter from [MessaegPackFromatter] attribute.
     /// </summary>
-    public sealed class AttributeFormatterResolver : IFormatterResolver
+    internal sealed class AttributeFormatterResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new AttributeFormatterResolver();
+        internal static IFormatterResolver Instance = new AttributeFormatterResolver();
 
         AttributeFormatterResolver()
         {
@@ -24,7 +24,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {

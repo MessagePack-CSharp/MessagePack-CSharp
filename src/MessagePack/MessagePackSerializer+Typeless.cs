@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace MessagePack
 {
-    public partial class MessagePackSerializer
+    internal partial class MessagePackSerializer
     {
         /// <summary>
         /// A convenience wrapper around <see cref="MessagePackSerializer"/> that assumes all generic type arguments are <see cref="object"/>.
         /// </summary>
-        public class Typeless
+        internal class Typeless
         {
             private readonly MessagePackSerializer serializer;
 

@@ -17,9 +17,9 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// UnionResolver by dynamic code generation.
     /// </summary>
-    public sealed class DynamicUnionResolver : IFormatterResolver
+    internal sealed class DynamicUnionResolver : IFormatterResolver
     {
-        public static readonly DynamicUnionResolver Instance = new DynamicUnionResolver();
+        internal static readonly DynamicUnionResolver Instance = new DynamicUnionResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
 
@@ -56,7 +56,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {
@@ -386,24 +386,24 @@ namespace MessagePack.Resolvers
 
         static class MessagePackReaderTypeInfo
         {
-            public static TypeInfo ReaderTypeInfo = typeof(MessagePackReader).GetTypeInfo();
+            internal static TypeInfo ReaderTypeInfo = typeof(MessagePackReader).GetTypeInfo();
 
-            public static MethodInfo ReadBytes = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadBytes), Type.EmptyTypes);
-            public static MethodInfo ReadInt32 = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadInt32), Type.EmptyTypes);
-            public static MethodInfo ReadString = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadString), Type.EmptyTypes);
-            public static MethodInfo TryReadNil = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.TryReadNil), Type.EmptyTypes);
-            public static MethodInfo Skip = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.Skip), Type.EmptyTypes);
-            public static MethodInfo ReadArrayHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadArrayHeader), Type.EmptyTypes);
-            public static MethodInfo ReadMapHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadMapHeader), Type.EmptyTypes);
+            internal static MethodInfo ReadBytes = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadBytes), Type.EmptyTypes);
+            internal static MethodInfo ReadInt32 = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadInt32), Type.EmptyTypes);
+            internal static MethodInfo ReadString = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadString), Type.EmptyTypes);
+            internal static MethodInfo TryReadNil = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.TryReadNil), Type.EmptyTypes);
+            internal static MethodInfo Skip = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.Skip), Type.EmptyTypes);
+            internal static MethodInfo ReadArrayHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadArrayHeader), Type.EmptyTypes);
+            internal static MethodInfo ReadMapHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadMapHeader), Type.EmptyTypes);
         }
 
         static class MessagePackWriterTypeInfo
         {
-            public static TypeInfo WriterTypeInfo = typeof(MessagePackWriter).GetTypeInfo();
+            internal static TypeInfo WriterTypeInfo = typeof(MessagePackWriter).GetTypeInfo();
 
-            public static MethodInfo WriteArrayHeader = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteArrayHeader), new[] { typeof(int) });
-            public static MethodInfo WriteInt32 = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.Write), new[] { typeof(int) });
-            public static MethodInfo WriteNil = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteNil), Type.EmptyTypes);
+            internal static MethodInfo WriteArrayHeader = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteArrayHeader), new[] { typeof(int) });
+            internal static MethodInfo WriteInt32 = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.Write), new[] { typeof(int) });
+            internal static MethodInfo WriteNil = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteNil), Type.EmptyTypes);
         }
     }
 
@@ -415,9 +415,9 @@ namespace MessagePack.Internal
 {
     // RuntimeTypeHandle can embed directly by OpCodes.Ldtoken
     // It does not implements IEquatable<T>(but GetHashCode and Equals is implemented) so needs this to avoid boxing.
-    public class RuntimeTypeHandleEqualityComparer : IEqualityComparer<RuntimeTypeHandle>
+    internal class RuntimeTypeHandleEqualityComparer : IEqualityComparer<RuntimeTypeHandle>
     {
-        public static IEqualityComparer<RuntimeTypeHandle> Default = new RuntimeTypeHandleEqualityComparer();
+        internal static IEqualityComparer<RuntimeTypeHandle> Default = new RuntimeTypeHandleEqualityComparer();
 
         RuntimeTypeHandleEqualityComparer()
         {

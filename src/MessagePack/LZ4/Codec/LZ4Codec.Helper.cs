@@ -8,7 +8,7 @@ namespace MessagePack.LZ4
 
         // use 'Safe' code for Unity because in IL2CPP gots strange behaviour.
 
-        public static int Encode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
+        internal static int Encode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
         {
             if (IntPtr.Size == 4)
             {
@@ -20,7 +20,7 @@ namespace MessagePack.LZ4
             }
         }
 
-        public static int Decode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
+        internal static int Decode(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
         {
             if (IntPtr.Size == 4)
             {
@@ -45,7 +45,7 @@ namespace MessagePack.LZ4
             [ThreadStatic]
             static int[] intPool;
 
-            public static ushort[] GetUShortHashTablePool()
+            internal static ushort[] GetUShortHashTablePool()
             {
                 if (ushortPool == null)
                 {
@@ -58,7 +58,7 @@ namespace MessagePack.LZ4
                 return ushortPool;
             }
 
-            public static uint[] GetUIntHashTablePool()
+            internal static uint[] GetUIntHashTablePool()
             {
                 if (uintPool == null)
                 {
@@ -71,7 +71,7 @@ namespace MessagePack.LZ4
                 return uintPool;
             }
 
-            public static int[] GetIntHashTablePool()
+            internal static int[] GetIntHashTablePool()
             {
                 if (intPool == null)
                 {

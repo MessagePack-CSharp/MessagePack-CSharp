@@ -12,7 +12,7 @@ namespace MessagePack
     /// <summary>
     /// High-Level API of MessagePack for C#.
     /// </summary>
-    public partial class MessagePackSerializer
+    internal partial class MessagePackSerializer
     {
         /// <summary>
         /// Backing field for the <see cref="DefaultResolver"/> property.

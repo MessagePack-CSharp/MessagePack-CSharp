@@ -17,7 +17,7 @@ namespace MessagePack
     ///  32-bit integer with length of *uncompressed* data (as a MessagePack Int32 entity)
     ///  compressed data  (raw -- not as a raw/bytes MessagePack entity)
     /// </remarks>
-    public partial class LZ4MessagePackSerializer : MessagePackSerializer
+    internal partial class LZ4MessagePackSerializer : MessagePackSerializer
     {
         public const sbyte ExtensionTypeCode = 99;
 

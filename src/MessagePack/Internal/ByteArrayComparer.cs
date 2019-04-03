@@ -13,7 +13,7 @@ namespace MessagePack.Internal
         static readonly bool Is32Bit = (IntPtr.Size == 4);
 
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int GetHashCode(ReadOnlySpan<byte> bytes)
+        internal static int GetHashCode(ReadOnlySpan<byte> bytes)
         {
             if (Is32Bit)
             {
@@ -30,7 +30,7 @@ namespace MessagePack.Internal
 #if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static unsafe bool Equals(ReadOnlySpan<byte> xs, ReadOnlySpan<byte> ys)
+        internal static unsafe bool Equals(ReadOnlySpan<byte> xs, ReadOnlySpan<byte> ys)
         {
             if (xs.Length != ys.Length)
             {
@@ -92,7 +92,7 @@ namespace MessagePack.Internal
 #if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        public static bool Equals(ReadOnlySpan<byte> xs, ReadOnlySpan<byte> ys)
+        internal static bool Equals(ReadOnlySpan<byte> xs, ReadOnlySpan<byte> ys)
         {
             if (xs.Length != ys.Length)
             {

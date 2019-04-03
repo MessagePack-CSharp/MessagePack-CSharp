@@ -14,7 +14,7 @@ namespace MessagePack
         /// A convenience wrapper around <see cref="MessagePackSerializer"/> that allows all generic type arguments
         /// to be specified as <see cref="Type"/> parameters instead.
         /// </summary>
-        public class NonGeneric
+        internal class NonGeneric
         {
             private static readonly Func<Type, CompiledMethods> CreateCompiledMethods;
             private static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
@@ -80,7 +80,7 @@ namespace MessagePack
                     var ti = type.GetTypeInfo();
                     var param0 = Expression.Parameter(typeof(MessagePackSerializer), "serializer");
                     {
-                        // public static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
+                        // internal static byte[] Serialize<T>(T obj, IFormatterResolver resolver)
                         var serialize = GetMethod(type, new Type[] { null, typeof(IFormatterResolver) });
 
                         var param1 = Expression.Parameter(typeof(object), "obj");
@@ -96,7 +96,7 @@ namespace MessagePack
                         this.serialize2 = lambda;
                     }
                     {
-                        // public static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
+                        // internal static void Serialize<T>(Stream stream, T obj, IFormatterResolver resolver)
                         var serialize = GetMethod(type, new Type[] { typeof(Stream), null, typeof(IFormatterResolver) });
 
                         var param1 = Expression.Parameter(typeof(Stream), "stream");
@@ -114,7 +114,7 @@ namespace MessagePack
                         this.serialize4 = lambda;
                     }
                     {
-                        // public static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
+                        // internal static T Deserialize<T>(Stream stream, IFormatterResolver resolver)
                         var deserialize = GetMethod(type, new Type[] { typeof(Stream), typeof(IFormatterResolver) });
 
                         var param1 = Expression.Parameter(typeof(Stream), "stream");
@@ -126,7 +126,7 @@ namespace MessagePack
                     }
 
                     {
-                        // public static T Deserialize<T>(ReadOnlyMemory<byte> bytes, IFormatterResolver resolver)
+                        // internal static T Deserialize<T>(ReadOnlyMemory<byte> bytes, IFormatterResolver resolver)
                         var deserialize = GetMethod(type, new Type[] { typeof(ReadOnlyMemory<byte>), typeof(IFormatterResolver) });
 
                         var param1 = Expression.Parameter(typeof(ReadOnlyMemory<byte>), "bytes");

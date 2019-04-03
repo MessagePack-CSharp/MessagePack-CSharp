@@ -1,8 +1,8 @@
 ﻿namespace MessagePack.Formatters
 {
-    public class NilFormatter : IMessagePackFormatter<Nil>
+    internal class NilFormatter : IMessagePackFormatter<Nil>
     {
-        public static readonly IMessagePackFormatter<Nil> Instance = new NilFormatter();
+        internal static readonly IMessagePackFormatter<Nil> Instance = new NilFormatter();
 
         NilFormatter()
         {
@@ -22,9 +22,9 @@
     }
 
     // NullableNil is same as Nil.
-    public class NullableNilFormatter : IMessagePackFormatter<Nil?>
+    internal class NullableNilFormatter : IMessagePackFormatter<Nil?>
     {
-        public static readonly IMessagePackFormatter<Nil?> Instance = new NullableNilFormatter();
+        internal static readonly IMessagePackFormatter<Nil?> Instance = new NullableNilFormatter();
 
         NullableNilFormatter()
         {

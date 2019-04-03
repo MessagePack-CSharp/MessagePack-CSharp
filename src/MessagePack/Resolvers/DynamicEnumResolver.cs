@@ -14,9 +14,9 @@ namespace MessagePack.Resolvers
     /// <summary>
     /// EnumResolver by dynamic code generation, serialized underlying type.
     /// </summary>
-    public sealed class DynamicEnumResolver : IFormatterResolver
+    internal sealed class DynamicEnumResolver : IFormatterResolver
     {
-        public static readonly DynamicEnumResolver Instance = new DynamicEnumResolver();
+        internal static readonly DynamicEnumResolver Instance = new DynamicEnumResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicEnumResolver";
 
@@ -49,7 +49,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {

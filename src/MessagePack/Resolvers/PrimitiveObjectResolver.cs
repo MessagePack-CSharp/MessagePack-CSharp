@@ -2,9 +2,9 @@
 
 namespace MessagePack.Resolvers
 {
-    public sealed class PrimitiveObjectResolver : IFormatterResolver
+    internal sealed class PrimitiveObjectResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new PrimitiveObjectResolver();
+        internal static IFormatterResolver Instance = new PrimitiveObjectResolver();
 
         PrimitiveObjectResolver()
         {
@@ -18,7 +18,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {
@@ -34,9 +34,9 @@ namespace MessagePack.Resolvers
 //    /// <summary>
 //    /// In `object`, when serializing resolve by concrete type and when deserializing use primitive.
 //    /// </summary>
-//    public sealed class DynamicObjectTypeFallbackResolver : IFormatterResolver
+//    internal sealed class DynamicObjectTypeFallbackResolver : IFormatterResolver
 //    {
-//        public static IFormatterResolver Instance = new DynamicObjectTypeFallbackResolver();
+//        internal static IFormatterResolver Instance = new DynamicObjectTypeFallbackResolver();
 
 //        DynamicObjectTypeFallbackResolver()
 //        {
@@ -50,7 +50,7 @@ namespace MessagePack.Resolvers
 
 //        static class FormatterCache<T>
 //        {
-//            public static readonly IMessagePackFormatter<T> formatter;
+//            internal static readonly IMessagePackFormatter<T> formatter;
 
 //            static FormatterCache()
 //            {

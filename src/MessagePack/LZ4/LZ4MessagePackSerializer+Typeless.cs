@@ -10,7 +10,7 @@ using MessagePack.Resolvers;
 namespace MessagePack
 {
     // Typeless API
-    public partial class LZ4MessagePackSerializer
+    internal partial class LZ4MessagePackSerializer
     {
         public new class Typeless : MessagePackSerializer.Typeless
         {

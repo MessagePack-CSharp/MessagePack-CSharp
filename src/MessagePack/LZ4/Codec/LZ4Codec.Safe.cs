@@ -323,7 +323,7 @@ namespace MessagePack.LZ4
         /// <param name="outputOffset">The output offset.</param>
         /// <param name="outputLength">Length of the output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static int Encode32Safe(
+        internal static int Encode32Safe(
             byte[] input,
             int inputOffset,
             int inputLength,
@@ -354,7 +354,7 @@ namespace MessagePack.LZ4
         /// <param name="outputOffset">The output offset.</param>
         /// <param name="outputLength">Length of the output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static int Encode64Safe(
+        internal static int Encode64Safe(
             byte[] input,
             int inputOffset,
             int inputLength,
@@ -385,7 +385,7 @@ namespace MessagePack.LZ4
         /// <param name="outputOffset">The output offset.</param>
         /// <param name="outputLength">Length of the output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static int Decode32Safe(
+        internal static int Decode32Safe(
             byte[] input,
             int inputOffset,
             int inputLength,
@@ -411,7 +411,7 @@ namespace MessagePack.LZ4
         /// <param name="outputOffset">The output offset.</param>
         /// <param name="outputLength">Length of the output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static int Decode64Safe(
+        internal static int Decode64Safe(
             byte[] input,
             int inputOffset,
             int inputLength,

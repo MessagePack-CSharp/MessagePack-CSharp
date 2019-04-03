@@ -6,7 +6,7 @@ namespace MessagePack.Formatters
     /// The contract for serialization of some specific type.
     /// </summary>
     /// <typeparam name="T">The type to be serialized or deserialized.</typeparam>
-    public interface IMessagePackFormatter<T>
+    internal interface IMessagePackFormatter<T>
     {
         /// <summary>
         /// Serializes a value.

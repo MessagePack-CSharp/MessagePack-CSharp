@@ -71,7 +71,7 @@ namespace MessagePack.LZ4
         /// <param name="input">The input.</param>
         /// <param name="output">The output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static unsafe int Encode(ReadOnlySpan<byte> input, Span<byte> output)
+        internal static unsafe int Encode(ReadOnlySpan<byte> input, Span<byte> output)
         {
             if (output.Length == 0) throw new ArgumentException("Output is empty.");
 
@@ -115,7 +115,7 @@ namespace MessagePack.LZ4
         /// <param name="input">The input.</param>
         /// <param name="output">The output.</param>
         /// <returns>Number of bytes written.</returns>
-        public static unsafe int Decode(ReadOnlySpan<byte> input, Span<byte> output)
+        internal static unsafe int Decode(ReadOnlySpan<byte> input, Span<byte> output)
         {
             if (output.Length == 0) throw new ArgumentException("Output is empty.");
 

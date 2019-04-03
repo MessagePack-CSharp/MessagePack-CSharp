@@ -7,7 +7,7 @@ namespace MessagePack.Formatters
 {
     // multi dimentional array serialize to [i, j, [seq]]
 
-    public sealed class TwoDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,]>
+    internal sealed class TwoDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,]>
     {
         const int ArrayLength = 3;
 
@@ -77,7 +77,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ThreeDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,,]>
+    internal sealed class ThreeDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,,]>
     {
         const int ArrayLength = 4;
 
@@ -157,7 +157,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class FourDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,,,]>
+    internal sealed class FourDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,,,]>
     {
         const int ArrayLength = 5;
 

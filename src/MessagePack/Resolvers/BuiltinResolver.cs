@@ -9,9 +9,9 @@ using System.Text;
 
 namespace MessagePack.Resolvers
 {
-    public sealed class BuiltinResolver : IFormatterResolver
+    internal sealed class BuiltinResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new BuiltinResolver();
+        internal static readonly IFormatterResolver Instance = new BuiltinResolver();
 
         BuiltinResolver()
         {
@@ -25,7 +25,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {

@@ -15,7 +15,7 @@ namespace MessagePack.Resolvers
     /// Serialized binary is valid MessagePack binary used ext-format and custom typecode(100).
     /// Inside ext - assembly qualified type name, and serialized object
     /// </summary>
-    public sealed class TypelessObjectResolver : IFormatterResolver
+    internal sealed class TypelessObjectResolver : IFormatterResolver
     {
         /// <summary>
         /// Backing field for the <see cref="Formatter"/> property.
@@ -46,7 +46,7 @@ namespace MessagePack.Resolvers
 
     internal sealed class ForceSizePrimitiveObjectResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new ForceSizePrimitiveObjectResolver();
+        internal static IFormatterResolver Instance = new ForceSizePrimitiveObjectResolver();
 
         ForceSizePrimitiveObjectResolver()
         {
@@ -60,7 +60,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {
@@ -102,7 +102,7 @@ namespace MessagePack.Resolvers
                 {typeof(SByte[]), ForceSByteBlockArrayFormatter.Instance},
             };
 
-            public static object GetFormatter(Type type)
+            internal static object GetFormatter(Type type)
             {
                 object formatter;
                 return formatterMap.TryGetValue(type, out formatter)
@@ -132,7 +132,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {

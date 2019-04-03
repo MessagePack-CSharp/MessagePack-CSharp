@@ -3,9 +3,9 @@ using System.Buffers;
 
 namespace MessagePack.Formatters
 {
-    public sealed class Int16Formatter : IMessagePackFormatter<Int16>
+    internal sealed class Int16Formatter : IMessagePackFormatter<Int16>
     {
-        public static readonly Int16Formatter Instance = new Int16Formatter();
+        internal static readonly Int16Formatter Instance = new Int16Formatter();
 
         Int16Formatter()
         {
@@ -22,9 +22,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableInt16Formatter : IMessagePackFormatter<Int16?>
+    internal sealed class NullableInt16Formatter : IMessagePackFormatter<Int16?>
     {
-        public static readonly NullableInt16Formatter Instance = new NullableInt16Formatter();
+        internal static readonly NullableInt16Formatter Instance = new NullableInt16Formatter();
 
         NullableInt16Formatter()
         {
@@ -55,9 +55,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class Int16ArrayFormatter : IMessagePackFormatter<Int16[]>
+    internal sealed class Int16ArrayFormatter : IMessagePackFormatter<Int16[]>
     {
-        public static readonly Int16ArrayFormatter Instance = new Int16ArrayFormatter();
+        internal static readonly Int16ArrayFormatter Instance = new Int16ArrayFormatter();
 
         Int16ArrayFormatter()
         {
@@ -99,9 +99,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class Int32Formatter : IMessagePackFormatter<Int32>
+    internal sealed class Int32Formatter : IMessagePackFormatter<Int32>
     {
-        public static readonly Int32Formatter Instance = new Int32Formatter();
+        internal static readonly Int32Formatter Instance = new Int32Formatter();
 
         Int32Formatter()
         {
@@ -118,9 +118,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableInt32Formatter : IMessagePackFormatter<Int32?>
+    internal sealed class NullableInt32Formatter : IMessagePackFormatter<Int32?>
     {
-        public static readonly NullableInt32Formatter Instance = new NullableInt32Formatter();
+        internal static readonly NullableInt32Formatter Instance = new NullableInt32Formatter();
 
         NullableInt32Formatter()
         {
@@ -151,9 +151,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class Int32ArrayFormatter : IMessagePackFormatter<Int32[]>
+    internal sealed class Int32ArrayFormatter : IMessagePackFormatter<Int32[]>
     {
-        public static readonly Int32ArrayFormatter Instance = new Int32ArrayFormatter();
+        internal static readonly Int32ArrayFormatter Instance = new Int32ArrayFormatter();
 
         Int32ArrayFormatter()
         {
@@ -195,9 +195,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class Int64Formatter : IMessagePackFormatter<Int64>
+    internal sealed class Int64Formatter : IMessagePackFormatter<Int64>
     {
-        public static readonly Int64Formatter Instance = new Int64Formatter();
+        internal static readonly Int64Formatter Instance = new Int64Formatter();
 
         Int64Formatter()
         {
@@ -214,9 +214,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableInt64Formatter : IMessagePackFormatter<Int64?>
+    internal sealed class NullableInt64Formatter : IMessagePackFormatter<Int64?>
     {
-        public static readonly NullableInt64Formatter Instance = new NullableInt64Formatter();
+        internal static readonly NullableInt64Formatter Instance = new NullableInt64Formatter();
 
         NullableInt64Formatter()
         {
@@ -247,9 +247,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class Int64ArrayFormatter : IMessagePackFormatter<Int64[]>
+    internal sealed class Int64ArrayFormatter : IMessagePackFormatter<Int64[]>
     {
-        public static readonly Int64ArrayFormatter Instance = new Int64ArrayFormatter();
+        internal static readonly Int64ArrayFormatter Instance = new Int64ArrayFormatter();
 
         Int64ArrayFormatter()
         {
@@ -291,9 +291,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt16Formatter : IMessagePackFormatter<UInt16>
+    internal sealed class UInt16Formatter : IMessagePackFormatter<UInt16>
     {
-        public static readonly UInt16Formatter Instance = new UInt16Formatter();
+        internal static readonly UInt16Formatter Instance = new UInt16Formatter();
 
         UInt16Formatter()
         {
@@ -310,9 +310,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableUInt16Formatter : IMessagePackFormatter<UInt16?>
+    internal sealed class NullableUInt16Formatter : IMessagePackFormatter<UInt16?>
     {
-        public static readonly NullableUInt16Formatter Instance = new NullableUInt16Formatter();
+        internal static readonly NullableUInt16Formatter Instance = new NullableUInt16Formatter();
 
         NullableUInt16Formatter()
         {
@@ -343,9 +343,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt16ArrayFormatter : IMessagePackFormatter<UInt16[]>
+    internal sealed class UInt16ArrayFormatter : IMessagePackFormatter<UInt16[]>
     {
-        public static readonly UInt16ArrayFormatter Instance = new UInt16ArrayFormatter();
+        internal static readonly UInt16ArrayFormatter Instance = new UInt16ArrayFormatter();
 
         UInt16ArrayFormatter()
         {
@@ -387,9 +387,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt32Formatter : IMessagePackFormatter<UInt32>
+    internal sealed class UInt32Formatter : IMessagePackFormatter<UInt32>
     {
-        public static readonly UInt32Formatter Instance = new UInt32Formatter();
+        internal static readonly UInt32Formatter Instance = new UInt32Formatter();
 
         UInt32Formatter()
         {
@@ -406,9 +406,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableUInt32Formatter : IMessagePackFormatter<UInt32?>
+    internal sealed class NullableUInt32Formatter : IMessagePackFormatter<UInt32?>
     {
-        public static readonly NullableUInt32Formatter Instance = new NullableUInt32Formatter();
+        internal static readonly NullableUInt32Formatter Instance = new NullableUInt32Formatter();
 
         NullableUInt32Formatter()
         {
@@ -439,9 +439,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt32ArrayFormatter : IMessagePackFormatter<UInt32[]>
+    internal sealed class UInt32ArrayFormatter : IMessagePackFormatter<UInt32[]>
     {
-        public static readonly UInt32ArrayFormatter Instance = new UInt32ArrayFormatter();
+        internal static readonly UInt32ArrayFormatter Instance = new UInt32ArrayFormatter();
 
         UInt32ArrayFormatter()
         {
@@ -483,9 +483,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt64Formatter : IMessagePackFormatter<UInt64>
+    internal sealed class UInt64Formatter : IMessagePackFormatter<UInt64>
     {
-        public static readonly UInt64Formatter Instance = new UInt64Formatter();
+        internal static readonly UInt64Formatter Instance = new UInt64Formatter();
 
         UInt64Formatter()
         {
@@ -502,9 +502,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableUInt64Formatter : IMessagePackFormatter<UInt64?>
+    internal sealed class NullableUInt64Formatter : IMessagePackFormatter<UInt64?>
     {
-        public static readonly NullableUInt64Formatter Instance = new NullableUInt64Formatter();
+        internal static readonly NullableUInt64Formatter Instance = new NullableUInt64Formatter();
 
         NullableUInt64Formatter()
         {
@@ -535,9 +535,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class UInt64ArrayFormatter : IMessagePackFormatter<UInt64[]>
+    internal sealed class UInt64ArrayFormatter : IMessagePackFormatter<UInt64[]>
     {
-        public static readonly UInt64ArrayFormatter Instance = new UInt64ArrayFormatter();
+        internal static readonly UInt64ArrayFormatter Instance = new UInt64ArrayFormatter();
 
         UInt64ArrayFormatter()
         {
@@ -579,9 +579,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class SingleFormatter : IMessagePackFormatter<Single>
+    internal sealed class SingleFormatter : IMessagePackFormatter<Single>
     {
-        public static readonly SingleFormatter Instance = new SingleFormatter();
+        internal static readonly SingleFormatter Instance = new SingleFormatter();
 
         SingleFormatter()
         {
@@ -598,9 +598,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableSingleFormatter : IMessagePackFormatter<Single?>
+    internal sealed class NullableSingleFormatter : IMessagePackFormatter<Single?>
     {
-        public static readonly NullableSingleFormatter Instance = new NullableSingleFormatter();
+        internal static readonly NullableSingleFormatter Instance = new NullableSingleFormatter();
 
         NullableSingleFormatter()
         {
@@ -631,9 +631,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class SingleArrayFormatter : IMessagePackFormatter<Single[]>
+    internal sealed class SingleArrayFormatter : IMessagePackFormatter<Single[]>
     {
-        public static readonly SingleArrayFormatter Instance = new SingleArrayFormatter();
+        internal static readonly SingleArrayFormatter Instance = new SingleArrayFormatter();
 
         SingleArrayFormatter()
         {
@@ -675,9 +675,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class DoubleFormatter : IMessagePackFormatter<Double>
+    internal sealed class DoubleFormatter : IMessagePackFormatter<Double>
     {
-        public static readonly DoubleFormatter Instance = new DoubleFormatter();
+        internal static readonly DoubleFormatter Instance = new DoubleFormatter();
 
         DoubleFormatter()
         {
@@ -694,9 +694,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableDoubleFormatter : IMessagePackFormatter<Double?>
+    internal sealed class NullableDoubleFormatter : IMessagePackFormatter<Double?>
     {
-        public static readonly NullableDoubleFormatter Instance = new NullableDoubleFormatter();
+        internal static readonly NullableDoubleFormatter Instance = new NullableDoubleFormatter();
 
         NullableDoubleFormatter()
         {
@@ -727,9 +727,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class DoubleArrayFormatter : IMessagePackFormatter<Double[]>
+    internal sealed class DoubleArrayFormatter : IMessagePackFormatter<Double[]>
     {
-        public static readonly DoubleArrayFormatter Instance = new DoubleArrayFormatter();
+        internal static readonly DoubleArrayFormatter Instance = new DoubleArrayFormatter();
 
         DoubleArrayFormatter()
         {
@@ -771,9 +771,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class BooleanFormatter : IMessagePackFormatter<Boolean>
+    internal sealed class BooleanFormatter : IMessagePackFormatter<Boolean>
     {
-        public static readonly BooleanFormatter Instance = new BooleanFormatter();
+        internal static readonly BooleanFormatter Instance = new BooleanFormatter();
 
         BooleanFormatter()
         {
@@ -790,9 +790,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableBooleanFormatter : IMessagePackFormatter<Boolean?>
+    internal sealed class NullableBooleanFormatter : IMessagePackFormatter<Boolean?>
     {
-        public static readonly NullableBooleanFormatter Instance = new NullableBooleanFormatter();
+        internal static readonly NullableBooleanFormatter Instance = new NullableBooleanFormatter();
 
         NullableBooleanFormatter()
         {
@@ -823,9 +823,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class BooleanArrayFormatter : IMessagePackFormatter<Boolean[]>
+    internal sealed class BooleanArrayFormatter : IMessagePackFormatter<Boolean[]>
     {
-        public static readonly BooleanArrayFormatter Instance = new BooleanArrayFormatter();
+        internal static readonly BooleanArrayFormatter Instance = new BooleanArrayFormatter();
 
         BooleanArrayFormatter()
         {
@@ -867,9 +867,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ByteFormatter : IMessagePackFormatter<Byte>
+    internal sealed class ByteFormatter : IMessagePackFormatter<Byte>
     {
-        public static readonly ByteFormatter Instance = new ByteFormatter();
+        internal static readonly ByteFormatter Instance = new ByteFormatter();
 
         ByteFormatter()
         {
@@ -886,9 +886,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableByteFormatter : IMessagePackFormatter<Byte?>
+    internal sealed class NullableByteFormatter : IMessagePackFormatter<Byte?>
     {
-        public static readonly NullableByteFormatter Instance = new NullableByteFormatter();
+        internal static readonly NullableByteFormatter Instance = new NullableByteFormatter();
 
         NullableByteFormatter()
         {
@@ -920,9 +920,9 @@ namespace MessagePack.Formatters
     }
 
 
-    public sealed class SByteFormatter : IMessagePackFormatter<SByte>
+    internal sealed class SByteFormatter : IMessagePackFormatter<SByte>
     {
-        public static readonly SByteFormatter Instance = new SByteFormatter();
+        internal static readonly SByteFormatter Instance = new SByteFormatter();
 
         SByteFormatter()
         {
@@ -939,9 +939,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableSByteFormatter : IMessagePackFormatter<SByte?>
+    internal sealed class NullableSByteFormatter : IMessagePackFormatter<SByte?>
     {
-        public static readonly NullableSByteFormatter Instance = new NullableSByteFormatter();
+        internal static readonly NullableSByteFormatter Instance = new NullableSByteFormatter();
 
         NullableSByteFormatter()
         {
@@ -972,9 +972,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class SByteArrayFormatter : IMessagePackFormatter<SByte[]>
+    internal sealed class SByteArrayFormatter : IMessagePackFormatter<SByte[]>
     {
-        public static readonly SByteArrayFormatter Instance = new SByteArrayFormatter();
+        internal static readonly SByteArrayFormatter Instance = new SByteArrayFormatter();
 
         SByteArrayFormatter()
         {
@@ -1016,9 +1016,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class CharFormatter : IMessagePackFormatter<Char>
+    internal sealed class CharFormatter : IMessagePackFormatter<Char>
     {
-        public static readonly CharFormatter Instance = new CharFormatter();
+        internal static readonly CharFormatter Instance = new CharFormatter();
 
         CharFormatter()
         {
@@ -1035,9 +1035,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableCharFormatter : IMessagePackFormatter<Char?>
+    internal sealed class NullableCharFormatter : IMessagePackFormatter<Char?>
     {
-        public static readonly NullableCharFormatter Instance = new NullableCharFormatter();
+        internal static readonly NullableCharFormatter Instance = new NullableCharFormatter();
 
         NullableCharFormatter()
         {
@@ -1068,9 +1068,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class CharArrayFormatter : IMessagePackFormatter<Char[]>
+    internal sealed class CharArrayFormatter : IMessagePackFormatter<Char[]>
     {
-        public static readonly CharArrayFormatter Instance = new CharArrayFormatter();
+        internal static readonly CharArrayFormatter Instance = new CharArrayFormatter();
 
         CharArrayFormatter()
         {
@@ -1112,9 +1112,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class DateTimeFormatter : IMessagePackFormatter<DateTime>
+    internal sealed class DateTimeFormatter : IMessagePackFormatter<DateTime>
     {
-        public static readonly DateTimeFormatter Instance = new DateTimeFormatter();
+        internal static readonly DateTimeFormatter Instance = new DateTimeFormatter();
 
         DateTimeFormatter()
         {
@@ -1131,9 +1131,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableDateTimeFormatter : IMessagePackFormatter<DateTime?>
+    internal sealed class NullableDateTimeFormatter : IMessagePackFormatter<DateTime?>
     {
-        public static readonly NullableDateTimeFormatter Instance = new NullableDateTimeFormatter();
+        internal static readonly NullableDateTimeFormatter Instance = new NullableDateTimeFormatter();
 
         NullableDateTimeFormatter()
         {
@@ -1164,9 +1164,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class DateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
+    internal sealed class DateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
     {
-        public static readonly DateTimeArrayFormatter Instance = new DateTimeArrayFormatter();
+        internal static readonly DateTimeArrayFormatter Instance = new DateTimeArrayFormatter();
 
         DateTimeArrayFormatter()
         {

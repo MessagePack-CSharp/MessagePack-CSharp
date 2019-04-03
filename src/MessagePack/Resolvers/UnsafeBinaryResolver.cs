@@ -6,9 +6,9 @@ using System;
 
 namespace MessagePack.Resolvers
 {
-    public sealed class UnsafeBinaryResolver : IFormatterResolver
+    internal sealed class UnsafeBinaryResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new UnsafeBinaryResolver();
+        internal static readonly IFormatterResolver Instance = new UnsafeBinaryResolver();
 
         UnsafeBinaryResolver()
         {
@@ -22,7 +22,7 @@ namespace MessagePack.Resolvers
 
         static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> formatter;
 
             static FormatterCache()
             {

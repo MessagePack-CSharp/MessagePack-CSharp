@@ -16,7 +16,7 @@ namespace MessagePack.Formatters
     /// <summary>
     /// For `object` field that holds derived from `object` value, ex: var arr = new object[] { 1, "a", new Model() };
     /// </summary>
-    public sealed class TypelessFormatter : IMessagePackFormatter<object>
+    internal sealed class TypelessFormatter : IMessagePackFormatter<object>
     {
         public const sbyte ExtensionTypeCode = 100;
 

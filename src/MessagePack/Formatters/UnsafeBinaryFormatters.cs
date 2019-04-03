@@ -5,12 +5,12 @@ using System.Buffers;
 
 namespace MessagePack.Formatters
 {
-    public sealed class BinaryGuidFormatter : IMessagePackFormatter<Guid>
+    internal sealed class BinaryGuidFormatter : IMessagePackFormatter<Guid>
     {
         /// <summary>
         /// Unsafe binary Guid formatter. this is only allowed on LittleEndian environment.
         /// </summary>
-        public static readonly IMessagePackFormatter<Guid> Instance = new BinaryGuidFormatter();
+        internal static readonly IMessagePackFormatter<Guid> Instance = new BinaryGuidFormatter();
 
         BinaryGuidFormatter()
         {
@@ -44,12 +44,12 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class BinaryDecimalFormatter : IMessagePackFormatter<Decimal>
+    internal sealed class BinaryDecimalFormatter : IMessagePackFormatter<Decimal>
     {
         /// <summary>
         /// Unsafe binary Decimal formatter. this is only allows on LittleEndian environment.
         /// </summary>
-        public static readonly IMessagePackFormatter<Decimal> Instance = new BinaryDecimalFormatter();
+        internal static readonly IMessagePackFormatter<Decimal> Instance = new BinaryDecimalFormatter();
 
         BinaryDecimalFormatter()
         {

@@ -65,7 +65,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Loads the local variable at a specific index onto the evaluation stack.
         /// </summary>
-        public static void EmitLdloc(this ILGenerator il, int index)
+        internal static void EmitLdloc(this ILGenerator il, int index)
         {
             switch (index)
             {
@@ -94,7 +94,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitLdloc(this ILGenerator il, LocalBuilder local)
+        internal static void EmitLdloc(this ILGenerator il, LocalBuilder local)
         {
             EmitLdloc(il, local.LocalIndex);
         }
@@ -102,7 +102,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Pops the current value from the top of the evaluation stack and stores it in a the local variable list at a specified index.
         /// </summary>
-        public static void EmitStloc(this ILGenerator il, int index)
+        internal static void EmitStloc(this ILGenerator il, int index)
         {
             switch (index)
             {
@@ -131,7 +131,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitStloc(this ILGenerator il, LocalBuilder local)
+        internal static void EmitStloc(this ILGenerator il, LocalBuilder local)
         {
             EmitStloc(il, local.LocalIndex);
         }
@@ -139,7 +139,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Loads the address of the local variable at a specific index onto the evaluation statck.
         /// </summary>
-        public static void EmitLdloca(this ILGenerator il, int index)
+        internal static void EmitLdloca(this ILGenerator il, int index)
         {
             if (index <= 255)
             {
@@ -151,22 +151,22 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitLdloca(this ILGenerator il, LocalBuilder local)
+        internal static void EmitLdloca(this ILGenerator il, LocalBuilder local)
         {
             EmitLdloca(il, local.LocalIndex);
         }
 
-        public static void EmitTrue(this ILGenerator il)
+        internal static void EmitTrue(this ILGenerator il)
         {
             EmitBoolean(il, true);
         }
 
-        public static void EmitFalse(this ILGenerator il)
+        internal static void EmitFalse(this ILGenerator il)
         {
             EmitBoolean(il, false);
         }
 
-        public static void EmitBoolean(this ILGenerator il, bool value)
+        internal static void EmitBoolean(this ILGenerator il, bool value)
         {
             EmitLdc_I4(il, value ? 1 : 0);
         }
@@ -174,7 +174,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Pushes a supplied value of type int32 onto the evaluation stack as an int32.
         /// </summary>
-        public static void EmitLdc_I4(this ILGenerator il, int value)
+        internal static void EmitLdc_I4(this ILGenerator il, int value)
         {
             switch (value)
             {
@@ -221,7 +221,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitUnboxOrCast(this ILGenerator il, Type type)
+        internal static void EmitUnboxOrCast(this ILGenerator il, Type type)
         {
             if (type.GetTypeInfo().IsValueType)
             {
@@ -233,7 +233,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitBoxOrDoNothing(this ILGenerator il, Type type)
+        internal static void EmitBoxOrDoNothing(this ILGenerator il, Type type)
         {
             if (type.GetTypeInfo().IsValueType)
             {
@@ -241,7 +241,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitLdarg(this ILGenerator il, int index)
+        internal static void EmitLdarg(this ILGenerator il, int index)
         {
             switch (index)
             {
@@ -270,12 +270,12 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitLoadThis(this ILGenerator il)
+        internal static void EmitLoadThis(this ILGenerator il)
         {
             EmitLdarg(il, 0);
         }
 
-        public static void EmitLdarga(this ILGenerator il, int index)
+        internal static void EmitLdarga(this ILGenerator il, int index)
         {
             if (index <= 255)
             {
@@ -287,7 +287,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitStarg(this ILGenerator il, int index)
+        internal static void EmitStarg(this ILGenerator il, int index)
         {
             if (index <= 255)
             {
@@ -302,7 +302,7 @@ namespace MessagePack.Internal
         /// <summary>
         /// Helper for Pop op.
         /// </summary>
-        public static void EmitPop(this ILGenerator il, int count)
+        internal static void EmitPop(this ILGenerator il, int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -310,7 +310,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitCall(this ILGenerator il, MethodInfo methodInfo)
+        internal static void EmitCall(this ILGenerator il, MethodInfo methodInfo)
         {
             if (methodInfo.IsFinal || !methodInfo.IsVirtual)
             {
@@ -322,46 +322,46 @@ namespace MessagePack.Internal
             }
         }
 
-        public static void EmitLdfld(this ILGenerator il, FieldInfo fieldInfo)
+        internal static void EmitLdfld(this ILGenerator il, FieldInfo fieldInfo)
         {
             il.Emit(OpCodes.Ldfld, fieldInfo);
         }
 
-        public static void EmitLdsfld(this ILGenerator il, FieldInfo fieldInfo)
+        internal static void EmitLdsfld(this ILGenerator il, FieldInfo fieldInfo)
         {
             il.Emit(OpCodes.Ldsfld, fieldInfo);
         }
 
-        public static void EmitRet(this ILGenerator il)
+        internal static void EmitRet(this ILGenerator il)
         {
             il.Emit(OpCodes.Ret);
         }
 
-        public static void EmitIntZeroReturn(this ILGenerator il)
+        internal static void EmitIntZeroReturn(this ILGenerator il)
         {
             il.EmitLdc_I4(0);
             il.Emit(OpCodes.Ret);
         }
 
-        public static void EmitNullReturn(this ILGenerator il)
+        internal static void EmitNullReturn(this ILGenerator il)
         {
             il.Emit(OpCodes.Ldnull);
             il.Emit(OpCodes.Ret);
         }
 
-        public static void EmitULong(this ILGenerator il, ulong value)
+        internal static void EmitULong(this ILGenerator il, ulong value)
         {
             il.Emit(OpCodes.Ldc_I8, unchecked((long)value));
         }
 
-        public static void EmitThrowNotimplemented(this ILGenerator il)
+        internal static void EmitThrowNotimplemented(this ILGenerator il)
         {
             il.Emit(OpCodes.Newobj, typeof(System.NotImplementedException).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 0));
             il.Emit(OpCodes.Throw);
         }
 
         /// <summary>for  var i = 0, i ..., i++ </summary>
-        public static void EmitIncrementFor(this ILGenerator il, LocalBuilder conditionGreater, Action<LocalBuilder> emitBody)
+        internal static void EmitIncrementFor(this ILGenerator il, LocalBuilder conditionGreater, Action<LocalBuilder> emitBody)
         {
             var loopBegin = il.DefineLabel();
             var condtionLabel = il.DefineLabel();
