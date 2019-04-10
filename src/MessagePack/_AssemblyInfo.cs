@@ -12,8 +12,8 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 [assembly: Guid("b23e464e-0ac2-47c9-9520-ea98cbb99575")]
-[assembly: AssemblyVersion("1.7.3.4")]
-[assembly: AssemblyFileVersion("1.7.3.4")]
+[assembly: AssemblyVersion("1.7.3.7")]
+[assembly: AssemblyFileVersion("1.7.3.7")]
 
 // sn.exe -Tp
 //[assembly: InternalsVisibleTo("MessagePack.Tests, PublicKey=" +
