@@ -31,11 +31,11 @@
     </metadata>
     <files>
         <file src="..\src\MessagePack.UnityShims\bin\Release\net45\MessagePack.UnityShims.dll" target="lib\net45" />
-        <file src="..\src\MessagePack.UnityShims\bin\Release\netstandard2.0\MessagePack.UnityShims.xml" target="lib\net45" />
+        <file src="..\src\MessagePack.UnityShims\bin\Release\net45\MessagePack.UnityShims.xml" target="lib\net45" />
         <file src="..\src\MessagePack.UnityShims\bin\Release\net47\MessagePack.UnityShims.dll" target="lib\net47" />
-        <file src="..\src\MessagePack.UnityShims\bin\Release\netstandard2.0\MessagePack.UnityShims.xml" target="lib\net47" />
+        <file src="..\src\MessagePack.UnityShims\bin\Release\net47\MessagePack.UnityShims.xml" target="lib\net47" />
         <file src="..\src\MessagePack.UnityShims\bin\Release\netstandard1.6\MessagePack.UnityShims.dll" target="lib\netstandard1.6" />
-        <file src="..\src\MessagePack.UnityShims\bin\Release\netstandard2.0\MessagePack.UnityShims.xml" target="lib\netstandard1.6" />
+        <file src="..\src\MessagePack.UnityShims\bin\Release\netstandard1.6\MessagePack.UnityShims.xml" target="lib\netstandard1.6" />
         <file src="..\src\MessagePack.UnityShims\bin\Release\netstandard2.0\MessagePack.UnityShims.dll" target="lib\netstandard2.0" />
         <file src="..\src\MessagePack.UnityShims\bin\Release\netstandard2.0\MessagePack.UnityShims.xml" target="lib\netstandard2.0" />
     </files>

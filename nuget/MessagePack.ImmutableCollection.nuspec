@@ -35,11 +35,11 @@
     </metadata>
     <files>
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\net47\MessagePack.ImmutableCollection.dll" target="lib\net47" />
-        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\net47" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\net47\MessagePack.ImmutableCollection.xml" target="lib\net47" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\net45\MessagePack.ImmutableCollection.dll" target="lib\net45" />
-        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\net45" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\net45\MessagePack.ImmutableCollection.xml" target="lib\net45" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard1.6\MessagePack.ImmutableCollection.dll" target="lib\netstandard1.6" />
-        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\netstandard1.6" />
+        <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard1.6\MessagePack.ImmutableCollection.xml" target="lib\netstandard1.6" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.dll" target="lib\netstandard2.0" />
         <file src="..\src\MessagePack.ImmutableCollection\bin\Release\netstandard2.0\MessagePack.ImmutableCollection.xml" target="lib\netstandard2.0" />
     </files>
