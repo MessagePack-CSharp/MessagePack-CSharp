@@ -3,6 +3,7 @@ using System.Linq;
 using System.IO;
 using Xunit;
 using System.Text;
+using System.Collections.Generic;
 
 namespace MessagePack.Tests
 {
@@ -350,16 +351,15 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
-        [InlineData(int.MaxValue, 5)]
         public void MapHeaderTest(uint target, int length)
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
+            byte[] bytes = new byte[length + target * 2];
             MessagePackBinary.WriteMapHeader(ref bytes, 0, target).Is(length);
 
-            packer.PackMapHeader((int)target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.PackMapHeader((int)target).Position.Is(length);
+            stream.ToArray().SequenceEqual(bytes.Take(length)).IsTrue();
 
             int readSize;
             MessagePackBinary.ReadMapHeaderRaw(bytes, 0, out readSize).Is(target);
@@ -385,16 +385,15 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
-        [InlineData(int.MaxValue, 5)]
         public void ArrayHeaderTest(uint target, int length)
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
+            byte[] bytes = new byte[length + target];
             MessagePackBinary.WriteArrayHeader(ref bytes, 0, target).Is(length);
 
-            packer.PackArrayHeader((int)target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.PackArrayHeader((int)target).Position.Is(length);
+            stream.ToArray().SequenceEqual(bytes.Take(length)).IsTrue();
 
             int readSize;
             MessagePackBinary.ReadArrayHeaderRaw(bytes, 0, out readSize).Is(target);
@@ -733,6 +732,58 @@ namespace MessagePack.Tests
                 MessagePackBinary.WriteInt64(ref target, 0, uint.MaxValue);
                 target.SequenceEqual(small).IsTrue();
             }
+        }
+
+        [Fact]
+        public void ReadArrayHeader_MitigatesLargeAllocations()
+        {
+            byte[] bytes = null;
+            int count = MessagePackBinary.WriteArrayHeader(ref bytes, 0, 9999);
+            Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadArrayHeader(bytes, 0, out int readSize));
+        }
+
+        [Fact]
+        public void ReadArrayHeaderRaw_MitigatesLargeAllocations()
+        {
+            byte[] bytes = null;
+            int count = MessagePackBinary.WriteArrayHeader(ref bytes, 0, 9999);
+            Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadArrayHeaderRaw(bytes, 0, out int readSize));
+        }
+
+        [Fact]
+        public void ReadMapHeader_MitigatesLargeAllocations()
+        {
+            byte[] bytes = null;
+            int count = MessagePackBinary.WriteMapHeader(ref bytes, 0, 9999);
+            Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadMapHeader(bytes, 0, out int readSize));
+        }
+
+        [Fact]
+        public void ReadMapHeaderRaw_MitigatesLargeAllocations()
+        {
+            byte[] bytes = null;
+            int count = MessagePackBinary.WriteMapHeader(ref bytes, 0, 9999);
+            Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadMapHeaderRaw(bytes, 0, out int readSize));
+        }
+
+        [Fact]
+        public void DeserializeLargeArray_Stream_WithLargePayload()
+        {
+            int[] expected = new int[128 * 1024];
+            byte[] buffer = MessagePackSerializer.Serialize(expected); // something larger than the 64KB default buffer size
+            MemoryStream ms = new MemoryStream(buffer);
+            var actual = MessagePackSerializer.Deserialize<int[]>(ms, readStrict: true);
+            Assert.Equal<int>(expected, actual);
+        }
+
+        [Fact]
+        public void DeserializeLargeMap_Stream_WithLargePayload()
+        {
+            var expected = Enumerable.Range(0, 128 * 1024).ToDictionary(n => n);
+            byte[] buffer = MessagePackSerializer.Serialize(expected); // something larger than the 64KB default buffer size
+            MemoryStream ms = new MemoryStream(buffer);
+            var actual = MessagePackSerializer.Deserialize<Dictionary<int, int>>(ms, readStrict: true);
+            Assert.Equal(expected.Count, actual.Count);
         }
     }
 }
