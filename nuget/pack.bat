@@ -1,6 +1,6 @@
-nuget pack MessagePack.nuspec
-nuget pack MessagePack.ImmutableCollection.nuspec
-nuget pack MessagePack.ReactiveProperty.nuspec
-nuget pack MessagePack.UnityShims.nuspec
-nuget pack MessagePack.AspNetCoreMvcFormatter.nuspec
-nuget pack MessagePackAnalyzer.nuspec
+nuget pack -OutputDirectory "%~dp0\" %~dp0MessagePack.nuspec
+nuget pack -OutputDirectory "%~dp0\" %~dp0MessagePack.ImmutableCollection.nuspec
+nuget pack -OutputDirectory "%~dp0\" %~dp0MessagePack.ReactiveProperty.nuspec
+nuget pack -OutputDirectory "%~dp0\" %~dp0MessagePack.UnityShims.nuspec
+nuget pack -OutputDirectory "%~dp0\" %~dp0MessagePack.AspNetCoreMvcFormatter.nuspec
+nuget pack -OutputDirectory "%~dp0\" %~dp0MessagePackAnalyzer.nuspec
