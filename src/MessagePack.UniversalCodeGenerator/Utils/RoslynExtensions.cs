@@ -222,7 +222,7 @@ namespace MessagePack.CodeGenerator
             }
             foreach (var asm in assemblies)
             {
-                roslynProject = roslynProject.AddMetadataReference(MetadataReference.CreateFromFile(asm.Text));
+                roslynProject = roslynProject.AddMetadataReference(MetadataReference.CreateFromFile(asm.Text.Replace('\\', Path.DirectorySeparatorChar)));
             }
             var compopt = roslynProject.CompilationOptions as CSharpCompilationOptions;
             compopt = roslynProject.CompilationOptions as CSharpCompilationOptions;
