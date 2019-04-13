@@ -2,7 +2,7 @@
 @SETLOCAL
 @if "%CONFIG%"=="" SET CONFIG=Release
 @IF NOT EXIST "%~dp0..\..\bin\MessagePack\%CONFIG%\net47" (
-    dotnet build src\MessagePack -c release -f net47
+    dotnet build "%~dp0..\MessagePack" -c release -f net47
     IF ERRORLEVEL 1 EXIT /B %ERRORLEVEL%
 )
 
