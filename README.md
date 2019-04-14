@@ -4,7 +4,7 @@ MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
 [![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2)
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/neuecc/MessagePack-CSharp/releases)
- 
+
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 The extremely fast [MessagePack](http://msgpack.org/) serializer for C#. It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and outperforms other C# serializers. MessagePack for C# also ships with built-in support for LZ4 compression - an extremely fast compression algorithm. Performance is important, particularly in applications like game development, distributed computing, microservice architecture, and caching.
@@ -1258,7 +1258,13 @@ How to Build
 ---
 Open `MessagePack.sln` on Visual Studio 2017.
 
-Unity Project is using symbolic link. At first, run `make_unity_symlink.bat` so linked under Unity project. You can open `src\MessagePack.UnityClient` on Unity Editor.
+Unity project uses symbolic links. See [making symlinks work in Git for Windows](https://stackoverflow.com/a/42137273/46926),
+or simply run this command before cloning:
+
+    git config --global core.symlinks true
+
+Unity Project is using symbolic link. At first, run `make_unity_symlink.bat` under `src\MessagePack.UnityClient`.
+Then open that directory in the Unity Editor.
 
 Author Info
 ---
