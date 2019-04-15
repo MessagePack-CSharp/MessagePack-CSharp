@@ -65,10 +65,6 @@ steps:
     projects: tests/**/*.Tests.csproj
     arguments: --configuration $(BuildConfiguration) --no-build -v n
 
-- script: src\MessagePack.UnityClient\build_unity.bat
-  displayName: Build MessagePack.unitypackage
-  enabled: false # We need to get Unity installed and active its license before enabling this
-
 - task: CopyFiles@1
   inputs:
     Contents: |
