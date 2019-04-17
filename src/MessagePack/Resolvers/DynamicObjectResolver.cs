@@ -1254,7 +1254,7 @@ namespace MessagePack.Internal
             var ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
 
-            var contractAttr = ti.GetCustomAttribute<MessagePackObjectAttribute>();
+            var contractAttr = ti.GetCustomAttributes<MessagePackObjectAttribute>().FirstOrDefault();
             var dataContractAttr = ti.GetCustomAttribute<DataContractAttribute>();
             if (contractAttr == null && dataContractAttr == null && !forceStringKey && !contractless)
             {
@@ -1531,7 +1531,9 @@ namespace MessagePack.Internal
                         {
                             if (intMembers.TryGetValue(ctorParamIndex, out paramMember))
                             {
-                                if (item.ParameterType == paramMember.Type && paramMember.IsReadable)
+                                if ((item.ParameterType == paramMember.Type ||
+                                    item.ParameterType.GetTypeInfo().IsAssignableFrom(paramMember.Type))
+                                    && paramMember.IsReadable)
                                 {
                                     constructorParameters.Add(paramMember);
                                 }
