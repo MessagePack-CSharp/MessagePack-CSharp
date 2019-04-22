@@ -36,9 +36,6 @@ steps:
         Write-Host "Running under OSS account: $env:System_TeamFoundationCollectionUri"
       }
 
-- ${{ if eq(variables['system.collectionId'], '011b8bdf-6d56-4f87-be0d-0092136884d9') }}:
-  - template: azure-pipeline.microbuild.before.yml
-
 - task: DotNetCoreCLI@2
   displayName: Restore
   inputs:
@@ -48,7 +45,7 @@ steps:
     feedsToUse: config
     nugetConfigPath: nuget.config
 
-# Use VSBuild to pack because `dotnet pack` can't sign packages with MicroBuild.
+# Use VSBuild to pack because `dotnet pack` can't build VSIX projects.
 - task: VSBuild@1
   inputs:
     vsVersion: 15.0
@@ -100,16 +97,6 @@ steps:
   condition: succeededOrFailed()
 
 ## The rest of these steps are for deployment and skipped for PR builds
-
-#- task: PublishBuildArtifacts@1
-#  inputs:
-#    PathtoPublish: $(build.sourcesdirectory)/bin
-#    ArtifactName: bin
-#    ArtifactType: Container
-#  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-
-- ${{ if eq(variables['system.collectionId'], '011b8bdf-6d56-4f87-be0d-0092136884d9') }}:
-  - template: azure-pipeline.microbuild.after.yml
 
 - task: CopyFiles@1
   inputs:
