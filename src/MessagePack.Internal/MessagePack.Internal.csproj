@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp2.2</TargetFrameworks>
+    <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK;SPAN_BUILTIN;MESSAGEPACK_INTERNAL</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <NoWarn>CS0436;$(NoWarn)</NoWarn>
+
+    <Description>
+      A project that compiles MessagePackReader \ MessagePackWriter and related types with internal visibility modifier.
+      This is used as a way to verify that sources in AspNetCore where MessagePackage is
+      consumed as an implementation detail can compile and run.
+    </Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.Streams" Version="2.1.28-beta" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack\BufferWriter.cs" />
+    <Compile Include="..\MessagePack\ExtensionHeader.cs" />
+    <Compile Include="..\MessagePack\ExtensionResult.cs" />
+    <Compile Include="..\MessagePack\FloatBits.cs" />
+    <Compile Include="..\MessagePack\MessagePackCode.cs" />
+    <Compile Include="..\MessagePack\MessagePackReader.cs" />
+    <Compile Include="..\MessagePack\MessagePackReader.Integers.cs" />
+    <Compile Include="..\MessagePack\MessagePackWriter.cs" />
+    <Compile Include="..\MessagePack\Nil.cs" />
+    <Compile Include="..\MessagePack\SequencePool.cs" />
+    <Compile Include="..\MessagePack\SequenceReader.cs" />
+    <Compile Include="..\MessagePack\SequenceReaderExtensions.cs" />
+    <Compile Include="..\MessagePack\StringEncoding.cs" />
+    <Compile Include="..\MessagePack\Internal\DateTimeConstants.cs" />
+    <Compile Include="..\MessagePack\Internal\GuidBits.cs" />
+  </ItemGroup>
+
+</Project>

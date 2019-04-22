@@ -16,7 +16,12 @@ namespace MessagePack
     /// <remarks>
     /// <see href="https://github.com/msgpack/msgpack/blob/master/spec.md">The MessagePack spec.</see>
     /// </remarks>
-    public ref partial struct MessagePackReader
+#if MESSAGEPACK_INTERNAL
+    internal
+#else
+    public
+#endif
+    ref partial struct MessagePackReader
     {
         /// <summary>
         /// The reader over the sequence.
