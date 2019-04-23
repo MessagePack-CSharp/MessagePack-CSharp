@@ -1,6 +1,11 @@
 ﻿namespace MessagePack
 {
-    public struct ExtensionHeader
+#if MESSAGEPACK_INTERNAL
+    internal
+#else
+    public
+#endif
+    struct ExtensionHeader
     {
         public sbyte TypeCode { get; private set; }
         public uint Length { get; private set; }

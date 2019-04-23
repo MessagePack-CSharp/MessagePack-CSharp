@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Andrew Arnott. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 
-using MessagePack.Formatters;
 using MessagePack.Internal;
 using Microsoft;
 using System;
@@ -19,7 +18,12 @@ namespace MessagePack
     /// <remarks>
     /// <see href="https://github.com/msgpack/msgpack/blob/master/spec.md">The MessagePack spec.</see>
     /// </remarks>
-    public ref struct MessagePackWriter
+#if MESSAGEPACK_INTERNAL
+    internal
+#else
+    public
+#endif
+    ref struct MessagePackWriter
     {
         /// <summary>
         /// The writer to use.
@@ -86,7 +90,13 @@ namespace MessagePack
         /// Copies bytes directly into the message pack writer.
         /// </summary>
         /// <param name="rawMessagePackBlock">The span of bytes to copy from.</param>
-        public void WriteRaw(ReadOnlySequence<byte> rawMessagePackBlock) => rawMessagePackBlock.CopyTo(ref writer);
+        public void WriteRaw(ReadOnlySequence<byte> rawMessagePackBlock)
+        {
+            foreach (var segment in rawMessagePackBlock)
+            {
+                writer.Write(segment.Span);
+            }
+        }
 
         /// <summary>
         /// Write the length of the next array to be written in the most compact form of
@@ -665,7 +675,7 @@ namespace MessagePack
         {
             if (this.OldSpec)
             {
-                throw new NotSupportedException($"The MsgPack spec does not define a format for {nameof(DateTime)} in {nameof(OldSpec)} mode. Turn off {nameof(OldSpec)} mode or use the {nameof(NativeDateTimeFormatter)}.");
+                throw new NotSupportedException($"The MsgPack spec does not define a format for {nameof(DateTime)} in {nameof(OldSpec)} mode. Turn off {nameof(OldSpec)} mode or use NativeDateTimeFormatter.");
             }
             else
             {

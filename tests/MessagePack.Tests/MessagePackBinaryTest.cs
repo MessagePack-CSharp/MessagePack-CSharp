@@ -5,7 +5,6 @@ using Xunit;
 using System.Text;
 using Nerdbank.Streams;
 using System.Buffers;
-using MessagePack.Formatters;
 
 namespace MessagePack.Tests
 {
