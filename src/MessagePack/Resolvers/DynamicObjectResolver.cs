@@ -414,37 +414,32 @@ namespace MessagePack.Internal
 
             if (serializationInfo.IsStringKey)
             {
-                var i = 0;
-                foreach (var item in serializationInfo.Members.Where(x => x.IsReadable))
+                for (var i = 0; i < serializationInfo.Members.Length; i++)
                 {
+                    var item = serializationInfo.Members[i];
+
+                    if (!item.IsReadable) continue;
+
                     stringByteKeysField.Add(Utilities.GetWriterBytes(item.StringKey, (ref MessagePackWriter writer, string arg) => writer.Write(arg)));
-                    i++;
                 }
             }
-            foreach (var item in serializationInfo.Members.Where(x => x.IsReadable))
+
+            for (var i = 0; i < serializationInfo.Members.Length; i++)
             {
+                var item = serializationInfo.Members[i];
                 var attr = item.GetMessagePackFormatterAttribute();
-                if (attr != null)
+
+                formatter = attr != null
+                    ? Activator.CreateInstance(attr.FormatterType, attr.Arguments)
+                    : null;
+
+                if (item.IsReadable)
                 {
-                    var formatter = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
                     serializeCustomFormatters.Add(formatter);
                 }
-                else
+                else // not only for writable because for use ctor.
                 {
-                    serializeCustomFormatters.Add(null);
-                }
-            }
-            foreach (var item in serializationInfo.Members) // not only for writable because for use ctor.
-            {
-                var attr = item.GetMessagePackFormatterAttribute();
-                if (attr != null)
-                {
-                    var formatter = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
                     deserializeCustomFormatters.Add(formatter);
-                }
-                else
-                {
-                    deserializeCustomFormatters.Add(null);
                 }
             }
 
@@ -507,15 +502,17 @@ namespace MessagePack.Internal
             il.EmitLdc_I4(writeCount);
             il.Emit(OpCodes.Newarr, typeof(byte[]));
 
-            var i = 0;
-            foreach (var item in info.Members.Where(x => x.IsReadable))
+            for (var i = 0; i < info.Members.Length; i++)
             {
+                var item = info.Members[i];
+
+                if (!item.IsReadable) continue;
+
                 il.Emit(OpCodes.Dup);
                 il.EmitLdc_I4(i);
                 il.Emit(OpCodes.Ldstr, item.StringKey);
                 il.EmitCall(CodeGenHelpersTypeInfo.GetEncodedStringBytes);
                 il.Emit(OpCodes.Stelem_Ref);
-                i++;
             }
 
             il.Emit(OpCodes.Stfld, stringByteKeysField);
@@ -523,48 +520,53 @@ namespace MessagePack.Internal
 
         static Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> BuildCustomFormatterField(TypeBuilder builder, ObjectSerializationInfo info, ILGenerator il)
         {
-            Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> dict = new Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo>();
-            foreach (var item in info.Members.Where(x => x.IsReadable || x.IsWritable))
+            var dict = new Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo>();
+                        
+            for (int i = 0; i < info.Members.Length; i++)
             {
+                var item = info.Members[i];
+
+                if (!(item.IsReadable || item.IsWritable)) continue;
+
                 var attr = item.GetMessagePackFormatterAttribute();
-                if (attr != null)
-                {
-                    var f = builder.DefineField(item.Name + "_formatter", attr.FormatterType, FieldAttributes.Private | FieldAttributes.InitOnly);
 
-                    var bindingFlags = (int)(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (attr == null) continue;
+                
+                 var f = builder.DefineField(item.Name + "_formatter", attr.FormatterType, FieldAttributes.Private | FieldAttributes.InitOnly);
 
-                    var attrVar = il.DeclareLocal(typeof(MessagePackFormatterAttribute));
+                 var bindingFlags = (int)(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-                    il.Emit(OpCodes.Ldtoken, info.Type);
-                    il.EmitCall(EmitInfo.GetTypeFromHandle);
-                    il.Emit(OpCodes.Ldstr, item.Name);
-                    il.EmitLdc_I4(bindingFlags);
-                    if (item.IsProperty)
-                    {
-                        il.EmitCall(EmitInfo.TypeGetProperty);
-                    }
-                    else
-                    {
-                        il.EmitCall(EmitInfo.TypeGetField);
-                    }
+                 var attrVar = il.DeclareLocal(typeof(MessagePackFormatterAttribute));
 
-                    il.EmitTrue();
-                    il.EmitCall(EmitInfo.GetCustomAttributeMessagePackFormatterAttribute);
-                    il.EmitStloc(attrVar);
+                 il.Emit(OpCodes.Ldtoken, info.Type);
+                 il.EmitCall(EmitInfo.GetTypeFromHandle);
+                 il.Emit(OpCodes.Ldstr, item.Name);
+                 il.EmitLdc_I4(bindingFlags);
+                 if (item.IsProperty)
+                 {
+                     il.EmitCall(EmitInfo.TypeGetProperty);
+                 }
+                 else
+                 {
+                     il.EmitCall(EmitInfo.TypeGetField);
+                 }
 
-                    il.EmitLoadThis();
+                 il.EmitTrue();
+                 il.EmitCall(EmitInfo.GetCustomAttributeMessagePackFormatterAttribute);
+                 il.EmitStloc(attrVar);
 
-                    il.EmitLdloc(attrVar);
-                    il.EmitCall(EmitInfo.MessagePackFormatterAttr.FormatterType);
-                    il.EmitLdloc(attrVar);
-                    il.EmitCall(EmitInfo.MessagePackFormatterAttr.Arguments);
-                    il.EmitCall(EmitInfo.ActivatorCreateInstance);
+                 il.EmitLoadThis();
 
-                    il.Emit(OpCodes.Castclass, attr.FormatterType);
-                    il.Emit(OpCodes.Stfld, f);
+                 il.EmitLdloc(attrVar);
+                 il.EmitCall(EmitInfo.MessagePackFormatterAttr.FormatterType);
+                 il.EmitLdloc(attrVar);
+                 il.EmitCall(EmitInfo.MessagePackFormatterAttr.Arguments);
+                 il.EmitCall(EmitInfo.ActivatorCreateInstance);
 
-                    dict.Add(item, f);
-                }
+                 il.Emit(OpCodes.Castclass, attr.FormatterType);
+                 il.Emit(OpCodes.Stfld, f);
+
+                 dict.Add(item, f);
             }
 
             return dict;
@@ -658,9 +660,12 @@ namespace MessagePack.Internal
                     il.EmitCall(MessagePackWriterTypeInfo.WriteMapHeader);
                 }
 
-                var index = 0;
-                foreach (var item in info.Members.Where(x => x.IsReadable))
+                for (int index = 0; index < info.Members.Length; index++)
                 {
+                    var item = info.Members[index];
+
+                    if (!item.IsReadable) continue;
+
                     argWriter.EmitLoad();
                     emitStringByteKeys();
                     il.EmitLdc_I4(index);
@@ -688,7 +693,6 @@ namespace MessagePack.Internal
                     }
 
                     EmitSerializeValue(il, type.GetTypeInfo(), item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argResolver);
-                    index++;
                 }
             }
 
@@ -928,15 +932,14 @@ namespace MessagePack.Internal
                         il.Emit(OpCodes.Br, switchDefault);
                     }
 
-                    var i = 0;
-                    foreach (var item in infoList)
+                    for (int i = 0, index = 0; i < infoList.Length; i++)
                     {
-                        if (item.MemberInfo != null)
-                        {
-                            il.MarkLabel(item.SwitchLabel);
-                            EmitDeserializeValue(il, item, i++, tryEmitLoadCustomFormatter, reader, argResolver);
-                            il.Emit(OpCodes.Br, loopEnd);
-                        }
+                        var item = info.Members[i];
+                        if (item.MemberInfo == null) continue;
+                        
+                        il.MarkLabel(item.SwitchLabel);
+                        EmitDeserializeValue(il, item, index++, tryEmitLoadCustomFormatter, reader, argResolver);
+                        il.Emit(OpCodes.Br, loopEnd);                        
                     }
 
                     il.MarkLabel(loopEnd);
@@ -1048,18 +1051,25 @@ namespace MessagePack.Internal
         {
             if (info.IsClass)
             {
-                foreach (var item in info.ConstructorParameters)
+                for (int i = 0; i < info.ConstructorParameters.Length; i++)
                 {
+                    var item = info.ConstructorParameters[i];
                     var local = members.First(x => x.MemberInfo == item);
+
                     il.EmitLdloc(local.LocalField);
                 }
                 il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
 
-                foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
+                for (int i = 0; i < members.Length; i++)
                 {
-                    il.Emit(OpCodes.Dup);
-                    il.EmitLdloc(item.LocalField);
-                    item.MemberInfo.EmitStoreValue(il);
+                    var item = members[i];
+
+                    if (item.MemberInfo != null && item.MemberInfo.IsWritable)
+                    {
+                        il.Emit(OpCodes.Dup);
+                        il.EmitLdloc(item.LocalField);
+                        item.MemberInfo.EmitStoreValue(il);
+                    }
                 }
 
                 return null;
@@ -1074,20 +1084,29 @@ namespace MessagePack.Internal
                 }
                 else
                 {
-                    foreach (var item in info.ConstructorParameters)
+                    for (int i = 0; i < info.ConstructorParameters.Length; i++)
                     {
+                        var item = info.ConstructorParameters[i];
                         var local = members.First(x => x.MemberInfo == item);
+
                         il.EmitLdloc(local.LocalField);
                     }
+
                     il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
                     il.Emit(OpCodes.Stloc, result);
                 }
 
-                foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
+                for (int i = 0; i < members.Length; i++)
                 {
-                    il.EmitLdloca(result);
-                    il.EmitLdloc(item.LocalField);
-                    item.MemberInfo.EmitStoreValue(il);
+                    var item = members[i];
+
+                    if (item.MemberInfo != null && item.MemberInfo.IsWritable)
+                    {
+                        il.EmitLdloca(result);
+
+                        il.EmitLdloc(item.LocalField);
+                        item.MemberInfo.EmitStoreValue(il);
+                    }
                 }
 
                 return result; // struct returns local result field
@@ -1523,9 +1542,13 @@ namespace MessagePack.Internal
                 do
                 {
                     constructorParameters.Clear();
+                    var parameters = ctor.GetParameters();
+
                     var ctorParamIndex = 0;
-                    foreach (var item in ctor.GetParameters())
+                    for (int i = 0; i < parameters.Length; i++)
                     {
+                        var item = parameters[i];
+
                         EmittableMember paramMember;
                         if (isIntKey)
                         {

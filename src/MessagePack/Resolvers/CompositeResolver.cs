@@ -75,13 +75,10 @@ namespace MessagePack.Resolvers
 
             lock (this.subResolvers)
             {
-                foreach (var resolver in this.subResolvers)
+                for (var i = 0; i < this.subResolvers.Count; i++)
                 {
-                    formatter = resolver.GetFormatter<T>();
-                    if (formatter != null)
-                    {
-                        break;
-                    }
+                    formatter = this.subResolvers[i].GetFormatter<T>();
+                    if (formatter != null) break;
                 }
             }
 

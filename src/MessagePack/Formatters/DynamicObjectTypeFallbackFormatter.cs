@@ -49,9 +49,9 @@ namespace MessagePack.Formatters
                     if (!serializers.TryGetValue(type, out formatterAndDelegate))
                     {
                         object formatter = null;
-                        foreach (var innerResolver in innerResolvers)
+                        for (int i = 0; i < innerResolvers.Length; i++)
                         {
-                            formatter = innerResolver.GetFormatterDynamic(type);
+                            formatter = innerResolvers[i].GetFormatterDynamic(type);
                             if (formatter != null) break;
                         }
                         if (formatter == null)
