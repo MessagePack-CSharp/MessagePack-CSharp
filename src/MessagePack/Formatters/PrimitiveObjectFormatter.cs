@@ -153,22 +153,29 @@ namespace MessagePack.Formatters
                             break;
                     }
                 }
-                else if (value is System.Collections.IDictionary) // check IDictionary first
+                else if (value is System.Collections.IDictionary dictionary) // check IDictionary first
                 {
-                    var d = value as System.Collections.IDictionary;
-                    writer.WriteMapHeader(d.Count);
-                    foreach (System.Collections.DictionaryEntry item in d)
+                    writer.WriteMapHeader(dictionary.Count);
+                    foreach (System.Collections.DictionaryEntry item in dictionary)
                     {
                         Serialize(ref writer, item.Key, resolver);
                         Serialize(ref writer, item.Value, resolver);
                     }
                     return;
                 }
-                else if (value is System.Collections.ICollection)
+                else if (value is System.Collections.IList list)
                 {
-                    var c = value as System.Collections.ICollection;
-                    writer.WriteArrayHeader(c.Count);
-                    foreach (var item in c)
+                    writer.WriteArrayHeader(list.Count);
+                    for (var i = 0; i < list.Count; i++)
+                    {
+                        Serialize(ref writer, list[i], resolver);
+                    }
+                    return;
+                }
+                else if (value is System.Collections.ICollection collection)
+                {
+                    writer.WriteArrayHeader(collection.Count);
+                    foreach (var item in collection)
                     {
                         Serialize(ref writer, item, resolver);
                     }

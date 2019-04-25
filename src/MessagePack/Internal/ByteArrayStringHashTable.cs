@@ -183,11 +183,16 @@ namespace MessagePack.Internal
         {
             var b = this.buckets;
 
-            foreach (var item in b)
+            for (int m = 0; m < b.Length; m++)
             {
+                var item = b[m];
+
                 if (item == null) continue;
-                foreach (var item2 in item)
+
+                for (int n = 0; n < item.Length; n++)
                 {
+                    var item2 = item[n];
+
                     yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key.Span), item2.Value);
                 }
             }

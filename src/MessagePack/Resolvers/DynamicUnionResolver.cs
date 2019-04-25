@@ -94,8 +94,10 @@ namespace MessagePack.Resolvers
 
             var checker1 = new HashSet<int>();
             var checker2 = new HashSet<Type>();
-            foreach (var item in unionAttrs)
+            for (int i = 0; i < unionAttrs.Length; i++)
             {
+                var item = unionAttrs[i]; 
+
                 if (!checker1.Add(item.Key)) throw new MessagePackDynamicUnionResolverException("Same union key has found. Type:" + type.Name + " Key:" + item.Key);
                 if (!checker2.Add(item.SubType)) throw new MessagePackDynamicUnionResolverException("Same union subType has found. Type:" + type.Name + " SubType: " + item.SubType);
             }
@@ -147,17 +149,16 @@ namespace MessagePack.Resolvers
                 il.Emit(OpCodes.Ldsfld, runtimeTypeHandleEqualityComparer);
                 il.Emit(OpCodes.Newobj, typeMapDictionaryConstructor);
 
-                var index = 0;
-                foreach (var item in infos)
+                for (int index = 0; index < infos.Length; index++)
                 {
+                    var item = infos[index];
+
                     il.Emit(OpCodes.Dup);
                     il.Emit(OpCodes.Ldtoken, item.SubType);
                     il.EmitLdc_I4(item.Key);
                     il.EmitLdc_I4(index);
                     il.Emit(OpCodes.Newobj, intIntKeyValuePairConstructor);
                     il.EmitCall(typeMapDictionaryAdd);
-
-                    index++;
                 }
 
                 il.Emit(OpCodes.Stfld, typeToKeyAndJumpMap);
@@ -167,16 +168,16 @@ namespace MessagePack.Resolvers
                 il.EmitLdc_I4(infos.Length);
                 il.Emit(OpCodes.Newobj, keyMapDictionaryConstructor);
 
-                var index = 0;
-                foreach (var item in infos)
+                for (int index = 0; index < infos.Length; index++)
                 {
+                    var item = infos[index];
+
                     il.Emit(OpCodes.Dup);
                     il.EmitLdc_I4(item.Key);
                     il.EmitLdc_I4(index);
                     il.EmitCall(keyMapDictionaryAdd);
-
-                    index++;
                 }
+
                 il.Emit(OpCodes.Stfld, keyToJumpMap);
             }
 
@@ -227,8 +228,10 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Switch, switchLabels.Select(x => x.Label).ToArray());
             il.Emit(OpCodes.Br, loopEnd); // default
 
-            foreach (var item in switchLabels)
+            for (int i = 0; i < switchLabels.Length; i++)
             {
+                var item = switchLabels[i];
+
                 il.MarkLabel(item.Label);
                 il.EmitLdarg(3);
                 il.Emit(OpCodes.Call, getFormatterWithVerify.MakeGenericMethod(item.Attr.SubType));
@@ -323,9 +326,11 @@ namespace MessagePack.Resolvers
             writer.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.Skip);
             il.Emit(OpCodes.Br, loopEnd);
-
-            foreach (var item in switchLabels)
+            
+            for (int i = 0; i < switchLabels.Length; i++)
             {
+                var item = switchLabels[i];
+
                 il.MarkLabel(item.Label);
                 il.EmitLdarg(2);
                 il.EmitCall(getFormatterWithVerify.MakeGenericMethod(item.Attr.SubType));

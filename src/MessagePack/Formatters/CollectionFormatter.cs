@@ -188,10 +188,10 @@ namespace MessagePack.Formatters
                     var formatter = resolver.GetFormatterWithVerify<TElement>();
 
                     writer.WriteArrayHeader(array.Length);
-
-                    foreach (var item in array)
+                    
+                    for (var i = 0; i < array.Length; i++)
                     {
-                        formatter.Serialize(ref writer, item, resolver);
+                        formatter.Serialize(ref writer, array[i], resolver);
                     }
 
                     return;
@@ -669,9 +669,10 @@ namespace MessagePack.Formatters
             var formatter = resolver.GetFormatterWithVerify<object>();
 
             writer.WriteArrayHeader(value.Count);
-            foreach (var item in value)
+            
+            for (int i = 0; i < value.Count; i++)
             {
-                formatter.Serialize(ref writer, item, resolver);
+                formatter.Serialize(ref writer, value[i], resolver);
             }
         }
 
@@ -716,9 +717,9 @@ namespace MessagePack.Formatters
             var formatter = resolver.GetFormatterWithVerify<object>();
 
             writer.WriteArrayHeader(value.Count);
-            foreach (var item in value)
+            for (var i = 0; i < value.Count; i++)
             {
-                formatter.Serialize(ref writer, item, resolver);
+                formatter.Serialize(ref writer, value[i], resolver);
             }
         }
 
