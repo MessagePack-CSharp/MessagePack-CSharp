@@ -429,7 +429,7 @@ namespace MessagePack.Internal
                 var item = serializationInfo.Members[i];
                 var attr = item.GetMessagePackFormatterAttribute();
 
-                formatter = attr != null
+                var formatter = attr != null
                     ? Activator.CreateInstance(attr.FormatterType, attr.Arguments)
                     : null;
 

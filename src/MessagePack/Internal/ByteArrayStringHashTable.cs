@@ -191,11 +191,8 @@ namespace MessagePack.Internal
 
                 for (int n = 0; n < item.Length; n++)
                 {
-#if UNITY
                     var item2 = item[n];
-#else
-                    ref var item2 = ref item[n];
-#endif
+
                     yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key.Span), item2.Value);
                 }
             }
