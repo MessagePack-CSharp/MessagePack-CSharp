@@ -32,27 +32,36 @@ namespace MessagePack.Tests
 
         ReadOnlySequence<T> BuildSequence<T>(params T[][] segmentContents)
         {
-            var segments = new TestSequenceSegment<T>[segmentContents.Length];
-            TestSequenceSegment<T> last = null;
-            for (var i = 0; i < segmentContents.Length; i++)
+            if (segmentContents.Length == 1)
             {
-                last = segments[i] = new TestSequenceSegment<T>(segmentContents[i], last);
+                return new ReadOnlySequence<T>(segmentContents[0].AsMemory());
             }
 
-            return new ReadOnlySequence<T>(segments[0], 0, last, last.Memory.Length);
+            var bufferSegment = new BufferSegment<T>(segmentContents[0].AsMemory());
+            BufferSegment<T> last = default;
+            for (var i = 1; i < segmentContents.Length; i++)
+            {
+                last = bufferSegment.Append(segmentContents[i]);
+            }
+
+            return new ReadOnlySequence<T>(bufferSegment, 0, last, last.Memory.Length);
         }
 
-        class TestSequenceSegment<T> : ReadOnlySequenceSegment<T>
+        internal class BufferSegment<T> : ReadOnlySequenceSegment<T>
         {
-            public TestSequenceSegment(T[] data, TestSequenceSegment<T> prev = null)
+            public BufferSegment(ReadOnlyMemory<T> memory)
             {
-                Memory = new Memory<T>(data);
+                Memory = memory;
+            }
 
-                if (prev != null)
+            public BufferSegment<T> Append(ReadOnlyMemory<T> memory)
+            {
+                var segment = new BufferSegment<T>(memory)
                 {
-                    prev.Next = this;
-                    RunningIndex = prev.RunningIndex + prev.Memory.Length;
-                }
+                    RunningIndex = RunningIndex + Memory.Length
+                };
+                Next = segment;
+                return segment;
             }
         }
     }

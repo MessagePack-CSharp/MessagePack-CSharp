@@ -19,6 +19,7 @@
     <Compile Include="..\MessagePack.Tests\MessagePackBinaryTest.cs" />
     <Compile Include="..\MessagePack.Tests\MessagePackReaderTests.cs" />
     <Compile Include="..\MessagePack.Tests\MessagePackReaderTests.ReadInt.cs" />
+    <Compile Include="..\MessagePack.Tests\MessagePackReaderTests.ReadString.cs" />
     <Compile Include="..\MessagePack.Tests\Utils\ChainingAssertion.Xunit.cs" />
   </ItemGroup>
 </Project>
