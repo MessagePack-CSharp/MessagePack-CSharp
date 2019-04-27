@@ -779,8 +779,7 @@ namespace MessagePack
             // We need to concatenate all the bytes together into one array.
             byte[] byteArray = ArrayPool<byte>.Shared.Rent(byteLength);
             ThrowInsufficientBufferUnless(this.reader.TryCopyTo(byteArray));
-            this.reader.Advance(byteArray.Length);
-            string value = StringEncoding.UTF8.GetString(byteArray);
+            string value = StringEncoding.UTF8.GetString(byteArray, 0, byteLength);
             ArrayPool<byte>.Shared.Return(byteArray);
             return value;
 #else
@@ -808,6 +807,7 @@ namespace MessagePack
                     }
                 }
 #endif
+                this.reader.Advance(bytesRead);
             }
 
             string value = new string(charArray, 0, initializedChars);

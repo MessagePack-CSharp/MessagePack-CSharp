@@ -438,7 +438,7 @@ namespace System.Buffers
 
         internal bool TryCopyMultisegment(Span<T> destination)
         {
-            if (Remaining < destination.Length)
+            if (destination.Length < Remaining)
                 return false;
 
             ReadOnlySpan<T> firstSpan = UnreadSpan;
