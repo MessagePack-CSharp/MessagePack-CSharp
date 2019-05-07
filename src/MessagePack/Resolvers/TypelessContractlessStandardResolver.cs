@@ -26,8 +26,8 @@ namespace MessagePack.Resolvers
 #endif
 #if !NO_IL_CODE
             DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
-#endif
             TypelessObjectResolver.Instance
+#endif
         };
 
         TypelessContractlessStandardResolver()

@@ -5,7 +5,7 @@ using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && !NO_IL_CODE
 
     /// <summary>
     /// Used for `object` fields/collections, ex: var arr = new object[] { 1, "a", new Model() };

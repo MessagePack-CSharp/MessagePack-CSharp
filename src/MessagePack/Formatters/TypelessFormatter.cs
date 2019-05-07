@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD || NETFRAMEWORK
+﻿#if (NETSTANDARD || NETFRAMEWORK) && !NO_IL_CODE
 
 using MessagePack.Internal;
 using System;
