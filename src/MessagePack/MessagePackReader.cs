@@ -778,7 +778,7 @@ namespace MessagePack
 #if NETSTANDARD1_6
             // We need to concatenate all the bytes together into one array.
             byte[] byteArray = ArrayPool<byte>.Shared.Rent(byteLength);
-            ThrowInsufficientBufferUnless(this.reader.TryCopyTo(byteArray));
+            ThrowInsufficientBufferUnless(this.reader.TryCopyTo(byteArray.AsSpan(0, byteLength)));
             string value = StringEncoding.UTF8.GetString(byteArray, 0, byteLength);
             ArrayPool<byte>.Shared.Return(byteArray);
             return value;
