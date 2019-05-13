@@ -48,7 +48,7 @@
   </ItemGroup>
   <!-- for iOS and UWP (.NET Native) remove the IL code using NO_IL_CODE flag -->
   <PropertyGroup Condition=" $(TargetFramework) == 'uap10.0'">
-    <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK;NO_IL_CODE;NETSTANDARD</DefineConstants>
+    <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK;NO_IL_CODE;NETSTANDARD;UWP_AOT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" $(TargetFramework) == 'xamarin.ios10' ">
     <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK;NO_IL_CODE;NETSTANDARD</DefineConstants>
