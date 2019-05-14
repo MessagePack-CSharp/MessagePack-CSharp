@@ -248,6 +248,17 @@ namespace MessagePack
             dateTimeDecoders[MessagePackCode.Ext8] = Decoders.Ext8DateTime.Instance;
         }
 
+        /// <summary>
+        /// A maximum allowable element count for any array or map allocated by this class
+        /// when reading from non-seekable streams.
+        /// The default is <see cref="int.MaxValue"/>.
+        /// </summary>
+        /// <remarks>
+        /// When reading from a byte array or seekable streams, the actual length
+        /// of the remaining buffer or stream is used to calculate a safe limit.
+        /// </remarks>
+        public static int MaxArrayAllocationSize = int.MaxValue;
+
 #if NETSTANDARD || NETFRAMEWORK
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
@@ -747,7 +758,16 @@ namespace MessagePack
         {
             checked
             {
-                return (int)mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+                int count = (int)mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
+                if (count * 2 > bytes.Length - offset)
+                {
+                    ThrowNotEnoughBytesException();
+                }
+
+                return count;
             }
         }
 
@@ -759,7 +779,21 @@ namespace MessagePack
 #endif
         public static uint ReadMapHeaderRaw(byte[] bytes, int offset, out int readSize)
         {
-            return mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+            return ReadMapHeaderRaw(bytes, offset, checked((uint)(bytes.Length - offset)), out readSize);
+        }
+
+        private static uint ReadMapHeaderRaw(byte[] bytes, int offset, uint remainingBytes, out int readSize)
+        {
+            uint count = mapHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
+            if (count * 2 > remainingBytes - readSize)
+            {
+                ThrowNotEnoughBytesException();
+            }
+
+            return count;
         }
 
 #if NETSTANDARD || NETFRAMEWORK
@@ -879,9 +913,20 @@ namespace MessagePack
         {
             checked
             {
-                return (int)arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+                int count = (int)arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                // We allow for each primitive to be the minimal 1 byte in size.
+                // Formatters that know each element is larger can double-check our work.
+                if (count > bytes.Length - offset)
+                {
+                    ThrowNotEnoughBytesException();
+                }
+
+                return count;
             }
         }
+
 
         /// <summary>
         /// Return array count.
@@ -891,7 +936,22 @@ namespace MessagePack
 #endif
         public static uint ReadArrayHeaderRaw(byte[] bytes, int offset, out int readSize)
         {
-            return arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+            return ReadArrayHeaderRaw(bytes, offset, checked((uint)(bytes.Length - offset)), out readSize);
+        }
+
+        private static uint ReadArrayHeaderRaw(byte[] bytes, int offset, uint remainingBytes, out int readSize)
+        {
+            uint count = arrayHeaderDecoders[bytes[offset]].Read(bytes, offset, out readSize);
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            // We allow for each primitive to be the minimal 1 byte in size.
+            // Formatters that know each element is larger can double-check our work.
+            if (count > remainingBytes - readSize)
+            {
+                ThrowNotEnoughBytesException();
+            }
+
+            return count;
         }
 
 #if NETSTANDARD || NETFRAMEWORK
@@ -2282,6 +2342,12 @@ namespace MessagePack
         {
             return dateTimeDecoders[bytes[offset]].Read(bytes, offset, out readSize);
         }
+
+        /// <summary>
+        /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
+        /// the promised data.
+        /// </summary>
+        internal static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
     }
 
     // Stream Overload
@@ -2379,6 +2445,7 @@ namespace MessagePack
                         if (MessagePackCode.MinFixStr <= code && code <= MessagePackCode.MaxFixStr)
                         {
                             var length = bytes[offset] & 0x1F;
+                            ThrowIfNotEnoughBytesRemaining(stream, length);
                             MessagePackBinary.EnsureCapacity(ref bytes, offset, 1 + length);
                             ReadFully(stream, bytes, offset + 1, length);
                             return length + 1;
@@ -2392,6 +2459,7 @@ namespace MessagePack
                                     ReadFully(stream, bytes, offset + 1, 1);
                                     var length = bytes[offset + 1];
 
+                                    ThrowIfNotEnoughBytesRemaining(stream, length);
                                     MessagePackBinary.EnsureCapacity(ref bytes, offset, 2 + length);
                                     ReadFully(stream, bytes, offset + 2, length);
 
@@ -2403,6 +2471,7 @@ namespace MessagePack
                                     ReadFully(stream, bytes, offset + 1, 2);
                                     var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
 
+                                    ThrowIfNotEnoughBytesRemaining(stream, length);
                                     MessagePackBinary.EnsureCapacity(ref bytes, offset, 3 + length);
                                     ReadFully(stream, bytes, offset + 3, length);
 
@@ -2414,6 +2483,7 @@ namespace MessagePack
                                     ReadFully(stream, bytes, offset + 1, 4);
                                     var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
 
+                                    ThrowIfNotEnoughBytesRemaining(stream, length);
                                     MessagePackBinary.EnsureCapacity(ref bytes, offset, 5 + length);
                                     ReadFully(stream, bytes, offset + 5, length);
 
@@ -2432,6 +2502,7 @@ namespace MessagePack
                                     ReadFully(stream, bytes, offset + 1, 1);
                                     var length = bytes[offset + 1];
 
+                                    ThrowIfNotEnoughBytesRemaining(stream, length);
                                     MessagePackBinary.EnsureCapacity(ref bytes, offset, 2 + length);
                                     ReadFully(stream, bytes, offset + 2, length);
 
@@ -2443,6 +2514,7 @@ namespace MessagePack
                                     ReadFully(stream, bytes, offset + 1, 2);
                                     var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
 
+                                    ThrowIfNotEnoughBytesRemaining(stream, length);
                                     MessagePackBinary.EnsureCapacity(ref bytes, offset, 3 + length);
                                     ReadFully(stream, bytes, offset + 3, length);
 
@@ -2454,6 +2526,7 @@ namespace MessagePack
                                     ReadFully(stream, bytes, offset + 1, 4);
                                     var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
 
+                                    ThrowIfNotEnoughBytesRemaining(stream, length);
                                     MessagePackBinary.EnsureCapacity(ref bytes, offset, 5 + length);
                                     ReadFully(stream, bytes, offset + 5, length);
 
@@ -2477,9 +2550,10 @@ namespace MessagePack
 
                         var startOffset = offset;
                         offset += (readHeaderSize + 1);
+                        uint remainingBytes = stream.CanSeek ? (uint)(stream.Length - startOffset) : uint.MaxValue;
 
                         int _;
-                        var length = ReadArrayHeaderRaw(bytes, startOffset, out _);
+                        var length = ReadArrayHeaderRaw(bytes, startOffset, remainingBytes, out _);
                         if (!readOnlySingleMessage)
                         {
                             for (int i = 0; i < length; i++)
@@ -2505,9 +2579,10 @@ namespace MessagePack
 
                         var startOffset = offset;
                         offset += (readHeaderSize + 1);
+                        uint remainingBytes = stream.CanSeek ? (uint)(stream.Length - startOffset) : uint.MaxValue;
 
                         int _;
-                        var length = ReadMapHeaderRaw(bytes, startOffset, out _);
+                        var length = ReadMapHeaderRaw(bytes, startOffset, remainingBytes, out _);
                         if (!readOnlySingleMessage)
                         {
                             for (int i = 0; i < length; i++)
@@ -2544,6 +2619,7 @@ namespace MessagePack
                             int _;
                             var header = ReadExtensionFormatHeader(bytes, offset, out _);
 
+                            ThrowIfNotEnoughBytesRemaining(stream, (int)header.Length);
                             MessagePackBinary.EnsureCapacity(ref bytes, offset, 1 + readHeaderSize + (int)header.Length);
                             ReadFully(stream, bytes, offset + 1 + readHeaderSize, (int)header.Length);
 
@@ -2555,6 +2631,17 @@ namespace MessagePack
                         }
                     }
                 default: throw new InvalidOperationException("Invalid Code");
+            }
+        }
+
+        private static void ThrowIfNotEnoughBytesRemaining(Stream stream, int length)
+        {
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            // For streams, we can only predict length when the streams are seekable.
+            int upperLimit = stream.CanSeek ? checked((int)(stream.Length - stream.Position)) : MaxArrayAllocationSize;
+            if (stream.CanSeek && length > upperLimit)
+            {
+                ThrowNotEnoughBytesException();
             }
         }
 
@@ -3670,6 +3757,13 @@ namespace MessagePack.Decoders
         public byte[] Read(byte[] bytes, int offset, out int readSize)
         {
             var length = bytes[offset + 1];
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            if (length > bytes.Length - offset)
+            {
+                MessagePackBinary.ThrowNotEnoughBytesException();
+            }
+
             var newBytes = new byte[length];
             Buffer.BlockCopy(bytes, offset + 2, newBytes, 0, length);
 
@@ -3690,6 +3784,13 @@ namespace MessagePack.Decoders
         public byte[] Read(byte[] bytes, int offset, out int readSize)
         {
             var length = (bytes[offset + 1] << 8) + (bytes[offset + 2]);
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            if (length > bytes.Length - offset)
+            {
+                MessagePackBinary.ThrowNotEnoughBytesException();
+            }
+
             var newBytes = new byte[length];
             Buffer.BlockCopy(bytes, offset + 3, newBytes, 0, length);
 
@@ -3710,6 +3811,13 @@ namespace MessagePack.Decoders
         public byte[] Read(byte[] bytes, int offset, out int readSize)
         {
             var length = (bytes[offset + 1] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 8) | (bytes[offset + 4]);
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            if (length > bytes.Length - offset)
+            {
+                MessagePackBinary.ThrowNotEnoughBytesException();
+            }
+
             var newBytes = new byte[length];
             Buffer.BlockCopy(bytes, offset + 5, newBytes, 0, length);
 
@@ -5372,6 +5480,12 @@ namespace MessagePack.Decoders
                 var length = bytes[offset + 1];
                 var typeCode = unchecked((sbyte)bytes[offset + 2]);
 
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                if (length > bytes.Length - offset)
+                {
+                    MessagePackBinary.ThrowNotEnoughBytesException();
+                }
+
                 var body = new byte[length];
                 readSize = (int)length + 3;
                 Buffer.BlockCopy(bytes, offset + 3, body, 0, (int)length);
@@ -5396,6 +5510,12 @@ namespace MessagePack.Decoders
                 var length = (int)((UInt16)(bytes[offset + 1] << 8) | (UInt16)bytes[offset + 2]);
                 var typeCode = unchecked((sbyte)bytes[offset + 3]);
 
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                if (length > bytes.Length - offset)
+                {
+                    MessagePackBinary.ThrowNotEnoughBytesException();
+                }
+
                 var body = new byte[length];
                 readSize = length + 4;
                 Buffer.BlockCopy(bytes, offset + 4, body, 0, (int)length);
@@ -5419,6 +5539,12 @@ namespace MessagePack.Decoders
             {
                 var length = (UInt32)((UInt32)(bytes[offset + 1] << 24) | (UInt32)(bytes[offset + 2] << 16) | (UInt32)(bytes[offset + 3] << 8) | (UInt32)bytes[offset + 4]);
                 var typeCode = unchecked((sbyte)bytes[offset + 5]);
+
+                // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+                if (length > bytes.Length - offset)
+                {
+                    MessagePackBinary.ThrowNotEnoughBytesException();
+                }
 
                 var body = new byte[length];
                 checked
