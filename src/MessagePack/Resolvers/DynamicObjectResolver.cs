@@ -585,8 +585,17 @@ namespace MessagePack.Internal
                 argValue.EmitLoad();
                 il.Emit(OpCodes.Brtrue_S, elseBody);
                 argWriter.EmitLoad();
-                il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
-                il.Emit(OpCodes.Ret);
+                if (info.IsNullAllowed)
+                {
+                    il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
+                    il.Emit(OpCodes.Ret);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldstr, "Null reference for class marked with AllowNil = false.");
+                    il.Emit(OpCodes.Newobj, invalidOperationExceptionConstructor);
+                    il.Emit(OpCodes.Throw);
+                }
 
                 il.MarkLabel(elseBody);
             }
@@ -722,7 +731,17 @@ namespace MessagePack.Internal
                     il.EmitStloc(memberValue);
                     il.Emit(OpCodes.Brtrue, writeNonNilValueLabel);
                     argWriter.EmitLoad();
-                    il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
+                    if (member.IsNullAllowed)
+                    {
+                        il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldstr, "Null reference for member marked with AllowNil = false.");
+                        il.Emit(OpCodes.Newobj, invalidOperationExceptionConstructor);
+                        il.Emit(OpCodes.Throw);
+                    }
+
                     il.Emit(OpCodes.Br, endLabel);
 
                     il.MarkLabel(writeNonNilValueLabel);
@@ -772,14 +791,22 @@ namespace MessagePack.Internal
             reader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
             il.Emit(OpCodes.Brfalse_S, falseLabel);
-            if (type.GetTypeInfo().IsClass)
+            if (type.GetTypeInfo().IsClass && info.IsNullAllowed)
             {
                 il.Emit(OpCodes.Ldnull);
                 il.Emit(OpCodes.Ret);
             }
             else
             {
-                il.Emit(OpCodes.Ldstr, "typecode is null, struct not supported");
+                if (info.IsNullAllowed)
+                {
+                    il.Emit(OpCodes.Ldstr, "typecode is null, struct not supported");
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldstr, "member marked with AllowNil = false but was null");
+                }
+
                 il.Emit(OpCodes.Newobj, invalidOperationExceptionConstructor);
                 il.Emit(OpCodes.Throw);
             }
@@ -1011,7 +1038,16 @@ namespace MessagePack.Internal
                     argReader.EmitLdarg();
                     il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
                     il.Emit(OpCodes.Brfalse_S, readNonNilValueLabel);
-                    il.Emit(OpCodes.Ldnull);
+                    if (info.MemberInfo.IsNullAllowed)
+                    {
+                        il.Emit(OpCodes.Ldnull);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldstr, "Read Nil for member marked with AllowNil = false.");
+                        il.Emit(OpCodes.Newobj, invalidOperationExceptionConstructor);
+                        il.Emit(OpCodes.Throw);
+                    }
                     il.Emit(OpCodes.Br, storeLabel);
 
                     il.MarkLabel(readNonNilValueLabel);
@@ -1240,6 +1276,7 @@ namespace MessagePack.Internal
         public bool IsStringKey { get { return !IsIntKey; } }
         public bool IsClass { get; set; }
         public bool IsStruct { get { return !IsClass; } }
+        public bool IsNullAllowed { get; set; }
         public ConstructorInfo BestmatchConstructor { get; set; }
         public EmittableMember[] ConstructorParameters { get; set; }
         public EmittableMember[] Members { get; set; }
@@ -1262,6 +1299,7 @@ namespace MessagePack.Internal
             }
 
             var isIntKey = true;
+            var isNullAllowed = contractAttr?.AllowNil ?? false;
             var intMembers = new Dictionary<int, EmittableMember>();
             var stringMembers = new Dictionary<string, EmittableMember>();
 
@@ -1279,12 +1317,15 @@ namespace MessagePack.Internal
 
                     var getMethod = item.GetGetMethod(true);
                     var setMethod = item.GetSetMethod(true);
+                    var keyAttribute =
+                        item.GetCustomAttribute<KeyAttribute>(true);
 
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,
                         IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
                         IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
+                        IsNullAllowed = keyAttribute == null || keyAttribute.AllowNil,
                         StringKey = item.Name
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
@@ -1305,11 +1346,15 @@ namespace MessagePack.Internal
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 
+                    var keyAttribute =
+                        item.GetCustomAttribute<KeyAttribute>(true);
+
                     var member = new EmittableMember
                     {
                         FieldInfo = item,
                         IsReadable = allowPrivate || item.IsPublic,
                         IsWritable = allowPrivate || (item.IsPublic && !item.IsInitOnly),
+                        IsNullAllowed = keyAttribute == null || keyAttribute.AllowNil,
                         StringKey = item.Name
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
@@ -1339,15 +1384,18 @@ namespace MessagePack.Internal
                     var getMethod = item.GetGetMethod(true);
                     var setMethod = item.GetSetMethod(true);
 
+                    var key =
+                        item.GetCustomAttribute<KeyAttribute>(true);
+
                     var member = new EmittableMember
                     {
                         PropertyInfo = item,
                         IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
                         IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
+                        IsNullAllowed = key == null || key.AllowNil
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
-                    KeyAttribute key;
                     if (contractAttr != null)
                     {
                         // MessagePackObjectAttribute
@@ -1422,19 +1470,20 @@ namespace MessagePack.Internal
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
 
+                    KeyAttribute key = item.GetCustomAttribute<KeyAttribute>(true);
+
                     var member = new EmittableMember
                     {
                         FieldInfo = item,
                         IsReadable = allowPrivate || item.IsPublic,
                         IsWritable = allowPrivate || (item.IsPublic && !item.IsInitOnly),
+                        IsNullAllowed = key == null || key.AllowNil,
                     };
                     if (!member.IsReadable && !member.IsWritable) continue;
 
-                    KeyAttribute key;
                     if (contractAttr != null)
                     {
                         // MessagePackObjectAttribute
-                        key = item.GetCustomAttribute<KeyAttribute>(true);
                         if (key == null)
                         {
                             throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
@@ -1647,6 +1696,7 @@ namespace MessagePack.Internal
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
+                IsNullAllowed = isNullAllowed,
                 Members = members,
             };
         }
@@ -1676,6 +1726,7 @@ namespace MessagePack.Internal
             public bool IsField { get { return FieldInfo != null; } }
             public bool IsWritable { get; set; }
             public bool IsReadable { get; set; }
+            public bool IsNullAllowed { get; set; } = true;
             public int IntKey { get; set; }
             public string StringKey { get; set; }
             public Type Type { get { return IsField ? FieldInfo.FieldType : PropertyInfo.PropertyType; } }

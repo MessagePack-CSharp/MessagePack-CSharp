@@ -6,10 +6,18 @@ namespace MessagePack
     public class MessagePackObjectAttribute : Attribute
     {
         public bool KeyAsPropertyName { get; private set; }
+        public bool AllowNil { get; private set; }
 
         public MessagePackObjectAttribute(bool keyAsPropertyName = false)
         {
             this.KeyAsPropertyName = keyAsPropertyName;
+            this.AllowNil = true;
+        }
+
+        public MessagePackObjectAttribute(bool keyAsPropertyName, bool allowNil)
+        {
+            this.KeyAsPropertyName = keyAsPropertyName;
+            this.AllowNil = allowNil;
         }
     }
 
@@ -18,6 +26,7 @@ namespace MessagePack
     {
         public int? IntKey { get; private set; }
         public string StringKey { get; private set; }
+        public bool AllowNil { get; private set; } = true;
 
         public KeyAttribute(int x)
         {
@@ -27,6 +36,18 @@ namespace MessagePack
         public KeyAttribute(string x)
         {
             this.StringKey = x;
+        }
+
+        public KeyAttribute(int x, bool allowNil)
+        {
+            this.IntKey = x;
+            AllowNil = allowNil;
+        }
+
+        public KeyAttribute(string x, bool allowNil)
+        {
+            this.StringKey = x;
+            AllowNil = allowNil;
         }
     }
 
