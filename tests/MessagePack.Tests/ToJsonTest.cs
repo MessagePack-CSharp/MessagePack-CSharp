@@ -73,8 +73,8 @@ namespace MessagePack.Tests
             var value = 0.1f;
 
             // Act
-            var bytes = MessagePackSerializer.Serialize(value);
-            var deserialized = MessagePackSerializer.Deserialize<float>(bytes);
+            var bytes = serializer.Serialize(value);
+            var deserialized = serializer.Deserialize<float>(bytes);
 
             // Assert
             Assert.Equal(value, deserialized);
@@ -87,8 +87,8 @@ namespace MessagePack.Tests
             var value = 0.1f;
 
             // Act
-            var bytes = LZ4MessagePackSerializer.Serialize(value);
-            var deserialized = LZ4MessagePackSerializer.Deserialize<float>(bytes);
+            var bytes = lz4Serializer.Serialize(value);
+            var deserialized = lz4Serializer.Deserialize<float>(bytes);
 
             // Assert
             Assert.Equal(value, deserialized);
@@ -101,9 +101,12 @@ namespace MessagePack.Tests
             var value = 0.1f;
 
             // Act
-            var json = MessagePackSerializer.ToJson(value);
-            var bytes = MessagePackSerializer.FromJson(json);
-            var deserialized = MessagePackSerializer.Deserialize<float>(bytes);
+            var json = serializer.SerializeToJson(value);
+            var sequence = new Sequence<byte>();
+            var sequenceWriter = new MessagePackWriter(sequence);
+            serializer.ConvertFromJson(json, ref sequenceWriter);
+            sequenceWriter.Flush();
+            var deserialized = serializer.Deserialize<float>(sequence.AsReadOnlySequence);
 
             // Assert
             Assert.Equal(value, deserialized);
@@ -116,9 +119,12 @@ namespace MessagePack.Tests
             var value = 0.1f;
 
             // Act
-            var json = LZ4MessagePackSerializer.ToJson(value);
-            var bytes = LZ4MessagePackSerializer.FromJson(json);
-            var deserialized = LZ4MessagePackSerializer.Deserialize<float>(bytes);
+            var json = lz4Serializer.SerializeToJson(value);
+            var sequence = new Sequence<byte>();
+            var sequenceWriter = new MessagePackWriter(sequence);
+            lz4Serializer.ConvertFromJson(json, ref sequenceWriter);
+            sequenceWriter.Flush();
+            var deserialized = lz4Serializer.Deserialize<float>(sequence.AsReadOnlySequence);
 
             // Assert
             Assert.Equal(value, deserialized);

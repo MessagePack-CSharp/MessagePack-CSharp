@@ -137,7 +137,7 @@ namespace MessagePack
                         }
                         if (v == ValueType.Float)
                         {
-                            offset += MessagePackBinary.WriteSingle(ref binary, offset, jr.FloatValue);
+                            writer.Write(jr.FloatValue);
                         }
                         else if (v == ValueType.Long)
                         {
