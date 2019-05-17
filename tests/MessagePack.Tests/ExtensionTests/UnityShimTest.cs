@@ -25,18 +25,20 @@ namespace MessagePack.Tests.ExtensionTests
 
     public class UnityShimTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T ConvertBlit<T>(T value)
         {
             var resolver = new WithUnityBlitResolver();
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, resolver), resolver);
+            return serializer.Deserialize<T>(serializer.Serialize(value, resolver), resolver);
         }
 
         T ConvertStandard<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, UnityResolver.Instance), UnityResolver.Instance);
+            return serializer.Deserialize<T>(serializer.Serialize(value, UnityResolver.Instance), UnityResolver.Instance);
         }
 
-        public static object[] testData = new object[]
+        public static object[][] testData = new object[][]
         {
             new object[]{ BlitContainer<Vector2>.Create(Enumerable.Range(1, 123).Select(x => new Vector2(x, x)))},
             new object[]{ BlitContainer<Vector3>.Create(Enumerable.Range(1, 123).Select(x => new Vector3(x,x, x)))},
@@ -62,7 +64,7 @@ namespace MessagePack.Tests.ExtensionTests
             ConvertBlit(blit).Array.IsNull();
         }
 
-        public static object[] testStandardData = new object[]
+        public static object[][] testStandardData = new object[][]
         {
             new object[]{ new Vector2(10,20) },
             new object[]{ new Vector3(10,20, 30) },

@@ -1,1 +1,1 @@
-../../../../MessagePack/Attributes.cs
+../../../../MessagePack.Annotations/Attributes.cs

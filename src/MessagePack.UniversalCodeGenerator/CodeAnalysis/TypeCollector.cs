@@ -20,14 +20,46 @@ namespace MessagePack.CodeGenerator
         public ReferenceSymbols(Compilation compilation)
         {
             TaskOfT = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task`1");
+            if(TaskOfT == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of System.Threading.Tasks.Task`1");
+            }
             Task = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task");
+            if (Task == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of System.Threading.Tasks.Task");
+            }
             MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute");
+            if (MessagePackObjectAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.MessagePackObjectAttribute");
+            }
             UnionAttribute = compilation.GetTypeByMetadataName("MessagePack.UnionAttribute");
+            if (UnionAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.UnionAttribute");
+            }
             SerializationConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.SerializationConstructorAttribute");
+            if (SerializationConstructorAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.SerializationConstructorAttribute");
+            }
             KeyAttribute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute");
+            if (KeyAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.KeyAttribute");
+            }
             IgnoreAttribute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute");
+            if (IgnoreAttribute == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.IgnoreMemberAttribute");
+            }
             IgnoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
             IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver");
+            if (IMessagePackSerializationCallbackReceiver == null)
+            {
+                throw new InvalidOperationException("failed to get metadata of MessagePack.IMessagePackSerializationCallbackReceiver");
+            }
         }
     }
 
@@ -210,6 +242,11 @@ namespace MessagePack.CodeGenerator
         {
             this.csProjPath = csProjPath;
             var compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
+            var compilationErrors = compilation.GetDiagnostics().Where(x => x.Severity == DiagnosticSeverity.Error).ToArray();
+            if(compilationErrors.Length != 0)
+            {
+                throw new InvalidOperationException($"detect compilation error:{string.Join("\n", compilationErrors.Select(x => x.ToString()))}");
+            }
             this.typeReferences = new ReferenceSymbols(compilation);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
@@ -470,7 +507,7 @@ namespace MessagePack.CodeGenerator
             }
 
             var isIntKey = true;
-            var intMemebrs = new Dictionary<int, MemberSerializationInfo>();
+            var intMembers = new Dictionary<int, MemberSerializationInfo>();
             var stringMembers = new Dictionary<string, MemberSerializationInfo>();
 
             if (isForceUseMap || (bool)contractAttr.ConstructorArguments[0].Value)
@@ -531,6 +568,7 @@ namespace MessagePack.CodeGenerator
 
                 foreach (var item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
+                    if (item.IsIndexer) continue; // .tt files don't generate good code for this yet: https://github.com/neuecc/MessagePack-CSharp/issues/390
                     if (item.GetAttributes().Any(x => x.AttributeClass == typeReferences.IgnoreAttribute || x.AttributeClass == typeReferences.IgnoreDataMemberAttribute)) continue;
 
                     var member = new MemberSerializationInfo
@@ -568,9 +606,9 @@ namespace MessagePack.CodeGenerator
                     if (isIntKey)
                     {
                         member.IntKey = (int)intKey;
-                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                        if (intMembers.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
-                        intMemebrs.Add(member.IntKey, member);
+                        intMembers.Add(member.IntKey, member);
                     }
                     else
                     {
@@ -624,9 +662,9 @@ namespace MessagePack.CodeGenerator
                     if (isIntKey)
                     {
                         member.IntKey = (int)intKey;
-                        if (intMemebrs.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                        if (intMembers.ContainsKey(member.IntKey)) throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
-                        intMemebrs.Add(member.IntKey, member);
+                        intMembers.Add(member.IntKey, member);
                     }
                     else
                     {
@@ -673,7 +711,7 @@ namespace MessagePack.CodeGenerator
                         MemberSerializationInfo paramMember;
                         if (isIntKey)
                         {
-                            if (intMemebrs.TryGetValue(ctorParamIndex, out paramMember))
+                            if (intMembers.TryGetValue(ctorParamIndex, out paramMember))
                             {
                                 if (item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == paramMember.Type && paramMember.IsReadable)
                                 {
@@ -779,7 +817,7 @@ namespace MessagePack.CodeGenerator
                 IsClass = isClass,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = (isIntKey) ? intMemebrs.Values.ToArray() : stringMembers.Values.ToArray(),
+                Members = (isIntKey) ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
                 Name = type.ToDisplayString(shortTypeNameFormat).Replace(".", "_"),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),

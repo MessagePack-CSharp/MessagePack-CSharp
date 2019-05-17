@@ -9,12 +9,14 @@ namespace MessagePack.Tests
 {
     public class ValueTupleTest
     {
-        T Convert<T>(T value)
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
+        private T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
-        public static object valueTupleData = new object[]
+        public static object[][] valueTupleData = new object[][]
         {
             new object[] { (1, 2) },
             new object[] { (1, 2, 3) },

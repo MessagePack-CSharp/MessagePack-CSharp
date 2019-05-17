@@ -144,8 +144,8 @@ namespace Xunit
             if (typeof(T) != typeof(string) && typeof(IEnumerable).GetTypeInfo().IsAssignableFrom(typeof(T)))
             {
                 Assert.Equal(
-                    ((IEnumerable)actual).Cast<object>().ToArray(),
-                    ((IEnumerable)expected).Cast<object>().ToArray());
+                    ((IEnumerable)expected).Cast<object>().ToArray(),
+                    ((IEnumerable)actual).Cast<object>().ToArray());
                 return;
             }
 
@@ -278,12 +278,14 @@ namespace Xunit
 
         /// <summary>Assert.Same</summary>
         public static void IsSameReferenceAs<T>(this T actual, T expected)
+            where T : class
         {
             Assert.Same(expected, actual);
         }
 
         /// <summary>Assert.NotSame</summary>
         public static void IsNotSameReferenceAs<T>(this T actual, T notExpected)
+            where T : class
         {
             Assert.NotSame(notExpected, actual);
         }

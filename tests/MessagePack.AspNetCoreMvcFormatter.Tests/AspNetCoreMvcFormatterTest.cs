@@ -26,6 +26,9 @@ namespace MessagePack.Tests.ExtensionTests
     {
         private const string MsgPackContentType = "application/x-msgpack";
 
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+        private LZ4MessagePackSerializer lz4Serializer = new LZ4MessagePackSerializer();
+
         [Fact]
         public async Task MessagePackFormatter()
         {
@@ -37,7 +40,7 @@ namespace MessagePack.Tests.ExtensionTests
                 Description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
             };
 
-            var messagePackBinary = MessagePackSerializer.Serialize(person);
+            var messagePackBinary = this.serializer.Serialize(person);
 
             // OutputFormatter
             var outputFormatterContext = GetOutputFormatterContext(person, typeof(User), MsgPackContentType);
@@ -54,7 +57,7 @@ namespace MessagePack.Tests.ExtensionTests
 
             using (var ms = new MemoryStream())
             {
-                body.CopyTo(ms);
+                await body.CopyToAsync(ms);
                 Assert.Equal(messagePackBinary, ms.ToArray());
             }
 
@@ -113,8 +116,8 @@ namespace MessagePack.Tests.ExtensionTests
                 Description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
             };
 
-            var messagePackBinary = MessagePackSerializer.Serialize(person);
-            var lz4MessagePackBinary = LZ4MessagePackSerializer.Serialize(person);
+            var messagePackBinary = this.serializer.Serialize(person);
+            var lz4MessagePackBinary = this.lz4Serializer.Serialize(person);
 
             // OutputFormatter
             var outputFormatterContext = GetOutputFormatterContext(person, typeof(User), MsgPackContentType);
@@ -127,7 +130,7 @@ namespace MessagePack.Tests.ExtensionTests
 
             using (var ms = new MemoryStream())
             {
-                body.CopyTo(ms);
+                await body.CopyToAsync(ms);
                 var binary = ms.ToArray();
 
                 binary.IsNot(messagePackBinary);

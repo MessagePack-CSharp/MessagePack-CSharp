@@ -1,6 +1,7 @@
 ﻿using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,8 @@ namespace MessagePack.Tests
 {
     public class MessagePackFormatterPerFieldTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         [MessagePackObject]
         public class MyClass
         {
@@ -43,28 +46,28 @@ namespace MessagePack.Tests
 
         public class Int_x10Formatter : IMessagePackFormatter<int>
         {
-            public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public int Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                return MessagePackBinary.ReadInt32(bytes, offset, out readSize) * 10;
+                return reader.ReadInt32() * 10;
             }
 
-            public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, int value, IFormatterResolver formatterResolver)
             {
-                return MessagePackBinary.WriteInt32(ref bytes, offset, value * 10);
+                writer.Write(value * 10);
             }
         }
 
         public class String_x2Formatter : IMessagePackFormatter<string>
         {
-            public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public string Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                var s = MessagePackBinary.ReadString(bytes, offset, out readSize);
+                var s = reader.ReadString();
                 return s + s;
             }
 
-            public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, string value, IFormatterResolver formatterResolver)
             {
-                return MessagePackBinary.WriteString(ref bytes, offset, value + value);
+                writer.Write(value + value);
             }
         }
 
@@ -73,22 +76,22 @@ namespace MessagePack.Tests
         public void FooBar()
         {
             {
-                var bin = MessagePack.MessagePackSerializer.Serialize(new MyClass { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
-                var json = MessagePackSerializer.ToJson(bin);
+                var bin = serializer.Serialize(new MyClass { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
+                var json = serializer.ConvertToJson(bin);
                 json.Is("[1000,9,\"foofoo\",\"bar\"]");
 
-                var r2 = MessagePackSerializer.Deserialize<MyClass>(bin);
+                var r2 = serializer.Deserialize<MyClass>(bin);
                 r2.MyProperty1.Is(10000);
                 r2.MyProperty2.Is(9);
                 r2.MyProperty3.Is("foofoofoofoo");
                 r2.MyProperty4.Is("bar");
             }
             {
-                var bin = MessagePack.MessagePackSerializer.Serialize(new MyStruct { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
-                var json = MessagePackSerializer.ToJson(bin);
+                var bin = serializer.Serialize(new MyStruct { MyProperty1 = 100, MyProperty2 = 9, MyProperty3 = "foo", MyProperty4 = "bar" });
+                var json = serializer.ConvertToJson(bin);
                 json.Is("[1000,9,\"foofoo\",\"bar\"]");
 
-                var r2 = MessagePackSerializer.Deserialize<MyStruct>(bin);
+                var r2 = serializer.Deserialize<MyStruct>(bin);
                 r2.MyProperty1.Is(10000);
                 r2.MyProperty2.Is(9);
                 r2.MyProperty3.Is("foofoofoofoo");

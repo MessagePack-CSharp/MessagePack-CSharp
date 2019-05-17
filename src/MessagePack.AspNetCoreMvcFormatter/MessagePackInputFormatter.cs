@@ -6,15 +6,21 @@ namespace MessagePack.AspNetCoreMvcFormatter
     public class MessagePackInputFormatter : IInputFormatter
     {
         private const string ContentType = "application/x-msgpack";
-        private readonly IFormatterResolver resolver;
+        private readonly MessagePackSerializer.NonGeneric serializer;
 
-        public MessagePackInputFormatter() : this(null)
+        public MessagePackInputFormatter()
+            : this(new MessagePackSerializer.NonGeneric(new MessagePackSerializer()))
         {
         }
 
         public MessagePackInputFormatter(IFormatterResolver resolver)
+            : this(new MessagePackSerializer.NonGeneric(new MessagePackSerializer(resolver)))
         {
-            this.resolver = resolver ?? MessagePackSerializer.DefaultResolver;
+        }
+
+        public MessagePackInputFormatter(MessagePackSerializer.NonGeneric serializer)
+        {
+            this.serializer = serializer ?? new MessagePackSerializer.NonGeneric();
         }
 
         public bool CanRead(InputFormatterContext context) => 
@@ -23,7 +29,7 @@ namespace MessagePack.AspNetCoreMvcFormatter
         public Task<InputFormatterResult> ReadAsync(InputFormatterContext context)
         {
             var request = context.HttpContext.Request;
-            var result = MessagePackSerializer.NonGeneric.Deserialize(context.ModelType, request.Body, resolver);
+            var result = this.serializer.Deserialize(context.ModelType, request.Body);
             return InputFormatterResult.SuccessAsync(result);
         }
     }

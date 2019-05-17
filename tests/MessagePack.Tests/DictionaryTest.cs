@@ -11,12 +11,14 @@ namespace MessagePack.Tests
 {
     public class DictionaryTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
-        public static object dictionaryTestData = new object[]
+        public static object[][] dictionaryTestData = new object[][]
         {
             new object[]{ new Dictionary<int, int>() { { 1, 100 } }, null },
             new object[]{ new ReadOnlyDictionary<int,int>(new Dictionary<int, int>() { { 1, 100 } }), null },

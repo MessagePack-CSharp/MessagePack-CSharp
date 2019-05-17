@@ -5,40 +5,40 @@ using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
-#if NETSTANDARD
+#if !UNITY
 
     /// <summary>
     /// Used for `object` fields/collections, ex: var arr = new object[] { 1, "a", new Model() };
     /// The runtime type of value in object field, should be covered by one of resolvers in complex/standard resolver.
-    /// TypelessObjectResolver should be placed before DynamicObjectTypeFallbackResolver and PrimitiveObjectFormatter in resolvers list.
-    /// Deserializer uses Namescape.TypeName, AssemblyName to get runtime type in destination app, so that combination must be present in destination app.
+    /// <see cref="TypelessObjectResolver"/> should be placed before DynamicObjectTypeFallbackResolver and <see cref="PrimitiveObjectFormatter"/> in resolvers list.
+    /// Deserializer uses Namespace.TypeName, AssemblyName to get runtime type in destination app, so that combination must be present in destination app.
     /// Serialized binary is valid MessagePack binary used ext-format and custom typecode(100).
     /// Inside ext - assembly qualified type name, and serialized object
     /// </summary>
     public sealed class TypelessObjectResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new TypelessObjectResolver();
+        /// <summary>
+        /// Backing field for the <see cref="Formatter"/> property.
+        /// </summary>
+        private TypelessFormatter formatter = new TypelessFormatter();
 
-        TypelessObjectResolver()
+        /// <summary>
+        /// Gets or sets the <see cref="TypelessFormatter"/> used when serializing/deserializing values typed as <see cref="object"/>/
+        /// </summary>
+        /// <value>A instance of a formatter. Never null.</value>
+        /// <exception cref="ArgumentNullException">Thrown if assigned a value of null.</exception>
+        public TypelessFormatter Formatter
         {
-
+            get => this.formatter;
+            set => this.formatter = value ?? throw new ArgumentNullException(nameof(value));
         }
 
+        /// <inheritdoc />
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
-        }
-
-        static class FormatterCache<T>
-        {
-            public static readonly IMessagePackFormatter<T> formatter;
-
-            static FormatterCache()
-            {
-                formatter = (typeof(T) == typeof(object))
-                    ? (IMessagePackFormatter<T>)(object)TypelessFormatter.Instance
-                    : null;
-            }
+            return typeof(T) == typeof(object)
+                ? (IMessagePackFormatter<T>)(object)this.Formatter
+                : null;
         }
     }
 
@@ -81,8 +81,8 @@ namespace MessagePack.Resolvers
                 {typeof(UInt64), ForceUInt64BlockFormatter.Instance},
                 {typeof(byte), ForceByteBlockFormatter.Instance},
                 {typeof(sbyte), ForceSByteBlockFormatter.Instance},
-            
-                // Nulllable Primitive
+
+                // Nullable Primitive
                 {typeof(Nullable<Int16>), NullableForceInt16BlockFormatter.Instance},
                 {typeof(Nullable<Int32>), NullableForceInt32BlockFormatter.Instance},
                 {typeof(Nullable<Int64>), NullableForceInt64BlockFormatter.Instance},
@@ -91,8 +91,8 @@ namespace MessagePack.Resolvers
                 {typeof(Nullable<UInt64>), NullableForceUInt64BlockFormatter.Instance},
                 {typeof(Nullable<byte>), NullableForceByteBlockFormatter.Instance},
                 {typeof(Nullable<sbyte>), NullableForceSByteBlockFormatter.Instance},
-            
-                // otpmitized primitive array formatter
+
+                // optimized primitive array formatter
                 {typeof(Int16[]), ForceInt16BlockArrayFormatter.Instance},
                 {typeof(Int32[]), ForceInt32BlockArrayFormatter.Instance},
                 {typeof(Int64[]), ForceInt64BlockArrayFormatter.Instance},
@@ -114,9 +114,9 @@ namespace MessagePack.Resolvers
 
     internal sealed class TypelessFormatterFallbackResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new TypelessFormatterFallbackResolver();
+        public readonly static IFormatterResolver Instance = new TypelessFormatterFallbackResolver();
 
-        static IMessagePackFormatter<object> fallbackFormatter = new DynamicObjectTypeFallbackFormatter(
+        static readonly IMessagePackFormatter<object> fallbackFormatter = new DynamicObjectTypeFallbackFormatter(
             ForceSizePrimitiveObjectResolver.Instance,
             ContractlessStandardResolverAllowPrivateCore.Instance);
 

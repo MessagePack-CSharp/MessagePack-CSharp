@@ -12,10 +12,12 @@ namespace MessagePack.Tests
 {
     public class MessagePackSerializerTest
     {
+        private MessagePackSerializer.NonGeneric nonGenericSerializer = new MessagePackSerializer.NonGeneric();
+
         T ConvertNonGeneric<T>(T obj)
         {
             var t = obj.GetType();
-            return (T)MessagePackSerializer.NonGeneric.Deserialize(t, MessagePackSerializer.NonGeneric.Serialize(t, obj));
+            return (T)nonGenericSerializer.Deserialize(t, nonGenericSerializer.Serialize(t, obj));
         }
 
         [Fact]
@@ -25,17 +27,17 @@ namespace MessagePack.Tests
             var t = typeof(FirstSimpleData);
             var ms = new MemoryStream();
 
-            var data1 = MessagePackSerializer.NonGeneric.Deserialize(t, MessagePackSerializer.NonGeneric.Serialize(t, data)) as FirstSimpleData;
-            var data2 = MessagePackSerializer.NonGeneric.Deserialize(t, MessagePackSerializer.NonGeneric.Serialize(t, data, StandardResolver.Instance)) as FirstSimpleData;
+            var data1 = nonGenericSerializer.Deserialize(t, nonGenericSerializer.Serialize(t, data)) as FirstSimpleData;
+            var data2 = nonGenericSerializer.Deserialize(t, nonGenericSerializer.Serialize(t, data, StandardResolver.Instance)) as FirstSimpleData;
 
-            MessagePackSerializer.NonGeneric.Serialize(t, ms, data);
+            nonGenericSerializer.Serialize(t, ms, data);
             ms.Position = 0;
-            var data3 = MessagePackSerializer.NonGeneric.Deserialize(t, ms) as FirstSimpleData;
+            var data3 = nonGenericSerializer.Deserialize(t, ms) as FirstSimpleData;
 
             ms = new MemoryStream();
-            MessagePackSerializer.NonGeneric.Serialize(t, ms, data, StandardResolver.Instance);
+            nonGenericSerializer.Serialize(t, ms, data, StandardResolver.Instance);
             ms.Position = 0;
-            var data4 = MessagePackSerializer.NonGeneric.Deserialize(t, ms, StandardResolver.Instance) as FirstSimpleData;
+            var data4 = nonGenericSerializer.Deserialize(t, ms, StandardResolver.Instance) as FirstSimpleData;
 
             new[] { data1.Prop1, data2.Prop1, data3.Prop1, data4.Prop1 }.Distinct().Is(data.Prop1);
             new[] { data1.Prop2, data2.Prop2, data3.Prop2, data4.Prop2 }.Distinct().Is(data.Prop2);
@@ -48,20 +50,20 @@ namespace MessagePack.Tests
             var originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
 
             var ms = new MemoryStream();
-            MessagePackSerializer.NonGeneric.Serialize(typeof(FirstSimpleData[]), ms, originalData);
+            nonGenericSerializer.Serialize(typeof(FirstSimpleData[]), ms, originalData);
 
-            var normal = MessagePackSerializer.NonGeneric.Serialize(typeof(FirstSimpleData[]), originalData);
+            var normal = nonGenericSerializer.Serialize(typeof(FirstSimpleData[]), originalData);
 
             ms.Position = 0;
 
             normal.SequenceEqual(ms.ToArray()).IsTrue();
 
-            var decompress1 = MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), ms.ToArray());
-            var decompress2 = MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), normal);
-            var decompress3 = MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), ms);
+            var decompress1 = nonGenericSerializer.Deserialize(typeof(FirstSimpleData[]), ms.ToArray());
+            var decompress2 = nonGenericSerializer.Deserialize(typeof(FirstSimpleData[]), normal);
+            var decompress3 = nonGenericSerializer.Deserialize(typeof(FirstSimpleData[]), ms);
             ms.Position = 0;
             var onmore = new NonMemoryStream(ms);
-            var decompress4 = MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), onmore);
+            var decompress4 = nonGenericSerializer.Deserialize(typeof(FirstSimpleData[]), onmore);
 
             decompress1.IsStructuralEqual(originalData);
             decompress2.IsStructuralEqual(originalData);

@@ -1,4 +1,5 @@
 ﻿using MessagePack.Formatters;
+using Nerdbank.Streams;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,8 @@ namespace MessagePack.Tests
 {
     public class NewGuidFormatterTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         // GuidBits is internal...
 
         //[Fact]
@@ -40,16 +43,19 @@ namespace MessagePack.Tests
         {
             {
                 var original = Guid.NewGuid();
-                byte[] bytes = null;
-                GuidFormatter.Instance.Serialize(ref bytes, 0, original, null).Is(38);
+                var sequence = new Sequence<byte>();
+                var sequenceWriter = new MessagePackWriter(sequence);
+                GuidFormatter.Instance.Serialize(ref sequenceWriter, original, null);
+                sequenceWriter.Flush();
+                sequence.Length.Is(38);
 
-                int readSize;
-                GuidFormatter.Instance.Deserialize(bytes, 0, null, out readSize).Is(original);
-                readSize.Is(38);
+                var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+                GuidFormatter.Instance.Deserialize(ref sequenceReader, null).Is(original);
+                sequenceReader.End.IsTrue();
             }
             {
                 var c = new InClass() { MyProperty = 3414141, Guid = Guid.NewGuid() };
-                var c2 = MessagePackSerializer.Deserialize<InClass>(MessagePackSerializer.Serialize(c));
+                var c2 = serializer.Deserialize<InClass>(serializer.Serialize(c));
                 c.MyProperty.Is(c2.MyProperty);
                 c.Guid.Is(c2.Guid);
             }

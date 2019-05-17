@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD
+﻿#if !UNITY
 
 using MessagePack.Formatters;
 using MessagePack.Internal;

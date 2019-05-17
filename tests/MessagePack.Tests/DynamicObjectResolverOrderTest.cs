@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -40,24 +41,26 @@ namespace MessagePack.Tests
 
     public class DynamicObjectResolverOrderTest
     {
-        IEnumerable<string> IteratePropertyNames(byte[] bin)
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
+        IEnumerable<string> IteratePropertyNames(ReadOnlyMemory<byte> bytes)
         {
-            var offset = 0;
-            int readSize = 0;
-            var mapCount = MessagePackBinary.ReadMapHeader(bin, 0, out readSize);
-            offset += readSize;
+            var reader = new MessagePackReader(bytes);
+            var mapCount = reader.ReadMapHeader();
+            var result = new string[mapCount];
             for (int i = 0; i < mapCount; i++)
             {
-                yield return MessagePackBinary.ReadString(bin, offset, out readSize);
-                offset += readSize;
-                offset += MessagePackBinary.ReadNext(bin, offset);
+                result[i] = reader.ReadString();
+                reader.Skip(); // skip the value
             }
+
+            return result;
         }
 
         [Fact]
         public void OrderTest()
         {
-            var msgRawData = MessagePack.MessagePackSerializer.Serialize(new OrderOrder());
+            var msgRawData = serializer.Serialize(new OrderOrder());
             IteratePropertyNames(msgRawData).Is("Bar", "Moge", "Foo", "FooBar", "NoBar");
         }
 
@@ -65,7 +68,7 @@ namespace MessagePack.Tests
         public void InheritIterateOrder()
         {
             RealClass realClass = new RealClass { Str = "X" };
-            var msgRawData = MessagePack.MessagePackSerializer.Serialize(realClass);
+            var msgRawData = serializer.Serialize(realClass);
 
             IteratePropertyNames(msgRawData).Is("Id", "Str");
         }

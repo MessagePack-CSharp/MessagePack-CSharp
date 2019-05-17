@@ -11,12 +11,14 @@ namespace MessagePack.Tests
 {
     public class CollectionTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
-        public static object collectionTestData = new object[]
+        public static object[][] collectionTestData = new object[][]
         {
             new object[]{ new int[]{ 1,10, 100 } , null },
             new object[]{ new List<int>{ 1,10, 100 } , null },

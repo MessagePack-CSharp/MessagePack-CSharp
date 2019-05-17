@@ -1,57 +1,17 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8E511130-F838-4B47-842B-0FB27AD175B5}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DynamicCodeDumper</RootNamespace>
-    <AssemblyName>DynamicCodeDumper</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_35;NETSTANDARD1_4</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <TargetFramework>net461</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;NET_35, NETSTANDARD1_4</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\..\src\MessagePack\Attributes.cs">
+    <Compile Include="..\..\src\MessagePack.Annotations\Attributes.cs">
       <Link>Code\Attributes.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\FloatBits.cs">
       <Link>Code\FloatBits.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\BufferWriter.cs">
+      <Link>Code\BufferWriter.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Formatters\IMessagePackFormatter.cs">
       <Link>Code\IMessagePackFormatter.cs</Link>
@@ -59,10 +19,13 @@
     <Compile Include="..\..\src\MessagePack\Formatters\NullableFormatter.cs">
       <Link>Code\NullableFormatter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Formatters\DateTimeFormatters.cs">
+      <Link>Code\DateTimeFormatters.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\IFormatterResolver.cs">
       <Link>Code\IFormatterResolver.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\IMessagePackSerializationCallbackReceiver.cs">
+    <Compile Include="..\..\src\MessagePack.Annotations\IMessagePackSerializationCallbackReceiver.cs">
       <Link>Code\IMessagePackSerializationCallbackReceiver.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\AutomataDictionary.cs">
@@ -73,6 +36,9 @@
     </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\ByteArrayStringHashTable.cs">
       <Link>Code\ByteArrayStringHashTable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\CodeGenHelpers.cs">
+      <Link>Code\CodeGenHelpers.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\DynamicAssembly.cs">
       <Link>Code\DynamicAssembly.cs</Link>
@@ -95,14 +61,41 @@
     <Compile Include="..\..\src\MessagePack\Internal\UnsafeMemory.Low.cs">
       <Link>Code\UnsafeMemory.Low.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\MessagePackBinary.cs">
-      <Link>Code\MessagePackBinary.cs</Link>
+    <Compile Include="..\..\src\MessagePack\ExtensionHeader.cs">
+      <Link>Code\ExtensionHeader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\ExtensionResult.cs">
+      <Link>Code\ExtensionResult.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackReader.cs">
+      <Link>Code\MessagePackReader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackReader.Integers.cs">
+      <Link>Code\MessagePackReader.Integers.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
+      <Link>Code\MessagePackWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\SequencePool.cs">
+      <Link>Code\SequencePool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\SequenceReader.cs">
+      <Link>Code\SequenceReader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\SequenceReaderExtensions.cs">
+      <Link>Code\SequenceReaderExtensions.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\MessagePackCode.cs">
       <Link>Code\MessagePackCode.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\DateTimeConstants.cs">
+      <Link>Code\Internal\DateTimeConstants.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack\Nil.cs">
       <Link>Code\Nil.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Utilities.cs">
+      <Link>Code\Utilities.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Resolvers\DynamicEnumResolver.cs">
       <Link>Code\DynamicEnumResolver.cs</Link>
@@ -119,8 +112,10 @@
     <Compile Include="..\SharedData\Class1.cs">
       <Link>Class1.cs</Link>
     </Compile>
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.Streams" Version="2.1.28-beta" />
+    <PackageReference Include="System.Memory" Version="4.5.1" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
+  </ItemGroup>
 </Project>

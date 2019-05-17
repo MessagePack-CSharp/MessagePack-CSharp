@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,12 +10,14 @@ namespace MessagePack.Tests
 {
     public class GenericFormatters
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
-        public static object[] tupleTestData = new object[]
+        public static object[][] tupleTestData = new object[][]
         {
             new object[] { Tuple.Create(1) },
             new object[] { Tuple.Create(1,2) },
@@ -47,14 +50,14 @@ namespace MessagePack.Tests
 
         [Theory(Skip = "AppVeyor Testing")]
         [MemberData(nameof(tupleTestData))]
-        public void TupleTest<T>(T data, T? @null)
+        public void TupleTest2<T>(T data, T? @null)
             where T : struct
         {
             Convert(data).IsStructuralEqual(data);
             Convert(@null).IsNull();
         }
 
-        public static object[] keyValuePairData = new object[]
+        public static object[][] keyValuePairData = new object[][]
         {
             new object[] { new KeyValuePair<int, int>(1,2), null },
             new object[] { new KeyValuePair<int, int>(3,4), new KeyValuePair<int, int>(5,6) },
@@ -69,7 +72,7 @@ namespace MessagePack.Tests
             Convert(t2).IsStructuralEqual(t2);
         }
 
-        public static object[] byteArraySegementData = new object[]
+        public static object[][] byteArraySegementData = new object[][]
         {
             new object[] { new ArraySegment<byte>(new byte[] { 0, 0, 1, 2, 3 }, 2, 3), null, new byte[] { 1, 2, 3 }  },
             new object[] { new ArraySegment<byte>(new byte[0], 0, 0), null, new byte[0] },
@@ -79,11 +82,9 @@ namespace MessagePack.Tests
         [MemberData(nameof(byteArraySegementData))]
         public void ByteArraySegmentTest(ArraySegment<byte> t, ArraySegment<byte>? t2, byte[] reference)
         {
-            MessagePackSerializer.Serialize(t).Is(MessagePackSerializer.Serialize(reference));
+            serializer.Serialize(t).Is(serializer.Serialize(reference));
             Convert(t).Array.Is(reference);
-            MessagePackBinary.IsNil(MessagePackSerializer.Serialize(t2), 0).IsTrue();
+            new MessagePackReader(serializer.Serialize(t2)).IsNil.IsTrue();
         }
-
-
     }
 }

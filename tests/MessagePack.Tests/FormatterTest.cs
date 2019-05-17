@@ -1,9 +1,12 @@
-﻿using SharedData;
+﻿using MessagePack.Formatters;
+using Nerdbank.Streams;
+using SharedData;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -12,12 +15,14 @@ namespace MessagePack.Tests
 {
     public class FormatterTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
-        public static object[] primitiveFormatterTestData = new object[]
+        public static object[][] primitiveFormatterTestData = new object[][]
         {
             new object[] { Int16.MinValue, Int16.MaxValue },
             new object[] { (Int16?)100, null },
@@ -56,7 +61,7 @@ namespace MessagePack.Tests
             Convert(y).Is(y);
         }
 
-        public static object[] enumFormatterTestData = new object[]
+        public static object[][] enumFormatterTestData = new object[][]
         {
             new object[] { ByteEnum.A, ByteEnum.B },
             new object[] { (ByteEnum?)ByteEnum.C, null },
@@ -92,7 +97,7 @@ namespace MessagePack.Tests
             Convert((Nil?)null).Is(Nil.Default);
         }
 
-        public static object[] standardStructFormatterTestData = new object[]
+        public static object[][] standardStructFormatterTestData = new object[][]
         {
             new object[] { decimal.MaxValue, decimal.MinValue, null },
             new object[] { TimeSpan.MaxValue, TimeSpan.MinValue, null },
@@ -115,20 +120,24 @@ namespace MessagePack.Tests
 
         [Theory]
         [MemberData(nameof(standardStructFormatterTestData))]
-        public void StandardClassLibraryStructFormatterTest<T>(T x, T? y, T? z)
-            where T : struct
+        public void StandardClassLibraryStructFormatterTest(object x, object y, object z)
         {
-            Convert(x).Is(x);
-            Convert(y).Is(y);
-            Convert(z).Is(z);
+            var helper = typeof(FormatterTest).GetTypeInfo().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).Single(m => m.Name == nameof(StandardClassLibraryStructFormatterTest_Helper));
+            var helperClosedGeneric = helper.MakeGenericMethod(x.GetType());
+
+            helperClosedGeneric.Invoke(this, new object[] { x });
+            helperClosedGeneric.Invoke(this, new object[] { y });
+            helperClosedGeneric.Invoke(this, new object[] { z });
         }
 
-        public static object[] standardClassFormatterTestData = new object[]
+        private void StandardClassLibraryStructFormatterTest_Helper<T>(T? value) where T : struct => Convert(value).Is(value);
+
+        public static object[][] standardClassFormatterTestData = new object[][]
         {
             new object[] { new byte[] { 1, 10, 100 }, new byte[0] { }, null },
             new object[] { "aaa", "", null },
             new object[] { new Uri("Http://hogehoge.com"), new Uri("Https://hugahuga.com"), null },
-            new object[] { new Version(), new Version(1,2,3), new Version(255,100,30) },
+            new object[] { new Version(0,0), new Version(1,2,3), new Version(255,100,30) },
             new object[] { new Version(1,2), new Version(100, 200,300,400), null },
             new object[] { new BitArray(new[] { true, false, true }), new BitArray(1), null },
         };
@@ -163,36 +172,11 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void TaskTest()
-        {
-            var intTask = Task.Run(() => 100);
-            Convert(intTask).Result.Is(100);
-
-            Task<int> nullTask = null;
-            Convert(nullTask).IsNull();
-
-            Task unitTask = Task.Run(() => 100);
-            Convert(unitTask).Status.Is(TaskStatus.RanToCompletion);
-
-            Task nullUnitTask = null;
-            Convert(nullUnitTask).Status.Is(TaskStatus.RanToCompletion); // write to nil
-
-            ValueTask<int> valueTask = new ValueTask<int>(100);
-            Convert(valueTask).Result.Is(100);
-
-            ValueTask<int>? nullValueTask = new ValueTask<int>(100);
-            Convert(nullValueTask).Value.Result.Is(100);
-
-            ValueTask<int>? nullValueTask2 = null;
-            Convert(nullValueTask2).IsNull();
-        }
-
-        [Fact]
         public void DateTimeOffsetTest()
         {
             DateTimeOffset now = new DateTime(DateTime.UtcNow.Ticks + TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time").BaseUtcOffset.Ticks, DateTimeKind.Local);
-            var binary = MessagePackSerializer.Serialize(now);
-            MessagePackSerializer.Deserialize<DateTimeOffset>(binary).Is(now);
+            var binary = serializer.Serialize(now);
+            serializer.Deserialize<DateTimeOffset>(binary).Is(now);
         }
 
         [Fact]
@@ -203,34 +187,49 @@ namespace MessagePack.Tests
             var c = new String('あ', 130);
             var d = new String('あ', 40000);
 
-            byte[] bytesA = null;
-            MessagePackBinary.WriteString(ref bytesA, 0, a).Is(Encoding.UTF8.GetByteCount(a) + 1);
+            var sequenceA = new Sequence<byte>();
+            var sequenceAWriter = new MessagePackWriter(sequenceA);
+            sequenceAWriter.Write(a);
+            sequenceAWriter.Flush();
+            sequenceA.Length.Is(Encoding.UTF8.GetByteCount(a) + 1);
 
-            byte[] bytesB = null;
-            MessagePackBinary.WriteString(ref bytesB, 0, b).Is(Encoding.UTF8.GetByteCount(b) + 2);
+            var sequenceB = new Sequence<byte>();
+            var sequenceBWriter = new MessagePackWriter(sequenceB);
+            sequenceBWriter.Write(b);
+            sequenceBWriter.Flush();
+            sequenceB.Length.Is(Encoding.UTF8.GetByteCount(b) + 2);
 
-            byte[] bytesC = null;
-            MessagePackBinary.WriteString(ref bytesC, 0, c).Is(Encoding.UTF8.GetByteCount(c) + 3);
+            var sequenceC = new Sequence<byte>();
+            var sequenceCWriter = new MessagePackWriter(sequenceC);
+            sequenceCWriter.Write(c);
+            sequenceCWriter.Flush();
+            sequenceC.Length.Is(Encoding.UTF8.GetByteCount(c) + 3);
 
-            byte[] bytesD = null;
-            MessagePackBinary.WriteString(ref bytesD, 0, d).Is(Encoding.UTF8.GetByteCount(d) + 5);
+            var sequenceD = new Sequence<byte>();
+            var sequenceDWriter = new MessagePackWriter(sequenceD);
+            sequenceDWriter.Write(d);
+            sequenceDWriter.Flush();
+            sequenceD.Length.Is(Encoding.UTF8.GetByteCount(d) + 5);
 
-            int readSize = 0;
-            MessagePackBinary.ReadString(bytesA, 0, out readSize).Is(a);
-            MessagePackBinary.ReadString(bytesB, 0, out readSize).Is(b);
-            MessagePackBinary.ReadString(bytesC, 0, out readSize).Is(c);
-            MessagePackBinary.ReadString(bytesD, 0, out readSize).Is(d);
+            var readerA = new MessagePackReader(sequenceA.AsReadOnlySequence);
+            var readerB = new MessagePackReader(sequenceB.AsReadOnlySequence);
+            var readerC = new MessagePackReader(sequenceC.AsReadOnlySequence);
+            var readerD = new MessagePackReader(sequenceD.AsReadOnlySequence);
+            readerA.ReadString().Is(a);
+            readerB.ReadString().Is(b);
+            readerC.ReadString().Is(c);
+            readerD.ReadString().Is(d);
         }
 
         // https://github.com/neuecc/MessagePack-CSharp/issues/22
         [Fact]
         public void DecimalLang()
         {
-            var estonian = CultureInfo.GetCultureInfo("et-EE");
+            var estonian = new CultureInfo("et-EE");
             CultureInfo.CurrentCulture = estonian;
 
-            var b = MessagePackSerializer.Serialize(12345.6789M);
-            var d = MessagePackSerializer.Deserialize<decimal>(b);
+            var b = serializer.Serialize(12345.6789M);
+            var d = serializer.Deserialize<decimal>(b);
 
             d.Is(12345.6789M);
         }
