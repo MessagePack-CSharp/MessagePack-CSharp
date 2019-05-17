@@ -108,6 +108,8 @@ namespace MessagePack
                 case ',':
                 case ':':
                 case '\"':
+                case '\n':
+                case '\r':
                     return true;
                 default:
                     return false;
