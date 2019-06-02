@@ -109,7 +109,7 @@ namespace MessagePack
                 var offset = 0;
                 var buffer = LZ4MemoryPool.GetBuffer();
                 var maxOutCount = LZ4Codec.MaximumOutputLength(serializedData.Count);
-                if (buffer.Length + 6 + 5 < maxOutCount) // (ext header size + fixed length size)
+                if (buffer.Length + 6 + 5 > maxOutCount) // (ext header size + fixed length size)
                 {
                     buffer = new byte[6 + 5 + maxOutCount];
                 }
