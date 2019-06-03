@@ -80,7 +80,7 @@ namespace MessagePack
         /// <param name="output">The buffer to write the result of the operation.</param>
         /// <param name="lz4Operation">The LZ4 codec transformation.</param>
         /// <returns>The number of bytes written to the <paramref name="output"/>.</returns>
-        private static int LZ4Operation(ReadOnlySequence<byte> input, Span<byte> output, LZ4Transform lz4Operation)
+        private static int LZ4Operation(in ReadOnlySequence<byte> input, Span<byte> output, LZ4Transform lz4Operation)
         {
             ReadOnlySpan<byte> inputSpan;
             byte[] rentedInputArray = null;
@@ -138,7 +138,7 @@ namespace MessagePack
             return false;
         }
 
-        private static void ToLZ4BinaryCore(ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer)
+        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer)
         {
             if (msgpackUncompressedData.Length < NotCompressionSize)
             {

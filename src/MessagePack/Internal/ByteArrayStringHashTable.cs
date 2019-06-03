@@ -77,7 +77,7 @@ namespace MessagePack.Internal
             return true;
         }
 
-        public bool TryGetValue(ReadOnlySequence<byte> key, out int value) => TryGetValue(CodeGenHelpers.GetSpanFromSequence(key), out value);
+        public bool TryGetValue(in ReadOnlySequence<byte> key, out int value) => TryGetValue(CodeGenHelpers.GetSpanFromSequence(key), out value);
 
         public bool TryGetValue(ReadOnlySpan<byte> key, out int value)
         {

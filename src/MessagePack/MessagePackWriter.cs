@@ -90,7 +90,7 @@ namespace MessagePack
         /// Copies bytes directly into the message pack writer.
         /// </summary>
         /// <param name="rawMessagePackBlock">The span of bytes to copy from.</param>
-        public void WriteRaw(ReadOnlySequence<byte> rawMessagePackBlock)
+        public void WriteRaw(in ReadOnlySequence<byte> rawMessagePackBlock)
         {
             foreach (var segment in rawMessagePackBlock)
             {
@@ -812,7 +812,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Bin32"/>,
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
-        public void Write(ReadOnlySequence<byte> src)
+        public void Write(in ReadOnlySequence<byte> src)
         {
             if (this.OldSpec)
             {
@@ -863,7 +863,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Str32"/>,
         /// </summary>
         /// <param name="utf8stringBytes">The bytes to write.</param>
-        public void WriteString(ReadOnlySequence<byte> utf8stringBytes)
+        public void WriteString(in ReadOnlySequence<byte> utf8stringBytes)
         {
             var byteCount = (int)utf8stringBytes.Length;
             if (byteCount <= MessagePackRange.MaxFixStringLength)

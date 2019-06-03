@@ -139,7 +139,7 @@ namespace MessagePack
         /// <param name="byteSequence">The sequence to deserialize from.</param>
         /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
         /// <returns>The deserialized value.</returns>
-        public T Deserialize<T>(ReadOnlySequence<byte> byteSequence, IFormatterResolver resolver = null)
+        public T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, IFormatterResolver resolver = null)
         {
             var reader = new MessagePackReader(byteSequence);
             return this.Deserialize<T>(ref reader, resolver);

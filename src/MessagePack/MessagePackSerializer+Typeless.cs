@@ -39,7 +39,7 @@ namespace MessagePack
 
             public object Deserialize(ref MessagePackReader reader) => serializer.Deserialize<object>(ref reader);
 
-            public object Deserialize(ReadOnlySequence<byte> byteSequence) => serializer.Deserialize<object>(byteSequence);
+            public object Deserialize(in ReadOnlySequence<byte> byteSequence) => serializer.Deserialize<object>(byteSequence);
 
             public object Deserialize(Stream stream) => serializer.Deserialize<object>(stream);
 

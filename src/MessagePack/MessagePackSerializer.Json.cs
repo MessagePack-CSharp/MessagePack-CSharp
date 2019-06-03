@@ -44,7 +44,7 @@ namespace MessagePack
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public string ConvertToJson(ReadOnlySequence<byte> bytes)
+        public string ConvertToJson(in ReadOnlySequence<byte> bytes)
         {
             var jsonWriter = new StringWriter();
             var reader = new MessagePackReader(bytes);
