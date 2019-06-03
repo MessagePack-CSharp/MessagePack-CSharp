@@ -146,5 +146,19 @@ namespace MessagePack.Tests.ExtensionTests
             MessagePackSerializer.Deserialize<int>(msgpack1).Is(100);
             MessagePackSerializer.Deserialize<FirstSimpleData[]>(msgpack2).IsStructuralEqual(originalData);
         }
+
+        [Fact]
+        public void BigList()
+        {
+            int capacity = 21974;
+            List<long> list = new List<long>(capacity);
+            for (long i = 0; i < capacity; i++)
+                list.Add(i);
+            var data = LZ4MessagePackSerializer.Serialize(list);
+            data.Length.IsNot(11);
+
+            var testList = LZ4MessagePackSerializer.Deserialize<List<long>>(data);
+            testList.Count.Is(list.Count);
+        }
     }
 }
