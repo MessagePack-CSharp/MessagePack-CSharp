@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>net461;net47;netcoreapp1.0;netcoreapp2.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <IsTestProject>true</IsTestProject>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <NoWarn>$(NoWarn);CS1701</NoWarn>
