@@ -48,7 +48,7 @@ steps:
 # Use VSBuild to pack because `dotnet pack` can't build VSIX projects.
 - task: VSBuild@1
   inputs:
-    vsVersion: 15.0
+    vsVersion: 16.0
     solution: MessagePack.sln
     msbuildArgs: /t:build,pack /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.binlog"
     platform: $(BuildPlatform)
@@ -64,7 +64,7 @@ steps:
 
 - task: VSBuild@1
   inputs:
-    vsVersion: 15.0
+    vsVersion: 16.0
     solution: src\MessagePack.UnityClient\MessagePack.UnityClient.sln
     msbuildArgs: /t:build /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.unity.binlog"
     platform: $(BuildPlatform)
