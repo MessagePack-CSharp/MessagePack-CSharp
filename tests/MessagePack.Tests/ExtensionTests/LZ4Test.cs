@@ -10,7 +10,6 @@ using Xunit;
 
 namespace MessagePack.Tests.ExtensionTests
 {
-
     public class LZ4Test
     {
         private MessagePackSerializer serializer = new MessagePackSerializer();
@@ -124,6 +123,20 @@ namespace MessagePack.Tests.ExtensionTests
         {
             var reader = new MessagePackReader(new ReadOnlySequence<byte>(msgpackBuffer));
             return reader.NextMessagePackType;
+        }
+
+        [Fact]
+        public void BigList()
+        {
+            int capacity = 21974;
+            List<long> list = new List<long>(capacity);
+            for (long i = 0; i < capacity; i++)
+                list.Add(i);
+            var data = lz4Serializer.Serialize(list);
+            data.Length.IsNot(11);
+
+            var testList = lz4Serializer.Deserialize<List<long>>(data);
+            testList.Count.Is(list.Count);
         }
     }
 }
