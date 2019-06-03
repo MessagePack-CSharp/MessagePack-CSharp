@@ -260,22 +260,36 @@ namespace MessagePack
         {
             ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
 
+            int count;
             switch (code)
             {
                 case MessagePackCode.Array16:
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortValue));
-                    return unchecked((ushort)shortValue);
+                    count = unchecked((ushort)shortValue);
+                    break;
                 case MessagePackCode.Array32:
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
-                    return intValue;
+                    count = intValue;
+                    break;
                 default:
                     if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
                     {
-                        return (byte)code & 0xF;
+                        count = code & 0xF;
+                        break;
                     }
 
                     throw ThrowInvalidCode(code);
             }
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            // We allow for each primitive to be the minimal 1 byte in size.
+            // Formatters that know each element is larger can double-check our work.
+            if (count > this.reader.Remaining)
+            {
+                ThrowNotEnoughBytesException();
+            }
+
+            return count;
         }
 
         /// <summary>
@@ -288,22 +302,36 @@ namespace MessagePack
         {
             ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
 
+            int count;
             switch (code)
             {
                 case MessagePackCode.Map16:
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortValue));
-                    return unchecked((ushort)shortValue);
+                    count = unchecked((ushort)shortValue);
+                    break;
                 case MessagePackCode.Map32:
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
-                    return intValue;
+                    count = intValue;
+                    break;
                 default:
                     if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
                     {
-                        return (byte)(code & 0xF);
+                        count = (byte)(code & 0xF);
+                        break;
                     }
 
                     throw ThrowInvalidCode(code);
             }
+
+            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
+            // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
+            // Formatters that know each element is larger can double-check our work.
+            if (count * 2 > this.reader.Remaining)
+            {
+                ThrowNotEnoughBytesException();
+            }
+
+            return count;
         }
 
         /// <summary>
@@ -673,6 +701,12 @@ namespace MessagePack
             this.reader.Advance(header.Length);
             return new ExtensionResult(header.TypeCode, data);
         }
+
+        /// <summary>
+        /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
+        /// the promised data.
+        /// </summary>
+        private static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
 
         private static Exception ThrowInvalidCode(byte code)
         {
