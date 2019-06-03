@@ -10,14 +10,16 @@ namespace MessagePack.Tests
 {
     public class AnonymousTypeTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         [Fact]
-        public void SerializeAndToJson()
+        public void SerializeAndConvertToJson()
         {
             var testData = new { Hoge = 100, Huga = true, Yaki = new { Rec = 1, T = 10 }, Nano = "nanoanno" };
 
-            var data = MessagePackSerializer.Serialize(testData, ContractlessStandardResolver.Instance);
+            var data = serializer.Serialize(testData, ContractlessStandardResolver.Instance);
 
-            MessagePackSerializer.ToJson(data).Is(@"{""Hoge"":100,""Huga"":true,""Yaki"":{""Rec"":1,""T"":10},""Nano"":""nanoanno""}");
+            serializer.ConvertToJson(data).Is(@"{""Hoge"":100,""Huga"":true,""Yaki"":{""Rec"":1,""T"":10},""Nano"":""nanoanno""}");
         }
     }
 }

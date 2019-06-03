@@ -10,6 +10,8 @@ namespace MessagePack.Tests
 {
     public class DataContractTest
     {
+        private MessagePackSerializer serializer = new MessagePackSerializer();
+
         [DataContract]
         public class MyClass
         {
@@ -62,13 +64,13 @@ namespace MessagePack.Tests
         {
             var mc = new MyClass { MyProperty1 = 100, MyProperty2 = "foobar" };
 
-            var bin = MessagePackSerializer.Serialize(mc);
-            var mc2 = MessagePackSerializer.Deserialize<MyClass>(bin);
+            var bin = serializer.Serialize(mc);
+            var mc2 = serializer.Deserialize<MyClass>(bin);
 
             mc.MyProperty1.Is(mc2.MyProperty1);
             mc.MyProperty2.Is(mc2.MyProperty2);
 
-            MessagePackSerializer.ToJson(bin).Is(@"[100,""foobar""]");
+            serializer.ConvertToJson(bin).Is(@"[100,""foobar""]");
         }
 
         [Fact]
@@ -76,11 +78,11 @@ namespace MessagePack.Tests
         {
             var mc = new MyClass1 { MyProperty1 = 100, MyProperty2 = "foobar" };
 
-            var bin = MessagePackSerializer.Serialize(mc);
+            var bin = serializer.Serialize(mc);
 
-            MessagePackSerializer.ToJson(bin).Is(@"{""mp1"":100,""mp2"":""foobar""}");
+            serializer.ConvertToJson(bin).Is(@"{""mp1"":100,""mp2"":""foobar""}");
 
-            var mc2 = MessagePackSerializer.Deserialize<MyClass1>(bin);
+            var mc2 = serializer.Deserialize<MyClass1>(bin);
 
             mc.MyProperty1.Is(mc2.MyProperty1);
             mc.MyProperty2.Is(mc2.MyProperty2);
@@ -91,13 +93,13 @@ namespace MessagePack.Tests
         {
             var mc = new MyClass2 { MyProperty1 = 100, MyProperty2 = "foobar" };
 
-            var bin = MessagePackSerializer.Serialize(mc);
-            var mc2 = MessagePackSerializer.Deserialize<MyClass2>(bin);
+            var bin = serializer.Serialize(mc);
+            var mc2 = serializer.Deserialize<MyClass2>(bin);
 
             mc.MyProperty1.Is(mc2.MyProperty1);
             mc.MyProperty2.Is(mc2.MyProperty2);
 
-            MessagePackSerializer.ToJson(bin).Is(@"{""MyProperty1"":100,""MyProperty2"":""foobar""}");
+            serializer.ConvertToJson(bin).Is(@"{""MyProperty1"":100,""MyProperty2"":""foobar""}");
         }
 
         [Fact]
@@ -112,8 +114,8 @@ namespace MessagePack.Tests
                 IgnoredField = 6,
             };
 
-            var bin = MessagePackSerializer.Serialize(mc);
-            var mc2 = MessagePackSerializer.Deserialize<ClassWithPublicMembersWithoutAttributes>(bin);
+            var bin = serializer.Serialize(mc);
+            var mc2 = serializer.Deserialize<ClassWithPublicMembersWithoutAttributes>(bin);
 
             mc2.AttributedProperty.Is(mc.AttributedProperty);
             mc2.AttributedField.Is(mc.AttributedField);
@@ -123,7 +125,7 @@ namespace MessagePack.Tests
             mc2.UnattributedField.Is(0);
             mc2.IgnoredField.Is(0);
 
-            MessagePackSerializer.ToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
+            serializer.ConvertToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
         }
     }
 }

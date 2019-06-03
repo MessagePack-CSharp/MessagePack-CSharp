@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
+    <TargetFrameworks>netstandard1.6;netstandard2.0;net46;net47</TargetFrameworks>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C# Extension Support for ImmutableCollection</Title>
@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,14 +1,16 @@
-﻿using RuntimeUnitTestToolkit;
+﻿using System;
+using RuntimeUnitTestToolkit;
 using SharedData;
-using System;
 
 namespace MessagePack.UnityClient.Tests
 {
     public class FormatterTest
     {
-        T Convert<T>(T value)
+        private readonly MessagePackSerializer serializer = new MessagePackSerializer(MsgPackUnsafeDefaultResolver.Instance);
+
+        private T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return this.serializer.Deserialize<T>(this.serializer.Serialize(value));
         }
 
         public void PrimitiveFormatterTest()

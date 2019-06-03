@@ -1,12 +1,12 @@
 ﻿#if !UNITY_WSA
-#if !NET_STANDARD_2_0
 
 using System;
-using MessagePack.Formatters;
-using MessagePack.Internal;
+using System.Buffers;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
+using MessagePack.Formatters;
+using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
@@ -87,31 +87,28 @@ namespace MessagePack.Resolvers
 
             var typeBuilder = assembly.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
-            // int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver);
+            // void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver resolver);
             {
                 var method = typeBuilder.DefineMethod("Serialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
-                    typeof(int),
-                    new Type[] { typeof(byte[]).MakeByRefType(), typeof(int), enumType, typeof(IFormatterResolver) });
+                    null,
+                    new Type[] { typeof(MessagePackWriter).MakeByRefType(), enumType, typeof(IFormatterResolver) });
 
                 var il = method.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldarg_2);
-                il.Emit(OpCodes.Ldarg_3);
-                il.Emit(OpCodes.Call, typeof(MessagePackBinary).GetRuntimeMethod("Write" + underlyingType.Name, new[] { typeof(byte[]).MakeByRefType(), typeof(int), underlyingType }));
+                il.Emit(OpCodes.Call, typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.Write), new[] { underlyingType }));
                 il.Emit(OpCodes.Ret);
             }
 
-            // T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize);
+            // T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver);
             {
                 var method = typeBuilder.DefineMethod("Deserialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
                     enumType,
-                    new Type[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), typeof(int).MakeByRefType() });
+                    new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(IFormatterResolver) });
 
                 var il = method.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Ldarg_2);
-                il.Emit(OpCodes.Ldarg_S, (byte)4);
-                il.Emit(OpCodes.Call, typeof(MessagePackBinary).GetRuntimeMethod("Read" + underlyingType.Name, new[] { typeof(byte[]), typeof(int), typeof(int).MakeByRefType() }));
+                il.Emit(OpCodes.Call, typeof(MessagePackReader).GetRuntimeMethod("Read" + underlyingType.Name, Type.EmptyTypes));
                 il.Emit(OpCodes.Ret);
             }
 
@@ -120,5 +117,4 @@ namespace MessagePack.Resolvers
     }
 }
 
-#endif
 #endif

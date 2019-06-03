@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -10,6 +11,7 @@ namespace MessagePack.Internal
     // and specialized for internal use(nongenerics, TValue is int)
 
     // internal, but code generator requires this class
+    // or at least PerfBenchmarkDotNet
     public class ByteArrayStringHashTable : IEnumerable<KeyValuePair<string, int>>
     {
         readonly Entry[][] buckets; // immutable array(faster than linkedlist)
@@ -45,7 +47,7 @@ namespace MessagePack.Internal
 
         bool TryAddInternal(byte[] key, int value)
         {
-            var h = ByteArrayGetHashCode(key, 0, key.Length);
+            var h = ByteArrayGetHashCode(key);
             var entry = new Entry { Key = key, Value = value };
 
             var array = buckets[h & (indexFor)];
@@ -59,7 +61,7 @@ namespace MessagePack.Internal
                 for (int i = 0; i < array.Length; i++)
                 {
                     var e = array[i].Key;
-                    if (ByteArrayComparer.Equals(key, 0, key.Length, e))
+                    if (ByteArrayComparer.Equals(key, e.Span))
                     {
                         return false;
                     }
@@ -75,21 +77,23 @@ namespace MessagePack.Internal
             return true;
         }
 
-        public bool TryGetValue(ArraySegment<byte> key, out int value)
+        public bool TryGetValue(ReadOnlySequence<byte> key, out int value) => TryGetValue(CodeGenHelpers.GetSpanFromSequence(key), out value);
+
+        public bool TryGetValue(ReadOnlySpan<byte> key, out int value)
         {
             var table = buckets;
-            var hash = ByteArrayGetHashCode(key.Array, key.Offset, key.Count);
+            var hash = ByteArrayGetHashCode(key);
             var entry = table[hash & indexFor];
 
             if (entry == null) goto NOT_FOUND;
 
             {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
                 ref var v = ref entry[0];
 #else
                 var v = entry[0];
 #endif
-                if (ByteArrayComparer.Equals(key.Array, key.Offset, key.Count, v.Key))
+                if (ByteArrayComparer.Equals(key, v.Key.Span))
                 {
                     value = v.Value;
                     return true;
@@ -98,43 +102,43 @@ namespace MessagePack.Internal
 
             for (int i = 1; i < entry.Length; i++)
             {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
                 ref var v = ref entry[i];
 #else
                 var v = entry[i];
 #endif
-                if (ByteArrayComparer.Equals(key.Array, key.Offset, key.Count, v.Key))
+                if (ByteArrayComparer.Equals(key, v.Key.Span))
                 {
                     value = v.Value;
                     return true;
                 }
             }
 
-            NOT_FOUND:
+        NOT_FOUND:
             value = default(int);
             return false;
         }
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
         static readonly bool Is32Bit = (IntPtr.Size == 4);
 #endif
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        static ulong ByteArrayGetHashCode(byte[] x, int offset, int count)
+        static ulong ByteArrayGetHashCode(ReadOnlySpan<byte> x)
         {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
             // FarmHash https://github.com/google/farmhash
             if (x == null) return 0;
 
             if (Is32Bit)
             {
-                return (ulong)FarmHash.Hash32(x, offset, count);
+                return (ulong)FarmHash.Hash32(x);
             }
             else
             {
-                return FarmHash.Hash64(x, offset, count);
+                return FarmHash.Hash64(x);
             }
 
 #else
@@ -184,7 +188,7 @@ namespace MessagePack.Internal
                 if (item == null) continue;
                 foreach (var item2 in item)
                 {
-                    yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key), item2.Value);
+                    yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key.Span), item2.Value);
                 }
             }
         }
@@ -196,13 +200,13 @@ namespace MessagePack.Internal
 
         struct Entry
         {
-            public byte[] Key;
+            public Memory<byte> Key;
             public int Value;
 
             // for debugging
             public override string ToString()
             {
-                return "(" + Encoding.UTF8.GetString(Key) + ", " + Value + ")";
+                return "(" + Encoding.UTF8.GetString(Key.Span) + ", " + Value + ")";
             }
         }
     }

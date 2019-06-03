@@ -10,8 +10,22 @@ variables:
   BuildConfiguration: Release
   BuildPlatform: Any CPU
 
+resources:
+  containers:
+  - container: unity
+    image: gableroux/unity3d:2018.3.11f1-windows
+
 jobs:
 - job: Windows
   pool: Hosted VS2017
   steps:
   - template: azure-pipelines/build.yml
+
+#- job: Unity
+#  pool:
+#    name: Default
+#    demands: unity
+##  container: unity
+#  condition: eq(variables['IncludeUnityBuild'], 'true')
+#  steps:
+#  - template: azure-pipelines/build_unity.yml

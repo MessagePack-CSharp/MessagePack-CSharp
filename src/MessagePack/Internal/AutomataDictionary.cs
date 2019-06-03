@@ -1,73 +1,71 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
-using System.Reflection.Emit;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace MessagePack.Internal
 {
     // Key = long, Value = int for UTF8String Dictionary
 
+    /// <remarks>
+    /// This code is used by dynamically generated code as well as AOT generated code,
+    /// and thus must be public for the "C# generated and compiled into saved assembly" scenario.
+    /// </remarks>
     public class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
     {
-        readonly AutomataNode root;
+        private readonly AutomataNode root;
 
         public AutomataDictionary()
         {
             root = new AutomataNode(0);
         }
 
-#if NETSTANDARD || NETFRAMEWORK
-        public unsafe void Add(string str, int value)
+#if !UNITY
+        public void Add(string str, int value)
         {
-            var bytes = Encoding.UTF8.GetBytes(str);
-            fixed (byte* buffer = &bytes[0])
+            ReadOnlySpan<byte> bytes = Encoding.UTF8.GetBytes(str);
+            var node = root;
+
+            while (bytes.Length > 0)
             {
-                var node = root;
+                var key = AutomataKeyGen.GetKey(ref bytes);
 
-                var p = buffer;
-                var rest = bytes.Length;
-                while (rest != 0)
+                if (bytes.Length == 0)
                 {
-                    var key = AutomataKeyGen.GetKey(ref p, ref rest);
-
-                    if (rest == 0)
-                    {
-                        node = node.Add(key, value, str);
-                    }
-                    else
-                    {
-                        node = node.Add(key);
-                    }
+                    node = node.Add(key, value, str);
+                }
+                else
+                {
+                    node = node.Add(key);
                 }
             }
         }
 
-        public unsafe bool TryGetValue(byte[] bytes, int offset, int count, out int value)
+        public bool TryGetValue(ReadOnlySequence<byte> bytes, out int value) => TryGetValue(bytes.ToArray(), out value);
+
+        public bool TryGetValue(ReadOnlySpan<byte> bytes, out int value)
         {
-            fixed (byte* p = &bytes[0])
+            var node = root;
+
+            while (bytes.Length > 0 && node != null)
             {
-                var p1 = p;
-                var node = root;
-                var rest = count;
+                node = node.SearchNext(ref bytes);
+            }
 
-                while (rest != 0 && node != null)
-                {
-                    node = node.SearchNext(ref p1, ref rest);
-                }
-
-                if (node == null)
-                {
-                    value = -1;
-                    return false;
-                }
-                else
-                {
-                    value = node.Value;
-                    return true;
-                }
+            if (node == null)
+            {
+                value = -1;
+                return false;
+            }
+            else
+            {
+                value = node.Value;
+                return true;
             }
         }
 #else
@@ -98,31 +96,6 @@ namespace MessagePack.Internal
 
 #endif
 
-
-        public bool TryGetValueSafe(ArraySegment<byte> key, out int value)
-        {
-            var node = root;
-            var bytes = key.Array;
-            var offset = key.Offset;
-            var rest = key.Count;
-
-            while (rest != 0 && node != null)
-            {
-                node = node.SearchNextSafe(bytes, ref offset, ref rest);
-            }
-
-            if (node == null)
-            {
-                value = -1;
-                return false;
-            }
-            else
-            {
-                value = node.Value;
-                return true;
-            }
-        }
-
         // for debugging
         public override string ToString()
         {
@@ -131,7 +104,7 @@ namespace MessagePack.Internal
             return sb.ToString();
         }
 
-        static void ToStringCore(IEnumerable<AutomataNode> nexts, StringBuilder sb, int depth)
+        private static void ToStringCore(IEnumerable<AutomataNode> nexts, StringBuilder sb, int depth)
         {
             foreach (var item in nexts)
             {
@@ -161,12 +134,19 @@ namespace MessagePack.Internal
             return YieldCore(this.root.YieldChildren()).GetEnumerator();
         }
 
-        static IEnumerable<KeyValuePair<string, int>> YieldCore(IEnumerable<AutomataNode> nexts)
+        private static IEnumerable<KeyValuePair<string, int>> YieldCore(IEnumerable<AutomataNode> nexts)
         {
             foreach (var item in nexts)
             {
-                if (item.Value != -1) yield return new KeyValuePair<string, int>(item.originalKey, item.Value);
-                foreach (var x in YieldCore(item.YieldChildren())) yield return x;
+                if (item.Value != -1)
+                {
+                    yield return new KeyValuePair<string, int>(item.originalKey, item.Value);
+                }
+
+                foreach (var x in YieldCore(item.YieldChildren()))
+                {
+                    yield return x;
+                }
             }
         }
 
@@ -174,25 +154,24 @@ namespace MessagePack.Internal
 
 #if !NET_STANDARD_2_0
 
-        public void EmitMatch(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
+        public void EmitMatch(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
         {
-            root.EmitSearchNext(il, p, rest, key, onFound, onNotFound);
+            root.EmitSearchNext(il, bytesSpan, key, onFound, onNotFound);
         }
 
 #endif
 
-        class AutomataNode : IComparable<AutomataNode>
+        private class AutomataNode : IComparable<AutomataNode>
         {
-            static readonly AutomataNode[] emptyNodes = new AutomataNode[0];
-            static readonly ulong[] emptyKeys = new ulong[0];
+            private static readonly AutomataNode[] emptyNodes = new AutomataNode[0];
+            private static readonly ulong[] emptyKeys = new ulong[0];
 
             public ulong Key;
             public int Value;
             public string originalKey;
-
-            AutomataNode[] nexts;
-            ulong[] nextKeys;
-            int count;
+            private AutomataNode[] nexts;
+            private ulong[] nextKeys;
+            private int count;
 
             public bool HasChildren { get { return count != 0; } }
 
@@ -239,11 +218,11 @@ namespace MessagePack.Internal
                 return v;
             }
 
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
 
-            public unsafe AutomataNode SearchNext(ref byte* p, ref int rest)
+            public AutomataNode SearchNext(ref ReadOnlySpan<byte> value)
             {
-                var key = AutomataKeyGen.GetKey(ref p, ref rest);
+                var key = AutomataKeyGen.GetKey(ref value);
                 if (count < 4)
                 {
                     // linear search
@@ -270,33 +249,6 @@ namespace MessagePack.Internal
 
 #endif
 
-            public AutomataNode SearchNextSafe(byte[] p, ref int offset, ref int rest)
-            {
-                var key = AutomataKeyGen.GetKeySafe(p, ref offset, ref rest);
-                if (count < 4)
-                {
-                    // linear search
-                    for (int i = 0; i < count; i++)
-                    {
-                        if (nextKeys[i] == key)
-                        {
-                            return nexts[i];
-                        }
-                    }
-                }
-                else
-                {
-                    // binary search
-                    var index = BinarySearch(nextKeys, 0, count, key);
-                    if (index >= 0)
-                    {
-                        return nexts[index];
-                    }
-                }
-
-                return null;
-            }
-
             internal static int BinarySearch(ulong[] array, int index, int length, ulong value)
             {
                 int lo = index;
@@ -307,11 +259,24 @@ namespace MessagePack.Internal
 
                     var arrayValue = array[i];
                     int order;
-                    if (arrayValue < value) order = -1;
-                    else if (arrayValue > value) order = 1;
-                    else order = 0;
+                    if (arrayValue < value)
+                    {
+                        order = -1;
+                    }
+                    else if (arrayValue > value)
+                    {
+                        order = 1;
+                    }
+                    else
+                    {
+                        order = 0;
+                    }
 
-                    if (order == 0) return i;
+                    if (order == 0)
+                    {
+                        return i;
+                    }
+
                     if (order < 0)
                     {
                         lo = i + 1;
@@ -340,24 +305,19 @@ namespace MessagePack.Internal
 
 #if !NET_STANDARD_2_0
 
-            // SearchNext(ref byte* p, ref int rest, ref ulong key)
-            public void EmitSearchNext(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
+            // SearchNext(ref ReadOnlySpan<byte> bytes)
+            public void EmitSearchNext(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
             {
-                // key = AutomataKeyGen.GetKey(ref p, ref rest);
-                il.EmitLdloca(p);
-                il.EmitLdloca(rest);
-#if NETSTANDARD || NETFRAMEWORK
+                // key = AutomataKeyGen.GetKey(ref bytesSpan);
+                il.EmitLdloca(bytesSpan);
                 il.EmitCall(AutomataKeyGen.GetKeyMethod);
-#else
-                il.EmitCall(AutomataKeyGen.GetGetKeyMethod());
-#endif
                 il.EmitStloc(key);
 
                 // match children.
-                EmitSearchNextCore(il, p, rest, key, onFound, onNotFound, nexts, count);
+                EmitSearchNextCore(il, bytesSpan, key, onFound, onNotFound, nexts, count);
             }
 
-            static void EmitSearchNextCore(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound, AutomataNode[] nexts, int count)
+            private static void EmitSearchNextCore(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound, AutomataNode[] nexts, int count)
             {
                 if (count < 4)
                 {
@@ -368,15 +328,17 @@ namespace MessagePack.Internal
                     var gotoNotFound = il.DefineLabel();
 
                     {
-                        il.EmitLdloc(rest);
+                        // bytesSpan.Length
+                        il.EmitLdloca(bytesSpan);
+                        il.EmitCall(typeof(ReadOnlySpan<byte>).GetRuntimeProperty(nameof(ReadOnlySpan<byte>.Length)).GetMethod);
                         if (childrenExists.Length != 0 && valueExists.Length == 0)
                         {
 
-                            il.Emit(OpCodes.Brfalse, gotoNotFound); // if(rest == 0)
+                            il.Emit(OpCodes.Brfalse, gotoNotFound); // if(bytesSpan.Length == 0)
                         }
                         else
                         {
-                            il.Emit(OpCodes.Brtrue, gotoSearchNext); // if(rest != 0)
+                            il.Emit(OpCodes.Brtrue, gotoSearchNext); // if(bytesSpan.Length != 0)
                         }
                     }
                     {
@@ -422,7 +384,7 @@ namespace MessagePack.Internal
                         il.EmitULong(childrenExists[i].Key);
                         il.Emit(OpCodes.Bne_Un, notFoundLabel);
                         // found
-                        childrenExists[i].EmitSearchNext(il, p, rest, key, onFound, onNotFound);
+                        childrenExists[i].EmitSearchNext(il, bytesSpan, key, onFound, onNotFound);
                         // notfound
                         il.MarkLabel(notFoundLabel);
                         if (i != childrenExists.Length - 1)
@@ -452,11 +414,11 @@ namespace MessagePack.Internal
                     il.EmitLdloc(key);
                     il.EmitULong(mid);
                     il.Emit(OpCodes.Bge, gotoRight);
-                    EmitSearchNextCore(il, p, rest, key, onFound, onNotFound, l, l.Length);
+                    EmitSearchNextCore(il, bytesSpan, key, onFound, onNotFound, l, l.Length);
 
                     // else
                     il.MarkLabel(gotoRight);
-                    EmitSearchNextCore(il, p, rest, key, onFound, onNotFound, r, r.Length);
+                    EmitSearchNextCore(il, bytesSpan, key, onFound, onNotFound, r, r.Length);
                 }
             }
 
@@ -464,303 +426,80 @@ namespace MessagePack.Internal
         }
     }
 
+    /// <remarks>
+    /// This is used by dynamically generated code. It can be made internal after we enable our dynamic assemblies to access internals.
+    /// But that trick may require net46, so maybe we should leave this as public.
+    /// </remarks>
     public static class AutomataKeyGen
     {
-        public delegate ulong PointerDelegate<T>(ref T p, ref int rest);
-
-#if NETSTANDARD || NETFRAMEWORK
-        public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod("GetKey", new[] { typeof(byte).MakePointerType().MakeByRefType(), typeof(int).MakeByRefType() });
+#if !UNITY
+        public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod(nameof(GetKey), new[] { typeof(ReadOnlySpan<byte>).MakeByRefType() });
 #endif
 
-#if !NETSTANDARD
-
-#if !NET_STANDARD_2_0
-
-        static MethodInfo dynamicGetKeyMethod;
-        static readonly object gate = new object();
-        static DynamicAssembly dynamicAssembly;
-
-        public static MethodInfo GetGetKeyMethod()
+        public static ulong GetKey(ref ReadOnlySpan<byte> span)
         {
-            if (dynamicGetKeyMethod == null)
-            {
-                lock (gate)
-                {
-                    if (dynamicGetKeyMethod == null)
-                    {
-                        dynamicAssembly = new DynamicAssembly("AutomataKeyGenHelper");
-                        var helperType = dynamicAssembly.DefineType("AutomataKeyGen", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract, null);
-
-                        var dm = helperType.DefineMethod("GetKey", MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig, typeof(ulong), new[] { typeof(byte).MakePointerType().MakeByRefType(), typeof(int).MakeByRefType() });
-
-                        var il = dm.GetILGenerator();
-
-                        il.DeclareLocal(typeof(int)); // var readSize
-                        il.DeclareLocal(typeof(ulong)); // var key = 
-                        il.DeclareLocal(typeof(int)); // var _local = 
-
-                        var elseLabel = il.DefineLabel();
-                        var endLabel = il.DefineLabel();
-                        var case0 = il.DefineLabel();
-                        var case1 = il.DefineLabel();
-                        var case2 = il.DefineLabel();
-                        var case3 = il.DefineLabel();
-                        var case4 = il.DefineLabel();
-                        var case5 = il.DefineLabel();
-                        var case6 = il.DefineLabel();
-                        var case7 = il.DefineLabel();
-
-                        il.Emit(OpCodes.Ldarg_1);
-                        il.Emit(OpCodes.Ldind_I4);
-                        il.Emit(OpCodes.Ldc_I4_8);
-                        il.Emit(OpCodes.Blt_S, elseLabel);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldind_I8);
-                        il.Emit(OpCodes.Stloc_1);
-                        il.Emit(OpCodes.Ldc_I4_8);
-                        il.Emit(OpCodes.Stloc_0);
-                        il.Emit(OpCodes.Br, endLabel);
-
-                        il.MarkLabel(elseLabel);
-                        il.Emit(OpCodes.Ldarg_1);
-                        il.Emit(OpCodes.Ldind_I4);
-                        il.Emit(OpCodes.Stloc_2);
-                        il.Emit(OpCodes.Ldloc_2);
-                        il.Emit(OpCodes.Switch, new[] { case0, case1, case2, case3, case4, case5, case6, case7 });
-                        il.Emit(OpCodes.Br, case0); // default
-
-                        il.MarkLabel(case1);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldind_U1);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Stloc_1);
-                        il.Emit(OpCodes.Ldc_I4_1);
-                        il.Emit(OpCodes.Stloc_0);
-                        il.Emit(OpCodes.Br, endLabel);
-
-                        il.MarkLabel(case2);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldind_U2);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Stloc_1);
-                        il.Emit(OpCodes.Ldc_I4_2);
-                        il.Emit(OpCodes.Stloc_0);
-                        il.Emit(OpCodes.Br, endLabel);
-
-                        il.MarkLabel(case3);
-                        il.DeclareLocal(typeof(ushort)); // _3
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldind_U1);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldc_I4_1);
-                        il.Emit(OpCodes.Add);
-                        il.Emit(OpCodes.Ldind_U2);
-                        il.Emit(OpCodes.Stloc_3);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Ldloc_3);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Ldc_I4_8);
-                        il.Emit(OpCodes.Shl);
-                        il.Emit(OpCodes.Or);
-                        il.Emit(OpCodes.Stloc_1);
-                        il.Emit(OpCodes.Ldc_I4_3);
-                        il.Emit(OpCodes.Stloc_0);
-                        il.Emit(OpCodes.Br, endLabel);
-
-                        il.MarkLabel(case4);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldind_U4);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Stloc_1);
-                        il.Emit(OpCodes.Ldc_I4_4);
-                        il.Emit(OpCodes.Stloc_0);
-                        il.Emit(OpCodes.Br, endLabel);
-
-                        il.MarkLabel(case5);
-                        il.DeclareLocal(typeof(uint)); // _4
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldind_U1);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldc_I4_1);
-                        il.Emit(OpCodes.Add);
-                        il.Emit(OpCodes.Ldind_U4);
-                        il.Emit(OpCodes.Stloc_S, 4);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Ldloc_S, 4);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Ldc_I4_8);
-                        il.Emit(OpCodes.Shl);
-                        il.Emit(OpCodes.Or);
-                        il.Emit(OpCodes.Stloc_1);
-                        il.Emit(OpCodes.Ldc_I4_5);
-                        il.Emit(OpCodes.Stloc_0);
-                        il.Emit(OpCodes.Br, endLabel);
-
-                        il.MarkLabel(case6);
-                        il.DeclareLocal(typeof(ulong)); // _5
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldind_U2);
-                        il.Emit(OpCodes.Conv_U8); // [x]
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldc_I4_2);
-                        il.Emit(OpCodes.Add); // [x, y]
-                        il.Emit(OpCodes.Ldind_U4);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Stloc_S, 5); // [x]
-                        il.Emit(OpCodes.Ldloc_S, 5);
-                        il.Emit(OpCodes.Ldc_I4_S, 16);
-                        il.Emit(OpCodes.Shl);
-                        il.Emit(OpCodes.Or);
-                        il.Emit(OpCodes.Stloc_1);
-                        il.Emit(OpCodes.Ldc_I4_6);
-                        il.Emit(OpCodes.Stloc_0);
-                        il.Emit(OpCodes.Br, endLabel);
-
-                        il.MarkLabel(case7);
-                        il.DeclareLocal(typeof(ushort)); // _6
-                        il.DeclareLocal(typeof(uint)); // _7
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldind_U1);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldc_I4_1);
-                        il.Emit(OpCodes.Add);
-                        il.Emit(OpCodes.Ldind_U2);
-                        il.Emit(OpCodes.Stloc_S, 6);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldc_I4_3);
-                        il.Emit(OpCodes.Add);
-                        il.Emit(OpCodes.Ldind_U4);
-                        il.Emit(OpCodes.Stloc_S, 7);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Ldloc_S, 6);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Ldc_I4_8);
-                        il.Emit(OpCodes.Shl);
-                        il.Emit(OpCodes.Or);
-                        il.Emit(OpCodes.Ldloc_S, 7);
-                        il.Emit(OpCodes.Conv_U8);
-                        il.Emit(OpCodes.Ldc_I4_S, 24);
-                        il.Emit(OpCodes.Shl);
-                        il.Emit(OpCodes.Or);
-                        il.Emit(OpCodes.Stloc_1);
-                        il.Emit(OpCodes.Ldc_I4_7);
-                        il.Emit(OpCodes.Stloc_0);
-                        il.Emit(OpCodes.Br, endLabel);
-
-                        il.MarkLabel(case0);
-                        il.Emit(OpCodes.Ldstr, "Not Supported Length");
-                        il.Emit(OpCodes.Newobj, typeof(InvalidOperationException).GetConstructor(new[] { typeof(string) }));
-                        il.Emit(OpCodes.Throw);
-
-                        il.MarkLabel(endLabel);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldind_I);
-                        il.Emit(OpCodes.Ldloc_0);
-                        il.Emit(OpCodes.Add);
-                        il.Emit(OpCodes.Stind_I);
-                        il.Emit(OpCodes.Ldarg_1);
-                        il.Emit(OpCodes.Ldarg_1);
-                        il.Emit(OpCodes.Ldind_I4);
-                        il.Emit(OpCodes.Ldloc_0);
-                        il.Emit(OpCodes.Sub);
-                        il.Emit(OpCodes.Stind_I4);
-                        il.Emit(OpCodes.Ldloc_1);
-                        il.Emit(OpCodes.Ret);
-
-                        var genereatedType = helperType.CreateTypeInfo().AsType();
-                        dynamicGetKeyMethod = genereatedType.GetMethods().First();
-                    }
-                }
-            }
-            
-            return dynamicGetKeyMethod;
-        }
-
-#endif
-
-#endif
-
-#if NETSTANDARD || NETFRAMEWORK
-
-        public static unsafe ulong GetKey(ref byte* p, ref int rest)
-        {
-            int readSize;
             ulong key;
 
             unchecked
             {
-                if (rest >= 8)
+                if (span.Length >= 8)
                 {
-                    key = *(ulong*)p;
-                    readSize = 8;
+                    key = MemoryMarshal.Cast<byte, ulong>(span)[0];
+                    span = span.Slice(8);
                 }
                 else
                 {
-                    switch (rest)
+                    switch (span.Length)
                     {
                         case 1:
                             {
-                                key = *(byte*)p;
-                                readSize = 1;
+                                key = span[0];
+                                span = span.Slice(1);
                                 break;
                             }
                         case 2:
                             {
-                                key = *(ushort*)p;
-                                readSize = 2;
+                                key = MemoryMarshal.Cast<byte, ushort>(span)[0];
+                                span = span.Slice(2);
                                 break;
                             }
                         case 3:
                             {
-                                var a = *p;
-                                var b = *(ushort*)(p + 1);
-                                key = ((ulong)a | (ulong)b << 8);
-                                readSize = 3;
+                                var a = span[0];
+                                var b = MemoryMarshal.Cast<byte, ushort>(span.Slice(1))[0];
+                                key = (a | (ulong)b << 8);
+                                span = span.Slice(3);
                                 break;
                             }
                         case 4:
                             {
-                                key = *(uint*)p;
-                                readSize = 4;
+                                key = MemoryMarshal.Cast<byte, uint>(span)[0];
+                                span = span.Slice(4);
                                 break;
                             }
                         case 5:
                             {
-                                var a = *p;
-                                var b = *(uint*)(p + 1);
-                                key = ((ulong)a | (ulong)b << 8);
-                                readSize = 5;
+                                var a = span[0];
+                                var b = MemoryMarshal.Cast<byte, uint>(span.Slice(1))[0];
+                                key = (a | (ulong)b << 8);
+                                span = span.Slice(5);
                                 break;
                             }
                         case 6:
                             {
-                                ulong a = *(ushort*)p;
-                                ulong b = *(uint*)(p + 2);
+                                ulong a = MemoryMarshal.Cast<byte, ushort>(span)[0];
+                                ulong b = MemoryMarshal.Cast<byte, uint>(span.Slice(2))[0];
                                 key = (a | (b << 16));
-                                readSize = 6;
+                                span = span.Slice(6);
                                 break;
                             }
                         case 7:
                             {
-                                var a = *(byte*)p;
-                                var b = *(ushort*)(p + 1);
-                                var c = *(uint*)(p + 3);
-                                key = ((ulong)a | (ulong)b << 8 | (ulong)c << 24);
-                                readSize = 7;
+                                var a = span[0];
+                                var b = MemoryMarshal.Cast<byte, ushort>(span.Slice(1))[0];
+                                var c = MemoryMarshal.Cast<byte, uint>(span.Slice(3))[0];
+                                key = (a | (ulong)b << 8 | (ulong)c << 24);
+                                span = span.Slice(7);
                                 break;
                             }
                         default:
@@ -768,156 +507,7 @@ namespace MessagePack.Internal
                     }
                 }
 
-                p += readSize;
-                rest -= readSize;
                 return key;
-            }
-        }
-
-#endif
-
-        public static ulong GetKeySafe(byte[] bytes, ref int offset, ref int rest)
-        {
-            int readSize;
-            ulong key;
-
-            if (BitConverter.IsLittleEndian)
-            {
-                unchecked
-                {
-                    if (rest >= 8)
-                    {
-                        key = (ulong)bytes[offset] << 0 | (ulong)bytes[offset + 1] << 8 | (ulong)bytes[offset + 2] << 16 | (ulong)bytes[offset + 3] << 24
-                            | (ulong)bytes[offset + 4] << 32 | (ulong)bytes[offset + 5] << 40 | (ulong)bytes[offset + 6] << 48 | (ulong)bytes[offset + 7] << 56;
-                        readSize = 8;
-                    }
-                    else
-                    {
-                        switch (rest)
-                        {
-                            case 1:
-                                {
-                                    key = bytes[offset];
-                                    readSize = 1;
-                                    break;
-                                }
-                            case 2:
-                                {
-                                    key = (ulong)bytes[offset] << 0 | (ulong)bytes[offset + 1] << 8;
-                                    readSize = 2;
-                                    break;
-                                }
-                            case 3:
-                                {
-                                    key = (ulong)bytes[offset] << 0 | (ulong)bytes[offset + 1] << 8 | (ulong)bytes[offset + 2] << 16;
-                                    readSize = 3;
-                                    break;
-                                }
-                            case 4:
-                                {
-                                    key = (ulong)bytes[offset] << 0 | (ulong)bytes[offset + 1] << 8 | (ulong)bytes[offset + 2] << 16 | (ulong)bytes[offset + 3] << 24;
-                                    readSize = 4;
-                                    break;
-                                }
-                            case 5:
-                                {
-                                    key = (ulong)bytes[offset] << 0 | (ulong)bytes[offset + 1] << 8 | (ulong)bytes[offset + 2] << 16 | (ulong)bytes[offset + 3] << 24
-                                        | (ulong)bytes[offset + 4] << 32;
-                                    readSize = 5;
-                                    break;
-                                }
-                            case 6:
-                                {
-                                    key = (ulong)bytes[offset] << 0 | (ulong)bytes[offset + 1] << 8 | (ulong)bytes[offset + 2] << 16 | (ulong)bytes[offset + 3] << 24
-                                        | (ulong)bytes[offset + 4] << 32 | (ulong)bytes[offset + 5] << 40;
-                                    readSize = 6;
-                                    break;
-                                }
-                            case 7:
-                                {
-                                    key = (ulong)bytes[offset] << 0 | (ulong)bytes[offset + 1] << 8 | (ulong)bytes[offset + 2] << 16 | (ulong)bytes[offset + 3] << 24
-                                        | (ulong)bytes[offset + 4] << 32 | (ulong)bytes[offset + 5] << 40 | (ulong)bytes[offset + 6] << 48;
-                                    readSize = 7;
-                                    break;
-                                }
-                            default:
-                                throw new InvalidOperationException("Not Supported Length");
-                        }
-                    }
-
-                    offset += readSize;
-                    rest -= readSize;
-                    return key;
-                }
-            }
-            else
-            {
-                unchecked
-                {
-                    if (rest >= 8)
-                    {
-                        key = (ulong)bytes[offset] << 56 | (ulong)bytes[offset + 1] << 48 | (ulong)bytes[offset + 2] << 40 | (ulong)bytes[offset + 3] << 32
-                            | (ulong)bytes[offset + 4] << 24 | (ulong)bytes[offset + 5] << 16 | (ulong)bytes[offset + 6] << 8 | (ulong)bytes[offset + 7];
-                        readSize = 8;
-                    }
-                    else
-                    {
-                        switch (rest)
-                        {
-                            case 1:
-                                {
-                                    key = bytes[offset];
-                                    readSize = 1;
-                                    break;
-                                }
-                            case 2:
-                                {
-                                    key = (ulong)bytes[offset] << 8 | (ulong)bytes[offset + 1] << 0;
-                                    readSize = 2;
-                                    break;
-                                }
-                            case 3:
-                                {
-                                    key = (ulong)bytes[offset] << 16 | (ulong)bytes[offset + 1] << 8 | (ulong)bytes[offset + 2] << 0;
-                                    readSize = 3;
-                                    break;
-                                }
-                            case 4:
-                                {
-                                    key = (ulong)bytes[offset] << 24 | (ulong)bytes[offset + 1] << 16 | (ulong)bytes[offset + 2] << 8 | (ulong)bytes[offset + 3] << 0;
-                                    readSize = 4;
-                                    break;
-                                }
-                            case 5:
-                                {
-                                    key = (ulong)bytes[offset] << 32 | (ulong)bytes[offset + 1] << 24 | (ulong)bytes[offset + 2] << 16 | (ulong)bytes[offset + 3] << 8
-                                        | (ulong)bytes[offset + 4] << 0;
-                                    readSize = 5;
-                                    break;
-                                }
-                            case 6:
-                                {
-                                    key = (ulong)bytes[offset] << 40 | (ulong)bytes[offset + 1] << 32 | (ulong)bytes[offset + 2] << 24 | (ulong)bytes[offset + 3] << 16
-                                        | (ulong)bytes[offset + 4] << 8 | (ulong)bytes[offset + 5] << 0;
-                                    readSize = 6;
-                                    break;
-                                }
-                            case 7:
-                                {
-                                    key = (ulong)bytes[offset] << 48 | (ulong)bytes[offset + 1] << 40 | (ulong)bytes[offset + 2] << 32 | (ulong)bytes[offset + 3] << 24
-                                        | (ulong)bytes[offset + 4] << 16 | (ulong)bytes[offset + 5] << 8 | (ulong)bytes[offset + 6] << 0;
-                                    readSize = 7;
-                                    break;
-                                }
-                            default:
-                                throw new InvalidOperationException("Not Supported Length");
-                        }
-                    }
-
-                    offset += readSize;
-                    rest -= readSize;
-                    return key;
-                }
             }
         }
     }

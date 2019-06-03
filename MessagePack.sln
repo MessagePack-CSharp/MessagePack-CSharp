@@ -59,6 +59,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.UniversalCodeGe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.AspNetCoreMvcFormatter.Tests", "tests\MessagePack.AspNetCoreMvcFormatter.Tests\MessagePack.AspNetCoreMvcFormatter.Tests.csproj", "{79C2B2CB-872A-4BA9-82DC-60F6DD77F940}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Annotations", "src\MessagePack.Annotations\MessagePack.Annotations.csproj", "{85763F30-7733-44AB-89AB-D1B64F6E0D93}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BAF9120-1293-449E-975C-A373E9DE7F69}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
@@ -67,6 +69,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmark", "benchmark", "{51A614B0-E583-4DD2-AC7D-6A65634582E0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SerializerBenchmark", "benchmark\SerializerBenchmark\SerializerBenchmark.csproj", "{4142EA80-FEF4-44A5-8553-1AE84BEBAFED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Internal", "src\MessagePack.Internal\MessagePack.Internal.csproj", "{C100FBA6-4164-4D6A-A532-5984D2B8DCB0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Internal.Tests", "tests\MessagePack.Internal.Tests\MessagePack.Internal.Tests.csproj", "{8D9FD130-7905-47D8-A25C-7FDEE28EA0E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -138,10 +144,22 @@ Global
 		{79C2B2CB-872A-4BA9-82DC-60F6DD77F940}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79C2B2CB-872A-4BA9-82DC-60F6DD77F940}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{79C2B2CB-872A-4BA9-82DC-60F6DD77F940}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85763F30-7733-44AB-89AB-D1B64F6E0D93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85763F30-7733-44AB-89AB-D1B64F6E0D93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85763F30-7733-44AB-89AB-D1B64F6E0D93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85763F30-7733-44AB-89AB-D1B64F6E0D93}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4142EA80-FEF4-44A5-8553-1AE84BEBAFED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4142EA80-FEF4-44A5-8553-1AE84BEBAFED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4142EA80-FEF4-44A5-8553-1AE84BEBAFED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4142EA80-FEF4-44A5-8553-1AE84BEBAFED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C100FBA6-4164-4D6A-A532-5984D2B8DCB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C100FBA6-4164-4D6A-A532-5984D2B8DCB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C100FBA6-4164-4D6A-A532-5984D2B8DCB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C100FBA6-4164-4D6A-A532-5984D2B8DCB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D9FD130-7905-47D8-A25C-7FDEE28EA0E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D9FD130-7905-47D8-A25C-7FDEE28EA0E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D9FD130-7905-47D8-A25C-7FDEE28EA0E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D9FD130-7905-47D8-A25C-7FDEE28EA0E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -163,7 +181,10 @@ Global
 		{2A32A538-BA26-4D89-85D0-E4249AFA0837} = {BF4C4202-5015-4FBD-80E6-D0F36A06F700}
 		{10AD85DD-929D-49B8-BD43-45242C2644B7} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{79C2B2CB-872A-4BA9-82DC-60F6DD77F940} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
+		{85763F30-7733-44AB-89AB-D1B64F6E0D93} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{4142EA80-FEF4-44A5-8553-1AE84BEBAFED} = {51A614B0-E583-4DD2-AC7D-6A65634582E0}
+		{C100FBA6-4164-4D6A-A532-5984D2B8DCB0} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
+		{8D9FD130-7905-47D8-A25C-7FDEE28EA0E8} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}

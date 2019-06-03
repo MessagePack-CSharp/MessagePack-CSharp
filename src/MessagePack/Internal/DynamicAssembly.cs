@@ -1,5 +1,4 @@
 ﻿#if !UNITY_WSA
-#if !NET_STANDARD_2_0
 
 using System;
 using System.Reflection;
@@ -27,7 +26,7 @@ namespace MessagePack.Internal
             this.assemblyBuilder = System.AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(moduleName), AssemblyBuilderAccess.RunAndSave);
             this.moduleBuilder = assemblyBuilder.DefineDynamicModule(moduleName, moduleName + ".dll");
 #else
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
             this.assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(moduleName), AssemblyBuilderAccess.Run);
 #else
             this.assemblyBuilder = System.AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(moduleName), AssemblyBuilderAccess.Run);
@@ -75,5 +74,4 @@ namespace MessagePack.Internal
     }
 }
 
-#endif
 #endif

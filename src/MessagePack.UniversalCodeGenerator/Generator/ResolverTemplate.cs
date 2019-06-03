@@ -36,9 +36,10 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write("\r\n{\r\n    using System;\r\n    using MessagePack;\r\n\r\n    public class ");
+            this.Write("\r\n{\r\n    using System;\r\n    using System.Buffers;\r\n    using MessagePack;\r\n\r\n    " +
+                    "public class ");
             
-            #line 16 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 17 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             
             #line default
@@ -46,14 +47,14 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static readonly " +
                     "global::MessagePack.IFormatterResolver Instance = new ");
             
-            #line 18 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 19 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             
             #line default
             #line hidden
             this.Write("();\r\n\r\n        ");
             
-            #line 20 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 21 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             
             #line default
@@ -76,7 +77,7 @@ namespace MessagePack.CodeGenerator.Generator
             {
                 var f = ");
             
-            #line 36 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 37 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             
             #line default
@@ -92,7 +93,7 @@ namespace MessagePack.CodeGenerator.Generator
 
     internal static class ");
             
-            #line 45 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 46 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             
             #line default
@@ -100,7 +101,7 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write("GetFormatterHelper\r\n    {\r\n        static readonly global::System.Collections.Gen" +
                     "eric.Dictionary<Type, int> lookup;\r\n\r\n        static ");
             
-            #line 49 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 50 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             
             #line default
@@ -108,35 +109,35 @@ namespace MessagePack.CodeGenerator.Generator
             this.Write("GetFormatterHelper()\r\n        {\r\n            lookup = new global::System.Collecti" +
                     "ons.Generic.Dictionary<Type, int>(");
             
-            #line 51 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 52 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(registerInfos.Length));
             
             #line default
             #line hidden
             this.Write(")\r\n            {\r\n");
             
-            #line 53 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 54 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
  for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; 
             
             #line default
             #line hidden
             this.Write("                {typeof(");
             
-            #line 54 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 55 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
             
             #line default
             #line hidden
             this.Write("), ");
             
-            #line 54 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 55 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
             this.Write(" },\r\n");
             
-            #line 55 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 56 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
  } 
             
             #line default
@@ -145,28 +146,28 @@ namespace MessagePack.CodeGenerator.Generator
                     "\n        {\r\n            int key;\r\n            if (!lookup.TryGetValue(t, out key" +
                     ")) return null;\r\n\r\n            switch (key)\r\n            {\r\n");
             
-            #line 66 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 67 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
  for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; 
             
             #line default
             #line hidden
             this.Write("                case ");
             
-            #line 67 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 68 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
             this.Write(": return new ");
             
-            #line 67 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 68 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName));
             
             #line default
             #line hidden
             this.Write("();\r\n");
             
-            #line 68 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
+            #line 69 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\ResolverTemplate.tt"
  } 
             
             #line default

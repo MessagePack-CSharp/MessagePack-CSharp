@@ -6,15 +6,21 @@ namespace MessagePack.AspNetCoreMvcFormatter
     public class MessagePackOutputFormatter : IOutputFormatter
     {
         private const string ContentType = "application/x-msgpack";
-        private readonly IFormatterResolver resolver;
+        private readonly MessagePackSerializer.NonGeneric serializer;
 
-        public MessagePackOutputFormatter() : this(null)
+        public MessagePackOutputFormatter()
+            : this(new MessagePackSerializer.NonGeneric(new MessagePackSerializer()))
         {
         }
 
         public MessagePackOutputFormatter(IFormatterResolver resolver)
+            : this(new MessagePackSerializer.NonGeneric(new MessagePackSerializer(resolver)))
         {
-            this.resolver = resolver ?? MessagePackSerializer.DefaultResolver;
+        }
+
+        public MessagePackOutputFormatter(MessagePackSerializer.NonGeneric serializer)
+        {
+            this.serializer = serializer ?? new MessagePackSerializer.NonGeneric();
         }
 
         public bool CanWriteResult(OutputFormatterCanWriteContext context) =>
@@ -33,13 +39,13 @@ namespace MessagePack.AspNetCoreMvcFormatter
                 }
                 else
                 {
-                    MessagePackSerializer.NonGeneric.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, resolver);
+                    this.serializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object);
                     return Task.CompletedTask;
                 }
             }
             else
             {
-                MessagePackSerializer.NonGeneric.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, resolver);
+                this.serializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object);
                 return Task.CompletedTask;
             }
         }

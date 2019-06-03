@@ -1,26 +1,27 @@
-﻿#if NETSTANDARD || NETFRAMEWORK
+﻿#if !UNITY
 
+using System;
 using System.Runtime.CompilerServices;
 
 namespace MessagePack.Internal
 {
-    public static class FarmHash
+    internal static class FarmHash
     {
         // entry point of 32bit
 
         #region Hash32
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe uint Hash32(byte[] bytes, int offset, int count)
+        public static unsafe uint Hash32(ReadOnlySpan<byte> bytes)
         {
-            if (count <= 4)
+            if (bytes.Length <= 4)
             {
-                return Hash32Len0to4(bytes, offset, (uint)count);
+                return Hash32Len0to4(bytes);
             }
 
-            fixed (byte* p = &bytes[offset])
+            fixed (byte* p = bytes)
             {
-                return Hash32(p, (uint)count);
+                return Hash32(p, (uint)bytes.Length);
             }
         }
 
@@ -72,19 +73,18 @@ namespace MessagePack.Internal
 
         // 0-4
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe uint Hash32Len0to4(byte[] s, int offset, uint len)
+        static unsafe uint Hash32Len0to4(ReadOnlySpan<byte> s)
         {
             unchecked
             {
                 uint b = 0;
                 uint c = 9;
-                var max = offset + len;
-                for (int i = offset; i < max; i++)
+                for (int i = 0; i < s.Length; i++)
                 {
                     b = b * c1 + s[i];
                     c ^= b;
                 }
-                return fmix(Mur(b, Mur(len, c)));
+                return fmix(Mur(b, Mur((uint)s.Length, c)));
             }
         }
 
@@ -195,11 +195,11 @@ namespace MessagePack.Internal
         // entry point
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe ulong Hash64(byte[] bytes, int offset, int count)
+        public static unsafe ulong Hash64(ReadOnlySpan<byte> bytes)
         {
-            fixed (byte* p = &bytes[offset])
+            fixed (byte* p = bytes)
             {
-                return Hash64(p, (uint)count);
+                return Hash64(p, (uint)bytes.Length);
             }
         }
 

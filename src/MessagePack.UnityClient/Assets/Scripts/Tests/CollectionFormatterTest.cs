@@ -1,15 +1,17 @@
-﻿using RuntimeUnitTestToolkit;
-using SharedData;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using RuntimeUnitTestToolkit;
+using SharedData;
 
 namespace MessagePack.UnityClient.Tests
 {
     public class CollectionFormatterTest
     {
-        T Convert<T>(T value)
+        private readonly MessagePackSerializer serializer = new MessagePackSerializer(MsgPackUnsafeDefaultResolver.Instance);
+
+        private T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return this.serializer.Deserialize<T>(this.serializer.Serialize(value));
         }
 
         public void DictionaryTestAll()

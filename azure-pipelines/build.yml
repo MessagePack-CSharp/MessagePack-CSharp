@@ -62,16 +62,6 @@ steps:
     projects: tests/**/*.Tests.csproj
     arguments: --configuration $(BuildConfiguration) --no-build -v n
 
-- task: VSBuild@1
-  inputs:
-    vsVersion: 15.0
-    solution: src\MessagePack.UnityClient\MessagePack.UnityClient.sln
-    msbuildArgs: /t:build /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.unity.binlog"
-    platform: $(BuildPlatform)
-    configuration: $(BuildConfiguration)
-  displayName: Build MessagePack.UnityClient.sln
-  enabled: false # The build fails till the solution is opened in Unity, after which HintPaths are machine-specific
-
 - task: CopyFiles@1
   inputs:
     Contents: |
@@ -103,6 +93,7 @@ steps:
     Contents: |
       bin/**/$(BuildConfiguration)/**/*.nupkg
       bin/**/$(BuildConfiguration)/**/*.vsix
+      bin/*.unitypackage
     TargetFolder: $(Build.ArtifactStagingDirectory)/deployables
     flattenFolders: true
   displayName: Collecting deployables

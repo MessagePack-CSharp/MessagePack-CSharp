@@ -1,15 +1,17 @@
-﻿namespace MessagePack.Formatters
+﻿using System.Buffers;
+
+namespace MessagePack.Formatters
 {
     public sealed class IgnoreFormatter<T> : IMessagePackFormatter<T>
     {
-        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver resolver)
         {
-            return MessagePackBinary.WriteNil(ref bytes, offset);
+            writer.WriteNil();
         }
 
-        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            readSize = MessagePackBinary.ReadNextBlock(bytes, offset);
+            reader.Skip();
             return default(T);
         }
     }

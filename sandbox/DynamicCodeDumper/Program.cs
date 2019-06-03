@@ -2,8 +2,10 @@
 using MessagePack.Formatters;
 using MessagePack.Internal;
 using MessagePack.Resolvers;
+using Nerdbank.Streams;
 using SharedData;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -58,9 +60,12 @@ namespace DynamicCodeDumper
 
                 //DynamicContractlessObjectResolver.Instance.GetFormatter<EntityBase>();
 
-                byte[] b = null;
-                var bin = f.Serialize(ref b, 0, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, null);
-
+                using (var sequence = new Sequence<byte>())
+                {
+                    var sequenceWriter = new MessagePackWriter(sequence);
+                    f.Serialize(ref sequenceWriter, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, null);
+                    sequenceWriter.Flush();
+                }
             }
             catch (Exception ex)
             {
@@ -125,28 +130,28 @@ namespace DynamicCodeDumper
     }
     public class Int_x10Formatter : IMessagePackFormatter<int>
     {
-        public int Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public int Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
-            return MessagePackBinary.ReadInt32(bytes, offset, out readSize) * 10;
+            return reader.ReadInt32() * 10;
         }
 
-        public int Serialize(ref byte[] bytes, int offset, int value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, int value, IFormatterResolver formatterResolver)
         {
-            return MessagePackBinary.WriteInt32(ref bytes, offset, value * 10);
+            writer.WriteInt32(value * 10);
         }
     }
 
     public class String_x2Formatter : IMessagePackFormatter<string>
     {
-        public string Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public string Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
         {
-            var s = MessagePackBinary.ReadString(bytes, offset, out readSize);
+            var s = reader.ReadString();
             return s + s;
         }
 
-        public int Serialize(ref byte[] bytes, int offset, string value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, string value, IFormatterResolver formatterResolver)
         {
-            return MessagePackBinary.WriteString(ref bytes, offset, value + value);
+            writer.Write(value + value);
         }
     }
 

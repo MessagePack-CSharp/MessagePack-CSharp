@@ -7,20 +7,22 @@ namespace MessagePack.UnityClient.Tests
 {
     public class Contractless
     {
+        MessagePackSerializer serializer = new MessagePackSerializer();
+
         T Convert<T>(T value)
         {
-            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
+            return serializer.Deserialize<T>(serializer.Serialize(value));
         }
 
         public void Versioning()
         {
-            var v1 = MessagePack.MessagePackSerializer.Serialize(new V1 { ABCDEFG1 = 10, ABCDEFG3 = 99 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v2 = MessagePack.MessagePackSerializer.Serialize(new V2 { ABCDEFG1 = 350, ABCDEFG2 = 34, ABCDEFG3 = 500 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v1 = serializer.Serialize(new V1 { ABCDEFG1 = 10, ABCDEFG3 = 99 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v2 = serializer.Serialize(new V2 { ABCDEFG1 = 350, ABCDEFG2 = 34, ABCDEFG3 = 500 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
-            var v1_1 = MessagePack.MessagePackSerializer.Deserialize<V1>(v1, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v1_2 = MessagePack.MessagePackSerializer.Deserialize<V1>(v2, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v2_1 = MessagePack.MessagePackSerializer.Deserialize<V2>(v1, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v2_2 = MessagePack.MessagePackSerializer.Deserialize<V2>(v2, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v1_1 = serializer.Deserialize<V1>(v1, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v1_2 = serializer.Deserialize<V1>(v2, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v2_1 = serializer.Deserialize<V2>(v1, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v2_2 = serializer.Deserialize<V2>(v2, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             v1_1.ABCDEFG1.Is(10); v1_1.ABCDEFG3.Is(99);
             v1_2.ABCDEFG1.Is(350); v1_2.ABCDEFG3.Is(500);
@@ -30,8 +32,8 @@ namespace MessagePack.UnityClient.Tests
 
         public void DuplicateAutomata()
         {
-            var bin = MessagePack.MessagePackSerializer.Serialize(new Dup { ABCDEFGH = 10, ABCDEFGHIJKL = 99 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v = MessagePackSerializer.Deserialize<Dup>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var bin = serializer.Serialize(new Dup { ABCDEFGH = 10, ABCDEFGHIJKL = 99 }, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v = serializer.Deserialize<Dup>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             v.ABCDEFGH.Is(10);
             v.ABCDEFGHIJKL.Is(99);
@@ -51,8 +53,8 @@ namespace MessagePack.UnityClient.Tests
                 MyP8 = 7373731,
                 MyP9 = 73573731,
             };
-            var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v = MessagePackSerializer.Deserialize<BinSearchSmall>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var bin = serializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v = serializer.Deserialize<BinSearchSmall>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             v.MyP1.Is(o.MyP1);
             v.MyP2.Is(o.MyP2);
@@ -79,8 +81,8 @@ namespace MessagePack.UnityClient.Tests
                 MyProperty8 = 7373731,
                 MyProperty9 = 73573731,
             };
-            var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v = MessagePackSerializer.Deserialize<BinSearchWithBranch>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var bin = serializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v = serializer.Deserialize<BinSearchWithBranch>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             v.MyProperty1.Is(o.MyProperty1);
             v.MyProperty2.Is(o.MyProperty2);
@@ -102,8 +104,8 @@ namespace MessagePack.UnityClient.Tests
                 MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2MyProperty = 532525252,
                 OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ = 3352666,
             };
-            var bin = MessagePack.MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-            var v = MessagePackSerializer.Deserialize<LongestString>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var bin = serializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            var v = serializer.Deserialize<LongestString>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
             v.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1.Is(o.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1);
             v.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2.Is(o.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2);

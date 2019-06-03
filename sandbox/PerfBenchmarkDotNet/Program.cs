@@ -29,10 +29,10 @@ namespace PerfBenchmarkDotNet
             Add(MarkdownExporter.GitHub);
             Add(MemoryDiagnoser.Default);
 
-            Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1));
+            Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1));
 
-            //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithTargetCount(1),
-            //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithTargetCount(1));
+            //Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1),
+            //Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithIterationCount(1));
         }
     }
 
@@ -50,14 +50,17 @@ namespace PerfBenchmarkDotNet
                 typeof(StringKeyDeserializeCompare),
                 typeof(NewVsOld),
                 typeof(GuidImprov),
-                typeof(ImproveStringKeySerializeBenchmark)
+                typeof(ImproveStringKeySerializeBenchmark),
+                typeof(MessagePackReaderBenchmark),
+                typeof(MessagePackWriterBenchmark),
+                typeof(SpanBenchmarks),
             });
 
             // args = new[] { "0" };
 #if !DEBUG
             switcher.Run(args);
 #else
-            // new TypelessBenchmark().MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes();
+            switcher.Run(args, new DebugInProcessConfig());
 #endif
         }
     }
@@ -201,25 +204,25 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_StandardResolver()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestContractType, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            return Serializers.Default.Serialize(TestContractType, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
         }
 
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_ContractlessStandardResolver()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestContractlessType, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            return Serializers.Default.Serialize(TestContractlessType, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
         }
 
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_primitive()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessPrimitiveType, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+            return Serializers.Default.Serialize(TestTypelessPrimitiveType, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
         }
 
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_complex()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(TestTypelessComplexType, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+            return Serializers.Default.Serialize(TestTypelessComplexType, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
         }
     }
 
@@ -231,10 +234,10 @@ namespace PerfBenchmarkDotNet
         private byte[] OldTypelessContractlessStandardResolverBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
         private byte[] OldTypelessContractlessStandardResolverComplexBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
 
-        private byte[] NewStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractType("John", new ContractType("Jack", null)), newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
-        private byte[] NewContractlessStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new ContractlessType("John", new ContractlessType("Jack", null)), newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-        private byte[] NewTypelessContractlessStandardResolverBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
-        private byte[] NewTypelessContractlessStandardResolverComplexBytes = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+        private byte[] NewStandardResolverBytes = Serializers.Default.Serialize(new ContractType("John", new ContractType("Jack", null)), newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+        private byte[] NewContractlessStandardResolverBytes = Serializers.Default.Serialize(new ContractlessType("John", new ContractlessType("Jack", null)), newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        private byte[] NewTypelessContractlessStandardResolverBytes = Serializers.Default.Serialize(new TypelessPrimitiveType("John", 555), new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
+        private byte[] NewTypelessContractlessStandardResolverComplexBytes = Serializers.Default.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
 
         [Benchmark]
         public ContractType Old_MessagePackSerializer_Deserialize_StandardResolver()
@@ -263,38 +266,43 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public ContractType MessagePackSerializer_Deserialize_StandardResolver()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractType>(NewStandardResolverBytes, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            return Serializers.Default.Deserialize<ContractType>(NewStandardResolverBytes, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
         }
 
         [Benchmark]
         public ContractlessType MessagePackSerializer_Deserialize_ContractlessStandardResolver()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<ContractlessType>(NewContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            return Serializers.Default.Deserialize<ContractlessType>(NewContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
         }
 
         [Benchmark]
         public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+            return Serializers.Default.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
         }
 
         [Benchmark]
         public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverComplexBytes, newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
+            return Serializers.Default.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverComplexBytes, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
         }
     }
 
+    internal static class Serializers
+    {
+        internal static readonly newmsgpack.MessagePack.MessagePackSerializer Default = new newmsgpack.MessagePack.MessagePackSerializer();
+        internal static readonly newmsgpack.MessagePack.MessagePackSerializer Typeless = new newmsgpack.MessagePack.MessagePackSerializer(new newmsgpack.MessagePack.Resolvers.TypelessContractlessStandardResolver());
+    }
 
     [Config(typeof(BenchmarkConfig))]
     public class DeserializeBenchmark
     {
         static MsgPack.Serialization.SerializationContext mapContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Map };
         static MsgPack.Serialization.SerializationContext arrayContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Array };
-        static byte[] intObj = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new IntKeySerializerTarget());
-        static byte[] stringKeyObj = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
-        static byte[] typelessWithIntKeyObj = newmsgpack.MessagePack.MessagePackSerializer.Typeless.Serialize(new IntKeySerializerTarget());
-        static byte[] typelessWithStringKeyObj = newmsgpack.MessagePack.MessagePackSerializer.Typeless.Serialize(new StringKeySerializerTarget());
+        static byte[] intObj = Serializers.Default.Serialize(new IntKeySerializerTarget());
+        static byte[] stringKeyObj = Serializers.Default.Serialize(new StringKeySerializerTarget());
+        static byte[] typelessWithIntKeyObj = Serializers.Typeless.Serialize(new IntKeySerializerTarget());
+        static byte[] typelessWithStringKeyObj = Serializers.Typeless.Serialize(new StringKeySerializerTarget());
         static byte[] mapObj = mapContext.GetSerializer<IntKeySerializerTarget>().PackSingleObject(new IntKeySerializerTarget());
         static byte[] arrayObj = arrayContext.GetSerializer<IntKeySerializerTarget>().PackSingleObject(new IntKeySerializerTarget());
         static byte[] protoObj;
@@ -327,37 +335,37 @@ namespace PerfBenchmarkDotNet
         [Benchmark(Baseline = true)]
         public IntKeySerializerTarget IntKey()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(intObj);
+            return Serializers.Default.Deserialize<IntKeySerializerTarget>(intObj);
         }
 
         [Benchmark]
         public StringKeySerializerTarget StringKey()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj);
+            return Serializers.Default.Deserialize<StringKeySerializerTarget>(stringKeyObj);
         }
 
         // [Benchmark]
         public StringKeySerializerTarget StringKey_MpcGenerated()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenFormatterResolver);
+            return Serializers.Default.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenFormatterResolver);
         }
 
         // [Benchmark]
         public StringKeySerializerTarget StringKey_MpcGeneratedDict()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenDictFormatterResolver);
+            return Serializers.Default.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenDictFormatterResolver);
         }
 
         [Benchmark]
         public IntKeySerializerTarget Typeless_IntKey()
         {
-            return (IntKeySerializerTarget)newmsgpack::MessagePack.MessagePackSerializer.Typeless.Deserialize(typelessWithIntKeyObj);
+            return (IntKeySerializerTarget)Serializers.Typeless.Deserialize<object>(typelessWithIntKeyObj);
         }
 
         [Benchmark]
         public StringKeySerializerTarget Typeless_StringKey()
         {
-            return (StringKeySerializerTarget)newmsgpack::MessagePack.MessagePackSerializer.Typeless.Deserialize(typelessWithStringKeyObj);
+            return (StringKeySerializerTarget)Serializers.Typeless.Deserialize<object>(typelessWithStringKeyObj);
         }
 
         [Benchmark]
@@ -424,8 +432,6 @@ namespace PerfBenchmarkDotNet
         }
     }
 
-
-
     [Config(typeof(BenchmarkConfig))]
     public class SerializeBenchmark
     {
@@ -441,25 +447,25 @@ namespace PerfBenchmarkDotNet
         [Benchmark(Baseline = true)]
         public byte[] IntKey()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize<IntKeySerializerTarget>(intData);
+            return Serializers.Default.Serialize<IntKeySerializerTarget>(intData);
         }
 
         [Benchmark]
         public byte[] StringKey()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize<StringKeySerializerTarget>(stringData);
+            return Serializers.Default.Serialize<StringKeySerializerTarget>(stringData);
         }
 
         [Benchmark]
         public byte[] Typeless_IntKey()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Typeless.Serialize(intData);
+            return Serializers.Typeless.Serialize(intData);
         }
 
         [Benchmark]
         public byte[] Typeless_StringKey()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Typeless.Serialize(stringData);
+            return Serializers.Typeless.Serialize(stringData);
         }
 
         [Benchmark]
@@ -565,7 +571,7 @@ namespace PerfBenchmarkDotNet
         {
             for (int i = 0; i < keys.Length; i++)
             {
-                automata.TryGetValue(keys[i], 0, keys[i].Length, out _);
+                automata.TryGetValue(keys[i], out _);
             }
         }
 
@@ -594,7 +600,7 @@ namespace PerfBenchmarkDotNet
         [Benchmark(Baseline = true)]
         public byte[] NewSerialize()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize<StringKeySerializerTarget>(stringData);
+            return Serializers.Default.Serialize<StringKeySerializerTarget>(stringData);
         }
     }
 
@@ -608,8 +614,8 @@ namespace PerfBenchmarkDotNet
 
         public StringKeyDeserializeCompare()
         {
-            bin = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
-            binIntKey = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new IntKeySerializerTarget());
+            bin = Serializers.Default.Serialize(new StringKeySerializerTarget());
+            binIntKey = Serializers.Default.Serialize(new IntKeySerializerTarget());
             automata = new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_AutomataLookup());
             hashtable = new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_ByteArrayStringHashTable());
         }
@@ -617,7 +623,7 @@ namespace PerfBenchmarkDotNet
         [Benchmark(Baseline = true)]
         public IntKeySerializerTarget IntKey()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(binIntKey);
+            return Serializers.Default.Deserialize<IntKeySerializerTarget>(binIntKey);
         }
 
         [Benchmark]
@@ -629,19 +635,19 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public StringKeySerializerTarget Automata()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, automata);
+            return Serializers.Default.Deserialize<StringKeySerializerTarget>(bin, automata);
         }
 
         [Benchmark]
         public StringKeySerializerTarget Hashtable()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, hashtable);
+            return Serializers.Default.Deserialize<StringKeySerializerTarget>(bin, hashtable);
         }
 
         [Benchmark]
         public StringKeySerializerTarget AutomataInlineEmit()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            return Serializers.Default.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
         }
     }
 
@@ -653,13 +659,13 @@ namespace PerfBenchmarkDotNet
         byte[] bin;
         public NewVsOld()
         {
-            bin = newmsgpack::MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
+            bin = Serializers.Default.Serialize(new StringKeySerializerTarget());
         }
 
         [Benchmark(Baseline = true)]
         public StringKeySerializerTarget New()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            return Serializers.Default.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
         }
 
         [Benchmark]
@@ -678,13 +684,13 @@ namespace PerfBenchmarkDotNet
         public GuidImprov()
         {
             guid = Guid.NewGuid();
-            bin = newmsgpack::MessagePack.MessagePackSerializer.Serialize(guid);
+            bin = Serializers.Default.Serialize(guid);
         }
 
         [Benchmark]
         public byte[] NewSerialize()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(guid);
+            return Serializers.Default.Serialize(guid);
         }
 
         [Benchmark]
@@ -696,7 +702,7 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public Guid NewDeserialize()
         {
-            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<Guid>(bin);
+            return Serializers.Default.Deserialize<Guid>(bin);
         }
 
         [Benchmark]
@@ -731,6 +737,7 @@ namespace GeneratedFormatter
     using newmsgpack::MessagePack.Formatters;
     using PerfBenchmarkDotNet;
     using newmsgpack::MessagePack;
+    using System.Buffers;
 
     namespace MessagePack.Formatters
     {
@@ -795,45 +802,43 @@ namespace GeneratedFormatter
                 };
             }
 
-            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
             {
                 if (stringKeySerializerTarget == null)
                 {
-                    return MessagePackBinary.WriteNil(ref bytes, num);
+                    writer.WriteNil();
+                    return;
                 }
-                int num2 = num;
-                num += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, num, 9);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[0]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty1);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[1]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty2);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[2]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty3);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[3]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty4);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[4]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty5);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[5]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty6);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[6]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty7);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[7]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty8);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[8]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty9);
-                return num - num2;
+
+                writer.WriteMapHeader(9);
+                writer.WriteString(this.stringByteKeys[0]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty1);
+                writer.WriteString(this.stringByteKeys[1]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty2);
+                writer.WriteString(this.stringByteKeys[2]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty3);
+                writer.WriteString(this.stringByteKeys[3]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty4);
+                writer.WriteString(this.stringByteKeys[4]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty5);
+                writer.WriteString(this.stringByteKeys[5]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty6);
+                writer.WriteString(this.stringByteKeys[6]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty7);
+                writer.WriteString(this.stringByteKeys[7]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty8);
+                writer.WriteString(this.stringByteKeys[8]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty9);
             }
 
-            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr)
+            public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                if (MessagePackBinary.IsNil(bytes, num))
+                if (reader.TryReadNil())
                 {
-                    ptr = 1;
                     return null;
                 }
-                int num2 = num;
-                int num3 = MessagePackBinary.ReadMapHeader(bytes, num, out ptr);
-                num += ptr;
+
+                int num3 = reader.ReadMapHeader();
                 int myProperty = 0;
                 int myProperty2 = 0;
                 int myProperty3 = 0;
@@ -846,51 +851,49 @@ namespace GeneratedFormatter
                 for (int i = 0; i < num3; i++)
                 {
                     int num4;
-                    bool arg_47_0 = this.keyMapping.TryGetValue(MessagePackBinary.ReadStringSegment(bytes, num, out ptr), out num4);
-                    num += ptr;
+                    bool arg_47_0 = this.keyMapping.TryGetValue(reader.ReadStringSegment(), out num4);
                     if (!arg_47_0)
                     {
-                        ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                        reader.Skip();
                     }
                     else
                     {
                         switch (num4)
                         {
                             case 0:
-                                myProperty = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty = reader.ReadInt32();
                                 break;
                             case 1:
-                                myProperty2 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty2 = reader.ReadInt32();
                                 break;
                             case 2:
-                                myProperty3 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty3 = reader.ReadInt32();
                                 break;
                             case 3:
-                                myProperty4 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty4 = reader.ReadInt32();
                                 break;
                             case 4:
-                                myProperty5 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty5 = reader.ReadInt32();
                                 break;
                             case 5:
-                                myProperty6 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty6 = reader.ReadInt32();
                                 break;
                             case 6:
-                                myProperty7 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty7 = reader.ReadInt32();
                                 break;
                             case 7:
-                                myProperty8 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty8 = reader.ReadInt32();
                                 break;
                             case 8:
-                                myProperty9 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty9 = reader.ReadInt32();
                                 break;
                             default:
-                                ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                                reader.Skip();
                                 break;
                         }
                     }
-                    num += ptr;
                 }
-                ptr = num - num2;
+
                 return new StringKeySerializerTarget
                 {
                     MyProperty1 = myProperty,
@@ -968,45 +971,42 @@ namespace GeneratedFormatter
                 };
             }
 
-            public int Serialize(ref byte[] bytes, int num, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
             {
                 if (stringKeySerializerTarget == null)
                 {
-                    return MessagePackBinary.WriteNil(ref bytes, num);
+                    writer.WriteNil();
+                    return;
                 }
-                int num2 = num;
-                num += MessagePackBinary.WriteFixedMapHeaderUnsafe(ref bytes, num, 9);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[0]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty1);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[1]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty2);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[2]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty3);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[3]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty4);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[4]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty5);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[5]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty6);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[6]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty7);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[7]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty8);
-                num += MessagePackBinary.WriteStringBytes(ref bytes, num, this.stringByteKeys[8]);
-                num += MessagePackBinary.WriteInt32(ref bytes, num, stringKeySerializerTarget.MyProperty9);
-                return num - num2;
+
+                writer.WriteMapHeader(9);
+                writer.WriteString(this.stringByteKeys[0]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty1);
+                writer.WriteString(this.stringByteKeys[1]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty2);
+                writer.WriteString(this.stringByteKeys[2]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty3);
+                writer.WriteString(this.stringByteKeys[3]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty4);
+                writer.WriteString(this.stringByteKeys[4]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty5);
+                writer.WriteString(this.stringByteKeys[5]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty6);
+                writer.WriteString(this.stringByteKeys[6]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty7);
+                writer.WriteString(this.stringByteKeys[7]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty8);
+                writer.WriteString(this.stringByteKeys[8]);
+                writer.WriteInt32(stringKeySerializerTarget.MyProperty9);
             }
 
-            public StringKeySerializerTarget Deserialize(byte[] bytes, int num, IFormatterResolver formatterResolver, out int ptr)
+            public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
             {
-                if (MessagePackBinary.IsNil(bytes, num))
+                if (reader.TryReadNil())
                 {
-                    ptr = 1;
                     return null;
                 }
-                int num2 = num;
-                int num3 = MessagePackBinary.ReadMapHeader(bytes, num, out ptr);
-                num += ptr;
+                int num3 = reader.ReadMapHeader();
                 int myProperty = 0;
                 int myProperty2 = 0;
                 int myProperty3 = 0;
@@ -1019,52 +1019,50 @@ namespace GeneratedFormatter
                 for (int i = 0; i < num3; i++)
                 {
                     int num4;
-                    var segment = MessagePackBinary.ReadStringSegment(bytes, num, out ptr);
-                    bool arg_47_0 = this.keyMapping.TryGetValueSafe(segment, out num4);
-                    num += ptr;
+                    var segment = reader.ReadStringSegment();
+                    bool arg_47_0 = this.keyMapping.TryGetValue(segment, out num4);
                     if (!arg_47_0)
                     {
-                        ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                        reader.Skip();
                     }
                     else
                     {
                         switch (num4)
                         {
                             case 0:
-                                myProperty = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty = reader.ReadInt32();
                                 break;
                             case 1:
-                                myProperty2 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty2 = reader.ReadInt32();
                                 break;
                             case 2:
-                                myProperty3 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty3 = reader.ReadInt32();
                                 break;
                             case 3:
-                                myProperty4 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty4 = reader.ReadInt32();
                                 break;
                             case 4:
-                                myProperty5 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty5 = reader.ReadInt32();
                                 break;
                             case 5:
-                                myProperty6 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty6 = reader.ReadInt32();
                                 break;
                             case 6:
-                                myProperty7 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty7 = reader.ReadInt32();
                                 break;
                             case 7:
-                                myProperty8 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty8 = reader.ReadInt32();
                                 break;
                             case 8:
-                                myProperty9 = MessagePackBinary.ReadInt32(bytes, num, out ptr);
+                                myProperty9 = reader.ReadInt32();
                                 break;
                             default:
-                                ptr = MessagePackBinary.ReadNextBlock(bytes, num);
+                                reader.Skip();
                                 break;
                         }
                     }
-                    num += ptr;
                 }
-                ptr = num - num2;
+
                 return new StringKeySerializerTarget
                 {
                     MyProperty1 = myProperty,
@@ -1118,22 +1116,19 @@ namespace GeneratedFormatter
             }
 
 
-            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
             {
                 throw new NotImplementedException();
             }
 
-            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
             {
-                if (newmsgpack::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+                if (reader.TryReadNil())
                 {
-                    readSize = 1;
                     return null;
                 }
 
-                var startOffset = offset;
-                var length = newmsgpack::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var length = reader.ReadMapHeader();
 
                 var __MyProperty1__ = default(int);
                 var __MyProperty2__ = default(int);
@@ -1147,54 +1142,48 @@ namespace GeneratedFormatter
 
                 for (int i = 0; i < length; i++)
                 {
-                    var stringKey = newmsgpack::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
-                    offset += readSize;
+                    var stringKey = reader.ReadStringSegment();
                     int key;
-                    if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                    if (!____keyMapping.TryGetValue(stringKey, out key))
                     {
-                        readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
-                        goto NEXT_LOOP;
+                        reader.Skip();
+                        continue;
                     }
 
                     switch (key)
                     {
                         case 0:
-                            __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty1__ = reader.ReadInt32();
                             break;
                         case 1:
-                            __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty2__ = reader.ReadInt32();
                             break;
                         case 2:
-                            __MyProperty3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty3__ = reader.ReadInt32();
                             break;
                         case 3:
-                            __MyProperty4__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty4__ = reader.ReadInt32();
                             break;
                         case 4:
-                            __MyProperty5__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty5__ = reader.ReadInt32();
                             break;
                         case 5:
-                            __MyProperty6__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty6__ = reader.ReadInt32();
                             break;
                         case 6:
-                            __MyProperty7__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty7__ = reader.ReadInt32();
                             break;
                         case 7:
-                            __MyProperty8__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty8__ = reader.ReadInt32();
                             break;
                         case 8:
-                            __MyProperty9__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty9__ = reader.ReadInt32();
                             break;
                         default:
-                            readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                            reader.Skip();
                             break;
                     }
-
-                    NEXT_LOOP:
-                    offset += readSize;
                 }
-
-                readSize = offset - startOffset;
 
                 var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget();
                 ____result.MyProperty1 = __MyProperty1__;
@@ -1247,22 +1236,19 @@ namespace GeneratedFormatter
             }
 
 
-            public int Serialize(ref byte[] bytes, int offset, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
             {
                 throw new NotImplementedException();
             }
 
-            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(byte[] bytes, int offset, newmsgpack::MessagePack.IFormatterResolver formatterResolver, out int readSize)
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
             {
-                if (newmsgpack::MessagePack.MessagePackBinary.IsNil(bytes, offset))
+                if (reader.TryReadNil())
                 {
-                    readSize = 1;
                     return null;
                 }
 
-                var startOffset = offset;
-                var length = newmsgpack::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-                offset += readSize;
+                var length = reader.ReadMapHeader();
 
                 var __MyProperty1__ = default(int);
                 var __MyProperty2__ = default(int);
@@ -1276,54 +1262,48 @@ namespace GeneratedFormatter
 
                 for (int i = 0; i < length; i++)
                 {
-                    var stringKey = newmsgpack::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
-                    offset += readSize;
+                    var stringKey = reader.ReadStringSegment();
                     int key;
                     if (!____keyMapping.TryGetValue(stringKey, out key))
                     {
-                        readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
-                        goto NEXT_LOOP;
+                        reader.Skip();
+                        continue;
                     }
 
                     switch (key)
                     {
                         case 0:
-                            __MyProperty1__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty1__ = reader.ReadInt32();
                             break;
                         case 1:
-                            __MyProperty2__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty2__ = reader.ReadInt32();
                             break;
                         case 2:
-                            __MyProperty3__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty3__ = reader.ReadInt32();
                             break;
                         case 3:
-                            __MyProperty4__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty4__ = reader.ReadInt32();
                             break;
                         case 4:
-                            __MyProperty5__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty5__ = reader.ReadInt32();
                             break;
                         case 5:
-                            __MyProperty6__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty6__ = reader.ReadInt32();
                             break;
                         case 6:
-                            __MyProperty7__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty7__ = reader.ReadInt32();
                             break;
                         case 7:
-                            __MyProperty8__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty8__ = reader.ReadInt32();
                             break;
                         case 8:
-                            __MyProperty9__ = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                            __MyProperty9__ = reader.ReadInt32();
                             break;
                         default:
-                            readSize = newmsgpack::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                            reader.Skip();
                             break;
                     }
-
-                    NEXT_LOOP:
-                    offset += readSize;
                 }
-
-                readSize = offset - startOffset;
 
                 var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget();
                 ____result.MyProperty1 = __MyProperty1__;
@@ -1339,5 +1319,4 @@ namespace GeneratedFormatter
             }
         }
     }
-
 }

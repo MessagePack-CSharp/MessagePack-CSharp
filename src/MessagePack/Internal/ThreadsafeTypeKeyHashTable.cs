@@ -2,7 +2,11 @@
 
 namespace MessagePack.Internal
 {
-    // Safe for multiple-read, single-write.
+    /// <summary>
+    /// A dictionary where <see cref="Type"/> is the key, and a configurable <typeparamref name="TValue"/> type
+    /// that is thread-safe, allowing concurrent reads and exclusive writes.
+    /// </summary>
+    /// <typeparam name="TValue">The type of value stored in the dictionary.</typeparam>
     internal class ThreadsafeTypeKeyHashTable<TValue>
     {
         Entry[] buckets;
@@ -181,7 +185,7 @@ namespace MessagePack.Internal
 
         static void VolatileWrite(ref Entry location, Entry value)
         {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
             System.Threading.Volatile.Write(ref location, value);
 #elif UNITY_WSA || NET_4_6
             System.Threading.Volatile.Write(ref location, value);
@@ -193,7 +197,7 @@ namespace MessagePack.Internal
 
         static void VolatileWrite(ref Entry[] location, Entry[] value)
         {
-#if NETSTANDARD || NETFRAMEWORK
+#if !UNITY
             System.Threading.Volatile.Write(ref location, value);
 #elif UNITY_WSA || NET_4_6
             System.Threading.Volatile.Write(ref location, value);

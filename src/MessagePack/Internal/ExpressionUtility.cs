@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace MessagePack.Internal
 {
-    public static class ExpressionUtility
+    internal static class ExpressionUtility
     {
         // Method
 

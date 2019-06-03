@@ -3,7 +3,8 @@ using System.Linq;
 using System.IO;
 using Xunit;
 using System.Text;
-using System.Collections.Generic;
+using Nerdbank.Streams;
+using System.Buffers;
 
 namespace MessagePack.Tests
 {
@@ -24,22 +25,27 @@ namespace MessagePack.Tests
             return unpacker.LastReadData;
         }
 
+        MsgPack.MessagePackObject CreateUnpackedReference(ReadOnlySequence<byte> bytes) => CreateUnpackedReference(bytes.ToArray());
+
         [Fact]
         public void NilTest()
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteNil(ref bytes, 0).Is(1);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteNil();
+            writer.Flush();
+            sequence.Length.Is(1);
 
-            packer.PackNull().Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.PackNull().Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadNil(bytes, 0, out readSize).Is(Nil.Default);
-            readSize.Is(1);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadNil().Is(Nil.Default);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).IsNil.IsTrue();
+            CreateUnpackedReference(sequence).IsNil.IsTrue();
         }
 
         [Theory]
@@ -49,17 +55,20 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteBoolean(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.Pack(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadBoolean(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadBoolean().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsBoolean().Is(target);
+            CreateUnpackedReference(sequence).AsBoolean().Is(target);
         }
 
         [Theory]
@@ -71,22 +80,24 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteByte(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.Pack(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadByte(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadByte().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsByte().Is(target);
+            CreateUnpackedReference(sequence).AsByte().Is(target);
         }
 
         public static object[][] bytesTestData = new object[][]
         {
-            new object[]{ (byte[])null, 1 },
             new object[]{ new byte[] { }, 2 },
             new object[]{ new byte[] { 1, 2, 3 }, 5 },
             new object[]{ Enumerable.Repeat((byte)100, byte.MaxValue).ToArray(), 255 + 2 },
@@ -100,17 +111,20 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteBytes(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.PackBinary(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.PackBinary(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadBytes(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadBytes().ToArray().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsBinary().Is(target);
+            CreateUnpackedReference(sequence).AsBinary().Is(target);
         }
 
         [Theory]
@@ -129,17 +143,20 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteSByte(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.Pack(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadSByte(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadSByte().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsSByte().Is(target);
+            CreateUnpackedReference(sequence).AsSByte().Is(target);
         }
 
         [Theory]
@@ -156,17 +173,20 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteSingle(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.Pack(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadSingle(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadSingle().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsSingle().Is(target);
+            CreateUnpackedReference(sequence).AsSingle().Is(target);
         }
 
         [Theory]
@@ -183,17 +203,20 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteDouble(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.Pack(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadDouble(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadDouble().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsDouble().Is(target);
+            CreateUnpackedReference(sequence).AsDouble().Is(target);
         }
 
         [Theory]
@@ -216,17 +239,21 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteInt16(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            // stream.ToArray().SequenceEqual(bytes).IsTrue();
+            sequence.Length.Is(length);
 
-            int readSize;
-            MessagePackBinary.ReadInt16(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            packer.Pack(target).Position.Is(sequence.Length);
+            // stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            CreateUnpackedReference(bytes).AsInt16().Is(target);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadInt16().Is(target);
+            sequenceReader.End.IsTrue();
+
+            CreateUnpackedReference(sequence).AsInt16().Is(target);
         }
 
         [Theory]
@@ -254,29 +281,32 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteInt32(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
             // bug of msgpack-cli
             if (target == 255)
             {
-                packer.Pack((byte)255).Position.Is(bytes.Length);
+                packer.Pack((byte)255).Position.Is(sequence.Length);
             }
             else if (target == 50000)
             {
-                packer.Pack((ushort)50000).Position.Is(bytes.Length);
+                packer.Pack((ushort)50000).Position.Is(sequence.Length);
             }
             else
             {
-                packer.Pack(target).Position.Is(bytes.Length);
+                packer.Pack(target).Position.Is(sequence.Length);
             }
-            // stream.ToArray().SequenceEqual(bytes).IsTrue();
+            // stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadInt32(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadInt32().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsInt32().Is(target);
+            CreateUnpackedReference(sequence).AsInt32().Is(target);
         }
 
         [Theory]
@@ -309,33 +339,36 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteInt64(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
             // bug of msgpack-cli
             if (target == 255)
             {
-                packer.Pack((byte)255).Position.Is(bytes.Length);
+                packer.Pack((byte)255).Position.Is(sequence.Length);
             }
             else if (target == 50000)
             {
-                packer.Pack((ushort)50000).Position.Is(bytes.Length);
+                packer.Pack((ushort)50000).Position.Is(sequence.Length);
             }
             else if (target == uint.MaxValue)
             {
-                packer.Pack(uint.MaxValue).Position.Is(bytes.Length);
+                packer.Pack(uint.MaxValue).Position.Is(sequence.Length);
             }
             else
             {
-                packer.Pack(target).Position.Is(bytes.Length);
+                packer.Pack(target).Position.Is(sequence.Length);
             }
-            // stream.ToArray().SequenceEqual(bytes).IsTrue();
+            // stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadInt64(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadInt64().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsInt64().Is(target);
+            CreateUnpackedReference(sequence).AsInt64().Is(target);
         }
 
         [Theory]
@@ -351,21 +384,25 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
+        [InlineData(int.MaxValue, 5)]
         public void MapHeaderTest(uint target, int length)
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = new byte[length + target * 2];
-            MessagePackBinary.WriteMapHeader(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteMapHeader(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.PackMapHeader((int)target).Position.Is(length);
-            stream.ToArray().SequenceEqual(bytes.Take(length)).IsTrue();
+            packer.PackMapHeader((int)target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadMapHeaderRaw(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadMapHeader().Is((int)target);
+            sequenceReader.End.IsTrue();
 
-            var ms = new MemoryStream(bytes);
+            var ms = new MemoryStream(sequence.AsReadOnlySequence.ToArray());
             var unpacker = MsgPack.Unpacker.Create(ms);
             long len;
             unpacker.ReadMapLength(out len).IsTrue();
@@ -385,21 +422,25 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
+        [InlineData(int.MaxValue, 5)]
         public void ArrayHeaderTest(uint target, int length)
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = new byte[length + target];
-            MessagePackBinary.WriteArrayHeader(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteArrayHeader(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.PackArrayHeader((int)target).Position.Is(length);
-            stream.ToArray().SequenceEqual(bytes.Take(length)).IsTrue();
+            packer.PackArrayHeader((int)target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadArrayHeaderRaw(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadArrayHeader().Is((int)target);
+            sequenceReader.End.IsTrue();
 
-            var ms = new MemoryStream(bytes);
+            var ms = new MemoryStream(sequence.AsReadOnlySequence.ToArray());
             var unpacker = MsgPack.Unpacker.Create(ms);
             long len;
             unpacker.ReadArrayLength(out len).IsTrue();
@@ -421,17 +462,20 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteUInt16(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.Pack(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadUInt16(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadUInt16().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsUInt16().Is(target);
+            CreateUnpackedReference(sequence).AsUInt16().Is(target);
         }
 
         [Theory]
@@ -450,17 +494,20 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteUInt32(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.Pack(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadUInt32(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadUInt32().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsUInt32().Is(target);
+            CreateUnpackedReference(sequence).AsUInt32().Is(target);
         }
 
         [Theory]
@@ -483,17 +530,20 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            MessagePackBinary.WriteUInt64(ref bytes, 0, target).Is(length);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            packer.Pack(target).Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadUInt64(bytes, 0, out readSize).Is(target);
-            readSize.Is(length);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadUInt64().Is(target);
+            sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(bytes).AsUInt64().Is(target);
+            CreateUnpackedReference(sequence).AsUInt64().Is(target);
         }
 
 
@@ -527,17 +577,21 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            var returnLength = MessagePackBinary.WriteString(ref bytes, 0, target);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            var returnLength = sequence.Length;
 
             var referencePacked = packer.PackString(target);
             referencePacked.Position.Is(returnLength);
-            stream.ToArray().SequenceEqual(bytes.Take(returnLength).ToArray()).IsTrue();
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadString(bytes, 0, out readSize).Is(target);
-            readSize.Is(returnLength);
-            CreateUnpackedReference(bytes).AsStringUtf8().Is(target);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadString().Is(target);
+            sequenceReader.End.IsTrue();
+
+            CreateUnpackedReference(sequence).AsStringUtf8().Is(target);
         }
 
         [Theory]
@@ -546,18 +600,22 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            var returnLength = MessagePackBinary.WriteString(ref bytes, 0, target);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            var returnLength = sequence.Length;
 
             var referencePacked = packer.PackString(target);
             referencePacked.Position.Is(returnLength);
-            stream.ToArray().SequenceEqual(bytes.Take(returnLength).ToArray()).IsTrue();
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            var segment = MessagePackBinary.ReadStringSegment(bytes, 0, out readSize);
-            Encoding.UTF8.GetString(segment.Array, segment.Offset, segment.Count).Is(target);
-            readSize.Is(returnLength);
-            CreateUnpackedReference(bytes).AsStringUtf8().Is(target);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            var segment = sequenceReader.ReadStringSegment().ToArray();
+            Encoding.UTF8.GetString(segment).Is(target);
+            sequenceReader.End.IsTrue();
+
+            CreateUnpackedReference(sequence).AsStringUtf8().Is(target);
         }
 
         [Theory]
@@ -570,18 +628,21 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            var returnLength = MessagePackBinary.WriteChar(ref bytes, 0, target);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            var returnLength = sequence.Length;
 
             var referencePacked = packer.Pack(target);
             referencePacked.Position.Is(returnLength);
-            referencePacked.Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            referencePacked.Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            MessagePackBinary.ReadChar(bytes, 0, out readSize).Is(target);
-            readSize.Is(returnLength);
-            ((char)CreateUnpackedReference(bytes).AsUInt16()).Is(target);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            sequenceReader.ReadChar().Is(target);
+            sequenceReader.End.IsTrue();
+            ((char)CreateUnpackedReference(sequence).AsUInt16()).Is(target);
         }
 
 
@@ -625,23 +686,26 @@ namespace MessagePack.Tests
         {
             (var stream, var packer) = CreateReferencePacker();
 
-            byte[] bytes = null;
-            var returnLength = MessagePackBinary.WriteExtensionFormat(ref bytes, 0, typeCode, target);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteExtensionFormat(new ExtensionResult(typeCode, target));
+            writer.Flush();
+            var returnLength = sequence.Length;
 
             var referencePacked = packer.PackExtendedTypeValue((byte)typeCode, target);
             referencePacked.Position.Is(returnLength);
-            referencePacked.Position.Is(bytes.Length);
-            stream.ToArray().SequenceEqual(bytes).IsTrue();
+            referencePacked.Position.Is(sequence.Length);
+            stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
-            int readSize;
-            var ext = MessagePackBinary.ReadExtensionFormat(bytes, 0, out readSize);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            var ext = sequenceReader.ReadExtensionFormat();
             ext.TypeCode.Is(typeCode);
-            ext.Data.SequenceEqual(target).IsTrue();
-            readSize.Is(returnLength);
+            ext.Data.ToArray().SequenceEqual(target).IsTrue();
+            sequenceReader.End.IsTrue();
 
-            var ext2 = CreateUnpackedReference(bytes).AsMessagePackExtendedTypeObject();
+            var ext2 = CreateUnpackedReference(sequence).AsMessagePackExtendedTypeObject();
             ext2.TypeCode.Is((byte)ext.TypeCode);
-            ext2.GetBody().SequenceEqual(ext.Data).IsTrue();
+            ext2.GetBody().SequenceEqual(ext.Data.ToArray()).IsTrue();
         }
 
         // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
@@ -670,13 +734,16 @@ namespace MessagePack.Tests
         [MemberData(nameof(dateTimeTestData))]
         public void DateTimeTest(DateTime target, int expectedLength)
         {
-            byte[] bytes = null;
-            var returnLength = MessagePackBinary.WriteDateTime(ref bytes, 0, target);
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(target);
+            writer.Flush();
+            var returnLength = sequence.Length;
             returnLength.Is(expectedLength);
 
-            int readSize;
-            var result = MessagePackBinary.ReadDateTime(bytes, 0, out readSize);
-            readSize.Is(returnLength);
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            var result = sequenceReader.ReadDateTime();
+            sequenceReader.End.IsTrue();
 
             result.Is(target);
         }
@@ -688,102 +755,86 @@ namespace MessagePack.Tests
             // Int32 can accepts UInt16
             // Int64 can accepts UInt32
             {
-                int readSize;
-                byte[] small = null;
-                byte[] target = null;
-                MessagePackBinary.WriteByte(ref small, 0, byte.MaxValue);
-                MessagePackBinary.ReadInt16(small, 0, out readSize).Is(byte.MaxValue);
-                MessagePackBinary.WriteInt16(ref target, 0, byte.MaxValue);
-                target.SequenceEqual(small).IsTrue();
+                var small = new Sequence<byte>();
+                var smallWriter = new MessagePackWriter(small);
+                smallWriter.Write(byte.MaxValue);
+                smallWriter.Flush();
+                var smallReader = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader.ReadInt16().Is(byte.MaxValue);
+
+                var target = new Sequence<byte>();
+                var targetWriter = new MessagePackWriter(target);
+                targetWriter.Write((short)byte.MaxValue);
+                targetWriter.Flush();
+                target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
             }
             {
-                int readSize;
-                byte[] small = null;
-                byte[] target = null;
-                MessagePackBinary.WriteByte(ref small, 0, byte.MaxValue);
-                MessagePackBinary.ReadInt32(small, 0, out readSize).Is(byte.MaxValue);
-                MessagePackBinary.WriteInt32(ref target, 0, byte.MaxValue);
-                target.SequenceEqual(small).IsTrue();
+                var small = new Sequence<byte>();
+                var smallWriter = new MessagePackWriter(small);
+                smallWriter.Write(byte.MaxValue);
+                smallWriter.Flush();
+                var smallReader = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader.ReadInt32().Is(byte.MaxValue);
 
-                small = target = null;
-                MessagePackBinary.WriteUInt16(ref small, 0, ushort.MaxValue);
-                MessagePackBinary.ReadInt32(small, 0, out readSize).Is(ushort.MaxValue);
-                MessagePackBinary.WriteInt32(ref target, 0, ushort.MaxValue);
-                target.SequenceEqual(small).IsTrue();
+                var target = new Sequence<byte>();
+                var targetWriter = new MessagePackWriter(target);
+                targetWriter.Write((int)byte.MaxValue);
+                targetWriter.Flush();
+                target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
+
+                small.Reset();
+                smallWriter = new MessagePackWriter(small);
+                smallWriter.Write(ushort.MaxValue);
+                smallWriter.Flush();
+                smallReader = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader.ReadInt32().Is(ushort.MaxValue);
+
+                target.Reset();
+                targetWriter = new MessagePackWriter(target);
+                targetWriter.Write((int)ushort.MaxValue);
+                targetWriter.Flush();
+                target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
             }
             {
-                int readSize;
-                byte[] small = null;
-                byte[] target = null;
-                MessagePackBinary.WriteByte(ref small, 0, byte.MaxValue);
-                MessagePackBinary.ReadInt64(small, 0, out readSize).Is(byte.MaxValue);
-                MessagePackBinary.WriteInt64(ref target, 0, byte.MaxValue);
-                target.SequenceEqual(small).IsTrue();
+                var small = new Sequence<byte>();
+                var smallWriter = new MessagePackWriter(small);
+                smallWriter.Write(byte.MaxValue);
+                smallWriter.Flush();
+                var smallReader = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader.ReadInt64().Is(byte.MaxValue);
 
-                small = target = null;
-                MessagePackBinary.WriteUInt16(ref small, 0, ushort.MaxValue);
-                MessagePackBinary.ReadInt64(small, 0, out readSize).Is(ushort.MaxValue);
-                MessagePackBinary.WriteInt64(ref target, 0, ushort.MaxValue);
-                target.SequenceEqual(small).IsTrue();
+                var target = new Sequence<byte>();
+                var targetWriter = new MessagePackWriter(target);
+                targetWriter.Write((long)byte.MaxValue);
+                targetWriter.Flush();
+                target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
 
-                small = target = null;
-                MessagePackBinary.WriteUInt32(ref small, 0, uint.MaxValue);
-                MessagePackBinary.ReadInt64(small, 0, out readSize).Is(uint.MaxValue);
-                MessagePackBinary.WriteInt64(ref target, 0, uint.MaxValue);
-                target.SequenceEqual(small).IsTrue();
+                small.Reset();
+                smallWriter = new MessagePackWriter(small);
+                smallWriter.Write(ushort.MaxValue);
+                smallWriter.Flush();
+                smallReader = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader.ReadInt64().Is(ushort.MaxValue);
+
+                target.Reset();
+                targetWriter = new MessagePackWriter(target);
+                targetWriter.Write((long)ushort.MaxValue);
+                targetWriter.Flush();
+                target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
+
+                small.Reset();
+                smallWriter = new MessagePackWriter(small);
+                smallWriter.Write(uint.MaxValue);
+                smallWriter.Flush();
+                smallReader = new MessagePackReader(small.AsReadOnlySequence);
+                smallReader.ReadInt64().Is(uint.MaxValue);
+
+                target.Reset();
+                targetWriter = new MessagePackWriter(target);
+                targetWriter.Write((long)uint.MaxValue);
+                targetWriter.Flush();
+                target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
             }
-        }
-
-        [Fact]
-        public void ReadArrayHeader_MitigatesLargeAllocations()
-        {
-            byte[] bytes = null;
-            int count = MessagePackBinary.WriteArrayHeader(ref bytes, 0, 9999);
-            Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadArrayHeader(bytes, 0, out int readSize));
-        }
-
-        [Fact]
-        public void ReadArrayHeaderRaw_MitigatesLargeAllocations()
-        {
-            byte[] bytes = null;
-            int count = MessagePackBinary.WriteArrayHeader(ref bytes, 0, 9999);
-            Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadArrayHeaderRaw(bytes, 0, out int readSize));
-        }
-
-        [Fact]
-        public void ReadMapHeader_MitigatesLargeAllocations()
-        {
-            byte[] bytes = null;
-            int count = MessagePackBinary.WriteMapHeader(ref bytes, 0, 9999);
-            Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadMapHeader(bytes, 0, out int readSize));
-        }
-
-        [Fact]
-        public void ReadMapHeaderRaw_MitigatesLargeAllocations()
-        {
-            byte[] bytes = null;
-            int count = MessagePackBinary.WriteMapHeader(ref bytes, 0, 9999);
-            Assert.Throws<EndOfStreamException>(() => MessagePackBinary.ReadMapHeaderRaw(bytes, 0, out int readSize));
-        }
-
-        [Fact]
-        public void DeserializeLargeArray_Stream_WithLargePayload()
-        {
-            int[] expected = new int[128 * 1024];
-            byte[] buffer = MessagePackSerializer.Serialize(expected); // something larger than the 64KB default buffer size
-            MemoryStream ms = new MemoryStream(buffer);
-            var actual = MessagePackSerializer.Deserialize<int[]>(ms, readStrict: true);
-            Assert.Equal<int>(expected, actual);
-        }
-
-        [Fact]
-        public void DeserializeLargeMap_Stream_WithLargePayload()
-        {
-            var expected = Enumerable.Range(0, 128 * 1024).ToDictionary(n => n);
-            byte[] buffer = MessagePackSerializer.Serialize(expected); // something larger than the 64KB default buffer size
-            MemoryStream ms = new MemoryStream(buffer);
-            var actual = MessagePackSerializer.Deserialize<Dictionary<int, int>>(ms, readStrict: true);
-            Assert.Equal(expected.Count, actual.Count);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 
 namespace MessagePack.Formatters
@@ -24,7 +25,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public int Serialize(ref byte[] bytes, int offset, T value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver resolver)
         {
             string name;
             if (!valueNameMapping.TryGetValue(value, out name))
@@ -32,12 +33,12 @@ namespace MessagePack.Formatters
                 name = value.ToString(); // fallback for flags etc, But Enum.ToString is too slow.
             }
 
-            return MessagePackBinary.WriteString(ref bytes, offset, name);
+            writer.Write(name);
         }
 
-        public T Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
         {
-            var name = MessagePackBinary.ReadString(bytes, offset, out readSize);
+            var name = reader.ReadString();
 
             T value;
             if (!nameValueMapping.TryGetValue(name, out value))
