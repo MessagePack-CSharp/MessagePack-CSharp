@@ -1,9 +1,24 @@
 steps:
-- task: DotNetCoreInstaller@0
-  displayName: Install .NET Core SDK 2.2.104
+- task: UseDotNet@2
+  displayName: Install .NET Core SDK 2.2.300
   inputs:
     packageType: sdk
-    version: 2.2.104
+    version: 2.2.300
+- task: UseDotNet@2
+  displayName: Install .NET Core runtime 1.0.x
+  inputs:
+    packageType: runtime
+    version: 1.0.x
+- task: UseDotNet@2
+  displayName: Install .NET Core runtime 2.0.x
+  inputs:
+    packageType: runtime
+    version: 2.0.x
+- task: UseDotNet@2
+  displayName: Install .NET Core runtime 2.1.x
+  inputs:
+    packageType: runtime
+    version: 2.1.x
 - script: dotnet --info
   displayName: Show dotnet SDK info
 
@@ -48,7 +63,7 @@ steps:
 # Use VSBuild to pack because `dotnet pack` can't build VSIX projects.
 - task: VSBuild@1
   inputs:
-    vsVersion: 15.0
+    vsVersion: 16.0
     solution: MessagePack.sln
     msbuildArgs: /t:build,pack /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.binlog"
     platform: $(BuildPlatform)
@@ -64,7 +79,7 @@ steps:
 
 - task: VSBuild@1
   inputs:
-    vsVersion: 15.0
+    vsVersion: 16.0
     solution: src\MessagePack.UnityClient\MessagePack.UnityClient.sln
     msbuildArgs: /t:build /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.unity.binlog"
     platform: $(BuildPlatform)
