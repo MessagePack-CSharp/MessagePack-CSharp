@@ -17,7 +17,8 @@ resources:
 
 jobs:
 - job: Windows
-  pool: Hosted VS2017
+  pool:
+    vmImage: windows-2019
   steps:
   - template: azure-pipelines/build.yml
 
