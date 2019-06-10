@@ -384,7 +384,6 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
-        [InlineData(int.MaxValue, 5)]
         public void MapHeaderTest(uint target, int length)
         {
             (var stream, var packer) = CreateReferencePacker();
@@ -398,8 +397,13 @@ namespace MessagePack.Tests
             packer.PackMapHeader((int)target).Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
+            // Expand sequence enough that ReadArrayHeader doesn't throw due to its security check.
+            writer.Write(new byte[target * 2]);
+            writer.Flush();
+
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
             sequenceReader.ReadMapHeader().Is((int)target);
+            sequenceReader.ReadBytes(); // read the padding we added
             sequenceReader.End.IsTrue();
 
             var ms = new MemoryStream(sequence.AsReadOnlySequence.ToArray());
@@ -422,7 +426,6 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
-        [InlineData(int.MaxValue, 5)]
         public void ArrayHeaderTest(uint target, int length)
         {
             (var stream, var packer) = CreateReferencePacker();
@@ -436,8 +439,13 @@ namespace MessagePack.Tests
             packer.PackArrayHeader((int)target).Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
+            // Expand sequence enough that ReadArrayHeader doesn't throw due to its security check.
+            writer.Write(new byte[target]);
+            writer.Flush();
+
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
             sequenceReader.ReadArrayHeader().Is((int)target);
+            sequenceReader.ReadBytes(); // read the padding we added
             sequenceReader.End.IsTrue();
 
             var ms = new MemoryStream(sequence.AsReadOnlySequence.ToArray());

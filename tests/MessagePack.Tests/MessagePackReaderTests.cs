@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.IO;
 using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
@@ -33,6 +34,36 @@ namespace MessagePack.Tests
         {
             var reader = new MessagePackReader(Encode((ref MessagePackWriter w) => w.Write(1.23)));
             Assert.Equal(1.23f, reader.ReadSingle());
+        }
+
+        [Fact]
+        public void ReadArrayHeader_MitigatesLargeAllocations()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteArrayHeader(9999);
+            writer.Flush();
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(sequence);
+                reader.ReadArrayHeader();
+            });
+        }
+
+        [Fact]
+        public void ReadMapHeader_MitigatesLargeAllocations()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteMapHeader(9999);
+            writer.Flush();
+
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(sequence);
+                reader.ReadMapHeader();
+            });
         }
 
         private delegate void WriterEncoder(ref MessagePackWriter writer);
