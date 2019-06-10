@@ -46,7 +46,7 @@ namespace MessagePack.Internal
             }
         }
 
-        public bool TryGetValue(ReadOnlySequence<byte> bytes, out int value) => TryGetValue(bytes.ToArray(), out value);
+        public bool TryGetValue(in ReadOnlySequence<byte> bytes, out int value) => TryGetValue(bytes.ToArray(), out value);
 
         public bool TryGetValue(ReadOnlySpan<byte> bytes, out int value)
         {

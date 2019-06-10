@@ -49,7 +49,7 @@ namespace System.Buffers
         /// over the given <see cref="ReadOnlySequence{T}"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public SequenceReader(ReadOnlySequence<T> sequence)
+        public SequenceReader(in ReadOnlySequence<T> sequence)
         {
             _usingSequence = true;
             CurrentSpanIndex = 0;
