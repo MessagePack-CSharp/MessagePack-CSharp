@@ -164,7 +164,7 @@ namespace MessagePack.LZ4
                                     len -= 255;
                                 } while (len > 254);
                                 *dst_p++ = (byte)len;
-                                BlockCopy(src_anchor, dst_p, (length));
+                                BlockCopy32(src_anchor, dst_p, (length));
                                 dst_p += length;
                                 goto _next_match;
                             }
@@ -291,7 +291,7 @@ namespace MessagePack.LZ4
                             *dst_p++ = (byte)lastRun;
                         }
                         else *dst_p++ = (byte)(lastRun << ML_BITS);
-                        BlockCopy(src_anchor, dst_p, (int)(src_end - src_anchor));
+                        BlockCopy32(src_anchor, dst_p, (int)(src_end - src_anchor));
                         dst_p += src_end - src_anchor;
                     }
 
@@ -393,7 +393,7 @@ namespace MessagePack.LZ4
                                     len -= 255;
                                 } while (len > 254);
                                 *dst_p++ = (byte)len;
-                                BlockCopy(src_anchor, dst_p, (length));
+                                BlockCopy32(src_anchor, dst_p, (length));
                                 dst_p += length;
                                 goto _next_match;
                             }
@@ -515,7 +515,7 @@ namespace MessagePack.LZ4
                             *dst_p++ = (byte)lastRun;
                         }
                         else *dst_p++ = (byte)(lastRun << ML_BITS);
-                        BlockCopy(src_anchor, dst_p, (int)(src_end - src_anchor));
+                        BlockCopy32(src_anchor, dst_p, (int)(src_end - src_anchor));
                         dst_p += src_end - src_anchor;
                     }
 
@@ -575,7 +575,7 @@ namespace MessagePack.LZ4
                         if (dst_cpy > dst_COPYLENGTH)
                         {
                             if (dst_cpy != dst_end) goto _output_error; // Error : not enough place for another match (min 4) + 5 literals
-                            BlockCopy(src_p, dst_p, (length));
+                            BlockCopy32(src_p, dst_p, (length));
                             src_p += length;
                             break; // EOF
                         }
@@ -670,6 +670,32 @@ namespace MessagePack.LZ4
         }
 
         #endregion
+
+        /// <summary>Copies block of memory.</summary>
+        /// <param name="src">The source.</param>
+        /// <param name="dst">The destination.</param>
+        /// <param name="len">The length (in bytes).</param>
+        private static unsafe void BlockCopy32(byte* src, byte* dst, int len)
+        {
+            while (len >= 4)
+            {
+                *(uint*)dst = *(uint*)src;
+                dst += 4;
+                src += 4;
+                len -= 4;
+            }
+            if (len >= 2)
+            {
+                *(ushort*)dst = *(ushort*)src;
+                dst += 2;
+                src += 2;
+                len -= 2;
+            }
+            if (len >= 1)
+            {
+                *dst = *src; /* d++; s++; l--; */
+            }
+        }
     }
 }
 
