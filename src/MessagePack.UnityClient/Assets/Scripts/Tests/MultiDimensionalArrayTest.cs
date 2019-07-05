@@ -167,7 +167,7 @@ namespace MessagePack.UnityClient.Tests
         }
     }
 
-    public class MultiDimentionalArrayTest
+    public class MultiDimensionalArrayTest
     {
         MessagePackSerializer serializer = new MessagePackSerializer();
 

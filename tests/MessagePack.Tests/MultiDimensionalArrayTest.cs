@@ -7,7 +7,7 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
-    public class MultiDimentionalArrayTest
+    public class MultiDimensionalArrayTest
     {
         private MessagePackSerializer serializer = new MessagePackSerializer();
 
@@ -20,7 +20,7 @@ namespace MessagePack.Tests
         [InlineData(100, 100, 10, 5)]
         [InlineData(10, 20, 15, 5)]
         [InlineData(3, 5, 10, 15)]
-        public void MultiDimentional(int dataI, int dataJ, int dataK, int dataL)
+        public void MultiDimensional(int dataI, int dataJ, int dataK, int dataL)
         {
             var two = new ValueTuple<int, int>[dataI, dataJ];
             var three = new ValueTuple<int, int, int>[dataI, dataJ, dataK];

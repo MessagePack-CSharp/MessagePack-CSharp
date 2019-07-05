@@ -121,10 +121,10 @@ namespace MessagePack.Resolvers
 
             switch (key)
             {
-                case 0: return new global::MessagePack.Formatters.TwoDimentionalArrayFormatter<int>();
-                case 1: return new global::MessagePack.Formatters.TwoDimentionalArrayFormatter<global::GlobalMyEnum>();
-                case 2: return new global::MessagePack.Formatters.ThreeDimentionalArrayFormatter<int>();
-                case 3: return new global::MessagePack.Formatters.FourDimentionalArrayFormatter<int>();
+                case 0: return new global::MessagePack.Formatters.TwoDimensionalArrayFormatter<int>();
+                case 1: return new global::MessagePack.Formatters.TwoDimensionalArrayFormatter<global::GlobalMyEnum>();
+                case 2: return new global::MessagePack.Formatters.ThreeDimensionalArrayFormatter<int>();
+                case 3: return new global::MessagePack.Formatters.FourDimensionalArrayFormatter<int>();
                 case 4: return new global::MessagePack.Formatters.ArrayFormatter<global::GlobalMyEnum>();
                 case 5: return new global::MessagePack.Formatters.ArrayFormatter<global::QuestMessageBody>();
                 case 6: return new global::MessagePack.Formatters.InterfaceDictionaryFormatter<string, string>();
