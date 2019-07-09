@@ -5,9 +5,9 @@ using System.Text;
 
 namespace MessagePack.Formatters
 {
-    // multi dimentional array serialize to [i, j, [seq]]
+    // multi dimensional array serialize to [i, j, [seq]]
 
-    public sealed class TwoDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,]>
+    public sealed class TwoDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,]>
     {
         const int ArrayLength = 3;
 
@@ -77,7 +77,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ThreeDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,,]>
+    public sealed class ThreeDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,,]>
     {
         const int ArrayLength = 4;
 
@@ -157,7 +157,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class FourDimentionalArrayFormatter<T> : IMessagePackFormatter<T[,,,]>
+    public sealed class FourDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,,,]>
     {
         const int ArrayLength = 5;
 

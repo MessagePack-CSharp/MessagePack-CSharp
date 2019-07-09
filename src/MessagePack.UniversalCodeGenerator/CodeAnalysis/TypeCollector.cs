@@ -399,19 +399,19 @@ namespace MessagePack.CodeGenerator
             }
             else if (array.Rank == 2)
             {
-                info.FormatterName = $"global::MessagePack.Formatters.TwoDimentionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+                info.FormatterName = $"global::MessagePack.Formatters.TwoDimensionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
             }
             else if (array.Rank == 3)
             {
-                info.FormatterName = $"global::MessagePack.Formatters.ThreeDimentionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+                info.FormatterName = $"global::MessagePack.Formatters.ThreeDimensionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
             }
             else if (array.Rank == 4)
             {
-                info.FormatterName = $"global::MessagePack.Formatters.FourDimentionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
+                info.FormatterName = $"global::MessagePack.Formatters.FourDimensionalArrayFormatter<{elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>";
             }
             else
             {
-                throw new InvalidOperationException("does not supports array dimention, " + info.FullName);
+                throw new InvalidOperationException("does not supports array dimension, " + info.FullName);
             }
 
             collectedGenericInfo.Add(info);
