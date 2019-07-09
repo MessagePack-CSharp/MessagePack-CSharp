@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.0</TargetFrameworks>
+    <TargetFramework>netstandard1.0</TargetFramework>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <RootNamespace>MessagePack</RootNamespace>
 
