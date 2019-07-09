@@ -809,14 +809,7 @@ namespace MessagePack
         private string ReadStringSlow(int byteLength)
         {
             ThrowInsufficientBufferUnless(this.reader.Remaining >= byteLength);
-#if NETSTANDARD1_6
-            // We need to concatenate all the bytes together into one array.
-            byte[] byteArray = ArrayPool<byte>.Shared.Rent(byteLength);
-            ThrowInsufficientBufferUnless(this.reader.TryCopyTo(byteArray.AsSpan(0, byteLength)));
-            string value = StringEncoding.UTF8.GetString(byteArray, 0, byteLength);
-            ArrayPool<byte>.Shared.Return(byteArray);
-            return value;
-#else
+
             // We need to decode bytes incrementally across multiple spans.
             int maxCharLength = StringEncoding.UTF8.GetMaxCharCount(byteLength);
             char[] charArray = ArrayPool<char>.Shared.Rent(maxCharLength);
@@ -847,7 +840,6 @@ namespace MessagePack
             string value = new string(charArray, 0, initializedChars);
             ArrayPool<char>.Shared.Return(charArray);
             return value;
-#endif
         }
 
         private void ReadNextArray()
