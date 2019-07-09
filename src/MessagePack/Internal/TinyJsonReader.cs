@@ -238,6 +238,7 @@ namespace MessagePack
                 numberWord.Length = 0; // Clear
             }
 
+            var scientificNotation = false;
             var isFloat = false;
             var isDouble = false;
             var intChar = reader.Peek();
@@ -247,19 +248,38 @@ namespace MessagePack
                 var c = ReadChar();
                 numberWord.Append(c);
                 if (c == '.') isFloat = true;
-                else if (c == 'e' || c == 'E') isDouble = true;
+                else if (c == 'e' || c == 'E')
+                {
+                    scientificNotation = true;
+                    isDouble = true;
+                }
                 else if (firstNumberIndex == -1 && !(c == '-' || c == '0')) firstNumberIndex = numberWord.Length - 1;
                 intChar = reader.Peek();
             }
 
-            // Length is total size minus initial zeroes and signs
-            var numberWordLength = numberWord.Length - firstNumberIndex;
-            if (isFloat && !isDouble && numberWordLength > 8)
+            var number = numberWord.ToString();
+
+            // Differentiate between float and double by checking if parsed number falls in float number range
+            if (scientificNotation)
             {
-                isDouble = true;
+                double parsedDouble;
+                Double.TryParse(number, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent, System.Globalization.CultureInfo.InvariantCulture, out parsedDouble);
+                if (parsedDouble <= float.MaxValue || parsedDouble >= float.MinValue)
+                {
+                    isDouble = false;
+                    isFloat = true;
+                }
+            }
+            else
+            {
+                // Length is total size minus initial zeroes and signs
+                var numberWordLength = numberWord.Length - firstNumberIndex;
+                if (isFloat && !isDouble && numberWordLength > 8)
+                {
+                    isDouble = true;
+                }
             }
 
-            var number = numberWord.ToString();
             if (isDouble)
             {
                 double parsedDouble;
