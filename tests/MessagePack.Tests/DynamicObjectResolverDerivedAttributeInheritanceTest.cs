@@ -5,14 +5,12 @@ namespace MessagePack.Tests
 {
     public class DynamicObjectResolverDerivedAttributeInheritanceTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         [Fact]
         public void InheritanceAndDerivedAttributeTest()
         {
             var value = new ChildClass(1, "Hello", 2);
-            var serialized = this.serializer.Serialize(value);
-            var deserialized = this.serializer.Deserialize<ChildClass>(serialized);
+            var serialized = MessagePackSerializer.Serialize(value);
+            var deserialized = MessagePackSerializer.Deserialize<ChildClass>(serialized);
             deserialized.OtherValue.Is(value.OtherValue);
             deserialized.Text.Is(value.Text);
             deserialized.Value.Is(value.Value);

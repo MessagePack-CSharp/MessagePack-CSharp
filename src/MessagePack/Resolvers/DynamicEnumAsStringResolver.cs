@@ -9,11 +9,18 @@ namespace MessagePack.Resolvers
 {
     public sealed class DynamicEnumAsStringResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new DynamicEnumAsStringResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly DynamicEnumAsStringResolver Instance = new DynamicEnumAsStringResolver();
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
         DynamicEnumAsStringResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()

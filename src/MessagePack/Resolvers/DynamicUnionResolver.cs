@@ -18,7 +18,17 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class DynamicUnionResolver : IFormatterResolver
     {
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
         public static readonly DynamicUnionResolver Instance = new DynamicUnionResolver();
+
+#if !DYNAMICCODEDUMPER
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+#endif
 
         const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
 
@@ -33,7 +43,6 @@ namespace MessagePack.Resolvers
 
         DynamicUnionResolver()
         {
-
         }
 
         static DynamicUnionResolver()
@@ -407,9 +416,9 @@ namespace MessagePack.Resolvers
     }
 
 #endif
-}
+    }
 
-namespace MessagePack.Internal
+    namespace MessagePack.Internal
 {
     // RuntimeTypeHandle can embed directly by OpCodes.Ldtoken
     // It does not implements IEquatable<T>(but GetHashCode and Equals is implemented) so needs this to avoid boxing.

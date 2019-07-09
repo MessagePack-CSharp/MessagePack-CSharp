@@ -22,12 +22,10 @@ namespace MessagePack.Tests.ExtensionTests
 
     public class ImmutableCollectionTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         T Convert<T>(T value)
         {
-            var resolver = new WithImmutableDefaultResolver();
-            return serializer.Deserialize<T>(serializer.Serialize(value, resolver), resolver);
+            var options = MessagePackSerializerOptions.Default.WithResolver(new WithImmutableDefaultResolver());
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
         public static object[][] collectionTestData = new object[][]

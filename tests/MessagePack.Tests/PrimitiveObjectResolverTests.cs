@@ -11,8 +11,6 @@ namespace MessagePack.Tests
 {
     public class PrimitiveObjectFormatterTests
     {
-        private readonly MessagePackSerializer serializer = new MessagePackSerializer(PrimitiveObjectResolver.Instance);
-
         [Theory]
         [InlineData((sbyte)5)]
         [InlineData((byte)5)]
@@ -24,16 +22,16 @@ namespace MessagePack.Tests
         [InlineData(5UL)]
         public void CompressibleIntegersRetainTypeInfo<T>(T value)
         {
-            var bin = serializer.Serialize<object>(value);
-            var result = Assert.IsType<T>(serializer.Deserialize<object>(bin));
+            var bin = MessagePackSerializer.Serialize<object>(value, PrimitiveObjectResolver.Options);
+            var result = Assert.IsType<T>(MessagePackSerializer.Deserialize<object>(bin, PrimitiveObjectResolver.Options));
             Assert.Equal(value, result);
         }
 
         [Fact]
         public void EnumRetainsUnderlyingType()
         {
-            var bin = serializer.Serialize<object>(SomeEnum.SomeValue);
-            var result = (SomeEnum)serializer.Deserialize<object>(bin);
+            var bin = MessagePackSerializer.Serialize<object>(SomeEnum.SomeValue, PrimitiveObjectResolver.Options);
+            var result = (SomeEnum)MessagePackSerializer.Deserialize<object>(bin, PrimitiveObjectResolver.Options);
             Assert.Equal(SomeEnum.SomeValue, result);
         }
 

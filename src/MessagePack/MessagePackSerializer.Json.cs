@@ -14,12 +14,12 @@ namespace MessagePack
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
-        public void SerializeToJson<T>(TextWriter textWriter, T obj, IFormatterResolver resolver = null)
+        public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions options = null)
         {
             using (var sequence = new Sequence<byte>())
             {
                 var msgpackWriter = new MessagePackWriter(sequence);
-                Serialize(ref msgpackWriter, obj, resolver);
+                Serialize(ref msgpackWriter, obj, options);
                 msgpackWriter.Flush();
                 var msgpackReader = new MessagePackReader(sequence.AsReadOnlySequence);
                 ConvertToJson(ref msgpackReader, textWriter);
@@ -29,61 +29,103 @@ namespace MessagePack
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
-        public string SerializeToJson<T>(T obj, IFormatterResolver resolver = null)
+        public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions options = null)
         {
             var writer = new StringWriter();
-            SerializeToJson(writer, obj, resolver);
+            SerializeToJson(writer, obj, options);
             return writer.ToString();
         }
 
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public string ConvertToJson(ReadOnlyMemory<byte> bytes) => this.ConvertToJson(new ReadOnlySequence<byte>(bytes));
+        public static string ConvertToJson(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null) => ConvertToJson(new ReadOnlySequence<byte>(bytes), options);
 
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public string ConvertToJson(in ReadOnlySequence<byte> bytes)
+        public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options = null)
         {
             var jsonWriter = new StringWriter();
             var reader = new MessagePackReader(bytes);
-            this.ConvertToJson(ref reader, jsonWriter);
+            ConvertToJson(ref reader, jsonWriter, options);
             return jsonWriter.ToString();
         }
 
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public virtual void ConvertToJson(ref MessagePackReader reader, TextWriter jsonWriter)
+        public static void ConvertToJson(ref MessagePackReader reader, TextWriter jsonWriter, MessagePackSerializerOptions options = null)
         {
             if (reader.End)
             {
                 return;
             }
 
-            ToJsonCore(ref reader, jsonWriter);
-        }
-
-        /// <summary>
-        /// From Json String to MessagePack binary
-        /// </summary>
-        public void ConvertFromJson(string str, ref MessagePackWriter writer)
-        {
-            using (var sr = new StringReader(str))
+            options = options ?? MessagePackSerializerOptions.Default;
+            if (options.UseLZ4Compression)
             {
-                ConvertFromJson(sr, ref writer);
+                using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                {
+                    if (TryDecompress(ref reader, scratch))
+                    {
+                        var scratchReader = new MessagePackReader(scratch.AsReadOnlySequence);
+                        if (scratchReader.End)
+                        {
+                            return;
+                        }
+
+                        ToJsonCore(ref scratchReader, jsonWriter);
+                    }
+                    else
+                    {
+                        ToJsonCore(ref reader, jsonWriter);
+                    }
+                }
+            }
+            else
+            {
+                ToJsonCore(ref reader, jsonWriter);
             }
         }
 
         /// <summary>
         /// From Json String to MessagePack binary
         /// </summary>
-        public virtual void ConvertFromJson(TextReader reader, ref MessagePackWriter writer)
+        public static void ConvertFromJson(string str, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
-            using (var jr = new TinyJsonReader(reader, false))
+            using (var sr = new StringReader(str))
             {
-                FromJsonCore(jr, ref writer);
+                ConvertFromJson(sr, ref writer, options);
+            }
+        }
+
+        /// <summary>
+        /// From Json String to MessagePack binary
+        /// </summary>
+        public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
+        {
+            options = options ?? MessagePackSerializerOptions.Default;
+            if (options.UseLZ4Compression)
+            {
+                using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                {
+                    var scratchWriter = writer.Clone(scratch);
+                    using (var jr = new TinyJsonReader(reader, false))
+                    {
+                        FromJsonCore(jr, ref scratchWriter);
+                    }
+
+                    scratchWriter.Flush();
+                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                }
+            }
+            else
+            {
+                using (var jr = new TinyJsonReader(reader, false))
+                {
+                    FromJsonCore(jr, ref writer);
+                }
             }
         }
 

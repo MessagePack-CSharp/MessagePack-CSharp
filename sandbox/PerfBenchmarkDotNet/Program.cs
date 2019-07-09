@@ -204,25 +204,25 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_StandardResolver()
         {
-            return Serializers.Default.Serialize(TestContractType, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            return newmsgpack.MessagePack.MessagePackSerializer.Serialize(TestContractType, newmsgpack::MessagePack.Resolvers.StandardResolver.Options);
         }
 
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_ContractlessStandardResolver()
         {
-            return Serializers.Default.Serialize(TestContractlessType, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            return newmsgpack.MessagePack.MessagePackSerializer.Serialize(TestContractlessType, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Options);
         }
 
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_primitive()
         {
-            return Serializers.Default.Serialize(TestTypelessPrimitiveType, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
+            return newmsgpack.MessagePack.MessagePackSerializer.Serialize(TestTypelessPrimitiveType, newmsgpack.MessagePack.Resolvers.TypelessContractlessStandardResolver.Options);
         }
 
         [Benchmark]
         public byte[] MessagePackSerializer_Serialize_TypelessContractlessStandardResolver_complex()
         {
-            return Serializers.Default.Serialize(TestTypelessComplexType, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
+            return newmsgpack.MessagePack.MessagePackSerializer.Serialize(TestTypelessComplexType, newmsgpack.MessagePack.Resolvers.TypelessContractlessStandardResolver.Options);
         }
     }
 
@@ -234,10 +234,10 @@ namespace PerfBenchmarkDotNet
         private byte[] OldTypelessContractlessStandardResolverBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
         private byte[] OldTypelessContractlessStandardResolverComplexBytes = oldmsgpack::MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), oldmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance);
 
-        private byte[] NewStandardResolverBytes = Serializers.Default.Serialize(new ContractType("John", new ContractType("Jack", null)), newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
-        private byte[] NewContractlessStandardResolverBytes = Serializers.Default.Serialize(new ContractlessType("John", new ContractlessType("Jack", null)), newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
-        private byte[] NewTypelessContractlessStandardResolverBytes = Serializers.Default.Serialize(new TypelessPrimitiveType("John", 555), new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
-        private byte[] NewTypelessContractlessStandardResolverComplexBytes = Serializers.Default.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
+        private byte[] NewStandardResolverBytes = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new ContractType("John", new ContractType("Jack", null)), newmsgpack::MessagePack.Resolvers.StandardResolver.Options);
+        private byte[] NewContractlessStandardResolverBytes = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new ContractlessType("John", new ContractlessType("Jack", null)), newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Options);
+        private byte[] NewTypelessContractlessStandardResolverBytes = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", 555), newmsgpack.MessagePack.Resolvers.TypelessContractlessStandardResolver.Options);
+        private byte[] NewTypelessContractlessStandardResolverComplexBytes = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new TypelessPrimitiveType("John", new TypelessPrimitiveType("John", null)), newmsgpack.MessagePack.Resolvers.TypelessContractlessStandardResolver.Options);
 
         [Benchmark]
         public ContractType Old_MessagePackSerializer_Deserialize_StandardResolver()
@@ -266,32 +266,26 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public ContractType MessagePackSerializer_Deserialize_StandardResolver()
         {
-            return Serializers.Default.Deserialize<ContractType>(NewStandardResolverBytes, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<ContractType>(NewStandardResolverBytes, newmsgpack::MessagePack.Resolvers.StandardResolver.Options);
         }
 
         [Benchmark]
         public ContractlessType MessagePackSerializer_Deserialize_ContractlessStandardResolver()
         {
-            return Serializers.Default.Deserialize<ContractlessType>(NewContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<ContractlessType>(NewContractlessStandardResolverBytes, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Options);
         }
 
         [Benchmark]
         public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolver()
         {
-            return Serializers.Default.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverBytes, newmsgpack.MessagePack.Resolvers.TypelessContractlessStandardResolver.Options);
         }
 
         [Benchmark]
         public TypelessPrimitiveType MessagePackSerializer_Deserialize_TypelessContractlessStandardResolverComplexBytes()
         {
-            return Serializers.Default.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverComplexBytes, new newmsgpack::MessagePack.Resolvers.TypelessContractlessStandardResolver());
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<TypelessPrimitiveType>(NewTypelessContractlessStandardResolverComplexBytes, newmsgpack.MessagePack.Resolvers.TypelessContractlessStandardResolver.Options);
         }
-    }
-
-    internal static class Serializers
-    {
-        internal static readonly newmsgpack.MessagePack.MessagePackSerializer Default = new newmsgpack.MessagePack.MessagePackSerializer();
-        internal static readonly newmsgpack.MessagePack.MessagePackSerializer Typeless = new newmsgpack.MessagePack.MessagePackSerializer(new newmsgpack.MessagePack.Resolvers.TypelessContractlessStandardResolver());
     }
 
     [Config(typeof(BenchmarkConfig))]
@@ -299,10 +293,10 @@ namespace PerfBenchmarkDotNet
     {
         static MsgPack.Serialization.SerializationContext mapContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Map };
         static MsgPack.Serialization.SerializationContext arrayContext = new MsgPack.Serialization.SerializationContext { SerializationMethod = SerializationMethod.Array };
-        static byte[] intObj = Serializers.Default.Serialize(new IntKeySerializerTarget());
-        static byte[] stringKeyObj = Serializers.Default.Serialize(new StringKeySerializerTarget());
-        static byte[] typelessWithIntKeyObj = Serializers.Typeless.Serialize(new IntKeySerializerTarget());
-        static byte[] typelessWithStringKeyObj = Serializers.Typeless.Serialize(new StringKeySerializerTarget());
+        static byte[] intObj = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new IntKeySerializerTarget());
+        static byte[] stringKeyObj = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
+        static byte[] typelessWithIntKeyObj = newmsgpack.MessagePack.MessagePackSerializer.Typeless.Serialize(new IntKeySerializerTarget());
+        static byte[] typelessWithStringKeyObj = newmsgpack.MessagePack.MessagePackSerializer.Typeless.Serialize(new StringKeySerializerTarget());
         static byte[] mapObj = mapContext.GetSerializer<IntKeySerializerTarget>().PackSingleObject(new IntKeySerializerTarget());
         static byte[] arrayObj = arrayContext.GetSerializer<IntKeySerializerTarget>().PackSingleObject(new IntKeySerializerTarget());
         static byte[] protoObj;
@@ -314,8 +308,8 @@ namespace PerfBenchmarkDotNet
         static Hyperion.Serializer hyperionSerializer = new Hyperion.Serializer();
         static byte[] hyperionObj;
 
-        static newmsgpack::MessagePack.IFormatterResolver mpcGenFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedAutomata());
-        static newmsgpack::MessagePack.IFormatterResolver mpcGenDictFormatterResolver = new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedDictionary());
+        static newmsgpack::MessagePack.MessagePackSerializerOptions mpcGenFormatterResolver = newmsgpack::MessagePack.MessagePackSerializerOptions.Default.WithResolver(new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedAutomata()));
+        static newmsgpack::MessagePack.MessagePackSerializerOptions mpcGenDictFormatterResolver = newmsgpack::MessagePack.MessagePackSerializerOptions.Default.WithResolver(new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedDictionary()));
 
         static DeserializeBenchmark()
         {
@@ -335,37 +329,37 @@ namespace PerfBenchmarkDotNet
         [Benchmark(Baseline = true)]
         public IntKeySerializerTarget IntKey()
         {
-            return Serializers.Default.Deserialize<IntKeySerializerTarget>(intObj);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(intObj);
         }
 
         [Benchmark]
         public StringKeySerializerTarget StringKey()
         {
-            return Serializers.Default.Deserialize<StringKeySerializerTarget>(stringKeyObj);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj);
         }
 
         // [Benchmark]
         public StringKeySerializerTarget StringKey_MpcGenerated()
         {
-            return Serializers.Default.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenFormatterResolver);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenFormatterResolver);
         }
 
         // [Benchmark]
         public StringKeySerializerTarget StringKey_MpcGeneratedDict()
         {
-            return Serializers.Default.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenDictFormatterResolver);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(stringKeyObj, mpcGenDictFormatterResolver);
         }
 
         [Benchmark]
         public IntKeySerializerTarget Typeless_IntKey()
         {
-            return (IntKeySerializerTarget)Serializers.Typeless.Deserialize<object>(typelessWithIntKeyObj);
+            return (IntKeySerializerTarget)newmsgpack.MessagePack.MessagePackSerializer.Typeless.Deserialize(typelessWithIntKeyObj);
         }
 
         [Benchmark]
         public StringKeySerializerTarget Typeless_StringKey()
         {
-            return (StringKeySerializerTarget)Serializers.Typeless.Deserialize<object>(typelessWithStringKeyObj);
+            return (StringKeySerializerTarget)newmsgpack.MessagePack.MessagePackSerializer.Typeless.Deserialize(typelessWithStringKeyObj);
         }
 
         [Benchmark]
@@ -447,25 +441,25 @@ namespace PerfBenchmarkDotNet
         [Benchmark(Baseline = true)]
         public byte[] IntKey()
         {
-            return Serializers.Default.Serialize<IntKeySerializerTarget>(intData);
+            return newmsgpack.MessagePack.MessagePackSerializer.Serialize<IntKeySerializerTarget>(intData);
         }
 
         [Benchmark]
         public byte[] StringKey()
         {
-            return Serializers.Default.Serialize<StringKeySerializerTarget>(stringData);
+            return newmsgpack.MessagePack.MessagePackSerializer.Serialize<StringKeySerializerTarget>(stringData);
         }
 
         [Benchmark]
         public byte[] Typeless_IntKey()
         {
-            return Serializers.Typeless.Serialize(intData);
+            return newmsgpack.MessagePack.MessagePackSerializer.Typeless.Serialize(intData);
         }
 
         [Benchmark]
         public byte[] Typeless_StringKey()
         {
-            return Serializers.Typeless.Serialize(stringData);
+            return newmsgpack.MessagePack.MessagePackSerializer.Typeless.Serialize(stringData);
         }
 
         [Benchmark]
@@ -600,7 +594,7 @@ namespace PerfBenchmarkDotNet
         [Benchmark(Baseline = true)]
         public byte[] NewSerialize()
         {
-            return Serializers.Default.Serialize<StringKeySerializerTarget>(stringData);
+            return newmsgpack.MessagePack.MessagePackSerializer.Serialize<StringKeySerializerTarget>(stringData);
         }
     }
 
@@ -609,21 +603,21 @@ namespace PerfBenchmarkDotNet
     {
         byte[] bin;
         byte[] binIntKey;
-        newmsgpack::MessagePack.IFormatterResolver automata;
-        newmsgpack::MessagePack.IFormatterResolver hashtable;
+        newmsgpack::MessagePack.MessagePackSerializerOptions automata;
+        newmsgpack::MessagePack.MessagePackSerializerOptions hashtable;
 
         public StringKeyDeserializeCompare()
         {
-            bin = Serializers.Default.Serialize(new StringKeySerializerTarget());
-            binIntKey = Serializers.Default.Serialize(new IntKeySerializerTarget());
-            automata = new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_AutomataLookup());
-            hashtable = new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_ByteArrayStringHashTable());
+            bin = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
+            binIntKey = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new IntKeySerializerTarget());
+            automata = newmsgpack::MessagePack.MessagePackSerializerOptions.Default.WithResolver(new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_AutomataLookup()));
+            hashtable = newmsgpack::MessagePack.MessagePackSerializerOptions.Default.WithResolver(new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_ByteArrayStringHashTable()));
         }
 
         [Benchmark(Baseline = true)]
         public IntKeySerializerTarget IntKey()
         {
-            return Serializers.Default.Deserialize<IntKeySerializerTarget>(binIntKey);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(binIntKey);
         }
 
         [Benchmark]
@@ -635,19 +629,19 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public StringKeySerializerTarget Automata()
         {
-            return Serializers.Default.Deserialize<StringKeySerializerTarget>(bin, automata);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, automata);
         }
 
         [Benchmark]
         public StringKeySerializerTarget Hashtable()
         {
-            return Serializers.Default.Deserialize<StringKeySerializerTarget>(bin, hashtable);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, hashtable);
         }
 
         [Benchmark]
         public StringKeySerializerTarget AutomataInlineEmit()
         {
-            return Serializers.Default.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Options);
         }
     }
 
@@ -659,13 +653,13 @@ namespace PerfBenchmarkDotNet
         byte[] bin;
         public NewVsOld()
         {
-            bin = Serializers.Default.Serialize(new StringKeySerializerTarget());
+            bin = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
         }
 
         [Benchmark(Baseline = true)]
         public StringKeySerializerTarget New()
         {
-            return Serializers.Default.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<StringKeySerializerTarget>(bin, newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Options);
         }
 
         [Benchmark]
@@ -684,13 +678,13 @@ namespace PerfBenchmarkDotNet
         public GuidImprov()
         {
             guid = Guid.NewGuid();
-            bin = Serializers.Default.Serialize(guid);
+            bin = newmsgpack.MessagePack.MessagePackSerializer.Serialize(guid);
         }
 
         [Benchmark]
         public byte[] NewSerialize()
         {
-            return Serializers.Default.Serialize(guid);
+            return newmsgpack.MessagePack.MessagePackSerializer.Serialize(guid);
         }
 
         [Benchmark]
@@ -702,7 +696,7 @@ namespace PerfBenchmarkDotNet
         [Benchmark]
         public Guid NewDeserialize()
         {
-            return Serializers.Default.Deserialize<Guid>(bin);
+            return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<Guid>(bin);
         }
 
         [Benchmark]

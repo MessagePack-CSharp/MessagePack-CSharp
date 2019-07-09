@@ -24,15 +24,14 @@ namespace MessagePack.Tests.ExtensionTests
 
     public class ReactivePropertyTest
     {
-      private MessagePackSerializer serializer = new MessagePackSerializer();
+        private static readonly MessagePackSerializerOptions options = MessagePackSerializerOptions.Default.WithResolver(new WithRxPropDefaultResolver());
 
-      T Convert<T>(T value)
+        T Convert<T>(T value)
         {
-            var resolver = new WithRxPropDefaultResolver();
-            return serializer.Deserialize<T>(serializer.Serialize(value, resolver), resolver);
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
-        [Fact(Skip ="assembly reference")]
+        [Fact(Skip = "assembly reference")]
         public void ViewModelTest()
         {
             var vm = new ViewModel(10, 20, 30);
@@ -44,7 +43,7 @@ namespace MessagePack.Tests.ExtensionTests
             deserialized.Prop4.Value.Is(60);
 
             // dump serialized
-            var data = serializer.SerializeToJson(vm, new WithRxPropDefaultResolver());
+            var data = MessagePackSerializer.SerializeToJson(vm, options);
 
             //  3 = ReactivePropertyMode.DistinctUntilChanged | ReactivePropertyMode.RaiseLatestValueOnSubscribe
             // -1 = UIDispatcherScheduler.Default

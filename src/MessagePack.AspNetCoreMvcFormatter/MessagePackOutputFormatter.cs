@@ -6,21 +6,16 @@ namespace MessagePack.AspNetCoreMvcFormatter
     public class MessagePackOutputFormatter : IOutputFormatter
     {
         private const string ContentType = "application/x-msgpack";
-        private readonly MessagePackSerializer.NonGeneric serializer;
+        private readonly MessagePackSerializerOptions options;
 
         public MessagePackOutputFormatter()
-            : this(new MessagePackSerializer.NonGeneric(new MessagePackSerializer()))
+            : this(null)
         {
         }
 
-        public MessagePackOutputFormatter(IFormatterResolver resolver)
-            : this(new MessagePackSerializer.NonGeneric(new MessagePackSerializer(resolver)))
+        public MessagePackOutputFormatter(MessagePackSerializerOptions options)
         {
-        }
-
-        public MessagePackOutputFormatter(MessagePackSerializer.NonGeneric serializer)
-        {
-            this.serializer = serializer ?? new MessagePackSerializer.NonGeneric();
+            this.options = options;
         }
 
         public bool CanWriteResult(OutputFormatterCanWriteContext context) =>
@@ -39,13 +34,15 @@ namespace MessagePack.AspNetCoreMvcFormatter
                 }
                 else
                 {
-                    this.serializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object);
+                    // TODO: switch to async typeless method when available.
+                    MessagePackSerializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, this.options);
                     return Task.CompletedTask;
                 }
             }
             else
             {
-                this.serializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object);
+                // TODO: switch to async typeless method when available.
+                MessagePackSerializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, this.options);
                 return Task.CompletedTask;
             }
         }

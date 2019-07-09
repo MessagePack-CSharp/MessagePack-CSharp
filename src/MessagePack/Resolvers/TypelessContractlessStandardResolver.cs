@@ -13,10 +13,20 @@ namespace MessagePack.Resolvers
     public sealed class TypelessContractlessStandardResolver : IFormatterResolver
     {
         /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly TypelessContractlessStandardResolver Instance;
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options;
+
+        /// <summary>
         /// A *private* list of resolvers. If we ever want to expose any of these (so the user can adjust settings, etc.)
         /// then we must make this an instance collection instead of a static collection so that each consumer can have their own settings.
         /// </summary>
-        private static readonly IReadOnlyList<IFormatterResolver> resolvers = new[]
+        private static readonly IReadOnlyList<IFormatterResolver> resolvers = new IFormatterResolver[]
         {
             NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
             BuiltinResolver.Instance, // Try Builtin
@@ -30,6 +40,12 @@ namespace MessagePack.Resolvers
             DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
             new TypelessObjectResolver(),
         };
+
+        static TypelessContractlessStandardResolver()
+        {
+            Instance = new TypelessContractlessStandardResolver();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
         private readonly ResolverCache resolverCache = new ResolverCache(resolvers);
 

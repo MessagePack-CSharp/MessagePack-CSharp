@@ -46,7 +46,15 @@ namespace MessagePack.Resolvers
 
     internal sealed class ForceSizePrimitiveObjectResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new ForceSizePrimitiveObjectResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly ForceSizePrimitiveObjectResolver Instance = new ForceSizePrimitiveObjectResolver();
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
         ForceSizePrimitiveObjectResolver()
         {
@@ -114,7 +122,15 @@ namespace MessagePack.Resolvers
 
     internal sealed class TypelessFormatterFallbackResolver : IFormatterResolver
     {
-        public readonly static IFormatterResolver Instance = new TypelessFormatterFallbackResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly TypelessFormatterFallbackResolver Instance = new TypelessFormatterFallbackResolver();
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
         static readonly IMessagePackFormatter<object> fallbackFormatter = new DynamicObjectTypeFallbackFormatter(
             ForceSizePrimitiveObjectResolver.Instance,

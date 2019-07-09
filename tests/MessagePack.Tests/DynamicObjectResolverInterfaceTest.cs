@@ -6,14 +6,12 @@ namespace MessagePack.Tests
 {
     public class DynamicObjectResolverInterfaceTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         [Fact]
         void TestConstructorWithParentInterface()
         {
             var myClass = new ConstructorEnumerableTest(new[] { "0", "2", "3" });
-            var serialized = this.serializer.Serialize(myClass);
-            var deserialized = this.serializer.Deserialize<ConstructorEnumerableTest>(serialized);
+            var serialized = MessagePackSerializer.Serialize(myClass);
+            var deserialized = MessagePackSerializer.Deserialize<ConstructorEnumerableTest>(serialized);
             deserialized.Values.IsStructuralEqual(myClass.Values);
         }
 
