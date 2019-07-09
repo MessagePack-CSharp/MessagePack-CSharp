@@ -24,11 +24,6 @@ namespace MessagePack
         private static byte[] scratchArray;
 
         /// <summary>
-        /// Backing field for the <see cref="DefaultResolver"/> property.
-        /// </summary>
-        private IFormatterResolver defaultResolver;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSerializer"/> class
         /// initialized with the <see cref="Resolvers.StandardResolver"/>.
         /// </summary>
@@ -43,17 +38,13 @@ namespace MessagePack
         /// <param name="defaultResolver">The resolver to use.</param>
         public MessagePackSerializer(IFormatterResolver defaultResolver)
         {
-            this.defaultResolver = defaultResolver ?? throw new ArgumentNullException(nameof(defaultResolver));
+            this.DefaultResolver = defaultResolver ?? throw new ArgumentNullException(nameof(defaultResolver));
         }
 
         /// <summary>
-        /// Gets or sets the resolver to use when one is not explicitly specified.
+        /// Gets the resolver to use when one is not explicitly specified.
         /// </summary>
-        public IFormatterResolver DefaultResolver
-        {
-            get => this.defaultResolver;
-            ////set => this.defaultResolver = value ?? throw new ArgumentNullException(nameof(value));
-        }
+        public IFormatterResolver DefaultResolver { get; }
 
         /// <summary>
         /// Serializes a given value with the specified buffer writer.
