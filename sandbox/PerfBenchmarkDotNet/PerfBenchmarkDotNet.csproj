@@ -25,9 +25,6 @@
     <PackageReference Include="ZeroFormatter" version="1.6.4" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj">
-      <Aliases>newmsgpack</Aliases>
-    </ProjectReference>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">
       <Aliases>newmsgpack</Aliases>
     </ProjectReference>
