@@ -61,14 +61,14 @@ namespace MessagePack
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                 {
                     var scratchWriter = writer.Clone(scratch);
-                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options.Resolver);
+                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
                     scratchWriter.Flush();
                     ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
                 }
             }
             else
             {
-                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options.Resolver);
+                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
             }
         }
 
@@ -154,17 +154,17 @@ namespace MessagePack
                     if (TryDecompress(ref reader, msgPackUncompressed))
                     {
                         var uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
-                        return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref uncompressedReader, options.Resolver);
+                        return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref uncompressedReader, options);
                     }
                     else
                     {
-                        return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options.Resolver);
+                        return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
                     }
                 }
             }
             else
             {
-                return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options.Resolver);
+                return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
             }
         }
 

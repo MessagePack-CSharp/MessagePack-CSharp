@@ -23,7 +23,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, byte[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, byte[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -35,7 +35,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public byte[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public byte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -56,7 +56,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, String value, IFormatterResolver typeResolver)
+        public void Serialize(ref MessagePackWriter writer, String value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -68,7 +68,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public String Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public String Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -90,7 +90,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, String[] value, IFormatterResolver typeResolver)
+        public void Serialize(ref MessagePackWriter writer, String[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -106,7 +106,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public String[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public String[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -134,13 +134,13 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, decimal value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, decimal value, MessagePackSerializerOptions options)
         {
             writer.Write(value.ToString(CultureInfo.InvariantCulture));
             return;
         }
 
-        public decimal Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public decimal Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return decimal.Parse(reader.ReadString(), CultureInfo.InvariantCulture);
         }
@@ -155,13 +155,13 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, TimeSpan value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, TimeSpan value, MessagePackSerializerOptions options)
         {
             writer.Write(value.Ticks);
             return;
         }
 
-        public TimeSpan Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public TimeSpan Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return new TimeSpan(reader.ReadInt64());
         }
@@ -176,7 +176,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, DateTimeOffset value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, DateTimeOffset value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
             writer.Write(new DateTime(value.Ticks, DateTimeKind.Utc)); // current ticks as is
@@ -184,7 +184,7 @@ namespace MessagePack.Formatters
             return;
         }
 
-        public DateTimeOffset Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public DateTimeOffset Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var count = reader.ReadArrayHeader();
 
@@ -207,7 +207,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public unsafe void Serialize(ref MessagePackWriter writer, Guid value, IFormatterResolver resolver)
+        public unsafe void Serialize(ref MessagePackWriter writer, Guid value, MessagePackSerializerOptions options)
         {
             byte* pBytes = stackalloc byte[36];
             Span<byte> bytes = new Span<byte>(pBytes, 36);
@@ -215,7 +215,7 @@ namespace MessagePack.Formatters
             writer.WriteString(bytes);
         }
 
-        public Guid Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Guid Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var segment = reader.ReadStringSegment();
             if (segment.Length != 36)
@@ -249,7 +249,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Uri value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Uri value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -261,7 +261,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Uri Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Uri Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -283,7 +283,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Version value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Version value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -295,7 +295,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Version Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Version Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -310,22 +310,24 @@ namespace MessagePack.Formatters
 
     public sealed class KeyValuePairFormatter<TKey, TValue> : IMessagePackFormatter<KeyValuePair<TKey, TValue>>
     {
-        public void Serialize(ref MessagePackWriter writer, KeyValuePair<TKey, TValue> value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, KeyValuePair<TKey, TValue> value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
-            resolver.GetFormatterWithVerify<TKey>().Serialize(ref writer, value.Key, resolver);
-            resolver.GetFormatterWithVerify<TValue>().Serialize(ref writer, value.Value, resolver);
+            var resolver = options.Resolver;
+            resolver.GetFormatterWithVerify<TKey>().Serialize(ref writer, value.Key, options);
+            resolver.GetFormatterWithVerify<TValue>().Serialize(ref writer, value.Value, options);
             return;
         }
 
-        public KeyValuePair<TKey, TValue> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public KeyValuePair<TKey, TValue> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var count = reader.ReadArrayHeader();
 
             if (count != 2) throw new InvalidOperationException("Invalid KeyValuePair format.");
 
-            var key = resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, resolver);
-            var value = resolver.GetFormatterWithVerify<TValue>().Deserialize(ref reader, resolver);
+            var resolver = options.Resolver;
+            var key = resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options);
+            var value = resolver.GetFormatterWithVerify<TValue>().Deserialize(ref reader, options);
             return new KeyValuePair<TKey, TValue>(key, value);
         }
     }
@@ -339,7 +341,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, StringBuilder value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, StringBuilder value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -351,7 +353,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public StringBuilder Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public StringBuilder Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -373,7 +375,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, BitArray value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, BitArray value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -392,7 +394,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public BitArray Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public BitArray Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -424,13 +426,13 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, System.Numerics.BigInteger value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, System.Numerics.BigInteger value, MessagePackSerializerOptions options)
         {
             writer.Write(value.ToByteArray());
             return;
         }
 
-        public System.Numerics.BigInteger Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public System.Numerics.BigInteger Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var bytes = reader.ReadBytes();
 #if NETCOREAPP2_1
@@ -466,7 +468,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, System.Numerics.Complex value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, System.Numerics.Complex value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
             writer.Write(value.Real);
@@ -474,7 +476,7 @@ namespace MessagePack.Formatters
             return;
         }
 
-        public System.Numerics.Complex Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public System.Numerics.Complex Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var count = reader.ReadArrayHeader();
 
@@ -490,7 +492,7 @@ namespace MessagePack.Formatters
 
     public sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, Lazy<T> value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Lazy<T> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -498,11 +500,12 @@ namespace MessagePack.Formatters
             }
             else
             {
-                resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, resolver);
+                var resolver = options.Resolver;
+                resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
             }
         }
 
-        public Lazy<T> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Lazy<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -511,7 +514,8 @@ namespace MessagePack.Formatters
             else
             {
                 // deserialize immediately(no delay, because capture byte[] causes memory leak)
-                var v = resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, resolver);
+                var resolver = options.Resolver;
+                var v = resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
                 return new Lazy<T>(() => v);
             }
         }

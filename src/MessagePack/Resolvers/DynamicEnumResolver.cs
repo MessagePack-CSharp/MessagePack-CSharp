@@ -90,11 +90,11 @@ namespace MessagePack.Resolvers
 
             var typeBuilder = assembly.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
-            // void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver resolver);
+            // void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
             {
                 var method = typeBuilder.DefineMethod("Serialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
                     null,
-                    new Type[] { typeof(MessagePackWriter).MakeByRefType(), enumType, typeof(IFormatterResolver) });
+                    new Type[] { typeof(MessagePackWriter).MakeByRefType(), enumType, typeof(MessagePackSerializerOptions) });
 
                 var il = method.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_1);
@@ -103,11 +103,11 @@ namespace MessagePack.Resolvers
                 il.Emit(OpCodes.Ret);
             }
 
-            // T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver);
+            // T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
             {
                 var method = typeBuilder.DefineMethod("Deserialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
                     enumType,
-                    new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(IFormatterResolver) });
+                    new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
 
                 var il = method.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_1);

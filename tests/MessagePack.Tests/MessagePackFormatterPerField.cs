@@ -44,12 +44,12 @@ namespace MessagePack.Tests
 
         public class Int_x10Formatter : IMessagePackFormatter<int>
         {
-            public int Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+            public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
                 return reader.ReadInt32() * 10;
             }
 
-            public void Serialize(ref MessagePackWriter writer, int value, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options)
             {
                 writer.Write(value * 10);
             }
@@ -57,13 +57,13 @@ namespace MessagePack.Tests
 
         public class String_x2Formatter : IMessagePackFormatter<string>
         {
-            public string Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+            public string Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
                 var s = reader.ReadString();
                 return s + s;
             }
 
-            public void Serialize(ref MessagePackWriter writer, string value, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, string value, MessagePackSerializerOptions options)
             {
                 writer.Write(value + value);
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using MessagePack.Formatters;
@@ -40,7 +41,7 @@ namespace MessagePack
 
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
-            var methodInfo = typeof(IFormatterResolver).GetRuntimeMethod("GetFormatter", Type.EmptyTypes);
+            var methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
 
             var formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
             return formatter;

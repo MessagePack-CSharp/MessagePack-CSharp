@@ -5,11 +5,14 @@ using System;
 
 namespace MessagePack
 {
+#if !DYNAMICCODEDUMPER
     /// <summary>
     /// An immutable description of options for running the <see cref="MessagePackSerializer"/>.
     /// </summary>
+#endif
     public class MessagePackSerializerOptions
     {
+#if !DYNAMICCODEDUMPER
         /// <summary>
         /// A good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
@@ -28,6 +31,7 @@ namespace MessagePack
             : this(Resolvers.StandardResolver.Instance, useLZ4Compression: false)
         {
         }
+#endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class
@@ -41,7 +45,7 @@ namespace MessagePack
         /// <summary>
         /// Gets the resolver to use for complex types.
         /// </summary>
-        /// <value>An instance of <see cref="IFormatterResolver"/>, defaulting to an instance of <see cref="Resolvers.StandardResolver"/>. Never <c>null</c>.</value>
+        /// <value>An instance of <see cref="IFormatterResolver"/>. Never <c>null</c>.</value>
         /// <exception cref="ArgumentNullException">Thrown if an attempt is made to set this property to <c>null</c>.</exception>
         public IFormatterResolver Resolver { get; }
 

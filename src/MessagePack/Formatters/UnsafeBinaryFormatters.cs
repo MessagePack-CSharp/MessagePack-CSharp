@@ -19,7 +19,7 @@ namespace MessagePack.Formatters
         // Guid's underlying _a,...,_k field is sequential and same layout as .NET Framework and Mono(Unity).
         // But target machines must be same endian so restrict only for little endian.
 
-        public unsafe void Serialize(ref MessagePackWriter writer, Guid value, IFormatterResolver resolver)
+        public unsafe void Serialize(ref MessagePackWriter writer, Guid value, MessagePackSerializerOptions options)
         {
             if (!BitConverter.IsLittleEndian) throw new Exception("BinaryGuidFormatter only allows on little endian env.");
 
@@ -27,7 +27,7 @@ namespace MessagePack.Formatters
             writer.Write(valueSpan);
         }
 
-        public unsafe Guid Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public unsafe Guid Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (!BitConverter.IsLittleEndian) throw new Exception("BinaryGuidFormatter only allows on little endian env.");
 
@@ -58,7 +58,7 @@ namespace MessagePack.Formatters
         // decimal underlying "flags, hi, lo, mid" fields are sequential and same layuout with .NET Framework and Mono(Unity)
         // But target machines must be same endian so restrict only for little endian.
 
-        public unsafe void Serialize(ref MessagePackWriter writer, Decimal value, IFormatterResolver resolver)
+        public unsafe void Serialize(ref MessagePackWriter writer, Decimal value, MessagePackSerializerOptions options)
         {
             if (!BitConverter.IsLittleEndian) throw new Exception("BinaryGuidFormatter only allows on little endian env.");
 
@@ -66,7 +66,7 @@ namespace MessagePack.Formatters
             writer.Write(valueSpan);
         }
 
-        public unsafe Decimal Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public unsafe Decimal Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (!BitConverter.IsLittleEndian) throw new Exception("BinaryDecimalFormatter only allows on little endian env.");
 

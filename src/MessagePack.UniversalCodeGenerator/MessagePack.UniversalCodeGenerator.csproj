@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MSBuild.StructuredLogger" Version="2.0.68"/>
+    <PackageReference Include="MSBuild.StructuredLogger" Version="2.0.68" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.10.0" />
   </ItemGroup>
 
@@ -30,6 +30,39 @@
 
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Generator\EnumTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>EnumTemplate.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Generator\FormatterTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>FormatterTemplate.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Generator\UnionTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>UnionTemplate.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Generator\EnumTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>EnumTemplate.cs</LastGenOutput>
+    </None>
+    <None Update="Generator\FormatterTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>FormatterTemplate.cs</LastGenOutput>
+    </None>
+    <None Update="Generator\UnionTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>UnionTemplate.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

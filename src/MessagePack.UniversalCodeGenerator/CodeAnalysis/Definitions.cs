@@ -102,7 +102,7 @@ namespace MessagePack.CodeGenerator
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Serialize(ref writer, value.{Name}, formatterResolver)";
+                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Serialize(ref writer, value.{Name}, options)";
             }
         }
 
@@ -114,7 +114,7 @@ namespace MessagePack.CodeGenerator
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Deserialize(ref reader, formatterResolver)";
+                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Deserialize(ref reader, options)";
             }
         }
     }

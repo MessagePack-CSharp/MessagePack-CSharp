@@ -35,7 +35,7 @@ namespace MessagePack.Unity.Extension
         protected abstract sbyte TypeCode { get; }
         protected void CopyDeserializeUnsafe(ReadOnlySpan<byte> src, Span<T> dest) => src.CopyTo(MemoryMarshal.Cast<T, byte>(dest));
 
-        public void Serialize(ref MessagePackWriter writer, T[] value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, T[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -51,7 +51,7 @@ namespace MessagePack.Unity.Extension
             writer.WriteRaw(MemoryMarshal.Cast<T, byte>(value));
         }
 
-        public T[] Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public T[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

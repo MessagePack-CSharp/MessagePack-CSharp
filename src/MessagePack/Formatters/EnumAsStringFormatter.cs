@@ -25,7 +25,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
         {
             string name;
             if (!valueNameMapping.TryGetValue(value, out name))
@@ -36,7 +36,7 @@ namespace MessagePack.Formatters
             writer.Write(name);
         }
 
-        public T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var name = reader.ReadString();
 

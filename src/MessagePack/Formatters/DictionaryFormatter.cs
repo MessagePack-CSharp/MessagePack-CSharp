@@ -17,7 +17,7 @@ namespace MessagePack.Formatters
         where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
         where TEnumerator : IEnumerator<KeyValuePair<TKey, TValue>>
     {
-        public void Serialize(ref MessagePackWriter writer, TDictionary value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -25,6 +25,7 @@ namespace MessagePack.Formatters
             }
             else
             {
+                var resolver = options.Resolver;
                 var keyFormatter = resolver.GetFormatterWithVerify<TKey>();
                 var valueFormatter = resolver.GetFormatterWithVerify<TValue>();
 
@@ -57,8 +58,8 @@ namespace MessagePack.Formatters
                     while (e.MoveNext())
                     {
                         var item = e.Current;
-                        keyFormatter.Serialize(ref writer, item.Key, resolver);
-                        valueFormatter.Serialize(ref writer, item.Value, resolver);
+                        keyFormatter.Serialize(ref writer, item.Key, options);
+                        valueFormatter.Serialize(ref writer, item.Value, options);
                     }
                 }
                 finally
@@ -68,7 +69,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public TDictionary Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public TDictionary Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -76,6 +77,7 @@ namespace MessagePack.Formatters
             }
             else
             {
+                var resolver = options.Resolver;
                 var keyFormatter = resolver.GetFormatterWithVerify<TKey>();
                 var valueFormatter = resolver.GetFormatterWithVerify<TValue>();
 
@@ -84,9 +86,9 @@ namespace MessagePack.Formatters
                 var dict = Create(len);
                 for (int i = 0; i < len; i++)
                 {
-                    var key = keyFormatter.Deserialize(ref reader, resolver);
+                    var key = keyFormatter.Deserialize(ref reader, options);
 
-                    var value = valueFormatter.Deserialize(ref reader, resolver);
+                    var value = valueFormatter.Deserialize(ref reader, options);
 
                     Add(dict, i, key, value);
                 }
@@ -271,7 +273,7 @@ namespace MessagePack.Formatters
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TDictionary> : IMessagePackFormatter<TDictionary>
         where TDictionary : IDictionary<TKey, TValue>
     {
-        public void Serialize(ref MessagePackWriter writer, TDictionary value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -306,7 +308,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public TDictionary Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public TDictionary Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

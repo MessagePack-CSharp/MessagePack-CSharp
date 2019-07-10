@@ -23,12 +23,10 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly DynamicUnionResolver Instance = new DynamicUnionResolver();
 
-#if !DYNAMICCODEDUMPER
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
         public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
-#endif
 
         const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
 
@@ -128,7 +126,7 @@ namespace MessagePack.Resolvers
             {
                 var method = typeBuilder.DefineMethod("Serialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
                     null,
-                    new Type[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(IFormatterResolver) });
+                    new Type[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
 
                 var il = method.GetILGenerator();
                 BuildSerialize(type, unionAttrs, method, typeToKeyAndJumpMap, il);
@@ -136,7 +134,7 @@ namespace MessagePack.Resolvers
             {
                 var method = typeBuilder.DefineMethod("Deserialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
                     type,
-                    new Type[] { refMessagePackReader, typeof(IFormatterResolver) });
+                    new Type[] { refMessagePackReader, typeof(MessagePackSerializerOptions) });
 
                 var il = method.GetILGenerator();
                 BuildDeserialize(type, unionAttrs, method, keyToJumpMap, il);
@@ -193,7 +191,7 @@ namespace MessagePack.Resolvers
         }
 
 
-        // void Serialize([arg:1]MessagePackWriter writer, [arg:2]T value, [arg:3]IFormatterResolver formatterResolver);
+        // void Serialize([arg:1]MessagePackWriter writer, [arg:2]T value, [arg:3]MessagePackSerializerOptions options);
         static void BuildSerialize(Type type, UnionAttribute[] infos, MethodBuilder method, FieldBuilder typeToKeyAndJumpMap, ILGenerator il)
         {
             // if(value == null) return WriteNil
@@ -204,6 +202,12 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Brtrue_S, elseBody);
             il.Emit(OpCodes.Br, notFoundType);
             il.MarkLabel(elseBody);
+
+            // IFormatterResolver resolver = options.Resolver;
+            var localResolver = il.DeclareLocal(typeof(IFormatterResolver));
+            il.EmitLdarg(3);
+            il.EmitCall(getResolverFromOptions);
+            il.EmitStloc(localResolver);
 
             var keyPair = il.DeclareLocal(typeof(KeyValuePair<int, int>));
 
@@ -239,7 +243,7 @@ namespace MessagePack.Resolvers
             foreach (var item in switchLabels)
             {
                 il.MarkLabel(item.Label);
-                il.EmitLdarg(3);
+                il.EmitLdloc(localResolver);
                 il.Emit(OpCodes.Call, getFormatterWithVerify.MakeGenericMethod(item.Attr.SubType));
 
                 il.EmitLdarg(1);
@@ -269,7 +273,7 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Ret);
         }
 
-        // T Deserialize([arg:1]ref MessagePackReader reader, [arg:2]IFormatterResolver formatterResolver);
+        // T Deserialize([arg:1]ref MessagePackReader reader, [arg:2]MessagePackSerializerOptions options);
         static void BuildDeserialize(Type type, UnionAttribute[] infos, MethodBuilder method, FieldBuilder keyToJumpMap, ILGenerator il)
         {
             // if(MessagePackBinary.TryReadNil()) { return null; }
@@ -281,9 +285,15 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Ldnull);
             il.Emit(OpCodes.Ret);
 
-            // read-array header and validate, reader.ReadArrayHeader() != 2) throw;
             il.MarkLabel(falseLabel);
 
+            // IFormatterResolver resolver = options.Resolver;
+            var localResolver = il.DeclareLocal(typeof(IFormatterResolver));
+            il.EmitLdarg(2);
+            il.EmitCall(getResolverFromOptions);
+            il.EmitStloc(localResolver);
+
+            // read-array header and validate, reader.ReadArrayHeader() != 2) throw;
             var rightLabel = il.DefineLabel();
             var writer = new ArgumentField(il, 1);
             writer.EmitLdarg();
@@ -336,7 +346,7 @@ namespace MessagePack.Resolvers
             foreach (var item in switchLabels)
             {
                 il.MarkLabel(item.Label);
-                il.EmitLdarg(2);
+                il.EmitLdloc(localResolver);
                 il.EmitCall(getFormatterWithVerify.MakeGenericMethod(item.Attr.SubType));
                 il.EmitLdarg(1);
                 il.EmitLdarg(2);
@@ -369,9 +379,10 @@ namespace MessagePack.Resolvers
         static readonly Type refMessagePackReader = typeof(MessagePackReader).MakeByRefType();
         static readonly Type refKvp = typeof(KeyValuePair<int, int>).MakeByRefType();
         static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == "GetFormatterWithVerify");
+        static readonly MethodInfo getResolverFromOptions = typeof(MessagePackSerializerOptions).GetRuntimeProperty(nameof(MessagePackSerializerOptions.Resolver)).GetMethod;
 
-        static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(IFormatterResolver) });
-        static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Deserialize", new[] { typeof(MessagePackReader).MakeByRefType(), typeof(IFormatterResolver) });
+        static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(MessagePackSerializerOptions) });
+        static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Deserialize", new[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
 
         static readonly FieldInfo runtimeTypeHandleEqualityComparer = typeof(RuntimeTypeHandleEqualityComparer).GetRuntimeField("Default");
         static readonly ConstructorInfo intIntKeyValuePairConstructor = typeof(KeyValuePair<int, int>).GetTypeInfo().DeclaredConstructors.First(x => x.GetParameters().Length == 2);

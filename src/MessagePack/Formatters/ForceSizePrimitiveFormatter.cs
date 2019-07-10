@@ -11,12 +11,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int16 value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int16 value, MessagePackSerializerOptions options)
         {
             writer.WriteInt16(value);
         }
 
-        public Int16 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int16 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadInt16();
         }
@@ -30,7 +30,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int16? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int16? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -42,7 +42,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int16? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int16? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -64,7 +64,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int16[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int16[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -80,7 +80,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int16[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int16[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -107,12 +107,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int32 value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int32 value, MessagePackSerializerOptions options)
         {
             writer.WriteInt32(value);
         }
 
-        public Int32 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int32 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadInt32();
         }
@@ -126,7 +126,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int32? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int32? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -138,7 +138,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int32? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int32? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -160,7 +160,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int32[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int32[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -176,7 +176,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int32[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int32[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -203,12 +203,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int64 value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int64 value, MessagePackSerializerOptions options)
         {
             writer.WriteInt64(value);
         }
 
-        public Int64 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int64 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadInt64();
         }
@@ -222,7 +222,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int64? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int64? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -234,7 +234,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int64? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int64? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -256,7 +256,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int64[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Int64[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -272,7 +272,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int64[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Int64[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -299,12 +299,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt16 value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt16 value, MessagePackSerializerOptions options)
         {
             writer.WriteUInt16(value);
         }
 
-        public UInt16 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt16 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadUInt16();
         }
@@ -318,7 +318,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt16? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt16? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -330,7 +330,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt16? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt16? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -352,7 +352,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt16[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt16[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -368,7 +368,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt16[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt16[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -395,12 +395,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt32 value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt32 value, MessagePackSerializerOptions options)
         {
             writer.WriteUInt32(value);
         }
 
-        public UInt32 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt32 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadUInt32();
         }
@@ -414,7 +414,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt32? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt32? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -426,7 +426,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt32? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt32? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -448,7 +448,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt32[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt32[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -464,7 +464,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt32[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt32[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -491,12 +491,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt64 value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt64 value, MessagePackSerializerOptions options)
         {
             writer.WriteUInt64(value);
         }
 
-        public UInt64 Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt64 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadUInt64();
         }
@@ -510,7 +510,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt64? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt64? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -522,7 +522,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt64? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt64? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -544,7 +544,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt64[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, UInt64[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -560,7 +560,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt64[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public UInt64[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -587,12 +587,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Byte value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Byte value, MessagePackSerializerOptions options)
         {
             writer.WriteUInt8(value);
         }
 
-        public Byte Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Byte Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadByte();
         }
@@ -606,7 +606,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Byte? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, Byte? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -618,7 +618,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Byte? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public Byte? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -640,12 +640,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, SByte value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, SByte value, MessagePackSerializerOptions options)
         {
             writer.WriteInt8(value);
         }
 
-        public SByte Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public SByte Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadSByte();
         }
@@ -659,7 +659,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, SByte? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, SByte? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -671,7 +671,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public SByte? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public SByte? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -693,7 +693,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, SByte[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, SByte[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -709,7 +709,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public SByte[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public SByte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

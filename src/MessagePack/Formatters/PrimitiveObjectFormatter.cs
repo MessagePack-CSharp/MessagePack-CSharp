@@ -49,7 +49,7 @@ namespace MessagePack.Formatters
 
 #endif
 
-        public void Serialize(ref MessagePackWriter writer, object value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -159,8 +159,8 @@ namespace MessagePack.Formatters
                     writer.WriteMapHeader(d.Count);
                     foreach (System.Collections.DictionaryEntry item in d)
                     {
-                        Serialize(ref writer, item.Key, resolver);
-                        Serialize(ref writer, item.Value, resolver);
+                        Serialize(ref writer, item.Key, options);
+                        Serialize(ref writer, item.Value, options);
                     }
                     return;
                 }
@@ -170,7 +170,7 @@ namespace MessagePack.Formatters
                     writer.WriteArrayHeader(c.Count);
                     foreach (var item in c)
                     {
-                        Serialize(ref writer, item, resolver);
+                        Serialize(ref writer, item, options);
                     }
                     return;
                 }
@@ -179,9 +179,10 @@ namespace MessagePack.Formatters
             throw new InvalidOperationException("Not supported primitive object resolver. type:" + t.Name);
         }
 
-        public object Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var type = reader.NextMessagePackType;
+            var resolver = options.Resolver;
             switch (type)
             {
                 case MessagePackType.Integer:
@@ -228,7 +229,7 @@ namespace MessagePack.Formatters
                         var array = new object[length];
                         for (int i = 0; i < length; i++)
                         {
-                            array[i] = objectFormatter.Deserialize(ref reader, resolver);
+                            array[i] = objectFormatter.Deserialize(ref reader, options);
                         }
 
                         return array;
@@ -241,9 +242,9 @@ namespace MessagePack.Formatters
                         var hash = new Dictionary<object, object>(length);
                         for (int i = 0; i < length; i++)
                         {
-                            var key = objectFormatter.Deserialize(ref reader, resolver);
+                            var key = objectFormatter.Deserialize(ref reader, options);
 
-                            var value = objectFormatter.Deserialize(ref reader, resolver);
+                            var value = objectFormatter.Deserialize(ref reader, options);
 
                             hash.Add(key, value);
                         }

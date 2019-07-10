@@ -28,7 +28,7 @@ namespace MessagePack.Formatters
 <# } #>
         }
 
-        public <#= t #> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public <#= t #> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {

@@ -22,8 +22,8 @@ namespace MessagePack.Formatters
 
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 
-        delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, IFormatterResolver resolver);
-        delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, IFormatterResolver resolver);
+        delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
+        delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, MessagePackSerializerOptions options);
 
         readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
         readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>> deserializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>>();
@@ -94,8 +94,8 @@ namespace MessagePack.Formatters
 
         public TypelessFormatter()
         {
-            serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, ref MessagePackWriter p2, object p3, IFormatterResolver p4) => { }));
-            deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object, DeserializeMethod>(null, (object p1, ref MessagePackReader p2, IFormatterResolver p3) => new object()));
+            serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, ref MessagePackWriter p2, object p3, MessagePackSerializerOptions p4) => { }));
+            deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object, DeserializeMethod>(null, (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object()));
         }
 
         // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
@@ -121,7 +121,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public void Serialize(ref MessagePackWriter writer, object value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -153,7 +153,7 @@ namespace MessagePack.Formatters
 
             if (typeName == null)
             {
-                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref writer, value, resolver);
+                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref writer, value, options);
                 return;
             }
 
@@ -167,6 +167,7 @@ namespace MessagePack.Formatters
                     {
                         var ti = type.GetTypeInfo();
 
+                        var resolver = options.Resolver;
                         var formatter = resolver.GetFormatterDynamic(type);
                         if (formatter == null)
                         {
@@ -177,9 +178,9 @@ namespace MessagePack.Formatters
                         var param0 = Expression.Parameter(typeof(object), "formatter");
                         var param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
                         var param2 = Expression.Parameter(typeof(object), "value");
-                        var param3 = Expression.Parameter(typeof(IFormatterResolver), "resolver");
+                        var param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
 
-                        var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(IFormatterResolver) });
+                        var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
 
                         var body = Expression.Call(
                             Expression.Convert(param0, formatterType),
@@ -201,7 +202,7 @@ namespace MessagePack.Formatters
             {
                 var scratchWriter = writer.Clone(scratch);
                 scratchWriter.WriteString(typeName);
-                formatterAndDelegate.Value(formatterAndDelegate.Key, ref scratchWriter, value, resolver);
+                formatterAndDelegate.Value(formatterAndDelegate.Key, ref scratchWriter, value, options);
                 scratchWriter.Flush();
 
                 // mark as extension with code 100
@@ -209,7 +210,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public object Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -232,7 +233,7 @@ namespace MessagePack.Formatters
                         typeNameArraySegment = new ArraySegment<byte>(rented, 0, (int)typeName.Length);
                     }
 
-                    var result = DeserializeByTypeName(typeNameArraySegment, ref reader, resolver);
+                    var result = DeserializeByTypeName(typeNameArraySegment, ref reader, options);
 
                     if (rented != null)
                     {
@@ -244,14 +245,14 @@ namespace MessagePack.Formatters
             }
 
             // fallback
-            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Deserialize(ref reader, resolver);
+            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Deserialize(ref reader, options);
         }
 
         /// <summary>
         /// Does not support deserializing of anonymous types
         /// Type should be covered by preceeding resolvers in complex/standard resolver
         /// </summary>
-        private object DeserializeByTypeName(ArraySegment<byte> typeName, ref MessagePackReader byteSequence, IFormatterResolver resolver)
+        private object DeserializeByTypeName(ArraySegment<byte> typeName, ref MessagePackReader byteSequence, MessagePackSerializerOptions options)
         {
             // try get type with assembly name, throw if not found
             Type type;
@@ -290,6 +291,7 @@ namespace MessagePack.Formatters
                     {
                         var ti = type.GetTypeInfo();
 
+                        var resolver = options.Resolver;
                         var formatter = resolver.GetFormatterDynamic(type);
                         if (formatter == null)
                         {
@@ -299,9 +301,9 @@ namespace MessagePack.Formatters
                         var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                         var param0 = Expression.Parameter(typeof(object), "formatter");
                         var param1 = Expression.Parameter(typeof(MessagePackReader).MakeByRefType(), "reader");
-                        var param2 = Expression.Parameter(typeof(IFormatterResolver), "resolver");
+                        var param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
 
-                        var deserializeMethodInfo = formatterType.GetRuntimeMethod("Deserialize", new[] { typeof(MessagePackReader).MakeByRefType(), typeof(IFormatterResolver) });
+                        var deserializeMethodInfo = formatterType.GetRuntimeMethod("Deserialize", new[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
 
                         var deserialize = Expression.Call(
                             Expression.Convert(param0, formatterType),
@@ -320,7 +322,7 @@ namespace MessagePack.Formatters
                 }
             }
 
-            return formatterAndDelegate.Value(formatterAndDelegate.Key, ref byteSequence, resolver);
+            return formatterAndDelegate.Value(formatterAndDelegate.Key, ref byteSequence, options);
         }
     }
 
