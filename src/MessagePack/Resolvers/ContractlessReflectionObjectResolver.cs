@@ -1,6 +1,4 @@
-﻿#if NETSTANDARD
-
-using MessagePack.Formatters;
+﻿using MessagePack.Formatters;
 using MessagePack.Internal;
 using System;
 using System.Collections.Generic;
@@ -301,5 +299,3 @@ namespace MessagePack.Resolvers
     //    }
     //}
 }
-
-#endif
