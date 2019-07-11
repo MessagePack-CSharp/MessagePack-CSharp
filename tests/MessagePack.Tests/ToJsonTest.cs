@@ -10,16 +10,13 @@ namespace MessagePack.Tests
 {
     public class ToJsonTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-        private LZ4MessagePackSerializer lz4Serializer = new LZ4MessagePackSerializer();
-
-        string JsonConvert(string json, MessagePackSerializer serializer)
+        string JsonConvert(string json, MessagePackSerializerOptions options)
         {
             var sequence = new Sequence<byte>();
             var sequenceWriter = new MessagePackWriter(sequence);
-            serializer.ConvertFromJson(json, ref sequenceWriter);
+            MessagePackSerializer.ConvertFromJson(json, ref sequenceWriter, options);
             sequenceWriter.Flush();
-            return serializer.ConvertToJson(sequence.AsReadOnlySequence);
+            return MessagePackSerializer.ConvertToJson(sequence.AsReadOnlySequence, options);
         }
 
         [Theory]
@@ -32,24 +29,24 @@ namespace MessagePack.Tests
         [InlineData(@"[1,20,false,true,3424.432]")]
         public void SimpleToJson(string json)
         {
-            JsonConvert(json, serializer).Is(json);
-            JsonConvert(json, lz4Serializer).Is(json);
+            JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
+            JsonConvert(json, MessagePackSerializerOptions.LZ4Default).Is(json);
         }
 
         [Fact]
         public void ComplexToJson()
         {
             var json = @"{""reservations"":[{""instances"":[{""type"":""small"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""large"",""state"":{""name"":""stopped""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]}]},{""instances"":[{""type"":""medium"",""state"":{""name"":""terminated""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""xlarge"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""DB""]},{""Key"":""version"",""Values"":[""1""]}]}]}]}";
-            JsonConvert(json, serializer).Is(json);
-            JsonConvert(json, lz4Serializer).Is(json);
+            JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
+            JsonConvert(json, MessagePackSerializerOptions.LZ4Default).Is(json);
         }
 
         [Fact]
         public void FloatJson()
         {
             var f = 3.33f;
-            var xs = serializer.Serialize(f);
-            var json = serializer.ConvertToJson(xs);
+            var xs = MessagePackSerializer.Serialize(f);
+            var json = MessagePackSerializer.ConvertToJson(xs);
             json.Is("3.33");
         }
 
@@ -60,8 +57,8 @@ namespace MessagePack.Tests
         [InlineData(@"{""Amount"":1E-06}", @"{""Amount"":1E-06}")]
         public void ScientificFloatJsonRoundTrip(string inputJson, string expectedRoundTripJson)
         {
-            JsonConvert(inputJson, serializer).Is(expectedRoundTripJson);
-            JsonConvert(inputJson, lz4Serializer).Is(expectedRoundTripJson);
+            JsonConvert(inputJson, MessagePackSerializerOptions.Default).Is(expectedRoundTripJson);
+            JsonConvert(inputJson, MessagePackSerializerOptions.LZ4Default).Is(expectedRoundTripJson);
         }
     }
 }

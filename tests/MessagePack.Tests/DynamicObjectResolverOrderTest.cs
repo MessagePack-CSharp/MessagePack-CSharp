@@ -41,8 +41,6 @@ namespace MessagePack.Tests
 
     public class DynamicObjectResolverOrderTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         IEnumerable<string> IteratePropertyNames(ReadOnlyMemory<byte> bytes)
         {
             var reader = new MessagePackReader(bytes);
@@ -60,7 +58,7 @@ namespace MessagePack.Tests
         [Fact]
         public void OrderTest()
         {
-            var msgRawData = serializer.Serialize(new OrderOrder());
+            var msgRawData = MessagePackSerializer.Serialize(new OrderOrder());
             IteratePropertyNames(msgRawData).Is("Bar", "Moge", "Foo", "FooBar", "NoBar");
         }
 
@@ -68,7 +66,7 @@ namespace MessagePack.Tests
         public void InheritIterateOrder()
         {
             RealClass realClass = new RealClass { Str = "X" };
-            var msgRawData = serializer.Serialize(realClass);
+            var msgRawData = MessagePackSerializer.Serialize(realClass);
 
             IteratePropertyNames(msgRawData).Is("Id", "Str");
         }

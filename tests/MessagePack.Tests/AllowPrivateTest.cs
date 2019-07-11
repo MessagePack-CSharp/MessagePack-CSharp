@@ -10,8 +10,6 @@ namespace MessagePack.Tests
 {
     public class AllowPrivateTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         [MessagePackObject]
         public class HasPrivate
         {
@@ -145,12 +143,12 @@ namespace MessagePack.Tests
                 var p = new HasPrivate { PublicKey = 100, PublicKeyS = "foo" };
                 p.SetPrivate(99, "bar");
 
-                var bin = serializer.Serialize(p, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
-                var json = serializer.ConvertToJson(bin);
+                var bin = MessagePackSerializer.Serialize(p, StandardResolverAllowPrivate.Options);
+                var json = MessagePackSerializer.ConvertToJson(bin);
 
                 json.Is("[99,100,\"bar\",\"foo\"]");
 
-                var r2 = serializer.Deserialize<HasPrivate>(bin, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
+                var r2 = MessagePackSerializer.Deserialize<HasPrivate>(bin, StandardResolverAllowPrivate.Options);
                 r2.PublicKey.Is(100);
                 r2.PublicKeyS.Is("foo");
                 r2.GetPrivateInt().Is(99);
@@ -160,12 +158,12 @@ namespace MessagePack.Tests
                 var p = new HasPrivateStruct { PublicKey = 100, PublicKeyS = "foo" };
                 p.SetPrivate(99, "bar");
 
-                var bin = serializer.Serialize(p, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
-                var json = serializer.ConvertToJson(bin);
+                var bin = MessagePackSerializer.Serialize(p, StandardResolverAllowPrivate.Options);
+                var json = MessagePackSerializer.ConvertToJson(bin);
 
                 json.Is("[99,100,\"bar\",\"foo\"]");
 
-                var r2 = serializer.Deserialize<HasPrivate>(bin, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
+                var r2 = MessagePackSerializer.Deserialize<HasPrivate>(bin, StandardResolverAllowPrivate.Options);
                 r2.PublicKey.Is(100);
                 r2.PublicKeyS.Is("foo");
                 r2.GetPrivateInt().Is(99);
@@ -175,12 +173,12 @@ namespace MessagePack.Tests
                 var p = new HasPrivateStringKey { PublicKey = 100, PublicKeyS = "foo" };
                 p.SetPrivate(99, "bar");
 
-                var bin = serializer.Serialize(p, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
-                var json = serializer.ConvertToJson(bin);
+                var bin = MessagePackSerializer.Serialize(p, StandardResolverAllowPrivate.Options);
+                var json = MessagePackSerializer.ConvertToJson(bin);
 
                 json.Is("{\"PublicKey\":100,\"privateKeyS\":\"bar\",\"PublicKeyS\":\"foo\",\"privateKey\":99}");
 
-                var r2 = serializer.Deserialize<HasPrivateStringKey>(bin, MessagePack.Resolvers.StandardResolverAllowPrivate.Instance);
+                var r2 = MessagePackSerializer.Deserialize<HasPrivateStringKey>(bin, StandardResolverAllowPrivate.Options);
                 r2.PublicKey.Is(100);
                 r2.PublicKeyS.Is("foo");
                 r2.GetPrivateInt().Is(99);
@@ -190,12 +188,12 @@ namespace MessagePack.Tests
                 var p = new HasPrivateContractless { PublicKey = 100, PublicKeyS = "foo" };
                 p.SetPrivate(99, "bar");
 
-                var bin = serializer.Serialize(p, MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Instance);
-                var json = serializer.ConvertToJson(bin);
+                var bin = MessagePackSerializer.Serialize(p, ContractlessStandardResolverAllowPrivate.Options);
+                var json = MessagePackSerializer.ConvertToJson(bin);
 
                 json.Is("{\"PublicKey\":100,\"privateKeyS\":\"bar\",\"PublicKeyS\":\"foo\",\"privateKey\":99}");
 
-                var r2 = serializer.Deserialize<HasPrivateContractless>(bin, MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Instance);
+                var r2 = MessagePackSerializer.Deserialize<HasPrivateContractless>(bin, ContractlessStandardResolverAllowPrivate.Options);
                 r2.PublicKey.Is(100);
                 r2.PublicKeyS.Is("foo");
                 r2.GetPrivateInt().Is(99);
@@ -206,8 +204,8 @@ namespace MessagePack.Tests
         [Fact]
         public void Empty()
         {
-            var x = serializer.Serialize(new EmptyConstructorStruct { X = 99 }, StandardResolverAllowPrivate.Instance);
-            serializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Instance).X.Is(99);
+            var x = MessagePackSerializer.Serialize(new EmptyConstructorStruct { X = 99 }, StandardResolverAllowPrivate.Options);
+            MessagePackSerializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Options).X.Is(99);
         }
     }
 }

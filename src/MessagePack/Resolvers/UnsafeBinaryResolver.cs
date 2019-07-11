@@ -8,7 +8,10 @@ namespace MessagePack.Resolvers
 {
     public sealed class UnsafeBinaryResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new UnsafeBinaryResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly UnsafeBinaryResolver Instance = new UnsafeBinaryResolver();
 
         UnsafeBinaryResolver()
         {

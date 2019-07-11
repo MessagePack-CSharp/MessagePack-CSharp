@@ -21,7 +21,17 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class DynamicObjectResolver : IFormatterResolver
     {
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
         public static readonly DynamicObjectResolver Instance = new DynamicObjectResolver();
+
+#if !DYNAMICCODEDUMPER
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+#endif
 
         const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
 
@@ -29,7 +39,6 @@ namespace MessagePack.Resolvers
 
         DynamicObjectResolver()
         {
-
         }
 
         static DynamicObjectResolver()

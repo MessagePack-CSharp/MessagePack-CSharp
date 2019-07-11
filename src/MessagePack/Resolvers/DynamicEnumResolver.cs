@@ -15,6 +15,9 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class DynamicEnumResolver : IFormatterResolver
     {
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
         public static readonly DynamicEnumResolver Instance = new DynamicEnumResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicEnumResolver";

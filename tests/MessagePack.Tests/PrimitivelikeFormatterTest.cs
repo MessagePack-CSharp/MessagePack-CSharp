@@ -13,6 +13,11 @@ namespace MessagePack.Tests
 {
     public class PrimitivelikeResolver : IFormatterResolver
     {
+        /// <summary>
+        /// An <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Default.WithResolver(new PrimitivelikeResolver());
+
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
             if (typeof(T) == typeof(DateTime))
@@ -46,16 +51,12 @@ namespace MessagePack.Tests
 
     public class PrimitivelikeFormatterTest
     {
-        private MessagePackSerializer defaultSerializer = new MessagePackSerializer();
-
         [Fact]
         public void CanResolve()
         {
-            var resolver = new PrimitivelikeResolver();
-
             Assert.Throws<NotImplementedException>(() =>
             {
-                defaultSerializer.Serialize(new MyDateTimeResolverTest() { MyProperty1 = DateTime.Now }, resolver);
+                MessagePackSerializer.Serialize(new MyDateTimeResolverTest() { MyProperty1 = DateTime.Now }, PrimitivelikeResolver.Options);
             });
         }
 
@@ -71,12 +72,12 @@ namespace MessagePack.Tests
 
             var serializer = referenceContext.GetSerializer<DateTime>();
 
-            var a = defaultSerializer.Serialize(now, NativeDateTimeResolver.Instance);
+            var a = MessagePackSerializer.Serialize(now, NativeDateTimeResolver.Options);
             var b = serializer.PackSingleObject(now);
 
             a.Is(b);
 
-            var dt1 = defaultSerializer.Deserialize<DateTime>(a, NativeDateTimeResolver.Instance);
+            var dt1 = MessagePackSerializer.Deserialize<DateTime>(a, NativeDateTimeResolver.Options);
             var dt2 = serializer.UnpackSingleObject(b);
 
             dt1.Is(dt2);
@@ -97,7 +98,7 @@ namespace MessagePack.Tests
             using (var sequence = new Sequence<byte>())
             {
                 var oldSpecWriter = new MessagePackWriter(sequence) { OldSpec = true };
-                defaultSerializer.Serialize(ref oldSpecWriter, data);
+                MessagePackSerializer.Serialize(ref oldSpecWriter, data);
                 oldSpecWriter.Flush();
                 var a = sequence.AsReadOnlySequence.ToArray();
                 var b = serializer.PackSingleObject(data);
@@ -105,7 +106,7 @@ namespace MessagePack.Tests
                 a.Is(b);
 
                 var oldSpecReader = new MessagePackReader(sequence.AsReadOnlySequence);
-                var r1 = defaultSerializer.Deserialize<string>(ref oldSpecReader);
+                var r1 = MessagePackSerializer.Deserialize<string>(ref oldSpecReader);
                 var r2 = serializer.UnpackSingleObject(b);
 
                 r1.Is(r2);
@@ -128,7 +129,7 @@ namespace MessagePack.Tests
             using (var sequence = new Sequence<byte>())
             {
                 var oldSpecWriter = new MessagePackWriter(sequence) { OldSpec = true };
-                defaultSerializer.Serialize(ref oldSpecWriter, data);
+                MessagePackSerializer.Serialize(ref oldSpecWriter, data);
                 oldSpecWriter.Flush();
                 var a = sequence.AsReadOnlySequence.ToArray();
                 var b = serializer.PackSingleObject(data);
@@ -136,7 +137,7 @@ namespace MessagePack.Tests
                 a.Is(b);
 
                 var oldSpecReader = new MessagePackReader(sequence.AsReadOnlySequence);
-                var r1 = defaultSerializer.Deserialize<byte[]>(ref oldSpecReader);
+                var r1 = MessagePackSerializer.Deserialize<byte[]>(ref oldSpecReader);
                 var r2 = serializer.UnpackSingleObject(b);
 
                 r1.Is(r2);

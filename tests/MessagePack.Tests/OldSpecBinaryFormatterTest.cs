@@ -14,8 +14,6 @@ namespace MessagePack.Tests
 {
     public class OldSpecBinaryFormatterTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         [Theory]
         [InlineData(10)] // fixstr
         [InlineData(1000)] // str 16
@@ -25,7 +23,7 @@ namespace MessagePack.Tests
             var sourceBytes = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte)i)).ToArray(); // long byte array
             var messagePackBytes = new Sequence<byte>();
             var messagePackBytesWriter = new MessagePackWriter(messagePackBytes) { OldSpec = true };
-            serializer.Serialize(ref messagePackBytesWriter, sourceBytes);
+            MessagePackSerializer.Serialize(ref messagePackBytesWriter, sourceBytes);
             messagePackBytesWriter.Flush();
             Assert.NotEqual(0, messagePackBytes.Length);
 
@@ -39,7 +37,7 @@ namespace MessagePack.Tests
             byte[] sourceBytes = null;
             var messagePackBytes = new Sequence<byte>();
             var messagePackBytesWriter = new MessagePackWriter(messagePackBytes) { OldSpec = true };
-            serializer.Serialize(ref messagePackBytesWriter, sourceBytes, StandardResolver.Instance);
+            MessagePackSerializer.Serialize(ref messagePackBytesWriter, sourceBytes);
             messagePackBytesWriter.Flush();
             Assert.Equal(1, messagePackBytes.Length);
             Assert.Equal(MessagePackCode.Nil, messagePackBytes.AsReadOnlySequence.First.Span[0]); 
@@ -59,7 +57,7 @@ namespace MessagePack.Tests
                 Id = 123,
                 Value = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte) i)).ToArray() // long byte array
             };
-            byte[] messagePackBytes = serializer.Serialize(foo);
+            byte[] messagePackBytes = MessagePackSerializer.Serialize(foo);
             Assert.NotEmpty(messagePackBytes);
 
             var deserializedFoo = DeserializeByClassicMsgPack<Foo>(messagePackBytes, MsgPack.Serialization.SerializationMethod.Map);
@@ -76,7 +74,7 @@ namespace MessagePack.Tests
             var sourceBytes = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte) i)).ToArray(); // long byte array
             var messagePackBytes = SerializeByClassicMsgPack(sourceBytes, MsgPack.Serialization.SerializationMethod.Array);
             var messagePackBytesReader = new MessagePackReader(messagePackBytes);
-            var deserializedBytes = serializer.Deserialize<byte[]>(ref messagePackBytesReader);
+            var deserializedBytes = MessagePackSerializer.Deserialize<byte[]>(ref messagePackBytesReader);
             Assert.NotNull(deserializedBytes);
             Assert.Equal(sourceBytes, deserializedBytes);
         }
@@ -86,7 +84,7 @@ namespace MessagePack.Tests
         {
             var messagePackReader = new MessagePackReader(new byte[] { MessagePackCode.Nil });
 
-            var deserializedObj = serializer.Deserialize<byte[]>(ref messagePackReader);
+            var deserializedObj = MessagePackSerializer.Deserialize<byte[]>(ref messagePackReader);
             Assert.Null(deserializedObj);
         }
 
@@ -103,7 +101,7 @@ namespace MessagePack.Tests
             };
             var messagePackBytes = SerializeByClassicMsgPack(foo, MsgPack.Serialization.SerializationMethod.Map);
             var oldSpecReader = new MessagePackReader(messagePackBytes);
-            var deserializedFoo = serializer.Deserialize<Foo>(ref oldSpecReader);
+            var deserializedFoo = MessagePackSerializer.Deserialize<Foo>(ref oldSpecReader);
             Assert.NotNull(deserializedFoo);
             Assert.Equal(foo.Id, deserializedFoo.Id);
             Assert.Equal(foo.Value, deserializedFoo.Value);
@@ -117,10 +115,10 @@ namespace MessagePack.Tests
                 CompatibilityOptions = { PackerCompatibilityOptions = MsgPack.PackerCompatibilityOptions.Classic }
             };
 
-            var serializer = MsgPack.Serialization.MessagePackSerializer.Get<T>(context);
+            var MessagePackSerializer = MsgPack.Serialization.MessagePackSerializer.Get<T>(context);
             using (var memory = new MemoryStream())
             {
-                serializer.Pack(memory, obj);
+                MessagePackSerializer.Pack(memory, obj);
                 return memory.ToArray();
             }
         }
@@ -133,10 +131,10 @@ namespace MessagePack.Tests
                 CompatibilityOptions = { PackerCompatibilityOptions = MsgPack.PackerCompatibilityOptions.Classic }
             };
 
-            var serializer = MsgPack.Serialization.MessagePackSerializer.Get<T>(context);
+            var MessagePackSerializer = MsgPack.Serialization.MessagePackSerializer.Get<T>(context);
             using (var memory = new MemoryStream(messagePackBytes))
             {
-                return serializer.Unpack(memory);
+                return MessagePackSerializer.Unpack(memory);
             }
         }
 

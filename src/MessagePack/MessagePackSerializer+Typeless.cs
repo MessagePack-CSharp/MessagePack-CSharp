@@ -11,41 +11,35 @@ namespace MessagePack
     public partial class MessagePackSerializer
     {
         /// <summary>
-        /// A convenience wrapper around <see cref="MessagePackSerializer"/> that assumes all generic type arguments are <see cref="object"/>.
+        /// A convenience wrapper around <see cref="MessagePackSerializer"/> that assumes all generic type arguments are <see cref="object"/>
+        /// causing the type of top-level objects to be recorded in the MessagePack stream and thus deserialized to the original type automatically.
         /// </summary>
-        public class Typeless
+        public static class Typeless
         {
-            private readonly MessagePackSerializer serializer;
+            /// <summary>
+            /// The default set of options to run with.
+            /// </summary>
+            public static readonly MessagePackSerializerOptions DefaultOptions = Resolvers.TypelessContractlessStandardResolver.Options;
 
-            public Typeless()
-                : this(new MessagePackSerializer(new Resolvers.TypelessContractlessStandardResolver()))
-            {
-            }
+            public static void Serialize(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options = null) => Serialize<object>(ref writer, obj, options ?? DefaultOptions);
 
-            public Typeless(MessagePackSerializer serializer)
-            {
-                this.serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            }
+            public static void Serialize(IBufferWriter<byte> writer, object obj, MessagePackSerializerOptions options = null) => Serialize<object>(writer, obj, options ?? DefaultOptions);
 
-            public void Serialize(ref MessagePackWriter writer, object obj) => serializer.Serialize(ref writer, obj);
+            public static byte[] Serialize(object obj, MessagePackSerializerOptions options = null) => Serialize<object>(obj, options ?? DefaultOptions);
 
-            public void Serialize(IBufferWriter<byte> writer, object obj) => serializer.Serialize(writer, obj);
+            public static void Serialize(Stream stream, object obj, MessagePackSerializerOptions options = null) => Serialize<object>(stream, obj, options ?? DefaultOptions);
 
-            public byte[] Serialize(object obj) => serializer.Serialize(obj);
+            public static ValueTask SerializeAsync(Stream stream, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => SerializeAsync<object>(stream, obj, options ?? DefaultOptions, cancellationToken);
 
-            public void Serialize(Stream stream, object obj) => serializer.Serialize(stream, obj);
+            public static object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options = null) => Deserialize<object>(ref reader, options ?? DefaultOptions);
 
-            public ValueTask SerializeAsync(Stream stream, object obj, CancellationToken cancellationToken) => serializer.SerializeAsync(stream, obj, cancellationToken: cancellationToken);
+            public static object Deserialize(in ReadOnlySequence<byte> byteSequence, MessagePackSerializerOptions options = null) => Deserialize<object>(byteSequence, options ?? DefaultOptions);
 
-            public object Deserialize(ref MessagePackReader reader) => serializer.Deserialize<object>(ref reader);
+            public static object Deserialize(Stream stream, MessagePackSerializerOptions options = null) => Deserialize<object>(stream, options ?? DefaultOptions);
 
-            public object Deserialize(in ReadOnlySequence<byte> byteSequence) => serializer.Deserialize<object>(byteSequence);
+            public static object Deserialize(Memory<byte> bytes, MessagePackSerializerOptions options = null) => Deserialize<object>(bytes, options ?? DefaultOptions);
 
-            public object Deserialize(Stream stream) => serializer.Deserialize<object>(stream);
-
-            public object Deserialize(Memory<byte> bytes) => serializer.Deserialize<object>(bytes);
-
-            public ValueTask<object> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default) => serializer.DeserializeAsync<object>(stream, cancellationToken: cancellationToken);
+            public static ValueTask<object> DeserializeAsync(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => DeserializeAsync<object>(stream, options ?? DefaultOptions, cancellationToken);
         }
     }
 }

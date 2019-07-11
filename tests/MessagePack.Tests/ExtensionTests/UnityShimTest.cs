@@ -21,21 +21,18 @@ namespace MessagePack.Tests.ExtensionTests
         }
     }
 
-
-
     public class UnityShimTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         T ConvertBlit<T>(T value)
         {
-            var resolver = new WithUnityBlitResolver();
-            return serializer.Deserialize<T>(serializer.Serialize(value, resolver), resolver);
+            var options = MessagePackSerializerOptions.Default.WithResolver(new WithUnityBlitResolver());
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
         T ConvertStandard<T>(T value)
         {
-            return serializer.Deserialize<T>(serializer.Serialize(value, UnityResolver.Instance), UnityResolver.Instance);
+            var options = MessagePackSerializerOptions.Default.WithResolver(UnityResolver.Instance);
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
         public static object[][] testData = new object[][]

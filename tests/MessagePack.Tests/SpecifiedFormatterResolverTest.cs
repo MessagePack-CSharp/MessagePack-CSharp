@@ -11,8 +11,6 @@ namespace MessagePack.Tests
 {
     public class SpecifiedFormatterResolverTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         [MessagePackFormatter(typeof(NoObjectFormatter))]
         class CustomClassObject
         {
@@ -176,7 +174,7 @@ namespace MessagePack.Tests
 
         T Convert<T>(T value)
         {
-            return serializer.Deserialize<T>(serializer.Serialize(value, MessagePack.Resolvers.StandardResolver.Instance), MessagePack.Resolvers.StandardResolver.Instance);
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
         [Fact]

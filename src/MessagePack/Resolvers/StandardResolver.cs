@@ -10,7 +10,15 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class StandardResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new StandardResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly StandardResolver Instance = new StandardResolver();
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
 #if !UNITY
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverCore.Instance);
@@ -50,7 +58,15 @@ namespace MessagePack.Resolvers
 
     public sealed class ContractlessStandardResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new ContractlessStandardResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly ContractlessStandardResolver Instance = new ContractlessStandardResolver();
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
 #if !UNITY
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverCore.Instance);
@@ -90,7 +106,15 @@ namespace MessagePack.Resolvers
 
     public sealed class StandardResolverAllowPrivate : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new StandardResolverAllowPrivate();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly StandardResolverAllowPrivate Instance = new StandardResolverAllowPrivate();
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
 #if !UNITY
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverAllowPrivateCore.Instance);
@@ -130,7 +154,15 @@ namespace MessagePack.Resolvers
 
     public sealed class ContractlessStandardResolverAllowPrivate : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new ContractlessStandardResolverAllowPrivate();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly ContractlessStandardResolverAllowPrivate Instance = new ContractlessStandardResolverAllowPrivate();
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
 #if !UNITY
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverAllowPrivateCore.Instance);
@@ -173,7 +205,7 @@ namespace MessagePack.Internal
 {
     internal static class StandardResolverHelper
     {
-        public static readonly IFormatterResolver[] DefaultResolvers = new[]
+        public static readonly IFormatterResolver[] DefaultResolvers = new IFormatterResolver[]
         {
             BuiltinResolver.Instance, // Try Builtin
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
@@ -193,7 +225,7 @@ namespace MessagePack.Internal
 
     internal sealed class StandardResolverCore : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new StandardResolverCore();
+        internal static readonly StandardResolverCore Instance = new StandardResolverCore();
 
         static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
@@ -232,7 +264,7 @@ namespace MessagePack.Internal
 
     internal sealed class ContractlessStandardResolverCore : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new ContractlessStandardResolverCore();
+        internal static readonly ContractlessStandardResolverCore Instance = new ContractlessStandardResolverCore();
 
         static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
@@ -273,7 +305,7 @@ namespace MessagePack.Internal
 
     internal sealed class StandardResolverAllowPrivateCore : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new StandardResolverAllowPrivateCore();
+        public static readonly StandardResolverAllowPrivateCore Instance = new StandardResolverAllowPrivateCore();
 
         static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
@@ -312,7 +344,7 @@ namespace MessagePack.Internal
 
     internal sealed class ContractlessStandardResolverAllowPrivateCore : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new ContractlessStandardResolverAllowPrivateCore();
+        public static readonly ContractlessStandardResolverAllowPrivateCore Instance = new ContractlessStandardResolverAllowPrivateCore();
 
         static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {

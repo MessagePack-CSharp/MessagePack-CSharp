@@ -6,11 +6,18 @@ namespace MessagePack.Resolvers
 {
     public sealed class NativeDateTimeResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new NativeDateTimeResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly NativeDateTimeResolver Instance = new NativeDateTimeResolver();
+
+        /// <summary>
+        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
         NativeDateTimeResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()

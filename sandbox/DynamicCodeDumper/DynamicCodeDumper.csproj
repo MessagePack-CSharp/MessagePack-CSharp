@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);DYNAMICCODEDUMPER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\src\MessagePack.Annotations\Attributes.cs">

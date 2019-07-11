@@ -12,9 +12,6 @@ namespace MessagePack.Tests
 {
     public class TypelessContractlessStandardResolverTest
     {
-        private MessagePackSerializer defaultSerializer = new MessagePackSerializer(new TypelessContractlessStandardResolver());
-        private MessagePackSerializer.Typeless typeless = new MessagePackSerializer.Typeless();
-
         public class Address
         {
             public string Street { get; set; }
@@ -44,11 +41,11 @@ namespace MessagePack.Tests
                     }
             };
 
-            var result = defaultSerializer.Serialize(p);
+            var result = MessagePackSerializer.Serialize(p, TypelessContractlessStandardResolver.Options);
 
-            defaultSerializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
 
-            var p2 = defaultSerializer.Deserialize<Person>(result);
+            var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
             p2.Name.Is("John");
             var addresses = p2.Addresses as IList;
             var d1 = addresses[0] as IDictionary;
@@ -70,12 +67,12 @@ namespace MessagePack.Tests
                 }
             };
 
-            var result = defaultSerializer.Serialize(p);
+            var result = MessagePackSerializer.Serialize(p, TypelessContractlessStandardResolver.Options);
 
-            var p2 = defaultSerializer.Deserialize<Person>(result);
+            var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
             p.IsStructuralEqual(p2);
 
-            defaultSerializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
         }
 
         [Fact]
@@ -91,15 +88,15 @@ namespace MessagePack.Tests
                 }
             };
 
-            var result = defaultSerializer.Serialize(p);
+            var result = MessagePackSerializer.Serialize(p, TypelessContractlessStandardResolver.Options);
 
-            var p2 = defaultSerializer.Deserialize<Person>(result);
+            var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
             p.IsStructuralEqual(p2);
 
 #if NETFRAMEWORK
-            defaultSerializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, mscorlib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, mscorlib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
 #else
-            defaultSerializer.ConvertToJson(result).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, System.Private.CoreLib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""""System.Object, System.Private.CoreLib""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
 #endif
         }
 
@@ -110,8 +107,8 @@ namespace MessagePack.Tests
         public void TypelessContractlessTest()
         {
             object obj = new B() { Nested = new A() { Id = 1 } };
-            var result = defaultSerializer.Serialize(obj);
-            defaultSerializer.ConvertToJson(result).Is(@"{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+B, MessagePack.Tests"",""Nested"":{""Id"":1}}");
+            var result = MessagePackSerializer.Serialize(obj, TypelessContractlessStandardResolver.Options);
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+B, MessagePack.Tests"",""Nested"":{""Id"":1}}");
         }
 
         [MessagePackObject]
@@ -123,8 +120,8 @@ namespace MessagePack.Tests
         public void TypelessAttributedTest()
         {
             object obj = new BC() { Nested = new AC() { Id = 1 }, Name = "Zed" };
-            var result = defaultSerializer.Serialize(obj);
-            defaultSerializer.ConvertToJson(result).Is(@"[""MessagePack.Tests.TypelessContractlessStandardResolverTest+BC, MessagePack.Tests"",[1],""Zed""]");
+            var result = MessagePackSerializer.Serialize(obj, TypelessContractlessStandardResolver.Options);
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"[""MessagePack.Tests.TypelessContractlessStandardResolverTest+BC, MessagePack.Tests"",[1],""Zed""]");
         }
 
         [Fact]
@@ -135,15 +132,15 @@ namespace MessagePack.Tests
                 { (byte)1, "a"},
                 { (byte)2, new object[] { "level2", new object[] { "level3", new Person() { Name = "Peter", Addresses = new object[] { new Address() { Street = "St." }, new DateTime(2017,6,26,14,58,0) } } } } }
             };
-            var result = defaultSerializer.Serialize(arr);
+            var result = MessagePackSerializer.Serialize(arr, TypelessContractlessStandardResolver.Options);
 
-            var deser = defaultSerializer.Deserialize<Dictionary<object, object>>(result);
+            var deser = MessagePackSerializer.Deserialize<Dictionary<object, object>>(result, TypelessContractlessStandardResolver.Options);
             deser.IsStructuralEqual(arr);
 
 #if NETFRAMEWORK
-            defaultSerializer.ConvertToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], mscorlib"",""level2"",[""System.Object[], mscorlib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, mscorlib"",636340858800000000}]}]]}");
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""1"":""a"",""2"":[""System.Object[], mscorlib"",""level2"",[""System.Object[], mscorlib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, mscorlib"",636340858800000000}]}]]}");
 #else
-            defaultSerializer.ConvertToJson(result).Is(@"{""1"":""a"",""2"":[""System.Object[], System.Private.CoreLib"",""level2"",[""System.Object[], System.Private.CoreLib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, System.Private.CoreLib"",636340858800000000}]}]]}");
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""1"":""a"",""2"":[""System.Object[], System.Private.CoreLib"",""level2"",[""System.Object[], System.Private.CoreLib"",""level3"",{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Person, MessagePack.Tests"",""Name"":""Peter"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""System.DateTime, System.Private.CoreLib"",636340858800000000}]}]]}");
 #endif
         }
 
@@ -151,14 +148,14 @@ namespace MessagePack.Tests
         public void PreservingCollectionTypeTest()
         {
             var arr = new object[] { (byte)1, new object[] { (byte)2, new LinkedList<object>(new object[] { "a", (byte)42 }) } };
-            var result = defaultSerializer.Serialize(arr);
-            var deser = defaultSerializer.Deserialize<object[]>(result);
+            var result = MessagePackSerializer.Serialize(arr, TypelessContractlessStandardResolver.Options);
+            var deser = MessagePackSerializer.Deserialize<object[]>(result, TypelessContractlessStandardResolver.Options);
             deser.IsStructuralEqual(arr);
 
 #if NETFRAMEWORK
-            defaultSerializer.ConvertToJson(result).Is(@"[1,[""System.Object[], mscorlib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"",""a"",42]]]");
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"[1,[""System.Object[], mscorlib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"",""a"",42]]]");
 #else
-            defaultSerializer.ConvertToJson(result).Is(@"[1,[""System.Object[], System.Private.CoreLib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, System.Private.CoreLib]], System.Collections"",""a"",42]]]");
+            MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"[1,[""System.Object[], System.Private.CoreLib"",2,[""System.Collections.Generic.LinkedList`1[[System.Object, System.Private.CoreLib]], System.Collections"",""a"",42]]]");
 #endif
         }
 
@@ -176,8 +173,8 @@ namespace MessagePack.Tests
         {
             var v = new ForTypelessObj() { Obj = p };
 
-            var bin = typeless.Serialize(v);
-            var o = (ForTypelessObj)typeless.Deserialize(bin);
+            var bin = MessagePackSerializer.Typeless.Serialize(v);
+            var o = (ForTypelessObj)MessagePackSerializer.Typeless.Deserialize(bin);
 
             o.Obj.GetType().Is(typeof(T));
         }
@@ -189,8 +186,8 @@ namespace MessagePack.Tests
                 var now = DateTime.Now;
                 var v = new ForTypelessObj() { Obj = now };
 
-                var bin = typeless.Serialize(v);
-                var o = (ForTypelessObj)typeless.Deserialize(bin);
+                var bin = MessagePackSerializer.Typeless.Serialize(v);
+                var o = (ForTypelessObj)MessagePackSerializer.Typeless.Deserialize(bin);
 
                 o.Obj.GetType().Is(typeof(DateTime));
                 ((DateTime)o.Obj).Is(now);
@@ -199,8 +196,8 @@ namespace MessagePack.Tests
                 var now = DateTimeOffset.Now;
                 var v = new ForTypelessObj() { Obj = now };
 
-                var bin = typeless.Serialize(v);
-                var o = (ForTypelessObj)typeless.Deserialize(bin);
+                var bin = MessagePackSerializer.Typeless.Serialize(v);
+                var o = (ForTypelessObj)MessagePackSerializer.Typeless.Deserialize(bin);
 
                 o.Obj.GetType().Is(typeof(DateTimeOffset));
                 ((DateTimeOffset)o.Obj).Is(now);
@@ -210,8 +207,8 @@ namespace MessagePack.Tests
         [Fact]
         public void TypelessEnum()
         {
-            var e = typeless.Serialize(GlobalMyEnum.Apple);
-            var b = typeless.Deserialize(e);
+            var e = MessagePackSerializer.Typeless.Serialize(GlobalMyEnum.Apple);
+            var b = MessagePackSerializer.Typeless.Deserialize(e);
             b.GetType().Is(typeof(GlobalMyEnum));
         }
 
@@ -227,8 +224,8 @@ namespace MessagePack.Tests
             };
 
             {
-                var serializedMessage = typeless.Serialize(sampleMessage);
-                var r2 = (InternalSampleMessageType)typeless.Deserialize(serializedMessage);
+                var serializedMessage = MessagePackSerializer.Typeless.Serialize(sampleMessage);
+                var r2 = (InternalSampleMessageType)MessagePackSerializer.Typeless.Deserialize(serializedMessage);
                 r2.DateProp.Is(sampleMessage.DateProp);
                 r2.GuidProp.Is(sampleMessage.GuidProp);
                 r2.IntProp.Is(sampleMessage.IntProp);
@@ -236,9 +233,8 @@ namespace MessagePack.Tests
             }
 
             {
-                var lz4 = new LZ4MessagePackSerializer.Typeless();
-                var serializedMessage = lz4.Serialize(sampleMessage);
-                var r2 = (InternalSampleMessageType)lz4.Deserialize(serializedMessage);
+                var serializedMessage = MessagePackSerializer.Typeless.Serialize(sampleMessage, MessagePackSerializer.Typeless.DefaultOptions.WithLZ4Compression());
+                var r2 = (InternalSampleMessageType)MessagePackSerializer.Typeless.Deserialize(serializedMessage, MessagePackSerializer.Typeless.DefaultOptions.WithLZ4Compression());
                 r2.DateProp.Is(sampleMessage.DateProp);
                 r2.GuidProp.Is(sampleMessage.GuidProp);
                 r2.IntProp.Is(sampleMessage.IntProp);
@@ -251,8 +247,8 @@ namespace MessagePack.Tests
         {
             {
                 string[] array = new[] { "test1", "test2" };
-                byte[] bytes = typeless.Serialize(array);
-                object obj = typeless.Deserialize(bytes);
+                byte[] bytes = MessagePackSerializer.Typeless.Serialize(array);
+                object obj = MessagePackSerializer.Typeless.Deserialize(bytes);
 
                 var obj2 = obj as string[];
                 obj2.Is("test1", "test2");
@@ -263,9 +259,9 @@ namespace MessagePack.Tests
                     Obj = new string[] { "asd", "asd" }
                 };
 
-                var objSer = defaultSerializer.Serialize(objRaw);
+                var objSer = MessagePackSerializer.Serialize(objRaw, TypelessContractlessStandardResolver.Options);
 
-                var objDes = defaultSerializer.Deserialize<SomeClass>(objSer);
+                var objDes = MessagePackSerializer.Deserialize<SomeClass>(objSer, TypelessContractlessStandardResolver.Options);
 
                 var expectedTrue = objDes.Obj is string[];
                 expectedTrue.IsTrue();

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using MessagePack.LZ4;
 using Nerdbank.Streams;
 
 namespace MessagePack
@@ -10,52 +12,38 @@ namespace MessagePack
     /// <summary>
     /// High-Level API of MessagePack for C#.
     /// </summary>
-    public partial class MessagePackSerializer
+    public static partial class MessagePackSerializer
     {
+        public const sbyte LZ4ExtensionTypeCode = 99;
+
+        private const int LZ4NotCompressionSize = 64;
+
+        /// <summary>
+        /// The default set of options to run with.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions DefaultOptions = MessagePackSerializerOptions.Default;
+
         /// <summary>
         /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
         /// </summary>
         private static readonly SequencePool reusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount);
 
         /// <summary>
-        /// A recyclable array that may be used for short burts of code.
+        /// A thread-local, recyclable array that may be used for short bursts of code.
         /// </summary>
         [ThreadStatic]
         private static byte[] scratchArray;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MessagePackSerializer"/> class
-        /// initialized with the <see cref="Resolvers.StandardResolver"/>.
-        /// </summary>
-        public MessagePackSerializer()
-            : this(Resolvers.StandardResolver.Instance)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MessagePackSerializer"/> class
-        /// </summary>
-        /// <param name="defaultResolver">The resolver to use.</param>
-        public MessagePackSerializer(IFormatterResolver defaultResolver)
-        {
-            this.DefaultResolver = defaultResolver ?? throw new ArgumentNullException(nameof(defaultResolver));
-        }
-
-        /// <summary>
-        /// Gets the resolver to use when one is not explicitly specified.
-        /// </summary>
-        public IFormatterResolver DefaultResolver { get; }
 
         /// <summary>
         /// Serializes a given value with the specified buffer writer.
         /// </summary>
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
-        public void Serialize<T>(IBufferWriter<byte> writer, T value, IFormatterResolver resolver = null)
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        public static void Serialize<T>(IBufferWriter<byte> writer, T value, MessagePackSerializerOptions options = null)
         {
             var fastWriter = new MessagePackWriter(writer);
-            this.Serialize(ref fastWriter, value, resolver);
+            Serialize(ref fastWriter, value, options);
             fastWriter.Flush();
         }
 
@@ -64,20 +52,33 @@ namespace MessagePack
         /// </summary>
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
-        public virtual void Serialize<T>(ref MessagePackWriter writer, T value, IFormatterResolver resolver = null)
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        public static void Serialize<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options = null)
         {
-            resolver = resolver ?? this.DefaultResolver;
-            resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, resolver);
+            options = options ?? MessagePackSerializerOptions.Default;
+            if (options.UseLZ4Compression)
+            {
+                using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                {
+                    var scratchWriter = writer.Clone(scratch);
+                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options.Resolver);
+                    scratchWriter.Flush();
+                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                }
+            }
+            else
+            {
+                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options.Resolver);
+            }
         }
 
         /// <summary>
         /// Serializes a given value with the specified buffer writer.
         /// </summary>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>A byte array with the serialized value.</returns>
-        public byte[] Serialize<T>(T value, IFormatterResolver resolver = null)
+        public static byte[] Serialize<T>(T value, MessagePackSerializerOptions options = null)
         {
             byte[] array = scratchArray;
             if (array == null)
@@ -86,7 +87,7 @@ namespace MessagePack
             }
 
             var msgpackWriter = new MessagePackWriter(reusableSequenceWithMinSize, array);
-            this.Serialize(ref msgpackWriter, value, resolver);
+            Serialize(ref msgpackWriter, value, options);
             return msgpackWriter.FlushAndGetArray();
         }
 
@@ -95,12 +96,12 @@ namespace MessagePack
         /// </summary>
         /// <param name="stream">The stream to serialize to.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
-        public void Serialize<T>(Stream stream, T value, IFormatterResolver resolver = null)
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions options = null)
         {
             using (var sequenceRental = reusableSequenceWithMinSize.Rent())
             {
-                this.Serialize<T>(sequenceRental.Value, value, resolver);
+                Serialize<T>(sequenceRental.Value, value, options);
                 foreach (var segment in sequenceRental.Value.AsReadOnlySequence)
                 {
                     stream.Write(segment.Span);
@@ -113,13 +114,13 @@ namespace MessagePack
         /// </summary>
         /// <param name="stream">The stream to serialize to.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A task that completes with the result of the async serialization operation.</returns>
-        public async ValueTask SerializeAsync<T>(Stream stream, T value, IFormatterResolver resolver = null, CancellationToken cancellationToken = default)
+        public static async ValueTask SerializeAsync<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             System.IO.Pipelines.PipeWriter writer = stream.UseStrictPipeWriter();
-            this.Serialize(writer, value, resolver);
+            Serialize(writer, value, options);
             await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -128,12 +129,12 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="byteSequence">The sequence to deserialize from.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
-        public T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, IFormatterResolver resolver = null)
+        public static T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, MessagePackSerializerOptions options = null)
         {
             var reader = new MessagePackReader(byteSequence);
-            return this.Deserialize<T>(ref reader, resolver);
+            return Deserialize<T>(ref reader, options);
         }
 
         /// <summary>
@@ -141,12 +142,30 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="reader">The reader to deserialize from.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
-        public virtual T Deserialize<T>(ref MessagePackReader reader, IFormatterResolver resolver = null)
+        public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
         {
-            resolver = resolver ?? this.DefaultResolver;
-            return resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, resolver);
+            options = options ?? MessagePackSerializerOptions.Default;
+            if (options.UseLZ4Compression)
+            {
+                using (var msgPackUncompressed = new Nerdbank.Streams.Sequence<byte>())
+                {
+                    if (TryDecompress(ref reader, msgPackUncompressed))
+                    {
+                        var uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
+                        return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref uncompressedReader, options.Resolver);
+                    }
+                    else
+                    {
+                        return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options.Resolver);
+                    }
+                }
+            }
+            else
+            {
+                return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options.Resolver);
+            }
         }
 
         /// <summary>
@@ -154,12 +173,12 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="buffer">The buffer to deserialize from.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
-        public T Deserialize<T>(ReadOnlyMemory<byte> buffer, IFormatterResolver resolver = null)
+        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options = null)
         {
             var reader = new MessagePackReader(buffer);
-            return this.Deserialize<T>(ref reader, resolver);
+            return Deserialize<T>(ref reader, options);
         }
 
         /// <summary>
@@ -167,13 +186,22 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="buffer">The memory to deserialize from.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
         /// <param name="bytesRead">The number of bytes read.</param>
         /// <returns>The deserialized value.</returns>
-        public T Deserialize<T>(ReadOnlyMemory<byte> buffer, IFormatterResolver resolver, out int bytesRead)
+        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, out int bytesRead) => Deserialize<T>(buffer, options: null, out bytesRead);
+
+        /// <summary>
+        /// Deserializes a value of a given type from a sequence of bytes.
+        /// </summary>
+        /// <typeparam name="T">The type of value to deserialize.</typeparam>
+        /// <param name="buffer">The memory to deserialize from.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="bytesRead">The number of bytes read.</param>
+        /// <returns>The deserialized value.</returns>
+        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options, out int bytesRead)
         {
             var reader = new MessagePackReader(buffer);
-            T result = Deserialize<T>(ref reader, resolver);
+            T result = Deserialize<T>(ref reader, options);
             bytesRead = buffer.Slice(0, (int)reader.Consumed).Length;
             return result;
         }
@@ -183,9 +211,9 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="stream">The stream to deserialize from.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
-        public T Deserialize<T>(Stream stream, IFormatterResolver resolver = null)
+        public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options = null)
         {
             using (var sequence = new Sequence<byte>())
             {
@@ -197,7 +225,7 @@ namespace MessagePack
                     sequence.Advance(bytesRead);
                 } while (bytesRead > 0);
 
-                return this.Deserialize<T>(sequence.AsReadOnlySequence, resolver);
+                return Deserialize<T>(sequence.AsReadOnlySequence, options);
             }
         }
 
@@ -206,10 +234,10 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="stream">The stream to deserialize from.</param>
-        /// <param name="resolver">The resolver to use during deserialization. Use <c>null</c> to use the <see cref="DefaultResolver"/>.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
-        public async ValueTask<T> DeserializeAsync<T>(Stream stream, IFormatterResolver resolver = null, CancellationToken cancellationToken = default)
+        public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             using (var sequence = new Sequence<byte>())
             {
@@ -221,7 +249,100 @@ namespace MessagePack
                     sequence.Advance(bytesRead);
                 } while (bytesRead > 0);
 
-                return this.Deserialize<T>(sequence.AsReadOnlySequence, resolver);
+                return Deserialize<T>(sequence.AsReadOnlySequence, options);
+            }
+        }
+
+        private delegate int LZ4Transform(ReadOnlySpan<byte> input, Span<byte> output);
+
+        /// <summary>
+        /// Performs LZ4 compression or decompression.
+        /// </summary>
+        /// <param name="input">The input for the operation.</param>
+        /// <param name="output">The buffer to write the result of the operation.</param>
+        /// <param name="lz4Operation">The LZ4 codec transformation.</param>
+        /// <returns>The number of bytes written to the <paramref name="output"/>.</returns>
+        private static int LZ4Operation(in ReadOnlySequence<byte> input, Span<byte> output, LZ4Transform lz4Operation)
+        {
+            ReadOnlySpan<byte> inputSpan;
+            byte[] rentedInputArray = null;
+            if (input.IsSingleSegment)
+            {
+                inputSpan = input.First.Span;
+            }
+            else
+            {
+                rentedInputArray = ArrayPool<byte>.Shared.Rent((int)input.Length);
+                input.CopyTo(rentedInputArray);
+                inputSpan = rentedInputArray.AsSpan(0, (int)input.Length);
+            }
+
+            try
+            {
+                return lz4Operation(inputSpan, output);
+            }
+            finally
+            {
+                if (rentedInputArray != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedInputArray);
+                }
+            }
+        }
+
+        private static bool TryDecompress(ref MessagePackReader reader, IBufferWriter<byte> writer)
+        {
+            if (!reader.End && reader.NextMessagePackType == MessagePackType.Extension)
+            {
+                var peekReader = reader.CreatePeekReader();
+                var header = peekReader.ReadExtensionFormatHeader();
+                if (header.TypeCode == LZ4ExtensionTypeCode)
+                {
+                    // Read the extension using the original reader, so we "consume" it.
+                    var extension = reader.ReadExtensionFormat();
+                    var extReader = new MessagePackReader(extension.Data);
+
+                    // The first part of the extension payload is a MessagePack-encoded Int32 that
+                    // tells us the length the data will be AFTER decompression.
+                    int uncompressedLength = extReader.ReadInt32();
+
+                    // The rest of the payload is the compressed data itself.
+                    var compressedData = extReader.Sequence.Slice(extReader.Position);
+
+                    var uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
+                    int actualUncompressedLength = LZ4Operation(compressedData, uncompressedSpan, LZ4Codec.Decode);
+                    Debug.Assert(actualUncompressedLength == uncompressedLength);
+                    writer.Advance(actualUncompressedLength);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer)
+        {
+            if (msgpackUncompressedData.Length < LZ4NotCompressionSize)
+            {
+                writer.WriteRaw(msgpackUncompressedData);
+            }
+            else
+            {
+                var maxCompressedLength = LZ4Codec.MaximumOutputLength((int)msgpackUncompressedData.Length);
+                var lz4Span = ArrayPool<byte>.Shared.Rent(maxCompressedLength);
+                try
+                {
+                    int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4Codec.Encode);
+
+                    const int LengthOfUncompressedDataSizeHeader = 5;
+                    writer.WriteExtensionFormatHeader(new ExtensionHeader(LZ4ExtensionTypeCode, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
+                    writer.WriteInt32((int)msgpackUncompressedData.Length);
+                    writer.WriteRaw(lz4Span.AsSpan(0, lz4Length));
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(lz4Span);
+                }
             }
         }
     }

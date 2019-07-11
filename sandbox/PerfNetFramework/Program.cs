@@ -88,9 +88,6 @@ namespace PerfNetFramework
             BenchmarkEventSource.Instance.SessionEnd();
         }
 
-        internal static readonly MessagePack.MessagePackSerializer DefaultSerializer = new MessagePackSerializer();
-        internal static readonly MessagePack.LZ4MessagePackSerializer LZ4Serializer = new LZ4MessagePackSerializer();
-
         private static void Benchmark<T>(T target)
         {
             const int Iteration = 10000;
@@ -99,8 +96,8 @@ namespace PerfNetFramework
             var jsonSerializer = new JsonSerializer();
             var msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
-            DefaultSerializer.Serialize(target);
-            LZ4Serializer.Serialize(target);
+            MessagePackSerializer.Serialize(target);
+            MessagePackSerializer.Serialize(target, MessagePackSerializerOptions.LZ4Default);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
@@ -125,7 +122,7 @@ namespace PerfNetFramework
                 for (int i = 0; i < Iteration; i++)
                 {
                     data0.Reset();
-                    DefaultSerializer.Serialize(data0, target);
+                    MessagePackSerializer.Serialize(data0, target);
                 }
             }
 
@@ -133,7 +130,7 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data3 = LZ4Serializer.Serialize(target);
+                    data3 = MessagePackSerializer.Serialize(target, MessagePackSerializerOptions.LZ4Default);
                 }
             }
 
@@ -219,10 +216,10 @@ namespace PerfNetFramework
 
 
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
-            DefaultSerializer.Deserialize<T>(data0);
+            MessagePackSerializer.Deserialize<T>(data0);
             //ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
-            LZ4Serializer.Deserialize<T>(data3);
+            MessagePackSerializer.Deserialize<T>(data3, MessagePackSerializerOptions.LZ4Default);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
@@ -233,7 +230,7 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    DefaultSerializer.Deserialize<T>(data0);
+                    MessagePackSerializer.Deserialize<T>(data0);
                 }
             }
 
@@ -241,7 +238,7 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    LZ4Serializer.Deserialize<T>(data3);
+                    MessagePackSerializer.Deserialize<T>(data3, MessagePackSerializerOptions.LZ4Default);
                 }
             }
 

@@ -6,15 +6,17 @@ using System.Linq; // require UNITY_WSA
 namespace MessagePack.Resolvers
 {
     /// <summary>
-    /// Get formatter from [MessaegPackFromatter] attribute.
+    /// Get formatter from <see cref="MessagePackFormatterAttribute"/>.
     /// </summary>
     public sealed class AttributeFormatterResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new AttributeFormatterResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly AttributeFormatterResolver Instance = new AttributeFormatterResolver();
 
-        AttributeFormatterResolver()
+        private AttributeFormatterResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()

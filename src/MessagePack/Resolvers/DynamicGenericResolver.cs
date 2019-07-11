@@ -17,11 +17,13 @@ namespace MessagePack.Resolvers
 {
     public sealed class DynamicGenericResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new DynamicGenericResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly DynamicGenericResolver Instance = new DynamicGenericResolver();
 
         DynamicGenericResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()

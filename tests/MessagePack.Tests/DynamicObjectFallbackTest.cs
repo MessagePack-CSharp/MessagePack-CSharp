@@ -20,8 +20,6 @@ namespace MessagePack.Tests
 
     public class DynamicObjectFallbackTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         [Fact]
         public void DynamicObject()
         {
@@ -45,9 +43,9 @@ namespace MessagePack.Tests
                 },
             };
 
-            var data1 = serializer.Serialize(testData);
+            var data1 = MessagePackSerializer.Serialize(testData);
 
-            var json = serializer.ConvertToJson(data1);
+            var json = MessagePackSerializer.ConvertToJson(data1);
 
             json.Is(@"[[100,[""a"",""b"",""c""]],[300,{""Prop1"":10,""Prop2"":2,""Prop3"":99999}]]");
 

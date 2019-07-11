@@ -11,11 +11,13 @@ namespace MessagePack.Resolvers
 {
     public sealed class BuiltinResolver : IFormatterResolver
     {
-        public static readonly IFormatterResolver Instance = new BuiltinResolver();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly BuiltinResolver Instance = new BuiltinResolver();
 
         BuiltinResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()

@@ -43,6 +43,8 @@ namespace MessagePack
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct.
         /// </summary>
+        /// <param name="sequencePool">The pool from which to draw an <see cref="IBufferWriter{T}"/> if required..</param>
+        /// <param name="array">An array to start with so we can avoid accessing the <paramref name="sequencePool"/> if possible.</param>
         internal MessagePackWriter(SequencePool sequencePool, byte[] array)
         {
             this.writer = new BufferWriter(sequencePool, array);

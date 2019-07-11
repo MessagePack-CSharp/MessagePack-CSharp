@@ -12,11 +12,9 @@ namespace MessagePack.Tests
 {
     public class UnionResolverTest
     {
-        private MessagePackSerializer serializer = new MessagePackSerializer();
-
         T Convert<T>(T value)
         {
-            return serializer.Deserialize<T>(serializer.Serialize(value));
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
         public static object[][] unionData = new object[][]
@@ -33,24 +31,24 @@ namespace MessagePack.Tests
             where T : IUnionChecker
             where U : IUnionChecker2
         {
-            var unionData1 = serializer.Serialize<IUnionChecker>(data);
-            var unionData2 = serializer.Serialize<IUnionChecker2>(data2);
+            var unionData1 = MessagePackSerializer.Serialize<IUnionChecker>(data);
+            var unionData2 = MessagePackSerializer.Serialize<IUnionChecker2>(data2);
 
-            var reData1 = serializer.Deserialize<IUnionChecker>(unionData1);
-            var reData2 = serializer.Deserialize<IUnionChecker>(unionData1);
+            var reData1 = MessagePackSerializer.Deserialize<IUnionChecker>(unionData1);
+            var reData2 = MessagePackSerializer.Deserialize<IUnionChecker>(unionData1);
 
             reData1.IsInstanceOf<T>();
             reData2.IsInstanceOf<U>();
 
-            var null1 = serializer.Serialize<IUnionChecker>(null);
-            var null2 = serializer.Serialize<IUnionChecker2>(null);
+            var null1 = MessagePackSerializer.Serialize<IUnionChecker>(null);
+            var null2 = MessagePackSerializer.Serialize<IUnionChecker2>(null);
 
-            serializer.Deserialize<IUnionChecker>(null1).IsNull();
-            serializer.Deserialize<IUnionChecker2>(null1).IsNull();
+            MessagePackSerializer.Deserialize<IUnionChecker>(null1).IsNull();
+            MessagePackSerializer.Deserialize<IUnionChecker2>(null1).IsNull();
 
 
-            var hoge = serializer.Serialize<IIVersioningUnion>(new VersioningUnion { FV = 0 });
-            serializer.Deserialize<IUnionChecker>(hoge).IsNull();
+            var hoge = MessagePackSerializer.Serialize<IIVersioningUnion>(new VersioningUnion { FV = 0 });
+            MessagePackSerializer.Deserialize<IUnionChecker>(hoge).IsNull();
         }
 
         [Fact]
@@ -74,13 +72,13 @@ namespace MessagePack.Tests
         {
 
 
-            var a = serializer.Serialize<IMessageBody>(new TextMessageBody() { Text = "hoge" });
-            var b = serializer.Serialize<IMessageBody>(new StampMessageBody() { StampId = 10 });
-            var c = serializer.Serialize<IMessageBody>(new QuestMessageBody() { Text = "hugahuga", QuestId = 99 });
+            var a = MessagePackSerializer.Serialize<IMessageBody>(new TextMessageBody() { Text = "hoge" });
+            var b = MessagePackSerializer.Serialize<IMessageBody>(new StampMessageBody() { StampId = 10 });
+            var c = MessagePackSerializer.Serialize<IMessageBody>(new QuestMessageBody() { Text = "hugahuga", QuestId = 99 });
 
-            var a2 = serializer.Deserialize<IMessageBody>(a);
-            var b2 = serializer.Deserialize<IMessageBody>(b);
-            var c2 = serializer.Deserialize<IMessageBody>(c);
+            var a2 = MessagePackSerializer.Deserialize<IMessageBody>(a);
+            var b2 = MessagePackSerializer.Deserialize<IMessageBody>(b);
+            var c2 = MessagePackSerializer.Deserialize<IMessageBody>(c);
 
             (a2 as TextMessageBody).Text.Is("hoge");
             (b2 as StampMessageBody).StampId.Is(10);
@@ -94,12 +92,12 @@ namespace MessagePack.Tests
             var b = new SubUnionType1() { MyProperty = 11, MyProperty1 = 100 };
             var c = new SubUnionType2() { MyProperty = 12, MyProperty2 = 200 };
 
-            // var binA = serializer.Serialize<RootUnionType>(a);
-            var binB = serializer.Serialize<RootUnionType>(b);
-            var binC = serializer.Serialize<RootUnionType>(c);
+            // var binA = MessagePackSerializer.Serialize<RootUnionType>(a);
+            var binB = MessagePackSerializer.Serialize<RootUnionType>(b);
+            var binC = MessagePackSerializer.Serialize<RootUnionType>(c);
 
-            var b2 = serializer.Deserialize<RootUnionType>(binB) as SubUnionType1;
-            var c2 = serializer.Deserialize<RootUnionType>(binC) as SubUnionType2;
+            var b2 = MessagePackSerializer.Deserialize<RootUnionType>(binB) as SubUnionType1;
+            var c2 = MessagePackSerializer.Deserialize<RootUnionType>(binC) as SubUnionType2;
 
             b2.MyProperty.Is(11); b2.MyProperty1.Is(100);
             c2.MyProperty.Is(12); c2.MyProperty2.Is(200);
