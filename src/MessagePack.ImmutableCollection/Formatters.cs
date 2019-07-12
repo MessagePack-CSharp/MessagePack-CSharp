@@ -8,7 +8,7 @@ namespace MessagePack.ImmutableCollection
     // Immutablearray<T>.Enumerator is 'not' IEnumerator<T>, can't use abstraction layer.
     public class ImmutableArrayFormatter<T> : IMessagePackFormatter<ImmutableArray<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, ImmutableArray<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, ImmutableArray<T> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -16,18 +16,18 @@ namespace MessagePack.ImmutableCollection
             }
             else
             {
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 writer.WriteArrayHeader(value.Length);
 
                 foreach (var item in value)
                 {
-                    formatter.Serialize(ref writer, item, formatterResolver);
+                    formatter.Serialize(ref writer, item, options);
                 }
             }
         }
 
-        public ImmutableArray<T> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public ImmutableArray<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -35,14 +35,14 @@ namespace MessagePack.ImmutableCollection
             }
             else
             {
-                var formatter = formatterResolver.GetFormatterWithVerify<T>();
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 var len = reader.ReadArrayHeader();
 
                 var builder = ImmutableArray.CreateBuilder<T>(len);
                 for (int i = 0; i < len; i++)
                 {
-                    builder.Add(formatter.Deserialize(ref reader, formatterResolver));
+                    builder.Add(formatter.Deserialize(ref reader, options));
                 }
 
                 return builder.ToImmutable();

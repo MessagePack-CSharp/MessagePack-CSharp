@@ -9,12 +9,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Nil value, IFormatterResolver typeResolver)
+        public void Serialize(ref MessagePackWriter writer, Nil value, MessagePackSerializerOptions options)
         {
             writer.WriteNil();
         }
 
-        public Nil Deserialize(ref MessagePackReader reader, IFormatterResolver typeResolver)
+        public Nil Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadNil();
         }
@@ -30,12 +30,12 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Nil? value, IFormatterResolver typeResolver)
+        public void Serialize(ref MessagePackWriter writer, Nil? value, MessagePackSerializerOptions options)
         {
             writer.WriteNil();
         }
 
-        public Nil? Deserialize(ref MessagePackReader reader, IFormatterResolver typeResolver)
+        public Nil? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.ReadNil();
         }

@@ -37,7 +37,7 @@ namespace <#= Namespace #>
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
             KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
@@ -48,7 +48,7 @@ namespace <#= Namespace #>
                 {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
                     case <#= i #>:
-                        formatterResolver.GetFormatterWithVerify<<#= item.Type #>>().Serialize(ref writer, (<#= item.Type #>)value, formatterResolver);
+                        options.Resolver.GetFormatterWithVerify<<#= item.Type #>>().Serialize(ref writer, (<#= item.Type #>)value, options);
                         break;
 <# } #>
                     default:
@@ -61,7 +61,7 @@ namespace <#= Namespace #>
             writer.WriteNil();
         }
 
-        public <#= info.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)
+        public <#= info.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -85,7 +85,7 @@ namespace <#= Namespace #>
             {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
                 case <#= i #>:
-                    result = (<#= info.FullName #>)formatterResolver.GetFormatterWithVerify<<#= item.Type #>>().Deserialize(ref reader, formatterResolver);
+                    result = (<#= info.FullName #>)options.Resolver.GetFormatterWithVerify<<#= item.Type #>>().Deserialize(ref reader, options);
                     break;
 <# } #>
                 default:

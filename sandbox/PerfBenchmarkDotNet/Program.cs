@@ -796,7 +796,7 @@ namespace GeneratedFormatter
                 };
             }
 
-            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, MessagePackSerializerOptions options)
             {
                 if (stringKeySerializerTarget == null)
                 {
@@ -825,7 +825,7 @@ namespace GeneratedFormatter
                 writer.WriteInt32(stringKeySerializerTarget.MyProperty9);
             }
 
-            public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+            public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
                 if (reader.TryReadNil())
                 {
@@ -965,7 +965,7 @@ namespace GeneratedFormatter
                 };
             }
 
-            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, MessagePackSerializerOptions options)
             {
                 if (stringKeySerializerTarget == null)
                 {
@@ -994,7 +994,7 @@ namespace GeneratedFormatter
                 writer.WriteInt32(stringKeySerializerTarget.MyProperty9);
             }
 
-            public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+            public StringKeySerializerTarget Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
                 if (reader.TryReadNil())
                 {
@@ -1110,12 +1110,12 @@ namespace GeneratedFormatter
             }
 
 
-            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.MessagePackSerializerOptions options)
             {
                 throw new NotImplementedException();
             }
 
-            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, newmsgpack::MessagePack.MessagePackSerializerOptions options)
             {
                 if (reader.TryReadNil())
                 {
@@ -1230,12 +1230,12 @@ namespace GeneratedFormatter
             }
 
 
-            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.MessagePackSerializerOptions options)
             {
                 throw new NotImplementedException();
             }
 
-            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, newmsgpack::MessagePack.IFormatterResolver formatterResolver)
+            public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, newmsgpack::MessagePack.MessagePackSerializerOptions options)
             {
                 if (reader.TryReadNil())
                 {

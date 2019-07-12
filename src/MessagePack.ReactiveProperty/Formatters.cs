@@ -103,7 +103,7 @@ namespace MessagePack.ReactivePropertyExtension
     // [Mode, SchedulerId, Value] : length should be three.
     public class ReactivePropertyFormatter<T> : IMessagePackFormatter<ReactiveProperty<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, ReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, ReactiveProperty<T> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -115,11 +115,11 @@ namespace MessagePack.ReactivePropertyExtension
 
                 writer.Write(ReactivePropertySchedulerMapper.ToReactivePropertyModeInt(value));
                 writer.Write(ReactivePropertySchedulerMapper.GetSchedulerId(value.RaiseEventScheduler));
-                formatterResolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, formatterResolver);
+                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
             }
         }
 
-        public ReactiveProperty<T> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public ReactiveProperty<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -136,7 +136,7 @@ namespace MessagePack.ReactivePropertyExtension
 
                 var scheduler = ReactivePropertySchedulerMapper.GetScheduler(schedulerId);
 
-                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(ref reader, formatterResolver);
+                var v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
 
                 return new ReactiveProperty<T>(scheduler, v, mode);
             }
@@ -146,19 +146,19 @@ namespace MessagePack.ReactivePropertyExtension
 
     public class InterfaceReactivePropertyFormatter<T> : IMessagePackFormatter<IReactiveProperty<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, IReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, IReactiveProperty<T> value, MessagePackSerializerOptions options)
         {
             var rxProp = value as ReactiveProperty<T>;
             if (rxProp != null)
             {
-                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref writer, rxProp, formatterResolver);
+                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref writer, rxProp, options);
                 return;
             }
 
             var slimProp = value as ReactivePropertySlim<T>;
             if (slimProp != null)
             {
-                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref writer, slimProp, formatterResolver);
+                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref writer, slimProp, options);
                 return;
             }
 
@@ -172,16 +172,16 @@ namespace MessagePack.ReactivePropertyExtension
             }
         }
 
-        public IReactiveProperty<T> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public IReactiveProperty<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var length = reader.ReadArrayHeader();
 
             switch (length)
             {
                 case 2:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(ref reader, formatterResolver);
+                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(ref reader, options);
                 case 3:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(ref reader, formatterResolver);
+                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(ref reader, options);
                 default:
                     throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
             }
@@ -190,19 +190,19 @@ namespace MessagePack.ReactivePropertyExtension
 
     public class InterfaceReadOnlyReactivePropertyFormatter<T> : IMessagePackFormatter<IReadOnlyReactiveProperty<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, IReadOnlyReactiveProperty<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, IReadOnlyReactiveProperty<T> value, MessagePackSerializerOptions options)
         {
             var rxProp = value as ReactiveProperty<T>;
             if (rxProp != null)
             {
-                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref writer, rxProp, formatterResolver);
+                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Serialize(ref writer, rxProp, options);
                 return;
             }
 
             var slimProp = value as ReactivePropertySlim<T>;
             if (slimProp != null)
             {
-                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref writer, slimProp, formatterResolver);
+                ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Serialize(ref writer, slimProp, options);
                 return;
             }
 
@@ -216,16 +216,16 @@ namespace MessagePack.ReactivePropertyExtension
             }
         }
 
-        public IReadOnlyReactiveProperty<T> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public IReadOnlyReactiveProperty<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var length = reader.ReadArrayHeader();
 
             switch (length)
             {
                 case 2:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(ref reader, formatterResolver);
+                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(ref reader, options);
                 case 3:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(ref reader, formatterResolver);
+                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(ref reader, options);
                 default:
                     throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
             }
@@ -254,12 +254,12 @@ namespace MessagePack.ReactivePropertyExtension
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Unit value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, Unit value, MessagePackSerializerOptions options)
         {
             writer.WriteNil();
         }
 
-        public Unit Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public Unit Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -281,12 +281,12 @@ namespace MessagePack.ReactivePropertyExtension
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, Unit? value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, Unit? value, MessagePackSerializerOptions options)
         {
             writer.WriteNil();
         }
 
-        public Unit? Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public Unit? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -302,7 +302,7 @@ namespace MessagePack.ReactivePropertyExtension
     // [Mode, Value]
     public class ReactivePropertySlimFormatter<T> : IMessagePackFormatter<ReactivePropertySlim<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, ReactivePropertySlim<T> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, ReactivePropertySlim<T> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -313,11 +313,11 @@ namespace MessagePack.ReactivePropertyExtension
                 writer.WriteArrayHeader(2);
 
                 writer.Write(ReactivePropertySchedulerMapper.ToReactivePropertySlimModeInt(value));
-                formatterResolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, formatterResolver);
+                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
             }
         }
 
-        public ReactivePropertySlim<T> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public ReactivePropertySlim<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -330,7 +330,7 @@ namespace MessagePack.ReactivePropertyExtension
 
                 var mode = (ReactivePropertyMode)reader.ReadInt32();
 
-                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(ref reader, formatterResolver);
+                var v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
 
                 return new ReactivePropertySlim<T>(v, mode);
             }

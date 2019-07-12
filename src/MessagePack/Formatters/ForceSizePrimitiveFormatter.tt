@@ -36,12 +36,12 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= t.Name #> value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, <#= t.Name #> value, MessagePackSerializerOptions options)
         {
             writer.Write<#= writeSuffix #>(value);
         }
 
-        public <#= t.Name #> Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public <#= t.Name #> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return reader.Read<#= t.Name #>();
         }
@@ -55,7 +55,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>? value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -67,7 +67,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t.Name #>? Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public <#= t.Name #>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -90,7 +90,7 @@ namespace MessagePack.Formatters
 
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>[] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -106,7 +106,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public <#= t.Name #>[] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public <#= t.Name #>[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

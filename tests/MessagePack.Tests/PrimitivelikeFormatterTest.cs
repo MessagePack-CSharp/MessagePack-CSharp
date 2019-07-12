@@ -31,12 +31,12 @@ namespace MessagePack.Tests
 
     public class DummyDateTimeFormatter : IMessagePackFormatter<DateTime>
     {
-        public DateTime Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public DateTime Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             throw new NotImplementedException();
         }
 
-        public void Serialize(ref MessagePackWriter writer, DateTime value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, DateTime value, MessagePackSerializerOptions options)
         {
             throw new NotImplementedException();
         }

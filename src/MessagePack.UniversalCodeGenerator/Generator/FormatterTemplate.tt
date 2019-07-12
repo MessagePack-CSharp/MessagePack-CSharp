@@ -42,7 +42,7 @@ namespace <#= Namespace #>
 
 <# } #>
 
-        public void Serialize(ref MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
 <# if( objInfo.IsClass) { #>
             if (value == null)
@@ -50,7 +50,9 @@ namespace <#= Namespace #>
                 writer.WriteNil();
                 return;
             }
+
 <# } #>
+            var formatterResolver = options.Resolver;
 <#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
             ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
@@ -76,7 +78,7 @@ namespace <#= Namespace #>
 <# } } #>
         }
 
-        public <#= objInfo.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)
+        public <#= objInfo.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -87,6 +89,7 @@ namespace <#= Namespace #>
 <# } #>
             }
 
+            var formatterResolver = options.Resolver;
 <# if(objInfo.IsStringKey) { #>
             var length = reader.ReadMapHeader();
 <# } else { #>

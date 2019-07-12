@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Buffers;
 using System.Diagnostics;
+using System.Xml.Schema;
 
 namespace MessagePack.Resolvers
 {
@@ -26,12 +27,10 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly DynamicObjectResolver Instance = new DynamicObjectResolver();
 
-#if !DYNAMICCODEDUMPER
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
         public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
-#endif
 
         const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
 
@@ -360,10 +359,10 @@ namespace MessagePack.Internal
             {
                 var method = typeBuilder.DefineMethod("Serialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
                     returnType: null,
-                    parameterTypes: new Type[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(IFormatterResolver) });
+                    parameterTypes: new Type[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
                 method.DefineParameter(1, ParameterAttributes.None, "writer");
                 method.DefineParameter(2, ParameterAttributes.None, "value");
-                method.DefineParameter(3, ParameterAttributes.None, "resolver");
+                method.DefineParameter(3, ParameterAttributes.None, "options");
 
                 var il = method.GetILGenerator();
                 BuildSerialize(type, serializationInfo, il, () =>
@@ -386,9 +385,9 @@ namespace MessagePack.Internal
             {
                 var method = typeBuilder.DefineMethod("Deserialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
                     type,
-                    new Type[] { refMessagePackReader, typeof(IFormatterResolver) });
+                    new Type[] { refMessagePackReader, typeof(MessagePackSerializerOptions) });
                 method.DefineParameter(1, ParameterAttributes.None, "reader");
-                method.DefineParameter(2, ParameterAttributes.None, "resolver");
+                method.DefineParameter(2, ParameterAttributes.None, "options");
 
                 var il = method.GetILGenerator();
                 BuildDeserialize(type, serializationInfo, il, (index, member) =>
@@ -412,9 +411,9 @@ namespace MessagePack.Internal
             var serializationInfo = ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, allowPrivate);
             if (serializationInfo == null) return null;
 
-            // internal delegate void AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, ref MessagePackWriter writer, T value, IFormatterResolver resolver);
-            // internal delegate T AnonymousDeserializeFunc<T>(object[] customFormatters, ref MessagePackReader reader, IFormatterResolver resolver);
-            var serialize = new DynamicMethod("Serialize", null, new[] { typeof(byte[][]), typeof(object[]), typeof(MessagePackWriter).MakeByRefType(), type, typeof(IFormatterResolver) }, type, true);
+            // internal delegate void AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
+            // internal delegate T AnonymousDeserializeFunc<T>(object[] customFormatters, ref MessagePackReader reader, MessagePackSerializerOptions options);
+            var serialize = new DynamicMethod("Serialize", null, new[] { typeof(byte[][]), typeof(object[]), typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) }, type, true);
             DynamicMethod deserialize = null;
 
             List<byte[]> stringByteKeysField = new List<byte[]>();
@@ -479,7 +478,7 @@ namespace MessagePack.Internal
 
             if (serializationInfo.IsStruct || serializationInfo.BestmatchConstructor != null)
             {
-                deserialize = new DynamicMethod("Deserialize", type, new[] { typeof(object[]), refMessagePackReader, typeof(IFormatterResolver) }, type, true);
+                deserialize = new DynamicMethod("Deserialize", type, new[] { typeof(object[]), refMessagePackReader, typeof(MessagePackSerializerOptions) }, type, true);
 
                 var il = deserialize.GetILGenerator();
                 BuildDeserialize(type, serializationInfo, il, (index, member) =>
@@ -579,7 +578,7 @@ namespace MessagePack.Internal
             return dict;
         }
 
-        // int Serialize([arg:1]MessagePackWriter writer, [arg:2]T value, [arg:3]IFormatterResolver resolver);
+        // int Serialize([arg:1]MessagePackWriter writer, [arg:2]T value, [arg:3]MessagePackSerializerOptions options);
         static void BuildSerialize(Type type, ObjectSerializationInfo info, ILGenerator il, Action emitStringByteKeys, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, int firstArgIndex)
         {
             var argWriter = new ArgumentField(il, firstArgIndex);
@@ -618,6 +617,12 @@ namespace MessagePack.Internal
                 }
             }
 
+            // IFormatterResolver resolver = options.Resolver;
+            var localResolver = il.DeclareLocal(typeof(IFormatterResolver));
+            argResolver.EmitLoad();
+            il.EmitCall(getResolverFromOptions);
+            il.EmitStloc(localResolver);
+
             if (info.IsIntKey)
             {
                 // use Array
@@ -641,7 +646,7 @@ namespace MessagePack.Internal
                     ObjectSerializationInfo.EmittableMember member;
                     if (intKeyMap.TryGetValue(i, out member))
                     {
-                        EmitSerializeValue(il, type.GetTypeInfo(), member, i, tryEmitLoadCustomFormatter, argWriter, argValue, argResolver);
+                        EmitSerializeValue(il, type.GetTypeInfo(), member, i, tryEmitLoadCustomFormatter, argWriter, argValue, argResolver, localResolver);
                     }
                     else
                     {
@@ -696,7 +701,7 @@ namespace MessagePack.Internal
                         il.EmitCall(MessagePackWriterTypeInfo.WriteRaw);
                     }
 
-                    EmitSerializeValue(il, type.GetTypeInfo(), item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argResolver);
+                    EmitSerializeValue(il, type.GetTypeInfo(), item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argResolver, localResolver);
                     index++;
                 }
             }
@@ -704,7 +709,7 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ret);
         }
 
-        static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argResolver)
+        static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argOptions, LocalBuilder localResolver)
         {
             var endLabel = il.DefineLabel();
             var t = member.Type;
@@ -715,7 +720,7 @@ namespace MessagePack.Internal
                 argWriter.EmitLoad();
                 argValue.EmitLoad();
                 member.EmitLoadValue(il);
-                argResolver.EmitLoad();
+                argOptions.EmitLoad();
                 il.EmitCall(getSerialize(t));
             }
             else if (IsOptimizeTargetType(t))
@@ -757,20 +762,20 @@ namespace MessagePack.Internal
             }
             else
             {
-                argResolver.EmitLoad();
+                il.EmitLdloc(localResolver);
                 il.Emit(OpCodes.Call, getFormatterWithVerify.MakeGenericMethod(t));
 
                 argWriter.EmitLoad();
                 argValue.EmitLoad();
                 member.EmitLoadValue(il);
-                argResolver.EmitLoad();
+                argOptions.EmitLoad();
                 il.EmitCall(getSerialize(t));
             }
 
             il.MarkLabel(endLabel);
         }
 
-        // T Deserialize([arg:1]ref MessagePackReader reader, [arg:2]IFormatterResolver resolver);
+        // T Deserialize([arg:1]ref MessagePackReader reader, [arg:2]MessagePackSerializerOptions options);
         static void BuildDeserialize(Type type, ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, int firstArgIndex)
         {
             var reader = new ArgumentField(il, firstArgIndex, @ref: true);
@@ -860,6 +865,12 @@ namespace MessagePack.Internal
                     .ToArray();
             }
 
+            // IFormatterResolver resolver = options.Resolver;
+            var localResolver = il.DeclareLocal(typeof(IFormatterResolver));
+            argResolver.EmitLoad();
+            il.EmitCall(getResolverFromOptions);
+            il.EmitStloc(localResolver);
+
             // Read Loop(for var i = 0; i < length; i++)
             if (info.IsStringKey)
             {
@@ -889,7 +900,7 @@ namespace MessagePack.Internal
                         var i = x.Value;
                         if (infoList[i].MemberInfo != null)
                         {
-                            EmitDeserializeValue(il, infoList[i], i, tryEmitLoadCustomFormatter, reader, argResolver);
+                            EmitDeserializeValue(il, infoList[i], i, tryEmitLoadCustomFormatter, reader, argResolver, localResolver);
                             il.Emit(OpCodes.Br, loopEnd);
                         }
                         else
@@ -943,7 +954,7 @@ namespace MessagePack.Internal
                         if (item.MemberInfo != null)
                         {
                             il.MarkLabel(item.SwitchLabel);
-                            EmitDeserializeValue(il, item, i++, tryEmitLoadCustomFormatter, reader, argResolver);
+                            EmitDeserializeValue(il, item, i++, tryEmitLoadCustomFormatter, reader, argResolver, localResolver);
                             il.Emit(OpCodes.Br, loopEnd);
                         }
                     }
@@ -997,7 +1008,7 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Ret);
         }
 
-        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argReader, ArgumentField argResolver)
+        static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argReader, ArgumentField argOptions, LocalBuilder localResolver)
         {
             var storeLabel = il.DefineLabel();
             var member = info.MemberInfo;
@@ -1007,7 +1018,7 @@ namespace MessagePack.Internal
             {
                 emitter();
                 argReader.EmitLdarg();
-                argResolver.EmitLoad();
+                argOptions.EmitLoad();
                 il.EmitCall(getDeserialize(t));
             }
             else if (IsOptimizeTargetType(t))
@@ -1042,10 +1053,10 @@ namespace MessagePack.Internal
             }
             else
             {
-                argResolver.EmitLoad();
+                il.EmitLdloc(localResolver);
                 il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
                 argReader.EmitLdarg();
-                argResolver.EmitLoad();
+                argOptions.EmitLoad();
                 il.EmitCall(getDeserialize(t));
             }
 
@@ -1133,8 +1144,9 @@ namespace MessagePack.Internal
         static readonly MethodInfo ArrayFromReadOnlySequence = typeof(BuffersExtensions).GetRuntimeMethods().Single(m => m.Name == nameof(BuffersExtensions.ToArray) && Matches(m, 0, typeof(ReadOnlySequence<>).MakeByRefType())).MakeGenericMethod(typeof(byte));
 
         static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == nameof(FormatterResolverExtensions.GetFormatterWithVerify));
-        static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Serialize), new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(IFormatterResolver) });
-        static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Deserialize), new[] { refMessagePackReader, typeof(IFormatterResolver) });
+        static readonly MethodInfo getResolverFromOptions = typeof(MessagePackSerializerOptions).GetRuntimeProperty(nameof(MessagePackSerializerOptions.Resolver)).GetMethod;
+        static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Serialize), new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(MessagePackSerializerOptions) });
+        static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod(nameof(IMessagePackFormatter<int>.Deserialize), new[] { refMessagePackReader, typeof(MessagePackSerializerOptions) });
         // static readonly ConstructorInfo dictionaryConstructor = typeof(ByteArrayStringHashTable).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
         // static readonly MethodInfo dictionaryAdd = typeof(ByteArrayStringHashTable).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
         // static readonly MethodInfo dictionaryTryGetValue = typeof(ByteArrayStringHashTable).GetRuntimeMethod("TryGetValue", new[] { typeof(ArraySegment<byte>), refInt });
@@ -1209,8 +1221,8 @@ namespace MessagePack.Internal
         }
     }
 
-    internal delegate void AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, ref MessagePackWriter writer, T value, IFormatterResolver resolver);
-    internal delegate T AnonymousDeserializeFunc<T>(object[] customFormatters, ref MessagePackReader reader, IFormatterResolver resolver);
+    internal delegate void AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
+    internal delegate T AnonymousDeserializeFunc<T>(object[] customFormatters, ref MessagePackReader reader, MessagePackSerializerOptions options);
 
     internal class AnonymousSerializableFormatter<T> : IMessagePackFormatter<T>
     {
@@ -1229,16 +1241,16 @@ namespace MessagePack.Internal
             this.deserialize = deserialize;
         }
 
-        public void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
         {
             if (serialize == null) throw new InvalidOperationException(this.GetType().Name + " does not support Serialize.");
-            serialize(stringByteKeysField, serializeCustomFormatters, ref writer, value, resolver);
+            serialize(stringByteKeysField, serializeCustomFormatters, ref writer, value, options);
         }
 
-        public T Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (deserialize == null) throw new InvalidOperationException(this.GetType().Name + " does not support Deserialize.");
-            return deserialize(deserializeCustomFormatters, ref reader, resolver);
+            return deserialize(deserializeCustomFormatters, ref reader, options);
         }
     }
 

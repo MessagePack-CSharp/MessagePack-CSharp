@@ -782,7 +782,7 @@ IMessagePackFormatter is serializer by each type. For example `Int32Formatter : 
 public interface IMessagePackFormatter<T>
 {
     void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver formatterResolver);
-    T Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver);
+    T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
 }
 ```
 
@@ -803,7 +803,7 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
         writer.WriteString(value.FullName);
     }
 
-    public FileInfo Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+    public FileInfo Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
         if (reader.TryReadNil())
         {
@@ -1068,7 +1068,7 @@ public class CustomObject
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.internalId, formatterResolver);
         }
 
-        public CustomObject Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public CustomObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, formatterResolver);
             return new CustomObject { internalId = id };
@@ -1080,7 +1080,7 @@ public class CustomObject
 
 public class Int_x10Formatter : IMessagePackFormatter<int>
 {
-    public int Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+    public int Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
         return reader.ReadInt32() * 10;
     }

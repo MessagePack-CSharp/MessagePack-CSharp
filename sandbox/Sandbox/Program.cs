@@ -244,14 +244,14 @@ namespace Sandbox
         // serialize/deserialize internal field.
         class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
         {
-            public void Serialize(ref MessagePackWriter writer, CustomObject value, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, CustomObject value, MessagePackSerializerOptions options)
             {
-                formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.internalId, formatterResolver);
+                options.Resolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.internalId, options);
             }
 
-            public CustomObject Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+            public CustomObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
-                var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, formatterResolver);
+                var id = options.Resolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                 return new CustomObject { internalId = id };
             }
         }
@@ -762,7 +762,7 @@ namespace Sandbox
             {1, 1 },
         };
 
-        public void Serialize(ref MessagePackWriter writer, IHogeMoge value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, IHogeMoge value, MessagePackSerializerOptions options)
         {
             KeyValuePair<int, int> key;
             if (map.TryGetValue(value.GetType(), out key))
@@ -773,10 +773,10 @@ namespace Sandbox
                 switch (key.Value)
                 {
                     case 0:
-                        formatterResolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref writer, (HogeMoge1)value, formatterResolver);
+                        options.Resolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref writer, (HogeMoge1)value, options);
                         break;
                     case 1:
-                        formatterResolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref writer, (HogeMoge2)value, formatterResolver);
+                        options.Resolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref writer, (HogeMoge2)value, options);
                         break;
                     default:
                         break;
@@ -788,7 +788,7 @@ namespace Sandbox
             writer.WriteNil();
         }
 
-        public IHogeMoge Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public IHogeMoge Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             // TODO:array header...
 
@@ -798,12 +798,12 @@ namespace Sandbox
             {
                 case 0:
                     {
-                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge1>().Deserialize(ref reader, formatterResolver);
+                        var result = options.Resolver.GetFormatterWithVerify<HogeMoge1>().Deserialize(ref reader, options);
                         return (IHogeMoge)result;
                     }
                 case 1:
                     {
-                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge2>().Deserialize(ref reader, formatterResolver);
+                        var result = options.Resolver.GetFormatterWithVerify<HogeMoge2>().Deserialize(ref reader, options);
                         return (IHogeMoge)result;
                     }
                 default:

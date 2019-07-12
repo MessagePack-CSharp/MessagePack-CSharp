@@ -154,7 +154,7 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(@" value, global::MessagePack.IFormatterResolver formatterResolver)
+            this.Write(@" value, global::MessagePack.MessagePackSerializerOptions options)
         {
             KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
@@ -177,7 +177,7 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(":\r\n                        formatterResolver.GetFormatterWithVerify<");
+            this.Write(":\r\n                        options.Resolver.GetFormatterWithVerify<");
             
             #line 51 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
@@ -191,7 +191,7 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(")value, formatterResolver);\r\n                        break;\r\n");
+            this.Write(")value, options);\r\n                        break;\r\n");
             
             #line 53 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
  } 
@@ -207,7 +207,7 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(@" Deserialize(ref MessagePackReader reader, global::MessagePack.IFormatterResolver formatterResolver)
+            this.Write(@" Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -253,14 +253,14 @@ namespace MessagePack.CodeGenerator.Generator
             
             #line default
             #line hidden
-            this.Write(")formatterResolver.GetFormatterWithVerify<");
+            this.Write(")options.Resolver.GetFormatterWithVerify<");
             
             #line 88 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
             
             #line default
             #line hidden
-            this.Write(">().Deserialize(ref reader, formatterResolver);\r\n                    break;\r\n");
+            this.Write(">().Deserialize(ref reader, options);\r\n                    break;\r\n");
             
             #line 90 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
  } 

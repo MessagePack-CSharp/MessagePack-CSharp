@@ -11,7 +11,7 @@ namespace MessagePack.Formatters
     {
         const int ArrayLength = 3;
 
-        public void Serialize(ref MessagePackWriter writer, T[,] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, T[,] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -22,7 +22,7 @@ namespace MessagePack.Formatters
                 var i = value.GetLength(0);
                 var j = value.GetLength(1);
 
-                var formatter = resolver.GetFormatterWithVerify<T>();
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 writer.WriteArrayHeader(ArrayLength);
                 writer.Write(i);
@@ -31,12 +31,12 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (var item in value)
                 {
-                    formatter.Serialize(ref writer, item, resolver);
+                    formatter.Serialize(ref writer, item, options);
                 }
             }
         }
 
-        public T[,] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public T[,] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -44,7 +44,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = resolver.GetFormatterWithVerify<T>();
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 var len = reader.ReadArrayHeader();
                 if (len != ArrayLength) throw new InvalidOperationException("Invalid T[,] format");
@@ -69,7 +69,7 @@ namespace MessagePack.Formatters
                         i++;
                     }
 
-                    array[i, j] = formatter.Deserialize(ref reader, resolver);
+                    array[i, j] = formatter.Deserialize(ref reader, options);
                 }
 
                 return array;
@@ -81,7 +81,7 @@ namespace MessagePack.Formatters
     {
         const int ArrayLength = 4;
 
-        public void Serialize(ref MessagePackWriter writer, T[,,] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, T[,,] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -93,7 +93,7 @@ namespace MessagePack.Formatters
                 var j = value.GetLength(1);
                 var k = value.GetLength(2);
 
-                var formatter = resolver.GetFormatterWithVerify<T>();
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 writer.WriteArrayHeader(ArrayLength);
                 writer.Write(i);
@@ -103,12 +103,12 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (var item in value)
                 {
-                    formatter.Serialize(ref writer, item, resolver);
+                    formatter.Serialize(ref writer, item, options);
                 }
             }
         }
 
-        public T[,,] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public T[,,] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -116,7 +116,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = resolver.GetFormatterWithVerify<T>();
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 var len = reader.ReadArrayHeader();
                 if (len != ArrayLength) throw new InvalidOperationException("Invalid T[,,] format");
@@ -149,7 +149,7 @@ namespace MessagePack.Formatters
                         i++;
                     }
 
-                    array[i, j, k] = formatter.Deserialize(ref reader, resolver);
+                    array[i, j, k] = formatter.Deserialize(ref reader, options);
                 }
 
                 return array;
@@ -161,7 +161,7 @@ namespace MessagePack.Formatters
     {
         const int ArrayLength = 5;
 
-        public void Serialize(ref MessagePackWriter writer, T[,,,] value, IFormatterResolver resolver)
+        public void Serialize(ref MessagePackWriter writer, T[,,,] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -174,7 +174,7 @@ namespace MessagePack.Formatters
                 var k = value.GetLength(2);
                 var l = value.GetLength(3);
 
-                var formatter = resolver.GetFormatterWithVerify<T>();
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 writer.WriteArrayHeader(ArrayLength);
                 writer.Write(i);
@@ -185,12 +185,12 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (var item in value)
                 {
-                    formatter.Serialize(ref writer, item, resolver);
+                    formatter.Serialize(ref writer, item, options);
                 }
             }
         }
 
-        public T[,,,] Deserialize(ref MessagePackReader reader, IFormatterResolver resolver)
+        public T[,,,] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -198,7 +198,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = resolver.GetFormatterWithVerify<T>();
+                var formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 var len = reader.ReadArrayHeader();
                 if (len != ArrayLength) throw new InvalidOperationException("Invalid T[,,,] format");
@@ -238,7 +238,7 @@ namespace MessagePack.Formatters
                         i++;
                     }
 
-                    array[i, j, k, l] = formatter.Deserialize(ref reader, resolver);
+                    array[i, j, k, l] = formatter.Deserialize(ref reader, options);
                 }
 
                 return array;
