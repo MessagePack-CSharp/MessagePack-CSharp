@@ -15,12 +15,6 @@ namespace MessagePack.Tests
 {
     public class MessagePackSerializerTest
     {
-        private T ConvertNonGeneric<T>(T obj)
-        {
-            Type t = obj.GetType();
-            return (T)MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, obj));
-        }
-
         [Fact]
         public void NonGeneric()
         {
@@ -43,6 +37,20 @@ namespace MessagePack.Tests
             new[] { data1.Prop1, data2.Prop1, data3.Prop1, data4.Prop1 }.Distinct().Is(data.Prop1);
             new[] { data1.Prop2, data2.Prop2, data3.Prop2, data4.Prop2 }.Distinct().Is(data.Prop2);
             new[] { data1.Prop3, data2.Prop3, data3.Prop3, data4.Prop3 }.Distinct().Is(data.Prop3);
+        }
+
+        [Fact]
+        public async Task NonGeneric_Async()
+        {
+            var data = new FirstSimpleData { Prop1 = 9, Prop2 = "hoge", Prop3 = 999 };
+            Type t = typeof(FirstSimpleData);
+            var ms = new MemoryStream();
+
+            await MessagePackSerializer.SerializeAsync(t, ms, data);
+            ms.Position = 0;
+            var data2 = (FirstSimpleData)await MessagePackSerializer.DeserializeAsync(t, ms);
+
+            Assert.Equal(data, data2);
         }
 
         [Fact]

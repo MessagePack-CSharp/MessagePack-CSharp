@@ -18,16 +18,22 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly StandardResolver Instance = new StandardResolver();
+        public static readonly StandardResolver Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
 
 #if !UNITY
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverCore.Instance);
 #endif
+
+        static StandardResolver()
+        {
+            Instance = new StandardResolver();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
         private StandardResolver()
         {
@@ -66,12 +72,18 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly ContractlessStandardResolver Instance = new ContractlessStandardResolver();
+        public static readonly ContractlessStandardResolver Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
+
+        static ContractlessStandardResolver()
+        {
+            Instance = new ContractlessStandardResolver();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
 #if !UNITY
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverCore.Instance);
@@ -114,12 +126,18 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly StandardResolverAllowPrivate Instance = new StandardResolverAllowPrivate();
+        public static readonly StandardResolverAllowPrivate Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
+
+        static StandardResolverAllowPrivate()
+        {
+            Instance = new StandardResolverAllowPrivate();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
 #if !UNITY
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverAllowPrivateCore.Instance);
@@ -162,12 +180,18 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly ContractlessStandardResolverAllowPrivate Instance = new ContractlessStandardResolverAllowPrivate();
+        public static readonly ContractlessStandardResolverAllowPrivate Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
+
+        static ContractlessStandardResolverAllowPrivate()
+        {
+            Instance = new ContractlessStandardResolverAllowPrivate();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
 #if !UNITY
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverAllowPrivateCore.Instance);

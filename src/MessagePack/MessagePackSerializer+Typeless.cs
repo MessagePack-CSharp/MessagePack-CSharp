@@ -32,7 +32,7 @@ namespace MessagePack
 
             public static void Serialize(Stream stream, object obj, MessagePackSerializerOptions options = null) => Serialize<object>(stream, obj, options ?? DefaultOptions);
 
-            public static ValueTask SerializeAsync(Stream stream, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => SerializeAsync<object>(stream, obj, options ?? DefaultOptions, cancellationToken);
+            public static Task SerializeAsync(Stream stream, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => SerializeAsync<object>(stream, obj, options ?? DefaultOptions, cancellationToken);
 
             public static object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options = null) => Deserialize<object>(ref reader, options ?? DefaultOptions);
 

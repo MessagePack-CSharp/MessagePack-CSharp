@@ -24,34 +24,36 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class DynamicUnionResolver : IFormatterResolver
     {
+        private const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
+
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly DynamicUnionResolver Instance = new DynamicUnionResolver();
+        public static readonly DynamicUnionResolver Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
-
-        private const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
+        public static readonly MessagePackSerializerOptions Options;
 
         private static readonly DynamicAssembly DynamicAssembly;
 #if !UNITY
         private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 #else
-        static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
+        private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
 #endif
 
         private static int nameSequence = 0;
 
-        private DynamicUnionResolver()
-        {
-        }
-
         static DynamicUnionResolver()
         {
+            Instance = new DynamicUnionResolver();
+            Options = new MessagePackSerializerOptions(Instance);
             DynamicAssembly = new DynamicAssembly(ModuleName);
+        }
+
+        private DynamicUnionResolver()
+        {
         }
 
 #if NETFRAMEWORK

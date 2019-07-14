@@ -52,12 +52,18 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly ForceSizePrimitiveObjectResolver Instance = new ForceSizePrimitiveObjectResolver();
+        public static readonly ForceSizePrimitiveObjectResolver Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
+
+        static ForceSizePrimitiveObjectResolver()
+        {
+            Instance = new ForceSizePrimitiveObjectResolver();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
         private ForceSizePrimitiveObjectResolver()
         {
@@ -127,16 +133,22 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly TypelessFormatterFallbackResolver Instance = new TypelessFormatterFallbackResolver();
+        public static readonly TypelessFormatterFallbackResolver Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
 
         private static readonly IMessagePackFormatter<object> FallbackFormatter = new DynamicObjectTypeFallbackFormatter(
             ForceSizePrimitiveObjectResolver.Instance,
             ContractlessStandardResolverAllowPrivateCore.Instance);
+
+        static TypelessFormatterFallbackResolver()
+        {
+            Instance = new TypelessFormatterFallbackResolver();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
         private TypelessFormatterFallbackResolver()
         {

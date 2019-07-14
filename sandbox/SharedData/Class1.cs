@@ -34,7 +34,7 @@ namespace SharedData
     public enum ULongEnum : ulong { A, B, C, D, E }
 
     [MessagePackObject]
-    public class FirstSimpleData
+    public class FirstSimpleData : IEquatable<FirstSimpleData>
     {
         [Key(0)]
         public int Prop1 { get; set; }
@@ -44,6 +44,14 @@ namespace SharedData
 
         [Key(2)]
         public int Prop3 { get; set; }
+
+        public bool Equals(FirstSimpleData other)
+        {
+            return other != null
+                && this.Prop1 == other.Prop1
+                && this.Prop2 == other.Prop2
+                && this.Prop3 == other.Prop3;
+        }
     }
 
     [MessagePackObject]
