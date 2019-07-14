@@ -41,7 +41,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= t.Name #> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, <#= t.Name #> value, MessagePackSerializerOptions options)
         {
             writer.Write<#= writeSuffix #>(value);
         }
@@ -60,7 +60,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, <#= t.Name #>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -94,7 +94,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, <#= t.Name #>[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {

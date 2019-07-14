@@ -21,7 +21,7 @@ namespace MessagePack.Formatters
         where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
         where TEnumerator : IEnumerator<KeyValuePair<TKey, TValue>>
     {
-        public void Serialize(ref MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -62,8 +62,8 @@ namespace MessagePack.Formatters
                     while (e.MoveNext())
                     {
                         KeyValuePair<TKey, TValue> item = e.Current;
-                        keyFormatter.Serialize(ref writer, item.Key, options);
-                        valueFormatter.Serialize(ref writer, item.Value, options);
+                        keyFormatter.Serialize(writer, item.Key, options);
+                        valueFormatter.Serialize(writer, item.Value, options);
                     }
                 }
                 finally
@@ -278,7 +278,7 @@ namespace MessagePack.Formatters
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TDictionary> : IMessagePackFormatter<TDictionary>
         where TDictionary : IDictionary<TKey, TValue>
     {
-        public void Serialize(ref MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -300,8 +300,8 @@ namespace MessagePack.Formatters
                     while (e.MoveNext())
                     {
                         var item = e.Current;
-                        offset += keyFormatter.Serialize(ref bytes, offset, item.Key, resolver);
-                        offset += valueFormatter.Serialize(ref bytes, offset, item.Value, resolver);
+                        offset += keyFormatter.Serialize(bytes, offset, item.Key, resolver);
+                        offset += valueFormatter.Serialize(bytes, offset, item.Value, resolver);
                     }
                 }
                 finally

@@ -10,7 +10,7 @@ namespace MessagePack.Formatters
     public sealed class NullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
-        public void Serialize(ref MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -18,7 +18,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
+                options.Resolver.GetFormatterWithVerify<T>().Serialize(writer, value.Value, options);
             }
         }
 
@@ -46,7 +46,7 @@ namespace MessagePack.Formatters
             this.underlyingFormatter = underlyingFormatter;
         }
 
-        public void Serialize(ref MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -54,7 +54,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                this.underlyingFormatter.Serialize(ref writer, value.Value, options);
+                this.underlyingFormatter.Serialize(writer, value.Value, options);
             }
         }
 

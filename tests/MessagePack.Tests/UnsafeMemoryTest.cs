@@ -17,7 +17,7 @@ namespace MessagePack.Tests
 {
     public class UnsafeMemoryTest
     {
-        private delegate void WriteDelegate(ref MessagePackWriter writer, ReadOnlySpan<byte> ys);
+        private delegate void WriteDelegate(in MessagePackWriter writer, ReadOnlySpan<byte> ys);
 
         [Theory]
         [InlineData('a', 1)]
@@ -49,7 +49,7 @@ namespace MessagePack.Tests
                 var src = Enumerable.Range(0, i).Select(x => (byte)x).ToArray();
                 var dst = new Sequence<byte>();
                 var dstWriter = new MessagePackWriter(dst);
-                (typeof(UnsafeMemory32).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
+                (typeof(UnsafeMemory32).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(dstWriter, src);
                 dstWriter.Flush();
                 dst.Length.Is(i);
                 MessagePack.Internal.ByteArrayComparer.Equals(src, CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
@@ -61,7 +61,7 @@ namespace MessagePack.Tests
                 var src = Enumerable.Range(0, i).Select(x => (byte)x).ToArray();
                 var dst = new Sequence<byte>();
                 var dstWriter = new MessagePackWriter(dst);
-                (typeof(UnsafeMemory64).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
+                (typeof(UnsafeMemory64).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(dstWriter, src);
                 dstWriter.Flush();
                 dst.Length.Is(i);
                 MessagePack.Internal.ByteArrayComparer.Equals(src, CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();

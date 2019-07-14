@@ -781,7 +781,7 @@ IMessagePackFormatter is serializer by each type. For example `Int32Formatter : 
 ```csharp
 public interface IMessagePackFormatter<T>
 {
-    void Serialize(ref MessagePackWriter writer, T value, IFormatterResolver formatterResolver);
+    void Serialize(in MessagePackWriter writer, T value, IFormatterResolver formatterResolver);
     T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
 }
 ```
@@ -792,7 +792,7 @@ All api works on `Span<byte>` level, no use Stream, no use Writer/Reader so impr
 // serialize fileinfo as string fullpath.
 public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
 {
-    public void Serialize(ref MessagePackWriter writer, FileInfo value, IFormatterResolver formatterResolver)
+    public void Serialize(in MessagePackWriter writer, FileInfo value, IFormatterResolver formatterResolver)
     {
         if (value == null)
         {
@@ -1063,9 +1063,9 @@ public class CustomObject
     // serialize/deserialize internal field.
     class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
     {
-        public void Serialize(ref MessagePackWriter writer, CustomObject value, IFormatterResolver formatterResolver)
+        public void Serialize(in MessagePackWriter writer, CustomObject value, IFormatterResolver formatterResolver)
         {
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.internalId, formatterResolver);
+            formatterResolver.GetFormatterWithVerify<string>().Serialize(writer, value.internalId, formatterResolver);
         }
 
         public CustomObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -1085,7 +1085,7 @@ public class Int_x10Formatter : IMessagePackFormatter<int>
         return reader.ReadInt32() * 10;
     }
 
-    public void Serialize(ref MessagePackWriter writer, int value, IFormatterResolver formatterResolver)
+    public void Serialize(in MessagePackWriter writer, int value, IFormatterResolver formatterResolver)
     {
         writer.WriteInt32(value * 10);
     }

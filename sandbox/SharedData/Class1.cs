@@ -84,7 +84,7 @@ namespace SharedData
             throw new NotImplementedException();
         }
 
-        public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, int value, MessagePackSerializerOptions options)
         {
             throw new NotImplementedException();
         }
@@ -101,7 +101,7 @@ namespace SharedData
             throw new NotImplementedException();
         }
 
-        public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, int value, MessagePackSerializerOptions options)
         {
             throw new NotImplementedException();
         }
@@ -711,19 +711,19 @@ namespace SharedData
             this.default9 = default9;
         }
 
-        public void Serialize(ref MessagePackWriter writer, DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(9);
             IFormatterResolver resolver = options.Resolver;
-            resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-            resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
-            resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
-            resolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
-            resolver.GetFormatterWithVerify<T5>().Serialize(ref writer, value.Item5, options);
-            resolver.GetFormatterWithVerify<T6>().Serialize(ref writer, value.Item6, options);
-            resolver.GetFormatterWithVerify<T7>().Serialize(ref writer, value.Item7, options);
-            resolver.GetFormatterWithVerify<T8>().Serialize(ref writer, value.Item8, options);
-            resolver.GetFormatterWithVerify<T9>().Serialize(ref writer, value.Item9, options);
+            resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
+            resolver.GetFormatterWithVerify<T2>().Serialize(writer, value.Item2, options);
+            resolver.GetFormatterWithVerify<T3>().Serialize(writer, value.Item3, options);
+            resolver.GetFormatterWithVerify<T4>().Serialize(writer, value.Item4, options);
+            resolver.GetFormatterWithVerify<T5>().Serialize(writer, value.Item5, options);
+            resolver.GetFormatterWithVerify<T6>().Serialize(writer, value.Item6, options);
+            resolver.GetFormatterWithVerify<T7>().Serialize(writer, value.Item7, options);
+            resolver.GetFormatterWithVerify<T8>().Serialize(writer, value.Item8, options);
+            resolver.GetFormatterWithVerify<T9>().Serialize(writer, value.Item9, options);
         }
 
         public DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)

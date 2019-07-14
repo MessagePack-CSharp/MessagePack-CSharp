@@ -24,7 +24,7 @@ namespace MessagePack
             /// </summary>
             public static readonly MessagePackSerializerOptions DefaultOptions = Resolvers.TypelessContractlessStandardResolver.Options;
 
-            public static void Serialize(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options = null) => Serialize<object>(ref writer, obj, options ?? DefaultOptions);
+            public static void Serialize(in MessagePackWriter writer, object obj, MessagePackSerializerOptions options = null) => Serialize<object>(writer, obj, options ?? DefaultOptions);
 
             public static void Serialize(IBufferWriter<byte> writer, object obj, MessagePackSerializerOptions options = null) => Serialize<object>(writer, obj, options ?? DefaultOptions);
 

@@ -63,7 +63,7 @@ namespace MessagePack.Tests
             using (var sequence = new Sequence<byte>())
             {
                 var oldSpecWriter = new MessagePackWriter(sequence, oldSpec: true);
-                MessagePackSerializer.Serialize(ref oldSpecWriter, data);
+                MessagePackSerializer.Serialize(oldSpecWriter, data);
                 oldSpecWriter.Flush();
                 var a = sequence.AsReadOnlySequence.ToArray();
                 var b = serializer.PackSingleObject(data);
@@ -93,7 +93,7 @@ namespace MessagePack.Tests
             using (var sequence = new Sequence<byte>())
             {
                 var oldSpecWriter = new MessagePackWriter(sequence, oldSpec: true);
-                MessagePackSerializer.Serialize(ref oldSpecWriter, data);
+                MessagePackSerializer.Serialize(oldSpecWriter, data);
                 oldSpecWriter.Flush();
                 var a = sequence.AsReadOnlySequence.ToArray();
                 var b = serializer.PackSingleObject(data);
@@ -133,7 +133,7 @@ namespace MessagePack.Tests
                 throw new NotImplementedException();
             }
 
-            public void Serialize(ref MessagePackWriter writer, DateTime value, MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, DateTime value, MessagePackSerializerOptions options)
             {
                 throw new NotImplementedException();
             }

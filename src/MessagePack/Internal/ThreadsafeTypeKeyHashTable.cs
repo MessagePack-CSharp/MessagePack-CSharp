@@ -15,7 +15,7 @@ namespace MessagePack.Internal
     internal class ThreadsafeTypeKeyHashTable<TValue>
     {
         private Entry[] buckets;
-        private int size; // only use in writer lock
+        private int size; // only use writer lock
 
         private readonly object writerLock = new object();
         private readonly float loadFactor;

@@ -17,7 +17,7 @@ namespace MessagePack.Tests
         {
             var sequence = new Sequence<byte>();
             var sequenceWriter = new MessagePackWriter(sequence);
-            MessagePackSerializer.ConvertFromJson(json, ref sequenceWriter, options);
+            MessagePackSerializer.ConvertFromJson(json, sequenceWriter, options);
             sequenceWriter.Flush();
             return MessagePackSerializer.ConvertToJson(sequence.AsReadOnlySequence, options);
         }

@@ -15,7 +15,7 @@ namespace MessagePack.Formatters
 {
     public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
     {
-        private delegate void SerializeMethod(object dynamicFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
+        private delegate void SerializeMethod(object dynamicFormatter, in MessagePackWriter writer, object value, MessagePackSerializerOptions options);
 
         private readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
 
@@ -26,7 +26,7 @@ namespace MessagePack.Formatters
             this.innerResolvers = innerResolvers;
         }
 
-        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, object value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -93,7 +93,7 @@ namespace MessagePack.Formatters
                 }
             }
 
-            formatterAndDelegate.Value(formatterAndDelegate.Key, ref writer, value, options);
+            formatterAndDelegate.Value(formatterAndDelegate.Key, writer, value, options);
         }
 
         public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)

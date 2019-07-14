@@ -82,7 +82,7 @@ namespace GeneratedFormatter
                 };
             }
 
-            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, MessagePackSerializerOptions options)
             {
                 if (stringKeySerializerTarget == null)
                 {
@@ -250,7 +250,7 @@ namespace GeneratedFormatter
                 };
             }
 
-            public void Serialize(ref MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, StringKeySerializerTarget stringKeySerializerTarget, MessagePackSerializerOptions options)
             {
                 if (stringKeySerializerTarget == null)
                 {
@@ -392,7 +392,7 @@ namespace GeneratedFormatter
                 };
             }
 
-            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.MessagePackSerializerOptions options)
             {
                 throw new NotImplementedException();
             }
@@ -509,7 +509,7 @@ namespace GeneratedFormatter
                 };
             }
 
-            public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, newmsgpack::MessagePack.MessagePackSerializerOptions options)
             {
                 throw new NotImplementedException();
             }

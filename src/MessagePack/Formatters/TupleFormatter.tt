@@ -24,7 +24,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
     {
-        public void Serialize(ref MessagePackWriter writer, <#= t #> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, <#= t #> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -36,7 +36,7 @@ namespace MessagePack.Formatters
 
                 IFormatterResolver resolver = options.Resolver;
 <# for(var j = 1; j <= i; j++) { #>
-                resolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref writer, value.<#= toItem(j) #>, options);
+                resolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(writer, value.<#= toItem(j) #>, options);
 <# } #>
             }
         }

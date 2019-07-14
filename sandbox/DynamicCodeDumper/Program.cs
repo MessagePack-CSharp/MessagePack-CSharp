@@ -66,7 +66,7 @@ namespace DynamicCodeDumper
                 using (var sequence = new Sequence<byte>())
                 {
                     var sequenceWriter = new MessagePackWriter(sequence);
-                    f.Serialize(ref sequenceWriter, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, null);
+                    f.Serialize(sequenceWriter, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, null);
                     sequenceWriter.Flush();
                 }
             }
@@ -143,7 +143,7 @@ namespace DynamicCodeDumper
             return reader.ReadInt32() * 10;
         }
 
-        public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, int value, MessagePackSerializerOptions options)
         {
             writer.WriteInt32(value * 10);
         }
@@ -157,7 +157,7 @@ namespace DynamicCodeDumper
             return s + s;
         }
 
-        public void Serialize(ref MessagePackWriter writer, string value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, string value, MessagePackSerializerOptions options)
         {
             writer.Write(value + value);
         }
@@ -450,7 +450,7 @@ namespace DynamicCodeDumper
     ////        };
     ////    }
 
-    ////    public int Serialize(ref byte[] bytes, int offset, Dup value, IFormatterResolver formatterResolver)
+    ////    public int Serialize(byte[] bytes, int offset, Dup value, IFormatterResolver formatterResolver)
     ////    {
     ////        throw new NotImplementedException();
     ////    }

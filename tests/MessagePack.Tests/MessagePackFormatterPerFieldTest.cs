@@ -58,7 +58,7 @@ namespace MessagePack.Tests
                 return reader.ReadInt32() * 10;
             }
 
-            public void Serialize(ref MessagePackWriter writer, int value, MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, int value, MessagePackSerializerOptions options)
             {
                 writer.Write(value * 10);
             }
@@ -72,7 +72,7 @@ namespace MessagePack.Tests
                 return s + s;
             }
 
-            public void Serialize(ref MessagePackWriter writer, string value, MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, string value, MessagePackSerializerOptions options)
             {
                 writer.Write(value + value);
             }

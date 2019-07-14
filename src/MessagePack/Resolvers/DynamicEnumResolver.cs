@@ -92,7 +92,7 @@ namespace MessagePack.Resolvers
 
             TypeBuilder typeBuilder = DynamicAssembly.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
-            // void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
+            // void Serialize(in MessagePackWriter writer, T value, MessagePackSerializerOptions options);
             {
                 MethodBuilder method = typeBuilder.DefineMethod(
                     "Serialize",

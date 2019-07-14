@@ -14,7 +14,7 @@ namespace MessagePack.Tests
     {
         private const sbyte ByteNegativeValue = -3;
         private const byte BytePositiveValue = 3;
-        private static readonly ReadOnlySequence<byte> StringEncodedAsFixStr = Encode((ref MessagePackWriter w) => w.Write("hi"));
+        private static readonly ReadOnlySequence<byte> StringEncodedAsFixStr = Encode((in MessagePackWriter w) => w.Write("hi"));
         private readonly ITestOutputHelper logger;
 
         public MessagePackReaderTests(ITestOutputHelper logger)
@@ -35,7 +35,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadSingle_CanReadDouble()
         {
-            var reader = new MessagePackReader(Encode((ref MessagePackWriter w) => w.Write(1.23)));
+            var reader = new MessagePackReader(Encode((in MessagePackWriter w) => w.Write(1.23)));
             Assert.Equal(1.23f, reader.ReadSingle());
         }
 
@@ -69,13 +69,13 @@ namespace MessagePack.Tests
             });
         }
 
-        private delegate void WriterEncoder(ref MessagePackWriter writer);
+        private delegate void WriterEncoder(in MessagePackWriter writer);
 
         private static ReadOnlySequence<byte> Encode(WriterEncoder cb)
         {
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
-            cb(ref writer);
+            cb(writer);
             writer.Flush();
             return sequence.AsReadOnlySequence;
         }
@@ -83,8 +83,8 @@ namespace MessagePack.Tests
 
     internal static class MessagePackWriterExtensions
     {
-        internal static void WriteByte(ref this MessagePackWriter writer, byte value) => writer.WriteUInt8(value);
+        internal static void WriteByte(in this MessagePackWriter writer, byte value) => writer.WriteUInt8(value);
 
-        internal static void WriteSByte(ref this MessagePackWriter writer, sbyte value) => writer.WriteInt8(value);
+        internal static void WriteSByte(in this MessagePackWriter writer, sbyte value) => writer.WriteInt8(value);
     }
 }

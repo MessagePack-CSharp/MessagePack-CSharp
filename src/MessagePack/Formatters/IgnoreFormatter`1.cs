@@ -7,7 +7,7 @@ namespace MessagePack.Formatters
 {
     public sealed class IgnoreFormatter<T> : IMessagePackFormatter<T>
     {
-        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T value, MessagePackSerializerOptions options)
         {
             writer.WriteNil();
         }

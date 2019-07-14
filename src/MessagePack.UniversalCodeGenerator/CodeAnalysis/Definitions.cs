@@ -134,7 +134,7 @@ namespace MessagePack.CodeGenerator
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{this.Type}>().Serialize(ref writer, value.{this.Name}, options)";
+                return $"formatterResolver.GetFormatterWithVerify<{this.Type}>().Serialize(writer, value.{this.Name}, options)";
             }
         }
 

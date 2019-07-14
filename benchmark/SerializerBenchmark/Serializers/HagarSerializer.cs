@@ -50,7 +50,7 @@
 ////        using (var session = sessionPool.GetSession())
 ////        {
 ////            var writer = pipe.Writer.CreateWriter(session);
-////            serializer.Serialize(ref writer, input);
+////            serializer.Serialize(writer, input);
 ////            pipe.Writer.Complete();
 ////            pipe.Reader.TryRead(out var result);
 ////            return result.Buffer.ToArray();

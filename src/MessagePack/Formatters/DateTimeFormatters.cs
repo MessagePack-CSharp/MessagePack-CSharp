@@ -14,7 +14,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NativeDateTimeFormatter Instance = new NativeDateTimeFormatter();
 
-        public void Serialize(ref MessagePackWriter writer, DateTime value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, DateTime value, MessagePackSerializerOptions options)
         {
             var dateData = value.ToBinary();
             writer.Write(dateData);
@@ -31,7 +31,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NativeDateTimeArrayFormatter Instance = new NativeDateTimeArrayFormatter();
 
-        public void Serialize(ref MessagePackWriter writer, DateTime[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, DateTime[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {

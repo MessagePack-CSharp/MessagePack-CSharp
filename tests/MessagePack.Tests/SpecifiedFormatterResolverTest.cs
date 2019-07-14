@@ -37,7 +37,7 @@ namespace MessagePack.Tests
                     return new CustomClassObject(r);
                 }
 
-                public void Serialize(ref MessagePackWriter writer, CustomClassObject value, MessagePackSerializerOptions options)
+                public void Serialize(in MessagePackWriter writer, CustomClassObject value, MessagePackSerializerOptions options)
                 {
                     writer.Write(value.x);
                 }
@@ -67,7 +67,7 @@ namespace MessagePack.Tests
                     return new CustomStructObject(r);
                 }
 
-                public void Serialize(ref MessagePackWriter writer, CustomStructObject value, MessagePackSerializerOptions options)
+                public void Serialize(in MessagePackWriter writer, CustomStructObject value, MessagePackSerializerOptions options)
                 {
                     writer.Write(value.x);
                 }
@@ -99,7 +99,7 @@ namespace MessagePack.Tests
                 return CustomyEnumObject.B;
             }
 
-            public void Serialize(ref MessagePackWriter writer, CustomyEnumObject value, MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, CustomyEnumObject value, MessagePackSerializerOptions options)
             {
                 writer.Write((int)value);
             }
@@ -119,7 +119,7 @@ namespace MessagePack.Tests
                 return new InheritDefault(r);
             }
 
-            public void Serialize(ref MessagePackWriter writer, ICustomInterfaceObject value, MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, ICustomInterfaceObject value, MessagePackSerializerOptions options)
             {
                 writer.Write(value.A);
             }
@@ -170,7 +170,7 @@ namespace MessagePack.Tests
                     return new CustomClassObjectWithArgument(r);
                 }
 
-                public void Serialize(ref MessagePackWriter writer, CustomClassObjectWithArgument value, MessagePackSerializerOptions options)
+                public void Serialize(in MessagePackWriter writer, CustomClassObjectWithArgument value, MessagePackSerializerOptions options)
                 {
                     writer.Write(value.x * (int)this.x);
                 }

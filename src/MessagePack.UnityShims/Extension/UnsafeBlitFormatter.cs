@@ -40,7 +40,7 @@ namespace MessagePack.Unity.Extension
 
         protected void CopyDeserializeUnsafe(ReadOnlySpan<byte> src, Span<T> dest) => src.CopyTo(MemoryMarshal.Cast<T, byte>(dest));
 
-        public void Serialize(ref MessagePackWriter writer, T[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {

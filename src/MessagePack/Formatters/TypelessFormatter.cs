@@ -25,7 +25,7 @@ namespace MessagePack.Formatters
 
         private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 
-        private delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
+        private delegate void SerializeMethod(object dynamicContractlessFormatter, in MessagePackWriter writer, object value, MessagePackSerializerOptions options);
 
         private delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, MessagePackSerializerOptions options);
 
@@ -99,7 +99,7 @@ namespace MessagePack.Formatters
 
         public TypelessFormatter()
         {
-            this.serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, ref MessagePackWriter p2, object p3, MessagePackSerializerOptions p4) => { }));
+            this.serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, in MessagePackWriter p2, object p3, MessagePackSerializerOptions p4) => { }));
             this.deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object, DeserializeMethod>(null, (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object()));
         }
 
@@ -126,7 +126,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, object value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -159,7 +159,7 @@ namespace MessagePack.Formatters
 
             if (typeName == null)
             {
-                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref writer, value, options);
+                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(writer, value, options);
                 return;
             }
 
@@ -209,7 +209,7 @@ namespace MessagePack.Formatters
             {
                 MessagePackWriter scratchWriter = writer.Clone(scratch);
                 scratchWriter.WriteString(typeName);
-                formatterAndDelegate.Value(formatterAndDelegate.Key, ref scratchWriter, value, options);
+                formatterAndDelegate.Value(formatterAndDelegate.Key, scratchWriter, value, options);
                 scratchWriter.Flush();
 
                 // mark as extension with code 100

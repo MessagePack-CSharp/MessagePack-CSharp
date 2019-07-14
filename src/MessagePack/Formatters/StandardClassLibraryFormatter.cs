@@ -28,7 +28,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, byte[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, byte[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -61,7 +61,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, String value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, String value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -94,7 +94,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, String[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, String[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -138,7 +138,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, decimal value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, decimal value, MessagePackSerializerOptions options)
         {
             writer.Write(value.ToString(CultureInfo.InvariantCulture));
             return;
@@ -158,7 +158,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, TimeSpan value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, TimeSpan value, MessagePackSerializerOptions options)
         {
             writer.Write(value.Ticks);
             return;
@@ -178,7 +178,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, DateTimeOffset value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, DateTimeOffset value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
             writer.Write(new DateTime(value.Ticks, DateTimeKind.Utc)); // current ticks as is
@@ -211,7 +211,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public unsafe void Serialize(ref MessagePackWriter writer, Guid value, MessagePackSerializerOptions options)
+        public unsafe void Serialize(in MessagePackWriter writer, Guid value, MessagePackSerializerOptions options)
         {
             byte* pBytes = stackalloc byte[36];
             Span<byte> bytes = new Span<byte>(pBytes, 36);
@@ -251,7 +251,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Uri value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Uri value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -284,7 +284,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Version value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Version value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -311,12 +311,12 @@ namespace MessagePack.Formatters
 
     public sealed class KeyValuePairFormatter<TKey, TValue> : IMessagePackFormatter<KeyValuePair<TKey, TValue>>
     {
-        public void Serialize(ref MessagePackWriter writer, KeyValuePair<TKey, TValue> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, KeyValuePair<TKey, TValue> value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
             IFormatterResolver resolver = options.Resolver;
-            resolver.GetFormatterWithVerify<TKey>().Serialize(ref writer, value.Key, options);
-            resolver.GetFormatterWithVerify<TValue>().Serialize(ref writer, value.Value, options);
+            resolver.GetFormatterWithVerify<TKey>().Serialize(writer, value.Key, options);
+            resolver.GetFormatterWithVerify<TValue>().Serialize(writer, value.Value, options);
             return;
         }
 
@@ -344,7 +344,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, StringBuilder value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, StringBuilder value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -377,7 +377,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, BitArray value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, BitArray value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -427,7 +427,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, System.Numerics.BigInteger value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, System.Numerics.BigInteger value, MessagePackSerializerOptions options)
         {
             writer.Write(value.ToByteArray());
             return;
@@ -468,7 +468,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, System.Numerics.Complex value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, System.Numerics.Complex value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
             writer.Write(value.Real);
@@ -495,7 +495,7 @@ namespace MessagePack.Formatters
 
     public sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, Lazy<T> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Lazy<T> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -504,7 +504,7 @@ namespace MessagePack.Formatters
             else
             {
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value.Value, options);
+                resolver.GetFormatterWithVerify<T>().Serialize(writer, value.Value, options);
             }
         }
 

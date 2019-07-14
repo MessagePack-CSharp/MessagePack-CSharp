@@ -451,7 +451,7 @@ namespace MessagePack.Internal
                 return null;
             }
 
-            // internal delegate void AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
+            // internal delegate void AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, in MessagePackWriter writer, T value, MessagePackSerializerOptions options);
             // internal delegate T AnonymousDeserializeFunc<T>(object[] customFormatters, ref MessagePackReader reader, MessagePackSerializerOptions options);
             var serialize = new DynamicMethod("Serialize", null, new[] { typeof(byte[][]), typeof(object[]), typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) }, type, true);
             DynamicMethod deserialize = null;
@@ -465,7 +465,7 @@ namespace MessagePack.Internal
                 var i = 0;
                 foreach (ObjectSerializationInfo.EmittableMember item in serializationInfo.Members.Where(x => x.IsReadable))
                 {
-                    stringByteKeysField.Add(Utilities.GetWriterBytes(item.StringKey, (ref MessagePackWriter writer, string arg) => writer.Write(arg)));
+                    stringByteKeysField.Add(Utilities.GetWriterBytes(item.StringKey, (in MessagePackWriter writer, string arg) => writer.Write(arg)));
                     i++;
                 }
             }
@@ -1310,7 +1310,7 @@ namespace MessagePack.Internal
         }
     }
 
-    internal delegate void AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
+    internal delegate void AnonymousSerializeFunc<T>(byte[][] stringByteKeysField, object[] customFormatters, in MessagePackWriter writer, T value, MessagePackSerializerOptions options);
 
     internal delegate T AnonymousDeserializeFunc<T>(object[] customFormatters, ref MessagePackReader reader, MessagePackSerializerOptions options);
 
@@ -1331,14 +1331,14 @@ namespace MessagePack.Internal
             this.deserialize = deserialize;
         }
 
-        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T value, MessagePackSerializerOptions options)
         {
             if (this.serialize == null)
             {
                 throw new InvalidOperationException(this.GetType().Name + " does not support Serialize.");
             }
 
-            this.serialize(this.stringByteKeysField, this.serializeCustomFormatters, ref writer, value, options);
+            this.serialize(this.stringByteKeysField, this.serializeCustomFormatters, writer, value, options);
         }
 
         public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)

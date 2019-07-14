@@ -21,7 +21,7 @@ namespace <#= Namespace #>
 
     public sealed class <#= info.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= info.FullName #>>
     {
-        public void Serialize(ref MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
             writer.Write((<#= info.UnderlyingType #>)value);
         }

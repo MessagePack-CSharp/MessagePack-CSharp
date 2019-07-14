@@ -46,7 +46,7 @@ namespace MessagePack
         public static void Serialize<T>(IBufferWriter<byte> writer, T value, MessagePackSerializerOptions options = null)
         {
             var fastWriter = new MessagePackWriter(writer);
-            Serialize(ref fastWriter, value, options);
+            Serialize(fastWriter, value, options);
             fastWriter.Flush();
         }
 
@@ -56,7 +56,7 @@ namespace MessagePack
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
-        public static void Serialize<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options = null)
+        public static void Serialize<T>(in MessagePackWriter writer, T value, MessagePackSerializerOptions options = null)
         {
             options = options ?? MessagePackSerializerOptions.Default;
             if (options.UseLZ4Compression)
@@ -64,14 +64,14 @@ namespace MessagePack
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                 {
                     MessagePackWriter scratchWriter = writer.Clone(scratch);
-                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
+                    options.Resolver.GetFormatterWithVerify<T>().Serialize(scratchWriter, value, options);
                     scratchWriter.Flush();
-                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, writer);
                 }
             }
             else
             {
-                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
+                options.Resolver.GetFormatterWithVerify<T>().Serialize(writer, value, options);
             }
         }
 
@@ -90,7 +90,7 @@ namespace MessagePack
             }
 
             var msgpackWriter = new MessagePackWriter(ReusableSequenceWithMinSize, array);
-            Serialize(ref msgpackWriter, value, options);
+            Serialize(msgpackWriter, value, options);
             return msgpackWriter.FlushAndGetArray();
         }
 
@@ -325,7 +325,7 @@ namespace MessagePack
             return false;
         }
 
-        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer)
+        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, in MessagePackWriter writer)
         {
             if (msgpackUncompressedData.Length < LZ4NotCompressionSize)
             {

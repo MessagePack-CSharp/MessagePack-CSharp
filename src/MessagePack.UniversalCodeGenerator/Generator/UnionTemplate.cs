@@ -154,8 +154,8 @@ namespace ");
             
             #line default
             #line hidden
-            this.Write("            };\r\n        }\r\n\r\n        public void Serialize(ref MessagePackWriter " +
-                    "writer, ");
+            this.Write("            };\r\n        }\r\n\r\n        public void Serialize(in MessagePackWriter w" +
+                    "riter, ");
             
             #line 44 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
@@ -192,7 +192,7 @@ namespace ");
             
             #line default
             #line hidden
-            this.Write(">().Serialize(ref writer, (");
+            this.Write(">().Serialize(writer, (");
             
             #line 55 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));

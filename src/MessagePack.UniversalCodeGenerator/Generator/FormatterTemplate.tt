@@ -46,7 +46,7 @@ namespace <#= Namespace #>
         }
 <# } #>
 
-        public void Serialize(ref MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
 <# if( objInfo.IsClass) { #>
             if (value == null)

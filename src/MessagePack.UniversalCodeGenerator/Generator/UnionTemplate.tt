@@ -41,7 +41,7 @@ namespace <#= Namespace #>
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
             KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
@@ -52,7 +52,7 @@ namespace <#= Namespace #>
                 {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
                     case <#= i #>:
-                        options.Resolver.GetFormatterWithVerify<<#= item.Type #>>().Serialize(ref writer, (<#= item.Type #>)value, options);
+                        options.Resolver.GetFormatterWithVerify<<#= item.Type #>>().Serialize(writer, (<#= item.Type #>)value, options);
                         break;
 <# } #>
                     default:

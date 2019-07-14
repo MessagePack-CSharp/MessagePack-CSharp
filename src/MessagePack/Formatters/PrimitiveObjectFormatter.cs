@@ -69,7 +69,7 @@ namespace MessagePack.Formatters
 
 #endif
 
-        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, object value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -180,8 +180,8 @@ namespace MessagePack.Formatters
                     writer.WriteMapHeader(d.Count);
                     foreach (System.Collections.DictionaryEntry item in d)
                     {
-                        this.Serialize(ref writer, item.Key, options);
-                        this.Serialize(ref writer, item.Value, options);
+                        this.Serialize(writer, item.Key, options);
+                        this.Serialize(writer, item.Value, options);
                     }
 
                     return;
@@ -192,7 +192,7 @@ namespace MessagePack.Formatters
                     writer.WriteArrayHeader(c.Count);
                     foreach (var item in c)
                     {
-                        this.Serialize(ref writer, item, options);
+                        this.Serialize(writer, item, options);
                     }
 
                     return;

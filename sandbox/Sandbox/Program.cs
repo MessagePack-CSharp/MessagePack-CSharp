@@ -255,9 +255,9 @@ namespace Sandbox
         // serialize/deserialize internal field.
         private class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
         {
-            public void Serialize(ref MessagePackWriter writer, CustomObject value, MessagePackSerializerOptions options)
+            public void Serialize(in MessagePackWriter writer, CustomObject value, MessagePackSerializerOptions options)
             {
-                options.Resolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.internalId, options);
+                options.Resolver.GetFormatterWithVerify<string>().Serialize(writer, value.internalId, options);
             }
 
             public CustomObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -821,7 +821,7 @@ namespace Sandbox
             { 1, 1 },
         };
 
-        public void Serialize(ref MessagePackWriter writer, IHogeMoge value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, IHogeMoge value, MessagePackSerializerOptions options)
         {
             KeyValuePair<int, int> key;
             if (Map.TryGetValue(value.GetType(), out key))
@@ -832,10 +832,10 @@ namespace Sandbox
                 switch (key.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref writer, (HogeMoge1)value, options);
+                        options.Resolver.GetFormatterWithVerify<HogeMoge1>().Serialize(writer, (HogeMoge1)value, options);
                         break;
                     case 1:
-                        options.Resolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref writer, (HogeMoge2)value, options);
+                        options.Resolver.GetFormatterWithVerify<HogeMoge2>().Serialize(writer, (HogeMoge2)value, options);
                         break;
                     default:
                         break;

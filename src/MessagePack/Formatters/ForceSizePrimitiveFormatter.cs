@@ -16,7 +16,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int16 value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int16 value, MessagePackSerializerOptions options)
         {
             writer.WriteInt16(value);
         }
@@ -35,7 +35,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int16? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int16? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -68,7 +68,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int16[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int16[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -112,7 +112,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int32 value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int32 value, MessagePackSerializerOptions options)
         {
             writer.WriteInt32(value);
         }
@@ -131,7 +131,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int32? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int32? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -164,7 +164,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int32[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int32[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -208,7 +208,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int64 value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int64 value, MessagePackSerializerOptions options)
         {
             writer.WriteInt64(value);
         }
@@ -227,7 +227,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int64? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int64? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -260,7 +260,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int64[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Int64[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -304,7 +304,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt16 value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt16 value, MessagePackSerializerOptions options)
         {
             writer.WriteUInt16(value);
         }
@@ -323,7 +323,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt16? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt16? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -356,7 +356,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt16[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt16[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -400,7 +400,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt32 value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt32 value, MessagePackSerializerOptions options)
         {
             writer.WriteUInt32(value);
         }
@@ -419,7 +419,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt32? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt32? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -452,7 +452,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt32[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt32[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -496,7 +496,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt64 value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt64 value, MessagePackSerializerOptions options)
         {
             writer.WriteUInt64(value);
         }
@@ -515,7 +515,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt64? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt64? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -548,7 +548,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt64[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, UInt64[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -592,7 +592,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Byte value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Byte value, MessagePackSerializerOptions options)
         {
             writer.WriteUInt8(value);
         }
@@ -611,7 +611,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Byte? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Byte? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -644,7 +644,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, SByte value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, SByte value, MessagePackSerializerOptions options)
         {
             writer.WriteInt8(value);
         }
@@ -663,7 +663,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, SByte? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, SByte? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -696,7 +696,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, SByte[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, SByte[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {

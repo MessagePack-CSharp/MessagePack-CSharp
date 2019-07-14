@@ -11,7 +11,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Nil value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Nil value, MessagePackSerializerOptions options)
         {
             writer.WriteNil();
         }
@@ -31,7 +31,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Nil? value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Nil? value, MessagePackSerializerOptions options)
         {
             writer.WriteNil();
         }

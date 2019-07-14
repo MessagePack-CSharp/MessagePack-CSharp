@@ -13,7 +13,7 @@ namespace MessagePack.ImmutableCollection
     // Immutablearray<T>.Enumerator is 'not' IEnumerator<T>, can't use abstraction layer.
     public class ImmutableArrayFormatter<T> : IMessagePackFormatter<ImmutableArray<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, ImmutableArray<T> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, ImmutableArray<T> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -27,7 +27,7 @@ namespace MessagePack.ImmutableCollection
 
                 foreach (T item in value)
                 {
-                    formatter.Serialize(ref writer, item, options);
+                    formatter.Serialize(writer, item, options);
                 }
             }
         }

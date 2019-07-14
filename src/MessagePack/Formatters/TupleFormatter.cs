@@ -12,7 +12,7 @@ namespace MessagePack.Formatters
 {
     public sealed class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Tuple<T1> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -23,7 +23,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(1);
 
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
+                resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
             }
         }
 
@@ -51,7 +51,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Tuple<T1, T2> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -62,8 +62,8 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(2);
 
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-                resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
+                resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
+                resolver.GetFormatterWithVerify<T2>().Serialize(writer, value.Item2, options);
             }
         }
 
@@ -92,7 +92,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Tuple<T1, T2, T3> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -103,9 +103,9 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(3);
 
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-                resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
-                resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
+                resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
+                resolver.GetFormatterWithVerify<T2>().Serialize(writer, value.Item2, options);
+                resolver.GetFormatterWithVerify<T3>().Serialize(writer, value.Item3, options);
             }
         }
 
@@ -135,7 +135,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Tuple<T1, T2, T3, T4> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -146,10 +146,10 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(4);
 
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-                resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
-                resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
-                resolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
+                resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
+                resolver.GetFormatterWithVerify<T2>().Serialize(writer, value.Item2, options);
+                resolver.GetFormatterWithVerify<T3>().Serialize(writer, value.Item3, options);
+                resolver.GetFormatterWithVerify<T4>().Serialize(writer, value.Item4, options);
             }
         }
 
@@ -180,7 +180,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -191,11 +191,11 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(5);
 
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-                resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
-                resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
-                resolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
-                resolver.GetFormatterWithVerify<T5>().Serialize(ref writer, value.Item5, options);
+                resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
+                resolver.GetFormatterWithVerify<T2>().Serialize(writer, value.Item2, options);
+                resolver.GetFormatterWithVerify<T3>().Serialize(writer, value.Item3, options);
+                resolver.GetFormatterWithVerify<T4>().Serialize(writer, value.Item4, options);
+                resolver.GetFormatterWithVerify<T5>().Serialize(writer, value.Item5, options);
             }
         }
 
@@ -227,7 +227,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -238,12 +238,12 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(6);
 
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-                resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
-                resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
-                resolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
-                resolver.GetFormatterWithVerify<T5>().Serialize(ref writer, value.Item5, options);
-                resolver.GetFormatterWithVerify<T6>().Serialize(ref writer, value.Item6, options);
+                resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
+                resolver.GetFormatterWithVerify<T2>().Serialize(writer, value.Item2, options);
+                resolver.GetFormatterWithVerify<T3>().Serialize(writer, value.Item3, options);
+                resolver.GetFormatterWithVerify<T4>().Serialize(writer, value.Item4, options);
+                resolver.GetFormatterWithVerify<T5>().Serialize(writer, value.Item5, options);
+                resolver.GetFormatterWithVerify<T6>().Serialize(writer, value.Item6, options);
             }
         }
 
@@ -276,7 +276,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -287,13 +287,13 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(7);
 
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-                resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
-                resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
-                resolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
-                resolver.GetFormatterWithVerify<T5>().Serialize(ref writer, value.Item5, options);
-                resolver.GetFormatterWithVerify<T6>().Serialize(ref writer, value.Item6, options);
-                resolver.GetFormatterWithVerify<T7>().Serialize(ref writer, value.Item7, options);
+                resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
+                resolver.GetFormatterWithVerify<T2>().Serialize(writer, value.Item2, options);
+                resolver.GetFormatterWithVerify<T3>().Serialize(writer, value.Item3, options);
+                resolver.GetFormatterWithVerify<T4>().Serialize(writer, value.Item4, options);
+                resolver.GetFormatterWithVerify<T5>().Serialize(writer, value.Item5, options);
+                resolver.GetFormatterWithVerify<T6>().Serialize(writer, value.Item6, options);
+                resolver.GetFormatterWithVerify<T7>().Serialize(writer, value.Item7, options);
             }
         }
 
@@ -327,7 +327,7 @@ namespace MessagePack.Formatters
 
     public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7, TRest> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7, TRest> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -338,14 +338,14 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(8);
 
                 IFormatterResolver resolver = options.Resolver;
-                resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-                resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
-                resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
-                resolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
-                resolver.GetFormatterWithVerify<T5>().Serialize(ref writer, value.Item5, options);
-                resolver.GetFormatterWithVerify<T6>().Serialize(ref writer, value.Item6, options);
-                resolver.GetFormatterWithVerify<T7>().Serialize(ref writer, value.Item7, options);
-                resolver.GetFormatterWithVerify<TRest>().Serialize(ref writer, value.Rest, options);
+                resolver.GetFormatterWithVerify<T1>().Serialize(writer, value.Item1, options);
+                resolver.GetFormatterWithVerify<T2>().Serialize(writer, value.Item2, options);
+                resolver.GetFormatterWithVerify<T3>().Serialize(writer, value.Item3, options);
+                resolver.GetFormatterWithVerify<T4>().Serialize(writer, value.Item4, options);
+                resolver.GetFormatterWithVerify<T5>().Serialize(writer, value.Item5, options);
+                resolver.GetFormatterWithVerify<T6>().Serialize(writer, value.Item6, options);
+                resolver.GetFormatterWithVerify<T7>().Serialize(writer, value.Item7, options);
+                resolver.GetFormatterWithVerify<TRest>().Serialize(writer, value.Rest, options);
             }
         }
 

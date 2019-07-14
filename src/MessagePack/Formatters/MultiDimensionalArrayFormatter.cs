@@ -16,7 +16,7 @@ namespace MessagePack.Formatters
     {
         private const int ArrayLength = 3;
 
-        public void Serialize(ref MessagePackWriter writer, T[,] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T[,] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -36,7 +36,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (T item in value)
                 {
-                    formatter.Serialize(ref writer, item, options);
+                    formatter.Serialize(writer, item, options);
                 }
             }
         }
@@ -89,7 +89,7 @@ namespace MessagePack.Formatters
     {
         private const int ArrayLength = 4;
 
-        public void Serialize(ref MessagePackWriter writer, T[,,] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T[,,] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -111,7 +111,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (T item in value)
                 {
-                    formatter.Serialize(ref writer, item, options);
+                    formatter.Serialize(writer, item, options);
                 }
             }
         }
@@ -172,7 +172,7 @@ namespace MessagePack.Formatters
     {
         private const int ArrayLength = 5;
 
-        public void Serialize(ref MessagePackWriter writer, T[,,,] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T[,,,] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -196,7 +196,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (T item in value)
                 {
-                    formatter.Serialize(ref writer, item, options);
+                    formatter.Serialize(writer, item, options);
                 }
             }
         }

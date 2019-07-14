@@ -148,7 +148,7 @@ namespace MessagePack.Resolvers
     ////        }
     ////    }
 
-    ////    public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+    ////    public void Serialize(in MessagePackWriter writer, T value, MessagePackSerializerOptions options)
     ////    {
     ////        // reduce generic method size, avoid write code in <T> type.
     ////        if (metaInfo.IsIntKey)

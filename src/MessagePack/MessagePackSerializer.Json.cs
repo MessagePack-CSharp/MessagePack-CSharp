@@ -22,7 +22,7 @@ namespace MessagePack
             using (var sequence = new Sequence<byte>())
             {
                 var msgpackWriter = new MessagePackWriter(sequence);
-                Serialize(ref msgpackWriter, obj, options);
+                Serialize(in msgpackWriter, obj, options);
                 msgpackWriter.Flush();
                 var msgpackReader = new MessagePackReader(sequence.AsReadOnlySequence);
                 ConvertToJson(ref msgpackReader, textWriter);
@@ -95,18 +95,18 @@ namespace MessagePack
         /// <summary>
         /// From Json String to MessagePack binary.
         /// </summary>
-        public static void ConvertFromJson(string str, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
+        public static void ConvertFromJson(string str, in MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
             using (var sr = new StringReader(str))
             {
-                ConvertFromJson(sr, ref writer, options);
+                ConvertFromJson(sr, writer, options);
             }
         }
 
         /// <summary>
         /// From Json String to MessagePack binary.
         /// </summary>
-        public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
+        public static void ConvertFromJson(TextReader reader, in MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
             options = options ?? MessagePackSerializerOptions.Default;
             if (options.UseLZ4Compression)
@@ -116,23 +116,23 @@ namespace MessagePack
                     MessagePackWriter scratchWriter = writer.Clone(scratch);
                     using (var jr = new TinyJsonReader(reader, false))
                     {
-                        FromJsonCore(jr, ref scratchWriter);
+                        FromJsonCore(jr, scratchWriter);
                     }
 
                     scratchWriter.Flush();
-                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, writer);
                 }
             }
             else
             {
                 using (var jr = new TinyJsonReader(reader, false))
                 {
-                    FromJsonCore(jr, ref writer);
+                    FromJsonCore(jr, writer);
                 }
             }
         }
 
-        private static uint FromJsonCore(TinyJsonReader jr, ref MessagePackWriter writer)
+        private static uint FromJsonCore(TinyJsonReader jr, in MessagePackWriter writer)
         {
             uint count = 0;
             while (jr.Read())
@@ -146,7 +146,7 @@ namespace MessagePack
                         using (var scratch = new Sequence<byte>())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratch);
-                            var mapCount = FromJsonCore(jr, ref scratchWriter);
+                            var mapCount = FromJsonCore(jr, scratchWriter);
                             scratchWriter.Flush();
 
                             mapCount = mapCount / 2; // remove propertyname string count.
@@ -163,7 +163,7 @@ namespace MessagePack
                         using (var scratch = new Sequence<byte>())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratch);
-                            var arrayCount = FromJsonCore(jr, ref scratchWriter);
+                            var arrayCount = FromJsonCore(jr, scratchWriter);
                             scratchWriter.Flush();
 
                             writer.WriteArrayHeader(arrayCount);
@@ -190,7 +190,7 @@ namespace MessagePack
                         }
                         else if (v == ValueType.Decimal)
                         {
-                            DecimalFormatter.Instance.Serialize(ref writer, jr.DecimalValue, null);
+                            DecimalFormatter.Instance.Serialize(writer, jr.DecimalValue, null);
                         }
 
                         count++;

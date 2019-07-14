@@ -18,7 +18,7 @@ namespace MessagePack.Formatters
 {
     public sealed class ArrayFormatter<T> : IMessagePackFormatter<T[]>
     {
-        public void Serialize(ref MessagePackWriter writer, T[] value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -32,7 +32,7 @@ namespace MessagePack.Formatters
 
                 for (int i = 0; i < value.Length; i++)
                 {
-                    formatter.Serialize(ref writer, value[i], options);
+                    formatter.Serialize(writer, value[i], options);
                 }
             }
         }
@@ -67,7 +67,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, ArraySegment<byte> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, ArraySegment<byte> value, MessagePackSerializerOptions options)
         {
             if (value.Array == null)
             {
@@ -94,7 +94,7 @@ namespace MessagePack.Formatters
 
     public sealed class ArraySegmentFormatter<T> : IMessagePackFormatter<ArraySegment<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, ArraySegment<T> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, ArraySegment<T> value, MessagePackSerializerOptions options)
         {
             if (value.Array == null)
             {
@@ -110,7 +110,7 @@ namespace MessagePack.Formatters
                 for (int i = 0; i < value.Count; i++)
                 {
                     T item = array[value.Offset + i];
-                    formatter.Serialize(ref writer, item, options);
+                    formatter.Serialize(writer, item, options);
                 }
             }
         }
@@ -132,7 +132,7 @@ namespace MessagePack.Formatters
     // List<T> is popular format, should avoid abstraction.
     public sealed class ListFormatter<T> : IMessagePackFormatter<List<T>>
     {
-        public void Serialize(ref MessagePackWriter writer, List<T> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, List<T> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -147,7 +147,7 @@ namespace MessagePack.Formatters
 
                 for (int i = 0; i < c; i++)
                 {
-                    formatter.Serialize(ref writer, value[i], options);
+                    formatter.Serialize(writer, value[i], options);
                 }
             }
         }
@@ -178,7 +178,7 @@ namespace MessagePack.Formatters
         where TCollection : IEnumerable<TElement>
         where TEnumerator : IEnumerator<TElement>
     {
-        public void Serialize(ref MessagePackWriter writer, TCollection value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, TCollection value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -196,7 +196,7 @@ namespace MessagePack.Formatters
 
                     foreach (TElement item in array)
                     {
-                        formatter.Serialize(ref writer, item, options);
+                        formatter.Serialize(writer, item, options);
                     }
 
                     return;
@@ -218,9 +218,9 @@ namespace MessagePack.Formatters
                             while (e.MoveNext())
                             {
 #if !UNITY
-                                formatter.Serialize(ref writer, e.Current, options);
+                                formatter.Serialize(writer, e.Current, options);
 #else
-                                formatter.Serialize(ref writer, (TElement)e.Current, (IFormatterResolver)resolver);
+                                formatter.Serialize(writer, (TElement)e.Current, (IFormatterResolver)resolver);
 #endif
                             }
                         }
@@ -244,9 +244,9 @@ namespace MessagePack.Formatters
                                 {
                                     count++;
 #if !UNITY
-                                    formatter.Serialize(ref scratchWriter, e.Current, options);
+                                    formatter.Serialize(scratchWriter, e.Current, options);
 #else
-                                    formatter.Serialize(ref scratchWriter, (TElement)e.Current, (IFormatterResolver)resolver);
+                                    formatter.Serialize(scratchWriter, (TElement)e.Current, (IFormatterResolver)resolver);
 #endif
                                 }
                             }
@@ -535,7 +535,7 @@ namespace MessagePack.Formatters
     // [Key, [Array]]
     public sealed class InterfaceGroupingFormatter<TKey, TElement> : IMessagePackFormatter<IGrouping<TKey, TElement>>
     {
-        public void Serialize(ref MessagePackWriter writer, IGrouping<TKey, TElement> value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, IGrouping<TKey, TElement> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -544,8 +544,8 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(2);
-                options.Resolver.GetFormatterWithVerify<TKey>().Serialize(ref writer, value.Key, options);
-                options.Resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Serialize(ref writer, value, options);
+                options.Resolver.GetFormatterWithVerify<TKey>().Serialize(writer, value.Key, options);
+                options.Resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Serialize(writer, value, options);
             }
         }
 
@@ -665,7 +665,7 @@ namespace MessagePack.Formatters
     public sealed class NonGenericListFormatter<T> : IMessagePackFormatter<T>
         where T : class, IList, new()
     {
-        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -678,7 +678,7 @@ namespace MessagePack.Formatters
             writer.WriteArrayHeader(value.Count);
             foreach (var item in value)
             {
-                formatter.Serialize(ref writer, item, options);
+                formatter.Serialize(writer, item, options);
             }
         }
 
@@ -711,7 +711,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, IList value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, IList value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -724,7 +724,7 @@ namespace MessagePack.Formatters
             writer.WriteArrayHeader(value.Count);
             foreach (var item in value)
             {
-                formatter.Serialize(ref writer, item, options);
+                formatter.Serialize(writer, item, options);
             }
         }
 
@@ -752,7 +752,7 @@ namespace MessagePack.Formatters
     public sealed class NonGenericDictionaryFormatter<T> : IMessagePackFormatter<T>
         where T : class, IDictionary, new()
     {
-        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, T value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -765,8 +765,8 @@ namespace MessagePack.Formatters
             writer.WriteMapHeader(value.Count);
             foreach (DictionaryEntry item in value)
             {
-                formatter.Serialize(ref writer, item.Key, options);
-                formatter.Serialize(ref writer, item.Value, options);
+                formatter.Serialize(writer, item.Key, options);
+                formatter.Serialize(writer, item.Value, options);
             }
         }
 
@@ -801,7 +801,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, IDictionary value, MessagePackSerializerOptions options)
+        public void Serialize(in MessagePackWriter writer, IDictionary value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -814,8 +814,8 @@ namespace MessagePack.Formatters
             writer.WriteMapHeader(value.Count);
             foreach (DictionaryEntry item in value)
             {
-                formatter.Serialize(ref writer, item.Key, options);
-                formatter.Serialize(ref writer, item.Value, options);
+                formatter.Serialize(writer, item.Key, options);
+                formatter.Serialize(writer, item.Value, options);
             }
         }
 

@@ -47,7 +47,7 @@ namespace MessagePack.Tests
                 var original = Guid.NewGuid();
                 var sequence = new Sequence<byte>();
                 var sequenceWriter = new MessagePackWriter(sequence);
-                GuidFormatter.Instance.Serialize(ref sequenceWriter, original, null);
+                GuidFormatter.Instance.Serialize(sequenceWriter, original, null);
                 sequenceWriter.Flush();
                 sequence.Length.Is(38);
 

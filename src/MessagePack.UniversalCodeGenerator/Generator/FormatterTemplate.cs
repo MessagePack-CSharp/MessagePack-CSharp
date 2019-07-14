@@ -143,7 +143,7 @@ namespace ");
             
             #line default
             #line hidden
-            this.Write("\r\n        public void Serialize(ref MessagePackWriter writer, ");
+            this.Write("\r\n        public void Serialize(in MessagePackWriter writer, ");
             
             #line 49 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\FormatterTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));

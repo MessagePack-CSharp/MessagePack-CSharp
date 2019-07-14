@@ -14,14 +14,14 @@ namespace MessagePack
     /// </summary>
     internal static class Utilities
     {
-        internal delegate void GetWriterBytesAction<TArg>(ref MessagePackWriter writer, TArg argument);
+        internal delegate void GetWriterBytesAction<TArg>(in MessagePackWriter writer, TArg argument);
 
         internal static byte[] GetWriterBytes<TArg>(TArg arg, GetWriterBytesAction<TArg> action)
         {
             using (var sequence = new Sequence<byte>())
             {
                 var writer = new MessagePackWriter(sequence);
-                action(ref writer, arg);
+                action(writer, arg);
                 writer.Flush();
                 return sequence.AsReadOnlySequence.ToArray();
             }

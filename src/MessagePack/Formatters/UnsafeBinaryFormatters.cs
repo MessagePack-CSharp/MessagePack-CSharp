@@ -24,7 +24,7 @@ namespace MessagePack.Formatters
         /* Guid's underlying _a,...,_k field is sequential and same layout as .NET Framework and Mono(Unity).
          * But target machines must be same endian so restrict only for little endian. */
 
-        public unsafe void Serialize(ref MessagePackWriter writer, Guid value, MessagePackSerializerOptions options)
+        public unsafe void Serialize(in MessagePackWriter writer, Guid value, MessagePackSerializerOptions options)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -69,7 +69,7 @@ namespace MessagePack.Formatters
         /* decimal underlying "flags, hi, lo, mid" fields are sequential and same layuout with .NET Framework and Mono(Unity)
          * But target machines must be same endian so restrict only for little endian. */
 
-        public unsafe void Serialize(ref MessagePackWriter writer, Decimal value, MessagePackSerializerOptions options)
+        public unsafe void Serialize(in MessagePackWriter writer, Decimal value, MessagePackSerializerOptions options)
         {
             if (!BitConverter.IsLittleEndian)
             {
