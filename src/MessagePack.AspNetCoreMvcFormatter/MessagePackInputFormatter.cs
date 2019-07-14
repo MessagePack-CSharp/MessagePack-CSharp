@@ -24,12 +24,11 @@ namespace MessagePack.AspNetCoreMvcFormatter
         public bool CanRead(InputFormatterContext context) =>
             context.HttpContext.Request.ContentType == ContentType;
 
-        public Task<InputFormatterResult> ReadAsync(InputFormatterContext context)
+        public async Task<InputFormatterResult> ReadAsync(InputFormatterContext context)
         {
-            // TODO: switch to async typeless method when available.
             Microsoft.AspNetCore.Http.HttpRequest request = context.HttpContext.Request;
-            var result = MessagePackSerializer.Deserialize(context.ModelType, request.Body, this.options);
-            return InputFormatterResult.SuccessAsync(result);
+            object result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, this.options, context.HttpContext.RequestAborted);
+            return await InputFormatterResult.SuccessAsync(result);
         }
     }
 }

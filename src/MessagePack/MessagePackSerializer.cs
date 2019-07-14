@@ -120,7 +120,7 @@ namespace MessagePack
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A task that completes with the result of the async serialization operation.</returns>
-        public static async ValueTask SerializeAsync<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static async Task SerializeAsync<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             System.IO.Pipelines.PipeWriter writer = stream.UseStrictPipeWriter();
             Serialize(writer, value, options);

@@ -37,16 +37,12 @@ namespace MessagePack.AspNetCoreMvcFormatter
                 }
                 else
                 {
-                    // TODO: switch to async typeless method when available.
-                    MessagePackSerializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, this.options);
-                    return Task.CompletedTask;
+                    return MessagePackSerializer.SerializeAsync(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
                 }
             }
             else
             {
-                // TODO: switch to async typeless method when available.
-                MessagePackSerializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, this.options);
-                return Task.CompletedTask;
+                return MessagePackSerializer.SerializeAsync(context.ObjectType, context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
             }
         }
     }
