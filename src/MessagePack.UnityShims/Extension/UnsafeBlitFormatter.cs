@@ -1,12 +1,18 @@
-﻿#if ENABLE_UNSAFE_MSGPACK
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePack.Formatters;
+#if ENABLE_UNSAFE_MSGPACK
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using MessagePack.Formatters;
 using UnityEngine;
+
+#pragma warning disable SA1402 // multiple types in a file
+#pragma warning disable SA1649 // file name matches type name
 
 namespace MessagePack.Unity.Extension
 {
@@ -26,13 +32,12 @@ namespace MessagePack.Unity.Extension
 
     // use ext instead of ArrayFormatter to extremely boost up performance.
     // Layout: [extHeader, byteSize(integer), isLittleEndian(bool), bytes()]
-
     // Used Ext:30~36
-
     public abstract class UnsafeBlitFormatterBase<T> : IMessagePackFormatter<T[]>
         where T : struct
     {
         protected abstract sbyte TypeCode { get; }
+
         protected void CopyDeserializeUnsafe(ReadOnlySpan<byte> src, Span<T> dest) => src.CopyTo(MemoryMarshal.Cast<T, byte>(dest));
 
         public void Serialize(ref MessagePackWriter writer, T[] value, MessagePackSerializerOptions options)
@@ -45,7 +50,7 @@ namespace MessagePack.Unity.Extension
 
             var byteLen = value.Length * Marshal.SizeOf<T>();
 
-            writer.WriteExtensionFormatHeader(new ExtensionHeader(TypeCode, byteLen));
+            writer.WriteExtensionFormatHeader(new ExtensionHeader(this.TypeCode, byteLen));
             writer.Write(byteLen); // write original header(not array header)
             writer.Write(BitConverter.IsLittleEndian);
             writer.WriteRaw(MemoryMarshal.Cast<T, byte>(value));
@@ -58,15 +63,18 @@ namespace MessagePack.Unity.Extension
                 return null;
             }
 
-            var header = reader.ReadExtensionFormatHeader();
-            if (header.TypeCode != TypeCode) throw new InvalidOperationException("Invalid typeCode.");
+            ExtensionHeader header = reader.ReadExtensionFormatHeader();
+            if (header.TypeCode != this.TypeCode)
+            {
+                throw new InvalidOperationException("Invalid typeCode.");
+            }
 
             var byteLength = reader.ReadInt32();
             var isLittleEndian = reader.ReadBoolean();
 
             // Allocate a T[] that we will return. We'll then cast the T[] as byte[] so we can copy the byte sequence directly into it.
             var result = new T[byteLength / Marshal.SizeOf<T>()];
-            var resultAsBytes = MemoryMarshal.Cast<T, byte>(result);
+            Span<byte> resultAsBytes = MemoryMarshal.Cast<T, byte>(result);
             reader.ReadRaw(byteLength).CopyTo(resultAsBytes);
 
             // Reverse the byte order if necessary.
@@ -163,17 +171,26 @@ namespace MessagePack.Unity.Extension
 
     public class IntArrayBlitFormatter : UnsafeBlitFormatterBase<int>
     {
-        protected override sbyte TypeCode { get { return ReservedUnityExtensionTypeCode.Int; } }
+        protected override sbyte TypeCode
+        {
+            get { return ReservedUnityExtensionTypeCode.Int; }
+        }
     }
 
     public class FloatArrayBlitFormatter : UnsafeBlitFormatterBase<float>
     {
-        protected override sbyte TypeCode { get { return ReservedUnityExtensionTypeCode.Float; } }
+        protected override sbyte TypeCode
+        {
+            get { return ReservedUnityExtensionTypeCode.Float; }
+        }
     }
 
     public class DoubleArrayBlitFormatter : UnsafeBlitFormatterBase<double>
     {
-        protected override sbyte TypeCode { get { return ReservedUnityExtensionTypeCode.Double; } }
+        protected override sbyte TypeCode
+        {
+            get { return ReservedUnityExtensionTypeCode.Double; }
+        }
     }
 }
 

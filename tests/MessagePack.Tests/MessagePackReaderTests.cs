@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 using System.IO;
 using Nerdbank.Streams;
@@ -22,7 +25,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadSingle_ReadIntegersOfVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((System.Numerics.BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 Assert.Equal((float)(double)value, new MessagePackReader(encoded).ReadSingle());
@@ -81,6 +84,7 @@ namespace MessagePack.Tests
     internal static class MessagePackWriterExtensions
     {
         internal static void WriteByte(ref this MessagePackWriter writer, byte value) => writer.WriteUInt8(value);
+
         internal static void WriteSByte(ref this MessagePackWriter writer, sbyte value) => writer.WriteInt8(value);
     }
 }

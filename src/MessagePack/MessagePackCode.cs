@@ -1,11 +1,14 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace MessagePack
 {
     /// <summary>
-    /// https://github.com/msgpack/msgpack/blob/master/spec.md#serialization-type-to-format-conversion
+    /// https://github.com/msgpack/msgpack/blob/master/spec.md#serialization-type-to-format-conversion.
     /// </summary>
 #if MESSAGEPACK_INTERNAL
     internal
@@ -28,7 +31,7 @@ namespace MessagePack
     }
 
     /// <summary>
-    /// https://github.com/msgpack/msgpack/blob/master/spec.md#overview
+    /// https://github.com/msgpack/msgpack/blob/master/spec.md#overview.
     /// </summary>
 #if MESSAGEPACK_INTERNAL
     internal
@@ -80,114 +83,117 @@ namespace MessagePack
         public const byte MinNegativeFixInt = 0xe0; // 224
         public const byte MaxNegativeFixInt = 0xff; // 255
 
-        static readonly MessagePackType[] typeLookupTable = new MessagePackType[256];
-        static readonly string[] formatNameTable = new string[256];
+        private static readonly MessagePackType[] TypeLookupTable = new MessagePackType[256];
+        private static readonly string[] FormatNameTable = new string[256];
 
         static MessagePackCode()
         {
             // Init Lookup Table
             for (int i = MinFixInt; i <= MaxFixInt; i++)
             {
-                typeLookupTable[i] = MessagePackType.Integer;
-                formatNameTable[i] = "positive fixint";
+                TypeLookupTable[i] = MessagePackType.Integer;
+                FormatNameTable[i] = "positive fixint";
             }
+
             for (int i = MinFixMap; i <= MaxFixMap; i++)
             {
-                typeLookupTable[i] = MessagePackType.Map;
-                formatNameTable[i] = "fixmap";
+                TypeLookupTable[i] = MessagePackType.Map;
+                FormatNameTable[i] = "fixmap";
             }
+
             for (int i = MinFixArray; i <= MaxFixArray; i++)
             {
-                typeLookupTable[i] = MessagePackType.Array;
-                formatNameTable[i] = "fixarray";
+                TypeLookupTable[i] = MessagePackType.Array;
+                FormatNameTable[i] = "fixarray";
             }
+
             for (int i = MinFixStr; i <= MaxFixStr; i++)
             {
-                typeLookupTable[i] = MessagePackType.String;
-                formatNameTable[i] = "fixstr";
+                TypeLookupTable[i] = MessagePackType.String;
+                FormatNameTable[i] = "fixstr";
             }
 
-            typeLookupTable[Nil] = MessagePackType.Nil;
-            typeLookupTable[NeverUsed] = MessagePackType.Unknown;
-            typeLookupTable[False] = MessagePackType.Boolean;
-            typeLookupTable[True] = MessagePackType.Boolean;
-            typeLookupTable[Bin8] = MessagePackType.Binary;
-            typeLookupTable[Bin16] = MessagePackType.Binary;
-            typeLookupTable[Bin32] = MessagePackType.Binary;
-            typeLookupTable[Ext8] = MessagePackType.Extension;
-            typeLookupTable[Ext16] = MessagePackType.Extension;
-            typeLookupTable[Ext32] = MessagePackType.Extension;
-            typeLookupTable[Float32] = MessagePackType.Float;
-            typeLookupTable[Float64] = MessagePackType.Float;
-            typeLookupTable[UInt8] = MessagePackType.Integer;
-            typeLookupTable[UInt16] = MessagePackType.Integer;
-            typeLookupTable[UInt32] = MessagePackType.Integer;
-            typeLookupTable[UInt64] = MessagePackType.Integer;
-            typeLookupTable[Int8] = MessagePackType.Integer;
-            typeLookupTable[Int16] = MessagePackType.Integer;
-            typeLookupTable[Int32] = MessagePackType.Integer;
-            typeLookupTable[Int64] = MessagePackType.Integer;
-            typeLookupTable[FixExt1] = MessagePackType.Extension;
-            typeLookupTable[FixExt2] = MessagePackType.Extension;
-            typeLookupTable[FixExt4] = MessagePackType.Extension;
-            typeLookupTable[FixExt8] = MessagePackType.Extension;
-            typeLookupTable[FixExt16] = MessagePackType.Extension;
-            typeLookupTable[Str8] = MessagePackType.String;
-            typeLookupTable[Str16] = MessagePackType.String;
-            typeLookupTable[Str32] = MessagePackType.String;
-            typeLookupTable[Array16] = MessagePackType.Array;
-            typeLookupTable[Array32] = MessagePackType.Array;
-            typeLookupTable[Map16] = MessagePackType.Map;
-            typeLookupTable[Map32] = MessagePackType.Map;
+            TypeLookupTable[Nil] = MessagePackType.Nil;
+            TypeLookupTable[NeverUsed] = MessagePackType.Unknown;
+            TypeLookupTable[False] = MessagePackType.Boolean;
+            TypeLookupTable[True] = MessagePackType.Boolean;
+            TypeLookupTable[Bin8] = MessagePackType.Binary;
+            TypeLookupTable[Bin16] = MessagePackType.Binary;
+            TypeLookupTable[Bin32] = MessagePackType.Binary;
+            TypeLookupTable[Ext8] = MessagePackType.Extension;
+            TypeLookupTable[Ext16] = MessagePackType.Extension;
+            TypeLookupTable[Ext32] = MessagePackType.Extension;
+            TypeLookupTable[Float32] = MessagePackType.Float;
+            TypeLookupTable[Float64] = MessagePackType.Float;
+            TypeLookupTable[UInt8] = MessagePackType.Integer;
+            TypeLookupTable[UInt16] = MessagePackType.Integer;
+            TypeLookupTable[UInt32] = MessagePackType.Integer;
+            TypeLookupTable[UInt64] = MessagePackType.Integer;
+            TypeLookupTable[Int8] = MessagePackType.Integer;
+            TypeLookupTable[Int16] = MessagePackType.Integer;
+            TypeLookupTable[Int32] = MessagePackType.Integer;
+            TypeLookupTable[Int64] = MessagePackType.Integer;
+            TypeLookupTable[FixExt1] = MessagePackType.Extension;
+            TypeLookupTable[FixExt2] = MessagePackType.Extension;
+            TypeLookupTable[FixExt4] = MessagePackType.Extension;
+            TypeLookupTable[FixExt8] = MessagePackType.Extension;
+            TypeLookupTable[FixExt16] = MessagePackType.Extension;
+            TypeLookupTable[Str8] = MessagePackType.String;
+            TypeLookupTable[Str16] = MessagePackType.String;
+            TypeLookupTable[Str32] = MessagePackType.String;
+            TypeLookupTable[Array16] = MessagePackType.Array;
+            TypeLookupTable[Array32] = MessagePackType.Array;
+            TypeLookupTable[Map16] = MessagePackType.Map;
+            TypeLookupTable[Map32] = MessagePackType.Map;
 
-            formatNameTable[Nil] = "nil";
-            formatNameTable[NeverUsed] = "(never used)";
-            formatNameTable[False] = "false";
-            formatNameTable[True] = "true";
-            formatNameTable[Bin8] = "bin 8";
-            formatNameTable[Bin16] = "bin 16";
-            formatNameTable[Bin32] = "bin 32";
-            formatNameTable[Ext8] = "ext 8";
-            formatNameTable[Ext16] = "ext 16";
-            formatNameTable[Ext32] = "ext 32";
-            formatNameTable[Float32] = "float 32";
-            formatNameTable[Float64] = "float 64";
-            formatNameTable[UInt8] = "uint 8";
-            formatNameTable[UInt16] = "uint 16";
-            formatNameTable[UInt32] = "uint 32";
-            formatNameTable[UInt64] = "uint 64";
-            formatNameTable[Int8] = "int 8";
-            formatNameTable[Int16] = "int 16";
-            formatNameTable[Int32] = "int 32";
-            formatNameTable[Int64] = "int 64";
-            formatNameTable[FixExt1] = "fixext 1";
-            formatNameTable[FixExt2] = "fixext 2";
-            formatNameTable[FixExt4] = "fixext 4";
-            formatNameTable[FixExt8] = "fixext 8";
-            formatNameTable[FixExt16] = "fixext 16";
-            formatNameTable[Str8] = "str 8";
-            formatNameTable[Str16] = "str 16";
-            formatNameTable[Str32] = "str 32";
-            formatNameTable[Array16] = "array 16";
-            formatNameTable[Array32] = "array 32";
-            formatNameTable[Map16] = "map 16";
-            formatNameTable[Map32] = "map 32";
+            FormatNameTable[Nil] = "nil";
+            FormatNameTable[NeverUsed] = "(never used)";
+            FormatNameTable[False] = "false";
+            FormatNameTable[True] = "true";
+            FormatNameTable[Bin8] = "bin 8";
+            FormatNameTable[Bin16] = "bin 16";
+            FormatNameTable[Bin32] = "bin 32";
+            FormatNameTable[Ext8] = "ext 8";
+            FormatNameTable[Ext16] = "ext 16";
+            FormatNameTable[Ext32] = "ext 32";
+            FormatNameTable[Float32] = "float 32";
+            FormatNameTable[Float64] = "float 64";
+            FormatNameTable[UInt8] = "uint 8";
+            FormatNameTable[UInt16] = "uint 16";
+            FormatNameTable[UInt32] = "uint 32";
+            FormatNameTable[UInt64] = "uint 64";
+            FormatNameTable[Int8] = "int 8";
+            FormatNameTable[Int16] = "int 16";
+            FormatNameTable[Int32] = "int 32";
+            FormatNameTable[Int64] = "int 64";
+            FormatNameTable[FixExt1] = "fixext 1";
+            FormatNameTable[FixExt2] = "fixext 2";
+            FormatNameTable[FixExt4] = "fixext 4";
+            FormatNameTable[FixExt8] = "fixext 8";
+            FormatNameTable[FixExt16] = "fixext 16";
+            FormatNameTable[Str8] = "str 8";
+            FormatNameTable[Str16] = "str 16";
+            FormatNameTable[Str32] = "str 32";
+            FormatNameTable[Array16] = "array 16";
+            FormatNameTable[Array32] = "array 32";
+            FormatNameTable[Map16] = "map 16";
+            FormatNameTable[Map32] = "map 32";
 
             for (int i = MinNegativeFixInt; i <= MaxNegativeFixInt; i++)
             {
-                typeLookupTable[i] = MessagePackType.Integer;
-                formatNameTable[i] = "negative fixint";
+                TypeLookupTable[i] = MessagePackType.Integer;
+                FormatNameTable[i] = "negative fixint";
             }
         }
 
         public static MessagePackType ToMessagePackType(byte code)
         {
-            return typeLookupTable[code];
+            return TypeLookupTable[code];
         }
 
         public static string ToFormatName(byte code)
         {
-            return formatNameTable[code];
+            return FormatNameTable[code];
         }
 
         /// <summary>

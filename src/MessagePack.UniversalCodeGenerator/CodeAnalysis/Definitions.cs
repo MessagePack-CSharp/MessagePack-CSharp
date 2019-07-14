@@ -1,44 +1,68 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.CodeGenerator
 {
     public interface IResolverRegisterInfo
     {
         string FullName { get; }
+
         string FormatterName { get; }
     }
 
     public class ObjectSerializationInfo : IResolverRegisterInfo
     {
         public string Name { get; set; }
+
         public string FullName { get; set; }
+
         public string Namespace { get; set; }
+
         public bool IsIntKey { get; set; }
-        public bool IsStringKey { get { return !IsIntKey; } }
+
+        public bool IsStringKey
+        {
+            get { return !this.IsIntKey; }
+        }
+
         public bool IsClass { get; set; }
-        public bool IsStruct { get { return !IsClass; } }
+
+        public bool IsStruct
+        {
+            get { return !this.IsClass; }
+        }
+
         public MemberSerializationInfo[] ConstructorParameters { get; set; }
+
         public MemberSerializationInfo[] Members { get; set; }
+
         public bool HasIMessagePackSerializationCallbackReceiver { get; set; }
+
         public bool NeedsCastOnBefore { get; set; }
+
         public bool NeedsCastOnAfter { get; set; }
-        public string FormatterName => (Namespace == null ? Name : Namespace + "." + Name) + "Formatter";
+
+        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
 
         public int WriteCount
         {
             get
             {
-                if (IsStringKey)
+                if (this.IsStringKey)
                 {
-                    return Members.Count(x => x.IsReadable);
+                    return this.Members.Count(x => x.IsReadable);
                 }
                 else
                 {
-                    return MaxKey;
+                    return this.MaxKey;
                 }
             }
         }
@@ -47,35 +71,43 @@ namespace MessagePack.CodeGenerator
         {
             get
             {
-                return Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
+                return this.Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
             }
         }
 
         public MemberSerializationInfo GetMember(int index)
         {
-            return Members.FirstOrDefault(x => x.IntKey == index);
+            return this.Members.FirstOrDefault(x => x.IntKey == index);
         }
 
         public string GetConstructorString()
         {
-            var args = string.Join(", ", ConstructorParameters.Select(x => "__" + x.Name + "__"));
-            return $"{FullName}({args})";
+            var args = string.Join(", ", this.ConstructorParameters.Select(x => "__" + x.Name + "__"));
+            return $"{this.FullName}({args})";
         }
     }
 
     public class MemberSerializationInfo
     {
         public bool IsProperty { get; set; }
+
         public bool IsField { get; set; }
+
         public bool IsWritable { get; set; }
+
         public bool IsReadable { get; set; }
+
         public int IntKey { get; set; }
+
         public string StringKey { get; set; }
+
         public string Type { get; set; }
+
         public string Name { get; set; }
+
         public string ShortTypeName { get; set; }
 
-        readonly HashSet<string> primitiveTypes = new HashSet<string>(new string[]
+        private readonly HashSet<string> primitiveTypes = new HashSet<string>(new string[]
         {
             "short",
             "int",
@@ -89,32 +121,32 @@ namespace MessagePack.CodeGenerator
             "byte",
             "sbyte",
             "char",
-            //"global::System.DateTime",
-            //"byte[]",
-            //"string",
+            ////"global::System.DateTime",
+            ////"byte[]",
+            ////"string",
         });
 
         public string GetSerializeMethodString()
         {
-            if (primitiveTypes.Contains(Type))
+            if (this.primitiveTypes.Contains(this.Type))
             {
-                return $"writer.Write(value.{Name})";
+                return $"writer.Write(value.{this.Name})";
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Serialize(ref writer, value.{Name}, options)";
+                return $"formatterResolver.GetFormatterWithVerify<{this.Type}>().Serialize(ref writer, value.{this.Name}, options)";
             }
         }
 
         public string GetDeserializeMethodString()
         {
-            if (primitiveTypes.Contains(Type))
+            if (this.primitiveTypes.Contains(this.Type))
             {
-                return $"reader.Read{ShortTypeName.Replace("[]", "s")}()";
+                return $"reader.Read{this.ShortTypeName.Replace("[]", "s")}()";
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{Type}>().Deserialize(ref reader, options)";
+                return $"formatterResolver.GetFormatterWithVerify<{this.Type}>().Deserialize(ref reader, options)";
             }
         }
     }
@@ -122,11 +154,14 @@ namespace MessagePack.CodeGenerator
     public class EnumSerializationInfo : IResolverRegisterInfo
     {
         public string Namespace { get; set; }
+
         public string Name { get; set; }
+
         public string FullName { get; set; }
+
         public string UnderlyingType { get; set; }
 
-        public string FormatterName => (Namespace == null ? Name : Namespace + "." + Name) + "Formatter";
+        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
     }
 
     public class GenericSerializationInfo : IResolverRegisterInfo, IEquatable<GenericSerializationInfo>
@@ -137,27 +172,32 @@ namespace MessagePack.CodeGenerator
 
         public bool Equals(GenericSerializationInfo other)
         {
-            return FullName.Equals(other.FullName);
+            return this.FullName.Equals(other.FullName);
         }
 
         public override int GetHashCode()
         {
-            return FullName.GetHashCode();
+            return this.FullName.GetHashCode();
         }
     }
 
     public class UnionSerializationInfo : IResolverRegisterInfo
     {
         public string Namespace { get; set; }
+
         public string Name { get; set; }
+
         public string FullName { get; set; }
-        public string FormatterName => (Namespace == null ? Name : Namespace + "." + Name) + "Formatter";
+
+        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
+
         public UnionSubTypeInfo[] SubTypes { get; set; }
     }
 
     public class UnionSubTypeInfo
     {
         public string Type { get; set; }
+
         public int Key { get; set; }
     }
 }

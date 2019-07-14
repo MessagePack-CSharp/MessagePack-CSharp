@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -40,7 +43,7 @@ namespace MessagePack.Tests
             MessagePackSerializer.Serialize(ref messagePackBytesWriter, sourceBytes);
             messagePackBytesWriter.Flush();
             Assert.Equal(1, messagePackBytes.Length);
-            Assert.Equal(MessagePackCode.Nil, messagePackBytes.AsReadOnlySequence.First.Span[0]); 
+            Assert.Equal(MessagePackCode.Nil, messagePackBytes.AsReadOnlySequence.First.Span[0]);
 
             var deserializedBytes = DeserializeByClassicMsgPack<byte[]>(messagePackBytes.AsReadOnlySequence.ToArray(), MsgPack.Serialization.SerializationMethod.Array);
             Assert.Null(deserializedBytes);
@@ -55,12 +58,12 @@ namespace MessagePack.Tests
             var foo = new Foo
             {
                 Id = 123,
-                Value = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte) i)).ToArray() // long byte array
+                Value = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte)i)).ToArray(), // long byte array
             };
             byte[] messagePackBytes = MessagePackSerializer.Serialize(foo);
             Assert.NotEmpty(messagePackBytes);
 
-            var deserializedFoo = DeserializeByClassicMsgPack<Foo>(messagePackBytes, MsgPack.Serialization.SerializationMethod.Map);
+            Foo deserializedFoo = DeserializeByClassicMsgPack<Foo>(messagePackBytes, MsgPack.Serialization.SerializationMethod.Map);
             Assert.Equal(foo.Id, deserializedFoo.Id);
             Assert.Equal(foo.Value, deserializedFoo.Value);
         }
@@ -71,7 +74,7 @@ namespace MessagePack.Tests
         [InlineData(100000)] // str 32
         public void DeserializeSimpleByteArray(int arrayLength)
         {
-            var sourceBytes = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte) i)).ToArray(); // long byte array
+            var sourceBytes = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte)i)).ToArray(); // long byte array
             var messagePackBytes = SerializeByClassicMsgPack(sourceBytes, MsgPack.Serialization.SerializationMethod.Array);
             var messagePackBytesReader = new MessagePackReader(messagePackBytes);
             var deserializedBytes = MessagePackSerializer.Deserialize<byte[]>(ref messagePackBytesReader);
@@ -97,11 +100,11 @@ namespace MessagePack.Tests
             var foo = new Foo
             {
                 Id = 123,
-                Value = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte)i)).ToArray() // long byte array
+                Value = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte)i)).ToArray(), // long byte array
             };
             var messagePackBytes = SerializeByClassicMsgPack(foo, MsgPack.Serialization.SerializationMethod.Map);
             var oldSpecReader = new MessagePackReader(messagePackBytes);
-            var deserializedFoo = MessagePackSerializer.Deserialize<Foo>(ref oldSpecReader);
+            Foo deserializedFoo = MessagePackSerializer.Deserialize<Foo>(ref oldSpecReader);
             Assert.NotNull(deserializedFoo);
             Assert.Equal(foo.Id, deserializedFoo.Id);
             Assert.Equal(foo.Value, deserializedFoo.Value);
@@ -112,13 +115,13 @@ namespace MessagePack.Tests
             var context = new MsgPack.Serialization.SerializationContext
             {
                 SerializationMethod = method,
-                CompatibilityOptions = { PackerCompatibilityOptions = MsgPack.PackerCompatibilityOptions.Classic }
+                CompatibilityOptions = { PackerCompatibilityOptions = MsgPack.PackerCompatibilityOptions.Classic },
             };
 
-            var MessagePackSerializer = MsgPack.Serialization.MessagePackSerializer.Get<T>(context);
+            var messagePackSerializer = MsgPack.Serialization.MessagePackSerializer.Get<T>(context);
             using (var memory = new MemoryStream())
             {
-                MessagePackSerializer.Pack(memory, obj);
+                messagePackSerializer.Pack(memory, obj);
                 return memory.ToArray();
             }
         }
@@ -128,13 +131,13 @@ namespace MessagePack.Tests
             var context = new MsgPack.Serialization.SerializationContext
             {
                 SerializationMethod = method,
-                CompatibilityOptions = { PackerCompatibilityOptions = MsgPack.PackerCompatibilityOptions.Classic }
+                CompatibilityOptions = { PackerCompatibilityOptions = MsgPack.PackerCompatibilityOptions.Classic },
             };
 
-            var MessagePackSerializer = MsgPack.Serialization.MessagePackSerializer.Get<T>(context);
+            var messagePackSerializer = MsgPack.Serialization.MessagePackSerializer.Get<T>(context);
             using (var memory = new MemoryStream(messagePackBytes))
             {
-                return MessagePackSerializer.Unpack(memory);
+                return messagePackSerializer.Unpack(memory);
             }
         }
 

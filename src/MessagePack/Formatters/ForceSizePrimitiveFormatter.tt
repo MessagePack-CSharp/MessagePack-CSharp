@@ -17,22 +17,27 @@
         typeof(sbyte),
     };
 #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Buffers;
 
+#pragma warning disable SA1649 // File name should match first type name
+
 namespace MessagePack.Formatters
-{
-<# foreach(var t in types) {
+{<# foreach(var t in types) {
     string writeSuffix = 
         t.Name == nameof(Byte) ? "UInt8" :
         t.Name == nameof(SByte) ? "Int8" :
         t.Name;
 #>
+
     public sealed class Force<#= t.Name #>BlockFormatter : IMessagePackFormatter<<#= t.Name #>>
     {
         public static readonly Force<#= t.Name #>BlockFormatter Instance = new Force<#= t.Name #>BlockFormatter();
 
-        Force<#= t.Name #>BlockFormatter()
+        private Force<#= t.Name #>BlockFormatter()
         {
         }
 
@@ -51,7 +56,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForce<#= t.Name #>BlockFormatter Instance = new NullableForce<#= t.Name #>BlockFormatter();
 
-        NullableForce<#= t.Name #>BlockFormatter()
+        private NullableForce<#= t.Name #>BlockFormatter()
         {
         }
 
@@ -79,15 +84,14 @@ namespace MessagePack.Formatters
             }
         }
     }
-
 <# if(t.Name != "Byte") { #>
+
     public sealed class Force<#= t.Name #>BlockArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
     {
         public static readonly Force<#= t.Name #>BlockArrayFormatter Instance = new Force<#= t.Name #>BlockArrayFormatter();
 
-        Force<#= t.Name #>BlockArrayFormatter()
+        private Force<#= t.Name #>BlockArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, <#= t.Name #>[] value, MessagePackSerializerOptions options)
@@ -120,11 +124,11 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.Read<#= t.Name #>();
                 }
+
                 return array;
             }
         }
     }
 <# } #>
-
 <# } #>
 }

@@ -1,12 +1,17 @@
-﻿// THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
-// CHANGE THE .tt FILE INSTEAD.
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
 
 using System;
 using System.Buffers;
 
 namespace MessagePack
 {
+#pragma warning disable SA1205 // Partial elements should declare access
     ref partial struct MessagePackReader
+#pragma warning restore SA1205 // Partial elements should declare access
     {
         /// <summary>
         /// Reads an <see cref="Byte"/> value from:
@@ -431,6 +436,5 @@ namespace MessagePack
                     throw ThrowInvalidCode(code);
             }
         }
-
     }
 }

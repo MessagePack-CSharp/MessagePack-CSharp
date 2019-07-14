@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,29 +14,29 @@ namespace MessagePack.Tests
 {
     public class CollectionTest
     {
-        T Convert<T>(T value)
+        private T Convert<T>(T value)
         {
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object[][] collectionTestData = new object[][]
+        public static object[][] CollectionTestData = new object[][]
         {
-            new object[]{ new int[]{ 1,10, 100 } , null },
-            new object[]{ new List<int>{ 1,10, 100 } , null },
-            new object[]{ new LinkedList<int>(new[] { 1, 10, 100 }) , null },
-            new object[]{ new Queue<int>(new[] { 1, 10, 100 }) , null },
-            new object[]{ new HashSet<int>(new[] { 1, 10, 100 }), null },
-            new object[]{ new ReadOnlyCollection<int>(new[] { 1, 10, 100 }), null },
-            new object[]{ new ObservableCollection<int>(new[] { 1, 10, 100 }), null },
-            new object[]{ new ReadOnlyObservableCollection<int>(new ObservableCollection<int>(new[] { 1, 10, 100 })), null },
+            new object[] { new int[] { 1, 10, 100 }, null },
+            new object[] { new List<int> { 1, 10, 100 }, null },
+            new object[] { new LinkedList<int>(new[] { 1, 10, 100 }), null },
+            new object[] { new Queue<int>(new[] { 1, 10, 100 }), null },
+            new object[] { new HashSet<int>(new[] { 1, 10, 100 }), null },
+            new object[] { new ReadOnlyCollection<int>(new[] { 1, 10, 100 }), null },
+            new object[] { new ObservableCollection<int>(new[] { 1, 10, 100 }), null },
+            new object[] { new ReadOnlyObservableCollection<int>(new ObservableCollection<int>(new[] { 1, 10, 100 })), null },
         };
 
         [Theory]
-        [MemberData(nameof(collectionTestData))]
+        [MemberData(nameof(CollectionTestData))]
         public void ConcreteCollectionTest<T>(T x, T y)
         {
-            Convert(x).IsStructuralEqual(x);
-            Convert(y).IsStructuralEqual(y);
+            this.Convert(x).IsStructuralEqual(x);
+            this.Convert(y).IsStructuralEqual(y);
         }
 
         [Fact]
@@ -41,19 +44,19 @@ namespace MessagePack.Tests
         {
             var a = (IList<int>)new int[] { 1, 10, 100 };
             var b = (ICollection<int>)new int[] { 1, 10, 100 };
-            var c = (Enumerable.Range(1, 100).AsEnumerable());
+            IEnumerable<int> c = Enumerable.Range(1, 100).AsEnumerable();
             var d = (IReadOnlyList<int>)new int[] { 1, 10, 100 };
             var e = (IReadOnlyCollection<int>)new int[] { 1, 10, 100 };
             var f = (ISet<int>)new HashSet<int>(new[] { 1, 10, 100 });
             var g = (ILookup<bool, int>)Enumerable.Range(1, 100).ToLookup(x => x % 2 == 0);
 
-            Convert(a).Is(a);
-            Convert(b).Is(b);
-            Convert(c).Is(c);
-            Convert(d).Is(d);
-            Convert(e).Is(e);
-            Convert(f).Is(f);
-            Convert(g).Is(g);
+            this.Convert(a).Is(a);
+            this.Convert(b).Is(b);
+            this.Convert(c).Is(c);
+            this.Convert(d).Is(d);
+            this.Convert(e).Is(e);
+            this.Convert(f).Is(f);
+            this.Convert(g).Is(g);
 
             a = null;
             b = null;
@@ -63,13 +66,13 @@ namespace MessagePack.Tests
             f = null;
             g = null;
 
-            Convert(a).Is(a);
-            Convert(b).Is(b);
-            Convert(c).IsNull();
-            Convert(d).Is(d);
-            Convert(e).Is(e);
-            Convert(f).Is(f);
-            Convert(g).Is(g);
+            this.Convert(a).Is(a);
+            this.Convert(b).Is(b);
+            this.Convert(c).IsNull();
+            this.Convert(d).Is(d);
+            this.Convert(e).Is(e);
+            this.Convert(f).Is(f);
+            this.Convert(g).Is(g);
         }
 
         [Fact]
@@ -77,13 +80,13 @@ namespace MessagePack.Tests
         {
             var stack = new Stack<int>(new[] { 1, 10, 100 });
             stack.AsEnumerable().Is(100, 10, 1);
-            Convert(stack).AsEnumerable().Is(100, 10, 1);
+            this.Convert(stack).AsEnumerable().Is(100, 10, 1);
 
             stack = new Stack<int>();
-            Convert(stack).AsEnumerable().Count().Is(0);
+            this.Convert(stack).AsEnumerable().Count().Is(0);
 
             stack = null;
-            Convert(stack).IsNull();
+            this.Convert(stack).IsNull();
         }
 
         [Fact]
@@ -93,29 +96,29 @@ namespace MessagePack.Tests
             var c1 = new ConcurrentStack<int>(new[] { 1, 10, 100 });
             var c2 = new ConcurrentBag<int>(new[] { 1, 10, 100 });
 
-            Convert(c0).Is(1, 10, 100);
-            Convert(c1).Is(100, 10, 1);
+            this.Convert(c0).Is(1, 10, 100);
+            this.Convert(c1).Is(100, 10, 1);
 
-            Convert(c2).OrderBy(x => x).Is(1, 10, 100);
+            this.Convert(c2).OrderBy(x => x).Is(1, 10, 100);
 
             c0 = null;
             c1 = null;
             c2 = null;
 
-            Convert(c0).IsNull();
-            Convert(c1).IsNull();
-            Convert(c2).IsNull();
+            this.Convert(c0).IsNull();
+            this.Convert(c1).IsNull();
+            this.Convert(c2).IsNull();
         }
 
         [Fact]
         public void ArraySegmentTest()
         {
             var test = new ArraySegment<int>(new[] { 1, 10, 100 });
-            Convert(test).Is(1, 10, 100);
+            this.Convert(test).Is(1, 10, 100);
             ArraySegment<int>? nullableTest = new ArraySegment<int>(new[] { 1, 10, 100 });
-            Convert(nullableTest).Is(1, 10, 100);
+            this.Convert(nullableTest).Is(1, 10, 100);
             nullableTest = null;
-            Convert(nullableTest).IsNull();
+            this.Convert(nullableTest).IsNull();
         }
     }
 }

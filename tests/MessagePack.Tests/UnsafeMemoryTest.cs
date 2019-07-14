@@ -1,6 +1,6 @@
-﻿using MessagePack.Formatters;
-using MessagePack.Internal;
-using Nerdbank.Streams;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -8,13 +8,16 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Formatters;
+using MessagePack.Internal;
+using Nerdbank.Streams;
 using Xunit;
 
 namespace MessagePack.Tests
 {
     public class UnsafeMemoryTest
     {
-        delegate void WriteDelegate(ref MessagePackWriter writer, ReadOnlySpan<byte> ys);
+        private delegate void WriteDelegate(ref MessagePackWriter writer, ReadOnlySpan<byte> ys);
 
         [Theory]
         [InlineData('a', 1)]
@@ -46,18 +49,19 @@ namespace MessagePack.Tests
                 var src = Enumerable.Range(0, i).Select(x => (byte)x).ToArray();
                 var dst = new Sequence<byte>();
                 var dstWriter = new MessagePackWriter(dst);
-                ((typeof(UnsafeMemory32).GetMethod("WriteRaw" + i)).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
+                (typeof(UnsafeMemory32).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
                 dstWriter.Flush();
                 dst.Length.Is(i);
                 MessagePack.Internal.ByteArrayComparer.Equals(src, CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
             }
+
             // x64
             for (int i = 1; i <= MessagePackRange.MaxFixStringLength; i++)
             {
                 var src = Enumerable.Range(0, i).Select(x => (byte)x).ToArray();
                 var dst = new Sequence<byte>();
                 var dstWriter = new MessagePackWriter(dst);
-                ((typeof(UnsafeMemory64).GetMethod("WriteRaw" + i)).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
+                (typeof(UnsafeMemory64).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
                 dstWriter.Flush();
                 dst.Length.Is(i);
                 MessagePack.Internal.ByteArrayComparer.Equals(src, CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();

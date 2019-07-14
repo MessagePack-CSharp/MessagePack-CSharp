@@ -1,6 +1,9 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* Licensed to the .NET Foundation under one or more agreements.
+ * The .NET Foundation licenses this file to you under the MIT license.
+ * See the LICENSE file in the project root for more information. */
 
 using System.Buffers.Binary;
 using System.Diagnostics;
@@ -18,26 +21,30 @@ namespace System.Buffers
         /// <remarks>
         /// IMPORTANT: The read is a straight copy of bits. If a struct depends on specific state of its members to
         /// behave correctly this can lead to exceptions, etc. If reading endian specific integers, use the explicit
-        /// overloads such as <see cref="TryReadLittleEndian(ref SequenceReader{byte}, out short)"/>
+        /// overloads such as <see cref="TryReadLittleEndian(ref SequenceReader{byte}, out short)"/>.
         /// </remarks>
         /// <returns>
         /// True if successful. <paramref name="value"/> will be default if failed (due to lack of space).
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe bool TryRead<T>(ref this SequenceReader<byte> reader, out T value) where T : unmanaged
+        internal static unsafe bool TryRead<T>(ref this SequenceReader<byte> reader, out T value)
+            where T : unmanaged
         {
             ReadOnlySpan<byte> span = reader.UnreadSpan;
             if (span.Length < sizeof(T))
+            {
                 return TryReadMultisegment(ref reader, out value);
+            }
 
             value = Unsafe.ReadUnaligned<T>(ref MemoryMarshal.GetReference(span));
             reader.Advance(sizeof(T));
             return true;
         }
 
-        private static unsafe bool TryReadMultisegment<T>(ref SequenceReader<byte> reader, out T value) where T : unmanaged
+        private static unsafe bool TryReadMultisegment<T>(ref SequenceReader<byte> reader, out T value)
+            where T : unmanaged
         {
-            Debug.Assert(reader.UnreadSpan.Length < sizeof(T));
+            Debug.Assert(reader.UnreadSpan.Length < sizeof(T), "reader.UnreadSpan.Length < sizeof(T)");
 
             // Not enough data in the current segment, try to peek for the data we need.
             T buffer = default;

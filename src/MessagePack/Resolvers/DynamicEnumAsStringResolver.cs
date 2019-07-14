@@ -1,9 +1,12 @@
-﻿#if !UNITY_WSA
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePack.Formatters;
-using MessagePack.Internal;
+#if !UNITY_WSA
+
 using System;
 using System.Reflection;
+using MessagePack.Formatters;
+using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
@@ -19,22 +22,22 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
-        DynamicEnumAsStringResolver()
+        private DynamicEnumAsStringResolver()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                var ti = typeof(T).GetTypeInfo();
+                TypeInfo ti = typeof(T).GetTypeInfo();
 
                 if (ti.IsNullable())
                 {
@@ -50,7 +53,8 @@ namespace MessagePack.Resolvers
                     {
                         return;
                     }
-                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
+
+                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(StaticNullableFormatter<>).MakeGenericType(ti.AsType()), new object[] { innerFormatter });
                     return;
                 }
                 else if (!ti.IsEnum)
@@ -58,7 +62,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                formatter = (IMessagePackFormatter<T>)(object)new EnumAsStringFormatter<T>();
+                Formatter = (IMessagePackFormatter<T>)(object)new EnumAsStringFormatter<T>();
             }
         }
     }

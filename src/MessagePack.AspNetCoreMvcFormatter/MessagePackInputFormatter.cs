@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace MessagePack.AspNetCoreMvcFormatter
@@ -18,13 +21,13 @@ namespace MessagePack.AspNetCoreMvcFormatter
             this.options = options;
         }
 
-        public bool CanRead(InputFormatterContext context) => 
+        public bool CanRead(InputFormatterContext context) =>
             context.HttpContext.Request.ContentType == ContentType;
 
         public Task<InputFormatterResult> ReadAsync(InputFormatterContext context)
         {
             // TODO: switch to async typeless method when available.
-            var request = context.HttpContext.Request;
+            Microsoft.AspNetCore.Http.HttpRequest request = context.HttpContext.Request;
             var result = MessagePackSerializer.Deserialize(context.ModelType, request.Body, this.options);
             return InputFormatterResult.SuccessAsync(result);
         }

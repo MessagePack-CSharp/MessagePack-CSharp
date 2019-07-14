@@ -1,4 +1,9 @@
-﻿using System.Buffers;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Buffers;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
@@ -34,7 +39,7 @@ namespace MessagePack.Formatters
     public sealed class StaticNullableFormatter<T> : IMessagePackFormatter<T?>
         where T : struct
     {
-        readonly IMessagePackFormatter<T> underlyingFormatter;
+        private readonly IMessagePackFormatter<T> underlyingFormatter;
 
         public StaticNullableFormatter(IMessagePackFormatter<T> underlyingFormatter)
         {
@@ -49,7 +54,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                underlyingFormatter.Serialize(ref writer, value.Value, options);
+                this.underlyingFormatter.Serialize(ref writer, value.Value, options);
             }
         }
 
@@ -61,7 +66,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                return underlyingFormatter.Deserialize(ref reader, options);
+                return this.underlyingFormatter.Deserialize(ref reader, options);
             }
         }
     }

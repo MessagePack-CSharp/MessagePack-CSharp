@@ -1,15 +1,18 @@
-﻿using Benchmark;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Benchmark;
 using Benchmark.Models;
 using BenchmarkDotNet.Running;
 
 namespace ConsoleApp1
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
-            //BenchmarkRunner.Run<ShortRun_AllSerializerBenchmark_BytesInOut>();
+            ////BenchmarkRunner.Run<ShortRun_AllSerializerBenchmark_BytesInOut>();
         }
     }
 }

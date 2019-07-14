@@ -1,32 +1,45 @@
-﻿#if !UNITY
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY
 
 using System;
 
+#pragma warning disable SA1649 // File name should match first type name
+
 namespace MessagePack.Internal
 {
-    // Safe for multiple-read, single-write.
-
-    // Add and Get Key is asymmetric.
+    /* Safe for multiple-read, single-write.
+     * Add and Get Key is asymmetric. */
 
     internal interface IAsymmetricEqualityComparer<TKey1, TKey2>
     {
         int GetHashCode(TKey1 key1);
+
         int GetHashCode(TKey2 key2);
+
         bool Equals(TKey1 x, TKey1 y); // when used rehash
+
         bool Equals(TKey1 x, TKey2 y); // when used get
     }
 
     internal class StringArraySegmentByteAscymmetricEqualityComparer : IAsymmetricEqualityComparer<byte[], ArraySegment<byte>>
     {
-        static readonly bool Is32Bit = (IntPtr.Size == 4);
+        private static readonly bool Is32Bit = IntPtr.Size == 4;
 
         public bool Equals(byte[] x, byte[] y)
         {
-            if (x.Length != y.Length) return false;
+            if (x.Length != y.Length)
+            {
+                return false;
+            }
 
             for (int i = 0; i < x.Length; i++)
             {
-                if (x[i] != y[i]) return false;
+                if (x[i] != y[i])
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -39,7 +52,7 @@ namespace MessagePack.Internal
 
         public int GetHashCode(byte[] key1)
         {
-            return GetHashCode(new ArraySegment<byte>(key1, 0, key1.Length));
+            return this.GetHashCode(new ArraySegment<byte>(key1, 0, key1.Length));
         }
 
         public int GetHashCode(ArraySegment<byte> key2)
@@ -60,12 +73,12 @@ namespace MessagePack.Internal
 
     internal sealed class AsymmetricKeyHashTable<TKey1, TKey2, TValue>
     {
-        Entry[] buckets;
-        int size; // only use in writer lock
+        private Entry[] buckets;
+        private int size; // only use in writer lock
 
-        readonly object writerLock = new object();
-        readonly float loadFactor;
-        readonly IAsymmetricEqualityComparer<TKey1, TKey2> comparer;
+        private readonly object writerLock = new object();
+        private readonly float loadFactor;
+        private readonly IAsymmetricEqualityComparer<TKey1, TKey2> comparer;
 
         public AsymmetricKeyHashTable(IAsymmetricEqualityComparer<TKey1, TKey2> comparer)
             : this(4, 0.72f, comparer)
@@ -83,64 +96,71 @@ namespace MessagePack.Internal
         public TValue AddOrGet(TKey1 key1, Func<TKey1, TValue> valueFactory)
         {
             TValue v;
-            TryAddInternal(key1, valueFactory, out v);
+            this.TryAddInternal(key1, valueFactory, out v);
             return v;
         }
 
         public bool TryAdd(TKey1 key, TValue value)
         {
-            return TryAdd(key, _ => value); // closure capture
+            return this.TryAdd(key, _ => value); // closure capture
         }
 
         public bool TryAdd(TKey1 key, Func<TKey1, TValue> valueFactory)
         {
-            TValue _;
-            return TryAddInternal(key, valueFactory, out _);
+            return this.TryAddInternal(key, valueFactory, out TValue _);
         }
 
-        bool TryAddInternal(TKey1 key, Func<TKey1, TValue> valueFactory, out TValue resultingValue)
+        private bool TryAddInternal(TKey1 key, Func<TKey1, TValue> valueFactory, out TValue resultingValue)
         {
-            lock (writerLock)
+            lock (this.writerLock)
             {
-                var nextCapacity = CalculateCapacity(size + 1, loadFactor);
+                var nextCapacity = CalculateCapacity(this.size + 1, this.loadFactor);
 
-                if (buckets.Length < nextCapacity)
+                if (this.buckets.Length < nextCapacity)
                 {
                     // rehash
                     var nextBucket = new Entry[nextCapacity];
-                    for (int i = 0; i < buckets.Length; i++)
+                    for (int i = 0; i < this.buckets.Length; i++)
                     {
-                        var e = buckets[i];
+                        Entry e = this.buckets[i];
                         while (e != null)
                         {
                             var newEntry = new Entry { Key = e.Key, Value = e.Value, Hash = e.Hash };
-                            AddToBuckets(nextBucket, key, newEntry, null, out resultingValue);
+                            this.AddToBuckets(nextBucket, key, newEntry, null, out resultingValue);
                             e = e.Next;
                         }
                     }
 
                     // add entry(if failed to add, only do resize)
-                    var successAdd = AddToBuckets(nextBucket, key, null, valueFactory, out resultingValue);
+                    var successAdd = this.AddToBuckets(nextBucket, key, null, valueFactory, out resultingValue);
 
                     // replace field(threadsafe for read)
-                    VolatileWrite(ref buckets, nextBucket);
+                    VolatileWrite(ref this.buckets, nextBucket);
 
-                    if (successAdd) size++;
+                    if (successAdd)
+                    {
+                        this.size++;
+                    }
+
                     return successAdd;
                 }
                 else
                 {
                     // add entry(insert last is thread safe for read)
-                    var successAdd = AddToBuckets(buckets, key, null, valueFactory, out resultingValue);
-                    if (successAdd) size++;
+                    var successAdd = this.AddToBuckets(this.buckets, key, null, valueFactory, out resultingValue);
+                    if (successAdd)
+                    {
+                        this.size++;
+                    }
+
                     return successAdd;
                 }
             }
         }
 
-        bool AddToBuckets(Entry[] buckets, TKey1 newKey, Entry newEntryOrNull, Func<TKey1, TValue> valueFactory, out TValue resultingValue)
+        private bool AddToBuckets(Entry[] buckets, TKey1 newKey, Entry newEntryOrNull, Func<TKey1, TValue> valueFactory, out TValue resultingValue)
         {
-            var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : comparer.GetHashCode(newKey);
+            var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : this.comparer.GetHashCode(newKey);
             if (buckets[h & (buckets.Length - 1)] == null)
             {
                 if (newEntryOrNull != null)
@@ -156,10 +176,10 @@ namespace MessagePack.Internal
             }
             else
             {
-                var searchLastEntry = buckets[h & (buckets.Length - 1)];
+                Entry searchLastEntry = buckets[h & (buckets.Length - 1)];
                 while (true)
                 {
-                    if (comparer.Equals(searchLastEntry.Key, newKey))
+                    if (this.comparer.Equals(searchLastEntry.Key, newKey))
                     {
                         resultingValue = searchLastEntry.Value;
                         return false;
@@ -177,8 +197,10 @@ namespace MessagePack.Internal
                             resultingValue = valueFactory(newKey);
                             VolatileWrite(ref searchLastEntry.Next, new Entry { Key = newKey, Value = resultingValue, Hash = h });
                         }
+
                         break;
                     }
+
                     searchLastEntry = searchLastEntry.Next;
                 }
             }
@@ -188,35 +210,39 @@ namespace MessagePack.Internal
 
         public bool TryGetValue(TKey2 key, out TValue value)
         {
-            var table = buckets;
-            var hash = comparer.GetHashCode(key);
-            var entry = table[hash & table.Length - 1];
+            Entry[] table = this.buckets;
+            var hash = this.comparer.GetHashCode(key);
+            Entry entry = table[hash & table.Length - 1];
 
-            if (entry == null) goto NOT_FOUND;
+            if (entry == null)
+            {
+                goto NOT_FOUND;
+            }
 
-            if (comparer.Equals(entry.Key, key))
+            if (this.comparer.Equals(entry.Key, key))
             {
                 value = entry.Value;
                 return true;
             }
 
-            var next = entry.Next;
+            Entry next = entry.Next;
             while (next != null)
             {
-                if (comparer.Equals(next.Key, key))
+                if (this.comparer.Equals(next.Key, key))
                 {
                     value = next.Value;
                     return true;
                 }
+
                 next = next.Next;
             }
 
-            NOT_FOUND:
+NOT_FOUND:
             value = default(TValue);
             return false;
         }
 
-        static int CalculateCapacity(int collectionSize, float loadFactor)
+        private static int CalculateCapacity(int collectionSize, float loadFactor)
         {
             var initialCapacity = (int)(((float)collectionSize) / loadFactor);
             var capacity = 1;
@@ -233,27 +259,29 @@ namespace MessagePack.Internal
             return capacity;
         }
 
-        static void VolatileWrite(ref Entry location, Entry value)
+        private static void VolatileWrite(ref Entry location, Entry value)
         {
             System.Threading.Volatile.Write(ref location, value);
         }
 
-        static void VolatileWrite(ref Entry[] location, Entry[] value)
+        private static void VolatileWrite(ref Entry[] location, Entry[] value)
         {
             System.Threading.Volatile.Write(ref location, value);
         }
 
-        class Entry
+        private class Entry
         {
-            public TKey1 Key;
-            public TValue Value;
-            public int Hash;
-            public Entry Next;
+#pragma warning disable SA1401 // Fields should be private
+            internal TKey1 Key;
+            internal TValue Value;
+            internal int Hash;
+            internal Entry Next;
+#pragma warning restore SA1401 // Fields should be private
 
             // from debugger only
             public override string ToString()
             {
-                return "Count:" + Count;
+                return "Count:" + this.Count;
             }
 
             internal int Count
@@ -261,12 +289,13 @@ namespace MessagePack.Internal
                 get
                 {
                     var count = 1;
-                    var n = this;
+                    Entry n = this;
                     while (n.Next != null)
                     {
                         count++;
                         n = n.Next;
                     }
+
                     return count;
                 }
             }

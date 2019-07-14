@@ -1,4 +1,7 @@
-﻿extern alias newmsgpack;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+extern alias newmsgpack;
 extern alias oldmsgpack;
 
 using BenchmarkDotNet.Attributes;
@@ -22,21 +25,22 @@ namespace PerfBenchmarkDotNet
         [GlobalSetup]
         public void GlobalSetup()
         {
-            int bufferSize = 16 + 4 * RepsOverArray * values.Length;
-            bytes = new byte[bufferSize];
+            int bufferSize = 16 + (4 * RepsOverArray * this.values.Length);
+            this.bytes = new byte[bufferSize];
 
-            for (int i = 0; i < values.Length; i++)
+            for (int i = 0; i < this.values.Length; i++)
             {
-                values[i] = i + 1;
+                this.values[i] = i + 1;
             }
-            for (int i = 0; i < byteValues.Length; i++)
+
+            for (int i = 0; i < this.byteValues.Length; i++)
             {
-                byteValues[i] = (byte)(i + 1);
+                this.byteValues[i] = (byte)(i + 1);
             }
         }
 
         [IterationSetup]
-        public void IterationSetup() => this.sequence.GetSpan(bytes.Length);
+        public void IterationSetup() => this.sequence.GetSpan(this.bytes.Length);
 
         [IterationCleanup]
         public void IterationCleanup() => this.sequence.Reset();
@@ -48,9 +52,9 @@ namespace PerfBenchmarkDotNet
             var writer = new newmsgpack::MessagePack.MessagePackWriter(this.sequence);
             for (int j = 0; j < RepsOverArray; j++)
             {
-                for (int i = 0; i < byteValues.Length; i++)
+                for (int i = 0; i < this.byteValues.Length; i++)
                 {
-                    writer.Write(byteValues[i]);
+                    writer.Write(this.byteValues[i]);
                 }
             }
         }
@@ -62,9 +66,9 @@ namespace PerfBenchmarkDotNet
             int offset = 0;
             for (int j = 0; j < RepsOverArray; j++)
             {
-                for (int i = 0; i < byteValues.Length; i++)
+                for (int i = 0; i < this.byteValues.Length; i++)
                 {
-                    offset += oldmsgpack::MessagePack.MessagePackBinary.WriteByte(ref bytes, offset, byteValues[i]);
+                    offset += oldmsgpack::MessagePack.MessagePackBinary.WriteByte(ref this.bytes, offset, this.byteValues[i]);
                 }
             }
         }
@@ -76,9 +80,9 @@ namespace PerfBenchmarkDotNet
             var writer = new newmsgpack::MessagePack.MessagePackWriter(this.sequence);
             for (int j = 0; j < RepsOverArray; j++)
             {
-                for (int i = 0; i < values.Length; i++)
+                for (int i = 0; i < this.values.Length; i++)
                 {
-                    writer.Write((uint)values[i]);
+                    writer.Write((uint)this.values[i]);
                 }
             }
         }
@@ -90,9 +94,9 @@ namespace PerfBenchmarkDotNet
             var writer = new newmsgpack::MessagePack.MessagePackWriter(this.sequence);
             for (int j = 0; j < RepsOverArray; j++)
             {
-                for (int i = 0; i < values.Length; i++)
+                for (int i = 0; i < this.values.Length; i++)
                 {
-                    writer.Write(values[i]);
+                    writer.Write(this.values[i]);
                 }
             }
         }
@@ -104,9 +108,9 @@ namespace PerfBenchmarkDotNet
             int offset = 0;
             for (int j = 0; j < RepsOverArray; j++)
             {
-                for (int i = 0; i < values.Length; i++)
+                for (int i = 0; i < this.values.Length; i++)
                 {
-                    offset += oldmsgpack::MessagePack.MessagePackBinary.WriteInt32(ref bytes, offset, values[i]);
+                    offset += oldmsgpack::MessagePack.MessagePackBinary.WriteInt32(ref this.bytes, offset, this.values[i]);
                 }
             }
         }
@@ -122,9 +126,10 @@ namespace PerfBenchmarkDotNet
                 {
                     writer.Write("Hello!");
                 }
+
                 writer.Flush();
                 this.sequence.Reset();
-                this.sequence.GetSpan(bytes.Length);
+                this.sequence.GetSpan(this.bytes.Length);
             }
         }
 
@@ -137,7 +142,7 @@ namespace PerfBenchmarkDotNet
                 int offset = 0;
                 for (int i = 0; i < 1000000; i++)
                 {
-                    offset += oldmsgpack::MessagePack.MessagePackBinary.WriteString(ref bytes, offset, "Hello!");
+                    offset += oldmsgpack::MessagePack.MessagePackBinary.WriteString(ref this.bytes, offset, "Hello!");
                 }
 
                 offset = 0;

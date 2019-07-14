@@ -1,10 +1,15 @@
-﻿using MessagePack.Resolvers;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Resolvers;
 using Xunit;
+
+#pragma warning disable SA1300 // Element should begin with uppercase letter
 
 namespace MessagePack.Tests
 {
@@ -19,29 +24,29 @@ namespace MessagePack.Tests
             [Key(1)]
             public int PublicKey { get; set; }
 
-
             [Key(2)]
-            string privateKeyS { get; set; }
+            private string privateKeyS { get; set; }
 
             [Key(3)]
             public string PublicKeyS { get; set; }
 
             public void SetPrivate(int p1, string p2)
             {
-                privateKey = p1;
-                privateKeyS = p2;
+                this.privateKey = p1;
+                this.privateKeyS = p2;
             }
 
             public int GetPrivateInt()
             {
-                return privateKey;
+                return this.privateKey;
             }
 
             public string GetPrivateStr()
             {
-                return privateKeyS;
+                return this.privateKeyS;
             }
         }
+
         [MessagePackObject]
         public struct HasPrivateStruct
         {
@@ -51,27 +56,26 @@ namespace MessagePack.Tests
             [Key(1)]
             public int PublicKey { get; set; }
 
-
             [Key(2)]
-            string privateKeyS { get; set; }
+            private string privateKeyS { get; set; }
 
             [Key(3)]
             public string PublicKeyS { get; set; }
 
             public void SetPrivate(int p1, string p2)
             {
-                privateKey = p1;
-                privateKeyS = p2;
+                this.privateKey = p1;
+                this.privateKeyS = p2;
             }
 
             public int GetPrivateInt()
             {
-                return privateKey;
+                return this.privateKey;
             }
 
             public string GetPrivateStr()
             {
-                return privateKeyS;
+                return this.privateKeyS;
             }
         }
 
@@ -79,27 +83,29 @@ namespace MessagePack.Tests
         public class HasPrivateStringKey
         {
             private int privateKey;
+
             public int PublicKey { get; set; }
-            string privateKeyS { get; set; }
+
+            private string privateKeyS { get; set; }
+
             public string PublicKeyS { get; set; }
 
             public void SetPrivate(int p1, string p2)
             {
-                privateKey = p1;
-                privateKeyS = p2;
+                this.privateKey = p1;
+                this.privateKeyS = p2;
             }
 
             public int GetPrivateInt()
             {
-                return privateKey;
+                return this.privateKey;
             }
 
             public string GetPrivateStr()
             {
-                return privateKeyS;
+                return this.privateKeyS;
             }
         }
-
 
         public class HasPrivateContractless
         {
@@ -107,25 +113,24 @@ namespace MessagePack.Tests
 
             public int PublicKey { get; set; }
 
-
-            string privateKeyS { get; set; }
+            private string privateKeyS { get; set; }
 
             public string PublicKeyS { get; set; }
 
             public void SetPrivate(int p1, string p2)
             {
-                privateKey = p1;
-                privateKeyS = p2;
+                this.privateKey = p1;
+                this.privateKeyS = p2;
             }
 
             public int GetPrivateInt()
             {
-                return privateKey;
+                return this.privateKey;
             }
 
             public string GetPrivateStr()
             {
-                return privateKeyS;
+                return this.privateKeyS;
             }
         }
 
@@ -148,12 +153,13 @@ namespace MessagePack.Tests
 
                 json.Is("[99,100,\"bar\",\"foo\"]");
 
-                var r2 = MessagePackSerializer.Deserialize<HasPrivate>(bin, StandardResolverAllowPrivate.Options);
+                HasPrivate r2 = MessagePackSerializer.Deserialize<HasPrivate>(bin, StandardResolverAllowPrivate.Options);
                 r2.PublicKey.Is(100);
                 r2.PublicKeyS.Is("foo");
                 r2.GetPrivateInt().Is(99);
                 r2.GetPrivateStr().Is("bar");
             }
+
             {
                 var p = new HasPrivateStruct { PublicKey = 100, PublicKeyS = "foo" };
                 p.SetPrivate(99, "bar");
@@ -163,12 +169,13 @@ namespace MessagePack.Tests
 
                 json.Is("[99,100,\"bar\",\"foo\"]");
 
-                var r2 = MessagePackSerializer.Deserialize<HasPrivate>(bin, StandardResolverAllowPrivate.Options);
+                HasPrivate r2 = MessagePackSerializer.Deserialize<HasPrivate>(bin, StandardResolverAllowPrivate.Options);
                 r2.PublicKey.Is(100);
                 r2.PublicKeyS.Is("foo");
                 r2.GetPrivateInt().Is(99);
                 r2.GetPrivateStr().Is("bar");
             }
+
             {
                 var p = new HasPrivateStringKey { PublicKey = 100, PublicKeyS = "foo" };
                 p.SetPrivate(99, "bar");
@@ -178,12 +185,13 @@ namespace MessagePack.Tests
 
                 json.Is("{\"PublicKey\":100,\"privateKeyS\":\"bar\",\"PublicKeyS\":\"foo\",\"privateKey\":99}");
 
-                var r2 = MessagePackSerializer.Deserialize<HasPrivateStringKey>(bin, StandardResolverAllowPrivate.Options);
+                HasPrivateStringKey r2 = MessagePackSerializer.Deserialize<HasPrivateStringKey>(bin, StandardResolverAllowPrivate.Options);
                 r2.PublicKey.Is(100);
                 r2.PublicKeyS.Is("foo");
                 r2.GetPrivateInt().Is(99);
                 r2.GetPrivateStr().Is("bar");
             }
+
             {
                 var p = new HasPrivateContractless { PublicKey = 100, PublicKeyS = "foo" };
                 p.SetPrivate(99, "bar");
@@ -193,7 +201,7 @@ namespace MessagePack.Tests
 
                 json.Is("{\"PublicKey\":100,\"privateKeyS\":\"bar\",\"PublicKeyS\":\"foo\",\"privateKey\":99}");
 
-                var r2 = MessagePackSerializer.Deserialize<HasPrivateContractless>(bin, ContractlessStandardResolverAllowPrivate.Options);
+                HasPrivateContractless r2 = MessagePackSerializer.Deserialize<HasPrivateContractless>(bin, ContractlessStandardResolverAllowPrivate.Options);
                 r2.PublicKey.Is(100);
                 r2.PublicKeyS.Is("foo");
                 r2.GetPrivateInt().Is(99);

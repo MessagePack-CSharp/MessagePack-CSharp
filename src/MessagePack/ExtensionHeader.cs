@@ -1,4 +1,7 @@
-﻿namespace MessagePack
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace MessagePack
 {
 #if MESSAGEPACK_INTERNAL
     internal
@@ -8,18 +11,19 @@
     struct ExtensionHeader
     {
         public sbyte TypeCode { get; private set; }
+
         public uint Length { get; private set; }
 
         public ExtensionHeader(sbyte typeCode, uint length)
         {
-            TypeCode = typeCode;
-            Length = length;
+            this.TypeCode = typeCode;
+            this.Length = length;
         }
 
         public ExtensionHeader(sbyte typeCode, int length)
         {
-            TypeCode = typeCode;
-            Length = (uint)length;
+            this.TypeCode = typeCode;
+            this.Length = (uint)length;
         }
     }
 }

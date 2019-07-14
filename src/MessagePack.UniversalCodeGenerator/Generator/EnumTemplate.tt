@@ -8,31 +8,37 @@
 #pragma warning disable 414
 #pragma warning disable 168
 
+#pragma warning disable SA1200 // Using directives should be placed correctly
+#pragma warning disable SA1403 // File may only contain a single namespace
+#pragma warning disable SA1649 // File name should match first type name
+
 namespace <#= Namespace #>
 {
     using System;
-	using System.Buffers;
+    using System.Buffers;
     using MessagePack;
+<# foreach(var info in EnumSerializationInfos) { #>
 
-<# foreach(var info in enumSerializationInfos) { #>
     public sealed class <#= info.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= info.FullName #>>
     {
         public void Serialize(ref MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
             writer.Write((<#= info.UnderlyingType #>)value);
         }
-        
+
         public <#= info.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             return (<#= info.FullName #>)reader.Read<#= info.UnderlyingType #>();
         }
     }
-
 <# } #>
-
 }
 
 #pragma warning restore 168
 #pragma warning restore 414
 #pragma warning restore 618
 #pragma warning restore 612
+
+#pragma warning restore SA1200 // Using directives should be placed correctly
+#pragma warning restore SA1403 // File may only contain a single namespace
+#pragma warning restore SA1649 // File name should match first type name

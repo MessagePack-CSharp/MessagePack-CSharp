@@ -1,12 +1,17 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
 
+#pragma warning disable SA1649 // File name should match first type name
+
 namespace MessagePack
 {
-    // simple, tiny JSON reader for MessagePackSerializer.FromJson.
-    // this is simple, compact and enough fast but not optimized extremely.
+    /* simple, tiny JSON reader for MessagePackSerializer.FromJson.
+     * this is simple, compact and enough fast but not optimized extremely. */
 
     internal enum TinyJsonToken
     {
@@ -31,29 +36,35 @@ namespace MessagePack
         Long,
         ULong,
         Decimal,
-        String
+        String,
     }
 
     internal class TinyJsonException : Exception
     {
-        public TinyJsonException(string message) : base(message)
+        public TinyJsonException(string message)
+            : base(message)
         {
-
         }
     }
 
     internal class TinyJsonReader : IDisposable
     {
-        readonly TextReader reader;
-        readonly bool disposeInnerReader;
-        StringBuilder reusableBuilder;
+        private readonly TextReader reader;
+        private readonly bool disposeInnerReader;
+        private StringBuilder reusableBuilder;
 
         public TinyJsonToken TokenType { get; private set; }
+
         public ValueType ValueType { get; private set; }
+
         public double DoubleValue { get; private set; }
+
         public long LongValue { get; private set; }
+
         public ulong ULongValue { get; private set; }
+
         public decimal DecimalValue { get; private set; }
+
         public string StringValue { get; private set; }
 
         public TinyJsonReader(TextReader reader, bool disposeInnerReader = true)
@@ -64,37 +75,38 @@ namespace MessagePack
 
         public bool Read()
         {
-            ReadNextToken();
-            ReadValue();
-            return TokenType != TinyJsonToken.None;
+            this.ReadNextToken();
+            this.ReadValue();
+            return this.TokenType != TinyJsonToken.None;
         }
 
         public void Dispose()
         {
-            if (reader != null && disposeInnerReader)
+            if (this.reader != null && this.disposeInnerReader)
             {
-                reader.Dispose();
+                this.reader.Dispose();
             }
-            TokenType = TinyJsonToken.None;
-            ValueType = ValueType.Null;
+
+            this.TokenType = TinyJsonToken.None;
+            this.ValueType = ValueType.Null;
         }
 
-        void SkipWhiteSpace()
+        private void SkipWhiteSpace()
         {
-            var c = reader.Peek();
+            var c = this.reader.Peek();
             while (c != -1 && Char.IsWhiteSpace((char)c))
             {
-                reader.Read();
-                c = reader.Peek();
+                this.reader.Read();
+                c = this.reader.Peek();
             }
         }
 
-        char ReadChar()
+        private char ReadChar()
         {
-            return (char)reader.Read();
+            return (char)this.reader.Read();
         }
 
-        static bool IsWordBreak(char c)
+        private static bool IsWordBreak(char c)
         {
             switch (c)
             {
@@ -112,14 +124,14 @@ namespace MessagePack
             }
         }
 
-        void ReadNextToken()
+        private void ReadNextToken()
         {
-            SkipWhiteSpace();
+            this.SkipWhiteSpace();
 
-            var intChar = reader.Peek();
+            var intChar = this.reader.Peek();
             if (intChar == -1)
             {
-                TokenType = TinyJsonToken.None;
+                this.TokenType = TinyJsonToken.None;
                 return;
             }
 
@@ -127,19 +139,19 @@ namespace MessagePack
             switch (c)
             {
                 case '{':
-                    TokenType = TinyJsonToken.StartObject;
+                    this.TokenType = TinyJsonToken.StartObject;
                     return;
                 case '}':
-                    TokenType = TinyJsonToken.EndObject;
+                    this.TokenType = TinyJsonToken.EndObject;
                     return;
                 case '[':
-                    TokenType = TinyJsonToken.StartArray;
+                    this.TokenType = TinyJsonToken.StartArray;
                     return;
                 case ']':
-                    TokenType = TinyJsonToken.EndArray;
+                    this.TokenType = TinyJsonToken.EndArray;
                     return;
                 case '"':
-                    TokenType = TinyJsonToken.String;
+                    this.TokenType = TinyJsonToken.String;
                     return;
                 case '0':
                 case '1':
@@ -152,32 +164,32 @@ namespace MessagePack
                 case '8':
                 case '9':
                 case '-':
-                    TokenType = TinyJsonToken.Number;
+                    this.TokenType = TinyJsonToken.Number;
                     return;
                 case 't':
-                    TokenType = TinyJsonToken.True;
+                    this.TokenType = TinyJsonToken.True;
                     return;
                 case 'f':
-                    TokenType = TinyJsonToken.False;
+                    this.TokenType = TinyJsonToken.False;
                     return;
                 case 'n':
-                    TokenType = TinyJsonToken.Null;
+                    this.TokenType = TinyJsonToken.Null;
                     return;
                 case ',':
                 case ':':
-                    reader.Read();
-                    ReadNextToken();
+                    this.reader.Read();
+                    this.ReadNextToken();
                     return;
                 default:
                     throw new TinyJsonException("Invalid String:" + c);
             }
         }
 
-        void ReadValue()
+        private void ReadValue()
         {
-            ValueType = ValueType.Null;
+            this.ValueType = ValueType.Null;
 
-            switch (TokenType)
+            switch (this.TokenType)
             {
                 case TinyJsonToken.None:
                     break;
@@ -185,63 +197,119 @@ namespace MessagePack
                 case TinyJsonToken.EndObject:
                 case TinyJsonToken.StartArray:
                 case TinyJsonToken.EndArray:
-                    reader.Read();
+                    this.reader.Read();
                     break;
                 case TinyJsonToken.Number:
-                    ReadNumber();
+                    this.ReadNumber();
                     break;
                 case TinyJsonToken.String:
-                    ReadString();
+                    this.ReadString();
                     break;
                 case TinyJsonToken.True:
-                    if (ReadChar() != 't') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'r') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'u') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'e') throw new TinyJsonException("Invalid Token");
-                    ValueType = ValueType.True;
+                    if (this.ReadChar() != 't')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'r')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'u')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'e')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    this.ValueType = ValueType.True;
                     break;
                 case TinyJsonToken.False:
-                    if (ReadChar() != 'f') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'a') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 's') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'e') throw new TinyJsonException("Invalid Token");
-                    ValueType = ValueType.False;
+                    if (this.ReadChar() != 'f')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'a')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'l')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 's')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'e')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    this.ValueType = ValueType.False;
                     break;
                 case TinyJsonToken.Null:
-                    if (ReadChar() != 'n') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'u') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
-                    ValueType = ValueType.Null;
+                    if (this.ReadChar() != 'n')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'u')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'l')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'l')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    this.ValueType = ValueType.Null;
                     break;
                 default:
-                    throw new ArgumentException("InvalidTokenState:" + TokenType);
+                    throw new ArgumentException("InvalidTokenState:" + this.TokenType);
             }
         }
 
-        void ReadNumber()
+        private void ReadNumber()
         {
             StringBuilder numberWord;
-            if (reusableBuilder == null)
+            if (this.reusableBuilder == null)
             {
-                reusableBuilder = new StringBuilder();
-                numberWord = reusableBuilder;
+                this.reusableBuilder = new StringBuilder();
+                numberWord = this.reusableBuilder;
             }
             else
             {
-                numberWord = reusableBuilder;
+                numberWord = this.reusableBuilder;
                 numberWord.Length = 0; // Clear
             }
 
             var isDouble = false;
-            var intChar = reader.Peek();
+            var intChar = this.reader.Peek();
             while (intChar != -1 && !IsWordBreak((char)intChar))
             {
-                var c = ReadChar();
+                var c = this.ReadChar();
                 numberWord.Append(c);
-                if (c == '.' || c == 'e' || c == 'E') isDouble = true;
-                intChar = reader.Peek();
+                if (c == '.' || c == 'e' || c == 'E')
+                {
+                    isDouble = true;
+                }
+
+                intChar = this.reader.Peek();
             }
 
             var number = numberWord.ToString();
@@ -249,66 +317,72 @@ namespace MessagePack
             {
                 double parsedDouble;
                 Double.TryParse(number, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite | NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowExponent, System.Globalization.CultureInfo.InvariantCulture, out parsedDouble);
-                ValueType = ValueType.Double;
-                DoubleValue = parsedDouble;
+                this.ValueType = ValueType.Double;
+                this.DoubleValue = parsedDouble;
             }
             else
             {
                 long parsedInt;
                 if (Int64.TryParse(number, NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedInt))
                 {
-                    ValueType = ValueType.Long;
-                    LongValue = parsedInt;
+                    this.ValueType = ValueType.Long;
+                    this.LongValue = parsedInt;
                     return;
                 }
 
                 ulong parsedULong;
                 if (ulong.TryParse(number, NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedULong))
                 {
-                    ValueType = ValueType.ULong;
-                    ULongValue = parsedULong;
+                    this.ValueType = ValueType.ULong;
+                    this.ULongValue = parsedULong;
                     return;
                 }
 
                 Decimal parsedDecimal;
                 if (decimal.TryParse(number, NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal))
                 {
-                    ValueType = ValueType.Decimal;
-                    DecimalValue = parsedDecimal;
+                    this.ValueType = ValueType.Decimal;
+                    this.DecimalValue = parsedDecimal;
                     return;
                 }
             }
         }
 
-        void ReadString()
+        private void ReadString()
         {
-            reader.Read(); // skip ["]
+            this.reader.Read(); // skip ["]
 
             StringBuilder sb;
-            if (reusableBuilder == null)
+            if (this.reusableBuilder == null)
             {
-                reusableBuilder = new StringBuilder();
-                sb = reusableBuilder;
+                this.reusableBuilder = new StringBuilder();
+                sb = this.reusableBuilder;
             }
             else
             {
-                sb = reusableBuilder;
+                sb = this.reusableBuilder;
                 sb.Length = 0; // Clear
             }
 
             while (true)
             {
-                if (reader.Peek() == -1) throw new TinyJsonException("Invalid Json String");
+                if (this.reader.Peek() == -1)
+                {
+                    throw new TinyJsonException("Invalid Json String");
+                }
 
-                var c = ReadChar();
+                var c = this.ReadChar();
                 switch (c)
                 {
                     case '"': // endtoken
                         goto END;
                     case '\\': // escape character
-                        if (reader.Peek() == -1) throw new TinyJsonException("Invalid Json String");
+                        if (this.reader.Peek() == -1)
+                        {
+                            throw new TinyJsonException("Invalid Json String");
+                        }
 
-                        c = ReadChar();
+                        c = this.ReadChar();
                         switch (c)
                         {
                             case '"':
@@ -333,13 +407,14 @@ namespace MessagePack
                                 break;
                             case 'u':
                                 var hex = new char[4];
-                                hex[0] = ReadChar();
-                                hex[1] = ReadChar();
-                                hex[2] = ReadChar();
-                                hex[3] = ReadChar();
+                                hex[0] = this.ReadChar();
+                                hex[1] = this.ReadChar();
+                                hex[2] = this.ReadChar();
+                                hex[3] = this.ReadChar();
                                 sb.Append((char)Convert.ToInt32(new string(hex), 16));
                                 break;
                         }
+
                         break;
                     default: // string
                         sb.Append(c);
@@ -347,9 +422,9 @@ namespace MessagePack
                 }
             }
 
-            END:
-            ValueType = ValueType.String;
-            StringValue = sb.ToString();
+END:
+            this.ValueType = ValueType.String;
+            this.StringValue = sb.ToString();
         }
     }
 }

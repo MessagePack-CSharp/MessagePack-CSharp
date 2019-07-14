@@ -1,46 +1,48 @@
-﻿using MessagePack.Formatters;
-using Reactive.Bindings;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Reactive;
 using System.Reflection;
+using MessagePack.Formatters;
+using Reactive.Bindings;
 
 namespace MessagePack.ReactivePropertyExtension
 {
     public class ReactivePropertyResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new ReactivePropertyResolver();
+        public static readonly ReactivePropertyResolver Instance = new ReactivePropertyResolver();
 
-        ReactivePropertyResolver()
+        private ReactivePropertyResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                formatter = (IMessagePackFormatter<T>)ReactivePropertyResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>)ReactivePropertyResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
 
     internal static class ReactivePropertyResolverGetFormatterHelper
     {
-        static readonly Dictionary<Type, Type> formatterMap = new Dictionary<Type, Type>()
+        private static readonly Dictionary<Type, Type> FormatterMap = new Dictionary<Type, Type>()
         {
-              {typeof(ReactiveProperty<>), typeof(ReactivePropertyFormatter<>)},
-              {typeof(IReactiveProperty<>), typeof(InterfaceReactivePropertyFormatter<>)},
-              {typeof(IReadOnlyReactiveProperty<>), typeof(InterfaceReadOnlyReactivePropertyFormatter<>)},
-              {typeof(ReactiveCollection<>), typeof(ReactiveCollectionFormatter<>)},
-              {typeof(ReactivePropertySlim<>), typeof(ReactivePropertySlimFormatter<>)},
+              { typeof(ReactiveProperty<>), typeof(ReactivePropertyFormatter<>) },
+              { typeof(IReactiveProperty<>), typeof(InterfaceReactivePropertyFormatter<>) },
+              { typeof(IReadOnlyReactiveProperty<>), typeof(InterfaceReadOnlyReactivePropertyFormatter<>) },
+              { typeof(ReactiveCollection<>), typeof(ReactiveCollectionFormatter<>) },
+              { typeof(ReactivePropertySlim<>), typeof(ReactivePropertySlimFormatter<>) },
         };
 
         internal static object GetFormatter(Type t)
@@ -54,13 +56,13 @@ namespace MessagePack.ReactivePropertyExtension
                 return NullableUnitFormatter.Instance;
             }
 
-            var ti = t.GetTypeInfo();
+            TypeInfo ti = t.GetTypeInfo();
 
             if (ti.IsGenericType)
             {
-                var genericType = ti.GetGenericTypeDefinition();
+                Type genericType = ti.GetGenericTypeDefinition();
                 Type formatterType;
-                if (formatterMap.TryGetValue(genericType, out formatterType))
+                if (FormatterMap.TryGetValue(genericType, out formatterType))
                 {
                     return CreateInstance(formatterType, ti.GenericTypeArguments);
                 }
@@ -69,7 +71,7 @@ namespace MessagePack.ReactivePropertyExtension
             return null;
         }
 
-        static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
+        private static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);
         }

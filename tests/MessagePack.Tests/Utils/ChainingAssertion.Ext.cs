@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,12 +16,13 @@ namespace MessagePack.Tests
             source.Any().IsFalse();
         }
 
-        /// <summary>Alternative of ExpectedExceptionAttribute(allow derived type)</summary>
-        public static T Catch<T>(Action testCode, string message = "") where T : Exception
+        /// <summary>Alternative of ExpectedExceptionAttribute(allow derived type).</summary>
+        public static T Catch<T>(Action testCode, string message = "")
+            where T : Exception
         {
-            var exception = ExecuteCode(testCode);
+            Exception exception = ExecuteCode(testCode);
             var headerMsg = "Failed Throws<" + typeof(T).Name + ">.";
-            var additionalMsg = string.IsNullOrEmpty(message) ? "" : ", " + message;
+            var additionalMsg = string.IsNullOrEmpty(message) ? string.Empty : ", " + message;
 
             if (exception == null)
             {
@@ -34,14 +38,15 @@ namespace MessagePack.Tests
             return (T)exception;
         }
 
-        public static T Throws<T>(Action testCode, string message = "") where T : Exception
+        public static T Throws<T>(Action testCode, string message = "")
+            where T : Exception
         {
-            var exception = Catch<T>(testCode, message);
+            T exception = Catch<T>(testCode, message);
 
             if (!typeof(T).Equals(exception.GetType()))
             {
                 var headerMsg = "Failed Throws<" + typeof(T).Name + ">.";
-                var additionalMsg = string.IsNullOrEmpty(message) ? "" : ", " + message;
+                var additionalMsg = string.IsNullOrEmpty(message) ? string.Empty : ", " + message;
                 var formatted = string.Format("{0} Catched:{1}{2}", headerMsg, exception.GetType().Name, additionalMsg);
                 throw new AssertFailedException(formatted);
             }
@@ -49,7 +54,7 @@ namespace MessagePack.Tests
             return (T)exception;
         }
 
-        /// <summary>execute action and return exception when catched otherwise return null</summary>
+        /// <summary>execute action and return exception when catched otherwise return null.</summary>
         private static Exception ExecuteCode(Action testCode)
         {
             try

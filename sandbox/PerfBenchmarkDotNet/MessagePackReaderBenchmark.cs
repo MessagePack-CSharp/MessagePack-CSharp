@@ -1,4 +1,7 @@
-﻿extern alias newmsgpack;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+extern alias newmsgpack;
 extern alias oldmsgpack;
 
 using System;

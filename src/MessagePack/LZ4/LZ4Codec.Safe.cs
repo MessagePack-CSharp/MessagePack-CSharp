@@ -1,25 +1,28 @@
-﻿#region license
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#region license
 
 /*
 Copyright (c) 2013, Milosz Krajewski
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this list of conditions 
+* Redistributions of source code must retain the above copyright notice, this list of conditions
   and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+* Redistributions in binary form must reproduce the above copyright notice, this list of conditions
   and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED 
-WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE 
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -28,32 +31,27 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Diagnostics;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
-
 namespace MessagePack.LZ4
 {
     /// <summary>Safe LZ4 codec.</summary>
-    partial class LZ4Codec
+    internal partial class LZ4Codec
     {
         #region Helper
-
-        // ReSharper disable UnusedParameter.Local
 
         [Conditional("DEBUG")]
         private static void Assert(bool condition, string errorMessage)
         {
-            if (!condition) throw new ArgumentException(errorMessage);
+            if (!condition)
+            {
+                throw new ArgumentException(errorMessage);
+            }
+
             Debug.Assert(condition, errorMessage);
         }
-
-        // ReSharper restore UnusedParameter.Local
 
         #endregion
 
         #region Byte manipulation
-
-        // ReSharper disable RedundantCast
 
         internal static void Poke2(byte[] buffer, int offset, ushort value)
         {
@@ -120,20 +118,34 @@ namespace MessagePack.LZ4
         private static bool Equal2(byte[] buffer, int offset1, int offset2)
         {
             // return Peek2(buffer, offset1) == Peek2(buffer, offset2);
-            if (buffer[offset1] != buffer[offset2]) return false;
+            if (buffer[offset1] != buffer[offset2])
+            {
+                return false;
+            }
+
             return buffer[offset1 + 1] == buffer[offset2 + 1];
         }
 
         private static bool Equal4(byte[] buffer, int offset1, int offset2)
         {
             // return Peek4(buffer, offset1) == Peek4(buffer, offset2);
-            if (buffer[offset1] != buffer[offset2]) return false;
-            if (buffer[offset1 + 1] != buffer[offset2 + 1]) return false;
-            if (buffer[offset1 + 2] != buffer[offset2 + 2]) return false;
+            if (buffer[offset1] != buffer[offset2])
+            {
+                return false;
+            }
+
+            if (buffer[offset1 + 1] != buffer[offset2 + 1])
+            {
+                return false;
+            }
+
+            if (buffer[offset1 + 2] != buffer[offset2 + 2])
+            {
+                return false;
+            }
+
             return buffer[offset1 + 3] == buffer[offset2 + 3];
         }
-
-        // ReSharper restore RedundantCast
 
         #endregion
 
@@ -219,18 +231,18 @@ namespace MessagePack.LZ4
             {
                 // apparently (tested) this is an overkill
                 // it seems to be faster without this 8-byte loop
-                //while (len >= 8)
-                //{
-                //	dst[dst_0] = src[src_0];
-                //	dst[dst_0 + 1] = src[src_0 + 1];
-                //	dst[dst_0 + 2] = src[src_0 + 2];
-                //	dst[dst_0 + 3] = src[src_0 + 3];
-                //	dst[dst_0 + 4] = src[src_0 + 4];
-                //	dst[dst_0 + 5] = src[src_0 + 5];
-                //	dst[dst_0 + 6] = src[src_0 + 6];
-                //	dst[dst_0 + 7] = src[src_0 + 7];
-                //	len -= 8; src_0 += 8; dst_0 += 8;
-                //}
+                ////while (len >= 8)
+                ////{
+                ////	dst[dst_0] = src[src_0];
+                ////	dst[dst_0 + 1] = src[src_0 + 1];
+                ////	dst[dst_0 + 2] = src[src_0 + 2];
+                ////	dst[dst_0 + 3] = src[src_0 + 3];
+                ////	dst[dst_0 + 4] = src[src_0 + 4];
+                ////	dst[dst_0 + 5] = src[src_0 + 5];
+                ////	dst[dst_0 + 6] = src[src_0 + 6];
+                ////	dst[dst_0 + 7] = src[src_0 + 7];
+                ////	len -= 8; src_0 += 8; dst_0 += 8;
+                ////}
 
                 while (len >= 4)
                 {
@@ -276,23 +288,24 @@ namespace MessagePack.LZ4
                     src += diff;
                     dst += diff;
                     len -= diff;
-                } while (len >= diff);
+                }
+                while (len >= diff);
             }
 
             // apparently (tested) this is an overkill
             // it seems to be faster without this 8-byte loop
-            //while (len >= 8)
-            //{
-            //	buffer[dst] = buffer[src];
-            //	buffer[dst + 1] = buffer[src + 1];
-            //	buffer[dst + 2] = buffer[src + 2];
-            //	buffer[dst + 3] = buffer[src + 3];
-            //	buffer[dst + 4] = buffer[src + 4];
-            //	buffer[dst + 5] = buffer[src + 5];
-            //	buffer[dst + 6] = buffer[src + 6];
-            //	buffer[dst + 7] = buffer[src + 7];
-            //	dst += 8; src += 8; len -= 8;
-            //}
+            ////while (len >= 8)
+            ////{
+            ////	buffer[dst] = buffer[src];
+            ////	buffer[dst + 1] = buffer[src + 1];
+            ////	buffer[dst + 2] = buffer[src + 2];
+            ////	buffer[dst + 3] = buffer[src + 3];
+            ////	buffer[dst + 4] = buffer[src + 4];
+            ////	buffer[dst + 5] = buffer[src + 5];
+            ////	buffer[dst + 6] = buffer[src + 6];
+            ////	buffer[dst + 7] = buffer[src + 7];
+            ////	dst += 8; src += 8; len -= 8;
+            ////}
 
             while (len >= 4)
             {
@@ -332,7 +345,10 @@ namespace MessagePack.LZ4
             int outputLength)
         {
             CheckArguments(input, inputOffset, inputLength, output, outputOffset, outputLength);
-            if (outputLength == 0) return 0;
+            if (outputLength == 0)
+            {
+                return 0;
+            }
 
             if (inputLength < LZ4_64KLIMIT)
             {
@@ -363,7 +379,10 @@ namespace MessagePack.LZ4
             int outputLength)
         {
             CheckArguments(input, inputOffset, inputLength, output, outputOffset, outputLength);
-            if (outputLength == 0) return 0;
+            if (outputLength == 0)
+            {
+                return 0;
+            }
 
             if (inputLength < LZ4_64KLIMIT)
             {
@@ -395,11 +414,17 @@ namespace MessagePack.LZ4
         {
             CheckArguments(input, inputOffset, inputLength, output, outputOffset, outputLength);
 
-            if (outputLength == 0) return 0;
+            if (outputLength == 0)
+            {
+                return 0;
+            }
 
             var length = LZ4_uncompress_safe32(input, output, inputOffset, outputOffset, outputLength);
             if (length != inputLength)
+            {
                 throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
+            }
+
             return outputLength;
         }
 
@@ -419,19 +444,20 @@ namespace MessagePack.LZ4
             int outputOffset,
             int outputLength)
         {
-            CheckArguments(
-                input, inputOffset, inputLength,
-                output, outputOffset, outputLength);
+            CheckArguments(input, inputOffset, inputLength, output, outputOffset, outputLength);
 
-            if (outputLength == 0) return 0;
+            if (outputLength == 0)
+            {
+                return 0;
+            }
 
             var length = LZ4_uncompress_safe64(input, output, inputOffset, outputOffset, outputLength);
             if (length != inputLength)
+            {
                 throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
+            }
+
             return outputLength;
         }
     }
 }
-
-// ReSharper restore InconsistentNaming
-// ReSharper restore CheckNamespace

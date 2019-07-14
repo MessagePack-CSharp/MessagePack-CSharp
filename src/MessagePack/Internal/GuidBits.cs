@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Runtime.InteropServices;
 
 namespace MessagePack.Internal
@@ -43,10 +46,10 @@ namespace MessagePack.Internal
         public readonly byte Byte15;
 
         // string.Join(", ", Enumerable.Range(0, 256).Select(x => (int)BitConverter.ToString(new byte[] { (byte)x }).ToLower()[0]))
-        static byte[] byteToHexStringHigh = new byte[256] { 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102 };
+        private static byte[] byteToHexStringHigh = new byte[256] { 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102 };
 
         // string.Join(", ", Enumerable.Range(0, 256).Select(x => (int)BitConverter.ToString(new byte[] { (byte)x }).ToLower()[1]))
-        static byte[] byteToHexStringLow = new byte[256] { 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102 };
+        private static byte[] byteToHexStringLow = new byte[256] { 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102 };
 
         public GuidBits(ref Guid value)
         {
@@ -88,6 +91,7 @@ namespace MessagePack.Internal
                     this.Byte6 = Parse(utf8string, 12);
                     this.Byte7 = Parse(utf8string, 14);
                 }
+
                 this.Byte8 = Parse(utf8string, 16);
                 this.Byte9 = Parse(utf8string, 18);
 
@@ -109,12 +113,18 @@ namespace MessagePack.Internal
                     this.Byte2 = Parse(utf8string, 2);
                     this.Byte3 = Parse(utf8string, 0);
 
-                    if (utf8string[8] != '-') goto ERROR;
+                    if (utf8string[8] != '-')
+                    {
+                        goto ERROR;
+                    }
 
                     this.Byte4 = Parse(utf8string, 11);
                     this.Byte5 = Parse(utf8string, 9);
 
-                    if (utf8string[13] != '-') goto ERROR;
+                    if (utf8string[13] != '-')
+                    {
+                        goto ERROR;
+                    }
 
                     this.Byte6 = Parse(utf8string, 16);
                     this.Byte7 = Parse(utf8string, 14);
@@ -126,23 +136,35 @@ namespace MessagePack.Internal
                     this.Byte2 = Parse(utf8string, 4);
                     this.Byte3 = Parse(utf8string, 6);
 
-                    if (utf8string[8] != '-') goto ERROR;
+                    if (utf8string[8] != '-')
+                    {
+                        goto ERROR;
+                    }
 
                     this.Byte4 = Parse(utf8string, 9);
                     this.Byte5 = Parse(utf8string, 11);
 
-                    if (utf8string[13] != '-') goto ERROR;
+                    if (utf8string[13] != '-')
+                    {
+                        goto ERROR;
+                    }
 
                     this.Byte6 = Parse(utf8string, 14);
                     this.Byte7 = Parse(utf8string, 16);
                 }
 
-                if (utf8string[18] != '-') goto ERROR;
+                if (utf8string[18] != '-')
+                {
+                    goto ERROR;
+                }
 
                 this.Byte8 = Parse(utf8string, 19);
                 this.Byte9 = Parse(utf8string, 21);
 
-                if (utf8string[23] != '-') goto ERROR;
+                if (utf8string[23] != '-')
+                {
+                    goto ERROR;
+                }
 
                 this.Byte10 = Parse(utf8string, 24);
                 this.Byte11 = Parse(utf8string, 26);
@@ -153,22 +175,22 @@ namespace MessagePack.Internal
                 return;
             }
 
-            ERROR:
+ERROR:
             throw new ArgumentException("Invalid Guid Pattern.");
         }
 
 #if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        static byte Parse(ReadOnlySpan<byte> bytes, int highOffset)
+        private static byte Parse(ReadOnlySpan<byte> bytes, int highOffset)
         {
-            return unchecked((byte)(SwitchParse(bytes[highOffset]) * 16 + SwitchParse(bytes[highOffset + 1])));
+            return unchecked((byte)((SwitchParse(bytes[highOffset]) * 16) + SwitchParse(bytes[highOffset + 1])));
         }
 
 #if !UNITY
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-        static byte SwitchParse(byte b)
+        private static byte SwitchParse(byte b)
         {
             // '0'(48) ~ '9'(57) => -48
             // 'A'(65) ~ 'F'(70) => -55
@@ -185,21 +207,21 @@ namespace MessagePack.Internal
                 case 55:
                 case 56:
                 case 57:
-                    return unchecked((byte)((b - 48)));
+                    return unchecked((byte)(b - 48));
                 case 65:
                 case 66:
                 case 67:
                 case 68:
                 case 69:
                 case 70:
-                    return unchecked((byte)((b - 55)));
+                    return unchecked((byte)(b - 55));
                 case 97:
                 case 98:
                 case 99:
                 case 100:
                 case 101:
                 case 102:
-                    return unchecked((byte)((b - 87)));
+                    return unchecked((byte)(b - 87));
                 case 0:
                 case 1:
                 case 2:
@@ -292,78 +314,78 @@ namespace MessagePack.Internal
             if (BitConverter.IsLittleEndian)
             {
                 // int(_a)
-                buffer[6] = byteToHexStringHigh[Byte0];
-                buffer[7] = byteToHexStringLow[Byte0];
-                buffer[4] = byteToHexStringHigh[Byte1];
-                buffer[5] = byteToHexStringLow[Byte1];
-                buffer[2] = byteToHexStringHigh[Byte2];
-                buffer[3] = byteToHexStringLow[Byte2];
-                buffer[0] = byteToHexStringHigh[Byte3];
-                buffer[1] = byteToHexStringLow[Byte3];
+                buffer[6] = byteToHexStringHigh[this.Byte0];
+                buffer[7] = byteToHexStringLow[this.Byte0];
+                buffer[4] = byteToHexStringHigh[this.Byte1];
+                buffer[5] = byteToHexStringLow[this.Byte1];
+                buffer[2] = byteToHexStringHigh[this.Byte2];
+                buffer[3] = byteToHexStringLow[this.Byte2];
+                buffer[0] = byteToHexStringHigh[this.Byte3];
+                buffer[1] = byteToHexStringLow[this.Byte3];
 
                 buffer[8] = (byte)'-';
 
                 // short(_b)
-                buffer[11] = byteToHexStringHigh[Byte4];
-                buffer[12] = byteToHexStringLow[Byte4];
-                buffer[9] = byteToHexStringHigh[Byte5];
-                buffer[10] = byteToHexStringLow[Byte5];
+                buffer[11] = byteToHexStringHigh[this.Byte4];
+                buffer[12] = byteToHexStringLow[this.Byte4];
+                buffer[9] = byteToHexStringHigh[this.Byte5];
+                buffer[10] = byteToHexStringLow[this.Byte5];
 
                 buffer[13] = (byte)'-';
 
                 // short(_c)
-                buffer[16] = byteToHexStringHigh[Byte6];
-                buffer[17] = byteToHexStringLow[Byte6];
-                buffer[14] = byteToHexStringHigh[Byte7];
-                buffer[15] = byteToHexStringLow[Byte7];
+                buffer[16] = byteToHexStringHigh[this.Byte6];
+                buffer[17] = byteToHexStringLow[this.Byte6];
+                buffer[14] = byteToHexStringHigh[this.Byte7];
+                buffer[15] = byteToHexStringLow[this.Byte7];
             }
             else
             {
-                buffer[0] = byteToHexStringHigh[Byte0];
-                buffer[1] = byteToHexStringLow[Byte0];
-                buffer[2] = byteToHexStringHigh[Byte1];
-                buffer[3] = byteToHexStringLow[Byte1];
-                buffer[4] = byteToHexStringHigh[Byte2];
-                buffer[5] = byteToHexStringLow[Byte2];
-                buffer[6] = byteToHexStringHigh[Byte3];
-                buffer[7] = byteToHexStringLow[Byte3];
+                buffer[0] = byteToHexStringHigh[this.Byte0];
+                buffer[1] = byteToHexStringLow[this.Byte0];
+                buffer[2] = byteToHexStringHigh[this.Byte1];
+                buffer[3] = byteToHexStringLow[this.Byte1];
+                buffer[4] = byteToHexStringHigh[this.Byte2];
+                buffer[5] = byteToHexStringLow[this.Byte2];
+                buffer[6] = byteToHexStringHigh[this.Byte3];
+                buffer[7] = byteToHexStringLow[this.Byte3];
 
                 buffer[8] = (byte)'-';
 
-                buffer[9] = byteToHexStringHigh[Byte4];
-                buffer[10] = byteToHexStringLow[Byte4];
-                buffer[11] = byteToHexStringHigh[Byte5];
-                buffer[12] = byteToHexStringLow[Byte5];
+                buffer[9] = byteToHexStringHigh[this.Byte4];
+                buffer[10] = byteToHexStringLow[this.Byte4];
+                buffer[11] = byteToHexStringHigh[this.Byte5];
+                buffer[12] = byteToHexStringLow[this.Byte5];
 
                 buffer[13] = (byte)'-';
 
-                buffer[14] = byteToHexStringHigh[Byte6];
-                buffer[15] = byteToHexStringLow[Byte6];
-                buffer[16] = byteToHexStringHigh[Byte7];
-                buffer[17] = byteToHexStringLow[Byte7];
+                buffer[14] = byteToHexStringHigh[this.Byte6];
+                buffer[15] = byteToHexStringLow[this.Byte6];
+                buffer[16] = byteToHexStringHigh[this.Byte7];
+                buffer[17] = byteToHexStringLow[this.Byte7];
             }
 
             buffer[18] = (byte)'-';
 
-            buffer[19] = byteToHexStringHigh[Byte8];
-            buffer[20] = byteToHexStringLow[Byte8];
-            buffer[21] = byteToHexStringHigh[Byte9];
-            buffer[22] = byteToHexStringLow[Byte9];
+            buffer[19] = byteToHexStringHigh[this.Byte8];
+            buffer[20] = byteToHexStringLow[this.Byte8];
+            buffer[21] = byteToHexStringHigh[this.Byte9];
+            buffer[22] = byteToHexStringLow[this.Byte9];
 
             buffer[23] = (byte)'-';
 
-            buffer[24] = byteToHexStringHigh[Byte10];
-            buffer[25] = byteToHexStringLow[Byte10];
-            buffer[26] = byteToHexStringHigh[Byte11];
-            buffer[27] = byteToHexStringLow[Byte11];
-            buffer[28] = byteToHexStringHigh[Byte12];
-            buffer[29] = byteToHexStringLow[Byte12];
-            buffer[30] = byteToHexStringHigh[Byte13];
-            buffer[31] = byteToHexStringLow[Byte13];
-            buffer[32] = byteToHexStringHigh[Byte14];
-            buffer[33] = byteToHexStringLow[Byte14];
-            buffer[34] = byteToHexStringHigh[Byte15];
-            buffer[35] = byteToHexStringLow[Byte15];
+            buffer[24] = byteToHexStringHigh[this.Byte10];
+            buffer[25] = byteToHexStringLow[this.Byte10];
+            buffer[26] = byteToHexStringHigh[this.Byte11];
+            buffer[27] = byteToHexStringLow[this.Byte11];
+            buffer[28] = byteToHexStringHigh[this.Byte12];
+            buffer[29] = byteToHexStringLow[this.Byte12];
+            buffer[30] = byteToHexStringHigh[this.Byte13];
+            buffer[31] = byteToHexStringLow[this.Byte13];
+            buffer[32] = byteToHexStringHigh[this.Byte14];
+            buffer[33] = byteToHexStringLow[this.Byte14];
+            buffer[34] = byteToHexStringHigh[this.Byte15];
+            buffer[35] = byteToHexStringLow[this.Byte15];
         }
     }
 }

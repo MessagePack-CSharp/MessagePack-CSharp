@@ -1,4 +1,12 @@
-﻿using MessagePack;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using MessagePack;
+
+#pragma warning disable SA1307 // Field should begin with upper-case letter
+#pragma warning disable SA1300 // Field should begin with upper-case letter
+#pragma warning disable IDE1006 // Field should begin with upper-case letter
+#pragma warning disable SA1649 // type name matches file name
 
 namespace UnityEngine
 {
@@ -101,7 +109,6 @@ namespace UnityEngine
         public Color(float r, float g, float b)
             : this(r, g, b, 1.0f)
         {
-
         }
 
         [SerializationConstructor]
@@ -130,6 +137,7 @@ namespace UnityEngine
             {
                 return this.extents * 2f;
             }
+
             set
             {
                 this.extents = value * 0.5f;
@@ -186,7 +194,6 @@ namespace UnityEngine
     }
 
     // additional from 1.7.3.3
-
     [MessagePackObject]
     public sealed class AnimationCurve
     {
@@ -194,7 +201,10 @@ namespace UnityEngine
         public Keyframe[] keys { get; set; }
 
         [IgnoreMember]
-        public int length { get { return keys.Length; } }
+        public int length
+        {
+            get { return this.keys.Length; }
+        }
 
         [Key(1)]
         public WrapMode postWrapMode { get; set; }
@@ -206,78 +216,33 @@ namespace UnityEngine
     [MessagePackObject]
     public struct Keyframe
     {
-        private float m_Time;
-        private float m_Value;
-        private float m_InTangent;
-        private float m_OutTangent;
-
-
         [Key(0)]
-        public float time
-        {
-            get
-            {
-                return this.m_Time;
-            }
-            set
-            {
-                this.m_Time = value;
-            }
-        }
+        public float time { get; set; }
+
         [Key(1)]
-        public float value
-        {
-            get
-            {
-                return this.m_Value;
-            }
-            set
-            {
-                this.m_Value = value;
-            }
-        }
+        public float value { get; set; }
 
         [Key(2)]
-        public float inTangent
-        {
-            get
-            {
-                return this.m_InTangent;
-            }
-            set
-            {
-                this.m_InTangent = value;
-            }
-        }
+        public float inTangent { get; set; }
 
         [Key(3)]
-        public float outTangent
-        {
-            get
-            {
-                return this.m_OutTangent;
-            }
-            set
-            {
-                this.m_OutTangent = value;
-            }
-        }
+        public float outTangent { get; set; }
 
         public Keyframe(float time, float value)
         {
-            this.m_Time = time;
-            this.m_Value = value;
-            this.m_InTangent = 0f;
-            this.m_OutTangent = 0f;
+            this.time = time;
+            this.value = value;
+            this.inTangent = 0f;
+            this.outTangent = 0f;
         }
 
         [SerializationConstructor]
         public Keyframe(float time, float value, float inTangent, float outTangent)
         {
-            this.m_Time = time;
-            this.m_Value = value;
-            this.m_InTangent = inTangent;
-            this.m_OutTangent = outTangent;
+            this.time = time;
+            this.value = value;
+            this.inTangent = inTangent;
+            this.outTangent = outTangent;
         }
     }
 
@@ -288,7 +253,7 @@ namespace UnityEngine
         PingPong = 4,
         Default = 0,
         ClampForever = 8,
-        Clamp = 1
+        Clamp = 1,
     }
 
     [MessagePackObject]
@@ -333,8 +298,10 @@ namespace UnityEngine
     {
         [Key(0)]
         public GradientColorKey[] colorKeys { get; set; }
+
         [Key(1)]
         public GradientAlphaKey[] alphaKeys { get; set; }
+
         [Key(2)]
         public GradientMode mode { get; set; }
     }
@@ -372,7 +339,7 @@ namespace UnityEngine
     public enum GradientMode
     {
         Blend,
-        Fixed
+        Fixed,
     }
 
     [MessagePackObject]
@@ -413,7 +380,6 @@ namespace UnityEngine
 
         public RectOffset()
         {
-
         }
 
         public RectOffset(int left, int right, int top, int bottom)
@@ -433,7 +399,6 @@ namespace UnityEngine
     }
 
     // from Unity2017.2
-
     [MessagePackObject]
     public struct Vector2Int
     {

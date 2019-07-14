@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Text;
+
+#pragma warning disable SA1509 // Opening braces should not be preceded by blank line
 
 namespace MessagePack.Internal
 {
@@ -22,14 +27,14 @@ namespace MessagePack.Internal
 
         public AutomataDictionary()
         {
-            root = new AutomataNode(0);
+            this.root = new AutomataNode(0);
         }
 
 #if !UNITY
         public void Add(string str, int value)
         {
             ReadOnlySpan<byte> bytes = Encoding.UTF8.GetBytes(str);
-            var node = root;
+            AutomataNode node = this.root;
 
             while (bytes.Length > 0)
             {
@@ -46,11 +51,11 @@ namespace MessagePack.Internal
             }
         }
 
-        public bool TryGetValue(in ReadOnlySequence<byte> bytes, out int value) => TryGetValue(bytes.ToArray(), out value);
+        public bool TryGetValue(in ReadOnlySequence<byte> bytes, out int value) => this.TryGetValue(bytes.ToArray(), out value);
 
         public bool TryGetValue(ReadOnlySpan<byte> bytes, out int value)
         {
-            var node = root;
+            AutomataNode node = this.root;
 
             while (bytes.Length > 0 && node != null)
             {
@@ -100,25 +105,27 @@ namespace MessagePack.Internal
         public override string ToString()
         {
             var sb = new StringBuilder();
-            ToStringCore(root.YieldChildren(), sb, 0);
+            ToStringCore(this.root.YieldChildren(), sb, 0);
             return sb.ToString();
         }
 
         private static void ToStringCore(IEnumerable<AutomataNode> nexts, StringBuilder sb, int depth)
         {
-            foreach (var item in nexts)
+            foreach (AutomataNode item in nexts)
             {
                 if (depth != 0)
                 {
                     sb.Append(' ', depth * 2);
                 }
+
                 sb.Append("[" + item.Key + "]");
                 if (item.Value != -1)
                 {
-                    sb.Append("(" + item.originalKey + ")");
+                    sb.Append("(" + item.OriginalKey + ")");
                     sb.Append(" = ");
                     sb.Append(item.Value);
                 }
+
                 sb.AppendLine();
                 ToStringCore(item.YieldChildren(), sb, depth + 1);
             }
@@ -126,7 +133,7 @@ namespace MessagePack.Internal
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            return this.GetEnumerator();
         }
 
         public IEnumerator<KeyValuePair<string, int>> GetEnumerator()
@@ -136,85 +143,92 @@ namespace MessagePack.Internal
 
         private static IEnumerable<KeyValuePair<string, int>> YieldCore(IEnumerable<AutomataNode> nexts)
         {
-            foreach (var item in nexts)
+            foreach (AutomataNode item in nexts)
             {
                 if (item.Value != -1)
                 {
-                    yield return new KeyValuePair<string, int>(item.originalKey, item.Value);
+                    yield return new KeyValuePair<string, int>(item.OriginalKey, item.Value);
                 }
 
-                foreach (var x in YieldCore(item.YieldChildren()))
+                foreach (KeyValuePair<string, int> x in YieldCore(item.YieldChildren()))
                 {
                     yield return x;
                 }
             }
         }
 
-        // IL Emit
+        /* IL Emit */
 
 #if !NET_STANDARD_2_0
 
         public void EmitMatch(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
         {
-            root.EmitSearchNext(il, bytesSpan, key, onFound, onNotFound);
+            this.root.EmitSearchNext(il, bytesSpan, key, onFound, onNotFound);
         }
 
 #endif
 
         private class AutomataNode : IComparable<AutomataNode>
         {
-            private static readonly AutomataNode[] emptyNodes = new AutomataNode[0];
-            private static readonly ulong[] emptyKeys = new ulong[0];
+            private static readonly AutomataNode[] EmptyNodes = new AutomataNode[0];
+            private static readonly ulong[] EmptyKeys = new ulong[0];
 
-            public ulong Key;
-            public int Value;
-            public string originalKey;
+#pragma warning disable SA1401 // Fields should be private
+            internal ulong Key;
+            internal int Value;
+            internal string OriginalKey;
+#pragma warning restore SA1401 // Fields should be private
+
             private AutomataNode[] nexts;
             private ulong[] nextKeys;
             private int count;
 
-            public bool HasChildren { get { return count != 0; } }
+            public bool HasChildren
+            {
+                get { return this.count != 0; }
+            }
 
             public AutomataNode(ulong key)
             {
                 this.Key = key;
                 this.Value = -1;
-                this.nexts = emptyNodes;
-                this.nextKeys = emptyKeys;
+                this.nexts = EmptyNodes;
+                this.nextKeys = EmptyKeys;
                 this.count = 0;
-                this.originalKey = null;
+                this.OriginalKey = null;
             }
 
             public AutomataNode Add(ulong key)
             {
-                var index = Array.BinarySearch(nextKeys, 0, count, key);
+                var index = Array.BinarySearch(this.nextKeys, 0, this.count, key);
                 if (index < 0)
                 {
-                    if (nexts.Length == count)
+                    if (this.nexts.Length == this.count)
                     {
-                        Array.Resize<AutomataNode>(ref nexts, (count == 0) ? 4 : (count * 2));
-                        Array.Resize<ulong>(ref nextKeys, (count == 0) ? 4 : (count * 2));
+                        Array.Resize<AutomataNode>(ref this.nexts, (this.count == 0) ? 4 : (this.count * 2));
+                        Array.Resize<ulong>(ref this.nextKeys, (this.count == 0) ? 4 : (this.count * 2));
                     }
-                    count++;
+
+                    this.count++;
 
                     var nextNode = new AutomataNode(key);
-                    nexts[count - 1] = nextNode;
-                    nextKeys[count - 1] = key;
-                    Array.Sort(nexts, 0, count);
-                    Array.Sort(nextKeys, 0, count);
+                    this.nexts[this.count - 1] = nextNode;
+                    this.nextKeys[this.count - 1] = key;
+                    Array.Sort(this.nexts, 0, this.count);
+                    Array.Sort(this.nextKeys, 0, this.count);
                     return nextNode;
                 }
                 else
                 {
-                    return nexts[index];
+                    return this.nexts[index];
                 }
             }
 
             public AutomataNode Add(ulong key, int value, string originalKey)
             {
-                var v = Add(key);
+                AutomataNode v = this.Add(key);
                 v.Value = value;
-                v.originalKey = originalKey;
+                v.OriginalKey = originalKey;
                 return v;
             }
 
@@ -223,24 +237,24 @@ namespace MessagePack.Internal
             public AutomataNode SearchNext(ref ReadOnlySpan<byte> value)
             {
                 var key = AutomataKeyGen.GetKey(ref value);
-                if (count < 4)
+                if (this.count < 4)
                 {
                     // linear search
-                    for (int i = 0; i < count; i++)
+                    for (int i = 0; i < this.count; i++)
                     {
-                        if (nextKeys[i] == key)
+                        if (this.nextKeys[i] == key)
                         {
-                            return nexts[i];
+                            return this.nexts[i];
                         }
                     }
                 }
                 else
                 {
                     // binary search
-                    var index = BinarySearch(nextKeys, 0, count, key);
+                    var index = BinarySearch(this.nextKeys, 0, this.count, key);
                     if (index >= 0)
                     {
-                        return nexts[index];
+                        return this.nexts[index];
                     }
                 }
 
@@ -297,9 +311,9 @@ namespace MessagePack.Internal
 
             public IEnumerable<AutomataNode> YieldChildren()
             {
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < this.count; i++)
                 {
-                    yield return nexts[i];
+                    yield return this.nexts[i];
                 }
             }
 
@@ -314,7 +328,7 @@ namespace MessagePack.Internal
                 il.EmitStloc(key);
 
                 // match children.
-                EmitSearchNextCore(il, bytesSpan, key, onFound, onNotFound, nexts, count);
+                EmitSearchNextCore(il, bytesSpan, key, onFound, onNotFound, this.nexts, this.count);
             }
 
             private static void EmitSearchNextCore(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound, AutomataNode[] nexts, int count)
@@ -322,18 +336,17 @@ namespace MessagePack.Internal
                 if (count < 4)
                 {
                     // linear-search
-                    var valueExists = nexts.Take(count).Where(x => x.Value != -1).ToArray();
-                    var childrenExists = nexts.Take(count).Where(x => x.HasChildren).ToArray();
-                    var gotoSearchNext = il.DefineLabel();
-                    var gotoNotFound = il.DefineLabel();
+                    AutomataNode[] valueExists = nexts.Take(count).Where(x => x.Value != -1).ToArray();
+                    AutomataNode[] childrenExists = nexts.Take(count).Where(x => x.HasChildren).ToArray();
+                    Label gotoSearchNext = il.DefineLabel();
+                    Label gotoNotFound = il.DefineLabel();
 
                     {
-                        // bytesSpan.Length
+                              // bytesSpan.Length
                         il.EmitLdloca(bytesSpan);
                         il.EmitCall(typeof(ReadOnlySpan<byte>).GetRuntimeProperty(nameof(ReadOnlySpan<byte>.Length)).GetMethod);
                         if (childrenExists.Length != 0 && valueExists.Length == 0)
                         {
-
                             il.Emit(OpCodes.Brfalse, gotoNotFound); // if(bytesSpan.Length == 0)
                         }
                         else
@@ -341,11 +354,12 @@ namespace MessagePack.Internal
                             il.Emit(OpCodes.Brtrue, gotoSearchNext); // if(bytesSpan.Length != 0)
                         }
                     }
+
                     {
-                        var ifValueNexts = Enumerable.Range(0, Math.Max(valueExists.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
+                        Label[] ifValueNexts = Enumerable.Range(0, Math.Max(valueExists.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
                         for (int i = 0; i < valueExists.Length; i++)
                         {
-                            var notFoundLabel = il.DefineLabel();
+                            Label notFoundLabel = il.DefineLabel();
                             if (i != 0)
                             {
                                 il.MarkLabel(ifValueNexts[i - 1]);
@@ -354,8 +368,9 @@ namespace MessagePack.Internal
                             il.EmitLdloc(key);
                             il.EmitULong(valueExists[i].Key);
                             il.Emit(OpCodes.Bne_Un, notFoundLabel);
+
                             // found
-                            onFound(new KeyValuePair<string, int>(valueExists[i].originalKey, valueExists[i].Value));
+                            onFound(new KeyValuePair<string, int>(valueExists[i].OriginalKey, valueExists[i].Value));
 
                             // notfound
                             il.MarkLabel(notFoundLabel);
@@ -371,10 +386,10 @@ namespace MessagePack.Internal
                     }
 
                     il.MarkLabel(gotoSearchNext);
-                    var ifRecNext = Enumerable.Range(0, Math.Max(childrenExists.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
+                    Label[] ifRecNext = Enumerable.Range(0, Math.Max(childrenExists.Length - 1, 0)).Select(_ => il.DefineLabel()).ToArray();
                     for (int i = 0; i < childrenExists.Length; i++)
                     {
-                        var notFoundLabel = il.DefineLabel();
+                        Label notFoundLabel = il.DefineLabel();
                         if (i != 0)
                         {
                             il.MarkLabel(ifRecNext[i - 1]);
@@ -383,8 +398,10 @@ namespace MessagePack.Internal
                         il.EmitLdloc(key);
                         il.EmitULong(childrenExists[i].Key);
                         il.Emit(OpCodes.Bne_Un, notFoundLabel);
+
                         // found
                         childrenExists[i].EmitSearchNext(il, bytesSpan, key, onFound, onNotFound);
+
                         // notfound
                         il.MarkLabel(notFoundLabel);
                         if (i != childrenExists.Length - 1)
@@ -405,10 +422,10 @@ namespace MessagePack.Internal
                     // binary-search
                     var midline = count / 2;
                     var mid = nexts[midline].Key;
-                    var l = nexts.Take(count).Take(midline).ToArray();
-                    var r = nexts.Take(count).Skip(midline).ToArray();
+                    AutomataNode[] l = nexts.Take(count).Take(midline).ToArray();
+                    AutomataNode[] r = nexts.Take(count).Skip(midline).ToArray();
 
-                    var gotoRight = il.DefineLabel();
+                    Label gotoRight = il.DefineLabel();
 
                     // if(key < mid)
                     il.EmitLdloc(key);
@@ -457,51 +474,58 @@ namespace MessagePack.Internal
                                 span = span.Slice(1);
                                 break;
                             }
+
                         case 2:
                             {
                                 key = MemoryMarshal.Cast<byte, ushort>(span)[0];
                                 span = span.Slice(2);
                                 break;
                             }
+
                         case 3:
                             {
                                 var a = span[0];
                                 var b = MemoryMarshal.Cast<byte, ushort>(span.Slice(1))[0];
-                                key = (a | (ulong)b << 8);
+                                key = a | (ulong)b << 8;
                                 span = span.Slice(3);
                                 break;
                             }
+
                         case 4:
                             {
                                 key = MemoryMarshal.Cast<byte, uint>(span)[0];
                                 span = span.Slice(4);
                                 break;
                             }
+
                         case 5:
                             {
                                 var a = span[0];
                                 var b = MemoryMarshal.Cast<byte, uint>(span.Slice(1))[0];
-                                key = (a | (ulong)b << 8);
+                                key = a | (ulong)b << 8;
                                 span = span.Slice(5);
                                 break;
                             }
+
                         case 6:
                             {
                                 ulong a = MemoryMarshal.Cast<byte, ushort>(span)[0];
                                 ulong b = MemoryMarshal.Cast<byte, uint>(span.Slice(2))[0];
-                                key = (a | (b << 16));
+                                key = a | (b << 16);
                                 span = span.Slice(6);
                                 break;
                             }
+
                         case 7:
                             {
                                 var a = span[0];
                                 var b = MemoryMarshal.Cast<byte, ushort>(span.Slice(1))[0];
                                 var c = MemoryMarshal.Cast<byte, uint>(span.Slice(3))[0];
-                                key = (a | (ulong)b << 8 | (ulong)c << 24);
+                                key = a | (ulong)b << 8 | (ulong)c << 24;
                                 span = span.Slice(7);
                                 break;
                             }
+
                         default:
                             throw new InvalidOperationException("Not Supported Length");
                     }

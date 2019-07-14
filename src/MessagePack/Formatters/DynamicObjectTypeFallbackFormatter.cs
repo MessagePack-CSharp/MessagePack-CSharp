@@ -1,22 +1,25 @@
-﻿#if !UNITY
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePack.Resolvers;
+#if !UNITY
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using MessagePack.Resolvers;
 
 namespace MessagePack.Formatters
 {
     public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
     {
-        delegate void SerializeMethod(object dynamicFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
+        private delegate void SerializeMethod(object dynamicFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
 
-        readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
+        private readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
 
-        readonly IFormatterResolver[] innerResolvers;
+        private readonly IFormatterResolver[] innerResolvers;
 
         public DynamicObjectTypeFallbackFormatter(params IFormatterResolver[] innerResolvers)
         {
@@ -31,8 +34,8 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var type = value.GetType();
-            var ti = type.GetTypeInfo();
+            Type type = value.GetType();
+            TypeInfo ti = type.GetTypeInfo();
 
             if (type == typeof(object))
             {
@@ -42,46 +45,50 @@ namespace MessagePack.Formatters
             }
 
             KeyValuePair<object, SerializeMethod> formatterAndDelegate;
-            if (!serializers.TryGetValue(type, out formatterAndDelegate))
+            if (!this.serializers.TryGetValue(type, out formatterAndDelegate))
             {
-                lock (serializers)
+                lock (this.serializers)
                 {
-                    if (!serializers.TryGetValue(type, out formatterAndDelegate))
+                    if (!this.serializers.TryGetValue(type, out formatterAndDelegate))
                     {
                         object formatter = null;
-                        foreach (var innerResolver in innerResolvers)
+                        foreach (IFormatterResolver innerResolver in this.innerResolvers)
                         {
                             formatter = innerResolver.GetFormatterDynamic(type);
-                            if (formatter != null) break;
+                            if (formatter != null)
+                            {
+                                break;
+                            }
                         }
+
                         if (formatter == null)
                         {
-                            throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolvers:" + string.Join(", ", innerResolvers.Select(x => x.GetType().Name).ToArray()));
+                            throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolvers:" + string.Join(", ", this.innerResolvers.Select(x => x.GetType().Name).ToArray()));
                         }
 
-                        var t = type;
+                        Type t = type;
                         {
-                            var formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(t);
-                            var param0 = Expression.Parameter(typeof(object), "formatter");
-                            var param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
-                            var param2 = Expression.Parameter(typeof(object), "value");
-                            var param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                            Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(t);
+                            ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
+                            ParameterExpression param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
+                            ParameterExpression param2 = Expression.Parameter(typeof(object), "value");
+                            ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
 
-                            var serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(MessagePackSerializerOptions) });
+                            MethodInfo serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(MessagePackSerializerOptions) });
 
-                            var body = Expression.Call(
+                            MethodCallExpression body = Expression.Call(
                                 Expression.Convert(param0, formatterType),
                                 serializeMethodInfo,
                                 param1,
                                 ti.IsValueType ? Expression.Unbox(param2, t) : Expression.Convert(param2, t),
                                 param3);
 
-                            var lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
+                            SerializeMethod lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
 
                             formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
                         }
 
-                        serializers.TryAdd(t, formatterAndDelegate);
+                        this.serializers.TryAdd(t, formatterAndDelegate);
                     }
                 }
             }

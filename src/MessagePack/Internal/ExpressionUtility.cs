@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -6,9 +9,7 @@ namespace MessagePack.Internal
 {
     internal static class ExpressionUtility
     {
-        // Method
-
-        static MethodInfo GetMethodInfoCore(LambdaExpression expression)
+        private static MethodInfo GetMethodInfoCore(LambdaExpression expression)
         {
             if (expression == null)
             {
@@ -60,9 +61,7 @@ namespace MessagePack.Internal
             return GetMethodInfoCore(expression);
         }
 
-        // Property
-
-        static MemberInfo GetMemberInfoCore<T>(Expression<T> source)
+        private static MemberInfo GetMemberInfoCore<T>(Expression<T> source)
         {
             if (source == null)
             {
@@ -77,8 +76,6 @@ namespace MessagePack.Internal
         {
             return GetMemberInfoCore(expression) as PropertyInfo;
         }
-
-        // Field
 
         public static FieldInfo GetFieldInfo<T, TR>(Expression<Func<T, TR>> expression)
         {

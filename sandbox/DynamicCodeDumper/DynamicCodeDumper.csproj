@@ -14,8 +14,8 @@
     <Compile Include="..\..\src\MessagePack\BufferWriter.cs">
       <Link>Code\BufferWriter.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Formatters\IMessagePackFormatter.cs">
-      <Link>Code\IMessagePackFormatter.cs</Link>
+    <Compile Include="..\..\src\MessagePack\Formatters\IMessagePackFormatter`1.cs">
+      <Link>Code\IMessagePackFormatter`1.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Formatters\NullableFormatter.cs">
       <Link>Code\NullableFormatter.cs</Link>

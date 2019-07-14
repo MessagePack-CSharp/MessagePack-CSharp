@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 
 namespace MessagePack
@@ -10,21 +13,21 @@ namespace MessagePack
 #endif
     struct ExtensionResult
     {
-        public sbyte TypeCode { get; private set; }
-
-        public ReadOnlySequence<byte> Data { get; private set; }
-
         public ExtensionResult(sbyte typeCode, Memory<byte> data)
         {
-            TypeCode = typeCode;
-            Data = new ReadOnlySequence<byte>(data);
+            this.TypeCode = typeCode;
+            this.Data = new ReadOnlySequence<byte>(data);
         }
 
         public ExtensionResult(sbyte typeCode, ReadOnlySequence<byte> data)
         {
-            TypeCode = typeCode;
-            Data = data;
+            this.TypeCode = typeCode;
+            this.Data = data;
         }
+
+        public sbyte TypeCode { get; private set; }
+
+        public ReadOnlySequence<byte> Data { get; private set; }
 
         public ExtensionHeader Header => new ExtensionHeader(this.TypeCode, (uint)this.Data.Length);
     }

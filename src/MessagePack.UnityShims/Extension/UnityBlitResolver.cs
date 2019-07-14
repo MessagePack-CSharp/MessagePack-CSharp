@@ -1,66 +1,68 @@
-﻿#if ENABLE_UNSAFE_MSGPACK
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePack.Formatters;
+#if ENABLE_UNSAFE_MSGPACK
+
 using System;
 using System.Collections.Generic;
+using MessagePack.Formatters;
 using UnityEngine;
 
 namespace MessagePack.Unity.Extension
 {
     /// <summary>
-    /// Special Resolver for Vector2[], Vector3[], Vector4[], Quaternion[], Color[], Bounds[], Rect[]
+    /// Special Resolver for Vector2[], Vector3[], Vector4[], Quaternion[], Color[], Bounds[], Rect[].
     /// </summary>
     public class UnityBlitResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new UnityBlitResolver();
+        public static readonly UnityBlitResolver Instance = new UnityBlitResolver();
 
-        UnityBlitResolver()
+        private UnityBlitResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                formatter = (IMessagePackFormatter<T>)UnityBlitResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>)UnityBlitResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
+
     /// <summary>
-    /// Special Resolver for Vector2[], Vector3[], Vector4[], Quaternion[], Color[], Bounds[], Rect[] + int[], float[], double[]
+    /// Special Resolver for Vector2[], Vector3[], Vector4[], Quaternion[], Color[], Bounds[], Rect[] + int[], float[], double[].
     /// </summary>
     public class UnityBlitWithPrimitiveArrayResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new UnityBlitWithPrimitiveArrayResolver();
+        public static readonly UnityBlitWithPrimitiveArrayResolver Instance = new UnityBlitWithPrimitiveArrayResolver();
 
-        UnityBlitWithPrimitiveArrayResolver()
+        private UnityBlitWithPrimitiveArrayResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                formatter = (IMessagePackFormatter<T>)UnityBlitWithPrimitiveResolverGetFormatterHelper.GetFormatter(typeof(T));
-                if (formatter == null)
+                Formatter = (IMessagePackFormatter<T>)UnityBlitWithPrimitiveResolverGetFormatterHelper.GetFormatter(typeof(T));
+                if (Formatter == null)
                 {
-                    formatter = UnityBlitResolver.Instance.GetFormatter<T>();
+                    Formatter = UnityBlitResolver.Instance.GetFormatter<T>();
                 }
             }
         }
@@ -68,21 +70,21 @@ namespace MessagePack.Unity.Extension
 
     internal static class UnityBlitResolverGetFormatterHelper
     {
-        static readonly Dictionary<Type, Type> formatterMap = new Dictionary<Type, Type>()
+        private static readonly Dictionary<Type, Type> FormatterMap = new Dictionary<Type, Type>()
         {
-              {typeof(Vector2[]), typeof(Vector2ArrayBlitFormatter)},
-              {typeof(Vector3[]), typeof(Vector3ArrayBlitFormatter)},
-              {typeof(Vector4[]), typeof(Vector4ArrayBlitFormatter)},
-              {typeof(Quaternion[]), typeof(QuaternionArrayBlitFormatter)},
-              {typeof(Color[]), typeof(ColorArrayBlitFormatter)},
-              {typeof(Bounds[]), typeof(BoundsArrayBlitFormatter)},
-              {typeof(Rect[]), typeof(RectArrayBlitFormatter)},
+              { typeof(Vector2[]), typeof(Vector2ArrayBlitFormatter) },
+              { typeof(Vector3[]), typeof(Vector3ArrayBlitFormatter) },
+              { typeof(Vector4[]), typeof(Vector4ArrayBlitFormatter) },
+              { typeof(Quaternion[]), typeof(QuaternionArrayBlitFormatter) },
+              { typeof(Color[]), typeof(ColorArrayBlitFormatter) },
+              { typeof(Bounds[]), typeof(BoundsArrayBlitFormatter) },
+              { typeof(Rect[]), typeof(RectArrayBlitFormatter) },
         };
 
         internal static object GetFormatter(Type t)
         {
             Type formatterType;
-            if (formatterMap.TryGetValue(t, out formatterType))
+            if (FormatterMap.TryGetValue(t, out formatterType))
             {
                 return Activator.CreateInstance(formatterType);
             }
@@ -93,17 +95,17 @@ namespace MessagePack.Unity.Extension
 
     internal static class UnityBlitWithPrimitiveResolverGetFormatterHelper
     {
-        static readonly Dictionary<Type, Type> formatterMap = new Dictionary<Type, Type>()
+        private static readonly Dictionary<Type, Type> FormatterMap = new Dictionary<Type, Type>()
         {
-              {typeof(int[]), typeof(IntArrayBlitFormatter)},
-              {typeof(float[]), typeof(FloatArrayBlitFormatter)},
-              {typeof(double[]), typeof(DoubleArrayBlitFormatter)},
+              { typeof(int[]), typeof(IntArrayBlitFormatter) },
+              { typeof(float[]), typeof(FloatArrayBlitFormatter) },
+              { typeof(double[]), typeof(DoubleArrayBlitFormatter) },
         };
 
         internal static object GetFormatter(Type t)
         {
             Type formatterType;
-            if (formatterMap.TryGetValue(t, out formatterType))
+            if (FormatterMap.TryGetValue(t, out formatterType))
             {
                 return Activator.CreateInstance(formatterType);
             }

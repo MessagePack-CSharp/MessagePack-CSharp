@@ -1,17 +1,22 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 using Xunit;
 
 namespace MessagePack.Tests
 {
-    partial class MessagePackReaderTests
+    public partial class MessagePackReaderTests
     {
         [Fact]
         public void ReadString_HandlesSingleSegment()
         {
-            var seq = BuildSequence(new[] {
+            ReadOnlySequence<byte> seq = this.BuildSequence(new[]
+            {
                 (byte)(MessagePackCode.MinFixStr + 2),
-                (byte)'A', (byte)'B' });
+                (byte)'A', (byte)'B',
+            });
 
             var reader = new MessagePackReader(seq);
             var result = reader.ReadString();
@@ -21,7 +26,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadString_HandlesMultipleSegments()
         {
-            var seq = BuildSequence(
+            ReadOnlySequence<byte> seq = this.BuildSequence(
                 new[] { (byte)(MessagePackCode.MinFixStr + 2), (byte)'A' },
                 new[] { (byte)'B' });
 
@@ -30,7 +35,7 @@ namespace MessagePack.Tests
             Assert.Equal("AB", result);
         }
 
-        ReadOnlySequence<T> BuildSequence<T>(params T[][] segmentContents)
+        private ReadOnlySequence<T> BuildSequence<T>(params T[][] segmentContents)
         {
             if (segmentContents.Length == 1)
             {
@@ -51,16 +56,16 @@ namespace MessagePack.Tests
         {
             public BufferSegment(ReadOnlyMemory<T> memory)
             {
-                Memory = memory;
+                this.Memory = memory;
             }
 
             public BufferSegment<T> Append(ReadOnlyMemory<T> memory)
             {
                 var segment = new BufferSegment<T>(memory)
                 {
-                    RunningIndex = RunningIndex + Memory.Length
+                    RunningIndex = this.RunningIndex + this.Memory.Length,
                 };
-                Next = segment;
+                this.Next = segment;
                 return segment;
             }
         }

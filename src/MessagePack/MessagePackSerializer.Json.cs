@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 using System.Globalization;
 using System.IO;
@@ -90,7 +93,7 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// From Json String to MessagePack binary
+        /// From Json String to MessagePack binary.
         /// </summary>
         public static void ConvertFromJson(string str, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
@@ -101,7 +104,7 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// From Json String to MessagePack binary
+        /// From Json String to MessagePack binary.
         /// </summary>
         public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
@@ -110,7 +113,7 @@ namespace MessagePack
             {
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                 {
-                    var scratchWriter = writer.Clone(scratch);
+                    MessagePackWriter scratchWriter = writer.Clone(scratch);
                     using (var jr = new TinyJsonReader(reader, false))
                     {
                         FromJsonCore(jr, ref scratchWriter);
@@ -142,7 +145,7 @@ namespace MessagePack
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
                         using (var scratch = new Sequence<byte>())
                         {
-                            var scratchWriter = writer.Clone(scratch);
+                            MessagePackWriter scratchWriter = writer.Clone(scratch);
                             var mapCount = FromJsonCore(jr, ref scratchWriter);
                             scratchWriter.Flush();
 
@@ -159,7 +162,7 @@ namespace MessagePack
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
                         using (var scratch = new Sequence<byte>())
                         {
-                            var scratchWriter = writer.Clone(scratch);
+                            MessagePackWriter scratchWriter = writer.Clone(scratch);
                             var arrayCount = FromJsonCore(jr, ref scratchWriter);
                             scratchWriter.Flush();
 
@@ -172,7 +175,7 @@ namespace MessagePack
                     case TinyJsonToken.EndArray:
                         return count; // break
                     case TinyJsonToken.Number:
-                        var v = jr.ValueType;
+                        ValueType v = jr.ValueType;
                         if (v == ValueType.Double)
                         {
                             writer.Write(jr.DoubleValue);
@@ -189,6 +192,7 @@ namespace MessagePack
                         {
                             DecimalFormatter.Instance.Serialize(ref writer, jr.DecimalValue, null);
                         }
+
                         count++;
                         break;
                     case TinyJsonToken.String:
@@ -211,12 +215,13 @@ namespace MessagePack
                         break;
                 }
             }
+
             return count;
         }
 
         private static void ToJsonCore(ref MessagePackReader reader, TextWriter writer)
         {
-            var type = reader.NextMessagePackType;
+            MessagePackType type = reader.NextMessagePackType;
             switch (type)
             {
                 case MessagePackType.Integer:
@@ -263,9 +268,11 @@ namespace MessagePack
                                 writer.Write(",");
                             }
                         }
+
                         writer.Write("]");
                         return;
                     }
+
                 case MessagePackType.Map:
                     {
                         int length = reader.ReadMapHeader();
@@ -274,7 +281,7 @@ namespace MessagePack
                         {
                             // write key
                             {
-                                var keyType = reader.NextMessagePackType;
+                                MessagePackType keyType = reader.NextMessagePackType;
                                 if (keyType == MessagePackType.String || keyType == MessagePackType.Binary)
                                 {
                                     ToJsonCore(ref reader, writer);
@@ -299,15 +306,17 @@ namespace MessagePack
                                 writer.Write(",");
                             }
                         }
+
                         writer.Write("}");
 
                         return;
                     }
+
                 case MessagePackType.Extension:
-                    var extHeader = reader.ReadExtensionFormatHeader();
+                    ExtensionHeader extHeader = reader.ReadExtensionFormatHeader();
                     if (extHeader.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
                     {
-                        var dt = reader.ReadDateTime(extHeader);
+                        DateTime dt = reader.ReadDateTime(extHeader);
                         writer.Write("\"");
                         writer.Write(dt.ToString("o", CultureInfo.InvariantCulture));
                         writer.Write("\"");
@@ -318,19 +327,20 @@ namespace MessagePack
                         // prepare type name token
                         var privateBuilder = new StringBuilder();
                         var typeNameTokenBuilder = new StringBuilder();
-                        var positionBeforeTypeNameRead = reader.Position;
+                        SequencePosition positionBeforeTypeNameRead = reader.Position;
                         ToJsonCore(ref reader, new StringWriter(typeNameTokenBuilder));
                         int typeNameReadSize = (int)reader.Sequence.Slice(positionBeforeTypeNameRead, reader.Position).Length;
                         if (extHeader.Length > typeNameReadSize)
                         {
                             // object map or array
-                            var typeInside = reader.NextMessagePackType;
+                            MessagePackType typeInside = reader.NextMessagePackType;
                             if (typeInside != MessagePackType.Array && typeInside != MessagePackType.Map)
                             {
                                 privateBuilder.Append("{");
                             }
 
                             ToJsonCore(ref reader, new StringWriter(privateBuilder));
+
                             // insert type name token to start of object map or array
                             if (typeInside != MessagePackType.Array)
                             {
@@ -359,7 +369,7 @@ namespace MessagePack
 #endif
                     else
                     {
-                        var ext = reader.ReadExtensionFormat();
+                        ExtensionResult ext = reader.ReadExtensionFormat();
                         writer.Write("[");
                         writer.Write(ext.TypeCode);
                         writer.Write(",");
@@ -368,6 +378,7 @@ namespace MessagePack
                         writer.Write("\"");
                         writer.Write("]");
                     }
+
                     break;
                 case MessagePackType.Nil:
                     reader.Skip();

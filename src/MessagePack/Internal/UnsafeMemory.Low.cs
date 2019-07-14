@@ -1,15 +1,18 @@
-﻿#if !UNITY
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY
 
 using System;
 using System.Runtime.CompilerServices;
 
 namespace MessagePack.Internal
 {
-    // for string key property name write optimization.
+    /* for string key property name write optimization. */
 
     public static class UnsafeMemory
     {
-        public static readonly bool Is32Bit = (IntPtr.Size == 4);
+        public static readonly bool Is32Bit = IntPtr.Size == 4;
     }
 
     public static partial class UnsafeMemory32
@@ -17,7 +20,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw1(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -31,7 +34,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw2(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -45,7 +48,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw3(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -63,7 +66,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw1(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -77,7 +80,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw2(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -91,7 +94,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw3(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -106,7 +109,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw4(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -120,7 +123,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw5(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -135,7 +138,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw6(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])
@@ -150,7 +153,7 @@ namespace MessagePack.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteRaw7(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            var dst = writer.GetSpan(src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
             fixed (byte* pDst = &dst[0])

@@ -1,20 +1,23 @@
-﻿using MessagePack.Resolvers;
-using SharedData;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Resolvers;
+using SharedData;
 using Xunit;
 
 namespace MessagePack.Tests
 {
     public class MessagePackSerializerTest
     {
-        T ConvertNonGeneric<T>(T obj)
+        private T ConvertNonGeneric<T>(T obj)
         {
-            var t = obj.GetType();
+            Type t = obj.GetType();
             return (T)MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, obj));
         }
 
@@ -22,7 +25,7 @@ namespace MessagePack.Tests
         public void NonGeneric()
         {
             var data = new FirstSimpleData { Prop1 = 9, Prop2 = "hoge", Prop3 = 999 };
-            var t = typeof(FirstSimpleData);
+            Type t = typeof(FirstSimpleData);
             var ms = new MemoryStream();
 
             var data1 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data)) as FirstSimpleData;
@@ -45,7 +48,7 @@ namespace MessagePack.Tests
         [Fact]
         public void StreamAPI()
         {
-            var originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
+            FirstSimpleData[] originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
 
             var ms = new MemoryStream();
             MessagePackSerializer.Serialize(typeof(FirstSimpleData[]), ms, originalData);
@@ -70,48 +73,48 @@ namespace MessagePack.Tests
         }
     }
 
-    class NonMemoryStream : Stream
+    internal class NonMemoryStream : Stream
     {
-        readonly MemoryStream stream;
+        private readonly MemoryStream stream;
 
         public NonMemoryStream(MemoryStream stream)
         {
             this.stream = stream;
         }
 
-        public override bool CanRead => stream.CanRead;
+        public override bool CanRead => this.stream.CanRead;
 
-        public override bool CanSeek => stream.CanSeek;
+        public override bool CanSeek => this.stream.CanSeek;
 
-        public override bool CanWrite => stream.CanWrite;
+        public override bool CanWrite => this.stream.CanWrite;
 
-        public override long Length => stream.Length;
+        public override long Length => this.stream.Length;
 
-        public override long Position { get => stream.Position; set => stream.Position = value; }
+        public override long Position { get => this.stream.Position; set => this.stream.Position = value; }
 
         public override void Flush()
         {
-            stream.Flush();
+            this.stream.Flush();
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return stream.Read(buffer, offset, count);
+            return this.stream.Read(buffer, offset, count);
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            return stream.Seek(offset, origin);
+            return this.stream.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
         {
-            stream.SetLength(value);
+            this.stream.SetLength(value);
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            stream.Write(buffer, offset, count);
+            this.stream.Write(buffer, offset, count);
         }
     }
 }

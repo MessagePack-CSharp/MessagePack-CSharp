@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +13,7 @@ namespace MessagePack.Tests
 {
     public class ToJsonTest
     {
-        string JsonConvert(string json, MessagePackSerializerOptions options)
+        private string JsonConvert(string json, MessagePackSerializerOptions options)
         {
             var sequence = new Sequence<byte>();
             var sequenceWriter = new MessagePackWriter(sequence);
@@ -29,16 +32,16 @@ namespace MessagePack.Tests
         [InlineData(@"[1,20,false,true,3424.432]")]
         public void SimpleToJson(string json)
         {
-            JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
-            JsonConvert(json, MessagePackSerializerOptions.LZ4Default).Is(json);
+            this.JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
+            this.JsonConvert(json, MessagePackSerializerOptions.LZ4Default).Is(json);
         }
 
         [Fact]
         public void ComplexToJson()
         {
             var json = @"{""reservations"":[{""instances"":[{""type"":""small"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""large"",""state"":{""name"":""stopped""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]}]},{""instances"":[{""type"":""medium"",""state"":{""name"":""terminated""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""xlarge"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""DB""]},{""Key"":""version"",""Values"":[""1""]}]}]}]}";
-            JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
-            JsonConvert(json, MessagePackSerializerOptions.LZ4Default).Is(json);
+            this.JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
+            this.JsonConvert(json, MessagePackSerializerOptions.LZ4Default).Is(json);
         }
 
         [Fact]
@@ -57,8 +60,8 @@ namespace MessagePack.Tests
         [InlineData(@"{""Amount"":1E-06}", @"{""Amount"":1E-06}")]
         public void ScientificFloatJsonRoundTrip(string inputJson, string expectedRoundTripJson)
         {
-            JsonConvert(inputJson, MessagePackSerializerOptions.Default).Is(expectedRoundTripJson);
-            JsonConvert(inputJson, MessagePackSerializerOptions.LZ4Default).Is(expectedRoundTripJson);
+            this.JsonConvert(inputJson, MessagePackSerializerOptions.Default).Is(expectedRoundTripJson);
+            this.JsonConvert(inputJson, MessagePackSerializerOptions.LZ4Default).Is(expectedRoundTripJson);
         }
     }
 }

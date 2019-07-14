@@ -1,6 +1,6 @@
-﻿using MessagePack.Formatters;
-using Nerdbank.Streams;
-using SharedData;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,18 +9,21 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Formatters;
+using Nerdbank.Streams;
+using SharedData;
 using Xunit;
 
 namespace MessagePack.Tests
 {
     public class FormatterTest
     {
-        T Convert<T>(T value)
+        private T Convert<T>(T value)
         {
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object[][] primitiveFormatterTestData = new object[][]
+        public static object[][] PrimitiveFormatterTestData = new object[][]
         {
             new object[] { Int16.MinValue, Int16.MaxValue },
             new object[] { (Int16?)100, null },
@@ -51,15 +54,15 @@ namespace MessagePack.Tests
         };
 
         [Theory]
-        [MemberData(nameof(primitiveFormatterTestData))]
+        [MemberData(nameof(PrimitiveFormatterTestData))]
         public void PrimitiveFormatterTest<T>(T x, T? y)
             where T : struct
         {
-            Convert(x).Is(x);
-            Convert(y).Is(y);
+            this.Convert(x).Is(x);
+            this.Convert(y).Is(y);
         }
 
-        public static object[][] enumFormatterTestData = new object[][]
+        public static object[][] EnumFormatterTestData = new object[][]
         {
             new object[] { ByteEnum.A, ByteEnum.B },
             new object[] { (ByteEnum?)ByteEnum.C, null },
@@ -80,28 +83,28 @@ namespace MessagePack.Tests
         };
 
         [Theory]
-        [MemberData(nameof(enumFormatterTestData))]
+        [MemberData(nameof(EnumFormatterTestData))]
         public void EnumFormatterTest<T>(T x, T? y)
             where T : struct
         {
-            Convert(x).Is(x);
-            Convert(y).Is(y);
+            this.Convert(x).Is(x);
+            this.Convert(y).Is(y);
         }
 
         [Fact]
         public void NilFormatterTest()
         {
-            Convert(Nil.Default).Is(Nil.Default);
-            Convert((Nil?)null).Is(Nil.Default);
+            this.Convert(Nil.Default).Is(Nil.Default);
+            this.Convert((Nil?)null).Is(Nil.Default);
         }
 
-        public static object[][] standardStructFormatterTestData = new object[][]
+        public static object[][] StandardStructFormatterTestData = new object[][]
         {
             new object[] { decimal.MaxValue, decimal.MinValue, null },
             new object[] { TimeSpan.MaxValue, TimeSpan.MinValue, null },
             new object[] { DateTimeOffset.MaxValue, DateTimeOffset.MinValue, null },
             new object[] { Guid.NewGuid(), Guid.Empty, null },
-            new object[] { new KeyValuePair<int,string>(10, "hoge"), default(KeyValuePair<int, string>), null },
+            new object[] { new KeyValuePair<int, string>(10, "hoge"), default(KeyValuePair<int, string>), null },
             new object[] { System.Numerics.BigInteger.Zero, System.Numerics.BigInteger.One, null },
             new object[] { System.Numerics.Complex.Zero, System.Numerics.Complex.One, null },
         };
@@ -109,64 +112,66 @@ namespace MessagePack.Tests
         [Fact]
         public void PrimitiveStringTest()
         {
-            Convert("a").Is("a");
-            Convert("test").Is("test");
-            Convert("testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest")
+            this.Convert("a").Is("a");
+            this.Convert("test").Is("test");
+            this.Convert("testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest")
                 .Is("testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest");
-            Convert((string)null).IsNull();
+            this.Convert((string)null).IsNull();
         }
 
         [Theory]
-        [MemberData(nameof(standardStructFormatterTestData))]
+        [MemberData(nameof(StandardStructFormatterTestData))]
         public void StandardClassLibraryStructFormatterTest(object x, object y, object z)
         {
-            var helper = typeof(FormatterTest).GetTypeInfo().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).Single(m => m.Name == nameof(StandardClassLibraryStructFormatterTest_Helper));
-            var helperClosedGeneric = helper.MakeGenericMethod(x.GetType());
+            MethodInfo helper = typeof(FormatterTest).GetTypeInfo().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).Single(m => m.Name == nameof(this.StandardClassLibraryStructFormatterTest_Helper));
+            MethodInfo helperClosedGeneric = helper.MakeGenericMethod(x.GetType());
 
             helperClosedGeneric.Invoke(this, new object[] { x });
             helperClosedGeneric.Invoke(this, new object[] { y });
             helperClosedGeneric.Invoke(this, new object[] { z });
         }
 
-        private void StandardClassLibraryStructFormatterTest_Helper<T>(T? value) where T : struct => Convert(value).Is(value);
+        private void StandardClassLibraryStructFormatterTest_Helper<T>(T? value)
+            where T : struct
+            => this.Convert(value).Is(value);
 
-        public static object[][] standardClassFormatterTestData = new object[][]
+        public static object[][] StandardClassFormatterTestData = new object[][]
         {
             new object[] { new byte[] { 1, 10, 100 }, new byte[0] { }, null },
-            new object[] { "aaa", "", null },
+            new object[] { "aaa", string.Empty, null },
             new object[] { new Uri("Http://hogehoge.com"), new Uri("Https://hugahuga.com"), null },
-            new object[] { new Version(0,0), new Version(1,2,3), new Version(255,100,30) },
-            new object[] { new Version(1,2), new Version(100, 200,300,400), null },
+            new object[] { new Version(0, 0), new Version(1, 2, 3), new Version(255, 100, 30) },
+            new object[] { new Version(1, 2), new Version(100, 200, 300, 400), null },
             new object[] { new BitArray(new[] { true, false, true }), new BitArray(1), null },
         };
 
         [Theory]
-        [MemberData(nameof(standardClassFormatterTestData))]
+        [MemberData(nameof(StandardClassFormatterTestData))]
         public void StandardClassLibraryFormatterTest<T>(T x, T y, T z)
         {
-            Convert(x).Is(x);
-            Convert(y).Is(y);
-            Convert(z).Is(z);
+            this.Convert(x).Is(x);
+            this.Convert(y).Is(y);
+            this.Convert(z).Is(z);
         }
 
         [Fact]
         public void StringBuilderTest()
         {
             var sb = new StringBuilder("aaa");
-            Convert(sb).ToString().Is("aaa");
+            this.Convert(sb).ToString().Is("aaa");
 
             StringBuilder nullSb = null;
-            Convert(nullSb).IsNull();
+            this.Convert(nullSb).IsNull();
         }
 
         [Fact]
         public void LazyTest()
         {
             var lz = new Lazy<int>(() => 100);
-            Convert(lz).Value.Is(100);
+            this.Convert(lz).Value.Is(100);
 
             Lazy<int> nullLz = null;
-            Convert(nullLz).IsNull();
+            this.Convert(nullLz).IsNull();
         }
 
         [Fact]
@@ -236,10 +241,10 @@ namespace MessagePack.Tests
         public void UriTest()
         {
             var absolute = new Uri("http://google.com/");
-            Convert(absolute).ToString().Is("http://google.com/");
+            this.Convert(absolute).ToString().Is("http://google.com/");
 
             var relative = new Uri("/me/", UriKind.Relative);
-            Convert(relative).ToString().Is("/me/");
+            this.Convert(relative).ToString().Is("/me/");
         }
     }
 }

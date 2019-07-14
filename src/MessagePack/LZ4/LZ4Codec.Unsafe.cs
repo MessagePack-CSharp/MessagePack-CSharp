@@ -1,4 +1,7 @@
-﻿#if !UNITY
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY
 
 #region license
 
@@ -32,7 +35,7 @@ using System;
 namespace MessagePack.LZ4
 {
     /// <summary>Unsafe LZ4 codec.</summary>
-    partial class LZ4Codec
+    internal partial class LZ4Codec
     {
         /// <summary>Encodes the specified input.</summary>
         /// <param name="input">The input.</param>
@@ -40,7 +43,10 @@ namespace MessagePack.LZ4
         /// <returns>Number of bytes written.</returns>
         public static unsafe int Encode(ReadOnlySpan<byte> input, Span<byte> output)
         {
-            if (output.Length == 0) throw new ArgumentException("Output is empty.");
+            if (output.Length == 0)
+            {
+                throw new ArgumentException("Output is empty.");
+            }
 
             fixed (byte* inputPtr = input)
             fixed (byte* outputPtr = output)
@@ -84,7 +90,10 @@ namespace MessagePack.LZ4
         /// <returns>Number of bytes written.</returns>
         public static unsafe int Decode(ReadOnlySpan<byte> input, Span<byte> output)
         {
-            if (output.Length == 0) throw new ArgumentException("Output is empty.");
+            if (output.Length == 0)
+            {
+                throw new ArgumentException("Output is empty.");
+            }
 
             fixed (byte* inputPtr = input)
             fixed (byte* outputPtr = output)
@@ -100,7 +109,10 @@ namespace MessagePack.LZ4
                 }
 
                 if (length != input.Length)
+                {
                     throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
+                }
+
                 return output.Length;
             }
         }

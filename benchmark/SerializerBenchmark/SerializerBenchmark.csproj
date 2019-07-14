@@ -5,14 +5,8 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>SerializerBenchmark</AssemblyName>
     <RootNamespace>Benchmark</RootNamespace>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisRuleSet>SerializerBenchmark.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <ItemGroup>

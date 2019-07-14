@@ -8,6 +8,10 @@
 #pragma warning disable 414
 #pragma warning disable 168
 
+#pragma warning disable SA1200 // Using directives should be placed correctly
+#pragma warning disable SA1312 // Variable names should begin with lower-case letter
+#pragma warning disable SA1649 // File name should match first type name
+
 namespace <#= Namespace #>
 {
     using System;
@@ -18,26 +22,25 @@ namespace <#= Namespace #>
     {
         public static readonly global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();
 
-        <#= ResolverName #>()
+        private <#= ResolverName #>()
         {
-
         }
 
         public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> formatter;
+            internal static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
                 var f = <#= ResolverName #>GetFormatterHelper.GetFormatter(typeof(T));
                 if (f != null)
                 {
-                    formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
+                    Formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
                 }
             }
         }
@@ -45,14 +48,14 @@ namespace <#= Namespace #>
 
     internal static class <#= ResolverName #>GetFormatterHelper
     {
-        static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
+        private static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
 
         static <#= ResolverName #>GetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(<#= registerInfos.Length #>)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(<#= RegisterInfos.Length #>)
             {
-<# for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; #>
-                {typeof(<#= x.FullName #>), <#= i #> },
+<# for(var i = 0; i < RegisterInfos.Length; i++) { var x = RegisterInfos[i]; #>
+                { typeof(<#= x.FullName #>), <#= i #> },
 <# } #>
             };
         }
@@ -60,11 +63,14 @@ namespace <#= Namespace #>
         internal static object GetFormatter(Type t)
         {
             int key;
-            if (!lookup.TryGetValue(t, out key)) return null;
+            if (!lookup.TryGetValue(t, out key))
+            {
+                return null;
+            }
 
             switch (key)
             {
-<# for(var i = 0; i < registerInfos.Length; i++) { var x = registerInfos[i]; #>
+<# for(var i = 0; i < RegisterInfos.Length; i++) { var x = RegisterInfos[i]; #>
                 case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName#>();
 <# } #>
                 default: return null;
@@ -77,3 +83,7 @@ namespace <#= Namespace #>
 #pragma warning restore 414
 #pragma warning restore 618
 #pragma warning restore 612
+
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
+#pragma warning restore SA1200 // Using directives should be placed correctly
+#pragma warning restore SA1649 // File name should match first type name

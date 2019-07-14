@@ -1,4 +1,10 @@
-﻿using Benchmark.Serializers;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Benchmark.Serializers;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
@@ -9,9 +15,6 @@ using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Benchmark
 {
@@ -20,23 +23,22 @@ namespace Benchmark
         public BenchmarkConfig()
         {
             // run quickly:)
-            var baseConfig = Job.ShortRun.WithIterationCount(1).WithWarmupCount(1);
+            Job baseConfig = Job.ShortRun.WithIterationCount(1).WithWarmupCount(1);
 
             // Add(baseConfig.With(Runtime.Clr).With(Jit.RyuJit).With(Platform.X64));
-            Add(baseConfig.With(Runtime.Core).With(Jit.RyuJit).With(Platform.X64));
+            this.Add(baseConfig.With(Runtime.Core).With(Jit.RyuJit).With(Platform.X64));
 
-            Add(MarkdownExporter.GitHub);
-            Add(CsvExporter.Default);
-            Add(MemoryDiagnoser.Default);
+            this.Add(MarkdownExporter.GitHub);
+            this.Add(CsvExporter.Default);
+            this.Add(MemoryDiagnoser.Default);
 
-            Add(new DataSizeColumn());
+            this.Add(new DataSizeColumn());
 
             this.Set(new CustomOrderer());
         }
 
         // 0.11.4 has bug of set CustomOrderer https://github.com/dotnet/BenchmarkDotNet/issues/1070
         // so skip update to 0.11.4.
-
         public class CustomOrderer : IOrderer
         {
             public bool SeparateLogicalGroups => false;
@@ -89,12 +91,12 @@ namespace Benchmark
 
             public string GetValue(Summary summary, BenchmarkCase benchmarkCase)
             {
-                return GetValue(summary, benchmarkCase, null);
+                return this.GetValue(summary, benchmarkCase, null);
             }
 
             public string GetValue(Summary summary, BenchmarkCase benchmarkCase, ISummaryStyle style)
             {
-                var mi = benchmarkCase.Descriptor.WorkloadMethod;
+                System.Reflection.MethodInfo mi = benchmarkCase.Descriptor.WorkloadMethod;
                 if (mi.Name.Contains("Serialize"))
                 {
                     var instance = Activator.CreateInstance(mi.DeclaringType);
@@ -119,36 +121,60 @@ namespace Benchmark
                 return false;
             }
 
-            static string ToHumanReadableSize(long size)
+            private static string ToHumanReadableSize(long size)
             {
-                return ToHumanReadableSize(new Nullable<long>(size));
+                return ToHumanReadableSize(new long?(size));
             }
 
-            static string ToHumanReadableSize(long? size)
+            private static string ToHumanReadableSize(long? size)
             {
-                if (size == null) return "NULL";
+                if (size == null)
+                {
+                    return "NULL";
+                }
 
                 double bytes = size.Value;
 
-                if (bytes <= 1024) return bytes.ToString("f2") + " B";
+                if (bytes <= 1024)
+                {
+                    return bytes.ToString("f2") + " B";
+                }
 
                 bytes = bytes / 1024;
-                if (bytes <= 1024) return bytes.ToString("f2") + " KB";
+                if (bytes <= 1024)
+                {
+                    return bytes.ToString("f2") + " KB";
+                }
 
                 bytes = bytes / 1024;
-                if (bytes <= 1024) return bytes.ToString("f2") + " MB";
+                if (bytes <= 1024)
+                {
+                    return bytes.ToString("f2") + " MB";
+                }
 
                 bytes = bytes / 1024;
-                if (bytes <= 1024) return bytes.ToString("f2") + " GB";
+                if (bytes <= 1024)
+                {
+                    return bytes.ToString("f2") + " GB";
+                }
 
                 bytes = bytes / 1024;
-                if (bytes <= 1024) return bytes.ToString("f2") + " TB";
+                if (bytes <= 1024)
+                {
+                    return bytes.ToString("f2") + " TB";
+                }
 
                 bytes = bytes / 1024;
-                if (bytes <= 1024) return bytes.ToString("f2") + " PB";
+                if (bytes <= 1024)
+                {
+                    return bytes.ToString("f2") + " PB";
+                }
 
                 bytes = bytes / 1024;
-                if (bytes <= 1024) return bytes.ToString("f2") + " EB";
+                if (bytes <= 1024)
+                {
+                    return bytes.ToString("f2") + " EB";
+                }
 
                 bytes = bytes / 1024;
                 return bytes + " ZB";

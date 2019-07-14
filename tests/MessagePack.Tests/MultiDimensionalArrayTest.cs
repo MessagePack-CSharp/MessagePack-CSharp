@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +12,7 @@ namespace MessagePack.Tests
 {
     public class MultiDimensionalArrayTest
     {
-        T Convert<T>(T value)
+        private T Convert<T>(T value)
         {
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
@@ -40,9 +43,9 @@ namespace MessagePack.Tests
                 }
             }
 
-            var cTwo = Convert(two);
-            var cThree = Convert(three);
-            var cFour = Convert(four);
+            (int, int)[,] cTwo = this.Convert(two);
+            (int, int, int)[,,] cThree = this.Convert(three);
+            (int, int, int, int)[,,,] cFour = this.Convert(four);
 
             cTwo.Length.Is(two.Length);
             cThree.Length.Is(three.Length);

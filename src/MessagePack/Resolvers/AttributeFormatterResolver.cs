@@ -1,7 +1,10 @@
-﻿using MessagePack.Formatters;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
-using System.Reflection;
 using System.Linq; // require UNITY_WSA
+using System.Reflection;
+using MessagePack.Formatters;
 
 namespace MessagePack.Resolvers
 {
@@ -21,19 +24,19 @@ namespace MessagePack.Resolvers
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
 #if UNITY_WSA && !NETFX_CORE
                 var attr = (MessagePackFormatterAttribute)typeof(T).GetCustomAttributes(typeof(MessagePackFormatterAttribute), true).FirstOrDefault();
 #else
-                var attr = typeof(T).GetTypeInfo().GetCustomAttribute<MessagePackFormatterAttribute>();
+                MessagePackFormatterAttribute attr = typeof(T).GetTypeInfo().GetCustomAttribute<MessagePackFormatterAttribute>();
 #endif
                 if (attr == null)
                 {
@@ -42,11 +45,11 @@ namespace MessagePack.Resolvers
 
                 if (attr.Arguments == null)
                 {
-                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType);
+                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType);
                 }
                 else
                 {
-                    formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType, attr.Arguments);
+                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType, attr.Arguments);
                 }
             }
         }

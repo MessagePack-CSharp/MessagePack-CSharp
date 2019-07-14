@@ -1,8 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.CSharp.Formatting;
-using Microsoft.CodeAnalysis.Text;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +8,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Formatting;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 using StLogger = Microsoft.Build.Logging.StructuredLogger;
 
 namespace MessagePack.CodeGenerator
@@ -18,31 +20,34 @@ namespace MessagePack.CodeGenerator
     // Utility and Extension methods for Roslyn
     internal static class RoslynExtensions
     {
-        static (string fname, string args) GetBuildCommandLine(string csprojPath, string tempPath, bool useDotNet)
+        private static (string fname, string args) GetBuildCommandLine(string csprojPath, string tempPath, bool useDotNet)
         {
             string fname = "dotnet";
             const string tasks = "Restore;ResolveReferences";
+
             // from Buildalyzer implementation
             // https://github.com/daveaglick/Buildalyzer/blob/b42d2e3ba1b3673a8133fb41e72b507b01bce1d6/src/Buildalyzer/Environment/BuildEnvironment.cs#L86-L96
             Dictionary<string, string> properties = new Dictionary<string, string>()
                 {
-                    {"ProviderCommandLineArgs", "true"},
-                    {"GenerateResourceMSBuildArchitecture", "CurrentArchitecture"},
-                    {"DesignTimeBuild", "true"},
-                    {"BuildProjectReferences","false"},
+                    { "ProviderCommandLineArgs", "true" },
+                    { "GenerateResourceMSBuildArchitecture", "CurrentArchitecture" },
+                    { "DesignTimeBuild", "true" },
+                    { "BuildProjectReferences", "false" },
+
                     // {"SkipCompilerExecution","true"},
-                    {"DisableRarCache", "true"},
-                    {"AutoGenerateBindingRedirects", "false"},
-                    {"CopyBuildOutputToOutputDirectory", "false"},
-                    {"CopyOutputSymbolsToOutputDirectory", "false"},
-                    {"SkipCopyBuildProduct", "true"},
-                    {"AddModules", "false"},
-                    {"UseCommonOutputDirectory", "true"},
-                    {"GeneratePackageOnBuild", "false"},
-                    {"RunPostBuildEvent", "false"},
-                    {"SolutionDir", (new FileInfo(csprojPath).Directory.FullName) + "/"}
+                    { "DisableRarCache", "true" },
+                    { "AutoGenerateBindingRedirects", "false" },
+                    { "CopyBuildOutputToOutputDirectory", "false" },
+                    { "CopyOutputSymbolsToOutputDirectory", "false" },
+                    { "SkipCopyBuildProduct", "true" },
+                    { "AddModules", "false" },
+                    { "UseCommonOutputDirectory", "true" },
+                    { "GeneratePackageOnBuild", "false" },
+                    { "RunPostBuildEvent", "false" },
+                    { "SolutionDir", new FileInfo(csprojPath).Directory.FullName + "/" },
                 };
             var propargs = string.Join(" ", properties.Select(kv => $"/p:{kv.Key}=\"{kv.Value}\""));
+
             // how to determine whether command should be executed('dotnet msbuild' or 'msbuild')?
             if (useDotNet)
             {
@@ -55,10 +60,11 @@ namespace MessagePack.CodeGenerator
                 return (fname, $"\"{csprojPath}\" /t:{tasks} {propargs} /bl:\"{Path.Combine(tempPath, "build.binlog")}\" /v:n");
             }
         }
-        static async Task<bool> TryExecute(string csprojPath, string tempPath, bool useDotNet)
+
+        private static async Task<bool> TryExecute(string csprojPath, string tempPath, bool useDotNet)
         {
             // executing build command with output binary log
-            var (fname, args) = GetBuildCommandLine(csprojPath, tempPath, useDotNet);
+            (string fname, string args) = GetBuildCommandLine(csprojPath, tempPath, useDotNet);
             try
             {
                 var buildlogpath = Path.Combine(tempPath, "build.binlog");
@@ -68,8 +74,11 @@ namespace MessagePack.CodeGenerator
                     {
                         File.Delete(buildlogpath);
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
+
                 using (var stdout = new MemoryStream())
                 using (var stderr = new MemoryStream())
                 {
@@ -79,13 +88,14 @@ namespace MessagePack.CodeGenerator
                         // write process output to stdout and stderr when error.
                         using (var stdout2 = new MemoryStream(stdout.ToArray()))
                         using (var stderr2 = new MemoryStream(stderr.ToArray()))
-                        using (var consoleStdout = Console.OpenStandardOutput())
-                        using (var consoleStderr = Console.OpenStandardError())
+                        using (Stream consoleStdout = Console.OpenStandardOutput())
+                        using (Stream consoleStderr = Console.OpenStandardError())
                         {
                             await stdout2.CopyToAsync(consoleStdout).ConfigureAwait(false);
                             await stderr2.CopyToAsync(consoleStderr).ConfigureAwait(false);
                         }
                     }
+
                     return File.Exists(buildlogpath);
                 }
             }
@@ -95,35 +105,40 @@ namespace MessagePack.CodeGenerator
                 return false;
             }
         }
-        static IEnumerable<StLogger.Error> FindAllErrors(StLogger.Build build)
+
+        private static IEnumerable<StLogger.Error> FindAllErrors(StLogger.Build build)
         {
             var lst = new List<StLogger.Error>();
             build.VisitAllChildren<StLogger.Error>(er => lst.Add(er));
             return lst;
         }
-        static (StLogger.Build, IEnumerable<StLogger.Error>) ProcessBuildLog(string tempPath)
+
+        private static (StLogger.Build, IEnumerable<StLogger.Error>) ProcessBuildLog(string tempPath)
         {
             var reader = new StLogger.BinLogReader();
             var stlogger = new StLogger.StructuredLogger();
+
             // prevent output temporary file
             StLogger.StructuredLogger.SaveLogToDisk = false;
+
             // never output, but if not set, throw exception when initializing
             stlogger.Parameters = "tmp.buildlog";
             stlogger.Initialize(reader);
             reader.Replay(Path.Combine(tempPath, "build.binlog"));
             stlogger.Shutdown();
-            var buildlog = stlogger.Construction.Build;
+            StLogger.Build buildlog = stlogger.Construction.Build;
             if (buildlog.Succeeded)
             {
                 return (buildlog, null);
             }
             else
             {
-                var errors = FindAllErrors(buildlog);
+                IEnumerable<StLogger.Error> errors = FindAllErrors(buildlog);
                 return (null, errors);
             }
         }
-        static async Task<(StLogger.Build, IEnumerable<StLogger.Error>)> TryGetBuildResultAsync(string csprojPath, string tempPath, bool useDotNet, params string[] preprocessorSymbols)
+
+        private static async Task<(StLogger.Build, IEnumerable<StLogger.Error>)> TryGetBuildResultAsync(string csprojPath, string tempPath, bool useDotNet, params string[] preprocessorSymbols)
         {
             try
             {
@@ -144,7 +159,8 @@ namespace MessagePack.CodeGenerator
                 }
             }
         }
-        static async Task<StLogger.Build> GetBuildResult(string csprojPath, params string[] preprocessorSymbols)
+
+        private static async Task<StLogger.Build> GetBuildResult(string csprojPath, params string[] preprocessorSymbols)
         {
             var tempPath = Path.Combine(new FileInfo(csprojPath).Directory.FullName, "__buildtemp");
             try
@@ -160,6 +176,7 @@ namespace MessagePack.CodeGenerator
                         throw new InvalidOperationException($"failed to build project: {string.Join("\n", errors)}");
                     }
                 }
+
                 return build;
             }
             finally
@@ -170,24 +187,27 @@ namespace MessagePack.CodeGenerator
                 }
             }
         }
-        static Workspace GetWorkspaceFromBuild(this StLogger.Build build, params string[] preprocessorSymbols)
+
+        private static Workspace GetWorkspaceFromBuild(this StLogger.Build build, params string[] preprocessorSymbols)
         {
-            var csproj = build.Children.OfType<StLogger.Project>().FirstOrDefault();
+            StLogger.Project csproj = build.Children.OfType<StLogger.Project>().FirstOrDefault();
             if (csproj == null)
             {
                 throw new InvalidOperationException("cannot find cs project build");
             }
+
             StLogger.Item[] compileItems = Array.Empty<StLogger.Item>();
             var properties = new Dictionary<string, StLogger.Property>();
-            foreach (var folder in csproj.Children.OfType<StLogger.Folder>())
+            foreach (StLogger.Folder folder in csproj.Children.OfType<StLogger.Folder>())
             {
                 if (folder.Name == "Items")
                 {
-                    var compileFolder = folder.Children.OfType<StLogger.Folder>().FirstOrDefault(x => x.Name == "Compile");
+                    StLogger.Folder compileFolder = folder.Children.OfType<StLogger.Folder>().FirstOrDefault(x => x.Name == "Compile");
                     if (compileFolder == null)
                     {
                         throw new InvalidOperationException("failed to get compililation documents");
                     }
+
                     compileItems = compileFolder.Children.OfType<StLogger.Item>().ToArray();
                 }
                 else if (folder.Name == "Properties")
@@ -195,34 +215,39 @@ namespace MessagePack.CodeGenerator
                     properties = folder.Children.OfType<StLogger.Property>().ToDictionary(x => x.Name);
                 }
             }
-            var assemblies = Array.Empty<StLogger.Item>();
-            foreach (var target in csproj.Children.OfType<StLogger.Target>())
+
+            StLogger.Item[] assemblies = Array.Empty<StLogger.Item>();
+            foreach (StLogger.Target target in csproj.Children.OfType<StLogger.Target>())
             {
                 if (target.Name == "ResolveReferences")
                 {
-                    var folder = target.Children.OfType<StLogger.Folder>().Where(x => x.Name == "TargetOutputs").FirstOrDefault();
+                    StLogger.Folder folder = target.Children.OfType<StLogger.Folder>().Where(x => x.Name == "TargetOutputs").FirstOrDefault();
                     if (folder == null)
                     {
                         throw new InvalidOperationException("cannot find result of resolving assembly");
                     }
+
                     assemblies = folder.Children.OfType<StLogger.Item>().ToArray();
                 }
             }
+
             var ws = new AdhocWorkspace();
-            var roslynProject = ws.AddProject(Path.GetFileNameWithoutExtension(csproj.ProjectFile), Microsoft.CodeAnalysis.LanguageNames.CSharp);
+            Project roslynProject = ws.AddProject(Path.GetFileNameWithoutExtension(csproj.ProjectFile), Microsoft.CodeAnalysis.LanguageNames.CSharp);
             var projectDir = properties["ProjectDir"].Value;
-            var pguid = properties.ContainsKey("ProjectGuid") ? Guid.Parse(properties["ProjectGuid"].Value) : Guid.NewGuid();
+            Guid pguid = properties.ContainsKey("ProjectGuid") ? Guid.Parse(properties["ProjectGuid"].Value) : Guid.NewGuid();
             var projectGuid = ProjectId.CreateFromSerialized(pguid);
-            foreach (var compile in compileItems)
+            foreach (StLogger.Item compile in compileItems)
             {
                 var filePath = compile.Text;
                 var absFilePath = Path.Combine(projectDir, filePath);
                 roslynProject = roslynProject.AddDocument(filePath, File.ReadAllText(absFilePath)).Project;
             }
-            foreach (var asm in assemblies)
+
+            foreach (StLogger.Item asm in assemblies)
             {
                 roslynProject = roslynProject.AddMetadataReference(MetadataReference.CreateFromFile(asm.Text));
             }
+
             var compopt = roslynProject.CompilationOptions as CSharpCompilationOptions;
             compopt = roslynProject.CompilationOptions as CSharpCompilationOptions;
             compopt = compopt ?? new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
@@ -239,6 +264,7 @@ namespace MessagePack.CodeGenerator
                     kind = OutputKind.DynamicallyLinkedLibrary;
                     break;
             }
+
             roslynProject = roslynProject.WithCompilationOptions(compopt.WithOutputKind(kind).WithAllowUnsafe(true));
             var parseopt = roslynProject.ParseOptions as CSharpParseOptions;
             roslynProject = roslynProject.WithParseOptions(parseopt.WithPreprocessorSymbols(preprocessorSymbols));
@@ -246,21 +272,23 @@ namespace MessagePack.CodeGenerator
             {
                 throw new InvalidOperationException("failed to apply solution changes to workspace");
             }
+
             return ws;
         }
+
         public static async Task<Compilation> GetCompilationFromProject(string csprojPath, params string[] preprocessorSymbols)
         {
-            var build = await GetBuildResult(csprojPath, preprocessorSymbols).ConfigureAwait(false);
+            StLogger.Build build = await GetBuildResult(csprojPath, preprocessorSymbols).ConfigureAwait(false);
 
-            using (var workspace = GetWorkspaceFromBuild(build, preprocessorSymbols))
+            using (Workspace workspace = GetWorkspaceFromBuild(build, preprocessorSymbols))
             {
                 workspace.WorkspaceFailed += WorkSpaceFailed;
-                var project = workspace.CurrentSolution.Projects.First();
+                Project project = workspace.CurrentSolution.Projects.First();
                 project = project
                     .WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols))
                     .WithCompilationOptions((project.CompilationOptions as CSharpCompilationOptions).WithAllowUnsafe(true));
 
-                var compilation = await project.GetCompilationAsync().ConfigureAwait(false);
+                Compilation compilation = await project.GetCompilationAsync().ConfigureAwait(false);
                 return compilation;
             }
         }
@@ -272,11 +300,11 @@ namespace MessagePack.CodeGenerator
 
         public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
         {
-            foreach (var syntaxTree in compilation.SyntaxTrees)
+            foreach (SyntaxTree syntaxTree in compilation.SyntaxTrees)
             {
-                var semModel = compilation.GetSemanticModel(syntaxTree);
+                SemanticModel semModel = compilation.GetSemanticModel(syntaxTree);
 
-                foreach (var item in syntaxTree.GetRoot()
+                foreach (ISymbol item in syntaxTree.GetRoot()
                     .DescendantNodes()
                     .Select(x => semModel.GetDeclaredSymbol(x))
                     .Where(x => x != null))
@@ -292,7 +320,7 @@ namespace MessagePack.CodeGenerator
 
         public static IEnumerable<INamedTypeSymbol> EnumerateBaseType(this ITypeSymbol symbol)
         {
-            var t = symbol.BaseType;
+            INamedTypeSymbol t = symbol.BaseType;
             while (t != null)
             {
                 yield return t;
@@ -307,7 +335,8 @@ namespace MessagePack.CodeGenerator
                 .FirstOrDefault();
         }
 
-        public static AttributeData FindAttributeShortName(this IEnumerable<AttributeData> attributeDataList,
+        public static AttributeData FindAttributeShortName(
+            this IEnumerable<AttributeData> attributeDataList,
             string typeName)
         {
             return attributeDataList
@@ -315,21 +344,26 @@ namespace MessagePack.CodeGenerator
                 .FirstOrDefault();
         }
 
-        public static AttributeData FindAttributeIncludeBasePropertyShortName(this IPropertySymbol property,
+        public static AttributeData FindAttributeIncludeBasePropertyShortName(
+            this IPropertySymbol property,
             string typeName)
         {
             do
             {
-                var data = FindAttributeShortName(property.GetAttributes(), typeName);
-                if (data != null) return data;
+                AttributeData data = FindAttributeShortName(property.GetAttributes(), typeName);
+                if (data != null)
+                {
+                    return data;
+                }
+
                 property = property.OverriddenProperty;
-            } while (property != null);
+            }
+            while (property != null);
 
             return null;
         }
 
-        public static AttributeSyntax FindAttribute(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel model,
-            string typeName)
+        public static AttributeSyntax FindAttribute(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel model, string typeName)
         {
             return typeDeclaration.AttributeLists
                 .SelectMany(x => x.Attributes)
@@ -346,7 +380,7 @@ namespace MessagePack.CodeGenerator
 
         public static object GetSingleNamedArgumentValue(this AttributeData attribute, string key)
         {
-            foreach (var item in attribute.NamedArguments)
+            foreach (KeyValuePair<string, TypedConstant> item in attribute.NamedArguments)
             {
                 if (item.Key == key)
                 {
@@ -366,18 +400,20 @@ namespace MessagePack.CodeGenerator
                     return true;
                 }
             }
+
             return false;
         }
 
         public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol symbol)
         {
-            var t = symbol;
+            ITypeSymbol t = symbol;
             while (t != null)
             {
-                foreach (var item in t.GetMembers())
+                foreach (ISymbol item in t.GetMembers())
                 {
                     yield return item;
                 }
+
                 t = t.BaseType;
             }
         }

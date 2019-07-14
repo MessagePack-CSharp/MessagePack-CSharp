@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
@@ -6,13 +9,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis.Editing;
 
 namespace MessagePackAnalyzer
 {
@@ -25,8 +28,7 @@ namespace MessagePackAnalyzer
             {
                 return ImmutableArray.Create(
                     MessagePackAnalyzer.PublicMemberNeedsKey.Id,
-                    MessagePackAnalyzer.TypeMustBeMessagePackObject.Id
-                );
+                    MessagePackAnalyzer.TypeMustBeMessagePackObject.Id);
             }
         }
 
@@ -38,16 +40,16 @@ namespace MessagePackAnalyzer
         public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false) as CompilationUnitSyntax;
-            var model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
+            SemanticModel model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
 
             var typeInfo = context.Diagnostics[0]?.Properties.GetValueOrDefault("type", null);
-            var namedSymbol = (typeInfo != null)
-                ? model.Compilation.GetTypeByMetadataName(typeInfo.Replace("global::", ""))
+            INamedTypeSymbol namedSymbol = (typeInfo != null)
+                ? model.Compilation.GetTypeByMetadataName(typeInfo.Replace("global::", string.Empty))
                 : null;
 
             if (namedSymbol == null)
             {
-                var targetNode = root.FindNode(context.Span);
+                SyntaxNode targetNode = root.FindNode(context.Span);
                 var property = targetNode as PropertyDeclarationSyntax;
                 var field = targetNode as FieldDeclarationSyntax;
                 var dec = targetNode as VariableDeclaratorSyntax;
@@ -96,14 +98,22 @@ namespace MessagePackAnalyzer
                             : (model.GetDeclaredSymbol(field) as IFieldSymbol)?.ContainingType;
                     }
                 }
-                if (targetType == null) return;
+
+                if (targetType == null)
+                {
+                    return;
+                }
 
                 if (targetType.TypeKind == TypeKind.Array)
                 {
                     targetType = (targetType as IArrayTypeSymbol).ElementType;
                 }
+
                 namedSymbol = targetType as INamedTypeSymbol;
-                if (namedSymbol == null) return;
+                if (namedSymbol == null)
+                {
+                    return;
+                }
             }
 
             var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttribute(context.Document, namedSymbol, c), "MessagePackAnalyzer.AddKeyAttribute");
@@ -111,16 +121,16 @@ namespace MessagePackAnalyzer
             context.RegisterCodeFix(action, context.Diagnostics.First()); // use single.
         }
 
-        static async Task<Document> AddKeyAttribute(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
+        private static async Task<Document> AddKeyAttribute(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
         {
             if (type.DeclaringSyntaxReferences.Length != 0)
             {
                 document = document.Project.GetDocument(type.DeclaringSyntaxReferences[0].SyntaxTree);
             }
 
-            var editor = await DocumentEditor.CreateAsync(document);
+            DocumentEditor editor = await DocumentEditor.CreateAsync(document);
 
-            var targets = type.GetAllMembers()
+            ISymbol[] targets = type.GetAllMembers()
                 .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
                 .Where(x => x.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.IgnoreShortName) == null && x.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.IgnoreDataMemberShortName) == null)
                 .Where(x => !x.IsStatic)
@@ -129,8 +139,12 @@ namespace MessagePackAnalyzer
                     var p = x as IPropertySymbol;
                     if (p == null)
                     {
-                        var f = (x as IFieldSymbol);
-                        if (f.IsImplicitlyDeclared) return false;
+                        var f = x as IFieldSymbol;
+                        if (f.IsImplicitlyDeclared)
+                        {
+                            return false;
+                        }
+
                         return true;
                     }
 
@@ -148,14 +162,17 @@ namespace MessagePackAnalyzer
                 .DefaultIfEmpty(-1) // if empty, start from zero.
                 .Max() + 1;
 
-            foreach (var item in targets)
+            foreach (ISymbol item in targets)
             {
-                var node = await item.DeclaringSyntaxReferences[0].GetSyntaxAsync();
+                SyntaxNode node = await item.DeclaringSyntaxReferences[0].GetSyntaxAsync();
 
-                var attr = item.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName);
-                if (attr != null) continue; // already tagged Index.
+                AttributeData attr = item.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName);
+                if (attr != null)
+                {
+                    continue; // already tagged Index.
+                }
 
-                var attribute = RoslynExtensions.ParseAttributeList($"[Key({startOrder++})]")
+                AttributeListSyntax attribute = RoslynExtensions.ParseAttributeList($"[Key({startOrder++})]")
                     .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);
 
                 editor.AddAttribute(node, attribute);
@@ -163,11 +180,11 @@ namespace MessagePackAnalyzer
 
             if (type.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.MessagePackObjectAttributeShortName) == null)
             {
-                var rootNode = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync();
+                SyntaxNode rootNode = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync();
                 editor.AddAttribute(rootNode, RoslynExtensions.ParseAttributeList("[MessagePackObject]"));
             }
 
-            var newDocument = editor.GetChangedDocument();
+            Document newDocument = editor.GetChangedDocument();
             var newRoot = editor.GetChangedRoot() as CompilationUnitSyntax;
             newDocument = newDocument.WithSyntaxRoot(newRoot.WithUsing("MessagePack"));
 

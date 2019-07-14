@@ -1,10 +1,13 @@
-﻿using MessagePack.Formatters;
-using Nerdbank.Streams;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Formatters;
+using Nerdbank.Streams;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -22,7 +25,7 @@ namespace MessagePack.Tests
             sequence.Length.Is(18);
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
-            var nguid = BinaryGuidFormatter.Instance.Deserialize(ref sequenceReader, null);
+            Guid nguid = BinaryGuidFormatter.Instance.Deserialize(ref sequenceReader, null);
             Assert.True(sequenceReader.End);
 
             guid.Is(nguid);

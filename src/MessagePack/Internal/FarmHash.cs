@@ -1,16 +1,22 @@
-﻿#if !UNITY
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY
 
 using System;
 using System.Runtime.CompilerServices;
+
+#pragma warning disable SA1300 // Element should begin with uppercase letter
+#pragma warning disable SA1303 // Const field names should begin with uppercase letter
+#pragma warning disable SA1307 // (public) field names should begin with uppercase letter
 
 namespace MessagePack.Internal
 {
     internal static class FarmHash
     {
-        // entry point of 32bit
-
         #region Hash32
 
+        // entry point of 32bit
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe uint Hash32(ReadOnlySpan<byte> bytes)
         {
@@ -28,22 +34,22 @@ namespace MessagePack.Internal
         // port of farmhash.cc, 32bit only
 
         // Magic numbers for 32-bit hashing.  Copied from Murmur3.
-        const uint c1 = 0xcc9e2d51;
-        const uint c2 = 0x1b873593;
+        private const uint c1 = 0xcc9e2d51;
+        private const uint c2 = 0x1b873593;
 
-        static unsafe uint Fetch32(byte* p)
+        private static unsafe uint Fetch32(byte* p)
         {
             return *(uint*)p;
         }
 
-        static uint Rotate32(uint val, int shift)
+        private static uint Rotate32(uint val, int shift)
         {
             return shift == 0 ? val : ((val >> shift) | (val << (32 - shift)));
         }
 
         // A 32-bit to 32-bit integer hash copied from Murmur3.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static uint fmix(uint h)
+        private static uint fmix(uint h)
         {
             unchecked
             {
@@ -57,7 +63,7 @@ namespace MessagePack.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static uint Mur(uint a, uint h)
+        private static uint Mur(uint a, uint h)
         {
             unchecked
             {
@@ -67,13 +73,13 @@ namespace MessagePack.Internal
                 a *= c2;
                 h ^= a;
                 h = Rotate32(h, 19);
-                return h * 5 + 0xe6546b64;
+                return (h * 5) + 0xe6546b64;
             }
         }
 
         // 0-4
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe uint Hash32Len0to4(ReadOnlySpan<byte> s)
+        private static unsafe uint Hash32Len0to4(ReadOnlySpan<byte> s)
         {
             unchecked
             {
@@ -81,16 +87,17 @@ namespace MessagePack.Internal
                 uint c = 9;
                 for (int i = 0; i < s.Length; i++)
                 {
-                    b = b * c1 + s[i];
+                    b = (b * c1) + s[i];
                     c ^= b;
                 }
+
                 return fmix(Mur(b, Mur((uint)s.Length, c)));
             }
         }
 
         // 5-12
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe uint Hash32Len5to12(byte* s, uint len)
+        private static unsafe uint Hash32Len5to12(byte* s, uint len)
         {
             unchecked
             {
@@ -104,7 +111,7 @@ namespace MessagePack.Internal
 
         // 13-24
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe uint Hash32Len13to24(byte* s, uint len)
+        private static unsafe uint Hash32Len13to24(byte* s, uint len)
         {
             unchecked
             {
@@ -114,7 +121,7 @@ namespace MessagePack.Internal
                 uint d = Fetch32(s + (len >> 1));
                 uint e = Fetch32(s);
                 uint f = Fetch32(s + len - 4);
-                uint h = d * c1 + len;
+                uint h = (d * c1) + len;
                 a = Rotate32(a, 12) + f;
                 h = Mur(c, h) + a;
                 a = Rotate32(a, 3) + c;
@@ -126,7 +133,7 @@ namespace MessagePack.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe uint Hash32(byte* s, uint len)
+        private static unsafe uint Hash32(byte* s, uint len)
         {
             if (len <= 24)
             {
@@ -144,16 +151,16 @@ namespace MessagePack.Internal
                 uint a4 = Rotate32(Fetch32(s + len - 20) * c1, 17) * c2;
                 h ^= a0;
                 h = Rotate32(h, 19);
-                h = h * 5 + 0xe6546b64;
+                h = (h * 5) + 0xe6546b64;
                 h ^= a2;
                 h = Rotate32(h, 19);
-                h = h * 5 + 0xe6546b64;
+                h = (h * 5) + 0xe6546b64;
                 g ^= a1;
                 g = Rotate32(g, 19);
-                g = g * 5 + 0xe6546b64;
+                g = (g * 5) + 0xe6546b64;
                 g ^= a3;
                 g = Rotate32(g, 19);
-                g = g * 5 + 0xe6546b64;
+                g = (g * 5) + 0xe6546b64;
                 f += a4;
                 f = Rotate32(f, 19) + 113;
                 uint iters = (len - 1) / 20;
@@ -169,20 +176,21 @@ namespace MessagePack.Internal
                     f += c;
                     h = Mur(d, h) + e;
                     g = Mur(c, g) + a;
-                    f = Mur(b + e * c1, f) + d;
+                    f = Mur(b + (e * c1), f) + d;
                     f += g;
                     g += f;
                     s += 20;
-                } while (--iters != 0);
+                }
+                while (--iters != 0);
                 g = Rotate32(g, 11) * c1;
                 g = Rotate32(g, 17) * c1;
                 f = Rotate32(f, 11) * c1;
                 f = Rotate32(f, 17) * c1;
                 h = Rotate32(h + g, 19);
-                h = h * 5 + 0xe6546b64;
+                h = (h * 5) + 0xe6546b64;
                 h = Rotate32(h, 17) * c1;
                 h = Rotate32(h + f, 19);
-                h = h * 5 + 0xe6546b64;
+                h = (h * 5) + 0xe6546b64;
                 h = Rotate32(h, 17) * c1;
                 return h;
             }
@@ -193,7 +201,6 @@ namespace MessagePack.Internal
         #region hash64
 
         // entry point
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe ulong Hash64(ReadOnlySpan<byte> bytes)
         {
@@ -203,9 +210,9 @@ namespace MessagePack.Internal
             }
         }
 
-        // port from farmhash.cc
+        /* port from farmhash.cc */
 
-        struct pair
+        private struct pair
         {
             public ulong first;
             public ulong second;
@@ -218,13 +225,13 @@ namespace MessagePack.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static pair make_pair(ulong first, ulong second)
+        private static pair make_pair(ulong first, ulong second)
         {
             return new pair(first, second);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void swap(ref ulong x, ref ulong z)
+        private static void swap(ref ulong x, ref ulong z)
         {
             var temp = z;
             z = x;
@@ -232,30 +239,30 @@ namespace MessagePack.Internal
         }
 
         // Some primes between 2^63 and 2^64 for various uses.
-        const ulong k0 = 0xc3a5c85c97cb3127UL;
-        const ulong k1 = 0xb492b66fbe98f273UL;
-        const ulong k2 = 0x9ae16a3b2f90404fUL;
+        private const ulong k0 = 0xc3a5c85c97cb3127UL;
+        private const ulong k1 = 0xb492b66fbe98f273UL;
+        private const ulong k2 = 0x9ae16a3b2f90404fUL;
 
-        static unsafe ulong Fetch64(byte* p)
+        private static unsafe ulong Fetch64(byte* p)
         {
             return *(ulong*)p;
         }
 
-        static ulong Rotate64(ulong val, int shift)
+        private static ulong Rotate64(ulong val, int shift)
         {
             return shift == 0 ? val : (val >> shift) | (val << (64 - shift));
         }
 
         // farmhashna.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ulong ShiftMix(ulong val)
+        private static ulong ShiftMix(ulong val)
         {
             return val ^ (val >> 47);
         }
 
         // farmhashna.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ulong HashLen16(ulong u, ulong v, ulong mul)
+        private static ulong HashLen16(ulong u, ulong v, ulong mul)
         {
             unchecked
             {
@@ -271,7 +278,7 @@ namespace MessagePack.Internal
 
         // farmhashxo.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong Hash64(byte* s, uint len)
+        private static unsafe ulong Hash64(byte* s, uint len)
         {
             if (len <= 16)
             {
@@ -307,25 +314,27 @@ namespace MessagePack.Internal
 
         // 0-16 farmhashna.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong HashLen0to16(byte* s, uint len)
+        private static unsafe ulong HashLen0to16(byte* s, uint len)
         {
             unchecked
             {
                 if (len >= 8)
                 {
-                    ulong mul = k2 + len * 2;
+                    ulong mul = k2 + (len * 2);
                     ulong a = Fetch64(s) + k2;
                     ulong b = Fetch64(s + len - 8);
-                    ulong c = Rotate64(b, 37) * mul + a;
+                    ulong c = (Rotate64(b, 37) * mul) + a;
                     ulong d = (Rotate64(a, 25) + b) * mul;
                     return HashLen16(c, d, mul);
                 }
+
                 if (len >= 4)
                 {
-                    ulong mul = k2 + len * 2;
+                    ulong mul = k2 + (len * 2);
                     ulong a = Fetch32(s);
                     return HashLen16(len + (a << 3), Fetch32(s + len - 4), mul);
                 }
+
                 if (len > 0)
                 {
                     ushort a = s[0];
@@ -335,29 +344,32 @@ namespace MessagePack.Internal
                     uint z = len + ((uint)c << 2);
                     return ShiftMix(y * k2 ^ z * k0) * k2;
                 }
+
                 return k2;
             }
         }
 
         // 17-32 farmhashna.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong HashLen17to32(byte* s, uint len)
+        private static unsafe ulong HashLen17to32(byte* s, uint len)
         {
             unchecked
             {
-                ulong mul = k2 + len * 2;
+                ulong mul = k2 + (len * 2);
                 ulong a = Fetch64(s) * k1;
                 ulong b = Fetch64(s + 8);
                 ulong c = Fetch64(s + len - 8) * mul;
                 ulong d = Fetch64(s + len - 16) * k2;
-                return HashLen16(Rotate64(a + b, 43) + Rotate64(c, 30) + d,
-                                 a + Rotate64(b + k2, 18) + c, mul);
+                return HashLen16(
+                    Rotate64(a + b, 43) + Rotate64(c, 30) + d,
+                    a + Rotate64(b + k2, 18) + c,
+                    mul);
             }
         }
 
         // farmhashxo.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong H32(byte* s, uint len, ulong mul, ulong seed0 = 0, ulong seed1 = 0)
+        private static unsafe ulong H32(byte* s, uint len, ulong mul, ulong seed0 = 0, ulong seed1 = 0)
         {
             unchecked
             {
@@ -375,32 +387,32 @@ namespace MessagePack.Internal
 
         // 33-64 farmhashxo.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong HashLen33to64(byte* s, uint len)
+        private static unsafe ulong HashLen33to64(byte* s, uint len)
         {
             const ulong mul0 = k2 - 30;
 
             unchecked
             {
-                ulong mul1 = k2 - 30 + 2 * len;
+                ulong mul1 = k2 - 30 + (2 * len);
                 ulong h0 = H32(s, 32, mul0);
                 ulong h1 = H32(s + len - 32, 32, mul1);
-                return (h1 * mul1 + h0) * mul1;
+                return ((h1 * mul1) + h0) * mul1;
             }
         }
 
         // 65-96 farmhashxo.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong HashLen65to96(byte* s, uint len)
+        private static unsafe ulong HashLen65to96(byte* s, uint len)
         {
             const ulong mul0 = k2 - 114;
 
             unchecked
             {
-                ulong mul1 = k2 - 114 + 2 * len;
+                ulong mul1 = k2 - 114 + (2 * len);
                 ulong h0 = H32(s, 32, mul0);
                 ulong h1 = H32(s + 32, 32, mul1);
                 ulong h2 = H32(s + len - 32, 32, mul1, h0, h1);
-                return (h2 * 9 + (h0 >> 17) + (h1 >> 21)) * mul1;
+                return ((h2 * 9) + (h0 >> 17) + (h1 >> 21)) * mul1;
             }
         }
 
@@ -408,7 +420,7 @@ namespace MessagePack.Internal
         // Return a 16-byte hash for 48 bytes.  Quick and dirty.
         // Callers do best to use "random-looking" values for a and b.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe pair WeakHashLen32WithSeeds(ulong w, ulong x, ulong y, ulong z, ulong a, ulong b)
+        private static unsafe pair WeakHashLen32WithSeeds(ulong w, ulong x, ulong y, ulong z, ulong a, ulong b)
         {
             unchecked
             {
@@ -425,19 +437,20 @@ namespace MessagePack.Internal
         // farmhashna.cc
         // Return a 16-byte hash for s[0] ... s[31], a, and b.  Quick and dirty.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe pair WeakHashLen32WithSeeds(byte* s, ulong a, ulong b)
+        private static unsafe pair WeakHashLen32WithSeeds(byte* s, ulong a, ulong b)
         {
-            return WeakHashLen32WithSeeds(Fetch64(s),
-                                          Fetch64(s + 8),
-                                          Fetch64(s + 16),
-                                          Fetch64(s + 24),
-                                          a,
-                                          b);
+            return WeakHashLen32WithSeeds(
+                Fetch64(s),
+                Fetch64(s + 8),
+                Fetch64(s + 16),
+                Fetch64(s + 24),
+                a,
+                b);
         }
 
         // na(97-256) farmhashna.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong Hash64NA(byte* s, uint len)
+        private static unsafe ulong Hash64NA(byte* s, uint len)
         {
             const ulong seed = 81;
 
@@ -446,14 +459,14 @@ namespace MessagePack.Internal
                 // For strings over 64 bytes we loop.  Internal state consists of
                 // 56 bytes: v, w, x, y, and z.
                 ulong x = seed;
-                ulong y = seed * k1 + 113;
-                ulong z = ShiftMix(y * k2 + 113) * k2;
-                var v = make_pair(0, 0);
-                var w = make_pair(0, 0);
-                x = x * k2 + Fetch64(s);
+                ulong y = (seed * k1) + 113;
+                ulong z = ShiftMix((y * k2) + 113) * k2;
+                pair v = make_pair(0, 0);
+                pair w = make_pair(0, 0);
+                x = (x * k2) + Fetch64(s);
 
                 // Set end so that after the loop we have 1 to 64 bytes left to process.
-                byte* end = s + ((len - 1) / 64) * 64;
+                byte* end = s + ((len - 1) / 64 * 64);
                 byte* last64 = end + ((len - 1) & 63) - 63;
 
                 do
@@ -467,35 +480,38 @@ namespace MessagePack.Internal
                     w = WeakHashLen32WithSeeds(s + 32, z + w.second, y + Fetch64(s + 16));
                     swap(ref z, ref x);
                     s += 64;
-                } while (s != end);
+                }
+                while (s != end);
                 ulong mul = k1 + ((z & 0xff) << 1);
+
                 // Make s point to the last 64 bytes of input.
                 s = last64;
-                w.first += ((len - 1) & 63);
+                w.first += (len - 1) & 63;
                 v.first += w.first;
                 w.first += v.first;
                 x = Rotate64(x + y + v.first + Fetch64(s + 8), 37) * mul;
                 y = Rotate64(y + v.second + Fetch64(s + 48), 42) * mul;
                 x ^= w.second * 9;
-                y += v.first * 9 + Fetch64(s + 40);
+                y += (v.first * 9) + Fetch64(s + 40);
                 z = Rotate64(z + w.first, 33) * mul;
                 v = WeakHashLen32WithSeeds(s, v.second * mul, x + w.first);
                 w = WeakHashLen32WithSeeds(s + 32, z + w.second, y + Fetch64(s + 16));
                 swap(ref z, ref x);
-                return HashLen16(HashLen16(v.first, w.first, mul) + ShiftMix(y) * k0 + z,
-                                 HashLen16(v.second, w.second, mul) + x,
-                                 mul);
+                return HashLen16(
+                    HashLen16(v.first, w.first, mul) + (ShiftMix(y) * k0) + z,
+                    HashLen16(v.second, w.second, mul) + x,
+                    mul);
             }
         }
 
         // farmhashuo.cc
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ulong H(ulong x, ulong y, ulong mul, int r)
+        private static ulong H(ulong x, ulong y, ulong mul, int r)
         {
             unchecked
             {
                 ulong a = (x ^ y) * mul;
-                a ^= (a >> 47);
+                a ^= a >> 47;
                 ulong b = (y ^ a) * mul;
                 return Rotate64(b, r) * mul;
             }
@@ -503,7 +519,7 @@ namespace MessagePack.Internal
 
         // uo(257-) farmhashuo.cc, Hash64WithSeeds
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe ulong Hash64UO(byte* s, uint len)
+        private static unsafe ulong Hash64UO(byte* s, uint len)
         {
             const ulong seed0 = 81;
             const ulong seed1 = 0;
@@ -513,16 +529,16 @@ namespace MessagePack.Internal
                 // For strings over 64 bytes we loop.  Internal state consists of
                 // 64 bytes: u, v, w, x, y, and z.
                 ulong x = seed0;
-                ulong y = seed1 * k2 + 113;
+                ulong y = (seed1 * k2) + 113;
                 ulong z = ShiftMix(y * k2) * k2;
-                var v = make_pair(seed0, seed1);
-                var w = make_pair(0, 0);
+                pair v = make_pair(seed0, seed1);
+                pair w = make_pair(0, 0);
                 ulong u = x - z;
                 x *= k2;
                 ulong mul = k2 + (u & 0x82);
 
                 // Set end so that after the loop we have 1 to 64 bytes left to process.
-                byte* end = s + ((len - 1) / 64) * 64;
+                byte* end = s + ((len - 1) / 64 * 64);
                 byte* last64 = end + ((len - 1) & 63) - 63;
 
                 do
@@ -574,13 +590,15 @@ namespace MessagePack.Internal
                     w.second = Rotate64(w.second, 34);
                     swap(ref u, ref z);
                     s += 64;
-                } while (s != end);
+                }
+                while (s != end);
+
                 // Make s point to the last 64 bytes of input.
                 s = last64;
                 u *= 9;
                 v.second = Rotate64(v.second, 28);
                 v.first = Rotate64(v.first, 20);
-                w.first += ((len - 1) & 63);
+                w.first += (len - 1) & 63;
                 u += y;
                 y += u;
                 x = Rotate64(y - x + v.first + Fetch64(s + 8), 37) * mul;
@@ -590,10 +608,11 @@ namespace MessagePack.Internal
                 z = Rotate64(z + w.first, 33) * mul;
                 v = WeakHashLen32WithSeeds(s, v.second * mul, x + w.first);
                 w = WeakHashLen32WithSeeds(s + 32, z + w.second, y + Fetch64(s + 16));
-                return H(HashLen16(v.first + x, w.first ^ y, mul) + z - u,
-                         H(v.second + y, w.second + z, k2, 30) ^ x,
-                         k2,
-                         31);
+                return H(
+                    HashLen16(v.first + x, w.first ^ y, mul) + z - u,
+                    H(v.second + y, w.second + z, k2, 30) ^ x,
+                    k2,
+                    31);
             }
         }
 

@@ -1,4 +1,7 @@
-﻿#if !UNITY
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY
 using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
@@ -8,7 +11,7 @@ namespace MessagePack.Resolvers
 {
     /// <summary>
     /// Embed c# type names for `object` typed fields/collection items
-    /// Preserve c# DateTime timezone
+    /// Preserve c# DateTime timezone.
     /// </summary>
     public sealed class TypelessContractlessStandardResolver : IFormatterResolver
     {
@@ -26,7 +29,7 @@ namespace MessagePack.Resolvers
         /// A *private* list of resolvers. If we ever want to expose any of these (so the user can adjust settings, etc.)
         /// then we must make this an instance collection instead of a static collection so that each consumer can have their own settings.
         /// </summary>
-        private static readonly IReadOnlyList<IFormatterResolver> resolvers = new IFormatterResolver[]
+        private static readonly IReadOnlyList<IFormatterResolver> Resolvers = new IFormatterResolver[]
         {
             NativeDateTimeResolver.Instance, // Native c# DateTime format, preserving timezone
             BuiltinResolver.Instance, // Try Builtin
@@ -47,7 +50,7 @@ namespace MessagePack.Resolvers
             Options = new MessagePackSerializerOptions(Instance);
         }
 
-        private readonly ResolverCache resolverCache = new ResolverCache(resolvers);
+        private readonly ResolverCache resolverCache = new ResolverCache(Resolvers);
 
         public IMessagePackFormatter<T> GetFormatter<T>() => this.resolverCache.GetFormatter<T>();
 
@@ -62,9 +65,9 @@ namespace MessagePack.Resolvers
 
             protected override IMessagePackFormatter<T> GetFormatterCore<T>()
             {
-                foreach (var item in resolvers)
+                foreach (IFormatterResolver item in this.resolvers)
                 {
-                    var f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
                     if (f != null)
                     {
                         return f;

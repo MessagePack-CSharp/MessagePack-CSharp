@@ -1,17 +1,22 @@
-﻿#if !UNITY_WSA
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePack.Formatters;
-using System.Linq;
-using MessagePack.Internal;
+#if !UNITY_WSA
+
 using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Collections.ObjectModel;
 using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Reflection;
+using MessagePack.Formatters;
+using MessagePack.Internal;
 
 #if !UNITY
 using System.Threading.Tasks;
 #endif
+
+#pragma warning disable SA1403 // File may only contain a single namespace
 
 namespace MessagePack.Resolvers
 {
@@ -22,22 +27,22 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly DynamicGenericResolver Instance = new DynamicGenericResolver();
 
-        DynamicGenericResolver()
+        private DynamicGenericResolver()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                formatter = (IMessagePackFormatter<T>)DynamicGenericResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>)DynamicGenericResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -47,51 +52,52 @@ namespace MessagePack.Internal
 {
     internal static class DynamicGenericResolverGetFormatterHelper
     {
-        static readonly Dictionary<Type, Type> formatterMap = new Dictionary<Type, Type>()
+        private static readonly Dictionary<Type, Type> FormatterMap = new Dictionary<Type, Type>()
         {
-              {typeof(List<>), typeof(ListFormatter<>)},
-              {typeof(LinkedList<>), typeof(LinkedListFormatter<>)},
-              {typeof(Queue<>), typeof(QeueueFormatter<>)},
-              {typeof(Stack<>), typeof(StackFormatter<>)},
-              {typeof(HashSet<>), typeof(HashSetFormatter<>)},
-              {typeof(ReadOnlyCollection<>), typeof(ReadOnlyCollectionFormatter<>)},
-              {typeof(IList<>), typeof(InterfaceListFormatter<>)},
-              {typeof(ICollection<>), typeof(InterfaceCollectionFormatter<>)},
-              {typeof(IEnumerable<>), typeof(InterfaceEnumerableFormatter<>)},
-              {typeof(Dictionary<,>), typeof(DictionaryFormatter<,>)},
-              {typeof(IDictionary<,>), typeof(InterfaceDictionaryFormatter<,>)},
-              {typeof(SortedDictionary<,>), typeof(SortedDictionaryFormatter<,>)},
-              {typeof(SortedList<,>), typeof(SortedListFormatter<,>)},
-              {typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>)},
-              {typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>)},
+              { typeof(List<>), typeof(ListFormatter<>) },
+              { typeof(LinkedList<>), typeof(LinkedListFormatter<>) },
+              { typeof(Queue<>), typeof(QeueueFormatter<>) },
+              { typeof(Stack<>), typeof(StackFormatter<>) },
+              { typeof(HashSet<>), typeof(HashSetFormatter<>) },
+              { typeof(ReadOnlyCollection<>), typeof(ReadOnlyCollectionFormatter<>) },
+              { typeof(IList<>), typeof(InterfaceListFormatter<>) },
+              { typeof(ICollection<>), typeof(InterfaceCollectionFormatter<>) },
+              { typeof(IEnumerable<>), typeof(InterfaceEnumerableFormatter<>) },
+              { typeof(Dictionary<,>), typeof(DictionaryFormatter<,>) },
+              { typeof(IDictionary<,>), typeof(InterfaceDictionaryFormatter<,>) },
+              { typeof(SortedDictionary<,>), typeof(SortedDictionaryFormatter<,>) },
+              { typeof(SortedList<,>), typeof(SortedListFormatter<,>) },
+              { typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>) },
+              { typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>) },
 #if !UNITY
-              {typeof(ObservableCollection<>), typeof(ObservableCollectionFormatter<>)},
-              {typeof(ReadOnlyObservableCollection<>),(typeof(ReadOnlyObservableCollectionFormatter<>))},
-              {typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>)},
-              {typeof(IReadOnlyCollection<>), typeof(InterfaceReadOnlyCollectionFormatter<>)},
-              {typeof(ISet<>), typeof(InterfaceSetFormatter<>)},
-              {typeof(System.Collections.Concurrent.ConcurrentBag<>), typeof(ConcurrentBagFormatter<>)},
-              {typeof(System.Collections.Concurrent.ConcurrentQueue<>), typeof(ConcurrentQueueFormatter<>)},
-              {typeof(System.Collections.Concurrent.ConcurrentStack<>), typeof(ConcurrentStackFormatter<>)},
-              {typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryFormatter<,>)},
-              {typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>)},
-              {typeof(System.Collections.Concurrent.ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>)},
-              {typeof(Lazy<>), typeof(LazyFormatter<>)},
+              { typeof(ObservableCollection<>), typeof(ObservableCollectionFormatter<>) },
+              { typeof(ReadOnlyObservableCollection<>), typeof(ReadOnlyObservableCollectionFormatter<>) },
+              { typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>) },
+              { typeof(IReadOnlyCollection<>), typeof(InterfaceReadOnlyCollectionFormatter<>) },
+              { typeof(ISet<>), typeof(InterfaceSetFormatter<>) },
+              { typeof(System.Collections.Concurrent.ConcurrentBag<>), typeof(ConcurrentBagFormatter<>) },
+              { typeof(System.Collections.Concurrent.ConcurrentQueue<>), typeof(ConcurrentQueueFormatter<>) },
+              { typeof(System.Collections.Concurrent.ConcurrentStack<>), typeof(ConcurrentStackFormatter<>) },
+              { typeof(ReadOnlyDictionary<,>), typeof(ReadOnlyDictionaryFormatter<,>) },
+              { typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>) },
+              { typeof(System.Collections.Concurrent.ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>) },
+              { typeof(Lazy<>), typeof(LazyFormatter<>) },
 #endif
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
         internal static object GetFormatter(Type t)
         {
-            var ti = t.GetTypeInfo();
+            TypeInfo ti = t.GetTypeInfo();
 
             if (t.IsArray)
             {
                 var rank = t.GetArrayRank();
                 if (rank == 1)
                 {
-                    if (t.GetElementType() == typeof(byte)) // byte[] is also supported in builtin formatter.
+                    if (t.GetElementType() == typeof(byte))
                     {
+                        // byte[] is also supported in builtin formatter.
                         return ByteArrayFormatter.Instance;
                     }
 
@@ -116,10 +122,10 @@ namespace MessagePack.Internal
             }
             else if (ti.IsGenericType)
             {
-                var genericType = ti.GetGenericTypeDefinition();
-                var genericTypeInfo = genericType.GetTypeInfo();
+                Type genericType = ti.GetGenericTypeDefinition();
+                TypeInfo genericTypeInfo = genericType.GetTypeInfo();
                 var isNullable = genericTypeInfo.IsNullable();
-                var nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
+                Type nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
 
                 if (genericType == typeof(KeyValuePair<,>))
                 {
@@ -129,9 +135,7 @@ namespace MessagePack.Internal
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
                 }
-
 #if !UNITY
-
                 else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
@@ -241,7 +245,7 @@ namespace MessagePack.Internal
                 else
                 {
                     Type formatterType;
-                    if (formatterMap.TryGetValue(genericType, out formatterType))
+                    if (FormatterMap.TryGetValue(genericType, out formatterType))
                     {
                         return CreateInstance(formatterType, ti.GenericTypeArguments);
                     }
@@ -251,16 +255,17 @@ namespace MessagePack.Internal
                           && ti.ImplementedInterfaces.Any(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(ICollection<>))
                           && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
                     {
-                        var elemType = ti.GenericTypeArguments[0];
+                        Type elemType = ti.GenericTypeArguments[0];
                         return CreateInstance(typeof(GenericCollectionFormatter<,>), new[] { elemType, t });
                     }
+
                     // generic dictionary
                     else if (ti.GenericTypeArguments.Length == 2
                           && ti.ImplementedInterfaces.Any(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(IDictionary<,>))
                           && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
                     {
-                        var keyType = ti.GenericTypeArguments[0];
-                        var valueType = ti.GenericTypeArguments[1];
+                        Type keyType = ti.GenericTypeArguments[0];
+                        Type valueType = ti.GenericTypeArguments[1];
                         return CreateInstance(typeof(GenericDictionaryFormatter<,,>), new[] { keyType, valueType, t });
                     }
                 }
@@ -276,6 +281,7 @@ namespace MessagePack.Internal
                 {
                     return NonGenericInterfaceDictionaryFormatter.Instance;
                 }
+
                 if (typeof(IList).GetTypeInfo().IsAssignableFrom(ti) && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
                 {
                     return Activator.CreateInstance(typeof(NonGenericListFormatter<>).MakeGenericType(t));
@@ -289,7 +295,7 @@ namespace MessagePack.Internal
             return null;
         }
 
-        static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
+        private static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);
         }

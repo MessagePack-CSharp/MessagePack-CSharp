@@ -1,5 +1,8 @@
-using System.Diagnostics;
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,34 +33,32 @@ namespace MessagePack.CodeGenerator
                 {
                     throw new InvalidOperationException($"failed to start process(fileName = {fileName}, args = {args})");
                 }
+
                 int exitCode = 0;
                 await Task.WhenAll(
                     Task.Run(() =>
                     {
                         exitCode = StdinTask(proc, stdin, exitedct, cts);
-                        if(exitCode < 0)
+                        if (exitCode < 0)
                         {
                             proc.Dispose();
                         }
-                    })
-                    ,
+                    }),
                     Task.Run(async () =>
                     {
                         if (stdout != null)
                         {
                             await RedirectOutputTask(proc.StandardOutput.BaseStream, stdout, exitedct.Token, "stdout");
                         }
-                    })
-                    ,
+                    }),
                     Task.Run(async () =>
                     {
                         if (stderr != null)
                         {
                             await RedirectOutputTask(proc.StandardError.BaseStream, stderr, exitedct.Token, "stderr");
                         }
-                    })
-                );
-                if(exitCode >= 0)
+                    }));
+                if (exitCode >= 0)
                 {
                     return proc.ExitCode;
                 }
@@ -67,7 +68,8 @@ namespace MessagePack.CodeGenerator
                 }
             }
         }
-        static int StdinTask(Process proc, TextReader stdin, CancellationTokenSource exitedct, CancellationTokenSource cts)
+
+        private static int StdinTask(Process proc, TextReader stdin, CancellationTokenSource exitedct, CancellationTokenSource cts)
         {
             if (stdin != null)
             {
@@ -78,10 +80,13 @@ namespace MessagePack.CodeGenerator
                     {
                         break;
                     }
+
                     proc.StandardInput.WriteLine(l);
                 }
+
                 proc.StandardInput.Dispose();
             }
+
             exitedct.Token.WaitHandle.WaitOne();
             if (cts.IsCancellationRequested)
             {
@@ -98,7 +103,7 @@ namespace MessagePack.CodeGenerator
             }
         }
 
-        static async Task RedirectOutputTask(Stream procStdout, Stream stdout, CancellationToken ct, string suffix)
+        private static async Task RedirectOutputTask(Stream procStdout, Stream stdout, CancellationToken ct, string suffix)
         {
             if (stdout != null)
             {
@@ -108,23 +113,23 @@ namespace MessagePack.CodeGenerator
                     try
                     {
                         var bytesread = await procStdout.ReadAsync(buf, 0, 1024, ct).ConfigureAwait(false);
-                        if(bytesread <= 0)
+                        if (bytesread <= 0)
                         {
                             break;
                         }
+
                         stdout.Write(buf, 0, bytesread);
                     }
-                    catch(NullReferenceException)
+                    catch (NullReferenceException)
                     {
                         break;
                     }
-                    catch(ObjectDisposedException)
+                    catch (ObjectDisposedException)
                     {
                         break;
                     }
                 }
             }
         }
-
     }
 }

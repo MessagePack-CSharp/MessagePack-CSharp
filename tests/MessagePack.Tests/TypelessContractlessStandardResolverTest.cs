@@ -1,4 +1,6 @@
-﻿using MessagePack.Resolvers;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -6,7 +8,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Resolvers;
 using Xunit;
+
+#pragma warning disable SA1509 // Opening braces should not be preceded by blank line
 
 namespace MessagePack.Tests
 {
@@ -20,6 +25,7 @@ namespace MessagePack.Tests
         public class Person
         {
             public string Name { get; set; }
+
             public object[] /*Address*/ Addresses { get; set; }
         }
 
@@ -36,16 +42,16 @@ namespace MessagePack.Tests
                 Name = "John",
                 Addresses = new[]
                 {
-                        new { Street = "St." },
-                        new { Street = "Ave." }
-                    }
+                    new { Street = "St." },
+                    new { Street = "Ave." },
+                },
             };
 
             var result = MessagePackSerializer.Serialize(p, TypelessContractlessStandardResolver.Options);
 
             MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""Name"":""John"",""Addresses"":[{""Street"":""St.""},{""Street"":""Ave.""}]}");
 
-            var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
+            Person p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
             p2.Name.Is("John");
             var addresses = p2.Addresses as IList;
             var d1 = addresses[0] as IDictionary;
@@ -63,13 +69,13 @@ namespace MessagePack.Tests
                 Addresses = new object[]
                 {
                     new Address { Street = "St." },
-                    new Address { Street = "Ave." }
-                }
+                    new Address { Street = "Ave." },
+                },
             };
 
             var result = MessagePackSerializer.Serialize(p, TypelessContractlessStandardResolver.Options);
 
-            var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
+            Person p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
             p.IsStructuralEqual(p2);
 
             MessagePackSerializer.ConvertToJson(result, TypelessContractlessStandardResolver.Options).Is(@"{""Name"":""John"",""Addresses"":[{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""St.""},{""$type"":""MessagePack.Tests.TypelessContractlessStandardResolverTest+Address, MessagePack.Tests"",""Street"":""Ave.""}]}");
@@ -84,13 +90,13 @@ namespace MessagePack.Tests
                 Addresses = new object[]
                 {
                     new object(),
-                    new Address { Street = "Ave." }
-                }
+                    new Address { Street = "Ave." },
+                },
             };
 
             var result = MessagePackSerializer.Serialize(p, TypelessContractlessStandardResolver.Options);
 
-            var p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
+            Person p2 = MessagePackSerializer.Deserialize<Person>(result, TypelessContractlessStandardResolver.Options);
             p.IsStructuralEqual(p2);
 
 #if NETFRAMEWORK
@@ -100,8 +106,15 @@ namespace MessagePack.Tests
 #endif
         }
 
-        public class A { public int Id; }
-        public class B { public A Nested; }
+        public class A
+        {
+            public int Id;
+        }
+
+        public class B
+        {
+            public A Nested;
+        }
 
         [Fact]
         public void TypelessContractlessTest()
@@ -112,9 +125,16 @@ namespace MessagePack.Tests
         }
 
         [MessagePackObject]
-        public class AC {[Key(0)] public int Id; }
+        public class AC
+        {
+            [Key(0)] public int Id;
+        }
+
         [MessagePackObject]
-        public class BC {[Key(0)] public AC Nested;[Key(1)] public string Name; }
+        public class BC
+        {
+            [Key(0)] public AC Nested; [Key(1)] public string Name;
+        }
 
         [Fact]
         public void TypelessAttributedTest()
@@ -129,12 +149,12 @@ namespace MessagePack.Tests
         {
             var arr = new Dictionary<object, object>()
             {
-                { (byte)1, "a"},
-                { (byte)2, new object[] { "level2", new object[] { "level3", new Person() { Name = "Peter", Addresses = new object[] { new Address() { Street = "St." }, new DateTime(2017,6,26,14,58,0) } } } } }
+                { (byte)1, "a" },
+                { (byte)2, new object[] { "level2", new object[] { "level3", new Person() { Name = "Peter", Addresses = new object[] { new Address() { Street = "St." }, new DateTime(2017, 6, 26, 14, 58, 0) } } } } },
             };
             var result = MessagePackSerializer.Serialize(arr, TypelessContractlessStandardResolver.Options);
 
-            var deser = MessagePackSerializer.Deserialize<Dictionary<object, object>>(result, TypelessContractlessStandardResolver.Options);
+            Dictionary<object, object> deser = MessagePackSerializer.Deserialize<Dictionary<object, object>>(result, TypelessContractlessStandardResolver.Options);
             deser.IsStructuralEqual(arr);
 
 #if NETFRAMEWORK
@@ -183,7 +203,7 @@ namespace MessagePack.Tests
         public void TypelessPrimitive2()
         {
             {
-                var now = DateTime.Now;
+                DateTime now = DateTime.Now;
                 var v = new ForTypelessObj() { Obj = now };
 
                 var bin = MessagePackSerializer.Typeless.Serialize(v);
@@ -192,8 +212,9 @@ namespace MessagePack.Tests
                 o.Obj.GetType().Is(typeof(DateTime));
                 ((DateTime)o.Obj).Is(now);
             }
+
             {
-                var now = DateTimeOffset.Now;
+                DateTimeOffset now = DateTimeOffset.Now;
                 var v = new ForTypelessObj() { Obj = now };
 
                 var bin = MessagePackSerializer.Typeless.Serialize(v);
@@ -220,7 +241,7 @@ namespace MessagePack.Tests
                 DateProp = new DateTime(2016, 10, 8, 1, 2, 3, DateTimeKind.Utc),
                 GuidProp = Guid.NewGuid(),
                 IntProp = 123,
-                StringProp = "Hello World"
+                StringProp = "Hello World",
             };
 
             {
@@ -253,23 +274,22 @@ namespace MessagePack.Tests
                 var obj2 = obj as string[];
                 obj2.Is("test1", "test2");
             }
+
             {
                 var objRaw = new SomeClass
                 {
-                    Obj = new string[] { "asd", "asd" }
+                    Obj = new string[] { "asd", "asd" },
                 };
 
                 var objSer = MessagePackSerializer.Serialize(objRaw, TypelessContractlessStandardResolver.Options);
 
-                var objDes = MessagePackSerializer.Deserialize<SomeClass>(objSer, TypelessContractlessStandardResolver.Options);
+                SomeClass objDes = MessagePackSerializer.Deserialize<SomeClass>(objSer, TypelessContractlessStandardResolver.Options);
 
                 var expectedTrue = objDes.Obj is string[];
                 expectedTrue.IsTrue();
             }
         }
     }
-
-
 
     public class SomeClass
     {
@@ -279,8 +299,11 @@ namespace MessagePack.Tests
     internal class InternalSampleMessageType
     {
         public string StringProp { get; set; }
+
         public int IntProp { get; set; }
+
         public Guid GuidProp { get; set; }
+
         public DateTime DateProp { get; set; }
     }
 }

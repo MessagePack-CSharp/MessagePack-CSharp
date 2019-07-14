@@ -1,16 +1,20 @@
 ﻿<#@ assembly name="System.Core" #>
 <#@ Import Namespace="System.Linq" #>
-// THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
-// CHANGE THE .tt FILE INSTEAD.
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
 
 using System;
 using System.Buffers;
 
 namespace MessagePack
 {
+#pragma warning disable SA1205 // Partial elements should declare access
     ref partial struct MessagePackReader
-    {
-<#
+#pragma warning restore SA1205 // Partial elements should declare access
+    {<#
 var unsignedTypes = new Type[]
 {
     typeof(byte),
@@ -29,6 +33,7 @@ var signedTypes = new Type[]
 var allTypes = unsignedTypes.Concat(signedTypes);
 foreach (var intType in allTypes) {
 #>
+
         /// <summary>
         /// Reads an <see cref="<#=intType.Name#>"/> value from:
         /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
@@ -81,7 +86,6 @@ foreach (var intType in allTypes) {
                     throw ThrowInvalidCode(code);
             }
         }
-
 <# } #>
     }
 }

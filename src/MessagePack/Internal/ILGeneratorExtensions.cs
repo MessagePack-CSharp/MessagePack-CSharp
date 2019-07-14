@@ -1,17 +1,22 @@
-﻿#if !UNITY_WSA && !NET_STANDARD_2_0
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY_WSA && !NET_STANDARD_2_0
 
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
+#pragma warning disable SA1649 // File name should match first type name
+
 namespace MessagePack.Internal
 {
     internal struct ArgumentField
     {
-        readonly int i;
-        readonly bool @ref;
-        readonly ILGenerator il;
+        private readonly int i;
+        private readonly bool @ref;
+        private readonly ILGenerator il;
 
         public ArgumentField(ILGenerator il, int i, bool @ref = false)
         {
@@ -24,35 +29,35 @@ namespace MessagePack.Internal
         {
             this.il = il;
             this.i = i;
-            var ti = type.GetTypeInfo();
+            TypeInfo ti = type.GetTypeInfo();
             this.@ref = (ti.IsClass || ti.IsInterface || ti.IsAbstract) ? false : true;
         }
 
         public void EmitLoad()
         {
-            if (@ref)
+            if (this.@ref)
             {
-                il.EmitLdarga(i);
+                this.il.EmitLdarga(this.i);
             }
             else
             {
-                il.EmitLdarg(i);
+                this.il.EmitLdarg(this.i);
             }
         }
 
         public void EmitLdarg()
         {
-            il.EmitLdarg(i);
+            this.il.EmitLdarg(this.i);
         }
 
         public void EmitLdarga()
         {
-            il.EmitLdarga(i);
+            this.il.EmitLdarga(this.i);
         }
 
         public void EmitStore()
         {
-            il.EmitStarg(i);
+            this.il.EmitStarg(this.i);
         }
     }
 
@@ -89,6 +94,7 @@ namespace MessagePack.Internal
                     {
                         il.Emit(OpCodes.Ldloc, (short)index);
                     }
+
                     break;
             }
         }
@@ -126,6 +132,7 @@ namespace MessagePack.Internal
                     {
                         il.Emit(OpCodes.Stloc, (short)index);
                     }
+
                     break;
             }
         }
@@ -216,6 +223,7 @@ namespace MessagePack.Internal
                     {
                         il.Emit(OpCodes.Ldc_I4, value);
                     }
+
                     break;
             }
         }
@@ -265,6 +273,7 @@ namespace MessagePack.Internal
                     {
                         il.Emit(OpCodes.Ldarg, index);
                     }
+
                     break;
             }
         }
@@ -359,14 +368,14 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Throw);
         }
 
-        /// <summary>for  var i = 0, i ..., i++ </summary>
+        /// <summary>for  var i = 0, i ..., i++. </summary>
         public static void EmitIncrementFor(this ILGenerator il, LocalBuilder conditionGreater, Action<LocalBuilder> emitBody)
         {
-            var loopBegin = il.DefineLabel();
-            var condtionLabel = il.DefineLabel();
+            Label loopBegin = il.DefineLabel();
+            Label condtionLabel = il.DefineLabel();
 
             // var i = 0
-            var forI = il.DeclareLocal(typeof(int));
+            LocalBuilder forI = il.DeclareLocal(typeof(int));
             il.EmitLdc_I4(0);
             il.EmitStloc(forI);
             il.Emit(OpCodes.Br, condtionLabel);
@@ -387,7 +396,6 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Blt, loopBegin);
         }
     }
-
 }
 
 #endif
