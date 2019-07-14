@@ -1,12 +1,16 @@
-﻿
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Buffers;
 
 #if !UNITY
 using System.Collections.Concurrent;
 #endif
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
@@ -25,9 +29,9 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var resolver = options.Resolver;
-                var keyFormatter = resolver.GetFormatterWithVerify<TKey>();
-                var valueFormatter = resolver.GetFormatterWithVerify<TValue>();
+                IFormatterResolver resolver = options.Resolver;
+                IMessagePackFormatter<TKey> keyFormatter = resolver.GetFormatterWithVerify<TKey>();
+                IMessagePackFormatter<TValue> valueFormatter = resolver.GetFormatterWithVerify<TValue>();
 
                 int count;
                 {
@@ -52,12 +56,12 @@ namespace MessagePack.Formatters
 
                 writer.WriteMapHeader(count);
 
-                var e = GetSourceEnumerator(value);
+                TEnumerator e = this.GetSourceEnumerator(value);
                 try
                 {
                     while (e.MoveNext())
                     {
-                        var item = e.Current;
+                        KeyValuePair<TKey, TValue> item = e.Current;
                         keyFormatter.Serialize(ref writer, item.Key, options);
                         valueFormatter.Serialize(ref writer, item.Value, options);
                     }
@@ -77,23 +81,23 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var resolver = options.Resolver;
-                var keyFormatter = resolver.GetFormatterWithVerify<TKey>();
-                var valueFormatter = resolver.GetFormatterWithVerify<TValue>();
+                IFormatterResolver resolver = options.Resolver;
+                IMessagePackFormatter<TKey> keyFormatter = resolver.GetFormatterWithVerify<TKey>();
+                IMessagePackFormatter<TValue> valueFormatter = resolver.GetFormatterWithVerify<TValue>();
 
                 var len = reader.ReadMapHeader();
 
-                var dict = Create(len);
+                TIntermediate dict = this.Create(len);
                 for (int i = 0; i < len; i++)
                 {
-                    var key = keyFormatter.Deserialize(ref reader, options);
+                    TKey key = keyFormatter.Deserialize(ref reader, options);
 
-                    var value = valueFormatter.Deserialize(ref reader, options);
+                    TValue value = valueFormatter.Deserialize(ref reader, options);
 
-                    Add(dict, i, key, value);
+                    this.Add(dict, i, key, value);
                 }
 
-                return Complete(dict);
+                return this.Complete(dict);
             }
         }
 
@@ -104,7 +108,9 @@ namespace MessagePack.Formatters
 
         // abstraction for deserialize
         protected abstract TIntermediate Create(int count);
+
         protected abstract void Add(TIntermediate collection, int index, TKey key, TValue value);
+
         protected abstract TDictionary Complete(TIntermediate intermediateCollection);
     }
 
@@ -125,7 +131,6 @@ namespace MessagePack.Formatters
             return intermediateCollection;
         }
     }
-
 
     public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>.Enumerator, Dictionary<TKey, TValue>>
     {

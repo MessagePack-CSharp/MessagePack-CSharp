@@ -1,54 +1,19 @@
-﻿using MessagePack.Formatters;
-using MessagePack.Resolvers;
-using Nerdbank.Streams;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Formatters;
+using MessagePack.Resolvers;
+using Nerdbank.Streams;
 using Xunit;
 
 namespace MessagePack.Tests
 {
-    public class PrimitivelikeResolver : IFormatterResolver
-    {
-        /// <summary>
-        /// An <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
-        /// </summary>
-        public static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Default.WithResolver(new PrimitivelikeResolver());
-
-        public IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            if (typeof(T) == typeof(DateTime))
-            {
-                return (IMessagePackFormatter<T>)new DummyDateTimeFormatter();
-            }
-
-            return StandardResolver.Instance.GetFormatter<T>();
-        }
-    }
-
-    public class DummyDateTimeFormatter : IMessagePackFormatter<DateTime>
-    {
-        public DateTime Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Serialize(ref MessagePackWriter writer, DateTime value, MessagePackSerializerOptions options)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    [MessagePackObject]
-    public class MyDateTimeResolverTest
-    {
-        [Key(0)]
-        public DateTime MyProperty1 { get; set; }
-    }
-
     public class PrimitivelikeFormatterTest
     {
         [Fact]
@@ -68,17 +33,17 @@ namespace MessagePack.Tests
                 DefaultDateTimeConversionMethod = MsgPack.Serialization.DateTimeConversionMethod.Native,
             };
 
-            var now = DateTime.Now;
+            DateTime now = DateTime.Now;
 
-            var serializer = referenceContext.GetSerializer<DateTime>();
+            MsgPack.Serialization.MessagePackSerializer<DateTime> serializer = referenceContext.GetSerializer<DateTime>();
 
             var a = MessagePackSerializer.Serialize(now, NativeDateTimeResolver.Options);
             var b = serializer.PackSingleObject(now);
 
             a.Is(b);
 
-            var dt1 = MessagePackSerializer.Deserialize<DateTime>(a, NativeDateTimeResolver.Options);
-            var dt2 = serializer.UnpackSingleObject(b);
+            DateTime dt1 = MessagePackSerializer.Deserialize<DateTime>(a, NativeDateTimeResolver.Options);
+            DateTime dt2 = serializer.UnpackSingleObject(b);
 
             dt1.Is(dt2);
         }
@@ -93,7 +58,7 @@ namespace MessagePack.Tests
 
             var data = "あいうえおabcdefgかきくけこあいうえおabcdefgかきくけこあいうえおabcdefgかきくけこあいうえおabcdefgかきくけこ"; // Japanese
 
-            var serializer = referenceContext.GetSerializer<string>();
+            MsgPack.Serialization.MessagePackSerializer<string> serializer = referenceContext.GetSerializer<string>();
 
             using (var sequence = new Sequence<byte>())
             {
@@ -113,7 +78,6 @@ namespace MessagePack.Tests
             }
         }
 
-
         [Fact]
         public void OldSpecBinary()
         {
@@ -124,7 +88,7 @@ namespace MessagePack.Tests
 
             var data = Enumerable.Range(0, 10000).Select(x => (byte)1).ToArray();
 
-            var serializer = referenceContext.GetSerializer<byte[]>();
+            MsgPack.Serialization.MessagePackSerializer<byte[]> serializer = referenceContext.GetSerializer<byte[]>();
 
             using (var sequence = new Sequence<byte>())
             {
@@ -142,6 +106,44 @@ namespace MessagePack.Tests
 
                 r1.Is(r2);
             }
+        }
+
+        public class PrimitivelikeResolver : IFormatterResolver
+        {
+            /// <summary>
+            /// An <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+            /// </summary>
+            public static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Default.WithResolver(new PrimitivelikeResolver());
+
+            public IMessagePackFormatter<T> GetFormatter<T>()
+            {
+                if (typeof(T) == typeof(DateTime))
+                {
+                    return (IMessagePackFormatter<T>)new DummyDateTimeFormatter();
+                }
+
+                return StandardResolver.Instance.GetFormatter<T>();
+            }
+        }
+
+        public class DummyDateTimeFormatter : IMessagePackFormatter<DateTime>
+        {
+            public DateTime Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void Serialize(ref MessagePackWriter writer, DateTime value, MessagePackSerializerOptions options)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        [MessagePackObject]
+        public class MyDateTimeResolverTest
+        {
+            [Key(0)]
+            public DateTime MyProperty1 { get; set; }
         }
     }
 }

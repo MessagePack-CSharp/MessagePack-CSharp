@@ -1,13 +1,18 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Buffers;
 
 #if !UNITY
 using System.Collections.Concurrent;
 #endif
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
@@ -21,7 +26,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 writer.WriteArrayHeader(value.Length);
 
@@ -40,7 +45,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 var len = reader.ReadArrayHeader();
                 var array = new T[len];
@@ -48,6 +53,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = formatter.Deserialize(ref reader, options);
                 }
+
                 return array;
             }
         }
@@ -59,7 +65,6 @@ namespace MessagePack.Formatters
 
         private ByteArraySegmentFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, ArraySegment<byte> value, MessagePackSerializerOptions options)
@@ -97,14 +102,14 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 writer.WriteArrayHeader(value.Count);
 
-                var array = value.Array;
+                T[] array = value.Array;
                 for (int i = 0; i < value.Count; i++)
                 {
-                    var item = array[value.Offset + i];
+                    T item = array[value.Offset + i];
                     formatter.Serialize(ref writer, item, options);
                 }
             }
@@ -118,7 +123,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var array = options.Resolver.GetFormatterWithVerify<T[]>().Deserialize(ref reader, options);
+                T[] array = options.Resolver.GetFormatterWithVerify<T[]>().Deserialize(ref reader, options);
                 return new ArraySegment<T>(array);
             }
         }
@@ -135,7 +140,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 var c = value.Count;
                 writer.WriteArrayHeader(c);
@@ -155,7 +160,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 var len = reader.ReadArrayHeader();
                 var list = new List<T>((int)len);
@@ -185,11 +190,11 @@ namespace MessagePack.Formatters
                 var array = value as TElement[];
                 if (array != null)
                 {
-                    var formatter = options.Resolver.GetFormatterWithVerify<TElement>();
+                    IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
 
                     writer.WriteArrayHeader(array.Length);
 
-                    foreach (var item in array)
+                    foreach (TElement item in array)
                     {
                         formatter.Serialize(ref writer, item, options);
                     }
@@ -198,16 +203,16 @@ namespace MessagePack.Formatters
                 }
                 else
                 {
-                    var formatter = options.Resolver.GetFormatterWithVerify<TElement>();
+                    IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
 
                     // knows count or not.
-                    var seqCount = GetCount(value);
+                    var seqCount = this.GetCount(value);
                     if (seqCount != null)
                     {
                         writer.WriteArrayHeader(seqCount.Value);
 
                         // Unity's foreach struct enumerator causes boxing so iterate manually.
-                        var e = GetSourceEnumerator(value);
+                        TEnumerator e = this.GetSourceEnumerator(value);
                         try
                         {
                             while (e.MoveNext())
@@ -230,9 +235,9 @@ namespace MessagePack.Formatters
                     {
                         using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                         {
-                            var scratchWriter = writer.Clone(scratch);
+                            MessagePackWriter scratchWriter = writer.Clone(scratch);
                             var count = 0;
-                            var e = GetSourceEnumerator(value);
+                            TEnumerator e = this.GetSourceEnumerator(value);
                             try
                             {
                                 while (e.MoveNext())
@@ -267,17 +272,17 @@ namespace MessagePack.Formatters
             }
             else
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<TElement>();
+                IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
 
                 var len = reader.ReadArrayHeader();
 
-                var list = Create(len);
+                TIntermediate list = this.Create(len);
                 for (int i = 0; i < len; i++)
                 {
-                    Add(list, i, formatter.Deserialize(ref reader, options));
+                    this.Add(list, i, formatter.Deserialize(ref reader, options));
                 }
 
-                return Complete(list);
+                return this.Complete(list);
             }
         }
 
@@ -308,7 +313,9 @@ namespace MessagePack.Formatters
 
         // abstraction for deserialize
         protected abstract TIntermediate Create(int count);
+
         protected abstract void Add(TIntermediate collection, int index, TElement value);
+
         protected abstract TCollection Complete(TIntermediate intermediateCollection);
     }
 
@@ -557,8 +564,8 @@ namespace MessagePack.Formatters
                     throw new InvalidOperationException("Invalid Grouping format.");
                 }
 
-                var key = options.Resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options);
-                var value = options.Resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(ref reader, options);
+                TKey key = options.Resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options);
+                IEnumerable<TElement> value = options.Resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(ref reader, options);
                 return new Grouping<TKey, TElement>(key, value);
             }
         }
@@ -597,18 +604,18 @@ namespace MessagePack.Formatters
         {
             get
             {
-                return key;
+                return this.key;
             }
         }
 
         public IEnumerator<TElement> GetEnumerator()
         {
-            return elements.GetEnumerator();
+            return this.elements.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return elements.GetEnumerator();
+            return this.elements.GetEnumerator();
         }
     }
 
@@ -625,7 +632,7 @@ namespace MessagePack.Formatters
         {
             get
             {
-                return groupings[key];
+                return this.groupings[key];
             }
         }
 
@@ -633,27 +640,27 @@ namespace MessagePack.Formatters
         {
             get
             {
-                return groupings.Count;
+                return this.groupings.Count;
             }
         }
 
         public bool Contains(TKey key)
         {
-            return groupings.ContainsKey(key);
+            return this.groupings.ContainsKey(key);
         }
 
         public IEnumerator<IGrouping<TKey, TElement>> GetEnumerator()
         {
-            return groupings.Values.GetEnumerator();
+            return this.groupings.Values.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return groupings.Values.GetEnumerator();
+            return this.groupings.Values.GetEnumerator();
         }
     }
 
-    // NonGenerics
+    /* NonGenerics */
 
     public sealed class NonGenericListFormatter<T> : IMessagePackFormatter<T>
         where T : class, IList, new()
@@ -666,7 +673,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<object>();
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             writer.WriteArrayHeader(value.Count);
             foreach (var item in value)
@@ -682,7 +689,7 @@ namespace MessagePack.Formatters
                 return default(T);
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<object>();
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             var count = reader.ReadArrayHeader();
 
@@ -702,7 +709,6 @@ namespace MessagePack.Formatters
 
         private NonGenericInterfaceListFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, IList value, MessagePackSerializerOptions options)
@@ -713,7 +719,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<object>();
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             writer.WriteArrayHeader(value.Count);
             foreach (var item in value)
@@ -729,7 +735,7 @@ namespace MessagePack.Formatters
                 return default(IList);
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<object>();
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             var count = reader.ReadArrayHeader();
 
@@ -754,7 +760,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<object>();
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             writer.WriteMapHeader(value.Count);
             foreach (DictionaryEntry item in value)
@@ -771,7 +777,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<object>();
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             var count = reader.ReadMapHeader();
 
@@ -793,7 +799,6 @@ namespace MessagePack.Formatters
 
         private NonGenericInterfaceDictionaryFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, IDictionary value, MessagePackSerializerOptions options)
@@ -804,7 +809,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<object>();
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             writer.WriteMapHeader(value.Count);
             foreach (DictionaryEntry item in value)
@@ -821,7 +826,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
-            var formatter = options.Resolver.GetFormatterWithVerify<object>();
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             var count = reader.ReadMapHeader();
 

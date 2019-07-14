@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -15,6 +18,7 @@ namespace MessagePack.Tests
         {
             [DataMember(Order = 0)]
             public int MyProperty1 { get; set; }
+
             [DataMember(Order = 1)]
             public string MyProperty2;
         }
@@ -24,6 +28,7 @@ namespace MessagePack.Tests
         {
             [DataMember(Name = "mp1")]
             public int MyProperty1 { get; set; }
+
             [DataMember(Name = "mp2")]
             public string MyProperty2;
         }
@@ -33,6 +38,7 @@ namespace MessagePack.Tests
         {
             [DataMember]
             public int MyProperty1 { get; set; }
+
             [DataMember]
             public string MyProperty2;
         }
@@ -63,7 +69,7 @@ namespace MessagePack.Tests
             var mc = new MyClass { MyProperty1 = 100, MyProperty2 = "foobar" };
 
             var bin = MessagePackSerializer.Serialize(mc);
-            var mc2 = MessagePackSerializer.Deserialize<MyClass>(bin);
+            MyClass mc2 = MessagePackSerializer.Deserialize<MyClass>(bin);
 
             mc.MyProperty1.Is(mc2.MyProperty1);
             mc.MyProperty2.Is(mc2.MyProperty2);
@@ -80,7 +86,7 @@ namespace MessagePack.Tests
 
             MessagePackSerializer.ConvertToJson(bin).Is(@"{""mp1"":100,""mp2"":""foobar""}");
 
-            var mc2 = MessagePackSerializer.Deserialize<MyClass1>(bin);
+            MyClass1 mc2 = MessagePackSerializer.Deserialize<MyClass1>(bin);
 
             mc.MyProperty1.Is(mc2.MyProperty1);
             mc.MyProperty2.Is(mc2.MyProperty2);
@@ -92,7 +98,7 @@ namespace MessagePack.Tests
             var mc = new MyClass2 { MyProperty1 = 100, MyProperty2 = "foobar" };
 
             var bin = MessagePackSerializer.Serialize(mc);
-            var mc2 = MessagePackSerializer.Deserialize<MyClass2>(bin);
+            MyClass2 mc2 = MessagePackSerializer.Deserialize<MyClass2>(bin);
 
             mc.MyProperty1.Is(mc2.MyProperty1);
             mc.MyProperty2.Is(mc2.MyProperty2);
@@ -103,7 +109,8 @@ namespace MessagePack.Tests
         [Fact]
         public void Serialize_WithVariousAttributes()
         {
-            var mc = new ClassWithPublicMembersWithoutAttributes {
+            var mc = new ClassWithPublicMembersWithoutAttributes
+            {
                 AttributedProperty = 1,
                 UnattributedProperty = 2,
                 IgnoredProperty = 3,
@@ -113,7 +120,7 @@ namespace MessagePack.Tests
             };
 
             var bin = MessagePackSerializer.Serialize(mc);
-            var mc2 = MessagePackSerializer.Deserialize<ClassWithPublicMembersWithoutAttributes>(bin);
+            ClassWithPublicMembersWithoutAttributes mc2 = MessagePackSerializer.Deserialize<ClassWithPublicMembersWithoutAttributes>(bin);
 
             mc2.AttributedProperty.Is(mc.AttributedProperty);
             mc2.AttributedField.Is(mc.AttributedField);

@@ -2,8 +2,11 @@
 <#@ assembly name="System.Numerics" #>
 <#@ Import Namespace="System.Linq" #>
 <#@ Import Namespace="System.Numerics" #>
-// THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
-// CHANGE THE .tt FILE INSTEAD.
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
 
 using System;
 using System.Buffers;
@@ -13,7 +16,7 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
-    partial class MessagePackReaderTests
+    public partial class MessagePackReaderTests
     {
 <#
 var unsignedTypes = new Type[]
@@ -39,7 +42,7 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
         private const sbyte MinNegativeFixInt = unchecked((sbyte)MessagePackCode.MinNegativeFixInt);
         private const sbyte MaxNegativeFixInt = unchecked((sbyte)MessagePackCode.MaxNegativeFixInt);
 
-        private readonly IReadOnlyList<(BigInteger Value, ReadOnlySequence<byte> Encoded)> IntegersOfInterest = new List<(BigInteger Value, ReadOnlySequence<byte> Encoded)>
+        private readonly IReadOnlyList<(BigInteger Value, ReadOnlySequence<byte> Encoded)> integersOfInterest = new List<(BigInteger Value, ReadOnlySequence<byte> Encoded)>
         {
             // * FixInt
             // ** non-boundary
@@ -54,21 +57,21 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
 <# } #>
 
             // ** Boundary conditions
-            // *** MaxFixInt
+            /* MaxFixInt */
             (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MaxFixInt))),
 <# foreach (Type type in allTypes) { #>
             (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(checked((<#=type.Name#>)MessagePackCode.MaxFixInt)))),
 <# } #>
-            // *** MinFixInt
+            /* MinFixInt */
             (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MinFixInt))),
 <# foreach (Type type in allTypes) { #>
             (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(checked((<#=type.Name#>)MessagePackCode.MinFixInt)))),
 <# } #>
-            // *** MinNegativeFixInt
+            /* MinNegativeFixInt */
 <# foreach (Type type in signedTypes) { #>
             (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(MinNegativeFixInt))),
 <# } #>
-            // *** MaxNegativeFixInt
+            /* MaxNegativeFixInt */
 <# foreach (Type type in signedTypes) { #>
             (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(MaxNegativeFixInt))),
 <# } #>
@@ -90,7 +93,7 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
 <# } #>
 
             // ** Max values
-            // *** Positive
+            /* Positive */
 <# foreach (var typeForMaxValue in allTypes) {
     var maxValue = GetMaxValueAsInt(typeForMaxValue);
     foreach (var encodedType in allTypes) {
@@ -99,7 +102,7 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
 <#      }
     }
 } #>
-            // *** Negative
+            /* Negative */
 <# foreach (var typeForMinValue in signedTypes) {
     var minValue = GetMinValueAsInt(typeForMinValue);
     foreach (var encodedType in signedTypes) {
@@ -114,7 +117,7 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
         [Fact]
         public void Read<#=t1.Name#>_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= <#=t1.Name#>.MaxValue && value >= <#=t1.Name#>.MinValue)

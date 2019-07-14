@@ -1,9 +1,12 @@
-﻿using MessagePack.Internal;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Internal;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -40,7 +43,7 @@ namespace MessagePack.Tests
                "mp2",
                "mp3",
                "mp4",
-               "mp5"
+               "mp5",
             };
 
             var automata = new AutomataDictionary();

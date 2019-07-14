@@ -1,7 +1,12 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 using System.Collections.Immutable;
 using MessagePack.Formatters;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.ImmutableCollection
 {
@@ -16,11 +21,11 @@ namespace MessagePack.ImmutableCollection
             }
             else
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 writer.WriteArrayHeader(value.Length);
 
-                foreach (var item in value)
+                foreach (T item in value)
                 {
                     formatter.Serialize(ref writer, item, options);
                 }
@@ -35,11 +40,11 @@ namespace MessagePack.ImmutableCollection
             }
             else
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<T>();
+                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 var len = reader.ReadArrayHeader();
 
-                var builder = ImmutableArray.CreateBuilder<T>(len);
+                ImmutableArray<T>.Builder builder = ImmutableArray.CreateBuilder<T>(len);
                 for (int i = 0; i < len; i++)
                 {
                     builder.Add(formatter.Deserialize(ref reader, options));
@@ -175,7 +180,7 @@ namespace MessagePack.ImmutableCollection
 
         protected override ImmutableQueue<T> Complete(ImmutableQueueBuilder<T> intermediateCollection)
         {
-            return intermediateCollection.q;
+            return intermediateCollection.Q;
         }
 
         protected override ImmutableQueueBuilder<T> Create(int count)
@@ -266,7 +271,7 @@ namespace MessagePack.ImmutableCollection
 
         protected override IImmutableQueue<T> Complete(ImmutableQueueBuilder<T> intermediateCollection)
         {
-            return intermediateCollection.q;
+            return intermediateCollection.Q;
         }
 
         protected override ImmutableQueueBuilder<T> Create(int count)
@@ -293,16 +298,14 @@ namespace MessagePack.ImmutableCollection
         }
     }
 
-
     // pseudo builders
-
     public class ImmutableQueueBuilder<T>
     {
-        public ImmutableQueue<T> q = ImmutableQueue<T>.Empty;
+        public ImmutableQueue<T> Q { get; set; } = ImmutableQueue<T>.Empty;
 
         public void Add(T value)
         {
-            q = q.Enqueue(value);
+            this.Q = this.Q.Enqueue(value);
         }
     }
 }

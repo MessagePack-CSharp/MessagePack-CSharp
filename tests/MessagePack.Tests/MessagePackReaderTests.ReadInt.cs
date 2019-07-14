@@ -1,5 +1,8 @@
-﻿// THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
-// CHANGE THE .tt FILE INSTEAD.
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
 
 using System;
 using System.Buffers;
@@ -9,12 +12,12 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
-    partial class MessagePackReaderTests
+    public partial class MessagePackReaderTests
     {
         private const sbyte MinNegativeFixInt = unchecked((sbyte)MessagePackCode.MinNegativeFixInt);
         private const sbyte MaxNegativeFixInt = unchecked((sbyte)MessagePackCode.MaxNegativeFixInt);
 
-        private readonly IReadOnlyList<(BigInteger Value, ReadOnlySequence<byte> Encoded)> IntegersOfInterest = new List<(BigInteger Value, ReadOnlySequence<byte> Encoded)>
+        private readonly IReadOnlyList<(BigInteger Value, ReadOnlySequence<byte> Encoded)> integersOfInterest = new List<(BigInteger Value, ReadOnlySequence<byte> Encoded)>
         {
             // * FixInt
             // ** non-boundary
@@ -35,7 +38,7 @@ namespace MessagePack.Tests
             (-3, Encode((ref MessagePackWriter w) => w.WriteInt64(-3))),
 
             // ** Boundary conditions
-            // *** MaxFixInt
+            /* MaxFixInt */
             (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MaxFixInt))),
             (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(checked((Byte)MessagePackCode.MaxFixInt)))),
             (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteUInt16(checked((UInt16)MessagePackCode.MaxFixInt)))),
@@ -45,7 +48,7 @@ namespace MessagePack.Tests
             (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt16(checked((Int16)MessagePackCode.MaxFixInt)))),
             (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(checked((Int32)MessagePackCode.MaxFixInt)))),
             (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt64(checked((Int64)MessagePackCode.MaxFixInt)))),
-            // *** MinFixInt
+            /* MinFixInt */
             (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MinFixInt))),
             (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(checked((Byte)MessagePackCode.MinFixInt)))),
             (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteUInt16(checked((UInt16)MessagePackCode.MinFixInt)))),
@@ -55,12 +58,12 @@ namespace MessagePack.Tests
             (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt16(checked((Int16)MessagePackCode.MinFixInt)))),
             (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(checked((Int32)MessagePackCode.MinFixInt)))),
             (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt64(checked((Int64)MessagePackCode.MinFixInt)))),
-            // *** MinNegativeFixInt
+            /* MinNegativeFixInt */
             (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteSByte(MinNegativeFixInt))),
             (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt16(MinNegativeFixInt))),
             (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MinNegativeFixInt))),
             (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt64(MinNegativeFixInt))),
-            // *** MaxNegativeFixInt
+            /* MaxNegativeFixInt */
             (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteSByte(MaxNegativeFixInt))),
             (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt16(MaxNegativeFixInt))),
             (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MaxNegativeFixInt))),
@@ -89,7 +92,7 @@ namespace MessagePack.Tests
             (-3, Encode((ref MessagePackWriter w) => w.WriteInt64(-3))),
 
             // ** Max values
-            // *** Positive
+            /* Positive */
             (0x0ff, Encode((ref MessagePackWriter w) => w.WriteByte(255))),
             (0x0ff, Encode((ref MessagePackWriter w) => w.WriteUInt16(255))),
             (0x0ff, Encode((ref MessagePackWriter w) => w.WriteUInt32(255))),
@@ -126,7 +129,7 @@ namespace MessagePack.Tests
             (0x7fffffff, Encode((ref MessagePackWriter w) => w.WriteInt64(2147483647))),
             (0x7fffffffffffffff, Encode((ref MessagePackWriter w) => w.WriteUInt64(9223372036854775807))),
             (0x7fffffffffffffff, Encode((ref MessagePackWriter w) => w.WriteInt64(9223372036854775807))),
-            // *** Negative
+            /* Negative */
             (unchecked((SByte)0x80), Encode((ref MessagePackWriter w) => w.WriteSByte(-128))),
             (unchecked((SByte)0x80), Encode((ref MessagePackWriter w) => w.WriteInt16(-128))),
             (unchecked((SByte)0x80), Encode((ref MessagePackWriter w) => w.WriteInt32(-128))),
@@ -142,7 +145,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadByte_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= Byte.MaxValue && value >= Byte.MinValue)
@@ -165,7 +168,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadUInt16_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= UInt16.MaxValue && value >= UInt16.MinValue)
@@ -188,7 +191,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadUInt32_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= UInt32.MaxValue && value >= UInt32.MinValue)
@@ -211,7 +214,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadUInt64_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= UInt64.MaxValue && value >= UInt64.MinValue)
@@ -234,7 +237,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadSByte_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= SByte.MaxValue && value >= SByte.MinValue)
@@ -257,7 +260,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadInt16_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= Int16.MaxValue && value >= Int16.MinValue)
@@ -280,7 +283,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadInt32_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= Int32.MaxValue && value >= Int32.MinValue)
@@ -303,7 +306,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadInt64_ReadVariousLengthsAndMagnitudes()
         {
-            foreach (var (value, encoded) in IntegersOfInterest)
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
             {
                 this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
                 if (value <= Int64.MaxValue && value >= Int64.MinValue)

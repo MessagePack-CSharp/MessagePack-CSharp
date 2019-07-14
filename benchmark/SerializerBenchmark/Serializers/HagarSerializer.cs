@@ -1,56 +1,59 @@
-﻿//using Benchmark.Serializers;
-//using System.Buffers;
-//using Hagar;
-//using Hagar.Buffers;
-//using Hagar.Session;
-//using Microsoft.Extensions.DependencyInjection;
-//using System.IO.Pipelines;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-//public class Hagar_ : SerializerBase
-//{
-//    readonly ServiceProvider serviceProvider;
+////using Benchmark.Serializers;
+////using System.Buffers;
+////using Hagar;
+////using Hagar.Buffers;
+////using Hagar.Session;
+////using Microsoft.Extensions.DependencyInjection;
+////using System.IO.Pipelines;
 
-//    public Hagar_()
-//    {
-//        this.serviceProvider = new ServiceCollection()
-//            .AddHagar()
-//            .AddISerializableSupport()
-//            .AddSerializers(typeof(Hagar_).Assembly) // this assembly
-//            .BuildServiceProvider();
-//    }
+////public class Hagar_ : SerializerBase
+////{
+////    readonly ServiceProvider serviceProvider;
 
-//    public override T Deserialize<T>(object input)
-//    {
-//        var serializer = serviceProvider.GetRequiredService<Serializer<T>>();
-//        var sessionPool = serviceProvider.GetRequiredService<SessionPool>();
+////    public Hagar_()
+////    {
+////        this.serviceProvider = new ServiceCollection()
+////            .AddHagar()
+////            .AddISerializableSupport()
+////            .AddSerializers(typeof(Hagar_).Assembly) // this assembly
+////            .BuildServiceProvider();
+////    }
 
-//        var pipe = new Pipe();
-//        pipe.Writer.WriteAsync((byte[])input).GetAwaiter().GetResult();
-//        pipe.Writer.Complete();
+////    public override T Deserialize<T>(object input)
+////    {
+////        var serializer = serviceProvider.GetRequiredService<Serializer<T>>();
+////        var sessionPool = serviceProvider.GetRequiredService<SessionPool>();
 
-//        using (var session = sessionPool.GetSession())
-//        {
-//            pipe.Reader.TryRead(out var readResult);
-//            var reader = new Reader(readResult.Buffer, session);
-//            var result = serializer.Deserialize(ref reader);
-//            return result;
-//        }
-//    }
+////        var pipe = new Pipe();
+////        pipe.Writer.WriteAsync((byte[])input).GetAwaiter().GetResult();
+////        pipe.Writer.Complete();
 
-//    public override object Serialize<T>(T input)
-//    {
-//        var serializer = serviceProvider.GetRequiredService<Serializer<T>>();
-//        var sessionPool = serviceProvider.GetRequiredService<SessionPool>();
+////        using (var session = sessionPool.GetSession())
+////        {
+////            pipe.Reader.TryRead(out var readResult);
+////            var reader = new Reader(readResult.Buffer, session);
+////            var result = serializer.Deserialize(ref reader);
+////            return result;
+////        }
+////    }
 
-//        var pipe = new Pipe();
+////    public override object Serialize<T>(T input)
+////    {
+////        var serializer = serviceProvider.GetRequiredService<Serializer<T>>();
+////        var sessionPool = serviceProvider.GetRequiredService<SessionPool>();
 
-//        using (var session = sessionPool.GetSession())
-//        {
-//            var writer = pipe.Writer.CreateWriter(session);
-//            serializer.Serialize(ref writer, input);
-//            pipe.Writer.Complete();
-//            pipe.Reader.TryRead(out var result);
-//            return result.Buffer.ToArray();
-//        }
-//    }
-//}
+////        var pipe = new Pipe();
+
+////        using (var session = sessionPool.GetSession())
+////        {
+////            var writer = pipe.Writer.CreateWriter(session);
+////            serializer.Serialize(ref writer, input);
+////            pipe.Writer.Complete();
+////            pipe.Reader.TryRead(out var result);
+////            return result.Buffer.ToArray();
+////        }
+////    }
+////}

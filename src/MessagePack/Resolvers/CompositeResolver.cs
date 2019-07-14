@@ -1,7 +1,10 @@
-﻿using MessagePack.Formatters;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using MessagePack.Formatters;
 
 namespace MessagePack.Resolvers
 {
@@ -29,7 +32,7 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// Adds a formatter to this composite resolver.
         /// </summary>
-        /// <param name="formatter">an object that implements <see cref="IMessagePackFormatter{T}"/> one or more times</param>
+        /// <param name="formatter">an object that implements <see cref="IMessagePackFormatter{T}"/> one or more times.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="formatter"/> is null.</exception>
         /// <exception cref="ArgumentException">Thrown when <paramref name="formatter"/> does not implement any <see cref="IMessagePackFormatter{T}"/> interfaces.</exception>
         public void RegisterFormatter(object formatter)
@@ -40,9 +43,9 @@ namespace MessagePack.Resolvers
             }
 
             bool foundAny = false;
-            foreach (var implInterface in formatter.GetType().GetTypeInfo().ImplementedInterfaces)
+            foreach (Type implInterface in formatter.GetType().GetTypeInfo().ImplementedInterfaces)
             {
-                var ti = implInterface.GetTypeInfo();
+                TypeInfo ti = implInterface.GetTypeInfo();
                 if (ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IMessagePackFormatter<>))
                 {
                     foundAny = true;
@@ -75,7 +78,7 @@ namespace MessagePack.Resolvers
 
             lock (this.subResolvers)
             {
-                foreach (var resolver in this.subResolvers)
+                foreach (IFormatterResolver resolver in this.subResolvers)
                 {
                     formatter = resolver.GetFormatter<T>();
                     if (formatter != null)

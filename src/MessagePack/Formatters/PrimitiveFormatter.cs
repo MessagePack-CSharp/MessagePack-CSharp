@@ -1,5 +1,10 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
@@ -7,7 +12,7 @@ namespace MessagePack.Formatters
     {
         public static readonly Int16Formatter Instance = new Int16Formatter();
 
-        Int16Formatter()
+        private Int16Formatter()
         {
         }
 
@@ -26,7 +31,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableInt16Formatter Instance = new NullableInt16Formatter();
 
-        NullableInt16Formatter()
+        private NullableInt16Formatter()
         {
         }
 
@@ -59,9 +64,8 @@ namespace MessagePack.Formatters
     {
         public static readonly Int16ArrayFormatter Instance = new Int16ArrayFormatter();
 
-        Int16ArrayFormatter()
+        private Int16ArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Int16[] value, MessagePackSerializerOptions options)
@@ -94,6 +98,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadInt16();
                 }
+
                 return array;
             }
         }
@@ -103,7 +108,7 @@ namespace MessagePack.Formatters
     {
         public static readonly Int32Formatter Instance = new Int32Formatter();
 
-        Int32Formatter()
+        private Int32Formatter()
         {
         }
 
@@ -122,7 +127,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableInt32Formatter Instance = new NullableInt32Formatter();
 
-        NullableInt32Formatter()
+        private NullableInt32Formatter()
         {
         }
 
@@ -155,9 +160,8 @@ namespace MessagePack.Formatters
     {
         public static readonly Int32ArrayFormatter Instance = new Int32ArrayFormatter();
 
-        Int32ArrayFormatter()
+        private Int32ArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Int32[] value, MessagePackSerializerOptions options)
@@ -190,6 +194,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadInt32();
                 }
+
                 return array;
             }
         }
@@ -199,7 +204,7 @@ namespace MessagePack.Formatters
     {
         public static readonly Int64Formatter Instance = new Int64Formatter();
 
-        Int64Formatter()
+        private Int64Formatter()
         {
         }
 
@@ -218,7 +223,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableInt64Formatter Instance = new NullableInt64Formatter();
 
-        NullableInt64Formatter()
+        private NullableInt64Formatter()
         {
         }
 
@@ -251,9 +256,8 @@ namespace MessagePack.Formatters
     {
         public static readonly Int64ArrayFormatter Instance = new Int64ArrayFormatter();
 
-        Int64ArrayFormatter()
+        private Int64ArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Int64[] value, MessagePackSerializerOptions options)
@@ -286,6 +290,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadInt64();
                 }
+
                 return array;
             }
         }
@@ -295,7 +300,7 @@ namespace MessagePack.Formatters
     {
         public static readonly UInt16Formatter Instance = new UInt16Formatter();
 
-        UInt16Formatter()
+        private UInt16Formatter()
         {
         }
 
@@ -314,7 +319,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableUInt16Formatter Instance = new NullableUInt16Formatter();
 
-        NullableUInt16Formatter()
+        private NullableUInt16Formatter()
         {
         }
 
@@ -347,9 +352,8 @@ namespace MessagePack.Formatters
     {
         public static readonly UInt16ArrayFormatter Instance = new UInt16ArrayFormatter();
 
-        UInt16ArrayFormatter()
+        private UInt16ArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, UInt16[] value, MessagePackSerializerOptions options)
@@ -382,6 +386,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadUInt16();
                 }
+
                 return array;
             }
         }
@@ -391,7 +396,7 @@ namespace MessagePack.Formatters
     {
         public static readonly UInt32Formatter Instance = new UInt32Formatter();
 
-        UInt32Formatter()
+        private UInt32Formatter()
         {
         }
 
@@ -410,7 +415,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableUInt32Formatter Instance = new NullableUInt32Formatter();
 
-        NullableUInt32Formatter()
+        private NullableUInt32Formatter()
         {
         }
 
@@ -443,9 +448,8 @@ namespace MessagePack.Formatters
     {
         public static readonly UInt32ArrayFormatter Instance = new UInt32ArrayFormatter();
 
-        UInt32ArrayFormatter()
+        private UInt32ArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, UInt32[] value, MessagePackSerializerOptions options)
@@ -478,6 +482,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadUInt32();
                 }
+
                 return array;
             }
         }
@@ -487,7 +492,7 @@ namespace MessagePack.Formatters
     {
         public static readonly UInt64Formatter Instance = new UInt64Formatter();
 
-        UInt64Formatter()
+        private UInt64Formatter()
         {
         }
 
@@ -506,7 +511,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableUInt64Formatter Instance = new NullableUInt64Formatter();
 
-        NullableUInt64Formatter()
+        private NullableUInt64Formatter()
         {
         }
 
@@ -539,9 +544,8 @@ namespace MessagePack.Formatters
     {
         public static readonly UInt64ArrayFormatter Instance = new UInt64ArrayFormatter();
 
-        UInt64ArrayFormatter()
+        private UInt64ArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, UInt64[] value, MessagePackSerializerOptions options)
@@ -574,6 +578,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadUInt64();
                 }
+
                 return array;
             }
         }
@@ -583,7 +588,7 @@ namespace MessagePack.Formatters
     {
         public static readonly SingleFormatter Instance = new SingleFormatter();
 
-        SingleFormatter()
+        private SingleFormatter()
         {
         }
 
@@ -602,7 +607,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableSingleFormatter Instance = new NullableSingleFormatter();
 
-        NullableSingleFormatter()
+        private NullableSingleFormatter()
         {
         }
 
@@ -635,9 +640,8 @@ namespace MessagePack.Formatters
     {
         public static readonly SingleArrayFormatter Instance = new SingleArrayFormatter();
 
-        SingleArrayFormatter()
+        private SingleArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Single[] value, MessagePackSerializerOptions options)
@@ -670,6 +674,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadSingle();
                 }
+
                 return array;
             }
         }
@@ -679,7 +684,7 @@ namespace MessagePack.Formatters
     {
         public static readonly DoubleFormatter Instance = new DoubleFormatter();
 
-        DoubleFormatter()
+        private DoubleFormatter()
         {
         }
 
@@ -698,7 +703,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableDoubleFormatter Instance = new NullableDoubleFormatter();
 
-        NullableDoubleFormatter()
+        private NullableDoubleFormatter()
         {
         }
 
@@ -731,9 +736,8 @@ namespace MessagePack.Formatters
     {
         public static readonly DoubleArrayFormatter Instance = new DoubleArrayFormatter();
 
-        DoubleArrayFormatter()
+        private DoubleArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Double[] value, MessagePackSerializerOptions options)
@@ -766,6 +770,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadDouble();
                 }
+
                 return array;
             }
         }
@@ -775,7 +780,7 @@ namespace MessagePack.Formatters
     {
         public static readonly BooleanFormatter Instance = new BooleanFormatter();
 
-        BooleanFormatter()
+        private BooleanFormatter()
         {
         }
 
@@ -794,7 +799,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableBooleanFormatter Instance = new NullableBooleanFormatter();
 
-        NullableBooleanFormatter()
+        private NullableBooleanFormatter()
         {
         }
 
@@ -827,9 +832,8 @@ namespace MessagePack.Formatters
     {
         public static readonly BooleanArrayFormatter Instance = new BooleanArrayFormatter();
 
-        BooleanArrayFormatter()
+        private BooleanArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Boolean[] value, MessagePackSerializerOptions options)
@@ -862,6 +866,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadBoolean();
                 }
+
                 return array;
             }
         }
@@ -871,7 +876,7 @@ namespace MessagePack.Formatters
     {
         public static readonly ByteFormatter Instance = new ByteFormatter();
 
-        ByteFormatter()
+        private ByteFormatter()
         {
         }
 
@@ -890,7 +895,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableByteFormatter Instance = new NullableByteFormatter();
 
-        NullableByteFormatter()
+        private NullableByteFormatter()
         {
         }
 
@@ -919,12 +924,11 @@ namespace MessagePack.Formatters
         }
     }
 
-
     public sealed class SByteFormatter : IMessagePackFormatter<SByte>
     {
         public static readonly SByteFormatter Instance = new SByteFormatter();
 
-        SByteFormatter()
+        private SByteFormatter()
         {
         }
 
@@ -943,7 +947,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableSByteFormatter Instance = new NullableSByteFormatter();
 
-        NullableSByteFormatter()
+        private NullableSByteFormatter()
         {
         }
 
@@ -976,9 +980,8 @@ namespace MessagePack.Formatters
     {
         public static readonly SByteArrayFormatter Instance = new SByteArrayFormatter();
 
-        SByteArrayFormatter()
+        private SByteArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, SByte[] value, MessagePackSerializerOptions options)
@@ -1011,6 +1014,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadSByte();
                 }
+
                 return array;
             }
         }
@@ -1020,7 +1024,7 @@ namespace MessagePack.Formatters
     {
         public static readonly CharFormatter Instance = new CharFormatter();
 
-        CharFormatter()
+        private CharFormatter()
         {
         }
 
@@ -1039,7 +1043,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableCharFormatter Instance = new NullableCharFormatter();
 
-        NullableCharFormatter()
+        private NullableCharFormatter()
         {
         }
 
@@ -1072,9 +1076,8 @@ namespace MessagePack.Formatters
     {
         public static readonly CharArrayFormatter Instance = new CharArrayFormatter();
 
-        CharArrayFormatter()
+        private CharArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Char[] value, MessagePackSerializerOptions options)
@@ -1107,6 +1110,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadChar();
                 }
+
                 return array;
             }
         }
@@ -1116,7 +1120,7 @@ namespace MessagePack.Formatters
     {
         public static readonly DateTimeFormatter Instance = new DateTimeFormatter();
 
-        DateTimeFormatter()
+        private DateTimeFormatter()
         {
         }
 
@@ -1135,7 +1139,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableDateTimeFormatter Instance = new NullableDateTimeFormatter();
 
-        NullableDateTimeFormatter()
+        private NullableDateTimeFormatter()
         {
         }
 
@@ -1168,9 +1172,8 @@ namespace MessagePack.Formatters
     {
         public static readonly DateTimeArrayFormatter Instance = new DateTimeArrayFormatter();
 
-        DateTimeArrayFormatter()
+        private DateTimeArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, DateTime[] value, MessagePackSerializerOptions options)
@@ -1203,9 +1206,9 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadDateTime();
                 }
+
                 return array;
             }
         }
     }
-
 }

@@ -1,6 +1,11 @@
-﻿using Benchmark.Serializers;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Benchmark.Serializers;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 public class BinaryFormatter_ : SerializerBase
 {

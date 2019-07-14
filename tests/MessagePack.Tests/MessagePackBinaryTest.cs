@@ -1,23 +1,26 @@
-﻿using System;
-using System.Linq;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Buffers;
 using System.IO;
-using Xunit;
+using System.Linq;
 using System.Text;
 using Nerdbank.Streams;
-using System.Buffers;
+using Xunit;
 
 namespace MessagePack.Tests
 {
     public class MessagePackBinaryTest
     {
-        (MemoryStream, MsgPack.Packer) CreateReferencePacker()
+        private (MemoryStream, MsgPack.Packer) CreateReferencePacker()
         {
             var ms = new MemoryStream();
             var packer = MsgPack.Packer.Create(ms, MsgPack.PackerCompatibilityOptions.None);
             return (ms, packer);
         }
 
-        MsgPack.MessagePackObject CreateUnpackedReference(byte[] bytes)
+        private MsgPack.MessagePackObject CreateUnpackedReference(byte[] bytes)
         {
             var ms = new MemoryStream(bytes);
             var unpacker = MsgPack.Unpacker.Create(ms);
@@ -25,12 +28,12 @@ namespace MessagePack.Tests
             return unpacker.LastReadData;
         }
 
-        MsgPack.MessagePackObject CreateUnpackedReference(ReadOnlySequence<byte> bytes) => CreateUnpackedReference(bytes.ToArray());
+        private MsgPack.MessagePackObject CreateUnpackedReference(ReadOnlySequence<byte> bytes) => this.CreateUnpackedReference(bytes.ToArray());
 
         [Fact]
         public void NilTest()
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -45,7 +48,7 @@ namespace MessagePack.Tests
             sequenceReader.ReadNil().Is(Nil.Default);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).IsNil.IsTrue();
+            this.CreateUnpackedReference(sequence).IsNil.IsTrue();
         }
 
         [Theory]
@@ -53,7 +56,7 @@ namespace MessagePack.Tests
         [InlineData(false, 1)]
         public void BoolTest(bool target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -68,7 +71,7 @@ namespace MessagePack.Tests
             sequenceReader.ReadBoolean().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsBoolean().Is(target);
+            this.CreateUnpackedReference(sequence).AsBoolean().Is(target);
         }
 
         [Theory]
@@ -78,7 +81,7 @@ namespace MessagePack.Tests
         [InlineData(byte.MaxValue, 2)]
         public void ByteTest(byte target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -93,23 +96,23 @@ namespace MessagePack.Tests
             sequenceReader.ReadByte().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsByte().Is(target);
+            this.CreateUnpackedReference(sequence).AsByte().Is(target);
         }
 
-        public static object[][] bytesTestData = new object[][]
+        public static object[][] BytesTestData = new object[][]
         {
-            new object[]{ new byte[] { }, 2 },
-            new object[]{ new byte[] { 1, 2, 3 }, 5 },
-            new object[]{ Enumerable.Repeat((byte)100, byte.MaxValue).ToArray(), 255 + 2 },
-            new object[]{ Enumerable.Repeat((byte)100, UInt16.MaxValue).ToArray(), 65535 + 3 },
-            new object[]{ Enumerable.Repeat((byte)100, 99999).ToArray(), 99999 + 5 },
+            new object[] { new byte[] { }, 2 },
+            new object[] { new byte[] { 1, 2, 3 }, 5 },
+            new object[] { Enumerable.Repeat((byte)100, byte.MaxValue).ToArray(), 255 + 2 },
+            new object[] { Enumerable.Repeat((byte)100, UInt16.MaxValue).ToArray(), 65535 + 3 },
+            new object[] { Enumerable.Repeat((byte)100, 99999).ToArray(), 99999 + 5 },
         };
 
         [Theory]
-        [MemberData(nameof(bytesTestData))]
+        [MemberData(nameof(BytesTestData))]
         public void BytesTest(byte[] target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -124,7 +127,7 @@ namespace MessagePack.Tests
             sequenceReader.ReadBytes().ToArray().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsBinary().Is(target);
+            this.CreateUnpackedReference(sequence).AsBinary().Is(target);
         }
 
         [Theory]
@@ -141,7 +144,7 @@ namespace MessagePack.Tests
         [InlineData(sbyte.MaxValue, 1)]
         public void SByteTest(sbyte target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -156,7 +159,7 @@ namespace MessagePack.Tests
             sequenceReader.ReadSByte().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsSByte().Is(target);
+            this.CreateUnpackedReference(sequence).AsSByte().Is(target);
         }
 
         [Theory]
@@ -171,7 +174,7 @@ namespace MessagePack.Tests
         [InlineData(Single.Epsilon, 5)]
         public void SingleTest(Single target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -186,7 +189,7 @@ namespace MessagePack.Tests
             sequenceReader.ReadSingle().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsSingle().Is(target);
+            this.CreateUnpackedReference(sequence).AsSingle().Is(target);
         }
 
         [Theory]
@@ -201,7 +204,7 @@ namespace MessagePack.Tests
         [InlineData(Double.Epsilon, 9)]
         public void DoubleTest(Double target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -216,7 +219,7 @@ namespace MessagePack.Tests
             sequenceReader.ReadDouble().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsDouble().Is(target);
+            this.CreateUnpackedReference(sequence).AsDouble().Is(target);
         }
 
         [Theory]
@@ -237,7 +240,7 @@ namespace MessagePack.Tests
         [InlineData(short.MaxValue, 3)]
         public void Int16Test(short target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -247,13 +250,13 @@ namespace MessagePack.Tests
             sequence.Length.Is(length);
 
             packer.Pack(target).Position.Is(sequence.Length);
-            // stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
+            //// stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
             sequenceReader.ReadInt16().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsInt16().Is(target);
+            this.CreateUnpackedReference(sequence).AsInt16().Is(target);
         }
 
         [Theory]
@@ -279,7 +282,7 @@ namespace MessagePack.Tests
         [InlineData(int.MaxValue, 5)]
         public void Int32Test(int target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -300,13 +303,14 @@ namespace MessagePack.Tests
             {
                 packer.Pack(target).Position.Is(sequence.Length);
             }
-            // stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
+
+            //// stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
             sequenceReader.ReadInt32().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsInt32().Is(target);
+            this.CreateUnpackedReference(sequence).AsInt32().Is(target);
         }
 
         [Theory]
@@ -337,7 +341,7 @@ namespace MessagePack.Tests
         [InlineData(long.MaxValue, 9)]
         public void Int64Test(long target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -362,13 +366,14 @@ namespace MessagePack.Tests
             {
                 packer.Pack(target).Position.Is(sequence.Length);
             }
-            // stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
+
+            //// stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
             sequenceReader.ReadInt64().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsInt64().Is(target);
+            this.CreateUnpackedReference(sequence).AsInt64().Is(target);
         }
 
         [Theory]
@@ -386,7 +391,7 @@ namespace MessagePack.Tests
         [InlineData(80000, 5)]
         public void MapHeaderTest(uint target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -428,7 +433,7 @@ namespace MessagePack.Tests
         [InlineData(80000, 5)]
         public void ArrayHeaderTest(uint target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -455,8 +460,6 @@ namespace MessagePack.Tests
             len.Is(target);
         }
 
-
-
         [Theory]
         [InlineData(0, 1)]
         [InlineData(1, 1)]
@@ -468,7 +471,7 @@ namespace MessagePack.Tests
         [InlineData(ushort.MaxValue, 3)]
         public void UInt16Test(ushort target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -483,7 +486,7 @@ namespace MessagePack.Tests
             sequenceReader.ReadUInt16().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsUInt16().Is(target);
+            this.CreateUnpackedReference(sequence).AsUInt16().Is(target);
         }
 
         [Theory]
@@ -500,7 +503,7 @@ namespace MessagePack.Tests
         [InlineData(uint.MaxValue, 5)]
         public void UInt32Test(uint target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -515,7 +518,7 @@ namespace MessagePack.Tests
             sequenceReader.ReadUInt32().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsUInt32().Is(target);
+            this.CreateUnpackedReference(sequence).AsUInt32().Is(target);
         }
 
         [Theory]
@@ -536,7 +539,7 @@ namespace MessagePack.Tests
         [InlineData(ulong.MaxValue, 9)]
         public void UInt64Test(ulong target, int length)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -551,39 +554,38 @@ namespace MessagePack.Tests
             sequenceReader.ReadUInt64().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsUInt64().Is(target);
+            this.CreateUnpackedReference(sequence).AsUInt64().Is(target);
         }
 
-
-        public static object[][] stringTestData = new object[][]
+        public static object[][] StringTestData = new object[][]
         {
-            new object[]{ "a"},
-            new object[]{ "abc" },
-            new object[]{ "012345678901234567890123456789"}, // 30
-            new object[]{ "0123456789012345678901234567890"}, // 31
-            new object[]{ "01234567890123456789012345678901"}, // 32
-            new object[]{ "012345678901234567890123456789012"}, // 33
-            new object[]{ "0123456789012345678901234567890123"}, // 33
-            new object[]{ new string('a', sbyte.MaxValue - 1) },
-            new object[]{ new string('a', sbyte.MaxValue) },
-            new object[]{ new string('a', sbyte.MaxValue + 1) },
-            new object[]{ new string('a', byte.MaxValue - 1) },
-            new object[]{ new string('a', byte.MaxValue) },
-            new object[]{ new string('a', byte.MaxValue + 1) },
-            new object[]{ new string('a', ushort.MaxValue - 1) },
-            new object[]{ new string('a', short.MaxValue -1 ) },
-            new object[]{ new string('a', short.MaxValue  ) },
-            new object[]{ new string('a', short.MaxValue + 1) },
-            new object[]{ new string('a', ushort.MaxValue ) },
-            new object[]{ new string('a', ushort.MaxValue+1 ) },
-            new object[]{ "あいうえおかきくけこさしすせおたちつてとなにぬねのわをん"}, // Japanese
+            new object[] { "a" },
+            new object[] { "abc" },
+            new object[] { "012345678901234567890123456789" }, // 30
+            new object[] { "0123456789012345678901234567890" }, // 31
+            new object[] { "01234567890123456789012345678901" }, // 32
+            new object[] { "012345678901234567890123456789012" }, // 33
+            new object[] { "0123456789012345678901234567890123" }, // 33
+            new object[] { new string('a', sbyte.MaxValue - 1) },
+            new object[] { new string('a', sbyte.MaxValue) },
+            new object[] { new string('a', sbyte.MaxValue + 1) },
+            new object[] { new string('a', byte.MaxValue - 1) },
+            new object[] { new string('a', byte.MaxValue) },
+            new object[] { new string('a', byte.MaxValue + 1) },
+            new object[] { new string('a', ushort.MaxValue - 1) },
+            new object[] { new string('a', short.MaxValue - 1) },
+            new object[] { new string('a', short.MaxValue) },
+            new object[] { new string('a', short.MaxValue + 1) },
+            new object[] { new string('a', ushort.MaxValue) },
+            new object[] { new string('a', ushort.MaxValue + 1) },
+            new object[] { "あいうえおかきくけこさしすせおたちつてとなにぬねのわをん" }, // Japanese
         };
 
         [Theory]
-        [MemberData(nameof(stringTestData))]
+        [MemberData(nameof(StringTestData))]
         public void StringTest(string target)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -591,7 +593,7 @@ namespace MessagePack.Tests
             writer.Flush();
             var returnLength = sequence.Length;
 
-            var referencePacked = packer.PackString(target);
+            MsgPack.Packer referencePacked = packer.PackString(target);
             referencePacked.Position.Is(returnLength);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
@@ -599,14 +601,14 @@ namespace MessagePack.Tests
             sequenceReader.ReadString().Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsStringUtf8().Is(target);
+            this.CreateUnpackedReference(sequence).AsStringUtf8().Is(target);
         }
 
         [Theory]
-        [MemberData(nameof(stringTestData))]
+        [MemberData(nameof(StringTestData))]
         public void StringSegmentTest(string target)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -614,7 +616,7 @@ namespace MessagePack.Tests
             writer.Flush();
             var returnLength = sequence.Length;
 
-            var referencePacked = packer.PackString(target);
+            MsgPack.Packer referencePacked = packer.PackString(target);
             referencePacked.Position.Is(returnLength);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
@@ -623,7 +625,7 @@ namespace MessagePack.Tests
             Encoding.UTF8.GetString(segment).Is(target);
             sequenceReader.End.IsTrue();
 
-            CreateUnpackedReference(sequence).AsStringUtf8().Is(target);
+            this.CreateUnpackedReference(sequence).AsStringUtf8().Is(target);
         }
 
         [Theory]
@@ -634,7 +636,7 @@ namespace MessagePack.Tests
         [InlineData(char.MaxValue)]
         public void CharTest(char target)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -642,7 +644,7 @@ namespace MessagePack.Tests
             writer.Flush();
             var returnLength = sequence.Length;
 
-            var referencePacked = packer.Pack(target);
+            MsgPack.Packer referencePacked = packer.Pack(target);
             referencePacked.Position.Is(returnLength);
             referencePacked.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
@@ -650,49 +652,48 @@ namespace MessagePack.Tests
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
             sequenceReader.ReadChar().Is(target);
             sequenceReader.End.IsTrue();
-            ((char)CreateUnpackedReference(sequence).AsUInt16()).Is(target);
+            ((char)this.CreateUnpackedReference(sequence).AsUInt16()).Is(target);
         }
 
-
-        public static object[][] extTestData = new object[][]
+        public static object[][] ExtTestData = new object[][]
         {
-            new object[]{ 0,  Enumerable.Repeat((byte)1, 0).ToArray() },
-            new object[]{ 1,  Enumerable.Repeat((byte)1, 1).ToArray() },
-            new object[]{ 2,  Enumerable.Repeat((byte)1, 2).ToArray() },
-            new object[]{ 3,  Enumerable.Repeat((byte)1, 3).ToArray() },
-            new object[]{ 4,  Enumerable.Repeat((byte)1, 4).ToArray() },
-            new object[]{ 5,  Enumerable.Repeat((byte)1, 5).ToArray() },
-            new object[]{ 6,  Enumerable.Repeat((byte)1, 6).ToArray() },
-            new object[]{ 7,  Enumerable.Repeat((byte)1, 7).ToArray() },
-            new object[]{ 8,  Enumerable.Repeat((byte)1, 8).ToArray() },
-            new object[]{ 9,  Enumerable.Repeat((byte)1, 9).ToArray() },
-            new object[]{ 10, Enumerable.Repeat((byte)1, 10).ToArray() },
-            new object[]{ 11, Enumerable.Repeat((byte)1, 11).ToArray() },
-            new object[]{ 12, Enumerable.Repeat((byte)1, 12).ToArray() },
-            new object[]{ 13, Enumerable.Repeat((byte)1, 13).ToArray() },
-            new object[]{ 14, Enumerable.Repeat((byte)1, 14).ToArray() },
-            new object[]{ 15, Enumerable.Repeat((byte)1, 15).ToArray() },
-            new object[]{ 16, Enumerable.Repeat((byte)1, 16).ToArray() },
-            new object[]{ 17, Enumerable.Repeat((byte)1, 17).ToArray() },
-            new object[]{ 29, Enumerable.Repeat((byte)1, sbyte.MaxValue - 1).ToArray() },
-            new object[]{ 39, Enumerable.Repeat((byte)1, sbyte.MaxValue).ToArray() },
-            new object[]{ 49, Enumerable.Repeat((byte)1, sbyte.MaxValue + 1).ToArray() },
-            new object[]{ 59, Enumerable.Repeat((byte)1, byte.MaxValue - 1).ToArray() },
-            new object[]{ 69, Enumerable.Repeat((byte)1, byte.MaxValue).ToArray() },
-            new object[]{ 79, Enumerable.Repeat((byte)1, byte.MaxValue + 1).ToArray() },
-            new object[]{ 89, Enumerable.Repeat((byte)1, short.MaxValue - 1).ToArray() },
-            new object[]{ 99, Enumerable.Repeat((byte)1, short.MaxValue).ToArray() },
-            new object[]{ 100, Enumerable.Repeat((byte)1, short.MaxValue + 1).ToArray() },
-            new object[]{ 101, Enumerable.Repeat((byte)1, ushort.MaxValue - 1).ToArray() },
-            new object[]{ 102, Enumerable.Repeat((byte)1, ushort.MaxValue).ToArray() },
-            new object[]{ 103, Enumerable.Repeat((byte)1, ushort.MaxValue + 1).ToArray() },
+            new object[] { 0,  Enumerable.Repeat((byte)1, 0).ToArray() },
+            new object[] { 1,  Enumerable.Repeat((byte)1, 1).ToArray() },
+            new object[] { 2,  Enumerable.Repeat((byte)1, 2).ToArray() },
+            new object[] { 3,  Enumerable.Repeat((byte)1, 3).ToArray() },
+            new object[] { 4,  Enumerable.Repeat((byte)1, 4).ToArray() },
+            new object[] { 5,  Enumerable.Repeat((byte)1, 5).ToArray() },
+            new object[] { 6,  Enumerable.Repeat((byte)1, 6).ToArray() },
+            new object[] { 7,  Enumerable.Repeat((byte)1, 7).ToArray() },
+            new object[] { 8,  Enumerable.Repeat((byte)1, 8).ToArray() },
+            new object[] { 9,  Enumerable.Repeat((byte)1, 9).ToArray() },
+            new object[] { 10, Enumerable.Repeat((byte)1, 10).ToArray() },
+            new object[] { 11, Enumerable.Repeat((byte)1, 11).ToArray() },
+            new object[] { 12, Enumerable.Repeat((byte)1, 12).ToArray() },
+            new object[] { 13, Enumerable.Repeat((byte)1, 13).ToArray() },
+            new object[] { 14, Enumerable.Repeat((byte)1, 14).ToArray() },
+            new object[] { 15, Enumerable.Repeat((byte)1, 15).ToArray() },
+            new object[] { 16, Enumerable.Repeat((byte)1, 16).ToArray() },
+            new object[] { 17, Enumerable.Repeat((byte)1, 17).ToArray() },
+            new object[] { 29, Enumerable.Repeat((byte)1, sbyte.MaxValue - 1).ToArray() },
+            new object[] { 39, Enumerable.Repeat((byte)1, sbyte.MaxValue).ToArray() },
+            new object[] { 49, Enumerable.Repeat((byte)1, sbyte.MaxValue + 1).ToArray() },
+            new object[] { 59, Enumerable.Repeat((byte)1, byte.MaxValue - 1).ToArray() },
+            new object[] { 69, Enumerable.Repeat((byte)1, byte.MaxValue).ToArray() },
+            new object[] { 79, Enumerable.Repeat((byte)1, byte.MaxValue + 1).ToArray() },
+            new object[] { 89, Enumerable.Repeat((byte)1, short.MaxValue - 1).ToArray() },
+            new object[] { 99, Enumerable.Repeat((byte)1, short.MaxValue).ToArray() },
+            new object[] { 100, Enumerable.Repeat((byte)1, short.MaxValue + 1).ToArray() },
+            new object[] { 101, Enumerable.Repeat((byte)1, ushort.MaxValue - 1).ToArray() },
+            new object[] { 102, Enumerable.Repeat((byte)1, ushort.MaxValue).ToArray() },
+            new object[] { 103, Enumerable.Repeat((byte)1, ushort.MaxValue + 1).ToArray() },
         };
 
         [Theory]
-        [MemberData(nameof(extTestData))]
+        [MemberData(nameof(ExtTestData))]
         public void ExtTest(sbyte typeCode, byte[] target)
         {
-            (var stream, var packer) = CreateReferencePacker();
+            (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -700,18 +701,18 @@ namespace MessagePack.Tests
             writer.Flush();
             var returnLength = sequence.Length;
 
-            var referencePacked = packer.PackExtendedTypeValue((byte)typeCode, target);
+            MsgPack.Packer referencePacked = packer.PackExtendedTypeValue((byte)typeCode, target);
             referencePacked.Position.Is(returnLength);
             referencePacked.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
-            var ext = sequenceReader.ReadExtensionFormat();
+            ExtensionResult ext = sequenceReader.ReadExtensionFormat();
             ext.TypeCode.Is(typeCode);
             ext.Data.ToArray().SequenceEqual(target).IsTrue();
             sequenceReader.End.IsTrue();
 
-            var ext2 = CreateUnpackedReference(sequence).AsMessagePackExtendedTypeObject();
+            MsgPack.MessagePackExtendedTypeObject ext2 = this.CreateUnpackedReference(sequence).AsMessagePackExtendedTypeObject();
             ext2.TypeCode.Is((byte)ext.TypeCode);
             ext2.GetBody().SequenceEqual(ext.Data.ToArray()).IsTrue();
         }
@@ -719,27 +720,27 @@ namespace MessagePack.Tests
         // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
         // FixExt8(-1) => nanoseconds + seconds | [1970-01-01 00:00:00.000000000 UTC, 2514-05-30 01:53:04.000000000 UTC) range
         // Ext8(12,-1) => nanoseconds + seconds | [-584554047284-02-23 16:59:44 UTC, 584554051223-11-09 07:00:16.000000000 UTC) range
-        public static object[][] dateTimeTestData = new object[][]
+        public static object[][] DateTimeTestData = new object[][]
         {
-            new object[]{ new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 6},
-            new object[]{ new DateTime(2010, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 6},
-            new object[]{ new DateTime(2106, 2, 7, 6, 28, 15, 0, DateTimeKind.Utc), 6},
-            new object[]{ new DateTime(2106, 2, 7, 6, 28, 16, 0, DateTimeKind.Utc), 10},
-            new object[]{ new DateTime(2106, 2, 7, 6, 28, 17, 0, DateTimeKind.Utc), 10},
-            new object[]{ new DateTime(2106, 2, 7, 6, 28, 16, 1, DateTimeKind.Utc), 10},
-            new object[]{ new DateTime(2010, 12, 1, 3, 4, 57, 123, DateTimeKind.Utc), 10},
-            new object[]{ new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc).AddMilliseconds(-1), 10},
-            new object[]{ new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc), 15},
-            new object[]{ new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc).AddMilliseconds(1), 15 },
-            new object[]{ new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(-1), 15},
-            new object[]{ new DateTime(111, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 15},
-            new object[]{ new DateTime(111, 12, 1, 3, 4, 57, 123, DateTimeKind.Utc), 15},
-            new object[]{  new DateTime(DateTime.MinValue.Ticks, DateTimeKind.Utc), 15},
-            new object[]{ new DateTime(DateTime.MaxValue.Ticks, DateTimeKind.Utc), 15},
+            new object[] { new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 6 },
+            new object[] { new DateTime(2010, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 6 },
+            new object[] { new DateTime(2106, 2, 7, 6, 28, 15, 0, DateTimeKind.Utc), 6 },
+            new object[] { new DateTime(2106, 2, 7, 6, 28, 16, 0, DateTimeKind.Utc), 10 },
+            new object[] { new DateTime(2106, 2, 7, 6, 28, 17, 0, DateTimeKind.Utc), 10 },
+            new object[] { new DateTime(2106, 2, 7, 6, 28, 16, 1, DateTimeKind.Utc), 10 },
+            new object[] { new DateTime(2010, 12, 1, 3, 4, 57, 123, DateTimeKind.Utc), 10 },
+            new object[] { new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc).AddMilliseconds(-1), 10 },
+            new object[] { new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc), 15 },
+            new object[] { new DateTime(2514, 5, 30, 1, 53, 4, 0, DateTimeKind.Utc).AddMilliseconds(1), 15 },
+            new object[] { new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(-1), 15 },
+            new object[] { new DateTime(111, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 15 },
+            new object[] { new DateTime(111, 12, 1, 3, 4, 57, 123, DateTimeKind.Utc), 15 },
+            new object[] { new DateTime(DateTime.MinValue.Ticks, DateTimeKind.Utc), 15 },
+            new object[] { new DateTime(DateTime.MaxValue.Ticks, DateTimeKind.Utc), 15 },
         };
 
         [Theory]
-        [MemberData(nameof(dateTimeTestData))]
+        [MemberData(nameof(DateTimeTestData))]
         public void DateTimeTest(DateTime target, int expectedLength)
         {
             var sequence = new Sequence<byte>();
@@ -750,7 +751,7 @@ namespace MessagePack.Tests
             returnLength.Is(expectedLength);
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
-            var result = sequenceReader.ReadDateTime();
+            DateTime result = sequenceReader.ReadDateTime();
             sequenceReader.End.IsTrue();
 
             result.Is(target);
@@ -776,6 +777,7 @@ namespace MessagePack.Tests
                 targetWriter.Flush();
                 target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
             }
+
             {
                 var small = new Sequence<byte>();
                 var smallWriter = new MessagePackWriter(small);
@@ -803,6 +805,7 @@ namespace MessagePack.Tests
                 targetWriter.Flush();
                 target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
             }
+
             {
                 var small = new Sequence<byte>();
                 var smallWriter = new MessagePackWriter(small);

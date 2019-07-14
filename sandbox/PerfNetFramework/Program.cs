@@ -1,61 +1,20 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using MessagePack;
-using MessagePack.Formatters;
-using MessagePack.Internal;
-using MessagePack.Resolvers;
 using Newtonsoft.Json;
-using ProtoBuf;
 using ZeroFormatter;
 
 namespace PerfNetFramework
 {
-    [ZeroFormattable]
-    [ProtoBuf.ProtoContract]
-    [MessagePackObject]
-    public class Person : IEquatable<Person>
-    {
-        [Index(0)]
-        [Key(0)]
-        [MsgPack.Serialization.MessagePackMember(0)]
-        [ProtoMember(1)]
-        public virtual int Age { get; set; }
-        [Index(1)]
-        [Key(1)]
-        [MsgPack.Serialization.MessagePackMember(1)]
-        [ProtoMember(2)]
-        public virtual string FirstName { get; set; }
-        [Index(2)]
-        [Key(2)]
-        [MsgPack.Serialization.MessagePackMember(2)]
-        [ProtoMember(3)]
-        public virtual string LastName { get; set; }
-        [Index(3)]
-        [MsgPack.Serialization.MessagePackMember(3)]
-        [Key(3)]
-        [ProtoMember(4)]
-        public virtual Sex Sex { get; set; }
-
-        public bool Equals(Person other)
-        {
-            return Age == other.Age && FirstName == other.FirstName && LastName == other.LastName && Sex == other.Sex;
-        }
-    }
-
-    public enum Sex : sbyte
-    {
-        Unknown, Male, Female,
-    }
-
     internal class Program
     {
-        internal static bool deserializing;
+        internal static bool Deserializing { get; set; }
 
         private static void Main(string[] args)
         {
@@ -74,7 +33,7 @@ namespace PerfNetFramework
                     Age = x,
                     FirstName = "Windows",
                     LastName = "Server",
-                    Sex = (Sex)rand.Next(0, 3)
+                    Sex = (Sex)rand.Next(0, 3),
                 })
                 .ToArray();
 
@@ -94,7 +53,7 @@ namespace PerfNetFramework
             Console.WriteLine("Running {0} iterations...", Iteration);
 
             var jsonSerializer = new JsonSerializer();
-            var msgpack = MsgPack.Serialization.SerializationContext.Default;
+            MsgPack.Serialization.SerializationContext msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
             MessagePackSerializer.Serialize(target);
             MessagePackSerializer.Serialize(target, MessagePackSerializerOptions.LZ4Default);
@@ -102,12 +61,11 @@ namespace PerfNetFramework
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
 
-
             Console.WriteLine(typeof(T).Name + " serialization test");
             Console.WriteLine();
 
             Console.WriteLine("Serialize::");
-            deserializing = false;
+            Deserializing = false;
 
             byte[] data = null;
             var data0 = new Nerdbank.Streams.Sequence<byte>();
@@ -201,8 +159,10 @@ namespace PerfNetFramework
                 {
                     jsonSerializer.Serialize(jw, target);
                 }
+
                 dataJson = ms.ToArray();
             }
+
             using (var ms = new MemoryStream())
             {
                 using (var gzip = new GZipStream(ms, CompressionLevel.Fastest))
@@ -211,20 +171,20 @@ namespace PerfNetFramework
                 {
                     jsonSerializer.Serialize(jw, target);
                 }
+
                 dataGzipJson = ms.ToArray();
             }
 
-
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
             MessagePackSerializer.Deserialize<T>(data0);
-            //ZeroFormatterSerializer.Deserialize<T>(data1);
+            ////ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
             MessagePackSerializer.Deserialize<T>(data3, MessagePackSerializerOptions.LZ4Default);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
             Console.WriteLine("Deserialize::");
-            deserializing = true;
+            Deserializing = true;
 
             using (new Measure("MessagePack for C#"))
             {
@@ -298,14 +258,21 @@ namespace PerfNetFramework
 
             Console.WriteLine();
             Console.WriteLine("FileSize::");
-            var label = "";
-            label = "MessagePack for C#"; Console.WriteLine($"{label,-25} {data0.Length,14} byte");
-            label = "MessagePack for C# (LZ4)"; Console.WriteLine($"{label,-25} {data3.Length,14} byte");
-            label = "MsgPack-Cli"; Console.WriteLine($"{label,-25} {data.Length,14} byte");
-            label = "protobuf-net"; Console.WriteLine($"{label,-25} {data2.Length,14} byte");
-            label = "ZeroFormatter"; Console.WriteLine($"{label,-25} {data1.Length,14} byte");
-            label = "Json.NET"; Console.WriteLine($"{label,-25} {dataJson.Length,14} byte");
-            label = "Json.NET(+GZip)"; Console.WriteLine($"{label,-25} {dataGzipJson.Length,14} byte");
+            var label = string.Empty;
+            label = "MessagePack for C#";
+            Console.WriteLine($"{label,-25} {data0.Length,14} byte");
+            label = "MessagePack for C# (LZ4)";
+            Console.WriteLine($"{label,-25} {data3.Length,14} byte");
+            label = "MsgPack-Cli";
+            Console.WriteLine($"{label,-25} {data.Length,14} byte");
+            label = "protobuf-net";
+            Console.WriteLine($"{label,-25} {data2.Length,14} byte");
+            label = "ZeroFormatter";
+            Console.WriteLine($"{label,-25} {data1.Length,14} byte");
+            label = "Json.NET";
+            Console.WriteLine($"{label,-25} {dataJson.Length,14} byte");
+            label = "Json.NET(+GZip)";
+            Console.WriteLine($"{label,-25} {dataGzipJson.Length,14} byte");
 
             Console.WriteLine();
             Console.WriteLine();
@@ -313,7 +280,7 @@ namespace PerfNetFramework
 
         private static string ToHumanReadableSize(long size)
         {
-            return ToHumanReadableSize(new Nullable<long>(size));
+            return ToHumanReadableSize(new long?(size));
         }
 
         private static string ToHumanReadableSize(long? size)
@@ -368,45 +335,6 @@ namespace PerfNetFramework
 
             bytes = bytes / 1024;
             return bytes + " ZB";
-        }
-    }
-
-    internal struct Measure : IDisposable
-    {
-        private string label;
-        private Stopwatch sw;
-
-        public Measure(string label)
-        {
-            this.label = label;
-            System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
-            if (!Program.deserializing)
-            {
-                BenchmarkEventSource.Instance.Serialize(label);
-            }
-            else
-            {
-                BenchmarkEventSource.Instance.Deserialize(label);
-            }
-
-            this.sw = Stopwatch.StartNew();
-        }
-
-        public void Dispose()
-        {
-            sw.Stop();
-            if (!Program.deserializing)
-            {
-                BenchmarkEventSource.Instance.SerializeEnd();
-            }
-            else
-            {
-                BenchmarkEventSource.Instance.DeserializeEnd();
-            }
-
-            Console.WriteLine($"{label,-25}   {sw.Elapsed.TotalMilliseconds,12:F2} ms");
-
-            System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
         }
     }
 }

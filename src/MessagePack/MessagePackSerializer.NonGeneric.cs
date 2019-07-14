@@ -1,4 +1,7 @@
-﻿#if !UNITY
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY
 
 using System;
 using System.IO;
@@ -9,141 +12,121 @@ using System.Threading;
 
 namespace MessagePack
 {
-    partial class MessagePackSerializer
+    public partial class MessagePackSerializer
     {
         private static readonly Func<Type, CompiledMethods> CreateCompiledMethods;
-        private static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
+        private static readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods> Serializes = new MessagePack.Internal.ThreadsafeTypeKeyHashTable<CompiledMethods>(capacity: 64);
 
         static MessagePackSerializer()
         {
             CreateCompiledMethods = t => new CompiledMethods(t);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="obj"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
         /// <seealso cref="Serialize{T}(T, MessagePackSerializerOptions)"/>
         public static byte[] Serialize(Type type, object obj, MessagePackSerializerOptions options = null)
         {
-            return GetOrAdd(type).serialize_T_Options.Invoke(obj, options);
+            return GetOrAdd(type).Serialize_T_Options.Invoke(obj, options);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="stream"></param>
-        /// <param name="obj"></param>
-        /// <param name="options"></param>
         /// <seealso cref="SerializeAsync{T}(Stream, T, MessagePackSerializerOptions, System.Threading.CancellationToken)"/>
         public static void Serialize(Type type, Stream stream, object obj, MessagePackSerializerOptions options = null)
         {
-            GetOrAdd(type).serializeAsync_Stream_T_Options.Invoke(stream, obj, options);
+            GetOrAdd(type).SerializeAsync_Stream_T_Options.Invoke(stream, obj, options);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="stream"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
         /// <seealso cref="Deserialize{T}(Stream, MessagePackSerializerOptions)"/>
         public static object Deserialize(Type type, Stream stream, MessagePackSerializerOptions options = null)
         {
-            return GetOrAdd(type).deserialize_Stream_Options.Invoke(stream, options);
+            return GetOrAdd(type).Deserialize_Stream_Options.Invoke(stream, options);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="bytes"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
         /// <seealso cref="Deserialize{T}(ReadOnlyMemory{byte}, MessagePackSerializerOptions)"/>
         public static object Deserialize(Type type, ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null)
         {
-            return GetOrAdd(type).deserialize_ReadOnlyMemory_Options.Invoke(bytes, options);
+            return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options);
         }
 
         private static CompiledMethods GetOrAdd(Type type)
         {
-            return serializes.GetOrAdd(type, CreateCompiledMethods);
+            return Serializes.GetOrAdd(type, CreateCompiledMethods);
         }
 
         private class CompiledMethods
         {
-            public readonly Func<object, MessagePackSerializerOptions, byte[]> serialize_T_Options;
-            public readonly Action<Stream, object, MessagePackSerializerOptions> serializeAsync_Stream_T_Options;
+#pragma warning disable SA1310 // Field names should not contain underscore
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+            internal readonly Func<object, MessagePackSerializerOptions, byte[]> Serialize_T_Options;
+            internal readonly Action<Stream, object, MessagePackSerializerOptions> SerializeAsync_Stream_T_Options;
 
-            public readonly Func<Stream, MessagePackSerializerOptions, object> deserialize_Stream_Options;
+            internal readonly Func<Stream, MessagePackSerializerOptions, object> Deserialize_Stream_Options;
 
-            public readonly Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object> deserialize_ReadOnlyMemory_Options;
+            internal readonly Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object> Deserialize_ReadOnlyMemory_Options;
+#pragma warning restore SA1401 // Fields should be private
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning restore SA1310 // Field names should not contain underscore
 
-            public CompiledMethods(Type type)
+            internal CompiledMethods(Type type)
             {
-                var ti = type.GetTypeInfo();
+                TypeInfo ti = type.GetTypeInfo();
                 {
                     // public static byte[] Serialize<T>(T obj, MessagePackSerializerOptions options)
-                    var serialize = GetMethod(type, new Type[] { null, typeof(MessagePackSerializerOptions) });
+                    MethodInfo serialize = GetMethod(type, new Type[] { null, typeof(MessagePackSerializerOptions) });
 
-                    var param1 = Expression.Parameter(typeof(object), "obj");
-                    var param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    ParameterExpression param1 = Expression.Parameter(typeof(object), "obj");
+                    ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
 
-                    var body = Expression.Call(
+                    MethodCallExpression body = Expression.Call(
                         null,
                         serialize,
                         ti.IsValueType ? Expression.Unbox(param1, type) : Expression.Convert(param1, type),
                         param2);
-                    var lambda = Expression.Lambda<Func<object, MessagePackSerializerOptions, byte[]>>(body, param1, param2).Compile();
+                    Func<object, MessagePackSerializerOptions, byte[]> lambda = Expression.Lambda<Func<object, MessagePackSerializerOptions, byte[]>>(body, param1, param2).Compile();
 
-                    this.serialize_T_Options = lambda;
+                    this.Serialize_T_Options = lambda;
                 }
+
                 {
                     // public static void Serialize<T>(Stream stream, T obj, MessagePackSerializerOptions options)
-                    var serialize = GetMethod(type, new Type[] { typeof(Stream), null, typeof(MessagePackSerializerOptions) });
+                    MethodInfo serialize = GetMethod(type, new Type[] { typeof(Stream), null, typeof(MessagePackSerializerOptions) });
 
-                    var param1 = Expression.Parameter(typeof(Stream), "stream");
-                    var param2 = Expression.Parameter(typeof(object), "obj");
-                    var param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    ParameterExpression param1 = Expression.Parameter(typeof(Stream), "stream");
+                    ParameterExpression param2 = Expression.Parameter(typeof(object), "obj");
+                    ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
 
-                    var body = Expression.Call(
+                    MethodCallExpression body = Expression.Call(
                         null,
                         serialize,
                         param1,
                         ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                         param3);
-                    var lambda = Expression.Lambda<Action<Stream, object, MessagePackSerializerOptions>>(body, param1, param2, param3).Compile();
+                    Action<Stream, object, MessagePackSerializerOptions> lambda = Expression.Lambda<Action<Stream, object, MessagePackSerializerOptions>>(body, param1, param2, param3).Compile();
 
-                    this.serializeAsync_Stream_T_Options = lambda;
+                    this.SerializeAsync_Stream_T_Options = lambda;
                 }
+
                 {
                     // public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options)
-                    var deserialize = GetMethod(type, new Type[] { typeof(Stream), typeof(MessagePackSerializerOptions) });
+                    MethodInfo deserialize = GetMethod(type, new Type[] { typeof(Stream), typeof(MessagePackSerializerOptions) });
 
-                    var param1 = Expression.Parameter(typeof(Stream), "stream");
-                    var param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
-                    var body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
-                    var lambda = Expression.Lambda<Func<Stream, MessagePackSerializerOptions, object>>(body, param1, param2).Compile();
+                    ParameterExpression param1 = Expression.Parameter(typeof(Stream), "stream");
+                    ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
+                    Func<Stream, MessagePackSerializerOptions, object> lambda = Expression.Lambda<Func<Stream, MessagePackSerializerOptions, object>>(body, param1, param2).Compile();
 
-                    this.deserialize_Stream_Options = lambda;
+                    this.Deserialize_Stream_Options = lambda;
                 }
 
                 {
                     // public static T Deserialize<T>(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options)
-                    var deserialize = GetMethod(type, new Type[] { typeof(ReadOnlyMemory<byte>), typeof(MessagePackSerializerOptions) });
+                    MethodInfo deserialize = GetMethod(type, new Type[] { typeof(ReadOnlyMemory<byte>), typeof(MessagePackSerializerOptions) });
 
-                    var param1 = Expression.Parameter(typeof(ReadOnlyMemory<byte>), "bytes");
-                    var param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
-                    var body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
-                    var lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object>>(body, param1, param2).Compile();
+                    ParameterExpression param1 = Expression.Parameter(typeof(ReadOnlyMemory<byte>), "bytes");
+                    ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
+                    Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object> lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object>>(body, param1, param2).Compile();
 
-                    this.deserialize_ReadOnlyMemory_Options = lambda;
+                    this.Deserialize_ReadOnlyMemory_Options = lambda;
                 }
             }
 
@@ -157,7 +140,7 @@ namespace MessagePack
                         return false;
                     }
 
-                    var ps = x.GetParameters();
+                    ParameterInfo[] ps = x.GetParameters();
                     if (ps.Length != parameters.Length)
                     {
                         return false;
@@ -175,6 +158,7 @@ namespace MessagePack
                             return false;
                         }
                     }
+
                     return true;
                 })
                 .MakeGenericMethod(type);

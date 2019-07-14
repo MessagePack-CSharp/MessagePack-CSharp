@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,25 +14,25 @@ namespace MessagePack.Tests
 {
     public class DictionaryTest
     {
-        T Convert<T>(T value)
+        private T Convert<T>(T value)
         {
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
-        public static object[][] dictionaryTestData = new object[][]
+        public static object[][] DictionaryTestData = new object[][]
         {
-            new object[]{ new Dictionary<int, int>() { { 1, 100 } }, null },
-            new object[]{ new ReadOnlyDictionary<int,int>(new Dictionary<int, int>() { { 1, 100 } }), null },
-            new object[]{ new SortedList<int, int>() { { 1, 100 } }, null },
-            new object[]{ new SortedDictionary<int, int>() { { 1, 100 } }, null },
+            new object[] { new Dictionary<int, int>() { { 1, 100 } }, null },
+            new object[] { new ReadOnlyDictionary<int, int>(new Dictionary<int, int>() { { 1, 100 } }), null },
+            new object[] { new SortedList<int, int>() { { 1, 100 } }, null },
+            new object[] { new SortedDictionary<int, int>() { { 1, 100 } }, null },
         };
 
         [Theory]
-        [MemberData(nameof(dictionaryTestData))]
+        [MemberData(nameof(DictionaryTestData))]
         public void DictionaryTestAll<T>(T x, T y)
         {
-            Convert(x).IsStructuralEqual(x);
-            Convert(y).IsStructuralEqual(y);
+            this.Convert(x).IsStructuralEqual(x);
+            this.Convert(y).IsStructuralEqual(y);
         }
 
         [Fact]
@@ -40,10 +43,10 @@ namespace MessagePack.Tests
             var c = (IDictionary<int, int>)null;
             var d = (IReadOnlyDictionary<int, int>)null;
 
-            Convert(a).IsStructuralEqual(a);
-            Convert(b).IsStructuralEqual(b);
-            Convert(c).IsStructuralEqual(c);
-            Convert(d).IsStructuralEqual(d);
+            this.Convert(a).IsStructuralEqual(a);
+            this.Convert(b).IsStructuralEqual(b);
+            this.Convert(c).IsStructuralEqual(c);
+            this.Convert(d).IsStructuralEqual(d);
         }
 
         [Fact]
@@ -55,13 +58,13 @@ namespace MessagePack.Tests
             cd.TryAdd(2, 200);
             cd.TryAdd(3, 300);
 
-            var conv = Convert(cd);
+            ConcurrentDictionary<int, int> conv = this.Convert(cd);
             conv[1].Is(100);
             conv[2].Is(200);
             conv[3].Is(300);
 
             cd = null;
-            Convert(cd).IsNull();
+            this.Convert(cd).IsNull();
         }
     }
 }

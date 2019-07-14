@@ -1,7 +1,12 @@
-﻿extern alias oldmsgpack;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+extern alias oldmsgpack;
 extern alias newmsgpack;
 
 using Benchmark.Serializers;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 public class MessagePack_v1 : SerializerBase
 {

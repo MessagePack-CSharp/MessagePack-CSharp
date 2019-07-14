@@ -1,8 +1,11 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 
 namespace MessagePack.LZ4
 {
-    partial class LZ4Codec
+    internal partial class LZ4Codec
     {
 #if UNITY
 
@@ -37,13 +40,13 @@ namespace MessagePack.LZ4
         internal static class HashTablePool
         {
             [ThreadStatic]
-            static ushort[] ushortPool;
+            private static ushort[] ushortPool;
 
             [ThreadStatic]
-            static uint[] uintPool;
+            private static uint[] uintPool;
 
             [ThreadStatic]
-            static int[] intPool;
+            private static int[] intPool;
 
             public static ushort[] GetUShortHashTablePool()
             {
@@ -55,6 +58,7 @@ namespace MessagePack.LZ4
                 {
                     Array.Clear(ushortPool, 0, ushortPool.Length);
                 }
+
                 return ushortPool;
             }
 
@@ -68,6 +72,7 @@ namespace MessagePack.LZ4
                 {
                     Array.Clear(uintPool, 0, uintPool.Length);
                 }
+
                 return uintPool;
             }
 
@@ -81,9 +86,9 @@ namespace MessagePack.LZ4
                 {
                     Array.Clear(intPool, 0, intPool.Length);
                 }
+
                 return intPool;
             }
         }
     }
 }
-

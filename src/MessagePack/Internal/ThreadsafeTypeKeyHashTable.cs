@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Internal
 {
@@ -9,14 +14,14 @@ namespace MessagePack.Internal
     /// <typeparam name="TValue">The type of value stored in the dictionary.</typeparam>
     internal class ThreadsafeTypeKeyHashTable<TValue>
     {
-        Entry[] buckets;
-        int size; // only use in writer lock
+        private Entry[] buckets;
+        private int size; // only use in writer lock
 
-        readonly object writerLock = new object();
-        readonly float loadFactor;
+        private readonly object writerLock = new object();
+        private readonly float loadFactor;
 
         // IEqualityComparer.Equals is overhead if key only Type, don't use it.
-        // readonly IEqualityComparer<TKey> comparer;
+        //// readonly IEqualityComparer<TKey> comparer;
 
         public ThreadsafeTypeKeyHashTable(int capacity = 4, float loadFactor = 0.75f)
         {
@@ -27,56 +32,63 @@ namespace MessagePack.Internal
 
         public bool TryAdd(Type key, TValue value)
         {
-            return TryAdd(key, _ => value); // create lambda capture
+            return this.TryAdd(key, _ => value); // create lambda capture
         }
 
         public bool TryAdd(Type key, Func<Type, TValue> valueFactory)
         {
-            TValue _;
-            return TryAddInternal(key, valueFactory, out _);
+            return this.TryAddInternal(key, valueFactory, out TValue _);
         }
 
-        bool TryAddInternal(Type key, Func<Type, TValue> valueFactory, out TValue resultingValue)
+        private bool TryAddInternal(Type key, Func<Type, TValue> valueFactory, out TValue resultingValue)
         {
-            lock (writerLock)
+            lock (this.writerLock)
             {
-                var nextCapacity = CalculateCapacity(size + 1, loadFactor);
+                var nextCapacity = CalculateCapacity(this.size + 1, this.loadFactor);
 
-                if (buckets.Length < nextCapacity)
+                if (this.buckets.Length < nextCapacity)
                 {
                     // rehash
                     var nextBucket = new Entry[nextCapacity];
-                    for (int i = 0; i < buckets.Length; i++)
+                    for (int i = 0; i < this.buckets.Length; i++)
                     {
-                        var e = buckets[i];
+                        Entry e = this.buckets[i];
                         while (e != null)
                         {
                             var newEntry = new Entry { Key = e.Key, Value = e.Value, Hash = e.Hash };
-                            AddToBuckets(nextBucket, key, newEntry, null, out resultingValue);
+                            this.AddToBuckets(nextBucket, key, newEntry, null, out resultingValue);
                             e = e.Next;
                         }
                     }
 
                     // add entry(if failed to add, only do resize)
-                    var successAdd = AddToBuckets(nextBucket, key, null, valueFactory, out resultingValue);
+                    var successAdd = this.AddToBuckets(nextBucket, key, null, valueFactory, out resultingValue);
 
                     // replace field(threadsafe for read)
-                    VolatileWrite(ref buckets, nextBucket);
+                    VolatileWrite(ref this.buckets, nextBucket);
 
-                    if (successAdd) size++;
+                    if (successAdd)
+                    {
+                        this.size++;
+                    }
+
                     return successAdd;
                 }
                 else
                 {
                     // add entry(insert last is thread safe for read)
-                    var successAdd = AddToBuckets(buckets, key, null, valueFactory, out resultingValue);
-                    if (successAdd) size++;
+                    var successAdd = this.AddToBuckets(this.buckets, key, null, valueFactory, out resultingValue);
+                    if (successAdd)
+                    {
+                        this.size++;
+                    }
+
                     return successAdd;
                 }
             }
         }
 
-        bool AddToBuckets(Entry[] buckets, Type newKey, Entry newEntryOrNull, Func<Type, TValue> valueFactory, out TValue resultingValue)
+        private bool AddToBuckets(Entry[] buckets, Type newKey, Entry newEntryOrNull, Func<Type, TValue> valueFactory, out TValue resultingValue)
         {
             var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : newKey.GetHashCode();
             if (buckets[h & (buckets.Length - 1)] == null)
@@ -94,7 +106,7 @@ namespace MessagePack.Internal
             }
             else
             {
-                var searchLastEntry = buckets[h & (buckets.Length - 1)];
+                Entry searchLastEntry = buckets[h & (buckets.Length - 1)];
                 while (true)
                 {
                     if (searchLastEntry.Key == newKey)
@@ -115,8 +127,10 @@ namespace MessagePack.Internal
                             resultingValue = valueFactory(newKey);
                             VolatileWrite(ref searchLastEntry.Next, new Entry { Key = newKey, Value = resultingValue, Hash = h });
                         }
+
                         break;
                     }
+
                     searchLastEntry = searchLastEntry.Next;
                 }
             }
@@ -126,11 +140,14 @@ namespace MessagePack.Internal
 
         public bool TryGetValue(Type key, out TValue value)
         {
-            var table = buckets;
+            Entry[] table = this.buckets;
             var hash = key.GetHashCode();
-            var entry = table[hash & table.Length - 1];
+            Entry entry = table[hash & table.Length - 1];
 
-            if (entry == null) goto NOT_FOUND;
+            if (entry == null)
+            {
+                goto NOT_FOUND;
+            }
 
             if (entry.Key == key)
             {
@@ -138,7 +155,7 @@ namespace MessagePack.Internal
                 return true;
             }
 
-            var next = entry.Next;
+            Entry next = entry.Next;
             while (next != null)
             {
                 if (next.Key == key)
@@ -146,10 +163,11 @@ namespace MessagePack.Internal
                     value = next.Value;
                     return true;
                 }
+
                 next = next.Next;
             }
 
-            NOT_FOUND:
+NOT_FOUND:
             value = default(TValue);
             return false;
         }
@@ -157,16 +175,16 @@ namespace MessagePack.Internal
         public TValue GetOrAdd(Type key, Func<Type, TValue> valueFactory)
         {
             TValue v;
-            if (TryGetValue(key, out v))
+            if (this.TryGetValue(key, out v))
             {
                 return v;
             }
 
-            TryAddInternal(key, valueFactory, out v);
+            this.TryAddInternal(key, valueFactory, out v);
             return v;
         }
 
-        static int CalculateCapacity(int collectionSize, float loadFactor)
+        private static int CalculateCapacity(int collectionSize, float loadFactor)
         {
             var initialCapacity = (int)(((float)collectionSize) / loadFactor);
             var capacity = 1;
@@ -183,7 +201,7 @@ namespace MessagePack.Internal
             return capacity;
         }
 
-        static void VolatileWrite(ref Entry location, Entry value)
+        private static void VolatileWrite(ref Entry location, Entry value)
         {
 #if !UNITY
             System.Threading.Volatile.Write(ref location, value);
@@ -195,7 +213,7 @@ namespace MessagePack.Internal
 #endif
         }
 
-        static void VolatileWrite(ref Entry[] location, Entry[] value)
+        private static void VolatileWrite(ref Entry[] location, Entry[] value)
         {
 #if !UNITY
             System.Threading.Volatile.Write(ref location, value);
@@ -207,28 +225,31 @@ namespace MessagePack.Internal
 #endif
         }
 
-        class Entry
+        private class Entry
         {
-            public Type Key;
-            public TValue Value;
-            public int Hash;
-            public Entry Next;
+#pragma warning disable SA1401 // Fields should be private
+            internal Type Key;
+            internal TValue Value;
+            internal int Hash;
+            internal Entry Next;
+#pragma warning restore SA1401 // Fields should be private
 
             // debug only
             public override string ToString()
             {
-                return Key + "(" + Count() + ")";
+                return this.Key + "(" + this.Count() + ")";
             }
 
-            int Count()
+            private int Count()
             {
                 var count = 1;
-                var n = this;
+                Entry n = this;
                 while (n.Next != null)
                 {
                     count++;
                     n = n.Next;
                 }
+
                 return count;
             }
         }

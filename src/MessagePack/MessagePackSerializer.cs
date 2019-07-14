@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
@@ -26,7 +29,7 @@ namespace MessagePack
         /// <summary>
         /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
         /// </summary>
-        private static readonly SequencePool reusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount);
+        private static readonly SequencePool ReusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount);
 
         /// <summary>
         /// A thread-local, recyclable array that may be used for short bursts of code.
@@ -60,7 +63,7 @@ namespace MessagePack
             {
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                 {
-                    var scratchWriter = writer.Clone(scratch);
+                    MessagePackWriter scratchWriter = writer.Clone(scratch);
                     options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
                     scratchWriter.Flush();
                     ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
@@ -86,7 +89,7 @@ namespace MessagePack
                 scratchArray = array = new byte[65536];
             }
 
-            var msgpackWriter = new MessagePackWriter(reusableSequenceWithMinSize, array);
+            var msgpackWriter = new MessagePackWriter(ReusableSequenceWithMinSize, array);
             Serialize(ref msgpackWriter, value, options);
             return msgpackWriter.FlushAndGetArray();
         }
@@ -99,10 +102,10 @@ namespace MessagePack
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions options = null)
         {
-            using (var sequenceRental = reusableSequenceWithMinSize.Rent())
+            using (SequencePool.Rental sequenceRental = ReusableSequenceWithMinSize.Rent())
             {
                 Serialize<T>(sequenceRental.Value, value, options);
-                foreach (var segment in sequenceRental.Value.AsReadOnlySequence)
+                foreach (ReadOnlyMemory<byte> segment in sequenceRental.Value.AsReadOnlySequence)
                 {
                     stream.Write(segment.Span);
                 }
@@ -153,7 +156,7 @@ namespace MessagePack
                 {
                     if (TryDecompress(ref reader, msgPackUncompressed))
                     {
-                        var uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
+                        MessagePackReader uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
                         return options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref uncompressedReader, options);
                     }
                     else
@@ -220,10 +223,11 @@ namespace MessagePack
                 int bytesRead;
                 do
                 {
-                    var span = sequence.GetSpan(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
+                    Span<byte> span = sequence.GetSpan(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
                     bytesRead = stream.Read(span);
                     sequence.Advance(bytesRead);
-                } while (bytesRead > 0);
+                }
+                while (bytesRead > 0);
 
                 return Deserialize<T>(sequence.AsReadOnlySequence, options);
             }
@@ -244,10 +248,11 @@ namespace MessagePack
                 int bytesRead;
                 do
                 {
-                    var memory = sequence.GetMemory(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
+                    Memory<byte> memory = sequence.GetMemory(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
                     bytesRead = await stream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
                     sequence.Advance(bytesRead);
-                } while (bytesRead > 0);
+                }
+                while (bytesRead > 0);
 
                 return Deserialize<T>(sequence.AsReadOnlySequence, options);
             }
@@ -294,12 +299,12 @@ namespace MessagePack
         {
             if (!reader.End && reader.NextMessagePackType == MessagePackType.Extension)
             {
-                var peekReader = reader.CreatePeekReader();
-                var header = peekReader.ReadExtensionFormatHeader();
+                MessagePackReader peekReader = reader.CreatePeekReader();
+                ExtensionHeader header = peekReader.ReadExtensionFormatHeader();
                 if (header.TypeCode == LZ4ExtensionTypeCode)
                 {
                     // Read the extension using the original reader, so we "consume" it.
-                    var extension = reader.ReadExtensionFormat();
+                    ExtensionResult extension = reader.ReadExtensionFormat();
                     var extReader = new MessagePackReader(extension.Data);
 
                     // The first part of the extension payload is a MessagePack-encoded Int32 that
@@ -307,11 +312,11 @@ namespace MessagePack
                     int uncompressedLength = extReader.ReadInt32();
 
                     // The rest of the payload is the compressed data itself.
-                    var compressedData = extReader.Sequence.Slice(extReader.Position);
+                    ReadOnlySequence<byte> compressedData = extReader.Sequence.Slice(extReader.Position);
 
-                    var uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
+                    Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
                     int actualUncompressedLength = LZ4Operation(compressedData, uncompressedSpan, LZ4Codec.Decode);
-                    Debug.Assert(actualUncompressedLength == uncompressedLength);
+                    Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
                     writer.Advance(actualUncompressedLength);
                     return true;
                 }

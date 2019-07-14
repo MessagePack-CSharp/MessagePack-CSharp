@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
 
 namespace MessagePack
@@ -10,7 +13,7 @@ namespace MessagePack
 #endif
     struct Nil : IEquatable<Nil>
     {
-        public static readonly Nil Default = new Nil();
+        public static readonly Nil Default = default(Nil);
 
         public override bool Equals(object obj)
         {

@@ -1,25 +1,13 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
 namespace Benchmark
 {
-    public class GenericEqualityComparer<T> : IEqualityComparer<T> where T : class, IGenericEquality<T>
-    {
-        public static readonly GenericEqualityComparer<T> Default = new GenericEqualityComparer<T>();
-
-        public bool Equals(T x, T y)
-        {
-            return x.TrueEquals(y);
-        }
-
-        public int GetHashCode(T obj)
-        {
-            return 0; // not fast, but not really important here
-        }
-    }
-
     public static class ExtensionMethods
     {
         public static bool TrueEqualsString(this IEnumerable<string> a, IEnumerable<string> b)
@@ -39,10 +27,12 @@ namespace Benchmark
             {
                 return true;
             }
+
             if (!a.HasValue)
             {
                 return false;
             }
+
             if (!b.HasValue)
             {
                 return false;
@@ -90,13 +80,14 @@ namespace Benchmark
             {
                 return false;
             }
+
             if (ReferenceEquals(b, null))
             {
                 return false;
             }
 
-            using (var e1 = a.GetEnumerator())
-            using (var e2 = b.GetEnumerator())
+            using (IEnumerator<T> e1 = a.GetEnumerator())
+            using (IEnumerator<dynamic> e2 = b.GetEnumerator())
             {
                 while (true)
                 {
@@ -106,21 +97,25 @@ namespace Benchmark
                     {
                         return false;
                     }
+
                     if (!e1Next && !e2Next)
                     {
                         break;
                     }
-                    var c1 = e1.Current;
-                    var c2 = e2.Current;
+
+                    T c1 = e1.Current;
+                    dynamic c2 = e2.Current;
 
                     if (c1 == null && c2 != null)
                     {
                         return false;
                     }
+
                     if (c2 == null && c1 != null)
                     {
                         return false;
                     }
+
                     if (!c1.EqualsDynamic(c2))
                     {
                         return false;
@@ -134,9 +129,25 @@ namespace Benchmark
         public static bool IsTypedList(this Type type)
         {
             return
-                type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(IList<>) ||
+                (type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(IList<>)) ||
                 type.GetTypeInfo().GetInterfaces().Any(i =>
                     i.GetTypeInfo().IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+        }
+
+        private class GenericEqualityComparer<T> : IEqualityComparer<T>
+            where T : class, IGenericEquality<T>
+        {
+            public static readonly GenericEqualityComparer<T> Default = new GenericEqualityComparer<T>();
+
+            public bool Equals(T x, T y)
+            {
+                return x.TrueEquals(y);
+            }
+
+            public int GetHashCode(T obj)
+            {
+                return 0; // not fast, but not really important here
+            }
         }
     }
 }

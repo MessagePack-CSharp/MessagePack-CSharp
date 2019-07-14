@@ -1,4 +1,7 @@
-﻿#region license
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#region license
 
 /*
 Copyright (c) 2013, Milosz Krajewski
@@ -27,7 +30,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 
-// ReSharper disable InconsistentNaming
+#pragma warning disable SA1310 // Field names should not contain underscore
 
 namespace MessagePack.LZ4
 {
@@ -39,7 +42,7 @@ namespace MessagePack.LZ4
         /// Memory usage formula : N->2^N Bytes (examples : 10 -> 1KB; 12 -> 4KB ; 16 -> 64KB; 20 -> 1MB; etc.)
         /// Increasing memory usage improves compression ratio
         /// Reduced memory usage can improve speed, due to cache effect
-        /// Default value is 14, for 16KB, which nicely fits into Intel x86 L1 cache
+        /// Default value is 14, for 16KB, which nicely fits into Intel x86 L1 cache.
         /// </summary>
         private const int MEMORY_USAGE = 12; // modified use 12.
 
@@ -48,7 +51,7 @@ namespace MessagePack.LZ4
         /// This may decrease compression ratio dramatically, but will be faster on incompressible data
         /// Increasing this value will make the algorithm search more before declaring a segment "incompressible"
         /// This could improve compression a bit, but will be slower on incompressible data
-        /// The default value (6) is recommended
+        /// The default value (6) is recommended.
         /// </summary>
         private const int NOTCOMPRESSIBLE_DETECTIONLEVEL = 6;
 
@@ -59,11 +62,8 @@ namespace MessagePack.LZ4
         private const int MINMATCH = 4;
 
 #pragma warning disable 162, 429
-        // ReSharper disable once UnreachableCode
-        private const int SKIPSTRENGTH =
-            NOTCOMPRESSIBLE_DETECTIONLEVEL > 2
-            ? NOTCOMPRESSIBLE_DETECTIONLEVEL
-            : 2;
+
+        private const int SKIPSTRENGTH = NOTCOMPRESSIBLE_DETECTIONLEVEL > 2 ? NOTCOMPRESSIBLE_DETECTIONLEVEL : 2;
 #pragma warning restore 162, 429
 
         private const int COPYLENGTH = 8;
@@ -94,27 +94,29 @@ namespace MessagePack.LZ4
         private const int HASHHC_LOG = MAXD_LOG - 1;
         private const int HASHHC_TABLESIZE = 1 << HASHHC_LOG;
         private const int HASHHC_ADJUST = (MINMATCH * 8) - HASHHC_LOG;
-        //private const int HASHHC_MASK = HASHHC_TABLESIZE - 1;
+        ////private const int HASHHC_MASK = HASHHC_TABLESIZE - 1;
+
+        private const int MAX_NB_ATTEMPTS = 256;
+        private const int OPTIMAL_ML = ML_MASK - 1 + MINMATCH;
+
+        private const int BLOCK_COPY_LIMIT = 16;
 
         private static readonly int[] DECODER_TABLE_32 = { 0, 3, 2, 3, 0, 0, 0, 0 };
         private static readonly int[] DECODER_TABLE_64 = { 0, 0, 0, -1, 0, 1, 2, 3 };
 
-        private static readonly int[] DEBRUIJN_TABLE_32 = {
+        private static readonly int[] DEBRUIJN_TABLE_32 =
+        {
             0, 0, 3, 0, 3, 1, 3, 0, 3, 2, 2, 1, 3, 2, 0, 1,
-            3, 3, 1, 2, 2, 2, 2, 0, 3, 1, 2, 0, 1, 0, 1, 1
+            3, 3, 1, 2, 2, 2, 2, 0, 3, 1, 2, 0, 1, 0, 1, 1,
         };
 
-        private static readonly int[] DEBRUIJN_TABLE_64 = {
+        private static readonly int[] DEBRUIJN_TABLE_64 =
+        {
             0, 0, 0, 0, 0, 1, 1, 2, 0, 3, 1, 3, 1, 4, 2, 7,
             0, 2, 3, 6, 1, 5, 3, 5, 1, 3, 4, 4, 2, 5, 6, 7,
             7, 0, 1, 2, 3, 3, 4, 6, 2, 6, 5, 5, 3, 4, 5, 6,
-            7, 1, 2, 4, 6, 4, 4, 5, 7, 2, 6, 5, 7, 6, 7, 7
+            7, 1, 2, 4, 6, 4, 4, 5, 7, 2, 6, 5, 7, 6, 7, 7,
         };
-
-        private const int MAX_NB_ATTEMPTS = 256;
-        private const int OPTIMAL_ML = (ML_MASK - 1) + MINMATCH;
-
-        private const int BLOCK_COPY_LIMIT = 16;
 
         #endregion
 
@@ -132,9 +134,7 @@ namespace MessagePack.LZ4
 
         #region internal interface (common)
 
-        internal static void CheckArguments(
-            byte[] input, int inputOffset, int inputLength,
-            byte[] output, int outputOffset, int outputLength)
+        internal static void CheckArguments(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int outputLength)
         {
             if (inputLength == 0)
             {
@@ -142,17 +142,37 @@ namespace MessagePack.LZ4
                 return;
             }
 
-            if (input == null) throw new ArgumentNullException("input");
-            if ((uint)inputOffset > (uint)input.Length) throw new ArgumentOutOfRangeException("inputOffset");
-            if ((uint)inputLength > (uint)input.Length - (uint)inputOffset) throw new ArgumentOutOfRangeException("inputLength");
+            if (input == null)
+            {
+                throw new ArgumentNullException("input");
+            }
 
-            if (output == null) throw new ArgumentNullException("output");
-            if ((uint)outputOffset > (uint)output.Length) throw new ArgumentOutOfRangeException("outputOffset");
-            if ((uint)outputLength > (uint)output.Length - (uint)outputOffset) throw new ArgumentOutOfRangeException("outputLength");
+            if ((uint)inputOffset > (uint)input.Length)
+            {
+                throw new ArgumentOutOfRangeException("inputOffset");
+            }
+
+            if ((uint)inputLength > (uint)input.Length - (uint)inputOffset)
+            {
+                throw new ArgumentOutOfRangeException("inputLength");
+            }
+
+            if (output == null)
+            {
+                throw new ArgumentNullException("output");
+            }
+
+            if ((uint)outputOffset > (uint)output.Length)
+            {
+                throw new ArgumentOutOfRangeException("outputOffset");
+            }
+
+            if ((uint)outputLength > (uint)output.Length - (uint)outputOffset)
+            {
+                throw new ArgumentOutOfRangeException("outputLength");
+            }
         }
 
         #endregion
     }
 }
-
-// ReSharper restore InconsistentNaming

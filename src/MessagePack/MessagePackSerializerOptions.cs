@@ -1,5 +1,5 @@
-﻿// Copyright (c) Andrew Arnott. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
 
@@ -34,7 +34,7 @@ namespace MessagePack
 #endif
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class
+        /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class.
         /// </summary>
         internal MessagePackSerializerOptions(IFormatterResolver resolver, bool useLZ4Compression = false)
         {

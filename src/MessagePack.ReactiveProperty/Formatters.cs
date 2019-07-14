@@ -1,9 +1,14 @@
-﻿using MessagePack.Formatters;
-using Reactive.Bindings;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Concurrency;
+using MessagePack.Formatters;
+using Reactive.Bindings;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.ReactivePropertyExtension
 {
@@ -11,25 +16,25 @@ namespace MessagePack.ReactivePropertyExtension
     {
 #pragma warning disable CS0618
 
-        static Dictionary<int, IScheduler> mapTo = new Dictionary<int, IScheduler>();
-        static Dictionary<IScheduler, int> mapFrom = new Dictionary<IScheduler, int>();
+        private static Dictionary<int, IScheduler> mapTo = new Dictionary<int, IScheduler>();
+        private static Dictionary<IScheduler, int> mapFrom = new Dictionary<IScheduler, int>();
 
         static ReactivePropertySchedulerMapper()
         {
             // default map
-            var mappings = new[]
+            (int, IScheduler)[] mappings = new[]
             {
-               (-2, CurrentThreadScheduler.Instance ),
-               (-3, ImmediateScheduler.Instance ),
-               (-4, TaskPoolScheduler.Default ),
-               (-5, System.Reactive.Concurrency.NewThreadScheduler.Default ),
-               (-6, Scheduler.ThreadPool ),
+               (-2, CurrentThreadScheduler.Instance),
+               (-3, ImmediateScheduler.Instance),
+               (-4, TaskPoolScheduler.Default),
+               (-5, System.Reactive.Concurrency.NewThreadScheduler.Default),
+               (-6, Scheduler.ThreadPool),
                (-7, System.Reactive.Concurrency.DefaultScheduler.Instance),
 
-               (-1, UIDispatcherScheduler.Default ), // override
+               (-1, UIDispatcherScheduler.Default), // override
             };
 
-            foreach (var item in mappings)
+            foreach ((int, IScheduler) item in mappings)
             {
                 ReactivePropertySchedulerMapper.mapTo[item.Item1] = item.Item2;
                 ReactivePropertySchedulerMapper.mapFrom[item.Item2] = item.Item1;
@@ -72,11 +77,12 @@ namespace MessagePack.ReactivePropertyExtension
 
         internal static int ToReactivePropertyModeInt<T>(global::Reactive.Bindings.ReactiveProperty<T> reactiveProperty)
         {
-            var mode = ReactivePropertyMode.None;
+            ReactivePropertyMode mode = ReactivePropertyMode.None;
             if (reactiveProperty.IsDistinctUntilChanged)
             {
                 mode |= ReactivePropertyMode.DistinctUntilChanged;
             }
+
             if (reactiveProperty.IsRaiseLatestValueOnSubscribe)
             {
                 mode |= ReactivePropertyMode.RaiseLatestValueOnSubscribe;
@@ -87,15 +93,17 @@ namespace MessagePack.ReactivePropertyExtension
 
         internal static int ToReactivePropertySlimModeInt<T>(global::Reactive.Bindings.ReactivePropertySlim<T> reactiveProperty)
         {
-            var mode = ReactivePropertyMode.None;
+            ReactivePropertyMode mode = ReactivePropertyMode.None;
             if (reactiveProperty.IsDistinctUntilChanged)
             {
                 mode |= ReactivePropertyMode.DistinctUntilChanged;
             }
+
             if (reactiveProperty.IsRaiseLatestValueOnSubscribe)
             {
                 mode |= ReactivePropertyMode.RaiseLatestValueOnSubscribe;
             }
+
             return (int)mode;
         }
     }
@@ -128,19 +136,21 @@ namespace MessagePack.ReactivePropertyExtension
             else
             {
                 var length = reader.ReadArrayHeader();
-                if (length != 3) throw new InvalidOperationException("Invalid ReactiveProperty data.");
+                if (length != 3)
+                {
+                    throw new InvalidOperationException("Invalid ReactiveProperty data.");
+                }
 
                 var mode = (ReactivePropertyMode)reader.ReadInt32();
 
                 var schedulerId = reader.ReadInt32();
 
-                var scheduler = ReactivePropertySchedulerMapper.GetScheduler(schedulerId);
+                IScheduler scheduler = ReactivePropertySchedulerMapper.GetScheduler(schedulerId);
 
-                var v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+                T v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
 
                 return new ReactiveProperty<T>(scheduler, v, mode);
             }
-
         }
     }
 
@@ -247,11 +257,10 @@ namespace MessagePack.ReactivePropertyExtension
 
     public class UnitFormatter : IMessagePackFormatter<Unit>
     {
-        public static IMessagePackFormatter<Unit> Instance = new UnitFormatter();
+        public static readonly UnitFormatter Instance = new UnitFormatter();
 
-        UnitFormatter()
+        private UnitFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Unit value, MessagePackSerializerOptions options)
@@ -274,11 +283,10 @@ namespace MessagePack.ReactivePropertyExtension
 
     public class NullableUnitFormatter : IMessagePackFormatter<Unit?>
     {
-        public static IMessagePackFormatter<Unit?> Instance = new NullableUnitFormatter();
+        public static readonly NullableUnitFormatter Instance = new NullableUnitFormatter();
 
-        NullableUnitFormatter()
+        private NullableUnitFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Unit? value, MessagePackSerializerOptions options)
@@ -326,15 +334,17 @@ namespace MessagePack.ReactivePropertyExtension
             else
             {
                 var length = reader.ReadArrayHeader();
-                if (length != 2) throw new InvalidOperationException("Invalid ReactivePropertySlim data.");
+                if (length != 2)
+                {
+                    throw new InvalidOperationException("Invalid ReactivePropertySlim data.");
+                }
 
                 var mode = (ReactivePropertyMode)reader.ReadInt32();
 
-                var v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+                T v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
 
                 return new ReactivePropertySlim<T>(v, mode);
             }
-
         }
     }
 }

@@ -1,4 +1,7 @@
-﻿#if !UNITY_WSA
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY_WSA
 
 using System;
 using System.Collections.Generic;

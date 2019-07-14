@@ -1,7 +1,12 @@
-﻿using MessagePack.Formatters;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.Linq;
+using MessagePack.Formatters;
 using MessagePack.Internal;
 using MessagePack.Resolvers;
+
+#pragma warning disable SA1403 // File may only contain a single namespace
 
 namespace MessagePack.Resolvers
 {
@@ -24,18 +29,18 @@ namespace MessagePack.Resolvers
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverCore.Instance);
 #endif
 
-        StandardResolver()
+        private StandardResolver()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
@@ -43,14 +48,14 @@ namespace MessagePack.Resolvers
                 {
                     // final fallback
 #if !UNITY
-                    formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
+                    Formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
 #endif
                 }
                 else
                 {
-                    formatter = StandardResolverCore.Instance.GetFormatter<T>();
+                    Formatter = StandardResolverCore.Instance.GetFormatter<T>();
                 }
             }
         }
@@ -72,18 +77,18 @@ namespace MessagePack.Resolvers
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverCore.Instance);
 #endif
 
-        ContractlessStandardResolver()
+        private ContractlessStandardResolver()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
@@ -91,14 +96,14 @@ namespace MessagePack.Resolvers
                 {
                     // final fallback
 #if !UNITY
-                    formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
+                    Formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
 #endif
                 }
                 else
                 {
-                    formatter = ContractlessStandardResolverCore.Instance.GetFormatter<T>();
+                    Formatter = ContractlessStandardResolverCore.Instance.GetFormatter<T>();
                 }
             }
         }
@@ -120,18 +125,18 @@ namespace MessagePack.Resolvers
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverAllowPrivateCore.Instance);
 #endif
 
-        StandardResolverAllowPrivate()
+        private StandardResolverAllowPrivate()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
@@ -139,14 +144,14 @@ namespace MessagePack.Resolvers
                 {
                     // final fallback
 #if !UNITY
-                    formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
+                    Formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
 #endif
                 }
                 else
                 {
-                    formatter = StandardResolverAllowPrivateCore.Instance.GetFormatter<T>();
+                    Formatter = StandardResolverAllowPrivateCore.Instance.GetFormatter<T>();
                 }
             }
         }
@@ -168,18 +173,18 @@ namespace MessagePack.Resolvers
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverAllowPrivateCore.Instance);
 #endif
 
-        ContractlessStandardResolverAllowPrivate()
+        private ContractlessStandardResolverAllowPrivate()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
@@ -187,14 +192,14 @@ namespace MessagePack.Resolvers
                 {
                     // final fallback
 #if !UNITY
-                    formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
+                    Formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
 #endif
                 }
                 else
                 {
-                    formatter = ContractlessStandardResolverAllowPrivateCore.Instance.GetFormatter<T>();
+                    Formatter = ContractlessStandardResolverAllowPrivateCore.Instance.GetFormatter<T>();
                 }
             }
         }
@@ -227,34 +232,34 @@ namespace MessagePack.Internal
     {
         internal static readonly StandardResolverCore Instance = new StandardResolverCore();
 
-        static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
+        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
 #if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
             DynamicObjectResolver.Instance, // Try Object
 #endif
         }).ToArray();
 
-        StandardResolverCore()
+        private StandardResolverCore()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                foreach (var item in resolvers)
+                foreach (IFormatterResolver item in Resolvers)
                 {
-                    var f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
                     if (f != null)
                     {
-                        formatter = f;
+                        Formatter = f;
                         return;
                     }
                 }
@@ -266,7 +271,7 @@ namespace MessagePack.Internal
     {
         internal static readonly ContractlessStandardResolverCore Instance = new ContractlessStandardResolverCore();
 
-        static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
+        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
 #if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
             DynamicObjectResolver.Instance, // Try Object
@@ -274,28 +279,27 @@ namespace MessagePack.Internal
 #endif
         }).ToArray();
 
-
-        ContractlessStandardResolverCore()
+        private ContractlessStandardResolverCore()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                foreach (var item in resolvers)
+                foreach (IFormatterResolver item in Resolvers)
                 {
-                    var f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
                     if (f != null)
                     {
-                        formatter = f;
+                        Formatter = f;
                         return;
                     }
                 }
@@ -307,34 +311,34 @@ namespace MessagePack.Internal
     {
         public static readonly StandardResolverAllowPrivateCore Instance = new StandardResolverAllowPrivateCore();
 
-        static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
+        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
 #if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
             DynamicObjectResolverAllowPrivate.Instance, // Try Object
 #endif
         }).ToArray();
 
-        StandardResolverAllowPrivateCore()
+        private StandardResolverAllowPrivateCore()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                foreach (var item in resolvers)
+                foreach (IFormatterResolver item in Resolvers)
                 {
-                    var f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
                     if (f != null)
                     {
-                        formatter = f;
+                        Formatter = f;
                         return;
                     }
                 }
@@ -346,7 +350,7 @@ namespace MessagePack.Internal
     {
         public static readonly ContractlessStandardResolverAllowPrivateCore Instance = new ContractlessStandardResolverAllowPrivateCore();
 
-        static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
+        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
 #if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
             DynamicObjectResolverAllowPrivate.Instance, // Try Object
@@ -354,28 +358,27 @@ namespace MessagePack.Internal
 #endif
         }).ToArray();
 
-
-        ContractlessStandardResolverAllowPrivateCore()
+        private ContractlessStandardResolverAllowPrivateCore()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                foreach (var item in resolvers)
+                foreach (IFormatterResolver item in Resolvers)
                 {
-                    var f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
                     if (f != null)
                     {
-                        formatter = f;
+                        Formatter = f;
                         return;
                     }
                 }

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
@@ -41,7 +44,7 @@ namespace MessagePack
 
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
-            var methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
+            MethodInfo methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
 
             var formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
             return formatter;
@@ -52,7 +55,8 @@ namespace MessagePack
 
     public class FormatterNotRegisteredException : Exception
     {
-        public FormatterNotRegisteredException(string message) : base(message)
+        public FormatterNotRegisteredException(string message)
+            : base(message)
         {
         }
     }

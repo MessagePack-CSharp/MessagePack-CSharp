@@ -1,4 +1,7 @@
-﻿using MessagePack.Formatters;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using MessagePack.Formatters;
 
 namespace MessagePack.Resolvers
 {
@@ -14,59 +17,59 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
 
-        PrimitiveObjectResolver()
+        private PrimitiveObjectResolver()
         {
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            public static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                formatter = (typeof(T) == typeof(object))
+                Formatter = (typeof(T) == typeof(object))
                     ? (IMessagePackFormatter<T>)(object)PrimitiveObjectFormatter.Instance
                     : null;
             }
         }
     }
 
-    //#if !UNITY
+    ////#if !UNITY
 
-    //    /// <summary>
-    //    /// In `object`, when serializing resolve by concrete type and when deserializing use primitive.
-    //    /// </summary>
-    //    public sealed class DynamicObjectTypeFallbackResolver : IFormatterResolver
-    //    {
-    //        public static readonly DynamicObjectTypeFallbackResolver Instance = new DynamicObjectTypeFallbackResolver();
+    ////    /// <summary>
+    ////    /// In `object`, when serializing resolve by concrete type and when deserializing use primitive.
+    ////    /// </summary>
+    ////    public sealed class DynamicObjectTypeFallbackResolver : IFormatterResolver
+    ////    {
+    ////        public static readonly DynamicObjectTypeFallbackResolver Instance = new DynamicObjectTypeFallbackResolver();
 
-    //        DynamicObjectTypeFallbackResolver()
-    //        {
+    ////        DynamicObjectTypeFallbackResolver()
+    ////        {
 
-    //        }
+    ////        }
 
-    //        public IMessagePackFormatter<T> GetFormatter<T>()
-    //        {
-    //            return FormatterCache<T>.formatter;
-    //        }
+    ////        public IMessagePackFormatter<T> GetFormatter<T>()
+    ////        {
+    ////            return FormatterCache<T>.formatter;
+    ////        }
 
-    //        static class FormatterCache<T>
-    //        {
-    //            public static readonly IMessagePackFormatter<T> formatter;
+    ////        static class FormatterCache<T>
+    ////        {
+    ////            public static readonly IMessagePackFormatter<T> formatter;
 
-    //            static FormatterCache()
-    //            {
-    //                formatter = (typeof(T) == typeof(object))
-    //                    ? (IMessagePackFormatter<T>)(object)DynamicObjectTypeFallbackFormatter.Instance
-    //                    : null;
-    //            }
-    //        }
-    //    }
+    ////            static FormatterCache()
+    ////            {
+    ////                formatter = (typeof(T) == typeof(object))
+    ////                    ? (IMessagePackFormatter<T>)(object)DynamicObjectTypeFallbackFormatter.Instance
+    ////                    : null;
+    ////            }
+    ////        }
+    ////    }
 
-    //#endif
+    ////#endif
 }

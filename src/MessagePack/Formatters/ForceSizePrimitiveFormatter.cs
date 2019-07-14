@@ -1,5 +1,10 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Buffers;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
@@ -7,7 +12,7 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceInt16BlockFormatter Instance = new ForceInt16BlockFormatter();
 
-        ForceInt16BlockFormatter()
+        private ForceInt16BlockFormatter()
         {
         }
 
@@ -26,7 +31,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForceInt16BlockFormatter Instance = new NullableForceInt16BlockFormatter();
 
-        NullableForceInt16BlockFormatter()
+        private NullableForceInt16BlockFormatter()
         {
         }
 
@@ -59,9 +64,8 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceInt16BlockArrayFormatter Instance = new ForceInt16BlockArrayFormatter();
 
-        ForceInt16BlockArrayFormatter()
+        private ForceInt16BlockArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Int16[] value, MessagePackSerializerOptions options)
@@ -94,6 +98,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadInt16();
                 }
+
                 return array;
             }
         }
@@ -103,7 +108,7 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceInt32BlockFormatter Instance = new ForceInt32BlockFormatter();
 
-        ForceInt32BlockFormatter()
+        private ForceInt32BlockFormatter()
         {
         }
 
@@ -122,7 +127,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForceInt32BlockFormatter Instance = new NullableForceInt32BlockFormatter();
 
-        NullableForceInt32BlockFormatter()
+        private NullableForceInt32BlockFormatter()
         {
         }
 
@@ -155,9 +160,8 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceInt32BlockArrayFormatter Instance = new ForceInt32BlockArrayFormatter();
 
-        ForceInt32BlockArrayFormatter()
+        private ForceInt32BlockArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Int32[] value, MessagePackSerializerOptions options)
@@ -190,6 +194,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadInt32();
                 }
+
                 return array;
             }
         }
@@ -199,7 +204,7 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceInt64BlockFormatter Instance = new ForceInt64BlockFormatter();
 
-        ForceInt64BlockFormatter()
+        private ForceInt64BlockFormatter()
         {
         }
 
@@ -218,7 +223,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForceInt64BlockFormatter Instance = new NullableForceInt64BlockFormatter();
 
-        NullableForceInt64BlockFormatter()
+        private NullableForceInt64BlockFormatter()
         {
         }
 
@@ -251,9 +256,8 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceInt64BlockArrayFormatter Instance = new ForceInt64BlockArrayFormatter();
 
-        ForceInt64BlockArrayFormatter()
+        private ForceInt64BlockArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, Int64[] value, MessagePackSerializerOptions options)
@@ -286,6 +290,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadInt64();
                 }
+
                 return array;
             }
         }
@@ -295,7 +300,7 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceUInt16BlockFormatter Instance = new ForceUInt16BlockFormatter();
 
-        ForceUInt16BlockFormatter()
+        private ForceUInt16BlockFormatter()
         {
         }
 
@@ -314,7 +319,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForceUInt16BlockFormatter Instance = new NullableForceUInt16BlockFormatter();
 
-        NullableForceUInt16BlockFormatter()
+        private NullableForceUInt16BlockFormatter()
         {
         }
 
@@ -347,9 +352,8 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceUInt16BlockArrayFormatter Instance = new ForceUInt16BlockArrayFormatter();
 
-        ForceUInt16BlockArrayFormatter()
+        private ForceUInt16BlockArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, UInt16[] value, MessagePackSerializerOptions options)
@@ -382,6 +386,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadUInt16();
                 }
+
                 return array;
             }
         }
@@ -391,7 +396,7 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceUInt32BlockFormatter Instance = new ForceUInt32BlockFormatter();
 
-        ForceUInt32BlockFormatter()
+        private ForceUInt32BlockFormatter()
         {
         }
 
@@ -410,7 +415,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForceUInt32BlockFormatter Instance = new NullableForceUInt32BlockFormatter();
 
-        NullableForceUInt32BlockFormatter()
+        private NullableForceUInt32BlockFormatter()
         {
         }
 
@@ -443,9 +448,8 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceUInt32BlockArrayFormatter Instance = new ForceUInt32BlockArrayFormatter();
 
-        ForceUInt32BlockArrayFormatter()
+        private ForceUInt32BlockArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, UInt32[] value, MessagePackSerializerOptions options)
@@ -478,6 +482,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadUInt32();
                 }
+
                 return array;
             }
         }
@@ -487,7 +492,7 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceUInt64BlockFormatter Instance = new ForceUInt64BlockFormatter();
 
-        ForceUInt64BlockFormatter()
+        private ForceUInt64BlockFormatter()
         {
         }
 
@@ -506,7 +511,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForceUInt64BlockFormatter Instance = new NullableForceUInt64BlockFormatter();
 
-        NullableForceUInt64BlockFormatter()
+        private NullableForceUInt64BlockFormatter()
         {
         }
 
@@ -539,9 +544,8 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceUInt64BlockArrayFormatter Instance = new ForceUInt64BlockArrayFormatter();
 
-        ForceUInt64BlockArrayFormatter()
+        private ForceUInt64BlockArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, UInt64[] value, MessagePackSerializerOptions options)
@@ -574,6 +578,7 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadUInt64();
                 }
+
                 return array;
             }
         }
@@ -583,7 +588,7 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceByteBlockFormatter Instance = new ForceByteBlockFormatter();
 
-        ForceByteBlockFormatter()
+        private ForceByteBlockFormatter()
         {
         }
 
@@ -602,7 +607,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForceByteBlockFormatter Instance = new NullableForceByteBlockFormatter();
 
-        NullableForceByteBlockFormatter()
+        private NullableForceByteBlockFormatter()
         {
         }
 
@@ -631,12 +636,11 @@ namespace MessagePack.Formatters
         }
     }
 
-
     public sealed class ForceSByteBlockFormatter : IMessagePackFormatter<SByte>
     {
         public static readonly ForceSByteBlockFormatter Instance = new ForceSByteBlockFormatter();
 
-        ForceSByteBlockFormatter()
+        private ForceSByteBlockFormatter()
         {
         }
 
@@ -655,7 +659,7 @@ namespace MessagePack.Formatters
     {
         public static readonly NullableForceSByteBlockFormatter Instance = new NullableForceSByteBlockFormatter();
 
-        NullableForceSByteBlockFormatter()
+        private NullableForceSByteBlockFormatter()
         {
         }
 
@@ -688,9 +692,8 @@ namespace MessagePack.Formatters
     {
         public static readonly ForceSByteBlockArrayFormatter Instance = new ForceSByteBlockArrayFormatter();
 
-        ForceSByteBlockArrayFormatter()
+        private ForceSByteBlockArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, SByte[] value, MessagePackSerializerOptions options)
@@ -723,9 +726,9 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.ReadSByte();
                 }
+
                 return array;
             }
         }
     }
-
 }

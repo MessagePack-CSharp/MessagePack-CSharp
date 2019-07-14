@@ -1,4 +1,7 @@
-﻿#region LZ4 original
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#region LZ4 original
 
 /*
    LZ4 - Fast LZ compression algorithm
@@ -9,9 +12,9 @@
    modification, are permitted provided that the following conditions are
    met:
 
-	   * Redistributions of source code must retain the above copyright
+   * Redistributions of source code must retain the above copyright
    notice, this list of conditions and the following disclaimer.
-	   * Redistributions in binary form must reproduce the above
+   * Redistributions in binary form must reproduce the above
    copyright notice, this list of conditions and the following disclaimer
    in the documentation and/or other materials provided with the
    distribution.
@@ -62,15 +65,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endregion
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
-// ReSharper disable TooWideLocalVariableScope
-// ReSharper disable JoinDeclarationAndInitializer
-// ReSharper disable RedundantIfElseBlock
+#pragma warning disable SA1312 // Variable names should begin with lower-case letter
 
 namespace MessagePack.LZ4
 {
-    partial class LZ4Codec
+    internal partial class LZ4Codec
     {
         #region LZ4_compressCtx
 
@@ -111,12 +110,15 @@ namespace MessagePack.LZ4
                 uint h, h_fwd;
 
                 // Init
-                if (src_len < MINLENGTH) goto _last_literals;
+                if (src_len < MINLENGTH)
+                {
+                    goto _last_literals;
+                }
 
                 // First Byte
-                hash_table[(((Peek4(src, src_p)) * 2654435761u) >> HASH_ADJUST)] = (src_p - src_base);
+                hash_table[(Peek4(src, src_p) * 2654435761u) >> HASH_ADJUST] = src_p - src_base;
                 src_p++;
-                h_fwd = (((Peek4(src, src_p)) * 2654435761u) >> HASH_ADJUST);
+                h_fwd = (Peek4(src, src_p) * 2654435761u) >> HASH_ADJUST;
 
                 // Main Loop
                 while (true)
@@ -134,12 +136,16 @@ namespace MessagePack.LZ4
                         src_p = src_p_fwd;
                         src_p_fwd = src_p + step;
 
-                        if (src_p_fwd > src_mflimit) goto _last_literals;
+                        if (src_p_fwd > src_mflimit)
+                        {
+                            goto _last_literals;
+                        }
 
-                        h_fwd = (((Peek4(src, src_p_fwd)) * 2654435761u) >> HASH_ADJUST);
+                        h_fwd = (Peek4(src, src_p_fwd) * 2654435761u) >> HASH_ADJUST;
                         src_ref = src_base + hash_table[h];
-                        hash_table[h] = (src_p - src_base);
-                    } while ((src_ref < src_p - MAX_DISTANCE) || (!Equal4(src, src_ref, src_p)));
+                        hash_table[h] = src_p - src_base;
+                    }
+                    while ((src_ref < src_p - MAX_DISTANCE) || (!Equal4(src, src_ref, src_p)));
 
                     // Catch up
                     while ((src_p > src_anchor) && (src_ref > src_0) && (src[src_p - 1] == src[src_ref - 1]))
@@ -149,29 +155,35 @@ namespace MessagePack.LZ4
                     }
 
                     // Encode Literal length
-                    length = (src_p - src_anchor);
+                    length = src_p - src_anchor;
                     dst_token = dst_p++;
 
-                    if (dst_p + length + (length >> 8) > dst_LASTLITERALS_3) return 0; // Check output limit
+                    if (dst_p + length + (length >> 8) > dst_LASTLITERALS_3)
+                    {
+                        return 0; // Check output limit
+                    }
 
                     if (length >= RUN_MASK)
                     {
                         var len = length - RUN_MASK;
-                        dst[dst_token] = (RUN_MASK << ML_BITS);
+                        dst[dst_token] = RUN_MASK << ML_BITS;
                         if (len > 254)
                         {
                             do
                             {
                                 dst[dst_p++] = 255;
                                 len -= 255;
-                            } while (len > 254);
+                            }
+                            while (len > 254);
                             dst[dst_p++] = (byte)len;
                             BlockCopy(src, src_anchor, dst, dst_p, length);
                             dst_p += length;
                             goto _next_match;
                         }
                         else
+                        {
                             dst[dst_p++] = (byte)len;
+                        }
                     }
                     else
                     {
@@ -186,8 +198,9 @@ namespace MessagePack.LZ4
                         dst_p = _i;
                     }
 
-                    _next_match:
-                    // Encode Offset
+_next_match:
+
+// Encode Offset
                     Poke2(dst, dst_p, (ushort)(src_p - src_ref));
                     dst_p += 2;
 
@@ -205,22 +218,31 @@ namespace MessagePack.LZ4
                             src_ref += STEPSIZE_32;
                             continue;
                         }
-                        src_p += debruijn32[((uint)((diff) & -(diff)) * 0x077CB531u) >> 27];
+
+                        src_p += debruijn32[((uint)(diff & -diff) * 0x077CB531u) >> 27];
                         goto _endCount;
                     }
 
-                    if ((src_p < src_LASTLITERALS_1) && (Equal2(src, src_ref, src_p)))
+                    if ((src_p < src_LASTLITERALS_1) && Equal2(src, src_ref, src_p))
                     {
                         src_p += 2;
                         src_ref += 2;
                     }
-                    if ((src_p < src_LASTLITERALS) && (src[src_ref] == src[src_p])) src_p++;
 
-                    _endCount:
-                    // Encode MatchLength
-                    length = (src_p - src_anchor);
+                    if ((src_p < src_LASTLITERALS) && (src[src_ref] == src[src_p]))
+                    {
+                        src_p++;
+                    }
 
-                    if (dst_p + (length >> 8) > dst_LASTLITERALS_1) return 0; // Check output limit
+_endCount:
+
+// Encode MatchLength
+                    length = src_p - src_anchor;
+
+                    if (dst_p + (length >> 8) > dst_LASTLITERALS_1)
+                    {
+                        return 0; // Check output limit
+                    }
 
                     if (length >= ML_MASK)
                     {
@@ -231,11 +253,13 @@ namespace MessagePack.LZ4
                             dst[dst_p++] = 255;
                             dst[dst_p++] = 255;
                         }
+
                         if (length > 254)
                         {
                             length -= 255;
                             dst[dst_p++] = 255;
                         }
+
                         dst[dst_p++] = (byte)length;
                     }
                     else
@@ -251,15 +275,14 @@ namespace MessagePack.LZ4
                     }
 
                     // Fill table
-                    hash_table[(((Peek4(src, src_p - 2)) * 2654435761u) >> HASH_ADJUST)] = (src_p - 2 - src_base);
+                    hash_table[(Peek4(src, src_p - 2) * 2654435761u) >> HASH_ADJUST] = src_p - 2 - src_base;
 
                     // Test next position
-
-                    h = (((Peek4(src, src_p)) * 2654435761u) >> HASH_ADJUST);
+                    h = (Peek4(src, src_p) * 2654435761u) >> HASH_ADJUST;
                     src_ref = src_base + hash_table[h];
-                    hash_table[h] = (src_p - src_base);
+                    hash_table[h] = src_p - src_base;
 
-                    if ((src_ref > src_p - (MAX_DISTANCE + 1)) && (Equal4(src, src_ref, src_p)))
+                    if ((src_ref > src_p - (MAX_DISTANCE + 1)) && Equal4(src, src_ref, src_p))
                     {
                         dst_token = dst_p++;
                         dst[dst_token] = 0;
@@ -268,30 +291,42 @@ namespace MessagePack.LZ4
 
                     // Prepare next loop
                     src_anchor = src_p++;
-                    h_fwd = (((Peek4(src, src_p)) * 2654435761u) >> HASH_ADJUST);
+                    h_fwd = (Peek4(src, src_p) * 2654435761u) >> HASH_ADJUST;
                 }
 
-                _last_literals:
-                // Encode Last Literals
-                {
-                    var lastRun = (src_end - src_anchor);
+_last_literals:
 
-                    if (dst_p + lastRun + 1 + ((lastRun + 255 - RUN_MASK) / 255) > dst_end) return 0;
+// Encode Last Literals
+                {
+                    var lastRun = src_end - src_anchor;
+
+                    if (dst_p + lastRun + 1 + ((lastRun + 255 - RUN_MASK) / 255) > dst_end)
+                    {
+                        return 0;
+                    }
 
                     if (lastRun >= RUN_MASK)
                     {
-                        dst[dst_p++] = (RUN_MASK << ML_BITS);
+                        dst[dst_p++] = RUN_MASK << ML_BITS;
                         lastRun -= RUN_MASK;
-                        for (; lastRun > 254; lastRun -= 255) dst[dst_p++] = 255;
+                        for (; lastRun > 254; lastRun -= 255)
+                        {
+                            dst[dst_p++] = 255;
+                        }
+
                         dst[dst_p++] = (byte)lastRun;
                     }
-                    else dst[dst_p++] = (byte)(lastRun << ML_BITS);
+                    else
+                    {
+                        dst[dst_p++] = (byte)(lastRun << ML_BITS);
+                    }
+
                     BlockCopy(src, src_anchor, dst, dst_p, src_end - src_anchor);
                     dst_p += src_end - src_anchor;
                 }
 
                 // End
-                return ((dst_p) - dst_0);
+                return dst_p - dst_0;
             }
         }
 
@@ -336,11 +371,14 @@ namespace MessagePack.LZ4
                 uint h, h_fwd;
 
                 // Init
-                if (src_len < MINLENGTH) goto _last_literals;
+                if (src_len < MINLENGTH)
+                {
+                    goto _last_literals;
+                }
 
                 // First Byte
                 src_p++;
-                h_fwd = (((Peek4(src, src_p)) * 2654435761u) >> HASH64K_ADJUST);
+                h_fwd = (Peek4(src, src_p) * 2654435761u) >> HASH64K_ADJUST;
 
                 // Main Loop
                 while (true)
@@ -358,12 +396,16 @@ namespace MessagePack.LZ4
                         src_p = src_p_fwd;
                         src_p_fwd = src_p + step;
 
-                        if (src_p_fwd > src_mflimit) goto _last_literals;
+                        if (src_p_fwd > src_mflimit)
+                        {
+                            goto _last_literals;
+                        }
 
-                        h_fwd = (((Peek4(src, src_p_fwd)) * 2654435761u) >> HASH64K_ADJUST);
+                        h_fwd = (Peek4(src, src_p_fwd) * 2654435761u) >> HASH64K_ADJUST;
                         src_ref = src_base + hash_table[h];
                         hash_table[h] = (ushort)(src_p - src_base);
-                    } while (!Equal4(src, src_ref, src_p));
+                    }
+                    while (!Equal4(src, src_ref, src_p));
 
                     // Catch up
                     while ((src_p > src_anchor) && (src_ref > src_0) && (src[src_p - 1] == src[src_ref - 1]))
@@ -373,22 +415,26 @@ namespace MessagePack.LZ4
                     }
 
                     // Encode Literal length
-                    length = (src_p - src_anchor);
+                    length = src_p - src_anchor;
                     dst_token = dst_p++;
 
-                    if (dst_p + length + (length >> 8) > dst_LASTLITERALS_3) return 0; // Check output limit
+                    if (dst_p + length + (length >> 8) > dst_LASTLITERALS_3)
+                    {
+                        return 0; // Check output limit
+                    }
 
                     if (length >= RUN_MASK)
                     {
                         len = length - RUN_MASK;
-                        dst[dst_token] = (RUN_MASK << ML_BITS);
+                        dst[dst_token] = RUN_MASK << ML_BITS;
                         if (len > 254)
                         {
                             do
                             {
                                 dst[dst_p++] = 255;
                                 len -= 255;
-                            } while (len > 254);
+                            }
+                            while (len > 254);
                             dst[dst_p++] = (byte)len;
                             BlockCopy(src, src_anchor, dst, dst_p, length);
                             dst_p += length;
@@ -412,8 +458,9 @@ namespace MessagePack.LZ4
                         dst_p = _i;
                     }
 
-                    _next_match:
-                    // Encode Offset
+_next_match:
+
+// Encode Offset
                     Poke2(dst, dst_p, (ushort)(src_p - src_ref));
                     dst_p += 2;
 
@@ -431,23 +478,31 @@ namespace MessagePack.LZ4
                             src_ref += STEPSIZE_32;
                             continue;
                         }
-                        src_p += debruijn32[((uint)((diff) & -(diff)) * 0x077CB531u) >> 27];
+
+                        src_p += debruijn32[((uint)(diff & -diff) * 0x077CB531u) >> 27];
                         goto _endCount;
                     }
 
-                    if ((src_p < src_LASTLITERALS_1) && (Equal2(src, src_ref, src_p)))
+                    if ((src_p < src_LASTLITERALS_1) && Equal2(src, src_ref, src_p))
                     {
                         src_p += 2;
                         src_ref += 2;
                     }
-                    if ((src_p < src_LASTLITERALS) && (src[src_ref] == src[src_p])) src_p++;
 
-                    _endCount:
+                    if ((src_p < src_LASTLITERALS) && (src[src_ref] == src[src_p]))
+                    {
+                        src_p++;
+                    }
 
-                    // Encode MatchLength
-                    len = (src_p - src_anchor);
+_endCount:
 
-                    if (dst_p + (len >> 8) > dst_LASTLITERALS_1) return 0; // Check output limit
+// Encode MatchLength
+                    len = src_p - src_anchor;
+
+                    if (dst_p + (len >> 8) > dst_LASTLITERALS_1)
+                    {
+                        return 0; // Check output limit
+                    }
 
                     if (len >= ML_MASK)
                     {
@@ -458,11 +513,13 @@ namespace MessagePack.LZ4
                             dst[dst_p++] = 255;
                             dst[dst_p++] = 255;
                         }
+
                         if (len > 254)
                         {
                             len -= 255;
                             dst[dst_p++] = 255;
                         }
+
                         dst[dst_p++] = (byte)len;
                     }
                     else
@@ -478,11 +535,10 @@ namespace MessagePack.LZ4
                     }
 
                     // Fill table
-                    hash_table[(((Peek4(src, src_p - 2)) * 2654435761u) >> HASH64K_ADJUST)] = (ushort)(src_p - 2 - src_base);
+                    hash_table[(Peek4(src, src_p - 2) * 2654435761u) >> HASH64K_ADJUST] = (ushort)(src_p - 2 - src_base);
 
                     // Test next position
-
-                    h = (((Peek4(src, src_p)) * 2654435761u) >> HASH64K_ADJUST);
+                    h = (Peek4(src, src_p) * 2654435761u) >> HASH64K_ADJUST;
                     src_ref = src_base + hash_table[h];
                     hash_table[h] = (ushort)(src_p - src_base);
 
@@ -495,29 +551,39 @@ namespace MessagePack.LZ4
 
                     // Prepare next loop
                     src_anchor = src_p++;
-                    h_fwd = (((Peek4(src, src_p)) * 2654435761u) >> HASH64K_ADJUST);
+                    h_fwd = (Peek4(src, src_p) * 2654435761u) >> HASH64K_ADJUST;
                 }
 
-                _last_literals:
-                // Encode Last Literals
-                var lastRun = (src_end - src_anchor);
-                if (dst_p + lastRun + 1 + (lastRun - RUN_MASK + 255) / 255 > dst_end) return 0;
+_last_literals:
+
+// Encode Last Literals
+                var lastRun = src_end - src_anchor;
+                if (dst_p + lastRun + 1 + ((lastRun - RUN_MASK + 255) / 255) > dst_end)
+                {
+                    return 0;
+                }
+
                 if (lastRun >= RUN_MASK)
                 {
-                    dst[dst_p++] = (RUN_MASK << ML_BITS);
+                    dst[dst_p++] = RUN_MASK << ML_BITS;
                     lastRun -= RUN_MASK;
-                    for (; lastRun > 254; lastRun -= 255) dst[dst_p++] = 255;
+                    for (; lastRun > 254; lastRun -= 255)
+                    {
+                        dst[dst_p++] = 255;
+                    }
+
                     dst[dst_p++] = (byte)lastRun;
                 }
                 else
                 {
                     dst[dst_p++] = (byte)(lastRun << ML_BITS);
                 }
+
                 BlockCopy(src, src_anchor, dst, dst_p, src_end - src_anchor);
                 dst_p += src_end - src_anchor;
 
                 // End
-                return ((dst_p) - dst_0);
+                return dst_p - dst_0;
             }
         }
 
@@ -559,13 +625,14 @@ namespace MessagePack.LZ4
 
                     // get runlength
                     token = src[src_p++];
-                    if ((length = (token >> ML_BITS)) == RUN_MASK)
+                    if ((length = token >> ML_BITS) == RUN_MASK)
                     {
                         int len;
                         for (; (len = src[src_p++]) == 255; length += 255)
                         {
                             /* do nothing */
                         }
+
                         length += len;
                     }
 
@@ -574,29 +641,42 @@ namespace MessagePack.LZ4
 
                     if (dst_cpy > dst_COPYLENGTH)
                     {
-                        if (dst_cpy != dst_end) goto _output_error; // Error : not enough place for another match (min 4) + 5 literals
+                        if (dst_cpy != dst_end)
+                        {
+                            goto _output_error; // Error : not enough place for another match (min 4) + 5 literals
+                        }
+
                         BlockCopy(src, src_p, dst, dst_p, length);
                         src_p += length;
                         break; // EOF
                     }
+
                     if (dst_p < dst_cpy)
                     {
                         _i = WildCopy(src, src_p, dst, dst_p, dst_cpy);
                         src_p += _i;
                         dst_p += _i;
                     }
-                    src_p -= (dst_p - dst_cpy);
+
+                    src_p -= dst_p - dst_cpy;
                     dst_p = dst_cpy;
 
                     // get offset
-                    dst_ref = (dst_cpy) - Peek2(src, src_p);
+                    dst_ref = dst_cpy - Peek2(src, src_p);
                     src_p += 2;
-                    if (dst_ref < dst_0) goto _output_error; // Error : offset outside destination buffer
+                    if (dst_ref < dst_0)
+                    {
+                        goto _output_error; // Error : offset outside destination buffer
+                    }
 
                     // get matchlength
-                    if ((length = (token & ML_MASK)) == ML_MASK)
+                    if ((length = token & ML_MASK) == ML_MASK)
                     {
-                        for (; src[src_p] == 255; length += 255) src_p++;
+                        for (; src[src_p] == 255; length += 255)
+                        {
+                            src_p++;
+                        }
+
                         length += src[src_p++];
                     }
 
@@ -621,11 +701,16 @@ namespace MessagePack.LZ4
                         dst_p += 4;
                         dst_ref += 4;
                     }
+
                     dst_cpy = dst_p + length - (STEPSIZE_32 - 4);
 
                     if (dst_cpy > dst_COPYLENGTH_STEPSIZE_4)
                     {
-                        if (dst_cpy > dst_LASTLITERALS) goto _output_error; // Error : last 5 bytes must be literals
+                        if (dst_cpy > dst_LASTLITERALS)
+                        {
+                            goto _output_error; // Error : last 5 bytes must be literals
+                        }
+
                         if (dst_p < dst_COPYLENGTH)
                         {
                             _i = SecureCopy(dst, dst_ref, dst_p, dst_COPYLENGTH);
@@ -633,7 +718,11 @@ namespace MessagePack.LZ4
                             dst_p += _i;
                         }
 
-                        while (dst_p < dst_cpy) dst[dst_p++] = dst[dst_ref++];
+                        while (dst_p < dst_cpy)
+                        {
+                            dst[dst_p++] = dst[dst_ref++];
+                        }
+
                         dst_p = dst_cpy;
                         continue;
                     }
@@ -642,24 +731,19 @@ namespace MessagePack.LZ4
                     {
                         SecureCopy(dst, dst_ref, dst_p, dst_cpy);
                     }
+
                     dst_p = dst_cpy; // correction
                 }
 
                 // end of decoding
-                return ((src_p) - src_0);
+                return src_p - src_0;
 
-                // write overflow error detected
-                _output_error:
-                return (-((src_p) - src_0));
+// write overflow error detected
+_output_error:
+                return -(src_p - src_0);
             }
         }
 
         #endregion
     }
 }
-
-// ReSharper restore RedundantIfElseBlock
-// ReSharper restore JoinDeclarationAndInitializer
-// ReSharper restore TooWideLocalVariableScope
-// ReSharper restore InconsistentNaming
-// ReSharper restore CheckNamespace

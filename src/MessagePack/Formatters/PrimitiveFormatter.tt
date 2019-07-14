@@ -22,17 +22,22 @@
         typeof(DateTime)
     };
 #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Buffers;
 
+#pragma warning disable SA1649 // File name should match first type name
+
 namespace MessagePack.Formatters
-{
-<# foreach(var t in types) {  #>
+{<# foreach(var t in types) {  #>
+
     public sealed class <#= t.Name #>Formatter : IMessagePackFormatter<<#= t.Name #>>
     {
         public static readonly <#= t.Name #>Formatter Instance = new <#= t.Name #>Formatter();
 
-        <#= t.Name #>Formatter()
+        private <#= t.Name #>Formatter()
         {
         }
 
@@ -51,7 +56,7 @@ namespace MessagePack.Formatters
     {
         public static readonly Nullable<#= t.Name #>Formatter Instance = new Nullable<#= t.Name #>Formatter();
 
-        Nullable<#= t.Name #>Formatter()
+        private Nullable<#= t.Name #>Formatter()
         {
         }
 
@@ -79,15 +84,14 @@ namespace MessagePack.Formatters
             }
         }
     }
-
 <# if(t.Name != "Byte") { #>
+
     public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
     {
         public static readonly <#= t.Name #>ArrayFormatter Instance = new <#= t.Name #>ArrayFormatter();
 
-        <#= t.Name #>ArrayFormatter()
+        private <#= t.Name #>ArrayFormatter()
         {
-
         }
 
         public void Serialize(ref MessagePackWriter writer, <#= t.Name #>[] value, MessagePackSerializerOptions options)
@@ -120,11 +124,11 @@ namespace MessagePack.Formatters
                 {
                     array[i] = reader.Read<#= t.Name #>();
                 }
+
                 return array;
             }
         }
     }
 <# } #>
-
 <# } #>
 }

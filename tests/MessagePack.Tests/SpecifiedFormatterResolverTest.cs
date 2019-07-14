@@ -1,10 +1,13 @@
-﻿using MessagePack.Formatters;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Formatters;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -12,21 +15,21 @@ namespace MessagePack.Tests
     public class SpecifiedFormatterResolverTest
     {
         [MessagePackFormatter(typeof(NoObjectFormatter))]
-        class CustomClassObject
+        private class CustomClassObject
         {
-            int X;
+            private int x;
 
             public CustomClassObject(int x)
             {
-                this.X = x;
+                this.x = x;
             }
 
             public int GetX()
             {
-                return X;
+                return this.x;
             }
 
-            class NoObjectFormatter : IMessagePackFormatter<CustomClassObject>
+            private class NoObjectFormatter : IMessagePackFormatter<CustomClassObject>
             {
                 public CustomClassObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
                 {
@@ -36,27 +39,27 @@ namespace MessagePack.Tests
 
                 public void Serialize(ref MessagePackWriter writer, CustomClassObject value, MessagePackSerializerOptions options)
                 {
-                    writer.Write(value.X);
+                    writer.Write(value.x);
                 }
             }
         }
 
         [MessagePackFormatter(typeof(CustomStructObjectFormatter))]
-        struct CustomStructObject
+        private struct CustomStructObject
         {
-            int X;
+            private int x;
 
             public CustomStructObject(int x)
             {
-                this.X = x;
+                this.x = x;
             }
 
             public int GetX()
             {
-                return X;
+                return this.x;
             }
 
-            class CustomStructObjectFormatter : IMessagePackFormatter<CustomStructObject>
+            private class CustomStructObjectFormatter : IMessagePackFormatter<CustomStructObject>
             {
                 public CustomStructObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
                 {
@@ -66,18 +69,20 @@ namespace MessagePack.Tests
 
                 public void Serialize(ref MessagePackWriter writer, CustomStructObject value, MessagePackSerializerOptions options)
                 {
-                    writer.Write(value.X);
+                    writer.Write(value.x);
                 }
             }
         }
 
         [MessagePackFormatter(typeof(CustomEnumObjectFormatter))]
-        enum CustomyEnumObject
+        private enum CustomyEnumObject
         {
-            A = 0, B = 1, C = 2
+            A = 0,
+            B = 1,
+            C = 2,
         }
 
-        class CustomEnumObjectFormatter : IMessagePackFormatter<CustomyEnumObject>
+        private class CustomEnumObjectFormatter : IMessagePackFormatter<CustomyEnumObject>
         {
             public CustomyEnumObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
@@ -90,6 +95,7 @@ namespace MessagePack.Tests
                 {
                     return CustomyEnumObject.C;
                 }
+
                 return CustomyEnumObject.B;
             }
 
@@ -100,12 +106,12 @@ namespace MessagePack.Tests
         }
 
         [MessagePackFormatter(typeof(CustomInterfaceObjectFormatter))]
-        interface ICustomInterfaceObject
+        private interface ICustomInterfaceObject
         {
             int A { get; }
         }
 
-        class CustomInterfaceObjectFormatter : IMessagePackFormatter<ICustomInterfaceObject>
+        private class CustomInterfaceObjectFormatter : IMessagePackFormatter<ICustomInterfaceObject>
         {
             public ICustomInterfaceObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
@@ -119,7 +125,7 @@ namespace MessagePack.Tests
             }
         }
 
-        class InheritDefault : ICustomInterfaceObject
+        private class InheritDefault : ICustomInterfaceObject
         {
             public int A { get; }
 
@@ -129,30 +135,29 @@ namespace MessagePack.Tests
             }
         }
 
-        class HogeMoge : ICustomInterfaceObject
+        private class HogeMoge : ICustomInterfaceObject
         {
             public int A { get; set; }
         }
 
-
         [MessagePackFormatter(typeof(NoObjectFormatter), CustomyEnumObject.C)]
-        class CustomClassObjectWithArgument
+        private class CustomClassObjectWithArgument
         {
-            int X;
+            private int x;
 
             public CustomClassObjectWithArgument(int x)
             {
-                this.X = x;
+                this.x = x;
             }
 
             public int GetX()
             {
-                return X;
+                return this.x;
             }
 
-            class NoObjectFormatter : IMessagePackFormatter<CustomClassObjectWithArgument>
+            private class NoObjectFormatter : IMessagePackFormatter<CustomClassObjectWithArgument>
             {
-                CustomyEnumObject x;
+                private CustomyEnumObject x;
 
                 public NoObjectFormatter(CustomyEnumObject x)
                 {
@@ -167,12 +172,12 @@ namespace MessagePack.Tests
 
                 public void Serialize(ref MessagePackWriter writer, CustomClassObjectWithArgument value, MessagePackSerializerOptions options)
                 {
-                    writer.Write(value.X * (int)x);
+                    writer.Write(value.x * (int)this.x);
                 }
             }
         }
 
-        T Convert<T>(T value)
+        private T Convert<T>(T value)
         {
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
@@ -180,17 +185,17 @@ namespace MessagePack.Tests
         [Fact]
         public void CustomFormatters()
         {
-            Convert(new CustomClassObject(999)).GetX().Is(999);
-            Convert(new CustomStructObject(1234)).GetX().Is(1234);
-            Convert(CustomyEnumObject.C).Is(CustomyEnumObject.C);
-            Convert((CustomyEnumObject)(1234)).Is(CustomyEnumObject.B);
-            Convert<ICustomInterfaceObject>(new HogeMoge { A = 999 }).A.Is(999);
+            this.Convert(new CustomClassObject(999)).GetX().Is(999);
+            this.Convert(new CustomStructObject(1234)).GetX().Is(1234);
+            this.Convert(CustomyEnumObject.C).Is(CustomyEnumObject.C);
+            this.Convert((CustomyEnumObject)1234).Is(CustomyEnumObject.B);
+            this.Convert<ICustomInterfaceObject>(new HogeMoge { A = 999 }).A.Is(999);
         }
 
         [Fact]
         public void WithArg()
         {
-            Convert(new CustomClassObjectWithArgument(999)).GetX().Is(999 * 2);
+            this.Convert(new CustomClassObjectWithArgument(999)).GetX().Is(999 * 2);
         }
     }
 }

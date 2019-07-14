@@ -1,5 +1,5 @@
-﻿// Copyright (c) Andrew Arnott. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
 using System.Buffers;
@@ -14,7 +14,7 @@ namespace MessagePack
     /// A primitive types reader for the MessagePack format.
     /// </summary>
     /// <remarks>
-    /// <see href="https://github.com/msgpack/msgpack/blob/master/spec.md">The MessagePack spec.</see>
+    /// <see href="https://github.com/msgpack/msgpack/blob/master/spec.md">The MessagePack spec.</see>.
     /// </remarks>
 #if MESSAGEPACK_INTERNAL
     internal
@@ -67,15 +67,15 @@ namespace MessagePack
         public bool End => this.reader.End;
 
         /// <summary>
-        /// Checks whether the reader position is pointing at a nil value.
+        /// Gets a value indicating whether the reader position is pointing at a nil value.
         /// </summary>
         /// <exception cref="EndOfStreamException">Thrown if the end of the sequence provided to the constructor is reached before the expected end of the data.</exception>
-        public bool IsNil => NextCode == MessagePackCode.Nil;
+        public bool IsNil => this.NextCode == MessagePackCode.Nil;
 
         /// <summary>
         /// Gets the next message pack type to be read.
         /// </summary>
-        public MessagePackType NextMessagePackType => MessagePackCode.ToMessagePackType(NextCode);
+        public MessagePackType NextMessagePackType => MessagePackCode.ToMessagePackType(this.NextCode);
 
         /// <summary>
         /// Gets the type of the next MessagePack block.
@@ -118,7 +118,7 @@ namespace MessagePack
         /// </remarks>
         public void Skip()
         {
-            byte code = NextCode;
+            byte code = this.NextCode;
             switch (code)
             {
                 case MessagePackCode.Nil:
@@ -146,22 +146,22 @@ namespace MessagePack
                     break;
                 case MessagePackCode.Map16:
                 case MessagePackCode.Map32:
-                    ReadNextMap();
+                    this.ReadNextMap();
                     break;
                 case MessagePackCode.Array16:
                 case MessagePackCode.Array32:
-                    ReadNextArray();
+                    this.ReadNextArray();
                     break;
                 case MessagePackCode.Str8:
                 case MessagePackCode.Str16:
                 case MessagePackCode.Str32:
-                    int length = GetStringLengthInBytes();
+                    int length = this.GetStringLengthInBytes();
                     this.reader.Advance(length);
                     break;
                 case MessagePackCode.Bin8:
                 case MessagePackCode.Bin16:
                 case MessagePackCode.Bin32:
-                    length = GetBytesLength();
+                    length = this.GetBytesLength();
                     this.reader.Advance(length);
                     break;
                 case MessagePackCode.FixExt1:
@@ -172,7 +172,7 @@ namespace MessagePack
                 case MessagePackCode.Ext8:
                 case MessagePackCode.Ext16:
                 case MessagePackCode.Ext32:
-                    var header = ReadExtensionFormatHeader();
+                    ExtensionHeader header = this.ReadExtensionFormatHeader();
                     this.reader.Advance(header.Length);
                     break;
                 default:
@@ -185,19 +185,19 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
                     {
-                        ReadNextMap();
+                        this.ReadNextMap();
                         break;
                     }
 
                     if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
                     {
-                        ReadNextArray();
+                        this.ReadNextArray();
                         break;
                     }
 
                     if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
                     {
-                        length = GetStringLengthInBytes();
+                        length = this.GetStringLengthInBytes();
                         this.reader.Advance(length);
                         break;
                     }
@@ -228,7 +228,7 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryReadNil()
         {
-            if (NextCode == MessagePackCode.Nil)
+            if (this.NextCode == MessagePackCode.Nil)
             {
                 this.reader.Advance(1);
                 return true;
@@ -244,7 +244,7 @@ namespace MessagePack
         /// <returns>The sequence of bytes read.</returns>
         public ReadOnlySequence<byte> ReadRaw(long length)
         {
-            var result = this.reader.Sequence.Slice(this.reader.Position, length);
+            ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
             this.reader.Advance(length);
             return result;
         }
@@ -516,7 +516,7 @@ namespace MessagePack
         /// Expects extension type code <see cref="ReservedMessagePackExtensionTypeCode.DateTime"/>.
         /// </summary>
         /// <returns>The value.</returns>
-        public DateTime ReadDateTime() => ReadDateTime(ReadExtensionFormatHeader());
+        public DateTime ReadDateTime() => this.ReadDateTime(this.ReadExtensionFormatHeader());
 
         /// <summary>
         /// Reads a <see cref="DateTime"/> from a value encoded with
@@ -571,9 +571,9 @@ namespace MessagePack
         /// </returns>
         public ReadOnlySequence<byte> ReadBytes()
         {
-            int length = GetBytesLength();
+            int length = this.GetBytesLength();
             ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
-            var result = this.reader.Sequence.Slice(this.reader.Position, length);
+            ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
             this.reader.Advance(length);
             return result;
         }
@@ -586,14 +586,14 @@ namespace MessagePack
         /// or a code between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
         /// <returns>
-        /// The sequence of bytes. 
+        /// The sequence of bytes.
         /// The data is a slice from the original sequence passed to this reader's constructor.
         /// </returns>
         public ReadOnlySequence<byte> ReadStringSegment()
         {
-            int length = GetStringLengthInBytes();
+            int length = this.GetStringLengthInBytes();
             ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
-            var result = this.reader.Sequence.Slice(this.reader.Position, length);
+            ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
             this.reader.Advance(length);
             return result;
         }
@@ -609,7 +609,7 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ReadString()
         {
-            int byteLength = GetStringLengthInBytes();
+            int byteLength = this.GetStringLengthInBytes();
 
             ReadOnlySpan<byte> unreadSpan = this.reader.UnreadSpan;
             if (unreadSpan.Length >= byteLength)
@@ -621,7 +621,7 @@ namespace MessagePack
             }
             else
             {
-                return ReadStringSlow(byteLength);
+                return this.ReadStringSlow(byteLength);
             }
         }
 
@@ -691,13 +691,13 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Ext32"/>.
         /// </summary>
         /// <returns>
-        /// The extension format. 
+        /// The extension format.
         /// The data is a slice from the original sequence passed to this reader's constructor.
         /// </returns>
         public ExtensionResult ReadExtensionFormat()
         {
-            var header = ReadExtensionFormatHeader();
-            var data = this.reader.Sequence.Slice(this.reader.Position, header.Length);
+            ExtensionHeader header = this.ReadExtensionFormatHeader();
+            ReadOnlySequence<byte> data = this.reader.Sequence.Slice(this.reader.Position, header.Length);
             this.reader.Advance(header.Length);
             return new ExtensionResult(header.TypeCode, data);
         }
@@ -775,7 +775,7 @@ namespace MessagePack
                 return code & 0x1F;
             }
 
-            return GetStringLengthInBytesSlow(code);
+            return this.GetStringLengthInBytesSlow(code);
         }
 
         private int GetStringLengthInBytesSlow(byte code)
@@ -813,7 +813,7 @@ namespace MessagePack
             // We need to decode bytes incrementally across multiple spans.
             int maxCharLength = StringEncoding.UTF8.GetMaxCharCount(byteLength);
             char[] charArray = ArrayPool<char>.Shared.Rent(maxCharLength);
-            var decoder = StringEncoding.UTF8.GetDecoder();
+            System.Text.Decoder decoder = StringEncoding.UTF8.GetDecoder();
 
             int remainingByteLength = byteLength;
             int initializedChars = 0;
@@ -844,20 +844,20 @@ namespace MessagePack
 
         private void ReadNextArray()
         {
-            int count = ReadArrayHeader();
+            int count = this.ReadArrayHeader();
             for (int i = 0; i < count; i++)
             {
-                Skip();
+                this.Skip();
             }
         }
 
         private void ReadNextMap()
         {
-            int count = ReadMapHeader();
+            int count = this.ReadMapHeader();
             for (int i = 0; i < count; i++)
             {
-                Skip(); // key
-                Skip(); // value
+                this.Skip(); // key
+                this.Skip(); // value
             }
         }
     }
