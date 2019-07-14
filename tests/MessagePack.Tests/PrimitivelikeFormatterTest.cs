@@ -62,7 +62,7 @@ namespace MessagePack.Tests
 
             using (var sequence = new Sequence<byte>())
             {
-                var oldSpecWriter = new MessagePackWriter(sequence) { OldSpec = true };
+                var oldSpecWriter = new MessagePackWriter(sequence, oldSpec: true);
                 MessagePackSerializer.Serialize(ref oldSpecWriter, data);
                 oldSpecWriter.Flush();
                 var a = sequence.AsReadOnlySequence.ToArray();
@@ -92,7 +92,7 @@ namespace MessagePack.Tests
 
             using (var sequence = new Sequence<byte>())
             {
-                var oldSpecWriter = new MessagePackWriter(sequence) { OldSpec = true };
+                var oldSpecWriter = new MessagePackWriter(sequence, oldSpec: true);
                 MessagePackSerializer.Serialize(ref oldSpecWriter, data);
                 oldSpecWriter.Flush();
                 var a = sequence.AsReadOnlySequence.ToArray();

@@ -23,18 +23,19 @@ namespace MessagePack
 #else
     public
 #endif
-    ref struct MessagePackWriter
+    readonly ref struct MessagePackWriter
     {
         /// <summary>
         /// The writer to use.
         /// </summary>
-        private BufferWriter writer;
+        private readonly BufferWriter writer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct.
         /// </summary>
         /// <param name="writer">The writer to use.</param>
-        public MessagePackWriter(IBufferWriter<byte> writer)
+        /// <param name="oldSpec">A value indicating whether to write in <see href="https://github.com/msgpack/msgpack/blob/master/spec-old.md">old spec</see> compatibility mode.</param>
+        public MessagePackWriter(IBufferWriter<byte> writer, bool oldSpec = false)
         {
             this.writer = new BufferWriter(writer);
             this.OldSpec = false;
@@ -52,9 +53,9 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to write in <see href="https://github.com/msgpack/msgpack/blob/master/spec-old.md">old spec</see> compatibility mode.
+        /// Gets a value indicating whether to write in <see href="https://github.com/msgpack/msgpack/blob/master/spec-old.md">old spec</see> compatibility mode.
         /// </summary>
-        public bool OldSpec { get; set; }
+        public bool OldSpec { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct,
@@ -62,10 +63,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="writer">The writer to use for the new instance.</param>
         /// <returns>The new writer.</returns>
-        public MessagePackWriter Clone(IBufferWriter<byte> writer) => new MessagePackWriter(writer)
-        {
-            OldSpec = this.OldSpec,
-        };
+        public MessagePackWriter Clone(IBufferWriter<byte> writer) => new MessagePackWriter(writer, this.OldSpec);
 
         /// <summary>
         /// Ensures everything previously written has been flushed to the underlying <see cref="IBufferWriter{T}"/>.

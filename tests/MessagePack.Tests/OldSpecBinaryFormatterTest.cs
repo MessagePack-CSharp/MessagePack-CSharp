@@ -25,7 +25,7 @@ namespace MessagePack.Tests
         {
             var sourceBytes = Enumerable.Range(0, arrayLength).Select(i => unchecked((byte)i)).ToArray(); // long byte array
             var messagePackBytes = new Sequence<byte>();
-            var messagePackBytesWriter = new MessagePackWriter(messagePackBytes) { OldSpec = true };
+            var messagePackBytesWriter = new MessagePackWriter(messagePackBytes, oldSpec: true);
             MessagePackSerializer.Serialize(ref messagePackBytesWriter, sourceBytes);
             messagePackBytesWriter.Flush();
             Assert.NotEqual(0, messagePackBytes.Length);
@@ -39,7 +39,7 @@ namespace MessagePack.Tests
         {
             byte[] sourceBytes = null;
             var messagePackBytes = new Sequence<byte>();
-            var messagePackBytesWriter = new MessagePackWriter(messagePackBytes) { OldSpec = true };
+            var messagePackBytesWriter = new MessagePackWriter(messagePackBytes, oldSpec: true);
             MessagePackSerializer.Serialize(ref messagePackBytesWriter, sourceBytes);
             messagePackBytesWriter.Flush();
             Assert.Equal(1, messagePackBytes.Length);
