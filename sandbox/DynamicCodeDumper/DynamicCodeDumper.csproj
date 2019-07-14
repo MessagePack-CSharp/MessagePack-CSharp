@@ -4,7 +4,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.Annotations\Attributes.cs">
+    <Compile Include="..\..\src\MessagePack\Attributes.cs">
       <Link>Code\Attributes.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\FloatBits.cs">
@@ -25,7 +25,7 @@
     <Compile Include="..\..\src\MessagePack\IFormatterResolver.cs">
       <Link>Code\IFormatterResolver.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack.Annotations\IMessagePackSerializationCallbackReceiver.cs">
+    <Compile Include="..\..\src\MessagePack\IMessagePackSerializationCallbackReceiver.cs">
       <Link>Code\IMessagePackSerializationCallbackReceiver.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack\Internal\AutomataDictionary.cs">
