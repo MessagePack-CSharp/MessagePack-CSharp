@@ -14,12 +14,18 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly NativeDateTimeResolver Instance = new NativeDateTimeResolver();
+        public static readonly NativeDateTimeResolver Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
+
+        static NativeDateTimeResolver()
+        {
+            Instance = new NativeDateTimeResolver();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
         private NativeDateTimeResolver()
         {

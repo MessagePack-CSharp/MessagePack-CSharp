@@ -15,12 +15,18 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly DynamicEnumAsStringResolver Instance = new DynamicEnumAsStringResolver();
+        public static readonly DynamicEnumAsStringResolver Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
+
+        static DynamicEnumAsStringResolver()
+        {
+            Instance = new DynamicEnumAsStringResolver();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
         private DynamicEnumAsStringResolver()
         {

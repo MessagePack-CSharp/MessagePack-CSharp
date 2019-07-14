@@ -10,12 +10,18 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly PrimitiveObjectResolver Instance = new PrimitiveObjectResolver();
+        public static readonly PrimitiveObjectResolver Instance;
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(Instance);
+        public static readonly MessagePackSerializerOptions Options;
+
+        static PrimitiveObjectResolver()
+        {
+            Instance = new PrimitiveObjectResolver();
+            Options = new MessagePackSerializerOptions(Instance);
+        }
 
         private PrimitiveObjectResolver()
         {
