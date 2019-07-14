@@ -43,6 +43,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>FormatterTemplate.tt</DependentUpon>
     </Compile>
+    <Compile Update="Generator\ResolverTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResolverTemplate.tt</DependentUpon>
+    </Compile>
     <Compile Update="Generator\UnionTemplate.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -58,6 +63,10 @@
     <None Update="Generator\FormatterTemplate.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
       <LastGenOutput>FormatterTemplate.cs</LastGenOutput>
+    </None>
+    <None Update="Generator\ResolverTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>ResolverTemplate.cs</LastGenOutput>
     </None>
     <None Update="Generator\UnionTemplate.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
