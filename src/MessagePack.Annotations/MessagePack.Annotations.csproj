@@ -7,7 +7,7 @@
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack annotations for C#</Title>
-    <Description>Extremely Fast MessagePack(MsgPack) Serializer for C#(.NET, .NET Core, Unity, Xamarin).</Description>
+    <Description>Attributes and interfaces for .NET types serializable with MessagePack.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
   </PropertyGroup>
 
