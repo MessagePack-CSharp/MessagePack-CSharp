@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
   </ItemGroup>
 
 </Project>
