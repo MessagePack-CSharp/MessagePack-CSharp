@@ -50,17 +50,17 @@ namespace MessagePack.UnityClient.Tests
 
     public class ValueTupleFormatter<T1, T2> : IMessagePackFormatter<ValueTuple<T1, T2>>
     {
-        public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2> value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
 
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, formatterResolver);
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, formatterResolver);
+            options.Resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
+            options.Resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
 
             
         }
 
-        public ValueTuple<T1, T2> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public ValueTuple<T1, T2> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {
@@ -71,8 +71,8 @@ namespace MessagePack.UnityClient.Tests
                 var count = reader.ReadArrayHeader();
                 if (count != 2) throw new InvalidOperationException("Invalid ValueTuple count");
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, formatterResolver);
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, formatterResolver);
+                var item1 = options.Resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                var item2 = options.Resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
 
                 return new ValueTuple<T1, T2>(item1, item2);
             }
@@ -82,16 +82,16 @@ namespace MessagePack.UnityClient.Tests
 
     public class ValueTupleFormatter<T1, T2, T3> : IMessagePackFormatter<ValueTuple<T1, T2, T3>>
     {
-        public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3> value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(3);
 
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, formatterResolver);
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, formatterResolver);
-            formatterResolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, formatterResolver);
+            options.Resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
+            options.Resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
+            options.Resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
         }
 
-        public ValueTuple<T1, T2, T3> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public ValueTuple<T1, T2, T3> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {
@@ -102,9 +102,9 @@ namespace MessagePack.UnityClient.Tests
                 var count = reader.ReadArrayHeader();
                 if (count != 3) throw new InvalidOperationException("Invalid ValueTuple count");
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, formatterResolver);
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, formatterResolver);
-                var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, formatterResolver);
+                var item1 = options.Resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                var item2 = options.Resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                var item3 = options.Resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
 
                 return new ValueTuple<T1, T2, T3>(item1, item2, item3);
             }
@@ -114,19 +114,19 @@ namespace MessagePack.UnityClient.Tests
 
     public class ValueTupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<ValueTuple<T1, T2, T3, T4>>
     {
-        public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3, T4> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, ValueTuple<T1, T2, T3, T4> value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(4);
 
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, formatterResolver);
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, formatterResolver);
-            formatterResolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, formatterResolver);
-            formatterResolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, formatterResolver);
+            options.Resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
+            options.Resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
+            options.Resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
+            options.Resolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
 
             
         }
 
-        public ValueTuple<T1, T2, T3, T4> Deserialize(ref MessagePackReader reader, IFormatterResolver formatterResolver)
+        public ValueTuple<T1, T2, T3, T4> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {
@@ -137,10 +137,10 @@ namespace MessagePack.UnityClient.Tests
                 var count = reader.ReadArrayHeader();
                 if (count != 4) throw new InvalidOperationException("Invalid ValueTuple count");
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, formatterResolver);
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, formatterResolver);
-                var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, formatterResolver);
-                var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, formatterResolver);
+                var item1 = options.Resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                var item2 = options.Resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                var item3 = options.Resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                var item4 = options.Resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
 
                 return new ValueTuple<T1, T2, T3, T4>(item1, item2, item3, item4);
             }
@@ -169,12 +169,10 @@ namespace MessagePack.UnityClient.Tests
 
     public class MultiDimensionalArrayTest
     {
-        MessagePackSerializer serializer = new MessagePackSerializer();
-
         T Convert<T>(T value)
         {
-            var resolver = new IntTupleRegistered();
-            return serializer.Deserialize<T>(serializer.Serialize(value, resolver), resolver);
+            var options = MessagePackSerializerOptions.Default.WithResolver(new IntTupleRegistered());
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
         public void MDArrayTest()

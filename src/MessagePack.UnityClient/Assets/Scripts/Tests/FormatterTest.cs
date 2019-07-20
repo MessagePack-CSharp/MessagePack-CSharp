@@ -6,11 +6,9 @@ namespace MessagePack.UnityClient.Tests
 {
     public class FormatterTest
     {
-        private readonly MessagePackSerializer serializer = new MessagePackSerializer(MsgPackUnsafeDefaultResolver.Instance);
-
-        private T Convert<T>(T value)
+        private static T Convert<T>(T value)
         {
-            return this.serializer.Deserialize<T>(this.serializer.Serialize(value));
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, MsgPackUnsafeDefaultResolver.Options), MsgPackUnsafeDefaultResolver.Options);
         }
 
         public void PrimitiveFormatterTest()
@@ -19,7 +17,6 @@ namespace MessagePack.UnityClient.Tests
             Convert(Double.MinValue).Is(Double.MinValue);
             Convert(DateTime.MinValue.ToUniversalTime()).Is(DateTime.MinValue.ToUniversalTime());
         }
-
 
         public void EnumFormatterTest()
         {
