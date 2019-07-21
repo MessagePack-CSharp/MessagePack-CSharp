@@ -5,115 +5,115 @@
     <DefineConstants>$(DefineConstants);DYNAMICCODEDUMPER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.Annotations\Attributes.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\Attributes.cs">
       <Link>Code\Attributes.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\FloatBits.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\FloatBits.cs">
       <Link>Code\FloatBits.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\BufferWriter.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\BufferWriter.cs">
       <Link>Code\BufferWriter.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Formatters\IMessagePackFormatter`1.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\IMessagePackFormatter`1.cs">
       <Link>Code\IMessagePackFormatter`1.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Formatters\NullableFormatter.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\NullableFormatter.cs">
       <Link>Code\NullableFormatter.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Formatters\DateTimeFormatters.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\DateTimeFormatters.cs">
       <Link>Code\DateTimeFormatters.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\IFormatterResolver.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\IFormatterResolver.cs">
       <Link>Code\IFormatterResolver.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack.Annotations\IMessagePackSerializationCallbackReceiver.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\IMessagePackSerializationCallbackReceiver.cs">
       <Link>Code\IMessagePackSerializationCallbackReceiver.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\AutomataDictionary.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataDictionary.cs">
       <Link>Code\AutomataDictionary.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\ByteArrayComparer.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ByteArrayComparer.cs">
       <Link>Code\ByteArrayComparer.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\ByteArrayStringHashTable.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ByteArrayStringHashTable.cs">
       <Link>Code\ByteArrayStringHashTable.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\CodeGenHelpers.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\CodeGenHelpers.cs">
       <Link>Code\CodeGenHelpers.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\DynamicAssembly.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs">
       <Link>Code\DynamicAssembly.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\ExpressionUtility.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ExpressionUtility.cs">
       <Link>Code\ExpressionUtility.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\FarmHash.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\FarmHash.cs">
       <Link>Code\FarmHash.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\ILGeneratorExtensions.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs">
       <Link>Code\ILGeneratorExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\ReflectionExtensions.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ReflectionExtensions.cs">
       <Link>Code\ReflectionExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\UnsafeMemory.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.cs">
       <Link>Code\UnsafeMemory.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\UnsafeMemory.Low.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.Low.cs">
       <Link>Code\UnsafeMemory.Low.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\ExtensionHeader.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionHeader.cs">
       <Link>Code\ExtensionHeader.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\ExtensionResult.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionResult.cs">
       <Link>Code\ExtensionResult.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\MessagePackSerializerOptions.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializerOptions.cs">
       <Link>Code\MessagePackSerializerOptions.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\MessagePackReader.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.cs">
       <Link>Code\MessagePackReader.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\MessagePackReader.Integers.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.Integers.cs">
       <Link>Code\MessagePackReader.Integers.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\MessagePackWriter.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackWriter.cs">
       <Link>Code\MessagePackWriter.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\SequencePool.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequencePool.cs">
       <Link>Code\SequencePool.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\SequenceReader.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReader.cs">
       <Link>Code\SequenceReader.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\SequenceReaderExtensions.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions.cs">
       <Link>Code\SequenceReaderExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\MessagePackCode.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs">
       <Link>Code\MessagePackCode.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Internal\DateTimeConstants.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DateTimeConstants.cs">
       <Link>Code\Internal\DateTimeConstants.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Nil.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Nil.cs">
       <Link>Code\Nil.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Utilities.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Utilities.cs">
       <Link>Code\Utilities.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Resolvers\DynamicEnumResolver.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Resolvers\DynamicEnumResolver.cs">
       <Link>Code\DynamicEnumResolver.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Resolvers\DynamicObjectResolver.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Resolvers\DynamicObjectResolver.cs">
       <Link>Code\DynamicObjectResolver.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\Resolvers\DynamicUnionResolver.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Resolvers\DynamicUnionResolver.cs">
       <Link>Code\DynamicUnionResolver.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack\StringEncoding.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs">
       <Link>Code\StringEncoding.cs</Link>
     </Compile>
-    <Compile Include="..\SharedData\Class1.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\Class1.cs">
       <Link>Class1.cs</Link>
     </Compile>
   </ItemGroup>

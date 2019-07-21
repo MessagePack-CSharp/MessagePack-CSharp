@@ -11,4 +11,8 @@
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**\*.cs" />
+  </ItemGroup>
+
 </Project>

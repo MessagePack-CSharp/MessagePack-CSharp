@@ -1,1 +1,0 @@
-../../../../MessagePack.Annotations/IMessagePackSerializationCallbackReceiver.cs

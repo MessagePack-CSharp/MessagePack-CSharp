@@ -13,6 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
   </ItemGroup>

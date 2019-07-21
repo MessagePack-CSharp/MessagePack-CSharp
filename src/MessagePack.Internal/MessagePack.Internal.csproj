@@ -20,21 +20,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack\BufferWriter.cs" />
-    <Compile Include="..\MessagePack\ExtensionHeader.cs" />
-    <Compile Include="..\MessagePack\ExtensionResult.cs" />
-    <Compile Include="..\MessagePack\FloatBits.cs" />
-    <Compile Include="..\MessagePack\MessagePackCode.cs" />
-    <Compile Include="..\MessagePack\MessagePackReader.cs" />
-    <Compile Include="..\MessagePack\MessagePackReader.Integers.cs" />
-    <Compile Include="..\MessagePack\MessagePackWriter.cs" />
-    <Compile Include="..\MessagePack\Nil.cs" />
-    <Compile Include="..\MessagePack\SequencePool.cs" />
-    <Compile Include="..\MessagePack\SequenceReader.cs" />
-    <Compile Include="..\MessagePack\SequenceReaderExtensions.cs" />
-    <Compile Include="..\MessagePack\StringEncoding.cs" />
-    <Compile Include="..\MessagePack\Internal\DateTimeConstants.cs" />
-    <Compile Include="..\MessagePack\Internal\GuidBits.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\BufferWriter.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionHeader.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionResult.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\FloatBits.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.Integers.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackWriter.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Nil.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequencePool.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReader.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DateTimeConstants.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\GuidBits.cs" />
   </ItemGroup>
 
 </Project>

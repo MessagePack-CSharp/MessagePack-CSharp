@@ -7,11 +7,9 @@ namespace MessagePack.UnityClient.Tests
 {
     public class CollectionFormatterTest
     {
-        private readonly MessagePackSerializer serializer = new MessagePackSerializer(MsgPackUnsafeDefaultResolver.Instance);
-
         private T Convert<T>(T value)
         {
-            return this.serializer.Deserialize<T>(this.serializer.Serialize(value));
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, MsgPackUnsafeDefaultResolver.Options), MsgPackUnsafeDefaultResolver.Options);
         }
 
         public void DictionaryTestAll()

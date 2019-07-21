@@ -22,8 +22,9 @@ fi
 
 echo Writing log to ${LOGFILE}
 
-/opt/Unity/Editor/Unity \
+$UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -batchmode \
+    -quit \
     -nographics \
     -silent-crashes \
     -noUpm \

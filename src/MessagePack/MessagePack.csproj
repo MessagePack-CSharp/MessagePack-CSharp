@@ -16,16 +16,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="bin\**" />
-    <Compile Remove="obj\**" />
-    <EmbeddedResource Remove="bin\**" />
-    <EmbeddedResource Remove="obj\**" />
-    <None Remove="*.meta" />
-    <None Remove="bin\**" />
-    <None Remove="obj\**" />
-    <None Remove="Resolvers\*.meta" />
-    <None Remove="Internal\*.meta" />
-    <None Remove="Formatters\*.meta" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs"
+             Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,59 +35,59 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Formatters\ForceSizePrimitiveFormatter.tt">
+    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\ForceSizePrimitiveFormatter.tt">
       <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </None>
-    <None Update="Formatters\PrimitiveFormatter.tt">
+    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
     </None>
-    <None Update="Formatters\TupleFormatter.tt">
+    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\TupleFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>TupleFormatter.cs</LastGenOutput>
     </None>
-    <None Update="Formatters\ValueTupleFormatter.tt">
+    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
     </None>
-    <None Update="Internal\UnsafeMemory.tt">
+    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.tt">
       <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </None>
-    <None Update="MessagePackReader.Integers.tt">
+    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.Integers.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>MessagePackReader.Integers.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Formatters\ForceSizePrimitiveFormatter.cs">
+    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\ForceSizePrimitiveFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>ForceSizePrimitiveFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="Formatters\PrimitiveFormatter.cs">
+    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="Formatters\TupleFormatter.cs">
+    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\TupleFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>TupleFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="Formatters\ValueTupleFormatter.cs">
+    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="Internal\UnsafeMemory.cs">
+    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.cs">
       <DependentUpon>UnsafeMemory.tt</DependentUpon>
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
     </Compile>
-    <Compile Update="MessagePackReader.Integers.cs">
+    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.Integers.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>MessagePackReader.Integers.tt</DependentUpon>
