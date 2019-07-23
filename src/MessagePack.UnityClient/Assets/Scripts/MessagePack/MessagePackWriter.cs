@@ -758,6 +758,26 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Writes a <see cref="byte"/>[], prefixed with a length encoded as the smallest fitting from:
+        /// <see cref="MessagePackCode.Bin8"/>,
+        /// <see cref="MessagePackCode.Bin16"/>,
+        /// <see cref="MessagePackCode.Bin32"/>,
+        /// or <see cref="MessagePackCode.Nil"/> if <paramref name="src"/> is <c>null</c>.
+        /// </summary>
+        /// <param name="src">The array of bytes to write.</param>
+        public void Write(byte[] src)
+        {
+            if (src == null)
+            {
+                this.WriteNil();
+            }
+            else
+            {
+                this.Write(src.AsSpan());
+            }
+        }
+
+        /// <summary>
         /// Writes a span of bytes, prefixed with a length encoded as the smallest fitting from:
         /// <see cref="MessagePackCode.Bin8"/>,
         /// <see cref="MessagePackCode.Bin16"/>, or

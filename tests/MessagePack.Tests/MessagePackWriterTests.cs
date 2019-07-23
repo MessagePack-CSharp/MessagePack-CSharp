@@ -34,5 +34,28 @@ namespace MessagePack.Tests
             Assert.Equal(1, written[0]);
             Assert.Equal(2, written[7]);
         }
+
+        [Fact]
+        public void Write_ByteArray_null()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write((byte[])null);
+            writer.Flush();
+            var reader = new MessagePackReader(sequence.AsReadOnlySequence);
+            Assert.True(reader.TryReadNil());
+        }
+
+        [Fact]
+        public void Write_ByteArray()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            var buffer = new byte[] { 1, 2, 3 };
+            writer.Write(buffer);
+            writer.Flush();
+            var reader = new MessagePackReader(sequence.AsReadOnlySequence);
+            Assert.Equal(buffer, reader.ReadBytes().ToArray());
+        }
     }
 }
