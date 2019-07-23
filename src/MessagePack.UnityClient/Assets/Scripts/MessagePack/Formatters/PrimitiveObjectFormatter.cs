@@ -35,7 +35,7 @@ namespace MessagePack.Formatters
         {
         }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
         public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
         {
@@ -135,7 +135,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-#if UNITY_STANDALONE && !NETFX_CORE
+#if UNITY_2018_3_OR_NEWER && !NETFX_CORE
                 if (t.IsEnum)
 #else
                 if (t.GetTypeInfo().IsEnum)

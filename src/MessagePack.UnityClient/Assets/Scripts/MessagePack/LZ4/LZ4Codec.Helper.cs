@@ -7,7 +7,7 @@ namespace MessagePack.LZ4
 {
     internal partial class LZ4Codec
     {
-#if UNITY_STANDALONE
+#if UNITY_2018_3_OR_NEWER
 
         // use 'Safe' code for Unity because in IL2CPP gots strange behaviour.
 

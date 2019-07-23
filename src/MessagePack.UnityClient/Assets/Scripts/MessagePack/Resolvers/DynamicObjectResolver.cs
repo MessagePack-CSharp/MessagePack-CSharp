@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
 using System;
 using System.Buffers;
@@ -302,7 +302,7 @@ namespace MessagePack.Internal
 {
     internal static class DynamicObjectTypeBuilder
     {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 #else
         static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");
@@ -753,7 +753,7 @@ namespace MessagePack.Internal
                     il.Emit(OpCodes.Call, ReadOnlySpanFromByteArray); // convert byte[] to ReadOnlySpan<byte>
 
                     // Optimize, WriteRaw(Unity, large) or UnsafeMemory32/64.WriteRawX
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
                     var valueLen = CodeGenHelpers.GetEncodedStringBytes(item.StringKey).Length;
                     if (valueLen <= MessagePackRange.MaxFixStringLength)
                     {

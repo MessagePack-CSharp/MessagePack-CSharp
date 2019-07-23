@@ -6,7 +6,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 using System.Collections.Concurrent;
 #endif
 
@@ -14,7 +14,7 @@ using System.Collections.Concurrent;
 
 namespace MessagePack.Formatters
 {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
     // unfortunately, can't use IDictionary<KVP> because supports IReadOnlyDictionary.
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary> : IMessagePackFormatter<TDictionary>

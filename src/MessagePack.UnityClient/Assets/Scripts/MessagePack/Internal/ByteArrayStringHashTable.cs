@@ -94,7 +94,7 @@ namespace MessagePack.Internal
             }
 
             {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
                 ref Entry v = ref entry[0];
 #else
                 var v = entry[0];
@@ -108,7 +108,7 @@ namespace MessagePack.Internal
 
             for (int i = 1; i < entry.Length; i++)
             {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
                 ref Entry v = ref entry[i];
 #else
                 var v = entry[i];
@@ -125,16 +125,16 @@ NOT_FOUND:
             return false;
         }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         private static readonly bool Is32Bit = IntPtr.Size == 4;
 #endif
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
         private static ulong ByteArrayGetHashCode(ReadOnlySpan<byte> x)
         {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
             // FarmHash https://github.com/google/farmhash
             if (x == null)
             {
