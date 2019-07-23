@@ -1209,11 +1209,11 @@ namespace MessagePack.Internal
                 || type == typeof(byte)
                 || type == typeof(sbyte)
                 || type == typeof(char)
-                || type == typeof(string)
                 || type == typeof(byte[])
 
             // Do not include types that resolvers are allowed to modify.
             ////|| type == typeof(DateTime) // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
+            ////|| type == typeof(string) // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
             ;
         }
 
