@@ -970,7 +970,8 @@ namespace MessagePack
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,.
+        /// <see cref="MessagePackCode.Str32"/>,
+        /// or <see cref="MessagePackCode.Nil"/> if the <paramref name="value"/> is <c>null</c>.
         /// </summary>
         /// <param name="value">The value to write. Must not be null.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -978,7 +979,8 @@ namespace MessagePack
         {
             if (value == null)
             {
-                ThrowArgumentNullException(nameof(value));
+                this.WriteNil();
+                return;
             }
 
             ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
