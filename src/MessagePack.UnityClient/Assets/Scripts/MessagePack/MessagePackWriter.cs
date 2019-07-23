@@ -874,7 +874,7 @@ namespace MessagePack
         /// Writes out an array of bytes that (may) represent a UTF-8 encoded string, prefixed with the length using one of these message codes:
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
-        /// <see cref="MessagePackCode.Str16"/>,
+        /// <see cref="MessagePackCode.Str16"/>, or
         /// <see cref="MessagePackCode.Str32"/>.
         /// </summary>
         /// <param name="utf8stringBytes">The bytes to write.</param>
@@ -918,7 +918,7 @@ namespace MessagePack
         /// Writes out an array of bytes that (may) represent a UTF-8 encoded string, prefixed with the length using one of these message codes:
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
-        /// <see cref="MessagePackCode.Str16"/>,
+        /// <see cref="MessagePackCode.Str16"/>, or
         /// <see cref="MessagePackCode.Str32"/>.
         /// </summary>
         /// <param name="utf8stringBytes">The bytes to write.</param>
