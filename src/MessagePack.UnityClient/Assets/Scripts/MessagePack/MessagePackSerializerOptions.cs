@@ -36,10 +36,11 @@ namespace MessagePack
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class.
         /// </summary>
-        internal MessagePackSerializerOptions(IFormatterResolver resolver, bool useLZ4Compression = false)
+        internal MessagePackSerializerOptions(IFormatterResolver resolver, bool useLZ4Compression = false, bool? oldSpec = null)
         {
             this.Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
             this.UseLZ4Compression = useLZ4Compression;
+            this.OldSpec = oldSpec;
         }
 
         /// <summary>
@@ -58,17 +59,38 @@ namespace MessagePack
         public bool UseLZ4Compression { get; }
 
         /// <summary>
+        /// Gets a value indicating whether to serialize with <see cref="MessagePackWriter.OldSpec"/> set to some value
+        /// causing messagepack spec compliance to be explicitly set to the old or new format.
+        /// </summary>
+        /// <value>
+        /// A null value means the <see cref="MessagePackWriter"/>'s default or previous setting will be used.
+        /// A non-null value will be applied to the <see cref="MessagePackWriter.OldSpec"/> property for the duration of a
+        /// serialization and then reverted to its prior setting.
+        /// </value>
+        /// <remarks>
+        /// Reading always supports both new and old spec.
+        /// </remarks>
+        public bool? OldSpec { get; }
+
+        /// <summary>
         /// Gets a copy of these options with the <see cref="Resolver"/> property set to a new value.
         /// </summary>
         /// <param name="resolver">The new value for the <see cref="Resolver"/>.</param>
         /// <returns>The new instance; or the original if the value is unchanged.</returns>
-        public MessagePackSerializerOptions WithResolver(IFormatterResolver resolver) => this.Resolver != resolver ? new MessagePackSerializerOptions(resolver, this.UseLZ4Compression) : this;
+        public MessagePackSerializerOptions WithResolver(IFormatterResolver resolver) => this.Resolver != resolver ? new MessagePackSerializerOptions(resolver, this.UseLZ4Compression, this.OldSpec) : this;
 
         /// <summary>
         /// Gets a copy of these options with the <see cref="UseLZ4Compression"/> property set to a new value.
         /// </summary>
         /// <param name="useLZ4Compression">The new value for the <see cref="UseLZ4Compression"/>.</param>
         /// <returns>The new instance; or the original if the value is unchanged.</returns>
-        public MessagePackSerializerOptions WithLZ4Compression(bool useLZ4Compression = true) => this.UseLZ4Compression != useLZ4Compression ? new MessagePackSerializerOptions(this.Resolver, useLZ4Compression) : this;
+        public MessagePackSerializerOptions WithLZ4Compression(bool useLZ4Compression = true) => this.UseLZ4Compression != useLZ4Compression ? new MessagePackSerializerOptions(this.Resolver, useLZ4Compression, this.OldSpec) : this;
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="OldSpec"/> property set to a new value.
+        /// </summary>
+        /// <param name="oldSpec">The new value for the <see cref="OldSpec"/>.</param>
+        /// <returns>The new instance; or the original if the value is unchanged.</returns>
+        public MessagePackSerializerOptions WithOldSpec(bool? oldSpec = true) => this.OldSpec != oldSpec ? new MessagePackSerializerOptions(this.Resolver, this.UseLZ4Compression, oldSpec) : this;
     }
 }
