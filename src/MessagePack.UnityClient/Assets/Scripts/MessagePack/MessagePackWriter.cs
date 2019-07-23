@@ -761,7 +761,7 @@ namespace MessagePack
         /// Writes a span of bytes, prefixed with a length encoded as the smallest fitting from:
         /// <see cref="MessagePackCode.Bin8"/>,
         /// <see cref="MessagePackCode.Bin16"/>, or
-        /// <see cref="MessagePackCode.Bin32"/>,.
+        /// <see cref="MessagePackCode.Bin32"/>.
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         public void Write(ReadOnlySpan<byte> src)
@@ -811,7 +811,7 @@ namespace MessagePack
         /// Writes a sequence of bytes, prefixed with a length encoded as the smallest fitting from:
         /// <see cref="MessagePackCode.Bin8"/>,
         /// <see cref="MessagePackCode.Bin16"/>, or
-        /// <see cref="MessagePackCode.Bin32"/>,.
+        /// <see cref="MessagePackCode.Bin32"/>.
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         public void Write(in ReadOnlySequence<byte> src)
@@ -862,7 +862,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,.
+        /// <see cref="MessagePackCode.Str32"/>.
         /// </summary>
         /// <param name="utf8stringBytes">The bytes to write.</param>
         public void WriteString(in ReadOnlySequence<byte> utf8stringBytes)
@@ -906,7 +906,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,.
+        /// <see cref="MessagePackCode.Str32"/>.
         /// </summary>
         /// <param name="utf8stringBytes">The bytes to write.</param>
         public void WriteString(ReadOnlySpan<byte> utf8stringBytes)
@@ -975,7 +975,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,.
+        /// <see cref="MessagePackCode.Str32"/>.
         /// </summary>
         /// <param name="value">The value to write.</param>
         public unsafe void Write(ReadOnlySpan<char> value)

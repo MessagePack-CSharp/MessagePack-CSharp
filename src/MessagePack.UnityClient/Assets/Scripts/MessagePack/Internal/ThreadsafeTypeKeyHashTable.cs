@@ -9,7 +9,7 @@ namespace MessagePack.Internal
 {
     /// <summary>
     /// A dictionary where <see cref="Type"/> is the key, and a configurable <typeparamref name="TValue"/> type
-    /// that is thread-safe, allowing concurrent reads and exclusive writes.
+    /// that is thread-safe to read and write, allowing concurrent reads and exclusive writes.
     /// </summary>
     /// <typeparam name="TValue">The type of value stored in the dictionary.</typeparam>
     internal class ThreadsafeTypeKeyHashTable<TValue>
