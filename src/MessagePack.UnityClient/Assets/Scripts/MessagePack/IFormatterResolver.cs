@@ -40,7 +40,7 @@ namespace MessagePack
             return formatter;
         }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {

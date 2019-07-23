@@ -179,7 +179,7 @@ ERROR:
             throw new ArgumentException("Invalid Guid Pattern.");
         }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
         private static byte Parse(ReadOnlySpan<byte> bytes, int highOffset)
@@ -187,7 +187,7 @@ ERROR:
             return unchecked((byte)((SwitchParse(bytes[highOffset]) * 16) + SwitchParse(bytes[highOffset + 1])));
         }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
         private static byte SwitchParse(byte b)
