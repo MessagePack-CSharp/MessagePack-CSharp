@@ -59,19 +59,32 @@ namespace MessagePack
         public static void Serialize<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options = null)
         {
             options = options ?? MessagePackSerializerOptions.Default;
-            if (options.UseLZ4Compression)
+            bool originalOldSpecValue = writer.OldSpec;
+            if (options.OldSpec.HasValue)
             {
-                using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                writer.OldSpec = options.OldSpec.Value;
+            }
+
+            try
+            {
+                if (options.UseLZ4Compression)
                 {
-                    MessagePackWriter scratchWriter = writer.Clone(scratch);
-                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
-                    scratchWriter.Flush();
-                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                    using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                    {
+                        MessagePackWriter scratchWriter = writer.Clone(scratch);
+                        options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
+                        scratchWriter.Flush();
+                        ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                    }
+                }
+                else
+                {
+                    options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
                 }
             }
-            else
+            finally
             {
-                options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
+                writer.OldSpec = originalOldSpecValue;
             }
         }
 
