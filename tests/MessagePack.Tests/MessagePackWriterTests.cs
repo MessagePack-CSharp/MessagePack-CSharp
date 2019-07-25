@@ -36,7 +36,7 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void WriteExtensionFormatHeader_NegativeExtension() 
+        public void WriteExtensionFormatHeader_NegativeExtension()
         {
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -44,7 +44,7 @@ namespace MessagePack.Tests
             var header = new ExtensionHeader(-1, 10);
             writer.WriteExtensionFormatHeader(header);
             writer.Flush();
-            
+
             var written = sequence.AsReadOnlySequence;
             var reader = new MessagePackReader(written);
             var readHeader = reader.ReadExtensionFormatHeader();
