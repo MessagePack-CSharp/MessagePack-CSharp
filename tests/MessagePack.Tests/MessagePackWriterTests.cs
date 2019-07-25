@@ -34,5 +34,23 @@ namespace MessagePack.Tests
             Assert.Equal(1, written[0]);
             Assert.Equal(2, written[7]);
         }
+
+        [Fact]
+        public void WriteExtensionFormatHeader_NegativeExtension() 
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+
+            var header = new ExtensionHeader(-1, 10);
+            writer.WriteExtensionFormatHeader(header);
+            writer.Flush();
+            
+            var written = sequence.AsReadOnlySequence;
+            var reader = new MessagePackReader(written);
+            var readHeader = reader.ReadExtensionFormatHeader();
+
+            Assert.Equal(header.TypeCode, readHeader.TypeCode);
+            Assert.Equal(header.Length, readHeader.Length);
+        }
     }
 }

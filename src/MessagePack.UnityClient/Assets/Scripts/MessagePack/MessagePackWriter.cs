@@ -1011,7 +1011,7 @@ namespace MessagePack
         public void WriteExtensionFormatHeader(ExtensionHeader extensionHeader)
         {
             int dataLength = (int)extensionHeader.Length;
-            byte typeCode = (byte)extensionHeader.TypeCode;
+            byte typeCode = unchecked((byte)extensionHeader.TypeCode);
             switch (dataLength)
             {
                 case 1:
