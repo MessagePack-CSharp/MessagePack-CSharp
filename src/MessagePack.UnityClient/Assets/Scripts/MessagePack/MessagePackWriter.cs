@@ -686,7 +686,14 @@ namespace MessagePack
                 // FixExt4(-1) => seconds |  [1970-01-01 00:00:00 UTC, 2106-02-07 06:28:16 UTC) range
                 // FixExt8(-1) => nanoseconds + seconds | [1970-01-01 00:00:00.000000000 UTC, 2514-05-30 01:53:04.000000000 UTC) range
                 // Ext8(12,-1) => nanoseconds + seconds | [-584554047284-02-23 16:59:44 UTC, 584554051223-11-09 07:00:16.000000000 UTC) range
-                dateTime = dateTime.ToUniversalTime();
+
+                // The spec requires UTC. Convert to UTC if we're sure the value was expressed as Local time.
+                // If it's Unspecified, we want to leave it alone since .NET will change the value when we convert
+                // and we simply don't know, so we should leave it as-is.
+                if (dateTime.Kind == DateTimeKind.Local)
+                {
+                    dateTime = dateTime.ToUniversalTime();
+                }
 
                 var secondsSinceBclEpoch = dateTime.Ticks / TimeSpan.TicksPerSecond;
                 var seconds = secondsSinceBclEpoch - DateTimeConstants.BclSecondsAtUnixEpoch;
