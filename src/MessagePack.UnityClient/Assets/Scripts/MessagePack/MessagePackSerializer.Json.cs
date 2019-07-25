@@ -322,7 +322,7 @@ namespace MessagePack
                         writer.Write(dt.ToString("o", CultureInfo.InvariantCulture));
                         writer.Write("\"");
                     }
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
                     else if (extHeader.TypeCode == TypelessFormatter.ExtensionTypeCode)
                     {
                         // prepare type name token

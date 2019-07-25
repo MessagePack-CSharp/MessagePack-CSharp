@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Linq; // require UNITY_STANDALONE
+using System.Linq; // require UNITY_2018_3_OR_NEWER
 using System.Reflection;
 using MessagePack.Formatters;
 
@@ -33,7 +33,7 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-#if UNITY_STANDALONE && !NETFX_CORE
+#if UNITY_2018_3_OR_NEWER && !NETFX_CORE
                 var attr = (MessagePackFormatterAttribute)typeof(T).GetCustomAttributes(typeof(MessagePackFormatterAttribute), true).FirstOrDefault();
 #else
                 MessagePackFormatterAttribute attr = typeof(T).GetTypeInfo().GetCustomAttribute<MessagePackFormatterAttribute>();

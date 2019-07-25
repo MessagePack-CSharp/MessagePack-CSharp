@@ -9,7 +9,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 using System.Collections.Concurrent;
 #endif
 
@@ -227,7 +227,7 @@ namespace MessagePack.Formatters
                         {
                             while (e.MoveNext())
                             {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
                                 formatter.Serialize(ref writer, e.Current, options);
 #else
                                 formatter.Serialize(ref writer, (TElement)e.Current, options);
@@ -253,7 +253,7 @@ namespace MessagePack.Formatters
                                 while (e.MoveNext())
                                 {
                                     count++;
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
                                     formatter.Serialize(ref scratchWriter, e.Current, options);
 #else
                                     formatter.Serialize(ref scratchWriter, (TElement)e.Current, options);
@@ -304,7 +304,7 @@ namespace MessagePack.Formatters
             {
                 return collection.Count;
             }
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
             else
             {
                 var c2 = sequence as IReadOnlyCollection<TElement>;
@@ -852,7 +852,7 @@ namespace MessagePack.Formatters
         }
     }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
     public sealed class ObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>>
     {

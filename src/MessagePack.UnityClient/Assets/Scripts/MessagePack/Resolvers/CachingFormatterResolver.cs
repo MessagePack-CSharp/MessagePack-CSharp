@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
 using MessagePack.Formatters;
 using MessagePack.Internal;

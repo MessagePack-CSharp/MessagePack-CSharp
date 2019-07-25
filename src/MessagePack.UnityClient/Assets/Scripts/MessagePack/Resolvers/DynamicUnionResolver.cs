@@ -17,7 +17,7 @@ using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
     /// <summary>
     /// UnionResolver by dynamic code generation.
@@ -37,7 +37,7 @@ namespace MessagePack.Resolvers
         public static readonly MessagePackSerializerOptions Options;
 
         private static readonly DynamicAssembly DynamicAssembly;
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
 #else
         private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+");

@@ -11,7 +11,7 @@ namespace MessagePack.Internal
     {
 #if ENABLE_UNSAFE_MSGPACK
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
         private static readonly bool Is32Bit = IntPtr.Size == 4;
 
@@ -30,7 +30,7 @@ namespace MessagePack.Internal
 
 #endif
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
         public static unsafe bool Equals(ReadOnlySpan<byte> xs, ReadOnlySpan<byte> ys)
@@ -112,7 +112,7 @@ namespace MessagePack.Internal
         }
 
 #else
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
         public static bool Equals(ReadOnlySpan<byte> xs, ReadOnlySpan<byte> ys)

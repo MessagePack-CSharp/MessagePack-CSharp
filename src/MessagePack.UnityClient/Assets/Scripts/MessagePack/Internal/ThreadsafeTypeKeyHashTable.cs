@@ -203,9 +203,9 @@ NOT_FOUND:
 
         private static void VolatileWrite(ref Entry location, Entry value)
         {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
             System.Threading.Volatile.Write(ref location, value);
-#elif UNITY_STANDALONE || NET_4_6
+#elif UNITY_2018_3_OR_NEWER || NET_4_6
             System.Threading.Volatile.Write(ref location, value);
 #else
             System.Threading.Thread.MemoryBarrier();
@@ -215,9 +215,9 @@ NOT_FOUND:
 
         private static void VolatileWrite(ref Entry[] location, Entry[] value)
         {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
             System.Threading.Volatile.Write(ref location, value);
-#elif UNITY_STANDALONE || NET_4_6
+#elif UNITY_2018_3_OR_NEWER || NET_4_6
             System.Threading.Volatile.Write(ref location, value);
 #else
             System.Threading.Thread.MemoryBarrier();

@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
 using System;
 using System.Collections;
@@ -12,7 +12,7 @@ using System.Reflection;
 using MessagePack.Formatters;
 using MessagePack.Internal;
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 using System.Threading.Tasks;
 #endif
 
@@ -69,7 +69,7 @@ namespace MessagePack.Internal
               { typeof(SortedList<,>), typeof(SortedListFormatter<,>) },
               { typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>) },
               { typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>) },
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
               { typeof(ObservableCollection<>), typeof(ObservableCollectionFormatter<>) },
               { typeof(ReadOnlyObservableCollection<>), typeof(ReadOnlyObservableCollectionFormatter<>) },
               { typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>) },
@@ -135,7 +135,7 @@ namespace MessagePack.Internal
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
                 }
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
                 else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });

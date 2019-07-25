@@ -50,7 +50,7 @@ namespace MessagePack.Internal
             }
         }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
         public bool TryGetValue(in ReadOnlySequence<byte> bytes, out int value) => this.TryGetValue(bytes.ToArray(), out value);
 
@@ -208,7 +208,7 @@ namespace MessagePack.Internal
                 return v;
             }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
             public AutomataNode SearchNext(ref ReadOnlySpan<byte> value)
             {
@@ -425,7 +425,7 @@ namespace MessagePack.Internal
     /// </remarks>
     public static class AutomataKeyGen
     {
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
         public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod(nameof(GetKey), new[] { typeof(ReadOnlySpan<byte>).MakeByRefType() });
 #endif
 

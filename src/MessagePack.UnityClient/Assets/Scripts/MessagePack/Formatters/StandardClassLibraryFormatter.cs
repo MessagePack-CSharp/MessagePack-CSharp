@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Text;
 using MessagePack.Internal;
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 using System.Threading.Tasks;
 #endif
 
@@ -389,7 +389,7 @@ namespace MessagePack.Formatters
         }
     }
 
-#if !UNITY_STANDALONE
+#if !UNITY_2018_3_OR_NEWER
 
     public sealed class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
     {
