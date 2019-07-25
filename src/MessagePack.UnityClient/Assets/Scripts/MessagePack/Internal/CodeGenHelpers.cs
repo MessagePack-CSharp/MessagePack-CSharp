@@ -3,8 +3,6 @@
 
 using System;
 using System.Buffers;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MessagePack.Internal
 {
@@ -57,7 +55,12 @@ namespace MessagePack.Internal
             }
         }
 
-        public static ReadOnlySpan<byte> GetSpanFromSequence(ReadOnlySequence<byte> sequence)
+        public static ReadOnlySpan<byte> GetSpanFromSequence(in ReadOnlySequence<byte>? sequence)
+        {
+            return sequence.HasValue ? GetSpanFromSequence(sequence.Value) : default;
+        }
+
+        public static ReadOnlySpan<byte> GetSpanFromSequence(in ReadOnlySequence<byte> sequence)
         {
             if (sequence.IsSingleSegment)
             {
@@ -66,5 +69,7 @@ namespace MessagePack.Internal
 
             return sequence.ToArray();
         }
+
+        public static byte[] GetArrayFromNullableSequence(in ReadOnlySequence<byte>? sequence) => sequence?.ToArray();
     }
 }

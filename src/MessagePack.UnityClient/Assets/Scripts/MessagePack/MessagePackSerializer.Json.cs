@@ -253,7 +253,8 @@ namespace MessagePack
                     WriteJsonString(reader.ReadString(), writer);
                     break;
                 case MessagePackType.Binary:
-                    writer.Write("\"" + Convert.ToBase64String(reader.ReadBytes().ToArray()) + "\"");
+                    ArraySegment<byte> segment = ByteArraySegmentFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Default);
+                    writer.Write("\"" + Convert.ToBase64String(segment.Array, segment.Offset, segment.Count) + "\"");
                     break;
                 case MessagePackType.Array:
                     {

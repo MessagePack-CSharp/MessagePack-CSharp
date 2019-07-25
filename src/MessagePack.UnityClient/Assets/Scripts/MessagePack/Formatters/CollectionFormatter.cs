@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 #if !UNITY_STANDALONE
 using System.Collections.Concurrent;
@@ -81,13 +82,22 @@ namespace MessagePack.Formatters
 
         public ArraySegment<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            if (reader.TryReadNil())
+            ReadOnlySequence<byte>? bytes = reader.ReadBytes();
+            if (bytes.HasValue)
             {
-                return default;
+                // Don't allocate and copy an array if we can return a segment directly into the sequence.
+                if (bytes.Value.IsSingleSegment && MemoryMarshal.TryGetArray(bytes.Value.First, out ArraySegment<byte> segment))
+                {
+                    return segment;
+                }
+                else
+                {
+                    return new ArraySegment<byte>(bytes.Value.ToArray());
+                }
             }
             else
             {
-                return new ArraySegment<byte>(reader.ReadBytes().ToArray());
+                return default;
             }
         }
     }

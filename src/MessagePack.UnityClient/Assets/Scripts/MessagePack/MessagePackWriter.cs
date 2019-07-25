@@ -764,7 +764,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Bin32"/>,
         /// or <see cref="MessagePackCode.Nil"/> if <paramref name="src"/> is <c>null</c>.
         /// </summary>
-        /// <param name="src">The array of bytes to write.</param>
+        /// <param name="src">The array of bytes to write. May be <c>null</c>.</param>
         public void Write(byte[] src)
         {
             if (src == null)
@@ -973,7 +973,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Str32"/>,
         /// or <see cref="MessagePackCode.Nil"/> if the <paramref name="value"/> is <c>null</c>.
         /// </summary>
-        /// <param name="value">The value to write. Must not be null.</param>
+        /// <param name="value">The value to write. May be null.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Write(string value)
         {

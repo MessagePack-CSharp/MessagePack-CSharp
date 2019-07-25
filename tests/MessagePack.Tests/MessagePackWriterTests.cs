@@ -55,7 +55,7 @@ namespace MessagePack.Tests
             writer.Write(buffer);
             writer.Flush();
             var reader = new MessagePackReader(sequence.AsReadOnlySequence);
-            Assert.Equal(buffer, reader.ReadBytes().ToArray());
+            Assert.Equal(buffer, reader.ReadBytes().Value.ToArray());
         }
 
         [Fact]

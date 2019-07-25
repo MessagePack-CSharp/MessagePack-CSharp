@@ -30,26 +30,12 @@ namespace MessagePack.Formatters
 
         public void Serialize(ref MessagePackWriter writer, byte[] value, MessagePackSerializerOptions options)
         {
-            if (value == null)
-            {
-                writer.WriteNil();
-            }
-            else
-            {
-                writer.Write(value);
-            }
+            writer.Write(value);
         }
 
         public byte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
-            else
-            {
-                return reader.ReadBytes().ToArray();
-            }
+            return reader.ReadBytes()?.ToArray();
         }
     }
 
@@ -61,28 +47,14 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, String value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, string value, MessagePackSerializerOptions options)
         {
-            if (value == null)
-            {
-                writer.WriteNil();
-            }
-            else
-            {
-                writer.Write(value);
-            }
+            writer.Write(value);
         }
 
-        public String Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public string Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
-            else
-            {
-                return reader.ReadString();
-            }
+            return reader.ReadString();
         }
     }
 
@@ -221,7 +193,7 @@ namespace MessagePack.Formatters
 
         public Guid Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            ReadOnlySequence<byte> segment = reader.ReadStringSegment();
+            ReadOnlySequence<byte> segment = reader.ReadStringSegment().Value;
             if (segment.Length != 36)
             {
                 throw new InvalidOperationException("Unexpected length of string.");
@@ -435,7 +407,7 @@ namespace MessagePack.Formatters
 
         public System.Numerics.BigInteger Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            ReadOnlySequence<byte> bytes = reader.ReadBytes();
+            ReadOnlySequence<byte> bytes = reader.ReadBytes().Value;
 #if NETCOREAPP2_1
             if (bytes.IsSingleSegment)
             {
