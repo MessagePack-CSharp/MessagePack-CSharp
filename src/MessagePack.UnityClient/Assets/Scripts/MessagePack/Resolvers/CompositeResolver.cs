@@ -22,30 +22,21 @@ namespace MessagePack.Resolvers
         private static readonly ReadOnlyDictionary<Type, IMessagePackFormatter> EmptyFormattersByType = new ReadOnlyDictionary<Type, IMessagePackFormatter>(new Dictionary<Type, IMessagePackFormatter>());
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CompositeResolver"/> class
-        /// with the supplied resolver that was pre-generated, and adds the standard non-AOT resolvers.
+        /// Initializes a new instance of an <see cref="IFormatterResolver"/> with the specified formatters and sub-resolvers.
         /// </summary>
-        /// <param name="aotResolver">An instance of the AOT code generated resolver.</param>
+        /// <param name="formatters">
+        /// A list of instances of <see cref="IMessagePackFormatter{T}"/> to prefer (above the <paramref name="resolvers"/>).
+        /// The formatters are searched in the order given, so if two formatters support serializing the same type, the first one is used.
+        /// May not be null, but may be <see cref="Array.Empty{T}"/>.
+        /// </param>
+        /// <param name="resolvers">
+        /// A list of resolvers to use for serializing types for which <paramref name="formatters"/> does not include a formatter.
+        /// The resolvers are searched in the order given, so if two resolvers support serializing the same type, the first one is used.
+        /// May not be null, but may be <see cref="Array.Empty{T}"/>.
+        /// </param>
         /// <returns>
-        /// The composite resolver that includes the AOT code generated resolver and several standard ones
-        /// that the AOT code generator expects to be present.
+        /// An instance of <see cref="IFormatterResolver"/>.
         /// </returns>
-        public static IFormatterResolver CreateForAot(IFormatterResolver aotResolver)
-        {
-            if (aotResolver is null)
-            {
-                throw new ArgumentNullException(nameof(aotResolver));
-            }
-
-            return Create(new[]
-            {
-                aotResolver,
-                BuiltinResolver.Instance,
-                AttributeFormatterResolver.Instance,
-                PrimitiveObjectResolver.Instance,
-            });
-        }
-
         public static IFormatterResolver Create(IReadOnlyList<IMessagePackFormatter> formatters, IReadOnlyList<IFormatterResolver> resolvers)
         {
             if (formatters is null)
