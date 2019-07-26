@@ -16,7 +16,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Vector2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(2);
+            writer.WriteArrayHeader(2);
             writer.Write(value.x);
             writer.Write(value.y);
         }
@@ -57,7 +57,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Vector3 value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(3);
+            writer.WriteArrayHeader(3);
             writer.Write(value.x);
             writer.Write(value.y);
             writer.Write(value.z);
@@ -103,7 +103,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Vector4 value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(4);
+            writer.WriteArrayHeader(4);
             writer.Write(value.x);
             writer.Write(value.y);
             writer.Write(value.z);
@@ -154,7 +154,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Quaternion value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(4);
+            writer.WriteArrayHeader(4);
             writer.Write(value.x);
             writer.Write(value.y);
             writer.Write(value.z);
@@ -205,7 +205,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Color value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(4);
+            writer.WriteArrayHeader(4);
             writer.Write(value.r);
             writer.Write(value.g);
             writer.Write(value.b);
@@ -257,7 +257,7 @@ namespace MessagePack.Unity
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Bounds value, global::MessagePack.MessagePackSerializerOptions options)
         {
             IFormatterResolver resolver = options.Resolver;
-            writer.WriteFixedArrayHeaderUnsafe(2);
+            writer.WriteArrayHeader(2);
             resolver.GetFormatterWithVerify<global::UnityEngine.Vector3>().Serialize(ref writer, value.center, options);
             resolver.GetFormatterWithVerify<global::UnityEngine.Vector3>().Serialize(ref writer, value.size, options);
         }
@@ -299,7 +299,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Rect value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(4);
+            writer.WriteArrayHeader(4);
             writer.Write(value.x);
             writer.Write(value.y);
             writer.Write(value.width);
@@ -377,7 +377,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Keyframe value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(4);
+            writer.WriteArrayHeader(4);
             writer.Write(value.time);
             writer.Write(value.value);
             writer.Write(value.inTangent);
@@ -439,7 +439,7 @@ namespace MessagePack.Unity
             }
 
             IFormatterResolver resolver = options.Resolver;
-            writer.WriteFixedArrayHeaderUnsafe(3);
+            writer.WriteArrayHeader(3);
             resolver.GetFormatterWithVerify<global::UnityEngine.Keyframe[]>().Serialize(ref writer, value.keys, options);
             resolver.GetFormatterWithVerify<global::UnityEngine.WrapMode>().Serialize(ref writer, value.postWrapMode, options);
             resolver.GetFormatterWithVerify<global::UnityEngine.WrapMode>().Serialize(ref writer, value.preWrapMode, options);
@@ -616,7 +616,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.GradientColorKey value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(2);
+            writer.WriteArrayHeader(2);
             options.Resolver.GetFormatterWithVerify<global::UnityEngine.Color>().Serialize(ref writer, value.color, options);
             writer.Write(value.time);
         }
@@ -660,7 +660,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.GradientAlphaKey value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(2);
+            writer.WriteArrayHeader(2);
             writer.Write(value.alpha);
             writer.Write(value.time);
         }
@@ -710,7 +710,7 @@ namespace MessagePack.Unity
             }
 
             IFormatterResolver resolver = options.Resolver;
-            writer.WriteFixedArrayHeaderUnsafe(3);
+            writer.WriteArrayHeader(3);
             resolver.GetFormatterWithVerify<global::UnityEngine.GradientColorKey[]>().Serialize(ref writer, value.colorKeys, options);
             resolver.GetFormatterWithVerify<global::UnityEngine.GradientAlphaKey[]>().Serialize(ref writer, value.alphaKeys, options);
             resolver.GetFormatterWithVerify<global::UnityEngine.GradientMode>().Serialize(ref writer, value.mode, options);
@@ -760,7 +760,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Color32 value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(4);
+            writer.WriteArrayHeader(4);
             writer.Write(value.r);
             writer.Write(value.g);
             writer.Write(value.b);
@@ -821,7 +821,7 @@ namespace MessagePack.Unity
                 return;
             }
 
-            writer.WriteFixedArrayHeaderUnsafe(4);
+            writer.WriteArrayHeader(4);
             writer.Write(value.left);
             writer.Write(value.right);
             writer.Write(value.top);
@@ -876,7 +876,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.LayerMask value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(1);
+            writer.WriteArrayHeader(1);
             writer.Write(value.value);
         }
 
@@ -913,7 +913,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Vector2Int value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(2);
+            writer.WriteArrayHeader(2);
             writer.WriteInt32(value.x);
             writer.WriteInt32(value.y);
         }
@@ -954,7 +954,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Vector3Int value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(3);
+            writer.WriteArrayHeader(3);
             writer.WriteInt32(value.x);
             writer.WriteInt32(value.y);
             writer.WriteInt32(value.z);
@@ -1001,7 +1001,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.RangeInt value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(2);
+            writer.WriteArrayHeader(2);
             writer.WriteInt32(value.start);
             writer.WriteInt32(value.length);
         }
@@ -1042,7 +1042,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.RectInt value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(4);
+            writer.WriteArrayHeader(4);
             writer.WriteInt32(value.x);
             writer.WriteInt32(value.y);
             writer.WriteInt32(value.width);
@@ -1095,7 +1095,7 @@ namespace MessagePack.Unity
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.BoundsInt value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(2);
+            writer.WriteArrayHeader(2);
             options.Resolver.GetFormatterWithVerify<global::UnityEngine.Vector3Int>().Serialize(ref writer, value.position, options);
             options.Resolver.GetFormatterWithVerify<global::UnityEngine.Vector3Int>().Serialize(ref writer, value.size, options);
         }
