@@ -231,6 +231,11 @@ namespace MessagePack
         /// <returns>The deserialized value.</returns>
         public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options = null)
         {
+            if (stream is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> streamBuffer))
+            {
+                return Deserialize<T>(streamBuffer, options);
+            }
+
             using (var sequence = new Sequence<byte>())
             {
                 int bytesRead;
@@ -256,6 +261,11 @@ namespace MessagePack
         /// <returns>The deserialized value.</returns>
         public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
+            if (stream is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> streamBuffer))
+            {
+                return Deserialize<T>(streamBuffer, options);
+            }
+
             using (var sequence = new Sequence<byte>())
             {
                 int bytesRead;
