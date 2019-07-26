@@ -1210,7 +1210,13 @@ By default, `mpc.exe` generates resolver to `MessagePack.Resolvers.GeneratedReso
 
 ```csharp
 // Do this once and store it for reuse.
-var resolver = MessagePack.Resolvers.CompositeResolver.CreateForAot(MessagePack.Resolvers.GeneratedResolver.Instance);
+var resolver = MessagePack.Resolvers.CompositeResolver.Create(
+    Array.Empty<IMessagePackFormatter>(),
+    new IFormatterResolver[]
+    {
+        MessagePack.Resolvers.GeneratedResolver.Instance,
+        MessagePack.Resolvers.StandardResolver.Instance,
+    });
 var options = MessagePackSerializerOptions.Default.WithResolver(resolver);
 
 // Each time you serialize/deserialize, specify the options:

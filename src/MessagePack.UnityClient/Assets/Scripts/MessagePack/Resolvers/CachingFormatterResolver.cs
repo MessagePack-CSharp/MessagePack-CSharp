@@ -16,12 +16,12 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The cache of types to their formatters.
         /// </summary>
-        private readonly ThreadsafeTypeKeyHashTable<object> formatters = new ThreadsafeTypeKeyHashTable<object>();
+        private readonly ThreadsafeTypeKeyHashTable<IMessagePackFormatter> formatters = new ThreadsafeTypeKeyHashTable<IMessagePackFormatter>();
 
         /// <inheritdoc />
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            if (!this.formatters.TryGetValue(typeof(T), out object formatter))
+            if (!this.formatters.TryGetValue(typeof(T), out IMessagePackFormatter formatter))
             {
                 formatter = this.GetFormatterCore<T>();
                 this.formatters.TryAdd(typeof(T), formatter);
