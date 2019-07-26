@@ -142,34 +142,34 @@ namespace MessagePack.Tests
         }
 
         [MessagePackObject]
-        public class ImmutablePrivateClass 
+        public class ImmutablePrivateClass
         {
             [Key(0)]
-            private int _x;
+            private int x;
 
             [Key(1)]
-            private int _y;
+            private int y;
 
             [SerializationConstructor]
-            ImmutablePrivateClass(int x, int y)
+            private ImmutablePrivateClass(int x, int y)
             {
-                _x = x;
-                _y = y;
-                CreatedUsingPrivateCtor = true;
+                this.x = x;
+                this.y = y;
+                this.CreatedUsingPrivateCtor = true;
             }
 
-            public ImmutablePrivateClass(int x, int y, bool _dummy)
+            public ImmutablePrivateClass(int x, int y, bool dummy)
             {
-                _x = x;
-                _y = y;
-                CreatedUsingPrivateCtor = false;
+                this.x = x;
+                this.y = y;
+                this.CreatedUsingPrivateCtor = false;
             }
 
             [IgnoreMember]
-            public int X => _x;
+            public int X => this.x;
 
             [IgnoreMember]
-            public int Y => _y;
+            public int Y => this.y;
 
             [IgnoreMember]
             public bool CreatedUsingPrivateCtor { get; }
@@ -253,14 +253,14 @@ namespace MessagePack.Tests
         [Fact]
         public void PrivateConstructor()
         {
-            var p1 = new ImmutablePrivateClass(10, 20, _dummy: false);
+            var p1 = new ImmutablePrivateClass(10, 20, dummy: false);
             var bin = MessagePackSerializer.Serialize(p1, StandardResolverAllowPrivate.Options);
             var p2 = MessagePackSerializer.Deserialize<ImmutablePrivateClass>(bin, StandardResolverAllowPrivate.Options);
 
             Assert.Equal(p1.X, p2.X);
             Assert.Equal(p1.Y, p2.Y);
-            Assert.Equal(false, p1.CreatedUsingPrivateCtor);
-            Assert.Equal(true, p2.CreatedUsingPrivateCtor);
+            Assert.False(p1.CreatedUsingPrivateCtor);
+            Assert.True(p2.CreatedUsingPrivateCtor);
         }
     }
 }
