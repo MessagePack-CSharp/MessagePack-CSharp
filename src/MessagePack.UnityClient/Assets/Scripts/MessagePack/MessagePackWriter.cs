@@ -765,10 +765,30 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Writes a <see cref="byte"/>[], prefixed with a length encoded as the smallest fitting from:
+        /// <see cref="MessagePackCode.Bin8"/>,
+        /// <see cref="MessagePackCode.Bin16"/>,
+        /// <see cref="MessagePackCode.Bin32"/>,
+        /// or <see cref="MessagePackCode.Nil"/> if <paramref name="src"/> is <c>null</c>.
+        /// </summary>
+        /// <param name="src">The array of bytes to write. May be <c>null</c>.</param>
+        public void Write(byte[] src)
+        {
+            if (src == null)
+            {
+                this.WriteNil();
+            }
+            else
+            {
+                this.Write(src.AsSpan());
+            }
+        }
+
+        /// <summary>
         /// Writes a span of bytes, prefixed with a length encoded as the smallest fitting from:
         /// <see cref="MessagePackCode.Bin8"/>,
         /// <see cref="MessagePackCode.Bin16"/>, or
-        /// <see cref="MessagePackCode.Bin32"/>,.
+        /// <see cref="MessagePackCode.Bin32"/>.
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         public void Write(ReadOnlySpan<byte> src)
@@ -818,7 +838,7 @@ namespace MessagePack
         /// Writes a sequence of bytes, prefixed with a length encoded as the smallest fitting from:
         /// <see cref="MessagePackCode.Bin8"/>,
         /// <see cref="MessagePackCode.Bin16"/>, or
-        /// <see cref="MessagePackCode.Bin32"/>,.
+        /// <see cref="MessagePackCode.Bin32"/>.
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         public void Write(in ReadOnlySequence<byte> src)
@@ -869,7 +889,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,.
+        /// <see cref="MessagePackCode.Str32"/>.
         /// </summary>
         /// <param name="utf8stringBytes">The bytes to write.</param>
         public void WriteString(in ReadOnlySequence<byte> utf8stringBytes)
@@ -913,7 +933,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,.
+        /// <see cref="MessagePackCode.Str32"/>.
         /// </summary>
         /// <param name="utf8stringBytes">The bytes to write.</param>
         public void WriteString(ReadOnlySpan<byte> utf8stringBytes)
@@ -957,15 +977,17 @@ namespace MessagePack
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,.
+        /// <see cref="MessagePackCode.Str32"/>,
+        /// or <see cref="MessagePackCode.Nil"/> if the <paramref name="value"/> is <c>null</c>.
         /// </summary>
-        /// <param name="value">The value to write. Must not be null.</param>
+        /// <param name="value">The value to write. May be null.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Write(string value)
         {
             if (value == null)
             {
-                ThrowArgumentNullException(nameof(value));
+                this.WriteNil();
+                return;
             }
 
             ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
@@ -982,7 +1004,7 @@ namespace MessagePack
         /// <see cref="MessagePackCode.MinFixStr"/>,
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,.
+        /// <see cref="MessagePackCode.Str32"/>.
         /// </summary>
         /// <param name="value">The value to write.</param>
         public unsafe void Write(ReadOnlySpan<char> value)

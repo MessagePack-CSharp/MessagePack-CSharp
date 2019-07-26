@@ -42,7 +42,7 @@ namespace MessagePack.Formatters
                 throw new Exception("BinaryGuidFormatter only allows on little endian env.");
             }
 
-            ReadOnlySequence<byte> valueSequence = reader.ReadBytes();
+            ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
             if (valueSequence.Length != sizeof(Guid))
             {
                 throw new InvalidOperationException("Invalid Guid Size.");
@@ -87,7 +87,7 @@ namespace MessagePack.Formatters
                 throw new Exception("BinaryDecimalFormatter only allows on little endian env.");
             }
 
-            ReadOnlySequence<byte> valueSequence = reader.ReadBytes();
+            ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
             if (valueSequence.Length != sizeof(decimal))
             {
                 throw new InvalidOperationException("Invalid decimal Size.");

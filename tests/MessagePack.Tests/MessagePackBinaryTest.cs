@@ -124,7 +124,7 @@ namespace MessagePack.Tests
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
-            sequenceReader.ReadBytes().ToArray().Is(target);
+            sequenceReader.ReadBytes().Value.ToArray().Is(target);
             sequenceReader.End.IsTrue();
 
             this.CreateUnpackedReference(sequence).AsBinary().Is(target);
@@ -621,7 +621,7 @@ namespace MessagePack.Tests
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
-            var segment = sequenceReader.ReadStringSegment().ToArray();
+            var segment = sequenceReader.ReadStringSegment().Value.ToArray();
             Encoding.UTF8.GetString(segment).Is(target);
             sequenceReader.End.IsTrue();
 

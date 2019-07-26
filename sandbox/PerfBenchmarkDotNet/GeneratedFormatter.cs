@@ -131,7 +131,7 @@ namespace GeneratedFormatter
                 for (int i = 0; i < num3; i++)
                 {
                     int num4;
-                    bool arg_47_0 = this.keyMapping.TryGetValue(reader.ReadStringSegment(), out num4);
+                    bool arg_47_0 = this.keyMapping.TryGetValue(reader.ReadStringSegment().Value, out num4);
                     if (!arg_47_0)
                     {
                         reader.Skip();
@@ -299,7 +299,7 @@ namespace GeneratedFormatter
                 for (int i = 0; i < num3; i++)
                 {
                     int num4;
-                    ReadOnlySequence<byte> segment = reader.ReadStringSegment();
+                    ReadOnlySequence<byte> segment = reader.ReadStringSegment().Value;
                     bool arg_47_0 = this.keyMapping.TryGetValue(segment, out num4);
                     if (!arg_47_0)
                     {
@@ -418,7 +418,7 @@ namespace GeneratedFormatter
 
                 for (int i = 0; i < length; i++)
                 {
-                    ReadOnlySequence<byte> stringKey = reader.ReadStringSegment();
+                    ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
                     int key;
                     if (!this.keyMapping.TryGetValue(stringKey, out key))
                     {
@@ -535,7 +535,7 @@ namespace GeneratedFormatter
 
                 for (int i = 0; i < length; i++)
                 {
-                    ReadOnlySequence<byte> stringKey = reader.ReadStringSegment();
+                    ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
                     int key;
                     if (!this.keyMapping.TryGetValue(stringKey, out key))
                     {

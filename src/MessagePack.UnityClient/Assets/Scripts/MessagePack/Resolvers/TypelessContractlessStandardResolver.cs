@@ -10,8 +10,8 @@ using MessagePack.Internal;
 namespace MessagePack.Resolvers
 {
     /// <summary>
-    /// Embed c# type names for `object` typed fields/collection items
-    /// Preserve c# DateTime timezone.
+    /// Embeds the full name of .NET types for <see cref="object"/> typed fields/collection items
+    /// Preserves .NET <see cref="DateTime"/> timezone.
     /// </summary>
     public sealed class TypelessContractlessStandardResolver : IFormatterResolver
     {

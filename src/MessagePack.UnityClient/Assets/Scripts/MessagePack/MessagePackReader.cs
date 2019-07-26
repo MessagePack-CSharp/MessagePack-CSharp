@@ -566,11 +566,16 @@ namespace MessagePack
         /// or something beteween <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
         /// <returns>
-        /// A sequence of bytes.
+        /// A sequence of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
         /// The data is a slice from the original sequence passed to this reader's constructor.
         /// </returns>
-        public ReadOnlySequence<byte> ReadBytes()
+        public ReadOnlySequence<byte>? ReadBytes()
         {
+            if (this.TryReadNil())
+            {
+                return null;
+            }
+
             int length = this.GetBytesLength();
             ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
             ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
@@ -586,11 +591,16 @@ namespace MessagePack
         /// or a code between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
         /// <returns>
-        /// The sequence of bytes.
+        /// The sequence of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
         /// The data is a slice from the original sequence passed to this reader's constructor.
         /// </returns>
-        public ReadOnlySequence<byte> ReadStringSegment()
+        public ReadOnlySequence<byte>? ReadStringSegment()
         {
+            if (this.TryReadNil())
+            {
+                return null;
+            }
+
             int length = this.GetStringLengthInBytes();
             ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
             ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
@@ -605,10 +615,15 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Str32"/>,
         /// or a code between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
-        /// <returns>A string.</returns>
+        /// <returns>A string, or <c>null</c> if the current msgpack token is <see cref="MessagePackCode.Nil"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ReadString()
         {
+            if (this.TryReadNil())
+            {
+                return null;
+            }
+
             int byteLength = this.GetStringLengthInBytes();
 
             ReadOnlySpan<byte> unreadSpan = this.reader.UnreadSpan;

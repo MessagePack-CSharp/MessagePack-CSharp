@@ -36,6 +36,52 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void Write_ByteArray_null()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write((byte[])null);
+            writer.Flush();
+            var reader = new MessagePackReader(sequence.AsReadOnlySequence);
+            Assert.True(reader.TryReadNil());
+        }
+
+        [Fact]
+        public void Write_ByteArray()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            var buffer = new byte[] { 1, 2, 3 };
+            writer.Write(buffer);
+            writer.Flush();
+            var reader = new MessagePackReader(sequence.AsReadOnlySequence);
+            Assert.Equal(buffer, reader.ReadBytes().Value.ToArray());
+        }
+
+        [Fact]
+        public void Write_String_null()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write((string)null);
+            writer.Flush();
+            var reader = new MessagePackReader(sequence.AsReadOnlySequence);
+            Assert.True(reader.TryReadNil());
+        }
+
+        [Fact]
+        public void Write_String()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            string expected = "hello";
+            writer.Write(expected);
+            writer.Flush();
+            var reader = new MessagePackReader(sequence.AsReadOnlySequence);
+            Assert.Equal(expected, reader.ReadString());
+        }
+
+        [Fact]
         public void WriteExtensionFormatHeader_NegativeExtension()
         {
             var sequence = new Sequence<byte>();

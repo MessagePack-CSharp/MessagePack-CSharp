@@ -106,7 +106,7 @@ namespace <#= Namespace #>
             for (int i = 0; i < length; i++)
             {
 <# if(objInfo.IsStringKey) { #>
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment();
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
