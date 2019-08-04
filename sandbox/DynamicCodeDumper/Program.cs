@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
@@ -66,7 +67,7 @@ namespace DynamicCodeDumper
                 using (var sequence = new Sequence<byte>())
                 {
                     var sequenceWriter = new MessagePackWriter(sequence);
-                    f.Serialize(ref sequenceWriter, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, null);
+                    f.Serialize(ref sequenceWriter, new MyClass { MyProperty1 = 100, MyProperty2 = "foo" }, EmptyResolver.Options);
                     sequenceWriter.Flush();
                 }
             }
@@ -89,7 +90,7 @@ namespace DynamicCodeDumper
 
         private static void Verify(params AssemblyBuilder[] builders)
         {
-            var path = @"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\x64\PEVerify.exe";
+            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\x64\PEVerify.exe");
 
             foreach (AssemblyBuilder targetDll in builders)
             {
@@ -106,6 +107,13 @@ namespace DynamicCodeDumper
                 var data = p.StandardOutput.ReadToEnd();
                 Console.WriteLine(data);
             }
+        }
+
+        private class EmptyResolver : IFormatterResolver
+        {
+            internal static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(new EmptyResolver());
+
+            public IMessagePackFormatter<T> GetFormatter<T>() => null;
         }
     }
 
