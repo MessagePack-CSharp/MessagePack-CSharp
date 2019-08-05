@@ -22,9 +22,18 @@ namespace MessagePack
         private const int LZ4NotCompressionSize = 64;
 
         /// <summary>
-        /// The default set of options to run with.
+        /// Gets or sets the default set of options to use when not explicitly specified for a method call.
         /// </summary>
-        public static readonly MessagePackSerializerOptions DefaultOptions = MessagePackSerializerOptions.Standard;
+        /// <value>The default value is <see cref="MessagePackSerializerOptions.Standard"/>.</value>
+        /// <remarks>
+        /// This is an AppDomain or process-wide setting.
+        /// If you're writing a library, you should NOT set or rely on this property but should instead pass
+        /// in <see cref="MessagePackSerializerOptions.Standard"/> (or the required options) explicitly to every method call
+        /// to guarantee appropriate behavior in any application.
+        /// If you are an app author, realize that setting this property impacts the entire application so it should only be
+        /// set once, and before any use of <see cref="MessagePackSerializer"/> occurs.
+        /// </remarks>
+        public static MessagePackSerializerOptions DefaultOptions { get; set; } = MessagePackSerializerOptions.Standard;
 
         /// <summary>
         /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
