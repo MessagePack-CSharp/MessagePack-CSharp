@@ -86,7 +86,7 @@ namespace MessagePack.UnityClient.Tests
         static MsgPackUnsafeDefaultResolver()
         {
             Instance = new MsgPackUnsafeDefaultResolver();
-            Options = MessagePackSerializerOptions.Default.WithResolver(Instance);
+            Options = MessagePackSerializerOptions.Standard.WithResolver(Instance);
             LZ4Options = Options.WithLZ4Compression();
         }
 

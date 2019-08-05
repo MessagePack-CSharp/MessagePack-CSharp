@@ -24,7 +24,7 @@ namespace MessagePack
         /// <summary>
         /// The default set of options to run with.
         /// </summary>
-        public static readonly MessagePackSerializerOptions DefaultOptions = MessagePackSerializerOptions.Default;
+        public static readonly MessagePackSerializerOptions DefaultOptions = MessagePackSerializerOptions.Standard;
 
         /// <summary>
         /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
@@ -58,7 +58,7 @@ namespace MessagePack
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         public static void Serialize<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options = null)
         {
-            options = options ?? MessagePackSerializerOptions.Default;
+            options = options ?? DefaultOptions;
             bool originalOldSpecValue = writer.OldSpec;
             if (options.OldSpec.HasValue)
             {
@@ -162,7 +162,7 @@ namespace MessagePack
         /// <returns>The deserialized value.</returns>
         public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
         {
-            options = options ?? MessagePackSerializerOptions.Default;
+            options = options ?? DefaultOptions;
             if (options.UseLZ4Compression)
             {
                 using (var msgPackUncompressed = new Nerdbank.Streams.Sequence<byte>())

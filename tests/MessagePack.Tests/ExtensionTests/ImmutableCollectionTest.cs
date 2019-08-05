@@ -18,7 +18,7 @@ namespace MessagePack.Tests.ExtensionTests
     {
         private T Convert<T>(T value)
         {
-            MessagePackSerializerOptions options = MessagePackSerializerOptions.Default.WithResolver(new WithImmutableDefaultResolver());
+            MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard.WithResolver(new WithImmutableDefaultResolver());
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 

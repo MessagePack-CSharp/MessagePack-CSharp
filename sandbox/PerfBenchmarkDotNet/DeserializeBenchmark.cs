@@ -36,8 +36,8 @@ namespace PerfBenchmarkDotNet
         private static Hyperion.Serializer hyperionSerializer = new Hyperion.Serializer();
         private static byte[] hyperionObj;
 
-        private static newmsgpack::MessagePack.MessagePackSerializerOptions mpcGenFormatterResolver = newmsgpack::MessagePack.MessagePackSerializerOptions.Default.WithResolver(new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedAutomata()));
-        private static newmsgpack::MessagePack.MessagePackSerializerOptions mpcGenDictFormatterResolver = newmsgpack::MessagePack.MessagePackSerializerOptions.Default.WithResolver(new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedDictionary()));
+        private static newmsgpack::MessagePack.MessagePackSerializerOptions mpcGenFormatterResolver = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedAutomata()));
+        private static newmsgpack::MessagePack.MessagePackSerializerOptions mpcGenDictFormatterResolver = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(new Resolver(new StringKeySerializerTargetFormatter_MpcGeneratedDictionary()));
 
         static DeserializeBenchmark()
         {

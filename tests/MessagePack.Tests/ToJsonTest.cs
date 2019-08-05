@@ -32,16 +32,16 @@ namespace MessagePack.Tests
         [InlineData(@"[1,20,false,true,3424.432]")]
         public void SimpleToJson(string json)
         {
-            this.JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
-            this.JsonConvert(json, MessagePackSerializerOptions.LZ4Default).Is(json);
+            this.JsonConvert(json, MessagePackSerializerOptions.Standard).Is(json);
+            this.JsonConvert(json, MessagePackSerializerOptions.LZ4Standard).Is(json);
         }
 
         [Fact]
         public void ComplexToJson()
         {
             var json = @"{""reservations"":[{""instances"":[{""type"":""small"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""large"",""state"":{""name"":""stopped""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]}]},{""instances"":[{""type"":""medium"",""state"":{""name"":""terminated""},""tags"":[{""Key"":""Name"",""Values"":[""Web""]},{""Key"":""version"",""Values"":[""1""]}]},{""type"":""xlarge"",""state"":{""name"":""running""},""tags"":[{""Key"":""Name"",""Values"":[""DB""]},{""Key"":""version"",""Values"":[""1""]}]}]}]}";
-            this.JsonConvert(json, MessagePackSerializerOptions.Default).Is(json);
-            this.JsonConvert(json, MessagePackSerializerOptions.LZ4Default).Is(json);
+            this.JsonConvert(json, MessagePackSerializerOptions.Standard).Is(json);
+            this.JsonConvert(json, MessagePackSerializerOptions.LZ4Standard).Is(json);
         }
 
         [Fact]
@@ -60,8 +60,8 @@ namespace MessagePack.Tests
         [InlineData(@"{""Amount"":1E-06}", @"{""Amount"":1E-06}")]
         public void ScientificFloatJsonRoundTrip(string inputJson, string expectedRoundTripJson)
         {
-            this.JsonConvert(inputJson, MessagePackSerializerOptions.Default).Is(expectedRoundTripJson);
-            this.JsonConvert(inputJson, MessagePackSerializerOptions.LZ4Default).Is(expectedRoundTripJson);
+            this.JsonConvert(inputJson, MessagePackSerializerOptions.Standard).Is(expectedRoundTripJson);
+            this.JsonConvert(inputJson, MessagePackSerializerOptions.LZ4Standard).Is(expectedRoundTripJson);
         }
     }
 }

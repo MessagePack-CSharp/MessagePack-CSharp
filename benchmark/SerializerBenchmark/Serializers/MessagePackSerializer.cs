@@ -51,11 +51,11 @@ public class MessagePackLz4_v2 : SerializerBase
 {
     public override T Deserialize<T>(object input)
     {
-        return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<T>((byte[])input, newmsgpack::MessagePack.MessagePackSerializerOptions.LZ4Default);
+        return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<T>((byte[])input, newmsgpack::MessagePack.MessagePackSerializerOptions.LZ4Standard);
     }
 
     public override object Serialize<T>(T input)
     {
-        return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, newmsgpack::MessagePack.MessagePackSerializerOptions.LZ4Default);
+        return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, newmsgpack::MessagePack.MessagePackSerializerOptions.LZ4Standard);
     }
 }

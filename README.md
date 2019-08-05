@@ -925,9 +925,9 @@ resolver.RegisterResolver(
     MessagePack.Unity.Extension.UnityBlitResolver.Instance,
     MessagePack.Unity.UnityResolver.Instance,
 
-    // finaly use standard resolver
+    // finally use standard resolver
     StandardResolver.Instance);
-var options = MessagePackSerializerOptions.Default.WithResolver(resolver);
+var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
 // Each time you serialize/deserialize, specify the options:
 byte[] msgpackBytes = MessagePackSerializer.Serialize(myObject, options);
@@ -1217,7 +1217,7 @@ var resolver = MessagePack.Resolvers.CompositeResolver.Create(
         MessagePack.Resolvers.GeneratedResolver.Instance,
         MessagePack.Resolvers.StandardResolver.Instance,
     });
-var options = MessagePackSerializerOptions.Default.WithResolver(resolver);
+var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
 // Each time you serialize/deserialize, specify the options:
 byte[] msgpackBytes = MessagePackSerializer.Serialize(myObject, options);

@@ -65,7 +65,7 @@ namespace MessagePack
                 return;
             }
 
-            options = options ?? MessagePackSerializerOptions.Default;
+            options = options ?? DefaultOptions;
             if (options.UseLZ4Compression)
             {
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
@@ -108,7 +108,7 @@ namespace MessagePack
         /// </summary>
         public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
-            options = options ?? MessagePackSerializerOptions.Default;
+            options = options ?? DefaultOptions;
             if (options.UseLZ4Compression)
             {
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
@@ -253,7 +253,7 @@ namespace MessagePack
                     WriteJsonString(reader.ReadString(), writer);
                     break;
                 case MessagePackType.Binary:
-                    ArraySegment<byte> segment = ByteArraySegmentFormatter.Instance.Deserialize(ref reader, MessagePackSerializerOptions.Default);
+                    ArraySegment<byte> segment = ByteArraySegmentFormatter.Instance.Deserialize(ref reader, DefaultOptions);
                     writer.Write("\"" + Convert.ToBase64String(segment.Array, segment.Offset, segment.Count) + "\"");
                     break;
                 case MessagePackType.Array:

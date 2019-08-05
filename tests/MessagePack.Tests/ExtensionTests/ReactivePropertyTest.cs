@@ -18,7 +18,7 @@ namespace MessagePack.Tests.ExtensionTests
 {
     public class ReactivePropertyTest
     {
-        private static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Default.WithResolver(new WithRxPropDefaultResolver());
+        private static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Standard.WithResolver(new WithRxPropDefaultResolver());
 
         private T Convert<T>(T value)
         {
