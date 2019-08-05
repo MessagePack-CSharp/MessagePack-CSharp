@@ -141,6 +141,40 @@ namespace MessagePack.Tests
             public int X;
         }
 
+        [MessagePackObject]
+        public class ImmutablePrivateClass
+        {
+            [Key(0)]
+            private int x;
+
+            [Key(1)]
+            private int y;
+
+            [SerializationConstructor]
+            private ImmutablePrivateClass(int x, int y)
+            {
+                this.x = x;
+                this.y = y;
+                this.CreatedUsingPrivateCtor = true;
+            }
+
+            public ImmutablePrivateClass(int x, int y, bool dummy)
+            {
+                this.x = x;
+                this.y = y;
+                this.CreatedUsingPrivateCtor = false;
+            }
+
+            [IgnoreMember]
+            public int X => this.x;
+
+            [IgnoreMember]
+            public int Y => this.y;
+
+            [IgnoreMember]
+            public bool CreatedUsingPrivateCtor { get; }
+        }
+
         [Fact]
         public void AllowPrivate()
         {
@@ -214,6 +248,19 @@ namespace MessagePack.Tests
         {
             var x = MessagePackSerializer.Serialize(new EmptyConstructorStruct { X = 99 }, StandardResolverAllowPrivate.Options);
             MessagePackSerializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Options).X.Is(99);
+        }
+
+        [Fact]
+        public void PrivateConstructor()
+        {
+            var p1 = new ImmutablePrivateClass(10, 20, dummy: false);
+            var bin = MessagePackSerializer.Serialize(p1, StandardResolverAllowPrivate.Options);
+            var p2 = MessagePackSerializer.Deserialize<ImmutablePrivateClass>(bin, StandardResolverAllowPrivate.Options);
+
+            Assert.Equal(p1.X, p2.X);
+            Assert.Equal(p1.Y, p2.Y);
+            Assert.False(p1.CreatedUsingPrivateCtor);
+            Assert.True(p2.CreatedUsingPrivateCtor);
         }
     }
 }

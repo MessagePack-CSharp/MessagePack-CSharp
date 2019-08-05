@@ -1381,6 +1381,7 @@ namespace MessagePack.Internal
         {
             TypeInfo ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
+            var isStruct = ti.IsValueType;
 
             MessagePackObjectAttribute contractAttr = ti.GetCustomAttributes<MessagePackObjectAttribute>().FirstOrDefault();
             DataContractAttribute dataContractAttr = ti.GetCustomAttribute<DataContractAttribute>();
@@ -1714,7 +1715,7 @@ namespace MessagePack.Internal
 
             // GetConstructor
             IEnumerator<ConstructorInfo> ctorEnumerator = null;
-            ConstructorInfo ctor = ti.DeclaredConstructors.Where(x => x.IsPublic).SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) != null);
+            ConstructorInfo ctor = ti.DeclaredConstructors.SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) != null);
             if (ctor == null)
             {
                 ctorEnumerator =
@@ -1728,7 +1729,7 @@ namespace MessagePack.Internal
             }
 
             // struct allows null ctor
-            if (ctor == null && isClass)
+            if (ctor == null && !isStruct)
             {
                 throw new MessagePackDynamicObjectResolverException("can't find public constructor. type:" + type.FullName);
             }
