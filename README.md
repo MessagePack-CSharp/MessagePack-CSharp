@@ -282,7 +282,7 @@ var bin = MessagePackSerializer.Serialize(data);
 var point = MessagePackSerializer.Deserialize<Point>(bin);
 ```
 
-MessagePackSerializer choose constructor with the least matched argument, match index if key in integer or match name(ignore case) if key is string. If encounts `MessagePackDynamicObjectResolverException: can't find matched constructor parameter` you should check about this.
+MessagePackSerializer choose constructor with the most matched argument, match index if key in integer or match name(ignore case) if key is string. If encounts `MessagePackDynamicObjectResolverException: can't find matched constructor parameter` you should check about this.
 
 If can not match automatically, you can specify to use constructor manually by `[SerializationConstructorAttribute]`.
 
@@ -295,13 +295,14 @@ public struct Point
     [Key(1)]
     public readonly int Y;
 
-    // If not marked attribute, used this(least matched argument)
+    [SerializationConstructor]
     public Point(int x)
     {
-        X = x;
+        this.X = x;
+        this.Y = -1;
     }
 
-    [SerializationConstructor]
+    // If not marked attribute, used this(most matched argument)
     public Point(int x, int y)
     {
         this.X = x;
@@ -1233,7 +1234,7 @@ MessagePack advocated [MessagePack RPC](https://github.com/msgpack-rpc/msgpack-r
 
 ### MagicOnion
 
-I've created gRPC based MessagePack HTTP/2 RPC streaming framework called [MagicOnion](https://github.com/neuecc/MagicOnion). gRPC usually communicates with Protocol Buffers using IDL. But MagicOnion uses MessagePack for C# and does not needs IDL. If communicates C# to C#, schemaless(C# classes as schema) is better than IDL.
+I've created gRPC based MessagePack HTTP/2 RPC streaming framework called [MagicOnion](https://github.com/Cysharp/MagicOnion). gRPC usually communicates with Protocol Buffers using IDL. But MagicOnion uses MessagePack for C# and does not needs IDL. If communicates C# to C#, schemaless(C# classes as schema) is better than IDL.
 
 ### StreamJsonRpc
 

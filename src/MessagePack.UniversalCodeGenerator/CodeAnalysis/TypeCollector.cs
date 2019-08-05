@@ -696,7 +696,7 @@ namespace MessagePack.CodeGenerator
             {
                 ctorEnumerator =
                     type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public && !x.IsImplicitlyDeclared).OrderBy(x => x.Parameters.Length)
-                    .Concat(type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).OrderBy(x => x.Parameters.Length).Take(1))
+                    .Concat(type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).OrderByDescending(x => x.Parameters.Length).Take(1))
                     .GetEnumerator();
 
                 if (ctorEnumerator.MoveNext())
