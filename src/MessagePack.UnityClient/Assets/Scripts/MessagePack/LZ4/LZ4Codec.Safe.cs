@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if UNITY_2018_3_OR_NEWER
+
 #region license
 
 /*
@@ -36,7 +38,7 @@ namespace MessagePack.LZ4
     /// <summary>Safe LZ4 codec.</summary>
     internal partial class LZ4Codec
     {
-        #region Helper
+#region Helper
 
         [Conditional("DEBUG")]
         private static void Assert(bool condition, string errorMessage)
@@ -49,9 +51,9 @@ namespace MessagePack.LZ4
             Debug.Assert(condition, errorMessage);
         }
 
-        #endregion
+#endregion
 
-        #region Byte manipulation
+#region Byte manipulation
 
         internal static void Poke2(byte[] buffer, int offset, ushort value)
         {
@@ -147,9 +149,9 @@ namespace MessagePack.LZ4
             return buffer[offset1 + 3] == buffer[offset2 + 3];
         }
 
-        #endregion
+#endregion
 
-        #region Byte block copy
+#region Byte block copy
 
         private static void Copy4(byte[] buf, int src, int dst)
         {
@@ -326,7 +328,7 @@ namespace MessagePack.LZ4
             return length; // done
         }
 
-        #endregion
+#endregion
 
         /// <summary>Encodes the specified input.</summary>
         /// <param name="input">The input.</param>
@@ -461,3 +463,5 @@ namespace MessagePack.LZ4
         }
     }
 }
+
+#endif
