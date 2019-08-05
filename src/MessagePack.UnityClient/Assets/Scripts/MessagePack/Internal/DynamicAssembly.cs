@@ -31,7 +31,7 @@ namespace MessagePack.Internal
             AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.Run;
 #endif
             this.assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(moduleName), builderAccess);
-            this.moduleBuilder = this.assemblyBuilder.DefineDynamicModule(moduleName);
+            this.moduleBuilder = this.assemblyBuilder.DefineDynamicModule(moduleName + ".dll");
         }
 
         /* requires lock on mono environment. see: https://github.com/neuecc/MessagePack-CSharp/issues/161 */
