@@ -1,5 +1,6 @@
 ﻿using MessagePack.Formatters;
 using MessagePack.Resolvers;
+using NUnit.Framework;
 using RuntimeUnitTestToolkit;
 using SharedData;
 using System;
@@ -175,6 +176,7 @@ namespace MessagePack.UnityClient.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
+        [Test]
         public void MDArrayTest()
         {
             var dataI = 100;

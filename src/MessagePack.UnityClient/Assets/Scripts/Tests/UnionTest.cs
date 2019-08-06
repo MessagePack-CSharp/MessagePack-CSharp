@@ -1,4 +1,5 @@
-﻿using RuntimeUnitTestToolkit;
+﻿using NUnit.Framework;
+using RuntimeUnitTestToolkit;
 using SharedData;
 using System;
 
@@ -6,6 +7,7 @@ namespace MessagePack.UnityClient.Tests
 {
     public class UnionTest
     {
+        [Test]
         public void Union()
         {
             {

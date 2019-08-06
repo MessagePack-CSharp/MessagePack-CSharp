@@ -1,13 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_2018_3_OR_NEWER
-
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace MessagePack.Internal
 {
@@ -36,8 +31,6 @@ namespace MessagePack.Internal
             return propertyInfo.GetIndexParameters().Length > 0;
         }
 
-#if !UNITY_2018_3_OR_NEWER
-
         public static bool IsConstructedGenericType(this System.Reflection.TypeInfo type)
         {
             return type.AsType().IsConstructedGenericType;
@@ -52,9 +45,5 @@ namespace MessagePack.Internal
         {
             return propInfo.SetMethod;
         }
-
-#endif
     }
 }
-
-#endif

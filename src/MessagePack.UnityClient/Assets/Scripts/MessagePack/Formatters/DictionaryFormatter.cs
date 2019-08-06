@@ -5,16 +5,12 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-
-#if !UNITY_2018_3_OR_NEWER
 using System.Collections.Concurrent;
-#endif
 
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
-#if !UNITY_2018_3_OR_NEWER
 
     // unfortunately, can't use IDictionary<KVP> because supports IReadOnlyDictionary.
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary> : IMessagePackFormatter<TDictionary>
@@ -272,166 +268,5 @@ namespace MessagePack.Formatters
             return new ConcurrentDictionary<TKey, TValue>();
         }
     }
-
-#else
-
-    public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TDictionary> : IMessagePackFormatter<TDictionary>
-        where TDictionary : IDictionary<TKey, TValue>
-    {
-        public void Serialize(ref MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-            }
-            else
-            {
-                var keyFormatter = options.Resolver.GetFormatterWithVerify<TKey>();
-                var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
-
-                var count = value.Count;
-
-                writer.WriteMapHeader(count);
-
-                var e = value.GetEnumerator();
-                try
-                {
-                    while (e.MoveNext())
-                    {
-                        var item = e.Current;
-                        keyFormatter.Serialize(ref writer, item.Key, options);
-                        valueFormatter.Serialize(ref writer, item.Value, options);
-                    }
-                }
-                finally
-                {
-                    e.Dispose();
-                }
-            }
-        }
-
-        public TDictionary Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return default(TDictionary);
-            }
-            else
-            {
-                var keyFormatter = options.Resolver.GetFormatterWithVerify<TKey>();
-                var valueFormatter = options.Resolver.GetFormatterWithVerify<TValue>();
-
-                var len = reader.ReadMapHeader();
-
-                var dict = Create(len);
-                for (int i = 0; i < len; i++)
-                {
-                    var key = keyFormatter.Deserialize(ref reader, options);
-                    var value = valueFormatter.Deserialize(ref reader, options);
-                    Add(dict, i, key, value);
-                }
-
-                return Complete(dict);
-            }
-        }
-
-        // abstraction for deserialize
-        protected abstract TIntermediate Create(int count);
-        protected abstract void Add(TIntermediate collection, int index, TKey key, TValue value);
-        protected abstract TDictionary Complete(TIntermediate intermediateCollection);
-    }
-
-    public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>>
-    {
-        protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
-        {
-            collection.Add(key, value);
-        }
-
-        protected override Dictionary<TKey, TValue> Complete(Dictionary<TKey, TValue> intermediateCollection)
-        {
-            return intermediateCollection;
-        }
-
-        protected override Dictionary<TKey, TValue> Create(int count)
-        {
-            return new Dictionary<TKey, TValue>(count);
-        }
-    }
-
-    public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary, TDictionary>
-        where TDictionary : IDictionary<TKey, TValue>, new()
-    {
-        protected override void Add(TDictionary collection, int index, TKey key, TValue value)
-        {
-            collection.Add(key, value);
-        }
-
-        protected override TDictionary Complete(TDictionary intermediateCollection)
-        {
-            return intermediateCollection;
-        }
-
-        protected override TDictionary Create(int count)
-        {
-            return new TDictionary();
-        }
-    }
-
-    public sealed class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
-    {
-        protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value)
-        {
-            collection.Add(key, value);
-        }
-
-        protected override Dictionary<TKey, TValue> Create(int count)
-        {
-            return new Dictionary<TKey, TValue>(count);
-        }
-
-        protected override IDictionary<TKey, TValue> Complete(Dictionary<TKey, TValue> intermediateCollection)
-        {
-            return intermediateCollection;
-        }
-    }
-
-    public sealed class SortedListFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedList<TKey, TValue>,  SortedList<TKey, TValue>>
-    {
-        protected override void Add(SortedList<TKey, TValue> collection, int index, TKey key, TValue value)
-        {
-            collection.Add(key, value);
-        }
-
-        protected override SortedList<TKey, TValue> Complete(SortedList<TKey, TValue> intermediateCollection)
-        {
-            return intermediateCollection;
-        }
-
-        protected override SortedList<TKey, TValue> Create(int count)
-        {
-            return new SortedList<TKey, TValue>(count);
-        }
-    }
-
-    public sealed class SortedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedDictionary<TKey, TValue>, SortedDictionary<TKey, TValue>>
-    {
-        protected override void Add(SortedDictionary<TKey, TValue> collection, int index, TKey key, TValue value)
-        {
-            collection.Add(key, value);
-        }
-
-        protected override SortedDictionary<TKey, TValue> Complete(SortedDictionary<TKey, TValue> intermediateCollection)
-        {
-            return intermediateCollection;
-        }
-
-        protected override SortedDictionary<TKey, TValue> Create(int count)
-        {
-            return new SortedDictionary<TKey, TValue>();
-        }
-    }
-
-#endif
 
 }

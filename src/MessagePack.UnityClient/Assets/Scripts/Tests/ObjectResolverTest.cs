@@ -2,7 +2,7 @@
 using System.Linq;
 using SharedData;
 using System;
-
+using NUnit.Framework;
 
 namespace MessagePack.UnityClient.Tests
 {
@@ -14,6 +14,7 @@ namespace MessagePack.UnityClient.Tests
         }
 
 
+        [Test]
         public void Standard()
         {
             try
@@ -66,6 +67,7 @@ namespace MessagePack.UnityClient.Tests
         }
 
 
+        [Test]
         public void Null()
         {
             SimpleIntKeyData n = null;
@@ -82,6 +84,7 @@ namespace MessagePack.UnityClient.Tests
             });
         }
 
+        [Test]
         public void WithConstructor()
         {
             var o = new Vector2(100.4f, 4321.1f);
@@ -91,6 +94,7 @@ namespace MessagePack.UnityClient.Tests
         }
 
 
+        [Test]
         public void Nullable()
         {
             Vector2? o = new Vector2(100.4f, 4321.1f);
@@ -101,6 +105,7 @@ namespace MessagePack.UnityClient.Tests
             Convert(o).IsNull();
         }
 
+        [Test]
         public void Versioning()
         {
             var v1 = new Version1
@@ -154,6 +159,7 @@ namespace MessagePack.UnityClient.Tests
             v0_.MyProperty1.Is(v1.MyProperty1);
         }
 
+        [Test]
         public void Versioning2()
         {
             var v1 = new HolderV1
@@ -207,6 +213,7 @@ namespace MessagePack.UnityClient.Tests
             v0_.After.Is(9999);
         }
 
+        [Test]
         public void SerializationCallbackTes()
         {
             {
@@ -238,20 +245,22 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
-        public void GenericClassTest()
-        {
-            var t = new GenericClass<int, string> { MyProperty0 = 100, MyProperty1 = "aaa" };
-            var v = Convert(t);
-            v.MyProperty0.Is(100);
-            v.MyProperty1.Is("aaa");
-        }
+        //[Test]
+        //public void GenericClassTest()
+        //{
+        //    var t = new GenericClass<int, string> { MyProperty0 = 100, MyProperty1 = "aaa" };
+        //    var v = Convert(t);
+        //    v.MyProperty0.Is(100);
+        //    v.MyProperty1.Is("aaa");
+        //}
 
-        public void GenericStructTest()
-        {
-            var t = new GenericStruct<int, string> { MyProperty0 = 100, MyProperty1 = "aaa" };
-            var v = Convert(t);
-            v.MyProperty0.Is(100);
-            v.MyProperty1.Is("aaa");
-        }
+        //[Test]
+        //public void GenericStructTest()
+        //{
+        //    var t = new GenericStruct<int, string> { MyProperty0 = 100, MyProperty1 = "aaa" };
+        //    var v = Convert(t);
+        //    v.MyProperty0.Is(100);
+        //    v.MyProperty1.Is("aaa");
+        //}
     }
 }

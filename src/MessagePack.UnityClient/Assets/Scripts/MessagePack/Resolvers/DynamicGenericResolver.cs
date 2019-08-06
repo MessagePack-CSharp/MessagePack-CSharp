@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_2018_3_OR_NEWER
 
 using System;
 using System.Collections;
@@ -11,10 +10,7 @@ using System.Linq;
 using System.Reflection;
 using MessagePack.Formatters;
 using MessagePack.Internal;
-
-#if !UNITY_2018_3_OR_NEWER
 using System.Threading.Tasks;
-#endif
 
 #pragma warning disable SA1403 // File may only contain a single namespace
 
@@ -69,7 +65,6 @@ namespace MessagePack.Internal
               { typeof(SortedList<,>), typeof(SortedListFormatter<,>) },
               { typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>) },
               { typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>) },
-#if !UNITY_2018_3_OR_NEWER
               { typeof(ObservableCollection<>), typeof(ObservableCollectionFormatter<>) },
               { typeof(ReadOnlyObservableCollection<>), typeof(ReadOnlyObservableCollectionFormatter<>) },
               { typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>) },
@@ -82,7 +77,6 @@ namespace MessagePack.Internal
               { typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>) },
               { typeof(System.Collections.Concurrent.ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>) },
               { typeof(Lazy<>), typeof(LazyFormatter<>) },
-#endif
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
@@ -135,7 +129,6 @@ namespace MessagePack.Internal
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
                 }
-#if !UNITY_2018_3_OR_NEWER
                 else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ValueTask<>))
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
@@ -214,8 +207,6 @@ namespace MessagePack.Internal
 
                     return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
                 }
-
-#endif
 
                 // ArraySegement
                 else if (genericType == typeof(ArraySegment<>))
@@ -301,5 +292,3 @@ namespace MessagePack.Internal
         }
     }
 }
-
-#endif
