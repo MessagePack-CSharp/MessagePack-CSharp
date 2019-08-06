@@ -48,7 +48,7 @@ namespace MessagePack
         /// </summary>
         /// <value>An instance of <see cref="IFormatterResolver"/>. Never <c>null</c>.</value>
         /// <exception cref="ArgumentNullException">Thrown if an attempt is made to set this property to <c>null</c>.</exception>
-        public IFormatterResolver Resolver { get; set; }
+        public IFormatterResolver Resolver { get; }
 
         /// <summary>
         /// Gets a value indicating whether to apply LZ4 to the MessagePack stream.

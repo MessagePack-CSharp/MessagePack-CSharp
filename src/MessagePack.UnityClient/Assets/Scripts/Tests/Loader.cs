@@ -27,8 +27,7 @@ namespace Assets.Scripts.Tests
                 MessagePack.Resolvers.StandardResolver.Instance
             });
 
-
-            MessagePackSerializer.DefaultOptions.Resolver = resolver;
+            MessagePackSerializer.DefaultOptions = MessagePackSerializerOptions.Standard.WithResolver(resolver);
         }
     }
 }
