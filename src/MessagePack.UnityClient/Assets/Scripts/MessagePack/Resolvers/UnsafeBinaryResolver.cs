@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !UNITY_2018_3_OR_NEWER
-
 using System;
 using MessagePack.Formatters;
 using MessagePack.Internal;
@@ -11,14 +9,14 @@ using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
-    public sealed class UnsafeBinaryResolver : IFormatterResolver
+    public sealed class NativeGuidResolver : IFormatterResolver
     {
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly UnsafeBinaryResolver Instance = new UnsafeBinaryResolver();
+        public static readonly NativeGuidResolver Instance = new NativeGuidResolver();
 
-        private UnsafeBinaryResolver()
+        private NativeGuidResolver()
         {
         }
 
@@ -33,7 +31,34 @@ namespace MessagePack.Resolvers
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)UnsafeBinaryResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>)NativeGuidResolverGetFormatterHelper.GetFormatter(typeof(T));
+            }
+        }
+    }
+
+    public sealed class NativeDecimalResolver : IFormatterResolver
+    {
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly NativeDecimalResolver Instance = new NativeDecimalResolver();
+
+        private NativeDecimalResolver()
+        {
+        }
+
+        public IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            return FormatterCache<T>.Formatter;
+        }
+
+        private static class FormatterCache<T>
+        {
+            public static readonly IMessagePackFormatter<T> Formatter;
+
+            static FormatterCache()
+            {
+                Formatter = (IMessagePackFormatter<T>)NativeDecimalResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -41,30 +66,37 @@ namespace MessagePack.Resolvers
 
 namespace MessagePack.Internal
 {
-    internal static class UnsafeBinaryResolverGetFormatterHelper
+    internal static class NativeGuidResolverGetFormatterHelper
     {
         internal static object GetFormatter(Type t)
         {
             if (t == typeof(Guid))
             {
-                return BinaryGuidFormatter.Instance;
+                return NativeGuidFormatter.Instance;
             }
             else if (t == typeof(Guid?))
             {
-                return new StaticNullableFormatter<Guid>(BinaryGuidFormatter.Instance);
+                return new StaticNullableFormatter<Guid>(NativeGuidFormatter.Instance);
             }
-            else if (t == typeof(Decimal))
+
+            return null;
+        }
+    }
+
+    internal static class NativeDecimalResolverGetFormatterHelper
+    {
+        internal static object GetFormatter(Type t)
+        {
+            if (t == typeof(Decimal))
             {
-                return BinaryDecimalFormatter.Instance;
+                return NativeDecimalFormatter.Instance;
             }
             else if (t == typeof(Decimal?))
             {
-                return new StaticNullableFormatter<Decimal>(BinaryDecimalFormatter.Instance);
+                return new StaticNullableFormatter<Decimal>(NativeDecimalFormatter.Instance);
             }
 
             return null;
         }
     }
 }
-
-#endif

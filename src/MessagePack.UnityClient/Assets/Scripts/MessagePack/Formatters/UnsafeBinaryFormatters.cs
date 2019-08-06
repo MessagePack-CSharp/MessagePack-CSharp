@@ -10,14 +10,14 @@ using System.Buffers;
 
 namespace MessagePack.Formatters
 {
-    public sealed class BinaryGuidFormatter : IMessagePackFormatter<Guid>
+    public sealed class NativeGuidFormatter : IMessagePackFormatter<Guid>
     {
         /// <summary>
         /// Unsafe binary Guid formatter. this is only allowed on LittleEndian environment.
         /// </summary>
-        public static readonly IMessagePackFormatter<Guid> Instance = new BinaryGuidFormatter();
+        public static readonly IMessagePackFormatter<Guid> Instance = new NativeGuidFormatter();
 
-        private BinaryGuidFormatter()
+        private NativeGuidFormatter()
         {
         }
 
@@ -28,7 +28,7 @@ namespace MessagePack.Formatters
         {
             if (!BitConverter.IsLittleEndian)
             {
-                throw new Exception("BinaryGuidFormatter only allows on little endian env.");
+                throw new Exception("NativeGuidFormatter only allows on little endian env.");
             }
 
             var valueSpan = new ReadOnlySpan<byte>(&value, sizeof(Guid));
@@ -39,7 +39,7 @@ namespace MessagePack.Formatters
         {
             if (!BitConverter.IsLittleEndian)
             {
-                throw new Exception("BinaryGuidFormatter only allows on little endian env.");
+                throw new Exception("NativeGuidFormatter only allows on little endian env.");
             }
 
             ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
@@ -55,14 +55,14 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class BinaryDecimalFormatter : IMessagePackFormatter<Decimal>
+    public sealed class NativeDecimalFormatter : IMessagePackFormatter<Decimal>
     {
         /// <summary>
         /// Unsafe binary Decimal formatter. this is only allows on LittleEndian environment.
         /// </summary>
-        public static readonly IMessagePackFormatter<Decimal> Instance = new BinaryDecimalFormatter();
+        public static readonly IMessagePackFormatter<Decimal> Instance = new NativeDecimalFormatter();
 
-        private BinaryDecimalFormatter()
+        private NativeDecimalFormatter()
         {
         }
 
@@ -73,7 +73,7 @@ namespace MessagePack.Formatters
         {
             if (!BitConverter.IsLittleEndian)
             {
-                throw new Exception("BinaryGuidFormatter only allows on little endian env.");
+                throw new Exception("NativeDecimalFormatter only allows on little endian env.");
             }
 
             var valueSpan = new ReadOnlySpan<byte>(&value, sizeof(Decimal));
@@ -84,7 +84,7 @@ namespace MessagePack.Formatters
         {
             if (!BitConverter.IsLittleEndian)
             {
-                throw new Exception("BinaryDecimalFormatter only allows on little endian env.");
+                throw new Exception("NativeDecimalFormatter only allows on little endian env.");
             }
 
             ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
