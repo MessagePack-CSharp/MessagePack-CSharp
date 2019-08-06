@@ -16,12 +16,12 @@ namespace MessagePack
         /// <summary>
         /// A good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Default = new MessagePackSerializerOptions();
+        public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions();
 
         /// <summary>
         /// A good default set of options that includes LZ4 compression and uses the <see cref="Resolvers.StandardResolver"/>.
         /// </summary>
-        public static readonly MessagePackSerializerOptions LZ4Default = Default.WithLZ4Compression(true);
+        public static readonly MessagePackSerializerOptions LZ4Standard = Standard.WithLZ4Compression(true);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class

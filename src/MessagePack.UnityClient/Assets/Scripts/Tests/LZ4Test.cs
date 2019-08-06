@@ -10,22 +10,22 @@ namespace MessagePack.UnityClient.Tests
     {
         public void TestSmall()
         {
-            new MessagePackReader(MessagePackSerializer.Serialize(100, MessagePackSerializerOptions.LZ4Default)).NextMessagePackType.Is(MessagePackType.Integer);
-            new MessagePackReader(MessagePackSerializer.Serialize("test", MessagePackSerializerOptions.LZ4Default)).NextMessagePackType.Is(MessagePackType.String);
-            new MessagePackReader(MessagePackSerializer.Serialize(false, MessagePackSerializerOptions.LZ4Default)).NextMessagePackType.Is(MessagePackType.Boolean);
+            new MessagePackReader(MessagePackSerializer.Serialize(100, MessagePackSerializerOptions.LZ4Standard)).NextMessagePackType.Is(MessagePackType.Integer);
+            new MessagePackReader(MessagePackSerializer.Serialize("test", MessagePackSerializerOptions.LZ4Standard)).NextMessagePackType.Is(MessagePackType.String);
+            new MessagePackReader(MessagePackSerializer.Serialize(false, MessagePackSerializerOptions.LZ4Standard)).NextMessagePackType.Is(MessagePackType.Boolean);
         }
 
         public void CompressionData()
         {
             var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();
-            var lz4Data = MessagePackSerializer.Serialize(originalData, MessagePackSerializerOptions.LZ4Default);
+            var lz4Data = MessagePackSerializer.Serialize(originalData, MessagePackSerializerOptions.LZ4Standard);
 
             var reader = new MessagePackReader(lz4Data);
             reader.NextMessagePackType.Is(MessagePackType.Extension);
             var header = reader.ReadExtensionFormatHeader();
             header.TypeCode.Is((sbyte)MessagePackSerializer.LZ4ExtensionTypeCode);
 
-            var decompress = MessagePackSerializer.Deserialize<int[]>(lz4Data, MessagePackSerializerOptions.LZ4Default);
+            var decompress = MessagePackSerializer.Deserialize<int[]>(lz4Data, MessagePackSerializerOptions.LZ4Standard);
             decompress.IsCollection(originalData);
         }
 

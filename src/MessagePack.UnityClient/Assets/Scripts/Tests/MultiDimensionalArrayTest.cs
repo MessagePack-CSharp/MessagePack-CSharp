@@ -57,7 +57,7 @@ namespace MessagePack.UnityClient.Tests
             options.Resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
             options.Resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
 
-            
+
         }
 
         public ValueTuple<T1, T2> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -123,7 +123,7 @@ namespace MessagePack.UnityClient.Tests
             options.Resolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
             options.Resolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
 
-            
+
         }
 
         public ValueTuple<T1, T2, T3, T4> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -171,7 +171,7 @@ namespace MessagePack.UnityClient.Tests
     {
         T Convert<T>(T value)
         {
-            var options = MessagePackSerializerOptions.Default.WithResolver(new IntTupleRegistered());
+            var options = MessagePackSerializerOptions.Standard.WithResolver(new IntTupleRegistered());
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 

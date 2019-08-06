@@ -23,8 +23,8 @@ namespace PerfBenchmarkDotNet
         {
             this.bin = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new StringKeySerializerTarget());
             this.binIntKey = newmsgpack.MessagePack.MessagePackSerializer.Serialize(new IntKeySerializerTarget());
-            this.automata = newmsgpack::MessagePack.MessagePackSerializerOptions.Default.WithResolver(new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_AutomataLookup()));
-            this.hashtable = newmsgpack::MessagePack.MessagePackSerializerOptions.Default.WithResolver(new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_ByteArrayStringHashTable()));
+            this.automata = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_AutomataLookup()));
+            this.hashtable = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(new Resolver(new GeneratedFormatter.MessagePack.Formatters.StringKeySerializerTargetFormatter_ByteArrayStringHashTable()));
         }
 
         [Benchmark(Baseline = true)]

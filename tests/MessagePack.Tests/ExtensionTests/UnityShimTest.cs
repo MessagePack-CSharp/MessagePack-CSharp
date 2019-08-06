@@ -19,13 +19,13 @@ namespace MessagePack.Tests.ExtensionTests
     {
         private T ConvertBlit<T>(T value)
         {
-            MessagePackSerializerOptions options = MessagePackSerializerOptions.Default.WithResolver(new WithUnityBlitResolver());
+            MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard.WithResolver(new WithUnityBlitResolver());
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
         private T ConvertStandard<T>(T value)
         {
-            MessagePackSerializerOptions options = MessagePackSerializerOptions.Default.WithResolver(UnityResolver.Instance);
+            MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard.WithResolver(UnityResolver.Instance);
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 

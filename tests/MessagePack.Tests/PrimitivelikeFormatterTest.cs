@@ -113,7 +113,7 @@ namespace MessagePack.Tests
             /// <summary>
             /// An <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
             /// </summary>
-            public static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Default.WithResolver(new PrimitivelikeResolver());
+            public static readonly MessagePackSerializerOptions Options = MessagePackSerializerOptions.Standard.WithResolver(new PrimitivelikeResolver());
 
             public IMessagePackFormatter<T> GetFormatter<T>()
             {
