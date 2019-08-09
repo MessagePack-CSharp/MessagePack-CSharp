@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if UNITY_2018_3_OR_NEWER
+
 #region LZ4 original
 
 /*
@@ -71,7 +73,7 @@ namespace MessagePack.LZ4
 {
     internal partial class LZ4Codec
     {
-        #region LZ4_compressCtx
+#region LZ4_compressCtx
 
         private static int LZ4_compressCtx_safe32(
             int[] hash_table,
@@ -330,9 +332,9 @@ _last_literals:
             }
         }
 
-        #endregion
+#endregion
 
-        #region LZ4_compress64kCtx
+#region LZ4_compress64kCtx
 
         private static int LZ4_compress64kCtx_safe32(
             ushort[] hash_table,
@@ -587,9 +589,9 @@ _last_literals:
             }
         }
 
-        #endregion
+#endregion
 
-        #region LZ4_uncompress
+#region LZ4_uncompress
 
         private static int LZ4_uncompress_safe32(
             byte[] src,
@@ -744,6 +746,8 @@ _output_error:
             }
         }
 
-        #endregion
+#endregion
     }
 }
+
+#endif
