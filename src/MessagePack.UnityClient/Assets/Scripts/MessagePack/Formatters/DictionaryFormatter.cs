@@ -2,16 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Concurrent;
 
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
-
     // unfortunately, can't use IDictionary<KVP> because supports IReadOnlyDictionary.
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary> : IMessagePackFormatter<TDictionary>
         where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
@@ -268,5 +266,4 @@ namespace MessagePack.Formatters
             return new ConcurrentDictionary<TKey, TValue>();
         }
     }
-
 }

@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using MessagePack.Internal;
-using System.Threading.Tasks;
 
 #pragma warning disable SA1649 // File name should match first type name
 

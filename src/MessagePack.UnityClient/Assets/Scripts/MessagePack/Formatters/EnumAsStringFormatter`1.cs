@@ -56,18 +56,19 @@ namespace MessagePack.Formatters
     public sealed class GenericEnumFormatter<T> : IMessagePackFormatter<T>
         where T : Enum
     {
-        delegate void EnumSerialize(ref MessagePackWriter writer, ref T value);
-        delegate T EnumDeserialize(ref MessagePackReader reader);
+        private delegate void EnumSerialize(ref MessagePackWriter writer, ref T value);
 
-        readonly EnumSerialize serializer;
-        readonly EnumDeserialize deserializer;
+        private delegate T EnumDeserialize(ref MessagePackReader reader);
+
+        private readonly EnumSerialize serializer;
+        private readonly EnumDeserialize deserializer;
 
         public GenericEnumFormatter()
         {
             var underlyingType = typeof(T).GetEnumUnderlyingType();
             switch (Type.GetTypeCode(underlyingType))
             {
-
+#pragma warning disable SA1107 // Avoid multiple statements on same line.
                 case TypeCode.Byte:
                     serializer = (ref MessagePackWriter writer, ref T value) => writer.Write(Unsafe.As<T, Byte>(ref value));
                     deserializer = (ref MessagePackReader reader) => { var v = reader.ReadByte(); return Unsafe.As<Byte, T>(ref v); };
@@ -102,6 +103,7 @@ namespace MessagePack.Formatters
                     break;
                 default:
                     break;
+#pragma warning restore SA1107 // Avoid multiple statements on same line.
             }
         }
 

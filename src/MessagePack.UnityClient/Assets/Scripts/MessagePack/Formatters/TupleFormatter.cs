@@ -376,4 +376,3 @@ namespace MessagePack.Formatters
         }
     }
 }
-
