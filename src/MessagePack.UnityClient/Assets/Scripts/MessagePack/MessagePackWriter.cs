@@ -596,25 +596,8 @@ namespace MessagePack
         public void Write(float value)
         {
             Span<byte> span = this.writer.GetSpan(5);
-
             span[0] = MessagePackCode.Float32;
-
-            var num = new Float32Bits(value);
-            if (BitConverter.IsLittleEndian)
-            {
-                span[1] = num.Byte3;
-                span[2] = num.Byte2;
-                span[3] = num.Byte1;
-                span[4] = num.Byte0;
-            }
-            else
-            {
-                span[1] = num.Byte0;
-                span[2] = num.Byte1;
-                span[3] = num.Byte2;
-                span[4] = num.Byte3;
-            }
-
+            WriteBigEndian(value, span.Slice(1));
             this.writer.Advance(5);
         }
 
@@ -625,33 +608,8 @@ namespace MessagePack
         public void Write(double value)
         {
             Span<byte> span = this.writer.GetSpan(9);
-
             span[0] = MessagePackCode.Float64;
-
-            var num = new Float64Bits(value);
-            if (BitConverter.IsLittleEndian)
-            {
-                span[1] = num.Byte7;
-                span[2] = num.Byte6;
-                span[3] = num.Byte5;
-                span[4] = num.Byte4;
-                span[5] = num.Byte3;
-                span[6] = num.Byte2;
-                span[7] = num.Byte1;
-                span[8] = num.Byte0;
-            }
-            else
-            {
-                span[1] = num.Byte0;
-                span[2] = num.Byte1;
-                span[3] = num.Byte2;
-                span[4] = num.Byte3;
-                span[5] = num.Byte4;
-                span[6] = num.Byte5;
-                span[7] = num.Byte6;
-                span[8] = num.Byte7;
-            }
-
+            WriteBigEndian(value, span.Slice(1));
             this.writer.Advance(9);
         }
 
@@ -1219,7 +1177,9 @@ namespace MessagePack
             }
         }
 
-        private static void ThrowArgumentNullException(string parameterName) => throw new ArgumentNullException(parameterName);
+        private static unsafe void WriteBigEndian(float value, Span<byte> span) => WriteBigEndian(*(int*)&value, span);
+
+        private static unsafe void WriteBigEndian(double value, Span<byte> span) => WriteBigEndian(*(long*)&value, span);
 
         /// <summary>
         /// Estimates the length of the header required for a given string.
