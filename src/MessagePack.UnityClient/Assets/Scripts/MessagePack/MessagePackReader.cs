@@ -383,19 +383,11 @@ namespace MessagePack
             switch (code)
             {
                 case MessagePackCode.Float32:
-                    byte* pScratch32 = stackalloc byte[4];
-                    Span<byte> scratch32 = new Span<byte>(pScratch32, 4);
-                    ThrowInsufficientBufferUnless(this.reader.TryCopyTo(scratch32));
-                    this.reader.Advance(4);
-                    var floatValue = new Float32Bits(scratch32);
-                    return floatValue.Value;
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out float floatValue));
+                    return floatValue;
                 case MessagePackCode.Float64:
-                    byte* pScratch64 = stackalloc byte[8];
-                    Span<byte> scratch64 = new Span<byte>(pScratch64, 8);
-                    ThrowInsufficientBufferUnless(this.reader.TryCopyTo(scratch64));
-                    this.reader.Advance(8);
-                    var doubleValue = new Float64Bits(scratch64);
-                    return (float)doubleValue.Value;
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out double doubleValue));
+                    return (float)doubleValue;
                 case MessagePackCode.Int8:
                     ThrowInsufficientBufferUnless(this.reader.TryRead(out sbyte sbyteValue));
                     return sbyteValue;
@@ -457,19 +449,11 @@ namespace MessagePack
             switch (code)
             {
                 case MessagePackCode.Float64:
-                    byte* pScratch8 = stackalloc byte[8];
-                    Span<byte> scratch8 = new Span<byte>(pScratch8, 8);
-                    ThrowInsufficientBufferUnless(this.reader.TryCopyTo(scratch8));
-                    this.reader.Advance(scratch8.Length);
-                    var doubleValue = new Float64Bits(scratch8);
-                    return doubleValue.Value;
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out double doubleValue));
+                    return doubleValue;
                 case MessagePackCode.Float32:
-                    byte* pScratch4 = stackalloc byte[4];
-                    Span<byte> scratch4 = new Span<byte>(pScratch4, 4);
-                    ThrowInsufficientBufferUnless(this.reader.TryCopyTo(scratch4));
-                    this.reader.Advance(scratch4.Length);
-                    var floatValue = new Float32Bits(scratch4);
-                    return floatValue.Value;
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out float floatValue));
+                    return floatValue;
                 case MessagePackCode.Int8:
                     ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteValue));
                     return unchecked((sbyte)byteValue);
