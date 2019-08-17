@@ -11,11 +11,11 @@ The extremely fast [MessagePack](http://msgpack.org/) serializer for C#. It is 1
 
 ![Perf comparison graph](https://cloud.githubusercontent.com/assets/46207/23835716/89c8ab08-07af-11e7-9183-9e9415bdc87f.png)
 
-MessagePack has compact binary size and full set of general purpose expression. Please see the [comparison with JSON, protobuf, ZeroFormatter section](doc/comparison.md). Learn [why MessagePack C# is fastest](doc/performance.md).
+MessagePack has compact binary size and full set of general purpose expression. Please see the [comparison with JSON, protobuf, ZeroFormatter section](#comparison). Learn [why MessagePack C# is fastest](#performance).
 
 ## Installation
 
-This library is distributed via NuGet package and with special [support for Unity](doc/unity.md).
+This library is distributed via NuGet package and with special [support for Unity](#unity).
 
 ### NuGet packages
 
@@ -31,7 +31,7 @@ Install the optional C# analyzer to get warnings for coding mistakes and code fi
 Install-Package MessagePackAnalyzer
 ```
 
-Extension Packages (learn more in our [extensions section](doc/extensions.md)):
+Extension Packages (learn more in our [extensions section](#extensions)):
 
 ```ps1
 Install-Package MessagePack.ImmutableCollection
@@ -42,7 +42,7 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 ### Unity
 
-For Unity, download from [releases](https://github.com/neuecc/MessagePack-CSharp/releases) page, providing `.unitypackage`. Unity IL2CPP or Xamarin AOT Environment, check the [pre-code generation section](doc/aot.md).
+For Unity, download from [releases](https://github.com/neuecc/MessagePack-CSharp/releases) page, providing `.unitypackage`. Unity IL2CPP or Xamarin AOT Environment, check the [pre-code generation section](#aot).
 
 ## Quick Start
 
@@ -97,7 +97,7 @@ class Program
 }
 ```
 
-By default the attribute is required. Optionally it can be unnecessary, see [Object Serialization section](serialization.md) and [Formatter Resolver section](resolvers.md) for details.
+By default the attribute is required. Optionally it can be unnecessary, see [Object Serialization section](#object-serialization) and [Formatter Resolver section](#resolvers) for details.
 
 ## Analyzer
 
@@ -523,7 +523,7 @@ MessagePack.Formatters.TypelessFormatter.BindToType = typeName =>
 };
 ```
 
-## MessagePack Performance
+## Performance
 
 Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and there [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config), ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) has infinitely fast deserializer so ignore deserialize performance.
 
@@ -641,7 +641,7 @@ If target binary size under 64 bytes, LZ4MessagePackSerializer does not compress
 
 lz4 compression support is using Milosz Krajewski's [lz4net](https://github.com/MiloszKrajewski/lz4net) code with some modified.
 
-## Compare with protobuf, JSON, ZeroFormatter
+## <a name="comparison"></a>Compare with protobuf, JSON, ZeroFormatter
 
 [protbuf-net](https://github.com/mgravell/protobuf-net) is major, most used binary-format library on .NET. I love protobuf-net and respect that great work. But if uses protobuf-net for general-purpose serialization format, you may encounts annoying issue.
 
@@ -800,7 +800,7 @@ public interface IMessagePackFormatter<T>
 }
 ```
 
-Many built-in formatters exists under `MessagePack.Formatters`. Your custom types are usually automatically supported with the built-in type resolvers that generate new `IMessagePackFormatter<T>` types on-the-fly using dynamic code generation. See our [AOT code generation](aot.md) support for platforms that do not support this.
+Many built-in formatters exists under `MessagePack.Formatters`. Your custom types are usually automatically supported with the built-in type resolvers that generate new `IMessagePackFormatter<T>` types on-the-fly using dynamic code generation. See our [AOT code generation](#aot) support for platforms that do not support this.
 
 To take more control over the serialization of your custom types, write your own `IMessagePackFormatter<T>` implementation.
 Here is sample of write own formatter. Note its use of the primitive API that is described in the next section.
@@ -833,7 +833,7 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
 }
 ```
 
-Your custom formatters must be discoverable via some `IFormatterResolver`. Learn more in our [resolvers](resolvers.md).
+Your custom formatters must be discoverable via some `IFormatterResolver`. Learn more in our [resolvers](#resolvers).
 
 You can see many other samples from [builtin formatters](https://github.com/neuecc/MessagePack-CSharp/tree/master/src/MessagePack/Formatters).
 
@@ -886,7 +886,7 @@ The `MessagePackWriter` writes the new msgpack spec by default, but can write ms
 `DateTime` is serialized to [MessagePack Timestamp format](https://github.com/msgpack/msgpack/blob/master/spec.md#formats-timestamp), it serialize/deserialize UTC and loses `Kind` info and requires that `MessagePackWriter.OldSpec == false`.
 If you use the `NativeDateTimeResolver`, `DateTime` values will be serialized using .NET's native `Int64` represnetation, which preserves `Kind` info but may not be interoperable with non-.NET platforms.
 
-## Extension Point (`IFormatterResolver`)
+## <a name="resolvers"></a>Extension Point (`IFormatterResolver`)
 
 An `IFormatterResolver` is storage of typed serializers. The `MessagePackSerializer` API accepts a `MessagePackSerializerOptions` object which specifies the `IFormatterResolver` to use, allowing customization of the serialization of complex types.
 
@@ -1120,7 +1120,7 @@ MessagePack for C# already used some messagepack ext type codes, be careful to u
 
 ## Unity support
 
-You can install by package and includes source code. If build target as PC, you can use as is but if build target uses IL2CPP, you can not use `Dynamic***Resolver` so use pre-code generation. Please see [pre-code generation section](aot.md).
+You can install by package and includes source code. If build target as PC, you can use as is but if build target uses IL2CPP, you can not use `Dynamic***Resolver` so use pre-code generation. Please see [pre-code generation section](#aot).
 
 In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and there nullable, there array, there list by built-in extension `UnityResolver`. It is included StandardResolver by default.
 
@@ -1167,7 +1167,7 @@ If you want to share class between Unity and Server, you can use `SharedProject`
 
 Other ways, use plain POCO by `DataContract`/`DataMember` can use.
 
-## AOT Code Generation (to support Unity/Xamarin)
+## <a name="aot"></a>AOT Code Generation (to support Unity/Xamarin)
 
 By default, MessagePack for C# serializes custom objects by using [generating IL](https://msdn.microsoft.com/en-us/library/system.reflection.emit.ilgenerator.aspx) at runtime for custom, highly tuned formatters for each type. This code generation has a minor upfront perf cost.
 Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
