@@ -1,4 +1,5 @@
 ﻿using System;
+using NUnit.Framework;
 using RuntimeUnitTestToolkit;
 using SharedData;
 
@@ -11,6 +12,7 @@ namespace MessagePack.UnityClient.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, MsgPackUnsafeDefaultResolver.Options), MsgPackUnsafeDefaultResolver.Options);
         }
 
+        [Test]
         public void PrimitiveFormatterTest()
         {
             Convert(Int32.MaxValue).Is(Int32.MaxValue);
@@ -18,6 +20,7 @@ namespace MessagePack.UnityClient.Tests
             Convert(DateTime.MinValue.ToUniversalTime()).Is(DateTime.MinValue.ToUniversalTime());
         }
 
+        [Test]
         public void EnumFormatterTest()
         {
             Convert(UShortEnum.A).Is(UShortEnum.A);

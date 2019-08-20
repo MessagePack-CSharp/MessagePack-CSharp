@@ -76,7 +76,6 @@
     <Rule Id="SA1134" Action="Hidden" />
     <Rule Id="SA1139" Action="Hidden" />
     <Rule Id="SA1515" Action="None" />
-
     <!-- Documentation -->
     <Rule Id="SA1600" Action="Hidden" />
     <Rule Id="SA1601" Action="Hidden" />
@@ -85,12 +84,12 @@
     <Rule Id="SA1611" Action="Hidden" />
     <Rule Id="SA1615" Action="Hidden" />
     <Rule Id="SA1618" Action="Hidden" />
-
     <!-- ordering rules, to enable later -->
     <Rule Id="SA1201" Action="Hidden" />
     <Rule Id="SA1202" Action="Hidden" />
     <Rule Id="SA1204" Action="Hidden" />
     <Rule Id="SA1214" Action="Hidden" />
     <Rule Id="SA1402" Action="Hidden" />
+    <Rule Id="SA1101" Action="Hidden" />
   </Rules>
 </RuleSet>

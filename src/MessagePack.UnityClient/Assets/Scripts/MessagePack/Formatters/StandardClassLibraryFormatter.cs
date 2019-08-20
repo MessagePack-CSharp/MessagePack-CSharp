@@ -9,10 +9,6 @@ using System.Globalization;
 using System.Text;
 using MessagePack.Internal;
 
-#if !UNITY_2018_3_OR_NEWER
-using System.Threading.Tasks;
-#endif
-
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
@@ -389,8 +385,6 @@ namespace MessagePack.Formatters
         }
     }
 
-#if !UNITY_2018_3_OR_NEWER
-
     public sealed class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
     {
         public static readonly IMessagePackFormatter<System.Numerics.BigInteger> Instance = new BigIntegerFormatter();
@@ -495,5 +489,4 @@ namespace MessagePack.Formatters
             }
         }
     }
-#endif
 }

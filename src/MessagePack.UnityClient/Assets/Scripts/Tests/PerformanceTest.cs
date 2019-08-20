@@ -2,6 +2,7 @@
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using MsgPack.Serialization;
+using NUnit.Framework;
 using Sandbox.Shared;
 using Sandbox.Shared.GeneratedSerializers;
 using System;
@@ -86,7 +87,7 @@ namespace MessagePack.UnityClient.Tests
         static MsgPackUnsafeDefaultResolver()
         {
             Instance = new MsgPackUnsafeDefaultResolver();
-            Options = MessagePackSerializerOptions.Standard.WithResolver(Instance);
+            Options = MessagePackSerializer.DefaultOptions.WithResolver(Instance);
             LZ4Options = Options.WithLZ4Compression();
         }
 
@@ -110,7 +111,7 @@ namespace MessagePack.UnityClient.Tests
 #endif
                 if (formatter == null)
                 {
-                    formatter = StandardResolver.Instance.GetFormatter<T>();
+                    formatter = MessagePackSerializer.DefaultOptions.Resolver.GetFormatter<T>();
                 }
             }
         }
@@ -121,7 +122,7 @@ namespace MessagePack.UnityClient.Tests
 
         public void Serialize(ref MessagePackWriter writer, Vector3 value, MessagePackSerializerOptions options)
         {
-            writer.WriteFixedArrayHeaderUnsafe(3);
+            writer.WriteArrayHeader(3);
             writer.Write(value.x);
             writer.Write(value.y);
             writer.Write(value.z);
@@ -191,7 +192,7 @@ namespace MessagePack.UnityClient.Tests
         SerializationContext msgPackContext;
 
         // Test Initialize:)
-        public void _Init()
+        public PerformanceTest()
         {
             // MsgPack Prepare
             MsgPack.Serialization.MessagePackSerializer.PrepareType<Sex>();
@@ -257,6 +258,7 @@ namespace MessagePack.UnityClient.Tests
             if (e.TargetType == typeof(Sex)) { e.SetSerializer(new SexSerializer(e.Context)); return; }
         }
 
+        [Test]
         public void MessagePackCSharpSerializeSingle()
         {
             for (int i = 0; i < Iteration; i++)
@@ -265,6 +267,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MessagePackCSharpSerializeArray()
         {
             for (int i = 0; i < Iteration; i++)
@@ -273,6 +276,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MessagePackCSharpDeserializeSingle()
         {
             for (int i = 0; i < Iteration; i++)
@@ -281,6 +285,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MessagePackCSharpDeserializeArray()
         {
             for (int i = 0; i < Iteration; i++)
@@ -291,6 +296,7 @@ namespace MessagePack.UnityClient.Tests
 
 
 
+        [Test]
         public void LZ4MessagePackCSharpSerializeSingle()
         {
             for (int i = 0; i < Iteration; i++)
@@ -299,6 +305,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void LZ4MessagePackCSharpSerializeArray()
         {
             for (int i = 0; i < Iteration; i++)
@@ -307,6 +314,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void LZ4MessagePackCSharpDeserializeSingle()
         {
             for (int i = 0; i < Iteration; i++)
@@ -315,6 +323,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void LZ4MessagePackCSharpDeserializeArray()
         {
             for (int i = 0; i < Iteration; i++)
@@ -323,6 +332,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MsgPackSerializeSingle()
         {
             var serializer = this.msgPackContext.GetSerializer<Person>();
@@ -332,6 +342,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MsgPackSerializeArray()
         {
             var serializer = this.msgPackContext.GetSerializer<Person[]>();
@@ -341,6 +352,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MsgPackDeserializeSingle()
         {
             var serializer = this.msgPackContext.GetSerializer<Person>();
@@ -350,6 +362,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MsgPackDeserializeArray()
         {
             var serializer = this.msgPackContext.GetSerializer<Person[]>();
@@ -359,6 +372,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void JsonUtilitySerializeSingle()
         {
             for (int i = 0; i < Iteration; i++)
@@ -368,6 +382,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void JsonUtilitySerializeArray()
         {
             for (int i = 0; i < Iteration; i++)
@@ -377,6 +392,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void JsonUtilityDeserializeSingle()
         {
             for (int i = 0; i < Iteration; i++)
@@ -386,6 +402,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void JsonUtilityDeserializeArray()
         {
             for (int i = 0; i < Iteration; i++)
@@ -398,6 +415,7 @@ namespace MessagePack.UnityClient.Tests
 
         // more...
 
+        [Test]
         public void MessagePackCSharpSerializeVector3()
         {
             for (int i = 0; i < Iteration; i++)
@@ -406,6 +424,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MessagePackCSharpSerializeVector3Array()
         {
             for (int i = 0; i < Iteration; i++)
@@ -414,6 +433,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MessagePackCSharpDeserializeVector3()
         {
             for (int i = 0; i < Iteration; i++)
@@ -422,6 +442,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MessagePackCSharpDeserializeVector3Array()
         {
             for (int i = 0; i < Iteration; i++)
@@ -430,6 +451,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MsgPackSerializeVector3()
         {
             var serializer = this.msgPackContext.GetSerializer<Vector3>();
@@ -439,6 +461,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MsgPackSerializeVector3Array()
         {
             var serializer = this.msgPackContext.GetSerializer<Vector3[]>();
@@ -448,6 +471,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MsgPackDeserializeVector3()
         {
             var serializer = this.msgPackContext.GetSerializer<Vector3>();
@@ -457,6 +481,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void MsgPackDeserializeVector3Array()
         {
             var serializer = this.msgPackContext.GetSerializer<Vector3[]>();
@@ -466,6 +491,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void JsonUtilitySerializeVector3()
         {
             for (int i = 0; i < Iteration; i++)
@@ -475,6 +501,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void JsonUtilitySerializeVector3Array()
         {
             for (int i = 0; i < Iteration; i++)
@@ -484,6 +511,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void JsonUtilityDeserializeVector3()
         {
             for (int i = 0; i < Iteration; i++)
@@ -493,6 +521,7 @@ namespace MessagePack.UnityClient.Tests
             }
         }
 
+        [Test]
         public void JsonUtilityDeserializeVector3Array()
         {
             for (int i = 0; i < Iteration; i++)

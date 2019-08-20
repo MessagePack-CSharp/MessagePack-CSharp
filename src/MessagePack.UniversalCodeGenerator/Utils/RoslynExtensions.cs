@@ -285,7 +285,9 @@ namespace MessagePack.CodeGenerator
                 workspace.WorkspaceFailed += WorkSpaceFailed;
                 Project project = workspace.CurrentSolution.Projects.First();
                 project = project
-                    .WithParseOptions((project.ParseOptions as CSharpParseOptions).WithPreprocessorSymbols(preprocessorSymbols))
+                    .WithParseOptions((project.ParseOptions as CSharpParseOptions)
+                    .WithLanguageVersion(LanguageVersion.CSharp7_3) // force latest version.
+                    .WithPreprocessorSymbols(preprocessorSymbols))
                     .WithCompilationOptions((project.CompilationOptions as CSharpCompilationOptions).WithAllowUnsafe(true));
 
                 Compilation compilation = await project.GetCompilationAsync().ConfigureAwait(false);

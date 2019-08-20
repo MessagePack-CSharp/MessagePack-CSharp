@@ -4,14 +4,11 @@
 using System;
 using System.Buffers;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
-
-#if !UNITY_2018_3_OR_NEWER
-using System.Collections.Concurrent;
-#endif
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -227,11 +224,7 @@ namespace MessagePack.Formatters
                         {
                             while (e.MoveNext())
                             {
-#if !UNITY_2018_3_OR_NEWER
                                 formatter.Serialize(ref writer, e.Current, options);
-#else
-                                formatter.Serialize(ref writer, (TElement)e.Current, options);
-#endif
                             }
                         }
                         finally
@@ -253,11 +246,7 @@ namespace MessagePack.Formatters
                                 while (e.MoveNext())
                                 {
                                     count++;
-#if !UNITY_2018_3_OR_NEWER
                                     formatter.Serialize(ref scratchWriter, e.Current, options);
-#else
-                                    formatter.Serialize(ref scratchWriter, (TElement)e.Current, options);
-#endif
                                 }
                             }
                             finally
@@ -304,7 +293,6 @@ namespace MessagePack.Formatters
             {
                 return collection.Count;
             }
-#if !UNITY_2018_3_OR_NEWER
             else
             {
                 var c2 = sequence as IReadOnlyCollection<TElement>;
@@ -313,7 +301,6 @@ namespace MessagePack.Formatters
                     return c2.Count;
                 }
             }
-#endif
 
             return null;
         }
@@ -852,8 +839,6 @@ namespace MessagePack.Formatters
         }
     }
 
-#if !UNITY_2018_3_OR_NEWER
-
     public sealed class ObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>>
     {
         protected override void Add(ObservableCollection<T> collection, int index, T value)
@@ -998,6 +983,4 @@ namespace MessagePack.Formatters
             return new ConcurrentStack<T>(intermediateCollection);
         }
     }
-
-#endif
 }

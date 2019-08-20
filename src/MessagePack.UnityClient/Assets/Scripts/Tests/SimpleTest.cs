@@ -9,6 +9,7 @@ using MessagePack.Internal;
 using MessagePack.Formatters;
 using SharedData;
 using System.Diagnostics;
+using NUnit.Framework;
 
 namespace MessagePack.UnityClient.Tests
 {
