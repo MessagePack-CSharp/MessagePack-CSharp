@@ -21,7 +21,7 @@ namespace System.Buffers
         /// <remarks>
         /// IMPORTANT: The read is a straight copy of bits. If a struct depends on specific state of its members to
         /// behave correctly this can lead to exceptions, etc. If reading endian specific integers, use the explicit
-        /// overloads such as <see cref="TryReadLittleEndian(ref SequenceReader{byte}, out short)"/>.
+        /// overloads such as <see cref="TryReadBigEndian(ref SequenceReader{byte}, out short)"/>.
         /// </remarks>
         /// <returns>
         /// True if successful. <paramref name="value"/> will be default if failed (due to lack of space).
@@ -80,20 +80,6 @@ namespace System.Buffers
         }
 
         /// <summary>
-        /// Reads an <see cref="Int16"/> as little endian.
-        /// </summary>
-        /// <returns>False if there wasn't enough data for an <see cref="Int16"/>.</returns>
-        public static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out short value)
-        {
-            if (BitConverter.IsLittleEndian)
-            {
-                return reader.TryRead(out value);
-            }
-
-            return TryReadReverseEndianness(ref reader, out value);
-        }
-
-        /// <summary>
         /// Reads an <see cref="Int16"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int16"/>.</returns>
@@ -132,20 +118,6 @@ namespace System.Buffers
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// Reads an <see cref="Int32"/> as little endian.
-        /// </summary>
-        /// <returns>False if there wasn't enough data for an <see cref="Int32"/>.</returns>
-        public static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out int value)
-        {
-            if (BitConverter.IsLittleEndian)
-            {
-                return reader.TryRead(out value);
-            }
-
-            return TryReadReverseEndianness(ref reader, out value);
         }
 
         /// <summary>
@@ -190,20 +162,6 @@ namespace System.Buffers
         }
 
         /// <summary>
-        /// Reads an <see cref="Int64"/> as little endian.
-        /// </summary>
-        /// <returns>False if there wasn't enough data for an <see cref="Int64"/>.</returns>
-        public static bool TryReadLittleEndian(ref this SequenceReader<byte> reader, out long value)
-        {
-            if (BitConverter.IsLittleEndian)
-            {
-                return reader.TryRead(out value);
-            }
-
-            return TryReadReverseEndianness(ref reader, out value);
-        }
-
-        /// <summary>
         /// Reads an <see cref="Int64"/> as big endian.
         /// </summary>
         /// <returns>False if there wasn't enough data for an <see cref="Int64"/>.</returns>
@@ -241,6 +199,38 @@ namespace System.Buffers
                 return true;
             }
 
+            return false;
+        }
+
+        /// <summary>
+        /// Reads a <see cref="Single"/> as big endian.
+        /// </summary>
+        /// <returns>False if there wasn't enough data for a <see cref="Single"/>.</returns>
+        public static unsafe bool TryReadBigEndian(ref this SequenceReader<byte> reader, out float value)
+        {
+            if (TryReadBigEndian(ref reader, out int intValue))
+            {
+                value = *(float*)&intValue;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Reads a <see cref="Double"/> as big endian.
+        /// </summary>
+        /// <returns>False if there wasn't enough data for a <see cref="Double"/>.</returns>
+        public static unsafe bool TryReadBigEndian(ref this SequenceReader<byte> reader, out double value)
+        {
+            if (TryReadBigEndian(ref reader, out long longValue))
+            {
+                value = *(double*)&longValue;
+                return true;
+            }
+
+            value = default;
             return false;
         }
     }

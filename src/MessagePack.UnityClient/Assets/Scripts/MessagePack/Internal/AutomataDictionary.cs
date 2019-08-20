@@ -50,8 +50,6 @@ namespace MessagePack.Internal
             }
         }
 
-#if !UNITY_2018_3_OR_NEWER
-
         public bool TryGetValue(in ReadOnlySequence<byte> bytes, out int value) => this.TryGetValue(bytes.ToArray(), out value);
 
         public bool TryGetValue(ReadOnlySpan<byte> bytes, out int value)
@@ -74,8 +72,6 @@ namespace MessagePack.Internal
                 return true;
             }
         }
-
-#endif
 
         // for debugging
         public override string ToString()
@@ -208,8 +204,6 @@ namespace MessagePack.Internal
                 return v;
             }
 
-#if !UNITY_2018_3_OR_NEWER
-
             public AutomataNode SearchNext(ref ReadOnlySpan<byte> value)
             {
                 var key = AutomataKeyGen.GetKey(ref value);
@@ -236,8 +230,6 @@ namespace MessagePack.Internal
 
                 return null;
             }
-
-#endif
 
             internal static int BinarySearch(ulong[] array, int index, int length, ulong value)
             {

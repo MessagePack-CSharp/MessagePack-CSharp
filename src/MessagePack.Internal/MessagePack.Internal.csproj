@@ -23,7 +23,6 @@
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\BufferWriter.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionHeader.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionResult.cs" />
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\FloatBits.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.Integers.cs" />

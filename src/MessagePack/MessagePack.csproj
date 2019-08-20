@@ -16,8 +16,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs"
-             Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs" Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\FloatBits.cs" />
   </ItemGroup>
 
   <ItemGroup>

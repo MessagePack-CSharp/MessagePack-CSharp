@@ -1,4 +1,5 @@
-﻿using RuntimeUnitTestToolkit;
+﻿using NUnit.Framework;
+using RuntimeUnitTestToolkit;
 using SharedData;
 using System;
 using System.Collections.Generic;
@@ -12,15 +13,16 @@ namespace MessagePack.UnityClient.Tests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
         }
 
+        [Test]
         public void Versioning()
         {
-            var v1 = MessagePackSerializer.Serialize(new V1 { ABCDEFG1 = 10, ABCDEFG3 = 99 }, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            var v2 = MessagePackSerializer.Serialize(new V2 { ABCDEFG1 = 350, ABCDEFG2 = 34, ABCDEFG3 = 500 }, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+            var v1 = MessagePackSerializer.Serialize(new V1 { ABCDEFG1 = 10, ABCDEFG3 = 99 });
+            var v2 = MessagePackSerializer.Serialize(new V2 { ABCDEFG1 = 350, ABCDEFG2 = 34, ABCDEFG3 = 500 });
 
-            var v1_1 = MessagePackSerializer.Deserialize<V1>(v1, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            var v1_2 = MessagePackSerializer.Deserialize<V1>(v2, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            var v2_1 = MessagePackSerializer.Deserialize<V2>(v1, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            var v2_2 = MessagePackSerializer.Deserialize<V2>(v2, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+            var v1_1 = MessagePackSerializer.Deserialize<V1>(v1);
+            var v1_2 = MessagePackSerializer.Deserialize<V1>(v2);
+            var v2_1 = MessagePackSerializer.Deserialize<V2>(v1);
+            var v2_2 = MessagePackSerializer.Deserialize<V2>(v2);
 
             v1_1.ABCDEFG1.Is(10); v1_1.ABCDEFG3.Is(99);
             v1_2.ABCDEFG1.Is(350); v1_2.ABCDEFG3.Is(500);
@@ -28,15 +30,17 @@ namespace MessagePack.UnityClient.Tests
             v2_2.ABCDEFG1.Is(350); v2_2.ABCDEFG2.Is(34); v2_2.ABCDEFG3.Is(500);
         }
 
+        [Test]
         public void DuplicateAutomata()
         {
-            var bin = MessagePackSerializer.Serialize(new Dup { ABCDEFGH = 10, ABCDEFGHIJKL = 99 }, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            var v = MessagePackSerializer.Deserialize<Dup>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+            var bin = MessagePackSerializer.Serialize(new Dup { ABCDEFGH = 10, ABCDEFGHIJKL = 99 });
+            var v = MessagePackSerializer.Deserialize<Dup>(bin);
 
             v.ABCDEFGH.Is(10);
             v.ABCDEFGHIJKL.Is(99);
         }
 
+        [Test]
         public void BinSearchSmallCheck()
         {
             var o = new BinSearchSmall
@@ -51,8 +55,8 @@ namespace MessagePack.UnityClient.Tests
                 MyP8 = 7373731,
                 MyP9 = 73573731,
             };
-            var bin = MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            var v = MessagePackSerializer.Deserialize<BinSearchSmall>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+            var bin = MessagePackSerializer.Serialize(o);
+            var v = MessagePackSerializer.Deserialize<BinSearchSmall>(bin);
 
             v.MyP1.Is(o.MyP1);
             v.MyP2.Is(o.MyP2);
@@ -65,6 +69,7 @@ namespace MessagePack.UnityClient.Tests
             v.MyP9.Is(o.MyP9);
         }
 
+        [Test]
         public void BinSearchWithBranchCheck()
         {
             var o = new BinSearchWithBranch
@@ -79,8 +84,8 @@ namespace MessagePack.UnityClient.Tests
                 MyProperty8 = 7373731,
                 MyProperty9 = 73573731,
             };
-            var bin = MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            var v = MessagePackSerializer.Deserialize<BinSearchWithBranch>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+            var bin = MessagePackSerializer.Serialize(o);
+            var v = MessagePackSerializer.Deserialize<BinSearchWithBranch>(bin);
 
             v.MyProperty1.Is(o.MyProperty1);
             v.MyProperty2.Is(o.MyProperty2);
@@ -93,6 +98,7 @@ namespace MessagePack.UnityClient.Tests
             v.MyProperty9.Is(o.MyProperty9);
         }
 
+        [Test]
         public void LongestStringCheck()
         {
             var o = new LongestString
@@ -102,8 +108,8 @@ namespace MessagePack.UnityClient.Tests
                 MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2MyProperty = 532525252,
                 OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ = 3352666,
             };
-            var bin = MessagePackSerializer.Serialize(o, MessagePack.Resolvers.ContractlessStandardResolver.Options);
-            var v = MessagePackSerializer.Deserialize<LongestString>(bin, MessagePack.Resolvers.ContractlessStandardResolver.Options);
+            var bin = MessagePackSerializer.Serialize(o);
+            var v = MessagePackSerializer.Deserialize<LongestString>(bin);
 
             v.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1.Is(o.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1);
             v.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2.Is(o.MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2);
@@ -112,6 +118,7 @@ namespace MessagePack.UnityClient.Tests
         }
     }
 
+    [MessagePackObject(true)]
     public class V1
     {
         public int ABCDEFG1 { get; set; }
@@ -119,6 +126,7 @@ namespace MessagePack.UnityClient.Tests
     }
 
 
+    [MessagePackObject(true)]
     public class V2
     {
         public int ABCDEFG1 { get; set; }
@@ -126,12 +134,14 @@ namespace MessagePack.UnityClient.Tests
         public int ABCDEFG3 { get; set; }
     }
 
+    [MessagePackObject(true)]
     public class Dup
     {
         public int ABCDEFGH { get; set; }
         public int ABCDEFGHIJKL { get; set; }
     }
 
+    [MessagePackObject(true)]
     public class BinSearchSmall
     {
         public int MyP1 { get; set; }
@@ -145,6 +155,7 @@ namespace MessagePack.UnityClient.Tests
         public int MyP9 { get; set; }
     }
 
+    [MessagePackObject(true)]
     public class BinSearchWithBranch
     {
         public int MyProperty1 { get; set; }
@@ -158,6 +169,7 @@ namespace MessagePack.UnityClient.Tests
         public int MyProperty9 { get; set; }
     }
 
+    [MessagePackObject(true)]
     public class LongestString
     {
         public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1 { get; set; }

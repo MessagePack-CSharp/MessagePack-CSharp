@@ -243,10 +243,11 @@ namespace MessagePack.Internal
             MessagePack.Unity.UnityResolver.Instance,
 #endif
 
+            DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
+
 #if !ENABLE_IL2CPP && !UNITY_2018_3_OR_NEWER && !NET_STANDARD_2_0
 
             DynamicEnumResolver.Instance, // Try Enum
-            DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
             DynamicUnionResolver.Instance, // Try Union(Interface)
 #endif
         };

@@ -9,9 +9,6 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\Attributes.cs">
       <Link>Code\Attributes.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\FloatBits.cs">
-      <Link>Code\FloatBits.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\BufferWriter.cs">
       <Link>Code\BufferWriter.cs</Link>
     </Compile>

@@ -3,11 +3,13 @@ using RuntimeUnitTestToolkit;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using NUnit.Framework;
 
 namespace MessagePack.UnityClient.Tests
 {
     public class LZ4Test
     {
+        [Test]
         public void TestSmall()
         {
             new MessagePackReader(MessagePackSerializer.Serialize(100, MessagePackSerializerOptions.LZ4Standard)).NextMessagePackType.Is(MessagePackType.Integer);
@@ -15,6 +17,7 @@ namespace MessagePack.UnityClient.Tests
             new MessagePackReader(MessagePackSerializer.Serialize(false, MessagePackSerializerOptions.LZ4Standard)).NextMessagePackType.Is(MessagePackType.Boolean);
         }
 
+        [Test]
         public void CompressionData()
         {
             var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();

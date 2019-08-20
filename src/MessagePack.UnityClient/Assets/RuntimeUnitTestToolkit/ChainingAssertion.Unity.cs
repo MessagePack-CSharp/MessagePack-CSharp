@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using NUnit.Framework;
 
 namespace RuntimeUnitTestToolkit
 {
@@ -121,14 +122,14 @@ namespace RuntimeUnitTestToolkit
         /// <summary>Assert.IsInstanceOf</summary>
         public static TExpected IsInstanceOf<TExpected>(this object value, string message = "")
         {
-            Assert.IsInstanceOfType(value, typeof(TExpected), message);
+            Assert.IsInstanceOf<TExpected>(value, message);
             return (TExpected)value;
         }
 
         /// <summary>Assert.IsNotInstanceOf</summary>
         public static void IsNotInstanceOf<TWrong>(this object value, string message = "")
         {
-            Assert.IsNotInstanceOfType(value, typeof(TWrong), message);
+            Assert.IsNotInstanceOf<TWrong>(value, message);
         }
 
         /// <summary>EqualityComparison to IComparer Converter for CollectionAssert</summary>
@@ -143,8 +144,8 @@ namespace RuntimeUnitTestToolkit
 
             public int Compare(object x, object y)
             {
-                return (comparison != null)
-                    ? comparison((T)x, (T)y) ? 0 : -1
+                return (this.comparison != null)
+                    ? this.comparison((T)x, (T)y) ? 0 : -1
                     : object.Equals(x, y) ? 0 : -1;
             }
         }
