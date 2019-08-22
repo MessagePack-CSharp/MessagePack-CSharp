@@ -39,6 +39,10 @@ namespace MessagePack.Tests
             new[] { data1.Prop3, data2.Prop3, data3.Prop3, data4.Prop3 }.Distinct().Is(data.Prop3);
         }
 
+#if !UNITY_2018_3_OR_NEWER
+
+        // Unity's NUnit currently no supported Task test.
+
         [Fact]
         public async Task NonGeneric_Async()
         {
@@ -52,6 +56,8 @@ namespace MessagePack.Tests
 
             Assert.Equal(data, data2);
         }
+
+#endif
 
         [Fact]
         public void StreamAPI()

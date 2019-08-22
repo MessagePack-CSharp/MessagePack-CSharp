@@ -52,8 +52,6 @@ namespace MessagePack
             throw new FormatterNotRegisteredException(t.FullName + " is not registered in this resolver. resolver:" + resolver.GetType().Name);
         }
 
-#if !UNITY_2018_3_OR_NEWER
-
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
             MethodInfo methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
@@ -61,8 +59,6 @@ namespace MessagePack
             var formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
             return formatter;
         }
-
-#endif
     }
 
     public class FormatterNotRegisteredException : Exception

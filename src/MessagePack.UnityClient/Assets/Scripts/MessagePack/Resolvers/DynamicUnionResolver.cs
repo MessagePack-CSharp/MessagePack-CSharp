@@ -17,8 +17,6 @@ using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
-#if !UNITY_2018_3_OR_NEWER
-
     /// <summary>
     /// UnionResolver by dynamic code generation.
     /// </summary>
@@ -481,8 +479,7 @@ namespace MessagePack.Resolvers
         }
     }
 
-#endif
-    }
+}
 
 namespace MessagePack.Internal
 {

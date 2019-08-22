@@ -76,8 +76,8 @@ namespace MessagePack.Tests
 
         [Theory]
         [InlineData(byte.MinValue, 1)]
-        [InlineData(111, 1)]
-        [InlineData(136, 2)]
+        [InlineData((byte)111, 1)]
+        [InlineData((byte)136, 2)]
         [InlineData(byte.MaxValue, 2)]
         public void ByteTest(byte target, int length)
         {
@@ -132,15 +132,15 @@ namespace MessagePack.Tests
 
         [Theory]
         [InlineData(sbyte.MinValue, 2)]
-        [InlineData(-100, 2)]
-        [InlineData(-33, 2)]
-        [InlineData(-32, 1)]
-        [InlineData(-31, 1)]
-        [InlineData(-30, 1)]
-        [InlineData(-1, 1)]
-        [InlineData(0, 1)]
-        [InlineData(1, 1)]
-        [InlineData(126, 1)]
+        [InlineData((sbyte)-100, 2)]
+        [InlineData((sbyte)-33, 2)]
+        [InlineData((sbyte)-32, 1)]
+        [InlineData((sbyte)-31, 1)]
+        [InlineData((sbyte)-30, 1)]
+        [InlineData((sbyte)-1, 1)]
+        [InlineData((sbyte)0, 1)]
+        [InlineData((sbyte)1, 1)]
+        [InlineData((sbyte)126, 1)]
         [InlineData(sbyte.MaxValue, 1)]
         public void SByteTest(sbyte target, int length)
         {
@@ -224,19 +224,19 @@ namespace MessagePack.Tests
 
         [Theory]
         [InlineData(short.MinValue, 3)]
-        [InlineData(-30000, 3)]
+        [InlineData((short)-30000, 3)]
         [InlineData((short)sbyte.MinValue, 2)]
-        [InlineData(-100, 2)]
-        [InlineData(-33, 2)]
-        [InlineData(-32, 1)]
-        [InlineData(-31, 1)]
-        [InlineData(-30, 1)]
-        [InlineData(-1, 1)]
-        [InlineData(0, 1)]
-        [InlineData(1, 1)]
-        [InlineData(126, 1)]
+        [InlineData((short)-100, 2)]
+        [InlineData((short)-33, 2)]
+        [InlineData((short)-32, 1)]
+        [InlineData((short)-31, 1)]
+        [InlineData((short)-30, 1)]
+        [InlineData((short)-1, 1)]
+        [InlineData((short)0, 1)]
+        [InlineData((short)1, 1)]
+        [InlineData((short)126, 1)]
         [InlineData((short)sbyte.MaxValue, 1)]
-        [InlineData(20000, 3)]
+        [InlineData((short)20000, 3)]
         [InlineData(short.MaxValue, 3)]
         public void Int16Test(short target, int length)
         {
@@ -315,30 +315,30 @@ namespace MessagePack.Tests
 
         [Theory]
         [InlineData(long.MinValue, 9)]
-        [InlineData(-3372036854775807, 9)]
-        [InlineData(int.MinValue, 5)]
-        [InlineData(-50000, 5)]
-        [InlineData(short.MinValue, 3)]
-        [InlineData(-30000, 3)]
-        [InlineData((short)sbyte.MinValue, 2)]
-        [InlineData(-100, 2)]
-        [InlineData(-33, 2)]
-        [InlineData(-32, 1)]
-        [InlineData(-31, 1)]
-        [InlineData(-30, 1)]
-        [InlineData(-1, 1)]
-        [InlineData(0, 1)]
-        [InlineData(1, 1)]
-        [InlineData(126, 1)]
-        [InlineData(sbyte.MaxValue, 1)]
-        [InlineData(byte.MaxValue, 2)]
-        [InlineData(20000, 3)]
-        [InlineData(short.MaxValue, 3)]
-        [InlineData(50000, 3)]
-        [InlineData(int.MaxValue, 5)]
-        [InlineData(uint.MaxValue, 5)]
-        [InlineData(3372036854775807, 9)]
-        [InlineData(long.MaxValue, 9)]
+        [InlineData((long)-3372036854775807, 9)]
+        [InlineData((long)int.MinValue, 5)]
+        [InlineData((long)-50000, 5)]
+        [InlineData((long)short.MinValue, 3)]
+        [InlineData((long)-30000, 3)]
+        [InlineData((long)(short)sbyte.MinValue, 2)]
+        [InlineData((long)-100, 2)]
+        [InlineData((long)-33, 2)]
+        [InlineData((long)-32, 1)]
+        [InlineData((long)-31, 1)]
+        [InlineData((long)-30, 1)]
+        [InlineData((long)-1, 1)]
+        [InlineData((long)0, 1)]
+        [InlineData((long)1, 1)]
+        [InlineData((long)126, 1)]
+        [InlineData((long)sbyte.MaxValue, 1)]
+        [InlineData((long)byte.MaxValue, 2)]
+        [InlineData((long)20000, 3)]
+        [InlineData((long)short.MaxValue, 3)]
+        [InlineData((long)50000, 3)]
+        [InlineData((long)int.MaxValue, 5)]
+        [InlineData((long)uint.MaxValue, 5)]
+        [InlineData((long)3372036854775807, 9)]
+        [InlineData((long)long.MaxValue, 9)]
         public void Int64Test(long target, int length)
         {
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
@@ -389,8 +389,10 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
-        public void MapHeaderTest(uint target, int length)
+        public void MapHeaderTest(object _target, int length)
         {
+            var target = Convert.ToUInt32(_target);
+
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
@@ -431,8 +433,10 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
-        public void ArrayHeaderTest(uint target, int length)
+        public void ArrayHeaderTest(object _target, int length)
         {
+            var target = Convert.ToUInt32(_target); // hack for work in Unity NUnit.
+
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
@@ -469,8 +473,10 @@ namespace MessagePack.Tests
         [InlineData(short.MaxValue, 3)]
         [InlineData(50000, 3)]
         [InlineData(ushort.MaxValue, 3)]
-        public void UInt16Test(ushort target, int length)
+        public void UInt16Test(object _target, int length)
         {
+            var target = Convert.ToUInt16(_target);
+
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
@@ -501,8 +507,10 @@ namespace MessagePack.Tests
         [InlineData(int.MaxValue, 5)]
         [InlineData(3294967295, 5)]
         [InlineData(uint.MaxValue, 5)]
-        public void UInt32Test(uint target, int length)
+        public void UInt32Test(object _target, int length)
         {
+            var target = Convert.ToUInt32(_target);
+
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
@@ -537,8 +545,10 @@ namespace MessagePack.Tests
         [InlineData(long.MaxValue, 9)]
         [InlineData(12446744073709551615, 9)]
         [InlineData(ulong.MaxValue, 9)]
-        public void UInt64Test(ulong target, int length)
+        public void UInt64Test(object _target, int length)
         {
+            var target = Convert.ToUInt64(_target);
+
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
@@ -691,8 +701,10 @@ namespace MessagePack.Tests
 
         [Theory]
         [MemberData(nameof(ExtTestData))]
-        public void ExtTest(sbyte typeCode, byte[] target)
+        public void ExtTest(object _typeCode, byte[] target)
         {
+            var typeCode = Convert.ToSByte(_typeCode); // hack for work in Unity NUnit.
+
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();

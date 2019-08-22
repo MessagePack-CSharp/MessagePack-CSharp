@@ -417,9 +417,7 @@ namespace MessagePack.Internal
     /// </remarks>
     public static class AutomataKeyGen
     {
-#if !UNITY_2018_3_OR_NEWER
         public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod(nameof(GetKey), new[] { typeof(ReadOnlySpan<byte>).MakeByRefType() });
-#endif
 
         public static ulong GetKey(ref ReadOnlySpan<byte> span)
         {

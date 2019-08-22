@@ -611,6 +611,8 @@ namespace MessagePack
             int byteLength = this.GetStringLengthInBytes();
 
             ReadOnlySpan<byte> unreadSpan = this.reader.UnreadSpan;
+            //UnityEngine.Debug.Log(reader.CurrentSpan[0]);
+            //UnityEngine.Debug.Log(unreadSpan[0]);
             if (unreadSpan.Length >= byteLength)
             {
                 // Fast path: all bytes to decode appear in the same span.

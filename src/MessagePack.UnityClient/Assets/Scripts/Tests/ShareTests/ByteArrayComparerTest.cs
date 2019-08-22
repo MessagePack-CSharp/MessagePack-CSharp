@@ -13,6 +13,8 @@ namespace MessagePack.Tests
 {
     public class ByteArrayComparerTest
     {
+#if !UNITY_2018_3_OR_NEWER
+
         [Fact]
         public void Compare()
         {
@@ -33,5 +35,8 @@ namespace MessagePack.Tests
                 }
             }
         }
+
+
+#endif
     }
 }

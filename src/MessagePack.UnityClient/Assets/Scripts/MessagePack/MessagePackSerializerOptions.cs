@@ -16,21 +16,13 @@ namespace MessagePack
         /// <summary>
         /// A good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions();
+        public static MessagePackSerializerOptions Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.Standard;
 
         /// <summary>
         /// A good default set of options that includes LZ4 compression and uses the <see cref="Resolvers.StandardResolver"/>.
         /// </summary>
-        public static readonly MessagePackSerializerOptions LZ4Standard = Standard.WithLZ4Compression(true);
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class
-        /// with default options.
-        /// </summary>
-        private MessagePackSerializerOptions()
-            : this(Resolvers.StandardResolver.Instance, useLZ4Compression: false)
-        {
-        }
+        public static MessagePackSerializerOptions LZ4Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.LZ4Standard;
+     
 #endif
 
         /// <summary>
@@ -92,5 +84,13 @@ namespace MessagePack
         /// <param name="oldSpec">The new value for the <see cref="OldSpec"/>.</param>
         /// <returns>The new instance; or the original if the value is unchanged.</returns>
         public MessagePackSerializerOptions WithOldSpec(bool? oldSpec = true) => this.OldSpec != oldSpec ? new MessagePackSerializerOptions(this.Resolver, this.UseLZ4Compression, oldSpec) : this;
+
+#if !DYNAMICCODEDUMPER
+        static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
+        {
+            public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance, useLZ4Compression: false);
+            public static readonly MessagePackSerializerOptions LZ4Standard = Standard.WithLZ4Compression(true);
+        }
+#endif
     }
 }

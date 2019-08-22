@@ -124,14 +124,6 @@ namespace MessagePack.Internal
                 {
                     return CreateInstance(typeof(KeyValuePairFormatter<,>), ti.GenericTypeArguments);
                 }
-                else if (isNullable && nullableElementType.GetTypeInfo().IsConstructedGenericType() && nullableElementType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
-                {
-                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
-                }
-                else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ValueTask<>))
-                {
-                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
-                }
 
                 // Tuple
                 else if (ti.FullName.StartsWith("System.Tuple"))
@@ -219,16 +211,11 @@ namespace MessagePack.Internal
                         return CreateInstance(typeof(ArraySegmentFormatter<>), ti.GenericTypeArguments);
                     }
                 }
-                else if (isNullable && nullableElementType.GetTypeInfo().IsConstructedGenericType() && nullableElementType.GetGenericTypeDefinition() == typeof(ArraySegment<>))
+
+                // Standard Nullable
+                else if (isNullable)
                 {
-                    if (nullableElementType == typeof(ArraySegment<byte>))
-                    {
-                        return new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance);
-                    }
-                    else
-                    {
-                        return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
-                    }
+                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
                 }
 
                 // Mapped formatter
@@ -259,6 +246,10 @@ namespace MessagePack.Internal
                         return CreateInstance(typeof(GenericDictionaryFormatter<,,>), new[] { keyType, valueType, t });
                     }
                 }
+            }
+            else if (ti.IsEnum)
+            {
+                return typeof(GenericEnumFormatter<>).MakeGenericType(ti.GetElementType());
             }
             else
             {

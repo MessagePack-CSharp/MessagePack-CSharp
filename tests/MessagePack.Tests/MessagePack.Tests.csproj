@@ -8,10 +8,11 @@
     <CodeAnalysisRuleSet>MessagePack.Tests.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ByteArrayComparer.cs" Link="ByteArrayComparer.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\FarmHash.cs" Link="FarmHash.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" Link="ILGeneratorExtensions.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" Link="StringEncoding.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ByteArrayComparer.cs" Link="Link\ByteArrayComparer.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\FarmHash.cs" Link="Link\FarmHash.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" Link="Link\ILGeneratorExtensions.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" Link="Link\StringEncoding.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\sandbox\SharedData\SharedData.csproj" />
@@ -49,5 +50,8 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>MessagePackReaderTests.ReadInt.tt</DependentUpon>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Link\" />
   </ItemGroup>
 </Project>
