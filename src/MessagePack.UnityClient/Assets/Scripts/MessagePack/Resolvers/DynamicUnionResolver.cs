@@ -478,7 +478,6 @@ namespace MessagePack.Resolvers
             internal static readonly MethodInfo WriteNil = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteNil), Type.EmptyTypes);
         }
     }
-
 }
 
 namespace MessagePack.Internal

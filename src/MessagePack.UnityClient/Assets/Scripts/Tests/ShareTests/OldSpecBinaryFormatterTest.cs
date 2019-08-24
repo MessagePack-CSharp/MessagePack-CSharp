@@ -152,4 +152,3 @@ namespace MessagePack.Tests
         }
     }
 }
-

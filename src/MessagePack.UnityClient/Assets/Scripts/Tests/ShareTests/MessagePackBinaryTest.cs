@@ -389,9 +389,9 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
-        public void MapHeaderTest(object _target, int length)
+        public void MapHeaderTest(object targetArg, int length)
         {
-            var target = Convert.ToUInt32(_target);
+            var target = Convert.ToUInt32(targetArg);
 
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
@@ -433,9 +433,9 @@ namespace MessagePack.Tests
         [InlineData(20000, 3)]
         [InlineData(ushort.MaxValue, 3)]
         [InlineData(80000, 5)]
-        public void ArrayHeaderTest(object _target, int length)
+        public void ArrayHeaderTest(object targetArg, int length)
         {
-            var target = Convert.ToUInt32(_target); // hack for work in Unity NUnit.
+            var target = Convert.ToUInt32(targetArg); // hack for work in Unity NUnit.
 
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
@@ -473,9 +473,9 @@ namespace MessagePack.Tests
         [InlineData(short.MaxValue, 3)]
         [InlineData(50000, 3)]
         [InlineData(ushort.MaxValue, 3)]
-        public void UInt16Test(object _target, int length)
+        public void UInt16Test(object targetArg, int length)
         {
-            var target = Convert.ToUInt16(_target);
+            var target = Convert.ToUInt16(targetArg);
 
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
@@ -507,9 +507,9 @@ namespace MessagePack.Tests
         [InlineData(int.MaxValue, 5)]
         [InlineData(3294967295, 5)]
         [InlineData(uint.MaxValue, 5)]
-        public void UInt32Test(object _target, int length)
+        public void UInt32Test(object targetArg, int length)
         {
-            var target = Convert.ToUInt32(_target);
+            var target = Convert.ToUInt32(targetArg);
 
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
@@ -545,9 +545,9 @@ namespace MessagePack.Tests
         [InlineData(long.MaxValue, 9)]
         [InlineData(12446744073709551615, 9)]
         [InlineData(ulong.MaxValue, 9)]
-        public void UInt64Test(object _target, int length)
+        public void UInt64Test(object targetArg, int length)
         {
-            var target = Convert.ToUInt64(_target);
+            var target = Convert.ToUInt64(targetArg);
 
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
@@ -701,9 +701,9 @@ namespace MessagePack.Tests
 
         [Theory]
         [MemberData(nameof(ExtTestData))]
-        public void ExtTest(object _typeCode, byte[] target)
+        public void ExtTest(object typeCodeArg, byte[] target)
         {
-            var typeCode = Convert.ToSByte(_typeCode); // hack for work in Unity NUnit.
+            var typeCode = Convert.ToSByte(typeCodeArg); // hack for work in Unity NUnit.
 
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 

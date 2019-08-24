@@ -22,7 +22,7 @@ namespace MessagePack
             }
 
             var array = bytes.ToArray();
-            
+
             fixed (byte* pBytes = bytes)
             {
                 return encoding.GetString(pBytes, bytes.Length);

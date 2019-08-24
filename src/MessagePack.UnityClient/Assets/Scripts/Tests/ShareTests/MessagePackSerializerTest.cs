@@ -41,7 +41,7 @@ namespace MessagePack.Tests
 
 #if !UNITY_2018_3_OR_NEWER
 
-        // Unity's NUnit currently no supported Task test.
+        /* Unity's NUnit currently no supported Task test. */
 
         [Fact]
         public async Task NonGeneric_Async()

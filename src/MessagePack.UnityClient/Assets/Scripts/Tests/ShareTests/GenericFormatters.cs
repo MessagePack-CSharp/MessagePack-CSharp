@@ -30,7 +30,7 @@ namespace MessagePack.Tests
             new object[] { Tuple.Create(1, 2, 3, 4, 5, 6, 7, 8) },
         };
 
-        [Theory()]
+        [Theory]
         [MemberData(nameof(TupleTestData))]
         public void TupleTest<T>(T data)
         {
@@ -49,7 +49,7 @@ namespace MessagePack.Tests
             new object[] { ValueTuple.Create(1, 2, 3, 4, 5, 6, 7, 8), null },
         };
 
-        [Theory()]
+        [Theory]
         [MemberData(nameof(ValueTupleTestData))]
         public void TupleTest2<T>(T data, T? @null)
             where T : struct
@@ -64,7 +64,7 @@ namespace MessagePack.Tests
             new object[] { new KeyValuePair<int, int>(3, 4), new KeyValuePair<int, int>(5, 6) },
         };
 
-        [Theory()]
+        [Theory]
         [MemberData(nameof(KeyValuePairData))]
         public void KeyValuePairTest<T>(T t, T? t2)
             where T : struct
@@ -79,7 +79,7 @@ namespace MessagePack.Tests
             new object[] { new ArraySegment<byte>(new byte[0], 0, 0), null, new byte[0] },
         };
 
-        [Theory()]
+        [Theory]
         [MemberData(nameof(ByteArraySegementData))]
         public void ByteArraySegmentTest(ArraySegment<byte> t, ArraySegment<byte>? t2, byte[] reference)
         {

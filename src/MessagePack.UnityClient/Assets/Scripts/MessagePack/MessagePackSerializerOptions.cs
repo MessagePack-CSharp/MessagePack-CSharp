@@ -14,15 +14,14 @@ namespace MessagePack
     {
 #if !DYNAMICCODEDUMPER
         /// <summary>
-        /// A good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
+        /// Gets a good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
         public static MessagePackSerializerOptions Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.Standard;
 
         /// <summary>
-        /// A good default set of options that includes LZ4 compression and uses the <see cref="Resolvers.StandardResolver"/>.
+        /// Gets a good default set of options that includes LZ4 compression and uses the <see cref="Resolvers.StandardResolver"/>.
         /// </summary>
         public static MessagePackSerializerOptions LZ4Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.LZ4Standard;
-     
 #endif
 
         /// <summary>
@@ -86,7 +85,7 @@ namespace MessagePack
         public MessagePackSerializerOptions WithOldSpec(bool? oldSpec = true) => this.OldSpec != oldSpec ? new MessagePackSerializerOptions(this.Resolver, this.UseLZ4Compression, oldSpec) : this;
 
 #if !DYNAMICCODEDUMPER
-        static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
+        private static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
         {
             public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance, useLZ4Compression: false);
             public static readonly MessagePackSerializerOptions LZ4Standard = Standard.WithLZ4Compression(true);

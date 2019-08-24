@@ -35,8 +35,6 @@ namespace MessagePack.Tests
                 }
             }
         }
-
-
 #endif
     }
 }
