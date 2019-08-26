@@ -30,6 +30,7 @@ namespace RuntimeUnitTestToolkit
         readonly Color normalColor = new Color(1f, 1f, 1f, 1f); // white
 
         bool allTestGreen = true;
+        bool logClear = false;
 
         void Start()
         {
@@ -37,7 +38,14 @@ namespace RuntimeUnitTestToolkit
             {
                 UnityEngine.Application.logMessageReceived += (a, b, c) =>
                 {
-                    AppendToGraphicText("[" + c + "]" + a + "\n");
+                    if (a.Contains("Mesh can not have more than 65000 vertices"))
+                    {
+                        logClear = true;
+                    }
+                    else
+                    {
+                        AppendToGraphicText("[" + c + "]" + a + "\n");
+                    }
                 };
 
                 // register all test types
@@ -612,13 +620,19 @@ NEXT_ASSEMBLY:
         {
             if (!Application.isBatchMode)
             {
+                if (logClear)
+                {
+                    logText.text = "";
+                    logClear = false;
+                }
+
                 try
                 {
                     logText.text += msg;
                 }
                 catch
                 {
-                    logText.text = ""; // clear
+                    logClear = true;
                 }
             }
         }
