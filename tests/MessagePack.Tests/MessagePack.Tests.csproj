@@ -8,7 +8,6 @@
     <CodeAnalysisRuleSet>MessagePack.Tests.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ByteArrayComparer.cs" Link="Link\ByteArrayComparer.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\FarmHash.cs" Link="Link\FarmHash.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" Link="Link\ILGeneratorExtensions.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" Link="Link\StringEncoding.cs" />

@@ -47,7 +47,7 @@ namespace MessagePack.Internal
 
         public bool Equals(byte[] x, ArraySegment<byte> y)
         {
-            return ByteArrayComparer.Equals(y, x);
+            return x.AsSpan().SequenceEqual(y);
         }
 
         public int GetHashCode(byte[] key1)
