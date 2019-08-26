@@ -15,12 +15,23 @@ namespace MessagePack.Tests
         private const sbyte ByteNegativeValue = -3;
         private const byte BytePositiveValue = 3;
         private static readonly ReadOnlySequence<byte> StringEncodedAsFixStr = Encode((ref MessagePackWriter w) => w.Write("hi"));
+
         private readonly ITestOutputHelper logger;
+
+#if !UNITY_2018_3_OR_NEWER
 
         public MessagePackReaderTests(ITestOutputHelper logger)
         {
             this.logger = logger;
         }
+
+#else
+        public MessagePackReaderTests()
+        {
+            this.logger = new NullTestOutputHelper();
+        }
+
+#endif
 
         [Fact]
         public void ReadSingle_ReadIntegersOfVariousLengthsAndMagnitudes()

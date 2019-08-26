@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
+
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -17,8 +19,6 @@ using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
-#if !UNITY_2018_3_OR_NEWER
-
     /// <summary>
     /// UnionResolver by dynamic code generation.
     /// </summary>
@@ -480,9 +480,7 @@ namespace MessagePack.Resolvers
             internal static readonly MethodInfo WriteNil = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteNil), Type.EmptyTypes);
         }
     }
-
-#endif
-    }
+}
 
 namespace MessagePack.Internal
 {
@@ -515,3 +513,5 @@ namespace MessagePack.Internal
         }
     }
 }
+
+#endif

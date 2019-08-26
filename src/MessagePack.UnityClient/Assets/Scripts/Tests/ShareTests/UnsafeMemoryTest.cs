@@ -36,9 +36,11 @@ namespace MessagePack.Tests
             bin3Writer.WriteRaw(bin1);
             bin3Writer.Flush();
 
-            MessagePack.Internal.ByteArrayComparer.Equals(bin1, bin2).IsTrue();
-            MessagePack.Internal.ByteArrayComparer.Equals(bin1, CodeGenHelpers.GetSpanFromSequence(bin3)).IsTrue();
+            new ReadOnlySpan<byte>(bin1).SequenceEqual(bin2).IsTrue();
+            new ReadOnlySpan<byte>(bin1).SequenceEqual(CodeGenHelpers.GetSpanFromSequence(bin3)).IsTrue();
         }
+
+#if !UNITY_2018_3_OR_NEWER
 
         [Fact]
         public void WriteRaw()
@@ -67,5 +69,7 @@ namespace MessagePack.Tests
                 MessagePack.Internal.ByteArrayComparer.Equals(src, CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
             }
         }
+
+#endif
     }
 }

@@ -30,6 +30,7 @@ namespace RuntimeUnitTestToolkit
         readonly Color normalColor = new Color(1f, 1f, 1f, 1f); // white
 
         bool allTestGreen = true;
+        bool logClear = false;
 
         void Start()
         {
@@ -37,7 +38,14 @@ namespace RuntimeUnitTestToolkit
             {
                 UnityEngine.Application.logMessageReceived += (a, b, c) =>
                 {
-                    logText.text += "[" + c + "]" + a + "\n";
+                    if (a.Contains("Mesh can not have more than 65000 vertices"))
+                    {
+                        logClear = true;
+                    }
+                    else
+                    {
+                        AppendToGraphicText("[" + c + "]" + a + "\n");
+                    }
                 };
 
                 // register all test types
@@ -169,7 +177,7 @@ namespace RuntimeUnitTestToolkit
                     }
                 }
 
-                NEXT_ASSEMBLY:
+NEXT_ASSEMBLY:
                 continue;
             }
         }
@@ -254,7 +262,30 @@ namespace RuntimeUnitTestToolkit
                             }
                             else
                             {
-                                UnityEngine.Debug.Log(testType.Name + "." + item.Name + " currently does not supported in RuntumeUnitTestToolkit(multiple parameter or return type is invalid).");
+                                var testData = GetTestData(item);
+                                if (testData.Count != 0)
+                                {
+                                    foreach (var item2 in testData)
+                                    {
+                                        Func<IEnumerator> factory;
+                                        if (item.IsGenericMethod)
+                                        {
+                                            var method2 = InferGenericType(item, item2);
+                                            factory = () => (IEnumerator)method2.Invoke(test, item2);
+                                        }
+                                        else
+                                        {
+                                            factory = () => (IEnumerator)item.Invoke(test, item2);
+                                        }
+                                        var name = item.Name + "(" + string.Join(", ", item2.Select(x => x?.ToString() ?? "null")) + ")";
+                                        name = name.Replace(Char.MinValue, ' ').Replace(Char.MaxValue, ' ').Replace("<", "[").Replace(">", "]");
+                                        AddAsyncTest(test.GetType().Name, name, factory, setups, teardowns);
+                                    }
+                                }
+                                else
+                                {
+                                    UnityEngine.Debug.Log(testType.Name + "." + item.Name + " currently does not supported in RuntumeUnitTestToolkit(multiple parameter without TestCase or return type is invalid).");
+                                }
                             }
                         }
 
@@ -268,7 +299,30 @@ namespace RuntimeUnitTestToolkit
                             }
                             else
                             {
-                                UnityEngine.Debug.Log(testType.Name + "." + item.Name + " currently does not supported in RuntumeUnitTestToolkit(multiple parameter or return type is invalid).");
+                                var testData = GetTestData(item);
+                                if (testData.Count != 0)
+                                {
+                                    foreach (var item2 in testData)
+                                    {
+                                        Action invoke = null;
+                                        if (item.IsGenericMethod)
+                                        {
+                                            var method2 = InferGenericType(item, item2);
+                                            invoke = () => method2.Invoke(test, item2);
+                                        }
+                                        else
+                                        {
+                                            invoke = () => item.Invoke(test, item2);
+                                        }
+                                        var name = item.Name + "(" + string.Join(", ", item2.Select(x => x?.ToString() ?? "null")) + ")";
+                                        name = name.Replace(Char.MinValue, ' ').Replace(Char.MaxValue, ' ').Replace("<", "[").Replace(">", "]");
+                                        AddTest(test.GetType().Name, name, invoke, setups, teardowns);
+                                    }
+                                }
+                                else
+                                {
+                                    UnityEngine.Debug.Log(testType.Name + "." + item.Name + " currently does not supported in RuntumeUnitTestToolkit(multiple parameter without TestCase or return type is invalid).");
+                                }
                             }
                         }
                     }
@@ -282,6 +336,88 @@ namespace RuntimeUnitTestToolkit
             {
                 Debug.LogException(ex);
             }
+        }
+
+        List<object[]> GetTestData(MethodInfo methodInfo)
+        {
+            List<object[]> testCases = new List<object[]>();
+
+            var inlineData = methodInfo.GetCustomAttributes<NUnit.Framework.TestCaseAttribute>(true);
+            foreach (var item in inlineData)
+            {
+                testCases.Add(item.Arguments);
+            }
+
+            var sourceData = methodInfo.GetCustomAttributes<NUnit.Framework.TestCaseSourceAttribute>(true);
+            foreach (var item in sourceData)
+            {
+                var enumerator = GetTestCaseSource(methodInfo, item.SourceType, item.SourceName, item.MethodParams);
+                foreach (var item2 in enumerator)
+                {
+                    var item3 = item2 as IEnumerable; // object[][]
+                    if (item3 != null)
+                    {
+                        var l = new List<object>();
+                        foreach (var item4 in item3)
+                        {
+                            l.Add(item4);
+                        }
+                        testCases.Add(l.ToArray());
+                    }
+                }
+            }
+
+            return testCases;
+        }
+
+        IEnumerable GetTestCaseSource(MethodInfo method, Type sourceType, string sourceName, object[] methodParams)
+        {
+            Type type = sourceType ?? method.DeclaringType;
+
+            MemberInfo[] member = type.GetMember(sourceName, BindingFlags.FlattenHierarchy | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+            if (member.Length == 1)
+            {
+                MemberInfo memberInfo = member[0];
+                FieldInfo fieldInfo = memberInfo as FieldInfo;
+                if ((object)fieldInfo != null)
+                {
+                    return (!fieldInfo.IsStatic) ? ReturnErrorAsParameter("The sourceName specified on a TestCaseSourceAttribute must refer to a static field, property or method.") : ((methodParams == null) ? ((IEnumerable)fieldInfo.GetValue(null)) : ReturnErrorAsParameter("You have specified a data source field but also given a set of parameters. Fields cannot take parameters, please revise the 3rd parameter passed to the TestCaseSourceAttribute and either remove it or specify a method."));
+                }
+                PropertyInfo propertyInfo = memberInfo as PropertyInfo;
+                if ((object)propertyInfo != null)
+                {
+                    return (!propertyInfo.GetGetMethod(nonPublic: true).IsStatic) ? ReturnErrorAsParameter("The sourceName specified on a TestCaseSourceAttribute must refer to a static field, property or method.") : ((methodParams == null) ? ((IEnumerable)propertyInfo.GetValue(null, null)) : ReturnErrorAsParameter("You have specified a data source property but also given a set of parameters. Properties cannot take parameters, please revise the 3rd parameter passed to the TestCaseSource attribute and either remove it or specify a method."));
+                }
+                MethodInfo methodInfo = memberInfo as MethodInfo;
+                if ((object)methodInfo != null)
+                {
+                    return (!methodInfo.IsStatic) ? ReturnErrorAsParameter("The sourceName specified on a TestCaseSourceAttribute must refer to a static field, property or method.") : ((methodParams == null || methodInfo.GetParameters().Length == methodParams.Length) ? ((IEnumerable)methodInfo.Invoke(null, methodParams)) : ReturnErrorAsParameter("You have given the wrong number of arguments to the method in the TestCaseSourceAttribute, please check the number of parameters passed in the object is correct in the 3rd parameter for the TestCaseSourceAttribute and this matches the number of parameters in the target method and try again."));
+                }
+            }
+            return null;
+        }
+
+        MethodInfo InferGenericType(MethodInfo methodInfo, object[] parameters)
+        {
+            var set = new HashSet<Type>();
+            List<Type> genericParameters = new List<Type>();
+            foreach (var item in methodInfo.GetParameters()
+                .Select((x, i) => new { x.ParameterType, i })
+                .Where(x => x.ParameterType.IsGenericParameter)
+                .OrderBy(x => x.ParameterType.GenericParameterPosition))
+            {
+                if (set.Add(item.ParameterType)) // DistinctBy
+                {
+                    genericParameters.Add(parameters[item.i].GetType());
+                }
+            }
+
+            return methodInfo.MakeGenericMethod(genericParameters.ToArray());
+        }
+
+        IEnumerable ReturnErrorAsParameter(string name)
+        {
+            throw new Exception(name);
         }
 
         System.Collections.IEnumerator ScrollLogToEndNextFrame()
@@ -306,7 +442,7 @@ namespace RuntimeUnitTestToolkit
 
             var allGreen = true;
 
-            logText.text += "<color=yellow>" + actionList.Key + "</color>\n";
+            AppendToGraphicText("<color=yellow>" + actionList.Key + "</color>\n");
             WriteToConsole("Begin Test Class: " + actionList.Key);
             yield return null;
 
@@ -326,7 +462,7 @@ namespace RuntimeUnitTestToolkit
                     GC.WaitForPendingFinalizers();
                     GC.Collect();
 
-                    logText.text += "<color=teal>" + item2.Key + "</color>\n";
+                    AppendToGraphicText("<color=teal>" + item2.Key + "</color>\n");
                     yield return null;
 
                     var v = item2.Value;
@@ -368,14 +504,14 @@ namespace RuntimeUnitTestToolkit
                     totalExecutionTime.Add(methodStopwatch.Elapsed.TotalMilliseconds);
                     if (exception == null)
                     {
-                        logText.text += "OK, " + methodStopwatch.Elapsed.TotalMilliseconds.ToString("0.00") + "ms\n";
+                        AppendToGraphicText("OK, " + methodStopwatch.Elapsed.TotalMilliseconds.ToString("0.00") + "ms\n");
                         WriteToConsoleResult(item2.Key + ", " + methodStopwatch.Elapsed.TotalMilliseconds.ToString("0.00") + "ms", true);
                     }
                     else
                     {
                         // found match line...
                         var line = string.Join("\n", exception.StackTrace.Split('\n').Where(x => x.Contains(actionList.Key) || x.Contains(item2.Key)).ToArray());
-                        logText.text += "<color=red>" + exception.Message + "\n" + line + "</color>\n";
+                        AppendToGraphicText("<color=red>" + exception.Message + "\n" + line + "</color>\n");
                         WriteToConsoleResult(item2.Key + ", " + exception.Message, false);
                         WriteToConsole(line);
                         allGreen = false;
@@ -391,7 +527,7 @@ namespace RuntimeUnitTestToolkit
                 }
             }
 
-            logText.text += "[" + actionList.Key + "]" + totalExecutionTime.Sum().ToString("0.00") + "ms\n\n";
+            AppendToGraphicText("[" + actionList.Key + "]" + totalExecutionTime.Sum().ToString("0.00") + "ms\n\n");
             foreach (var btn in list.GetComponentsInChildren<Button>()) btn.interactable = true;
             if (self != null)
             {
@@ -477,6 +613,27 @@ namespace RuntimeUnitTestToolkit
             if (Application.isBatchMode)
             {
                 Console.WriteLine(msg);
+            }
+        }
+
+        void AppendToGraphicText(string msg)
+        {
+            if (!Application.isBatchMode)
+            {
+                if (logClear)
+                {
+                    logText.text = "";
+                    logClear = false;
+                }
+
+                try
+                {
+                    logText.text += msg;
+                }
+                catch
+                {
+                    logClear = true;
+                }
             }
         }
 

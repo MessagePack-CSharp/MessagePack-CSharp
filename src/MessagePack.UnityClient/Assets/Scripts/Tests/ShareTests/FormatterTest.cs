@@ -228,13 +228,21 @@ namespace MessagePack.Tests
         [Fact]
         public void DecimalLang()
         {
-            var estonian = new CultureInfo("et-EE");
-            CultureInfo.CurrentCulture = estonian;
+            var current = CultureInfo.CurrentCulture;
+            try
+            {
+                var estonian = new CultureInfo("et-EE");
+                CultureInfo.CurrentCulture = estonian;
 
-            var b = MessagePackSerializer.Serialize(12345.6789M);
-            var d = MessagePackSerializer.Deserialize<decimal>(b);
+                var b = MessagePackSerializer.Serialize(12345.6789M);
+                var d = MessagePackSerializer.Deserialize<decimal>(b);
 
-            d.Is(12345.6789M);
+                d.Is(12345.6789M);
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = current;
+            }
         }
 
         [Fact]

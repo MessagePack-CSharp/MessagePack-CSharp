@@ -30,14 +30,14 @@ namespace MessagePack.Tests
             new object[] { Tuple.Create(1, 2, 3, 4, 5, 6, 7, 8) },
         };
 
-        [Theory(Skip = "AppVeyor Testing")]
+        [Theory]
         [MemberData(nameof(TupleTestData))]
         public void TupleTest<T>(T data)
         {
             this.Convert(data).IsStructuralEqual(data);
         }
 
-        public static object[] ValueTupleTestData = new object[]
+        public static object[][] ValueTupleTestData = new object[][]
         {
             new object[] { ValueTuple.Create(1), null },
             new object[] { ValueTuple.Create(1, 2), null },
@@ -49,8 +49,8 @@ namespace MessagePack.Tests
             new object[] { ValueTuple.Create(1, 2, 3, 4, 5, 6, 7, 8), null },
         };
 
-        [Theory(Skip = "AppVeyor Testing")]
-        [MemberData(nameof(TupleTestData))]
+        [Theory]
+        [MemberData(nameof(ValueTupleTestData))]
         public void TupleTest2<T>(T data, T? @null)
             where T : struct
         {
@@ -64,7 +64,7 @@ namespace MessagePack.Tests
             new object[] { new KeyValuePair<int, int>(3, 4), new KeyValuePair<int, int>(5, 6) },
         };
 
-        [Theory(Skip = "AppVeyor Testing")]
+        [Theory]
         [MemberData(nameof(KeyValuePairData))]
         public void KeyValuePairTest<T>(T t, T? t2)
             where T : struct
@@ -79,12 +79,11 @@ namespace MessagePack.Tests
             new object[] { new ArraySegment<byte>(new byte[0], 0, 0), null, new byte[0] },
         };
 
-        [Theory(Skip = "AppVeyor Testing")]
+        [Theory]
         [MemberData(nameof(ByteArraySegementData))]
         public void ByteArraySegmentTest(ArraySegment<byte> t, ArraySegment<byte>? t2, byte[] reference)
         {
             MessagePackSerializer.Serialize(t).Is(MessagePackSerializer.Serialize(reference));
-            this.Convert(t).Array.Is(reference);
             new MessagePackReader(MessagePackSerializer.Serialize(t2)).IsNil.IsTrue();
         }
     }

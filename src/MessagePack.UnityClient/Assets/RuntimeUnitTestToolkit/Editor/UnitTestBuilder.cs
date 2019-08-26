@@ -136,6 +136,15 @@ public static partial class UnitTestBuilder
         }
     }
 
+
+    [MenuItem("Test/LoadUnitTestScene")]
+    public static void LoadUnitTestScene()
+    {
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        BuildUnitTestRunnerScene();
+        EditorSceneManager.MarkSceneDirty(scene);
+    }
+
     static RuntimeUnitTestSettings LoadOrGetDefaultSettings()
     {
         var key = SettingsKeyBase + Application.productName;

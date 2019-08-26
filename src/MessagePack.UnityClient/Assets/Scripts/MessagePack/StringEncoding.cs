@@ -21,6 +21,8 @@ namespace MessagePack
                 return string.Empty;
             }
 
+            var array = bytes.ToArray();
+
             fixed (byte* pBytes = bytes)
             {
                 return encoding.GetString(pBytes, bytes.Length);

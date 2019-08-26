@@ -10,7 +10,7 @@ namespace MessagePack.Tests
     public class DynamicObjectResolverInterfaceTest
     {
         [Fact]
-        private void TestConstructorWithParentInterface()
+        public void TestConstructorWithParentInterface()
         {
             var myClass = new ConstructorEnumerableTest(new[] { "0", "2", "3" });
             var serialized = MessagePackSerializer.Serialize(myClass);
