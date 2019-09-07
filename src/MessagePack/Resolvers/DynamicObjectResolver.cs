@@ -1412,9 +1412,14 @@ typeof(int), typeof(int) });
                     KeyAttribute key;
                     if (contractAttr != null)
                     {
+                        if (contractAttr.memberSerializationOptIn)
+                        {
+                            continue;
+                        }
+
                         // MessagePackObjectAttribute
                         key = item.GetCustomAttribute<KeyAttribute>(true);
-                        if (key == null && contractAttr.memberSerializationOptIn)
+                        if (key == null)
                         {
                             throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
                         }
@@ -1493,9 +1498,14 @@ typeof(int), typeof(int) });
                     KeyAttribute key;
                     if (contractAttr != null)
                     {
+                        if (contractAttr.memberSerializationOptIn) 
+                        {
+                            continue;
+                        }
+
                         // MessagePackObjectAttribute
                         key = item.GetCustomAttribute<KeyAttribute>(true);
-                        if (key == null && contractAttr.memberSerializationOptIn)
+                        if (key == null)
                         {
                             throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
                         }
