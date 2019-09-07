@@ -1416,7 +1416,7 @@ typeof(int), typeof(int) });
                         key = item.GetCustomAttribute<KeyAttribute>(true);
                         if (key == null)
                         {
-                            if (true)
+                            if (contractAttr.MemberSerializationOptIn)
                             {
                                 continue;
                             }
@@ -1502,7 +1502,7 @@ typeof(int), typeof(int) });
                         key = item.GetCustomAttribute<KeyAttribute>(true);
                         if (key == null)
                         {
-                            if (true)
+                            if (contractAttr.MemberSerializationOptIn)
                             {
                                 continue;
                             }

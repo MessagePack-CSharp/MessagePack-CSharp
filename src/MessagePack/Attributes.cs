@@ -7,9 +7,12 @@ namespace MessagePack
     {
         public bool KeyAsPropertyName { get; private set; }
 
-        public MessagePackObjectAttribute(bool keyAsPropertyName = false)
+        public bool MemberSerializationOptIn { get; private set; }
+
+        public MessagePackObjectAttribute(bool keyAsPropertyName = false, bool memberSerializationOptIn = false)
         {
             this.KeyAsPropertyName = keyAsPropertyName;
+            this.MemberSerializationOptIn = memberSerializationOptIn;
         }
     }
 
