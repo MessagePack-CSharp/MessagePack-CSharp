@@ -50,7 +50,7 @@ namespace MessagePack
         public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options = null)
         {
             var jsonWriter = new StringWriter();
-            var reader = new MessagePackReader(bytes);
+            var reader = new MessagePackReader(in bytes);
             ConvertToJson(ref reader, jsonWriter, options);
             return jsonWriter.ToString();
         }

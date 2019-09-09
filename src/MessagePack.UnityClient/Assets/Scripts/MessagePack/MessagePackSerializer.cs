@@ -158,7 +158,7 @@ namespace MessagePack
         /// <returns>The deserialized value.</returns>
         public static T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, MessagePackSerializerOptions options = null)
         {
-            var reader = new MessagePackReader(byteSequence);
+            var reader = new MessagePackReader(in byteSequence);
             return Deserialize<T>(ref reader, options);
         }
 
@@ -200,9 +200,9 @@ namespace MessagePack
         /// <param name="buffer">The buffer to deserialize from.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <returns>The deserialized value.</returns>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options = null)
+        public static T Deserialize<T>(in ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options = null)
         {
-            var reader = new MessagePackReader(buffer);
+            var reader = new MessagePackReader(in buffer);
             return Deserialize<T>(ref reader, options);
         }
 
@@ -213,7 +213,7 @@ namespace MessagePack
         /// <param name="buffer">The memory to deserialize from.</param>
         /// <param name="bytesRead">The number of bytes read.</param>
         /// <returns>The deserialized value.</returns>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, out int bytesRead) => Deserialize<T>(buffer, options: null, out bytesRead);
+        public static T Deserialize<T>(in ReadOnlyMemory<byte> buffer, out int bytesRead) => Deserialize<T>(buffer, options: null, out bytesRead);
 
         /// <summary>
         /// Deserializes a value of a given type from a sequence of bytes.
@@ -223,9 +223,9 @@ namespace MessagePack
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="bytesRead">The number of bytes read.</param>
         /// <returns>The deserialized value.</returns>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options, out int bytesRead)
+        public static T Deserialize<T>(in ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options, out int bytesRead)
         {
-            var reader = new MessagePackReader(buffer);
+            var reader = new MessagePackReader(in buffer);
             T result = Deserialize<T>(ref reader, options);
             bytesRead = buffer.Slice(0, (int)reader.Consumed).Length;
             return result;

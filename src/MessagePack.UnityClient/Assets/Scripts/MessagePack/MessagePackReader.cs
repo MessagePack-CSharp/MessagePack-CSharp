@@ -32,9 +32,9 @@ namespace MessagePack
         /// Initializes a new instance of the <see cref="MessagePackReader"/> struct.
         /// </summary>
         /// <param name="memory">The buffer to read from.</param>
-        public MessagePackReader(ReadOnlyMemory<byte> memory)
+        public MessagePackReader(in ReadOnlyMemory<byte> memory)
         {
-            this.reader = new SequenceReader<byte>(memory);
+            this.reader = new SequenceReader<byte>(in memory);
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace MessagePack
         /// <param name="readOnlySequence">The sequence to read from.</param>
         public MessagePackReader(in ReadOnlySequence<byte> readOnlySequence)
         {
-            this.reader = new SequenceReader<byte>(readOnlySequence);
+            this.reader = new SequenceReader<byte>(in readOnlySequence);
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="readOnlySequence">The sequence to read from.</param>
         /// <returns>The new reader.</returns>
-        public MessagePackReader Clone(in ReadOnlySequence<byte> readOnlySequence) => new MessagePackReader(readOnlySequence)
+        public MessagePackReader Clone(in ReadOnlySequence<byte> readOnlySequence) => new MessagePackReader(in readOnlySequence)
         {
         };
 

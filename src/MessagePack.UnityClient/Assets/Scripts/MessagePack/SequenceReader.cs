@@ -80,7 +80,7 @@ namespace System.Buffers
         /// over the given <see cref="ReadOnlyMemory{T}"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public SequenceReader(ReadOnlyMemory<T> memory)
+        public SequenceReader(in ReadOnlyMemory<T> memory)
         {
             this.usingSequence = false;
             this.CurrentSpanIndex = 0;
