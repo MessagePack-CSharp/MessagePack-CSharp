@@ -25,12 +25,12 @@ namespace MessagePack.Tests
                     var xs = Enumerable.Range(1, i).Select(x => (byte)x).ToArray();
                     var ys = xs.ToArray();
 
-                    ByteArrayComparer.Equals(xs.AsSpan(j, xs.Length - j), ys.AsSpan(j, ys.Length - j)).IsTrue();
+                    xs.AsSpan(j, xs.Length - j).SequenceEqual(ys.AsSpan(j, ys.Length - j)).IsTrue();
 
                     if (ys.Length != 0)
                     {
                         ys[ys.Length - 1] = 255;
-                        ByteArrayComparer.Equals(xs.AsSpan(j, xs.Length - j), ys.AsSpan(j, ys.Length - j)).IsFalse();
+                        xs.AsSpan(j, xs.Length - j).SequenceEqual(ys.AsSpan(j, ys.Length - j)).IsFalse();
                     }
                 }
             }

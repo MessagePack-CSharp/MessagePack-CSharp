@@ -30,9 +30,6 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataDictionary.cs">
       <Link>Code\AutomataDictionary.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ByteArrayComparer.cs">
-      <Link>Code\ByteArrayComparer.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ByteArrayStringHashTable.cs">
       <Link>Code\ByteArrayStringHashTable.cs</Link>
     </Compile>

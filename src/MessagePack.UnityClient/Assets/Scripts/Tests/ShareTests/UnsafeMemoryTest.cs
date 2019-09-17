@@ -54,7 +54,7 @@ namespace MessagePack.Tests
                 (typeof(UnsafeMemory32).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
                 dstWriter.Flush();
                 dst.Length.Is(i);
-                MessagePack.Internal.ByteArrayComparer.Equals(src, CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
+                src.AsSpan().SequenceEqual(CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
             }
 
             // x64
@@ -66,7 +66,7 @@ namespace MessagePack.Tests
                 (typeof(UnsafeMemory64).GetMethod("WriteRaw" + i).CreateDelegate(typeof(WriteDelegate)) as WriteDelegate).Invoke(ref dstWriter, src);
                 dstWriter.Flush();
                 dst.Length.Is(i);
-                MessagePack.Internal.ByteArrayComparer.Equals(src, CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
+                src.AsSpan().SequenceEqual(CodeGenHelpers.GetSpanFromSequence(dst.AsReadOnlySequence)).IsTrue();
             }
         }
 

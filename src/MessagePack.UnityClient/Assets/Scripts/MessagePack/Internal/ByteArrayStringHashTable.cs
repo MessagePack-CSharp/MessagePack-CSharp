@@ -63,8 +63,8 @@ namespace MessagePack.Internal
                 // check duplicate
                 for (int i = 0; i < array.Length; i++)
                 {
-                    Memory<byte> e = array[i].Key;
-                    if (ByteArrayComparer.Equals(key, e.Span))
+                    byte[] e = array[i].Key;
+                    if (key.AsSpan().SequenceEqual(e))
                     {
                         return false;
                     }
@@ -82,6 +82,7 @@ namespace MessagePack.Internal
 
         public bool TryGetValue(in ReadOnlySequence<byte> key, out int value) => this.TryGetValue(CodeGenHelpers.GetSpanFromSequence(key), out value);
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool TryGetValue(ReadOnlySpan<byte> key, out int value)
         {
             Entry[][] table = this.buckets;
@@ -90,57 +91,42 @@ namespace MessagePack.Internal
 
             if (entry == null)
             {
-                goto NOT_FOUND;
+                value = default(int);
+                return false;
             }
 
+            ref Entry v = ref entry[0];
+            if (key.SequenceEqual(v.Key))
             {
-#if !UNITY_2018_3_OR_NEWER
-                ref Entry v = ref entry[0];
-#else
-                var v = entry[0];
-#endif
-                if (ByteArrayComparer.Equals(key, v.Key.Span))
-                {
-                    value = v.Value;
-                    return true;
-                }
+                value = v.Value;
+                return true;
             }
 
+            return TryGetValueSlow(key, entry, out value);
+        }
+
+        private bool TryGetValueSlow(ReadOnlySpan<byte> key, Entry[] entry, out int value)
+        {
             for (int i = 1; i < entry.Length; i++)
             {
-#if !UNITY_2018_3_OR_NEWER
                 ref Entry v = ref entry[i];
-#else
-                var v = entry[i];
-#endif
-                if (ByteArrayComparer.Equals(key, v.Key.Span))
+                if (key.SequenceEqual(v.Key))
                 {
                     value = v.Value;
                     return true;
                 }
             }
 
-NOT_FOUND:
             value = default(int);
             return false;
         }
 
-#if !UNITY_2018_3_OR_NEWER
         private static readonly bool Is32Bit = IntPtr.Size == 4;
-#endif
 
-#if !UNITY_2018_3_OR_NEWER
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         private static ulong ByteArrayGetHashCode(ReadOnlySpan<byte> x)
         {
-#if !UNITY_2018_3_OR_NEWER
             // FarmHash https://github.com/google/farmhash
-            if (x == null)
-            {
-                return 0;
-            }
-
             if (Is32Bit)
             {
                 return (ulong)FarmHash.Hash32(x);
@@ -149,23 +135,6 @@ NOT_FOUND:
             {
                 return FarmHash.Hash64(x);
             }
-
-#else
-
-            // FNV1-1a 32bit https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
-            uint hash = 0;
-            if (x != null)
-            {
-                hash = 2166136261;
-                for (int i = 0; i < x.Length; i++)
-                {
-                    hash = unchecked((x[i] ^ hash) * 16777619);
-                }
-            }
-
-            return (ulong)hash;
-
-#endif
         }
 
         private static int CalculateCapacity(int collectionSize, float loadFactor)
@@ -199,7 +168,7 @@ NOT_FOUND:
 
                 foreach (Entry item2 in item)
                 {
-                    yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key.Span), item2.Value);
+                    yield return new KeyValuePair<string, int>(Encoding.UTF8.GetString(item2.Key), item2.Value);
                 }
             }
         }
@@ -211,13 +180,13 @@ NOT_FOUND:
 
         private struct Entry
         {
-            public Memory<byte> Key;
+            public byte[] Key;
             public int Value;
 
             // for debugging
             public override string ToString()
             {
-                return "(" + Encoding.UTF8.GetString(this.Key.Span) + ", " + this.Value + ")";
+                return "(" + Encoding.UTF8.GetString(this.Key) + ", " + this.Value + ")";
             }
         }
     }
