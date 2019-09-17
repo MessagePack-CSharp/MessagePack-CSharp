@@ -21,6 +21,12 @@ namespace MessagePack
             CreateCompiledMethods = t => new CompiledMethods(t);
         }
 
+        /// <seealso cref="Serialize{T}(ref MessagePackWriter, T, MessagePackSerializerOptions)"/>
+        public static void Serialize(Type type, ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options = null)
+        {
+            GetOrAdd(type).Serialize_MessagePackWriter_T_Options.Invoke(ref writer, obj, options);
+        }
+
         /// <seealso cref="Serialize{T}(T, MessagePackSerializerOptions)"/>
         public static byte[] Serialize(Type type, object obj, MessagePackSerializerOptions options = null)
         {
@@ -37,6 +43,12 @@ namespace MessagePack
         public static Task SerializeAsync(Type type, Stream stream, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             return GetOrAdd(type).SerializeAsync_Stream_T_Options_CancellationToken.Invoke(stream, obj, options, cancellationToken);
+        }
+
+        /// <seealso cref="Deserialize{T}(ref MessagePackReader, MessagePackSerializerOptions)"/>
+        public static object Deserialize(Type type, ref MessagePackReader reader, MessagePackSerializerOptions options = null)
+        {
+            return GetOrAdd(type).Deserialize_MessagePackReader_Options.Invoke(ref reader, options);
         }
 
         /// <seealso cref="Deserialize{T}(Stream, MessagePackSerializerOptions)"/>
@@ -66,13 +78,19 @@ namespace MessagePack
 
         private class CompiledMethods
         {
+            internal delegate void MessagePackWriterSerialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
+
+            internal delegate object MessagePackReaderDeserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
+
 #pragma warning disable SA1310 // Field names should not contain underscore
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
             internal readonly Func<object, MessagePackSerializerOptions, byte[]> Serialize_T_Options;
             internal readonly Action<Stream, object, MessagePackSerializerOptions> Serialize_Stream_T_Options;
             internal readonly Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task> SerializeAsync_Stream_T_Options_CancellationToken;
+            internal readonly MessagePackWriterSerialize Serialize_MessagePackWriter_T_Options;
 
+            internal readonly MessagePackReaderDeserialize Deserialize_MessagePackReader_Options;
             internal readonly Func<Stream, MessagePackSerializerOptions, object> Deserialize_Stream_Options;
             internal readonly Func<Stream, MessagePackSerializerOptions, CancellationToken, ValueTask<object>> DeserializeAsync_Stream_Options_CancellationToken;
 
@@ -139,6 +157,37 @@ namespace MessagePack
                     Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task> lambda = Expression.Lambda<Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task>>(body, param1, param2, param3, param4).Compile();
 
                     this.SerializeAsync_Stream_T_Options_CancellationToken = lambda;
+                }
+
+                {
+                    // public static void Serialize<T>(ref MessagePackWriter writer, T obj, MessagePackSerializerOptions options)
+                    MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type[] { typeof(MessagePackWriter).MakeByRefType(), null, typeof(MessagePackSerializerOptions) });
+
+                    ParameterExpression param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
+                    ParameterExpression param2 = Expression.Parameter(typeof(object), "obj");
+                    ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+
+                    MethodCallExpression body = Expression.Call(
+                        null,
+                        serialize,
+                        param1,
+                        ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                        param3);
+                    MessagePackWriterSerialize lambda = Expression.Lambda<MessagePackWriterSerialize>(body, param1, param2, param3).Compile();
+
+                    this.Serialize_MessagePackWriter_T_Options = lambda;
+                }
+
+                {
+                    // public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options)
+                    MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
+
+                    ParameterExpression param1 = Expression.Parameter(typeof(MessagePackReader).MakeByRefType(), "reader");
+                    ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
+                    MessagePackReaderDeserialize lambda = Expression.Lambda<MessagePackReaderDeserialize>(body, param1, param2).Compile();
+
+                    this.Deserialize_MessagePackReader_Options = lambda;
                 }
 
                 {
