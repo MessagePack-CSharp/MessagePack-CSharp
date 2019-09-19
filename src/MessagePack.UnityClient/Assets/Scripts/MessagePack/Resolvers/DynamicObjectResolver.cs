@@ -1439,7 +1439,20 @@ namespace MessagePack.Internal
                     }
                     else
                     {
-                        stringMembers.Add(member.StringKey, member);
+                        if (stringMembers.TryGetValue(member.StringKey, out var existingMember))
+                        {
+                            // a member of the same name already exists
+                            var existingMemberInfo = existingMember.PropertyInfo ?? (MemberInfo)existingMember.FieldInfo;
+                            if (item.DeclaringType.IsSubclassOf(existingMemberInfo.DeclaringType))
+                            {
+                                // properties declared with the 'new' modifier override existing entries
+                                stringMembers[member.StringKey] = member;
+                            }
+                        }
+                        else
+                        {
+                            stringMembers.Add(member.StringKey, member);
+                        }
                     }
                 }
 
@@ -1484,7 +1497,20 @@ namespace MessagePack.Internal
                     }
                     else
                     {
-                        stringMembers.Add(member.StringKey, member);
+                        if (stringMembers.TryGetValue(member.StringKey, out var existingMember))
+                        {
+                            // a member of the same name already exists
+                            var existingMemberInfo = existingMember.PropertyInfo ?? (MemberInfo)existingMember.FieldInfo;
+                            if (item.DeclaringType.IsSubclassOf(existingMemberInfo.DeclaringType))
+                            {
+                                // fields declared with the 'new' modifier override existing entries
+                                stringMembers[member.StringKey] = member;
+                            }
+                        }
+                        else
+                        {
+                            stringMembers.Add(member.StringKey, member);
+                        }
                     }
                 }
             }
@@ -1871,7 +1897,7 @@ namespace MessagePack.Internal
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = members,
+                Members = members.Where(m => constructorParameters.Contains(m) || m.IsWritable).ToArray(),
             };
         }
 
