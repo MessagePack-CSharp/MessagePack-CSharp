@@ -1400,112 +1400,81 @@ namespace MessagePack.Internal
                 isIntKey = !(forceStringKey || (contractAttr != null && contractAttr.KeyAsPropertyName));
 
                 var hiddenIntKey = 0;
-                foreach (PropertyInfo item in type.GetRuntimeProperties())
+
+                // Group the properties and fields by name to qualify members of the same name
+                // (declared with the 'new' keyword) with the declaring type.
+                IEnumerable<IGrouping<string, MemberInfo>> membersByName = type.GetRuntimeProperties()
+                    .Concat(type.GetRuntimeFields().Cast<MemberInfo>())
+                    .GroupBy(m => m.Name);
+                foreach (var memberGroup in membersByName)
                 {
-                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
+                    foreach (MemberInfo item in memberGroup)
                     {
-                        continue;
-                    }
-
-                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
-
-                    if (item.IsIndexer())
-                    {
-                        continue;
-                    }
-
-                    MethodInfo getMethod = item.GetGetMethod(true);
-                    MethodInfo setMethod = item.GetSetMethod(true);
-
-                    var member = new EmittableMember
-                    {
-                        PropertyInfo = item,
-                        IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
-                        IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
-                        StringKey = item.Name,
-                    };
-                    if (!member.IsReadable && !member.IsWritable)
-                    {
-                        continue;
-                    }
-
-                    member.IntKey = hiddenIntKey++;
-                    if (isIntKey)
-                    {
-                        intMembers.Add(member.IntKey, member);
-                    }
-                    else
-                    {
-                        if (stringMembers.TryGetValue(member.StringKey, out var existingMember))
+                        if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
                         {
-                            // a member of the same name already exists
-                            var existingMemberInfo = existingMember.PropertyInfo ?? (MemberInfo)existingMember.FieldInfo;
-                            if (item.DeclaringType.IsSubclassOf(existingMemberInfo.DeclaringType))
+                            continue;
+                        }
+
+                        if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
+                        {
+                            continue;
+                        }
+
+                        EmittableMember member;
+                        var property = item as PropertyInfo;
+                        var field = item as FieldInfo;
+                        if (property != null)
+                        {
+                            if (property.IsIndexer())
                             {
-                                // properties declared with the 'new' modifier override existing entries
-                                stringMembers[member.StringKey] = member;
+                                continue;
                             }
+
+                            MethodInfo getMethod = property.GetGetMethod(true);
+                            MethodInfo setMethod = property.GetSetMethod(true);
+
+                            member = new EmittableMember
+                            {
+                                PropertyInfo = property,
+                                IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
+                                IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
+                                StringKey = memberGroup.Count() > 1 ? $"{item.DeclaringType.FullName}.{item.Name}" : item.Name,
+                            };
+                        }
+                        else if (field != null)
+                        {
+                            if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null)
+                            {
+                                continue;
+                            }
+
+                            if (field.IsStatic)
+                            {
+                                continue;
+                            }
+
+                            member = new EmittableMember
+                            {
+                                FieldInfo = field,
+                                IsReadable = allowPrivate || field.IsPublic,
+                                IsWritable = allowPrivate || (field.IsPublic && !field.IsInitOnly),
+                                StringKey = memberGroup.Count() > 1 ? $"{item.DeclaringType.FullName}.{item.Name}" : item.Name,
+                            };
                         }
                         else
                         {
-                            stringMembers.Add(member.StringKey, member);
+                            throw new InvalidOperationException("unexpected member type");
                         }
-                    }
-                }
 
-                foreach (FieldInfo item in type.GetRuntimeFields())
-                {
-                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
-
-                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
-
-                    if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null)
-                    {
-                        continue;
-                    }
-
-                    if (item.IsStatic)
-                    {
-                        continue;
-                    }
-
-                    var member = new EmittableMember
-                    {
-                        FieldInfo = item,
-                        IsReadable = allowPrivate || item.IsPublic,
-                        IsWritable = allowPrivate || (item.IsPublic && !item.IsInitOnly),
-                        StringKey = item.Name,
-                    };
-                    if (!member.IsReadable && !member.IsWritable)
-                    {
-                        continue;
-                    }
-
-                    member.IntKey = hiddenIntKey++;
-                    if (isIntKey)
-                    {
-                        intMembers.Add(member.IntKey, member);
-                    }
-                    else
-                    {
-                        if (stringMembers.TryGetValue(member.StringKey, out var existingMember))
+                        if (!member.IsReadable && !member.IsWritable)
                         {
-                            // a member of the same name already exists
-                            var existingMemberInfo = existingMember.PropertyInfo ?? (MemberInfo)existingMember.FieldInfo;
-                            if (item.DeclaringType.IsSubclassOf(existingMemberInfo.DeclaringType))
-                            {
-                                // fields declared with the 'new' modifier override existing entries
-                                stringMembers[member.StringKey] = member;
-                            }
+                            continue;
+                        }
+
+                        member.IntKey = hiddenIntKey++;
+                        if (isIntKey)
+                        {
+                            intMembers.Add(member.IntKey, member);
                         }
                         else
                         {

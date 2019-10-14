@@ -249,6 +249,7 @@ namespace MessagePack.Tests
         public void NewFieldCheck()
         {
             var o = new NewField { X = "Foo", Y = "Bar" };
+            ((BaseField)o).X = 123;
             var bin = MessagePackSerializer.Serialize(o, Resolvers.ContractlessStandardResolver.Options);
             NewField v =
                 MessagePackSerializer.Deserialize<NewField>(bin, Resolvers.ContractlessStandardResolver.Options);
@@ -260,6 +261,7 @@ namespace MessagePack.Tests
         public void NewPropertyCheck()
         {
             var o = new NewProperty { X = "Foo", Y = "Bar" };
+            ((BaseProperty)o).X = 123;
             var bin = MessagePackSerializer.Serialize(o, Resolvers.ContractlessStandardResolver.Options);
             NewProperty v =
                 MessagePackSerializer.Deserialize<NewProperty>(bin, Resolvers.ContractlessStandardResolver.Options);
