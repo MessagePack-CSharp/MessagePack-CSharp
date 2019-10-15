@@ -12,6 +12,8 @@ namespace MessagePack.Tests
 {
     public class PrimitiveResolverTest
     {
+#if !ENABLE_IL2CPP
+
         [Theory]
         [InlineData((bool)true)]
         [InlineData((byte)10)]
@@ -36,6 +38,8 @@ namespace MessagePack.Tests
             ////var re1 = MessagePackSerializer.Deserialize<object>(bin);
             ////((T)re1).Is(x);
         }
+
+#endif
 
         [Fact]
         public void PrimitiveTest2()

@@ -7,6 +7,8 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
+#if !ENABLE_IL2CPP
+
     public class DynamicObjectResolverInterfaceTest
     {
         [Fact]
@@ -31,4 +33,6 @@ namespace MessagePack.Tests
         [Key(0)]
         public IReadOnlyList<string> Values { get; }
     }
+
+#endif
 }

@@ -6,6 +6,8 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
+#if !ENABLE_IL2CPP
+
     public class DynamicObjectResolverDerivedAttributeInheritanceTest
     {
         [Fact]
@@ -61,4 +63,6 @@ namespace MessagePack.Tests
 
         public short Version { get; }
     }
+
+#endif
 }

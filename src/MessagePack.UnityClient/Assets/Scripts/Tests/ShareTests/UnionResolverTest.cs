@@ -56,6 +56,14 @@ namespace MessagePack.Tests
             MessagePackSerializer.Deserialize<IUnionChecker>(hoge).IsNull();
         }
 
+        public void IL2CPPHint()
+        {
+            Hoge<MySubUnion1, MySubUnion1>(default, default);
+            Hoge<MySubUnion2, MySubUnion2>(default, default);
+            Hoge<MySubUnion3, MySubUnion3>(default, default);
+            Hoge<MySubUnion4, MySubUnion4>(default, default);
+        }
+
         [Fact]
         public void ComplexTest()
         {
@@ -112,6 +120,13 @@ namespace MessagePack.Tests
 
 namespace ComplexdUnion
 {
+    [MessagePackObject(true)]
+    public class DummyForGenerate
+    {
+        public A[] MyProperty1 { get; set; }
+        public A2[] MyProperty2 { get; set; }
+    }
+
     [Union(0, typeof(B))]
     [Union(1, typeof(C))]
     public interface A

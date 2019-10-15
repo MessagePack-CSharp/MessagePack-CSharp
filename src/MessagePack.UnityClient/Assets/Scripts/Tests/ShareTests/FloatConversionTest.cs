@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+﻿// Copyright (c) All conILtributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -48,6 +48,31 @@ namespace MessagePack.Tests
         {
             var bin = MessagePackSerializer.Serialize(value);
             MessagePackSerializer.Deserialize<double>(bin).Is(Convert.ToDouble(value));
+        }
+
+        public void IL2CPPTypeHint()
+        {
+            FloatTest<float>(default);
+            FloatTest<int>(default);
+            FloatTest<byte>(default);
+            FloatTest<sbyte>(default);
+            FloatTest<short>(default);
+            FloatTest<int>(default);
+            FloatTest<long>(default);
+            FloatTest<ushort>(default);
+            FloatTest<uint>(default);
+            FloatTest<ulong>(default);
+
+            DoubleTest<int>(default);
+            DoubleTest<byte>(default);
+            DoubleTest<sbyte>(default);
+            DoubleTest<short>(default);
+            DoubleTest<int>(default);
+            DoubleTest<long>(default);
+            DoubleTest<ushort>(default);
+            DoubleTest<uint>(default);
+            DoubleTest<ulong>(default);
+            DoubleTest<double>(default);
         }
     }
 }

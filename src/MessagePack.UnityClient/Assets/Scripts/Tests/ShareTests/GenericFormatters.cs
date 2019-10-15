@@ -11,6 +11,8 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
+#if !ENABLE_IL2CPP
+
     public class GenericFormatters
     {
         private T Convert<T>(T value)
@@ -87,4 +89,6 @@ namespace MessagePack.Tests
             new MessagePackReader(MessagePackSerializer.Serialize(t2)).IsNil.IsTrue();
         }
     }
+
+#endif
 }

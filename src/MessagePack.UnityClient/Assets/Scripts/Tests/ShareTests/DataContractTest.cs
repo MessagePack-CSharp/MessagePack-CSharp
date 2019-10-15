@@ -11,6 +11,9 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
+
+#if !ENABLE_IL2CPP
+
     public class DataContractTest
     {
         [DataContract]
@@ -133,4 +136,6 @@ namespace MessagePack.Tests
             MessagePackSerializer.ConvertToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
         }
     }
+
+#endif
 }
