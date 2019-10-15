@@ -1238,7 +1238,7 @@ namespace MessagePack
             {
                 if (estimatedOffset != 1)
                 {
-                    Buffer.MemoryCopy(pBuffer + estimatedOffset, pBuffer + 1, byteCount, byteCount);
+                    MemoryCopy(pBuffer + estimatedOffset, pBuffer + 1, byteCount, byteCount);
                 }
 
                 pBuffer[0] = (byte)(MessagePackCode.MinFixStr | byteCount);
@@ -1248,7 +1248,7 @@ namespace MessagePack
             {
                 if (estimatedOffset != 2)
                 {
-                    Buffer.MemoryCopy(pBuffer + estimatedOffset, pBuffer + 2, byteCount, byteCount);
+                    MemoryCopy(pBuffer + estimatedOffset, pBuffer + 2, byteCount, byteCount);
                 }
 
                 pBuffer[0] = MessagePackCode.Str8;
@@ -1259,7 +1259,7 @@ namespace MessagePack
             {
                 if (estimatedOffset != 3)
                 {
-                    Buffer.MemoryCopy(pBuffer + estimatedOffset, pBuffer + 3, byteCount, byteCount);
+                    MemoryCopy(pBuffer + estimatedOffset, pBuffer + 3, byteCount, byteCount);
                 }
 
                 pBuffer[0] = MessagePackCode.Str16;
@@ -1270,13 +1270,38 @@ namespace MessagePack
             {
                 if (estimatedOffset != 5)
                 {
-                    Buffer.MemoryCopy(pBuffer + estimatedOffset, pBuffer + 5, byteCount, byteCount);
+                    MemoryCopy(pBuffer + estimatedOffset, pBuffer + 5, byteCount, byteCount);
                 }
 
                 pBuffer[0] = MessagePackCode.Str32;
                 WriteBigEndian((uint)byteCount, pBuffer + 1);
                 this.writer.Advance(byteCount + 5);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
+        {
+#if !UNITY_2018_3_OR_NEWER
+            Buffer.MemoryCopy(source, destination, destinationSizeInBytes, sourceBytesToCopy);
+#else
+            // Unity(mono) does not gurantee overlapped memcpy.
+            // https://github.com/neuecc/MessagePack-CSharp/issues/562
+
+            var buffer = ArrayPool<byte>.Shared.Rent((int)sourceBytesToCopy);
+            try
+            {
+                fixed (byte* p = buffer)
+                {
+                    Buffer.MemoryCopy(source, p, sourceBytesToCopy, sourceBytesToCopy);
+                    Buffer.MemoryCopy(p, destination, destinationSizeInBytes, sourceBytesToCopy);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+#endif
         }
     }
 }
