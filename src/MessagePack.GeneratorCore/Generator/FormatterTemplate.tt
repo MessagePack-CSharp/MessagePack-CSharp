@@ -1,0 +1,163 @@
+﻿<#@ template debug="false" hostspecific="false" linePragmas="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+#pragma warning disable 618
+#pragma warning disable 612
+#pragma warning disable 414
+#pragma warning disable 168
+
+#pragma warning disable SA1129 // Do not use default value type constructor
+#pragma warning disable SA1200 // Using directives should be placed correctly
+#pragma warning disable SA1309 // Field names should not begin with underscore
+#pragma warning disable SA1312 // Variable names should begin with lower-case letter
+#pragma warning disable SA1403 // File may only contain a single namespace
+#pragma warning disable SA1649 // File name should match first type name
+
+namespace <#= Namespace #>
+{
+    using System;
+    using System.Buffers;
+    using MessagePack;
+<# foreach(var objInfo in ObjectSerializationInfos) { #>
+
+    public sealed class <#= objInfo.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+    {
+<# foreach(var item in objInfo.Members) { #>
+<# if(item.CustomFormatterTypeName != null) { #>
+        <#= item.CustomFormatterTypeName #> __<#= item.Name #>CustomFormatter__ = new <#= item.CustomFormatterTypeName #>();
+<# } #>
+<# } #>
+
+<# if( objInfo.IsStringKey) { #>
+
+        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
+        private readonly byte[][] ____stringByteKeys;
+
+        public <#= objInfo.Name #>Formatter()
+        {
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
+            {
+<# foreach(var x in objInfo.Members) { #>
+                { "<#= x.StringKey #>", <#= x.IntKey #> },
+<# } #>
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+<# foreach(var x in objInfo.Members.Where(x => x.IsReadable)) { #>
+                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("<#= x.StringKey #>"),
+<# } #>
+            };
+        }
+<# } #>
+
+        public void Serialize(ref MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+<# if( objInfo.IsClass) { #>
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+<# } #>
+            IFormatterResolver formatterResolver = options.Resolver;
+<#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
+            ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
+<# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+            value.OnBeforeSerialize();
+<# } #>
+<# if( objInfo.IsIntKey) { #>
+            writer.WriteArrayHeader(<#= objInfo.MaxKey + 1 #>);
+<# } else { #>
+            writer.WriteMapHeader(<#= objInfo.WriteCount #>);
+<# } #>
+<# if(objInfo.IsIntKey) { #>
+<# for(var i =0; i<= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); #>
+<# if( member == null) { #>
+            writer.WriteNil();
+<# } else { #>
+            <#= member.GetSerializeMethodString() #>;
+<# } } } else { #>
+<# var index = 0; foreach(var x in objInfo.Members) { #>
+            writer.WriteRaw(this.____stringByteKeys[<#= index++ #>]);
+            <#= x.GetSerializeMethodString() #>;
+<# } } #>
+        }
+
+        public <#= objInfo.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+<# if( objInfo.IsClass) { #>
+                return null;
+<# } else { #>
+                throw new InvalidOperationException("typecode is null, struct not supported");
+<# } #>
+            }
+
+            IFormatterResolver formatterResolver = options.Resolver;
+<# if(objInfo.IsStringKey) { #>
+            var length = reader.ReadMapHeader();
+<# } else { #>
+            var length = reader.ReadArrayHeader();
+<# } #>
+<# foreach(var x in objInfo.Members) { #>
+            var __<#= x.Name #>__ = default(<#= x.Type #>);
+<# } #>
+
+            for (int i = 0; i < length; i++)
+            {
+<# if(objInfo.IsStringKey) { #>
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                int key;
+                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                {
+                    reader.Skip();
+                    continue;
+                }
+<# } else { #>
+                var key = i;
+<# } #>
+
+                switch (key)
+                {
+<# foreach(var x in objInfo.Members) { #>
+                    case <#= x.IntKey #>:
+                        __<#= x.Name #>__ = <#= x.GetDeserializeMethodString() #>;
+                        break;
+<# } #>
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new <#= objInfo.GetConstructorString()  #>;
+<# foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { #>
+            ____result.<#= x.Name #> = __<#= x.Name #>__;
+<# } #>
+<#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAfter) { #>
+            ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+<# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+            ____result.OnAfterDeserialize();
+<# } #>
+            return ____result;
+        }
+    }
+<# } #>
+}
+
+#pragma warning restore 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
+
+#pragma warning restore SA1129 // Do not use default value type constructor
+#pragma warning restore SA1200 // Using directives should be placed correctly
+#pragma warning restore SA1309 // Field names should not begin with underscore
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
+#pragma warning restore SA1403 // File may only contain a single namespace
+#pragma warning restore SA1649 // File name should match first type name
