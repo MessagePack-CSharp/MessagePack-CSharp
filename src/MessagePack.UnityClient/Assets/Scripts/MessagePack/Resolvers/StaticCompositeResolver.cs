@@ -11,11 +11,11 @@ namespace MessagePack.Resolvers
     {
         public static readonly StaticCompositeResolver Instance = new StaticCompositeResolver();
 
-        bool freezed;
-        IReadOnlyList<IMessagePackFormatter> formatters;
-        IReadOnlyList<IFormatterResolver> resolvers;
+        private bool freezed;
+        private IReadOnlyList<IMessagePackFormatter> formatters;
+        private IReadOnlyList<IFormatterResolver> resolvers;
 
-        StaticCompositeResolver()
+        private StaticCompositeResolver()
         {
             formatters = Array.Empty<IMessagePackFormatter>();
             resolvers = Array.Empty<IFormatterResolver>();
@@ -27,6 +27,7 @@ namespace MessagePack.Resolvers
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
+
             Instance.formatters = formatters;
         }
 
@@ -36,6 +37,7 @@ namespace MessagePack.Resolvers
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
+
             Instance.resolvers = resolvers;
         }
 
@@ -45,6 +47,7 @@ namespace MessagePack.Resolvers
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
+
             Instance.formatters = formatters;
             Instance.resolvers = resolvers;
         }
@@ -54,7 +57,7 @@ namespace MessagePack.Resolvers
             return Cache<T>.Formatter;
         }
 
-        static class Cache<T>
+        private static class Cache<T>
         {
             public static readonly IMessagePackFormatter<T> Formatter;
 
