@@ -1106,6 +1106,11 @@ namespace MessagePack
             }
             else
             {
+                if (this.writer.SequenceRental.Value == null)
+                {
+                    throw new NotSupportedException("This instance was not initialized to support this operation.");
+                }
+
                 this.Flush();
                 byte[] result = this.writer.SequenceRental.Value.AsReadOnlySequence.ToArray();
                 this.writer.SequenceRental.Dispose();
