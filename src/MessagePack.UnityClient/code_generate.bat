@@ -1,0 +1,1 @@
+dotnet run -p "..\MessagePack.Generator\MessagePack.Generator.csproj" -- -i "Tests.csproj" -o "Assets\Scripts\Tests\Generated\GeneratedResolver.cs" -c "UNITY_2018_3_OR_NEWER,NET_STANDARD_2_0,ENABLE_IL2CPP"
