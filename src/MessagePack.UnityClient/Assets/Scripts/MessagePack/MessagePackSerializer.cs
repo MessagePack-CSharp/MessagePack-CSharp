@@ -144,9 +144,8 @@ namespace MessagePack
         /// <returns>A task that completes with the result of the async serialization operation.</returns>
         public static async Task SerializeAsync<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            System.IO.Pipelines.PipeWriter writer = stream.UseStrictPipeWriter();
-            Serialize(writer, value, options);
-            await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+            Serialize(stream, value, options);
+            await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
