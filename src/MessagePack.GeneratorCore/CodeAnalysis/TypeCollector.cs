@@ -541,7 +541,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
                 foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>().Where(x => !x.IsOverride))
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == this.typeReferences.IgnoreAttribute || x.AttributeClass.Name  == this.typeReferences.IgnoreDataMemberAttribute.Name))
+                    if (item.GetAttributes().Any(x => x.AttributeClass == this.typeReferences.IgnoreAttribute || x.AttributeClass.Name == this.typeReferences.IgnoreDataMemberAttribute.Name))
                     {
                         continue;
                     }

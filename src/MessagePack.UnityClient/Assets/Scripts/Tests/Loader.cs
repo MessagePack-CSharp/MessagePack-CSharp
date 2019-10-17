@@ -1,5 +1,6 @@
 ﻿using MessagePack;
 using MessagePack.Formatters;
+using MessagePack.Resolvers;
 using SharedData;
 using System;
 using System.Collections.Generic;
@@ -15,21 +16,9 @@ namespace Assets.Scripts.Tests
         public static void Register()
         {
             // adhoc resolver registration to running test.
-            //#if ENABLE_IL2CPP
+#if ENABLE_IL2CPP
 
-            //var resolver = MessagePack.Resolvers.CompositeResolver.Create(new IMessagePackFormatter[]
-            //{
-            //    new GenericEnumFormatter<UShortEnum>(),
-            //    new GenericEnumFormatter<IntEnum>(),
-            //    new NullableFormatter<Vector2>(),
-            //    // new Genericli
-            //},
-            //new[]{
-            //    MessagePack.Resolvers.GeneratedResolver.Instance,
-            //    MessagePack.Resolvers.StandardResolver.Instance
-            //});
-
-            StaticCompositeResolver.Initialize(new IMessagePackFormatter[]{
+            StaticCompositeResolver.Register(new IMessagePackFormatter[]{
                 new ListFormatter<int>(),
                 new LinkedListFormatter<int>(),
                 new QueueFormatter<int>(),
@@ -116,69 +105,7 @@ namespace Assets.Scripts.Tests
 
             MessagePackSerializer.DefaultOptions = MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
-            //#endif
-        }
-    }
-
-    public class StaticCompositeResolver : IFormatterResolver
-    {
-        public static readonly StaticCompositeResolver Instance = new StaticCompositeResolver();
-
-        IReadOnlyList<IMessagePackFormatter> formatters;
-        IReadOnlyList<IFormatterResolver> resolvers;
-
-        StaticCompositeResolver()
-        {
-            formatters = Array.Empty<IMessagePackFormatter>();
-            resolvers = Array.Empty<IFormatterResolver>();
-        }
-
-        public static void Initialize(params IMessagePackFormatter[] formatters)
-        {
-            Instance.formatters = formatters;
-        }
-
-        public static void Initialize(params IFormatterResolver[] resolvers)
-        {
-            Instance.resolvers = resolvers;
-        }
-
-        public static void Initialize(IReadOnlyList<IMessagePackFormatter> formatters, IReadOnlyList<IFormatterResolver> resolvers)
-        {
-            Instance.formatters = formatters;
-            Instance.resolvers = resolvers;
-        }
-
-        public IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return Cache<T>.Formatter;
-        }
-
-        static class Cache<T>
-        {
-            public static readonly IMessagePackFormatter<T> Formatter;
-
-            static Cache()
-            {
-                foreach (var item in Instance.formatters)
-                {
-                    if (item is IMessagePackFormatter<T> f)
-                    {
-                        Formatter = f;
-                        return;
-                    }
-                }
-
-                foreach (var item in Instance.resolvers)
-                {
-                    var f = item.GetFormatter<T>();
-                    if (f != null)
-                    {
-                        Formatter = f;
-                        return;
-                    }
-                }
-            }
+#endif
         }
     }
 }
