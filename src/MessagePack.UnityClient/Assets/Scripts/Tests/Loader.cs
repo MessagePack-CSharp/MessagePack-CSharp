@@ -80,8 +80,33 @@ namespace Assets.Scripts.Tests
                 new LazyFormatter<int>(),
 
                 new KeyValuePairFormatter<int,string>(),
-                new NullableFormatter<KeyValuePair<int,string>>()
-            },
+                new NullableFormatter<KeyValuePair<int,string>>(),
+
+                new ArrayFormatter<FirstSimpleData>(),
+
+                new ValueTupleFormatter<int,int>(),
+                new ValueTupleFormatter<int,int,int>(),
+                new ValueTupleFormatter<int,int,int,int>(),
+                new ArrayFormatter<ValueTuple<int,int>>(),
+                new ArrayFormatter<ValueTuple<int,int,int>>(),
+                new ArrayFormatter<ValueTuple<int,int,int,int>>(),
+                new TwoDimensionalArrayFormatter<int>(),
+                new ThreeDimensionalArrayFormatter<int>(),
+                new FourDimensionalArrayFormatter<int>(),
+                new TwoDimensionalArrayFormatter<(int,int)>(),
+                new ThreeDimensionalArrayFormatter<(int,int,int)>(),
+                new FourDimensionalArrayFormatter<(int,int,int,int)>(),
+
+                NonGenericInterfaceListFormatter.Instance,
+                NonGenericInterfaceDictionaryFormatter.Instance,
+
+                new NullableFormatter<Vector2>(),
+
+                new ArrayFormatter<ComplexdUnion.A>(),
+                new ArrayFormatter<ComplexdUnion.A2>(),
+
+
+        },
             new IFormatterResolver[]{
                 MessagePack.Resolvers.GeneratedResolver.Instance,
                 MessagePack.Resolvers.StandardResolver.Instance

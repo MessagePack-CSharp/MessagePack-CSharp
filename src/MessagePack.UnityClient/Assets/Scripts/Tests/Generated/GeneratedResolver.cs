@@ -47,7 +47,7 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(84)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(88)
             {
                 { typeof(int[,]), 0 },
                 { typeof(global::GlobalMyEnum[,]), 1 },
@@ -57,82 +57,86 @@ namespace MessagePack.Resolvers
                 { typeof(global::QuestMessageBody[]), 5 },
                 { typeof(global::System.Collections.Generic.IDictionary<string, string>), 6 },
                 { typeof(global::System.Collections.Generic.IList<global::SimpleModel>), 7 },
-                { typeof(global::SharedData.ByteEnum), 8 },
-                { typeof(global::GlobalMyEnum), 9 },
-                { typeof(global::SharedData.IUnionChecker), 10 },
-                { typeof(global::SharedData.IUnionChecker2), 11 },
-                { typeof(global::SharedData.IIVersioningUnion), 12 },
-                { typeof(global::SharedData.RootUnionType), 13 },
-                { typeof(global::SharedData.IUnionSample), 14 },
-                { typeof(global::IMessageBody), 15 },
-                { typeof(global::MessagePack.Tests.DynamicObjectResolverOrderTest.AbstractBase), 16 },
-                { typeof(global::ComplexdUnion.A), 17 },
-                { typeof(global::ComplexdUnion.A2), 18 },
-                { typeof(global::ClassUnion.RootUnionType), 19 },
-                { typeof(global::SharedData.FirstSimpleData), 20 },
-                { typeof(global::SharedData.SimpleStringKeyData), 21 },
-                { typeof(global::SharedData.SimpleStructIntKeyData), 22 },
-                { typeof(global::SharedData.SimpleStructStringKeyData), 23 },
-                { typeof(global::SharedData.SimpleIntKeyData), 24 },
-                { typeof(global::SharedData.Vector2), 25 },
-                { typeof(global::SharedData.EmptyClass), 26 },
-                { typeof(global::SharedData.EmptyStruct), 27 },
-                { typeof(global::SharedData.Version1), 28 },
-                { typeof(global::SharedData.Version2), 29 },
-                { typeof(global::SharedData.Version0), 30 },
-                { typeof(global::SharedData.HolderV1), 31 },
-                { typeof(global::SharedData.HolderV2), 32 },
-                { typeof(global::SharedData.HolderV0), 33 },
-                { typeof(global::SharedData.Callback1), 34 },
-                { typeof(global::SharedData.Callback1_2), 35 },
-                { typeof(global::SharedData.Callback2), 36 },
-                { typeof(global::SharedData.Callback2_2), 37 },
-                { typeof(global::SharedData.SubUnionType1), 38 },
-                { typeof(global::SharedData.SubUnionType2), 39 },
-                { typeof(global::SharedData.MySubUnion1), 40 },
-                { typeof(global::SharedData.MySubUnion2), 41 },
-                { typeof(global::SharedData.MySubUnion3), 42 },
-                { typeof(global::SharedData.MySubUnion4), 43 },
-                { typeof(global::SharedData.VersioningUnion), 44 },
-                { typeof(global::SharedData.MyClass), 45 },
-                { typeof(global::SharedData.VersionBlockTest), 46 },
-                { typeof(global::SharedData.UnVersionBlockTest), 47 },
-                { typeof(global::SharedData.Empty1), 48 },
-                { typeof(global::SharedData.Empty2), 49 },
-                { typeof(global::SharedData.NonEmpty1), 50 },
-                { typeof(global::SharedData.NonEmpty2), 51 },
-                { typeof(global::SharedData.VectorLike2), 52 },
-                { typeof(global::SharedData.Vector3Like), 53 },
-                { typeof(global::SharedData.ArrayOptimizeClass), 54 },
-                { typeof(global::SharedData.NestParent.NestContract), 55 },
-                { typeof(global::SharedData.FooClass), 56 },
-                { typeof(global::SharedData.BarClass), 57 },
-                { typeof(global::SharedData.WithIndexer), 58 },
-                { typeof(global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga), 59 },
-                { typeof(global::GlobalMan), 60 },
-                { typeof(global::Message), 61 },
-                { typeof(global::TextMessageBody), 62 },
-                { typeof(global::StampMessageBody), 63 },
-                { typeof(global::QuestMessageBody), 64 },
-                { typeof(global::ArrayTestTest), 65 },
-                { typeof(global::SimpleModel), 66 },
-                { typeof(global::ComplexModel), 67 },
-                { typeof(global::PerfBenchmarkDotNet.StringKeySerializerTarget), 68 },
-                { typeof(global::MessagePack.Tests.DynamicObjectResolverConstructorTest.TestConstructor1), 69 },
-                { typeof(global::MessagePack.Tests.DynamicObjectResolverConstructorTest.TestConstructor2), 70 },
-                { typeof(global::MessagePack.Tests.DynamicObjectResolverConstructorTest.TestConstructor3), 71 },
-                { typeof(global::MessagePack.Tests.DynamicObjectResolverOrderTest.OrderOrder), 72 },
-                { typeof(global::MessagePack.Tests.IgnoreTest.ViewModel), 73 },
-                { typeof(global::MessagePack.Tests.MessagePackFormatterPerFieldTest.MyClass), 74 },
-                { typeof(global::MessagePack.Tests.MessagePackFormatterPerFieldTest.MyStruct), 75 },
-                { typeof(global::MessagePack.Tests.NewGuidFormatterTest.InClass), 76 },
-                { typeof(global::MessagePack.Tests.PrimitivelikeFormatterTest.MyDateTimeResolverTest), 77 },
-                { typeof(global::ComplexdUnion.B), 78 },
-                { typeof(global::ComplexdUnion.C), 79 },
-                { typeof(global::ComplexdUnion.B2), 80 },
-                { typeof(global::ComplexdUnion.C2), 81 },
-                { typeof(global::ClassUnion.SubUnionType1), 82 },
-                { typeof(global::ClassUnion.SubUnionType2), 83 },
+                { typeof(global::ComplexdUnion.A[]), 8 },
+                { typeof(global::ComplexdUnion.A2[]), 9 },
+                { typeof(global::SharedData.ByteEnum), 10 },
+                { typeof(global::GlobalMyEnum), 11 },
+                { typeof(global::SharedData.IUnionChecker), 12 },
+                { typeof(global::SharedData.IUnionChecker2), 13 },
+                { typeof(global::SharedData.IIVersioningUnion), 14 },
+                { typeof(global::SharedData.RootUnionType), 15 },
+                { typeof(global::SharedData.IUnionSample), 16 },
+                { typeof(global::IMessageBody), 17 },
+                { typeof(global::MessagePack.Tests.DynamicObjectResolverOrderTest.AbstractBase), 18 },
+                { typeof(global::ComplexdUnion.A), 19 },
+                { typeof(global::ComplexdUnion.A2), 20 },
+                { typeof(global::ClassUnion.RootUnionType), 21 },
+                { typeof(global::SharedData.FirstSimpleData), 22 },
+                { typeof(global::SharedData.SimpleStringKeyData), 23 },
+                { typeof(global::SharedData.SimpleStructIntKeyData), 24 },
+                { typeof(global::SharedData.SimpleStructStringKeyData), 25 },
+                { typeof(global::SharedData.SimpleIntKeyData), 26 },
+                { typeof(global::SharedData.Vector2), 27 },
+                { typeof(global::SharedData.EmptyClass), 28 },
+                { typeof(global::SharedData.EmptyStruct), 29 },
+                { typeof(global::SharedData.Version1), 30 },
+                { typeof(global::SharedData.Version2), 31 },
+                { typeof(global::SharedData.Version0), 32 },
+                { typeof(global::SharedData.HolderV1), 33 },
+                { typeof(global::SharedData.HolderV2), 34 },
+                { typeof(global::SharedData.HolderV0), 35 },
+                { typeof(global::SharedData.Callback1), 36 },
+                { typeof(global::SharedData.Callback1_2), 37 },
+                { typeof(global::SharedData.Callback2), 38 },
+                { typeof(global::SharedData.Callback2_2), 39 },
+                { typeof(global::SharedData.SubUnionType1), 40 },
+                { typeof(global::SharedData.SubUnionType2), 41 },
+                { typeof(global::SharedData.MySubUnion1), 42 },
+                { typeof(global::SharedData.MySubUnion2), 43 },
+                { typeof(global::SharedData.MySubUnion3), 44 },
+                { typeof(global::SharedData.MySubUnion4), 45 },
+                { typeof(global::SharedData.VersioningUnion), 46 },
+                { typeof(global::SharedData.MyClass), 47 },
+                { typeof(global::SharedData.VersionBlockTest), 48 },
+                { typeof(global::SharedData.UnVersionBlockTest), 49 },
+                { typeof(global::SharedData.Empty1), 50 },
+                { typeof(global::SharedData.Empty2), 51 },
+                { typeof(global::SharedData.NonEmpty1), 52 },
+                { typeof(global::SharedData.NonEmpty2), 53 },
+                { typeof(global::SharedData.VectorLike2), 54 },
+                { typeof(global::SharedData.Vector3Like), 55 },
+                { typeof(global::SharedData.ArrayOptimizeClass), 56 },
+                { typeof(global::SharedData.NestParent.NestContract), 57 },
+                { typeof(global::SharedData.FooClass), 58 },
+                { typeof(global::SharedData.BarClass), 59 },
+                { typeof(global::SharedData.WithIndexer), 60 },
+                { typeof(global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga), 61 },
+                { typeof(global::GlobalMan), 62 },
+                { typeof(global::Message), 63 },
+                { typeof(global::TextMessageBody), 64 },
+                { typeof(global::StampMessageBody), 65 },
+                { typeof(global::QuestMessageBody), 66 },
+                { typeof(global::ArrayTestTest), 67 },
+                { typeof(global::SimpleModel), 68 },
+                { typeof(global::ComplexModel), 69 },
+                { typeof(global::PerfBenchmarkDotNet.StringKeySerializerTarget), 70 },
+                { typeof(global::MessagePack.Tests.DynamicObjectResolverConstructorTest.TestConstructor1), 71 },
+                { typeof(global::MessagePack.Tests.DynamicObjectResolverConstructorTest.TestConstructor2), 72 },
+                { typeof(global::MessagePack.Tests.DynamicObjectResolverConstructorTest.TestConstructor3), 73 },
+                { typeof(global::MessagePack.Tests.DynamicObjectResolverOrderTest.OrderOrder), 74 },
+                { typeof(global::MessagePack.Tests.IgnoreTest.ViewModel), 75 },
+                { typeof(global::MessagePack.Tests.MessagePackFormatterPerFieldTest.MyClass), 76 },
+                { typeof(global::MessagePack.Tests.MessagePackFormatterPerFieldTest.MyStruct), 77 },
+                { typeof(global::MessagePack.Tests.NewGuidFormatterTest.InClass), 78 },
+                { typeof(global::MessagePack.Tests.Foo), 79 },
+                { typeof(global::MessagePack.Tests.PrimitivelikeFormatterTest.MyDateTimeResolverTest), 80 },
+                { typeof(global::ComplexdUnion.DummyForGenerate), 81 },
+                { typeof(global::ComplexdUnion.B), 82 },
+                { typeof(global::ComplexdUnion.C), 83 },
+                { typeof(global::ComplexdUnion.B2), 84 },
+                { typeof(global::ComplexdUnion.C2), 85 },
+                { typeof(global::ClassUnion.SubUnionType1), 86 },
+                { typeof(global::ClassUnion.SubUnionType2), 87 },
             };
         }
 
@@ -154,82 +158,86 @@ namespace MessagePack.Resolvers
                 case 5: return new global::MessagePack.Formatters.ArrayFormatter<global::QuestMessageBody>();
                 case 6: return new global::MessagePack.Formatters.InterfaceDictionaryFormatter<string, string>();
                 case 7: return new global::MessagePack.Formatters.InterfaceListFormatter<global::SimpleModel>();
-                case 8: return new MessagePack.Formatters.SharedData.ByteEnumFormatter();
-                case 9: return new MessagePack.Formatters.GlobalMyEnumFormatter();
-                case 10: return new MessagePack.Formatters.SharedData.IUnionCheckerFormatter();
-                case 11: return new MessagePack.Formatters.SharedData.IUnionChecker2Formatter();
-                case 12: return new MessagePack.Formatters.SharedData.IIVersioningUnionFormatter();
-                case 13: return new MessagePack.Formatters.SharedData.RootUnionTypeFormatter();
-                case 14: return new MessagePack.Formatters.SharedData.IUnionSampleFormatter();
-                case 15: return new MessagePack.Formatters.IMessageBodyFormatter();
-                case 16: return new MessagePack.Formatters.MessagePack.Tests.AbstractBaseFormatter();
-                case 17: return new MessagePack.Formatters.ComplexdUnion.AFormatter();
-                case 18: return new MessagePack.Formatters.ComplexdUnion.A2Formatter();
-                case 19: return new MessagePack.Formatters.ClassUnion.RootUnionTypeFormatter();
-                case 20: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
-                case 21: return new MessagePack.Formatters.SharedData.SimpleStringKeyDataFormatter();
-                case 22: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
-                case 23: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
-                case 24: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
-                case 25: return new MessagePack.Formatters.SharedData.Vector2Formatter();
-                case 26: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
-                case 27: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
-                case 28: return new MessagePack.Formatters.SharedData.Version1Formatter();
-                case 29: return new MessagePack.Formatters.SharedData.Version2Formatter();
-                case 30: return new MessagePack.Formatters.SharedData.Version0Formatter();
-                case 31: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
-                case 32: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
-                case 33: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
-                case 34: return new MessagePack.Formatters.SharedData.Callback1Formatter();
-                case 35: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
-                case 36: return new MessagePack.Formatters.SharedData.Callback2Formatter();
-                case 37: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
-                case 38: return new MessagePack.Formatters.SharedData.SubUnionType1Formatter();
-                case 39: return new MessagePack.Formatters.SharedData.SubUnionType2Formatter();
-                case 40: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
-                case 41: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
-                case 42: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
-                case 43: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
-                case 44: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
-                case 45: return new MessagePack.Formatters.SharedData.MyClassFormatter();
-                case 46: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
-                case 47: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
-                case 48: return new MessagePack.Formatters.SharedData.Empty1Formatter();
-                case 49: return new MessagePack.Formatters.SharedData.Empty2Formatter();
-                case 50: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
-                case 51: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
-                case 52: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
-                case 53: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
-                case 54: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
-                case 55: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
-                case 56: return new MessagePack.Formatters.SharedData.FooClassFormatter();
-                case 57: return new MessagePack.Formatters.SharedData.BarClassFormatter();
-                case 58: return new MessagePack.Formatters.SharedData.WithIndexerFormatter();
-                case 59: return new MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqagaFormatter();
-                case 60: return new MessagePack.Formatters.GlobalManFormatter();
-                case 61: return new MessagePack.Formatters.MessageFormatter();
-                case 62: return new MessagePack.Formatters.TextMessageBodyFormatter();
-                case 63: return new MessagePack.Formatters.StampMessageBodyFormatter();
-                case 64: return new MessagePack.Formatters.QuestMessageBodyFormatter();
-                case 65: return new MessagePack.Formatters.ArrayTestTestFormatter();
-                case 66: return new MessagePack.Formatters.SimpleModelFormatter();
-                case 67: return new MessagePack.Formatters.ComplexModelFormatter();
-                case 68: return new MessagePack.Formatters.PerfBenchmarkDotNet.StringKeySerializerTargetFormatter();
-                case 69: return new MessagePack.Formatters.MessagePack.Tests.DynamicObjectResolverConstructorTest_TestConstructor1Formatter();
-                case 70: return new MessagePack.Formatters.MessagePack.Tests.DynamicObjectResolverConstructorTest_TestConstructor2Formatter();
-                case 71: return new MessagePack.Formatters.MessagePack.Tests.DynamicObjectResolverConstructorTest_TestConstructor3Formatter();
-                case 72: return new MessagePack.Formatters.MessagePack.Tests.DynamicObjectResolverOrderTest_OrderOrderFormatter();
-                case 73: return new MessagePack.Formatters.MessagePack.Tests.IgnoreTest_ViewModelFormatter();
-                case 74: return new MessagePack.Formatters.MessagePack.Tests.MessagePackFormatterPerFieldTest_MyClassFormatter();
-                case 75: return new MessagePack.Formatters.MessagePack.Tests.MessagePackFormatterPerFieldTest_MyStructFormatter();
-                case 76: return new MessagePack.Formatters.MessagePack.Tests.NewGuidFormatterTest_InClassFormatter();
-                case 77: return new MessagePack.Formatters.MessagePack.Tests.PrimitivelikeFormatterTest_MyDateTimeResolverTestFormatter();
-                case 78: return new MessagePack.Formatters.ComplexdUnion.BFormatter();
-                case 79: return new MessagePack.Formatters.ComplexdUnion.CFormatter();
-                case 80: return new MessagePack.Formatters.ComplexdUnion.B2Formatter();
-                case 81: return new MessagePack.Formatters.ComplexdUnion.C2Formatter();
-                case 82: return new MessagePack.Formatters.ClassUnion.SubUnionType1Formatter();
-                case 83: return new MessagePack.Formatters.ClassUnion.SubUnionType2Formatter();
+                case 8: return new global::MessagePack.Formatters.ArrayFormatter<global::ComplexdUnion.A>();
+                case 9: return new global::MessagePack.Formatters.ArrayFormatter<global::ComplexdUnion.A2>();
+                case 10: return new MessagePack.Formatters.SharedData.ByteEnumFormatter();
+                case 11: return new MessagePack.Formatters.GlobalMyEnumFormatter();
+                case 12: return new MessagePack.Formatters.SharedData.IUnionCheckerFormatter();
+                case 13: return new MessagePack.Formatters.SharedData.IUnionChecker2Formatter();
+                case 14: return new MessagePack.Formatters.SharedData.IIVersioningUnionFormatter();
+                case 15: return new MessagePack.Formatters.SharedData.RootUnionTypeFormatter();
+                case 16: return new MessagePack.Formatters.SharedData.IUnionSampleFormatter();
+                case 17: return new MessagePack.Formatters.IMessageBodyFormatter();
+                case 18: return new MessagePack.Formatters.MessagePack.Tests.AbstractBaseFormatter();
+                case 19: return new MessagePack.Formatters.ComplexdUnion.AFormatter();
+                case 20: return new MessagePack.Formatters.ComplexdUnion.A2Formatter();
+                case 21: return new MessagePack.Formatters.ClassUnion.RootUnionTypeFormatter();
+                case 22: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
+                case 23: return new MessagePack.Formatters.SharedData.SimpleStringKeyDataFormatter();
+                case 24: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
+                case 25: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
+                case 26: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
+                case 27: return new MessagePack.Formatters.SharedData.Vector2Formatter();
+                case 28: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
+                case 29: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
+                case 30: return new MessagePack.Formatters.SharedData.Version1Formatter();
+                case 31: return new MessagePack.Formatters.SharedData.Version2Formatter();
+                case 32: return new MessagePack.Formatters.SharedData.Version0Formatter();
+                case 33: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
+                case 34: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
+                case 35: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
+                case 36: return new MessagePack.Formatters.SharedData.Callback1Formatter();
+                case 37: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
+                case 38: return new MessagePack.Formatters.SharedData.Callback2Formatter();
+                case 39: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
+                case 40: return new MessagePack.Formatters.SharedData.SubUnionType1Formatter();
+                case 41: return new MessagePack.Formatters.SharedData.SubUnionType2Formatter();
+                case 42: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
+                case 43: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
+                case 44: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
+                case 45: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
+                case 46: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
+                case 47: return new MessagePack.Formatters.SharedData.MyClassFormatter();
+                case 48: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
+                case 49: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
+                case 50: return new MessagePack.Formatters.SharedData.Empty1Formatter();
+                case 51: return new MessagePack.Formatters.SharedData.Empty2Formatter();
+                case 52: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
+                case 53: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
+                case 54: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
+                case 55: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
+                case 56: return new MessagePack.Formatters.SharedData.ArrayOptimizeClassFormatter();
+                case 57: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
+                case 58: return new MessagePack.Formatters.SharedData.FooClassFormatter();
+                case 59: return new MessagePack.Formatters.SharedData.BarClassFormatter();
+                case 60: return new MessagePack.Formatters.SharedData.WithIndexerFormatter();
+                case 61: return new MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqagaFormatter();
+                case 62: return new MessagePack.Formatters.GlobalManFormatter();
+                case 63: return new MessagePack.Formatters.MessageFormatter();
+                case 64: return new MessagePack.Formatters.TextMessageBodyFormatter();
+                case 65: return new MessagePack.Formatters.StampMessageBodyFormatter();
+                case 66: return new MessagePack.Formatters.QuestMessageBodyFormatter();
+                case 67: return new MessagePack.Formatters.ArrayTestTestFormatter();
+                case 68: return new MessagePack.Formatters.SimpleModelFormatter();
+                case 69: return new MessagePack.Formatters.ComplexModelFormatter();
+                case 70: return new MessagePack.Formatters.PerfBenchmarkDotNet.StringKeySerializerTargetFormatter();
+                case 71: return new MessagePack.Formatters.MessagePack.Tests.DynamicObjectResolverConstructorTest_TestConstructor1Formatter();
+                case 72: return new MessagePack.Formatters.MessagePack.Tests.DynamicObjectResolverConstructorTest_TestConstructor2Formatter();
+                case 73: return new MessagePack.Formatters.MessagePack.Tests.DynamicObjectResolverConstructorTest_TestConstructor3Formatter();
+                case 74: return new MessagePack.Formatters.MessagePack.Tests.DynamicObjectResolverOrderTest_OrderOrderFormatter();
+                case 75: return new MessagePack.Formatters.MessagePack.Tests.IgnoreTest_ViewModelFormatter();
+                case 76: return new MessagePack.Formatters.MessagePack.Tests.MessagePackFormatterPerFieldTest_MyClassFormatter();
+                case 77: return new MessagePack.Formatters.MessagePack.Tests.MessagePackFormatterPerFieldTest_MyStructFormatter();
+                case 78: return new MessagePack.Formatters.MessagePack.Tests.NewGuidFormatterTest_InClassFormatter();
+                case 79: return new MessagePack.Formatters.MessagePack.Tests.FooFormatter();
+                case 80: return new MessagePack.Formatters.MessagePack.Tests.PrimitivelikeFormatterTest_MyDateTimeResolverTestFormatter();
+                case 81: return new MessagePack.Formatters.ComplexdUnion.DummyForGenerateFormatter();
+                case 82: return new MessagePack.Formatters.ComplexdUnion.BFormatter();
+                case 83: return new MessagePack.Formatters.ComplexdUnion.CFormatter();
+                case 84: return new MessagePack.Formatters.ComplexdUnion.B2Formatter();
+                case 85: return new MessagePack.Formatters.ComplexdUnion.C2Formatter();
+                case 86: return new MessagePack.Formatters.ClassUnion.SubUnionType1Formatter();
+                case 87: return new MessagePack.Formatters.ClassUnion.SubUnionType2Formatter();
                 default: return null;
             }
         }
@@ -5123,6 +5131,87 @@ namespace MessagePack.Formatters.MessagePack.Tests
         }
     }
 
+    public sealed class FooFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MessagePack.Tests.Foo>
+    {
+
+
+        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
+        private readonly byte[][] ____stringByteKeys;
+
+        public FooFormatter()
+        {
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
+            {
+                { "Id", 0 },
+                { "Value", 1 },
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("Id"),
+                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("Value"),
+            };
+        }
+
+        public void Serialize(ref MessagePackWriter writer, global::MessagePack.Tests.Foo value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(this.____stringByteKeys[0]);
+            writer.Write(value.Id);
+            writer.WriteRaw(this.____stringByteKeys[1]);
+            formatterResolver.GetFormatterWithVerify<byte[]>().Serialize(ref writer, value.Value, options);
+        }
+
+        public global::MessagePack.Tests.Foo Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __Id__ = default(int);
+            var __Value__ = default(byte[]);
+
+            for (int i = 0; i < length; i++)
+            {
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                int key;
+                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                {
+                    reader.Skip();
+                    continue;
+                }
+
+                switch (key)
+                {
+                    case 0:
+                        __Id__ = reader.ReadInt32();
+                        break;
+                    case 1:
+                        __Value__ = formatterResolver.GetFormatterWithVerify<byte[]>().Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::MessagePack.Tests.Foo();
+            ____result.Id = __Id__;
+            ____result.Value = __Value__;
+            return ____result;
+        }
+    }
+
     public sealed class PrimitivelikeFormatterTest_MyDateTimeResolverTestFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MessagePack.Tests.PrimitivelikeFormatterTest.MyDateTimeResolverTest>
     {
 
@@ -5202,6 +5291,87 @@ namespace MessagePack.Formatters.ComplexdUnion
     using System;
     using System.Buffers;
     using MessagePack;
+
+    public sealed class DummyForGenerateFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ComplexdUnion.DummyForGenerate>
+    {
+
+
+        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
+        private readonly byte[][] ____stringByteKeys;
+
+        public DummyForGenerateFormatter()
+        {
+            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
+            {
+                { "MyProperty1", 0 },
+                { "MyProperty2", 1 },
+            };
+
+            this.____stringByteKeys = new byte[][]
+            {
+                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("MyProperty1"),
+                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("MyProperty2"),
+            };
+        }
+
+        public void Serialize(ref MessagePackWriter writer, global::ComplexdUnion.DummyForGenerate value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(this.____stringByteKeys[0]);
+            formatterResolver.GetFormatterWithVerify<global::ComplexdUnion.A[]>().Serialize(ref writer, value.MyProperty1, options);
+            writer.WriteRaw(this.____stringByteKeys[1]);
+            formatterResolver.GetFormatterWithVerify<global::ComplexdUnion.A2[]>().Serialize(ref writer, value.MyProperty2, options);
+        }
+
+        public global::ComplexdUnion.DummyForGenerate Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __MyProperty1__ = default(global::ComplexdUnion.A[]);
+            var __MyProperty2__ = default(global::ComplexdUnion.A2[]);
+
+            for (int i = 0; i < length; i++)
+            {
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                int key;
+                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                {
+                    reader.Skip();
+                    continue;
+                }
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<global::ComplexdUnion.A[]>().Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<global::ComplexdUnion.A2[]>().Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::ComplexdUnion.DummyForGenerate();
+            ____result.MyProperty1 = __MyProperty1__;
+            ____result.MyProperty2 = __MyProperty2__;
+            return ____result;
+        }
+    }
 
     public sealed class BFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ComplexdUnion.B>
     {

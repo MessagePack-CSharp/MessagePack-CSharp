@@ -30,6 +30,18 @@ namespace MessagePack.Tests
             Assert.Equal(value, result);
         }
 
+        public void IL2CPPHint()
+        {
+            CompressibleIntegersRetainTypeInfo<sbyte>(default);
+            CompressibleIntegersRetainTypeInfo<byte>(default);
+            CompressibleIntegersRetainTypeInfo<short>(default);
+            CompressibleIntegersRetainTypeInfo<ushort>(default);
+            CompressibleIntegersRetainTypeInfo<int>(default);
+            CompressibleIntegersRetainTypeInfo<uint>(default);
+            CompressibleIntegersRetainTypeInfo<long>(default);
+            CompressibleIntegersRetainTypeInfo<ulong>(default);
+        }
+
         [Fact]
         public void EnumRetainsUnderlyingType()
         {

@@ -49,6 +49,8 @@ namespace MessagePack.Tests
             Assert.Null(deserializedBytes);
         }
 
+#if !ENABLE_IL2CPP
+
         [Theory]
         [InlineData(10)] // fixstr
         [InlineData(1000)] // str 16
@@ -67,6 +69,8 @@ namespace MessagePack.Tests
             Assert.Equal(foo.Id, deserializedFoo.Id);
             Assert.Equal(foo.Value, deserializedFoo.Value);
         }
+
+#endif
 
         [Theory]
         [InlineData(10)] // fixstr
@@ -91,6 +95,8 @@ namespace MessagePack.Tests
             Assert.Null(deserializedObj);
         }
 
+#if !ENABLE_IL2CPP
+
         [Theory]
         [InlineData(10)] // fixstr
         [InlineData(1000)] // str 16
@@ -109,6 +115,8 @@ namespace MessagePack.Tests
             Assert.Equal(foo.Id, deserializedFoo.Id);
             Assert.Equal(foo.Value, deserializedFoo.Value);
         }
+
+#endif
 
         private static byte[] SerializeByClassicMsgPack<T>(T obj, MsgPack.Serialization.SerializationMethod method)
         {
@@ -140,15 +148,12 @@ namespace MessagePack.Tests
                 return messagePackSerializer.Unpack(memory);
             }
         }
+    }
 
-        [DataContract]
-        public class Foo
-        {
-            [DataMember(Name = "Id")]
-            public int Id { get; set; }
-
-            [DataMember(Name = "Value")]
-            public byte[] Value { get; set; }
-        }
+    [MessagePackObject(true)]
+    public class Foo
+    {
+        public int Id { get; set; }
+        public byte[] Value { get; set; }
     }
 }

@@ -16,6 +16,8 @@ namespace MessagePack.Tests
 {
     public class MessagePackSerializerTest
     {
+#if !ENABLE_IL2CPP
+
         [Fact]
         public void NonGeneric()
         {
@@ -47,6 +49,8 @@ namespace MessagePack.Tests
             new[] { data1.Prop3, data2.Prop3, data3.Prop3, data4.Prop3, data5.Prop3 }.Distinct().Is(data.Prop3);
         }
 
+#endif
+
 #if !UNITY_2018_3_OR_NEWER
 
         /* Unity's NUnit currently no supported Task test. */
@@ -73,20 +77,20 @@ namespace MessagePack.Tests
             FirstSimpleData[] originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
 
             var ms = new MemoryStream();
-            MessagePackSerializer.Serialize(typeof(FirstSimpleData[]), ms, originalData);
+            MessagePackSerializer.Serialize(ms, originalData); // serialize to stream
 
-            var normal = MessagePackSerializer.Serialize(typeof(FirstSimpleData[]), originalData);
+            var normal = MessagePackSerializer.Serialize(originalData);
 
             ms.Position = 0;
 
             normal.SequenceEqual(ms.ToArray()).IsTrue();
 
-            var decompress1 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), ms.ToArray());
-            var decompress2 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), normal);
-            var decompress3 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), ms);
+            var decompress1 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(ms.ToArray());
+            var decompress2 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(normal);
+            var decompress3 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(ms);
             ms.Position = 0;
             var onmore = new NonMemoryStream(ms);
-            var decompress4 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), onmore);
+            var decompress4 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(onmore);
 
             decompress1.IsStructuralEqual(originalData);
             decompress2.IsStructuralEqual(originalData);

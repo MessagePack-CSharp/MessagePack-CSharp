@@ -252,6 +252,8 @@ namespace MessagePack.Tests
             }
         }
 
+#if !ENABLE_IL2CPP
+
         [Fact]
         public void GenericClassTest()
         {
@@ -269,6 +271,8 @@ namespace MessagePack.Tests
             v.MyProperty0.Is(100);
             v.MyProperty1.Is("aaa");
         }
+
+#endif
 
         [Fact]
         public void Versioning3()
@@ -297,6 +301,34 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void NestedClass()
+        {
+            {
+                var data = new NestParent.NestContract() { MyProperty = 1000 };
+                var bin = MessagePackSerializer.Serialize(data);
+                NestParent.NestContract re = MessagePackSerializer.Deserialize<NestParent.NestContract>(bin);
+
+                re.MyProperty.Is(1000);
+            }
+        }
+
+        [Fact]
+        public void WithIndexer()
+        {
+            var o = new WithIndexer
+            {
+                Data1 = 15,
+                Data2 = "15",
+            };
+            var bin = MessagePackSerializer.Serialize(o);
+            WithIndexer v = MessagePackSerializer.Deserialize<WithIndexer>(bin);
+
+            v.IsStructuralEqual(o);
+        }
+
+#if !ENABLE_IL2CPP
+
+        [Fact]
         public void Contractless()
         {
             var data = new ContractlessConstructorCheck(10, "hogehoge");
@@ -319,18 +351,6 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void NestedClass()
-        {
-            {
-                var data = new NestParent.NestContract() { MyProperty = 1000 };
-                var bin = MessagePackSerializer.Serialize(data);
-                NestParent.NestContract re = MessagePackSerializer.Deserialize<NestParent.NestContract>(bin);
-
-                re.MyProperty.Is(1000);
-            }
-        }
-
-        [Fact]
         public void NestedClassContractless()
         {
             {
@@ -340,20 +360,6 @@ namespace MessagePack.Tests
 
                 re.MyProperty.Is(1000);
             }
-        }
-
-        [Fact]
-        public void WithIndexer()
-        {
-            var o = new WithIndexer
-            {
-                Data1 = 15,
-                Data2 = "15",
-            };
-            var bin = MessagePackSerializer.Serialize(o);
-            WithIndexer v = MessagePackSerializer.Deserialize<WithIndexer>(bin);
-
-            v.IsStructuralEqual(o);
         }
 
         [Fact]
@@ -369,5 +375,8 @@ namespace MessagePack.Tests
 
             v.IsStructuralEqual(o);
         }
+
+#endif
+
     }
 }

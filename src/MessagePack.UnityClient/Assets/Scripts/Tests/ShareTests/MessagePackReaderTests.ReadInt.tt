@@ -126,7 +126,9 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).Read<#=t1.Name#>());
+#endif
                 }
             }
         }
