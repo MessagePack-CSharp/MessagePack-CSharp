@@ -15,6 +15,7 @@ namespace MessagePack
     /// <summary>
     /// High-Level API of MessagePack for C#.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Each overload has sufficiently unique required parameters.")]
     public static partial class MessagePackSerializer
     {
         public const sbyte LZ4ExtensionTypeCode = 99;
