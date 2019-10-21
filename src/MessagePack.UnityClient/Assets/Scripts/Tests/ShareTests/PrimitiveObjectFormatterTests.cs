@@ -30,6 +30,7 @@ namespace MessagePack.Tests
             Assert.Equal(value, result);
         }
 
+        [Fact]
         public void IL2CPPHint()
         {
             CompressibleIntegersRetainTypeInfo<sbyte>(default);

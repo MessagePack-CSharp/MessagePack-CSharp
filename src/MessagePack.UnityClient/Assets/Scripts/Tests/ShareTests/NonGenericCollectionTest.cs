@@ -13,7 +13,6 @@ namespace MessagePack.Tests
 {
     public class NonGenericCollectionTest
     {
-
 #if !ENABLE_IL2CPP
         [Fact]
         public void List()

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Threading;
 using MessagePackCompiler;
 using Microsoft.Build.Framework;
@@ -9,6 +12,7 @@ namespace MessagePack.MSBuild.Tasks
     {
         [Required]
         public string Input { get; set; }
+
         [Required]
         public string Output { get; set; }
 
@@ -34,8 +38,7 @@ namespace MessagePack.MSBuild.Tasks
                         ResolverName ?? "GeneratedResolver",
                         Namespace ?? "MessagePack",
                         UseMapMode,
-                        MultipleIfDirectiveOutputSymbols
-                    )
+                        MultipleIfDirectiveOutputSymbols)
                     .GetAwaiter().GetResult();
             }
             catch (Exception ex)
@@ -43,6 +46,7 @@ namespace MessagePack.MSBuild.Tasks
                 this.Log.LogErrorFromException(ex, true);
                 return false;
             }
+
             return true;
         }
     }

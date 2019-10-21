@@ -106,6 +106,7 @@ namespace MessagePackCompiler.CodeAnalysis
         public string Name { get; set; }
 
         public string ShortTypeName { get; set; }
+
         public string CustomFormatterTypeName { get; set; }
 
         private readonly HashSet<string> primitiveTypes = new HashSet<string>(new string[]

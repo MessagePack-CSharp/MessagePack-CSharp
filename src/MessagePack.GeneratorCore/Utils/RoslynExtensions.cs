@@ -1,13 +1,12 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePackCompiler
 {
@@ -51,7 +50,8 @@ namespace MessagePackCompiler
                 .FirstOrDefault();
         }
 
-        public static AttributeData FindAttributeShortName(this IEnumerable<AttributeData> attributeDataList,
+        public static AttributeData FindAttributeShortName(
+            this IEnumerable<AttributeData> attributeDataList,
             string typeName)
         {
             return attributeDataList
@@ -59,20 +59,28 @@ namespace MessagePackCompiler
                 .FirstOrDefault();
         }
 
-        public static AttributeData FindAttributeIncludeBasePropertyShortName(this IPropertySymbol property,
+        public static AttributeData FindAttributeIncludeBasePropertyShortName(
+            this IPropertySymbol property,
             string typeName)
         {
             do
             {
                 var data = FindAttributeShortName(property.GetAttributes(), typeName);
-                if (data != null) return data;
+                if (data != null)
+                {
+                    return data;
+                }
+
                 property = property.OverriddenProperty;
-            } while (property != null);
+            }
+            while (property != null);
 
             return null;
         }
 
-        public static AttributeSyntax FindAttribute(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel model,
+        public static AttributeSyntax FindAttribute(
+            this BaseTypeDeclarationSyntax typeDeclaration,
+            SemanticModel model,
             string typeName)
         {
             return typeDeclaration.AttributeLists
@@ -110,6 +118,7 @@ namespace MessagePackCompiler
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -122,6 +131,7 @@ namespace MessagePackCompiler
                 {
                     yield return item;
                 }
+
                 t = t.BaseType;
             }
         }

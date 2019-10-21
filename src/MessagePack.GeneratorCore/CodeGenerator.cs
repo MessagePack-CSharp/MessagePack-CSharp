@@ -1,8 +1,10 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,10 +15,10 @@ namespace MessagePackCompiler
 {
     public class CodeGenerator
     {
-        static readonly Encoding NoBomUtf8 = new UTF8Encoding(false);
+        private static readonly Encoding NoBomUtf8 = new UTF8Encoding(false);
 
-        Action<string> logger;
-        CancellationToken cancellationToken;
+        private Action<string> logger;
+        private CancellationToken cancellationToken;
 
         public CodeGenerator(Action<string> logger, CancellationToken cancellationToken)
         {
@@ -31,16 +33,15 @@ namespace MessagePackCompiler
            string resolverName,
            string @namespace,
            bool useMapMode,
-           string multipleIfDiretiveOutputSymbols
-           )
+           string multipleIfDiretiveOutputSymbols)
         {
-            var namespaceDot = string.IsNullOrWhiteSpace(@namespace) ? "" : @namespace + ".";
+            var namespaceDot = string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace + ".";
             var conditionalSymbols = conditionalSymbol?.Split(',') ?? Array.Empty<string>();
             var multipleOutputSymbols = multipleIfDiretiveOutputSymbols?.Split(',') ?? Array.Empty<string>();
 
             var sw = Stopwatch.StartNew();
 
-            foreach (var multioutSymbol in multipleOutputSymbols.Length == 0 ? new[] { "" } : multipleOutputSymbols)
+            foreach (var multioutSymbol in multipleOutputSymbols.Length == 0 ? new[] { string.Empty } : multipleOutputSymbols)
             {
                 logger("Project Compilation Start:" + input);
 
@@ -68,7 +69,7 @@ namespace MessagePackCompiler
                         .GroupBy(x => x.Namespace)
                         .Select(x => new FormatterTemplate()
                         {
-                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
+                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
                             ObjectSerializationInfos = x.ToArray(),
                         })
                         .ToArray();
@@ -77,8 +78,8 @@ namespace MessagePackCompiler
                         .GroupBy(x => x.Namespace)
                         .Select(x => new EnumTemplate()
                         {
-                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
-                            EnumSerializationInfos = x.ToArray()
+                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
+                            EnumSerializationInfos = x.ToArray(),
                         })
                         .ToArray();
 
@@ -86,8 +87,8 @@ namespace MessagePackCompiler
                         .GroupBy(x => x.Namespace)
                         .Select(x => new UnionTemplate()
                         {
-                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? "" : "." + x.Key),
-                            UnionSerializationInfos = x.ToArray()
+                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
+                            UnionSerializationInfos = x.ToArray(),
                         })
                         .ToArray();
 
@@ -96,7 +97,7 @@ namespace MessagePackCompiler
                         Namespace = namespaceDot + "Resolvers",
                         FormatterNamespace = namespaceDot + "Formatters",
                         ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray()
+                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray(),
                     };
 
                     var sb = new StringBuilder();
@@ -107,12 +108,14 @@ namespace MessagePackCompiler
                         var text = item.TransformText();
                         sb.AppendLine(text);
                     }
+
                     sb.AppendLine();
                     foreach (var item in unionFormatterTemplates)
                     {
                         var text = item.TransformText();
                         sb.AppendLine(text);
                     }
+
                     sb.AppendLine();
                     foreach (var item in objectFormatterTemplates)
                     {
@@ -120,7 +123,7 @@ namespace MessagePackCompiler
                         sb.AppendLine(text);
                     }
 
-                    if (multioutSymbol == "")
+                    if (multioutSymbol == string.Empty)
                     {
                         await OutputAsync(output, sb.ToString(), cancellationToken);
                     }
@@ -138,7 +141,7 @@ namespace MessagePackCompiler
                     {
                         var template = new FormatterTemplate()
                         {
-                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? "" : "." + x.Namespace),
+                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
                             ObjectSerializationInfos = new[] { x },
                         };
 
@@ -150,7 +153,7 @@ namespace MessagePackCompiler
                     {
                         var template = new EnumTemplate()
                         {
-                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? "" : "." + x.Namespace),
+                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
                             EnumSerializationInfos = new[] { x },
                         };
 
@@ -162,7 +165,7 @@ namespace MessagePackCompiler
                     {
                         var template = new UnionTemplate()
                         {
-                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? "" : "." + x.Namespace),
+                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
                             UnionSerializationInfos = new[] { x },
                         };
 
@@ -175,7 +178,7 @@ namespace MessagePackCompiler
                         Namespace = namespaceDot + "Resolvers",
                         FormatterNamespace = namespaceDot + "Formatters",
                         ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray()
+                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray(),
                     };
 
                     await OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken);
@@ -185,22 +188,22 @@ namespace MessagePackCompiler
             logger("Output Generation Complete:" + sw.Elapsed.ToString());
         }
 
-        Task OutputToDirAsync(string dir, string ns, string name, string multipleOutSymbol, string text, CancellationToken cancellationToken)
+        private Task OutputToDirAsync(string dir, string ns, string name, string multipleOutSymbol, string text, CancellationToken cancellationToken)
         {
-            if (multipleOutSymbol == "")
+            if (multipleOutSymbol == string.Empty)
             {
-                return OutputAsync(Path.Combine(dir, $"{ns}_{name}".Replace(".", "_").Replace("global::", "") + ".cs"), text, cancellationToken);
+                return OutputAsync(Path.Combine(dir, $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text, cancellationToken);
             }
             else
             {
                 text = $"#if {multipleOutSymbol}" + Environment.NewLine + text + Environment.NewLine + "#endif";
-                return OutputAsync(Path.Combine(dir, MultiSymbolToSafeFilePath(multipleOutSymbol), $"{ns}_{name}".Replace(".", "_").Replace("global::", "") + ".cs"), text, cancellationToken);
+                return OutputAsync(Path.Combine(dir, MultiSymbolToSafeFilePath(multipleOutSymbol), $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text, cancellationToken);
             }
         }
 
-        Task OutputAsync(string path, string text, CancellationToken cancellationToken)
+        private Task OutputAsync(string path, string text, CancellationToken cancellationToken)
         {
-            path = path.Replace("global::", "");
+            path = path.Replace("global::", string.Empty);
 
             const string prefix = "[Out]";
             logger(prefix + path);
@@ -215,10 +218,9 @@ namespace MessagePackCompiler
             return Task.CompletedTask;
         }
 
-        static string MultiSymbolToSafeFilePath(string symbol)
+        private static string MultiSymbolToSafeFilePath(string symbol)
         {
-            return symbol.Replace("!", "NOT_").Replace("(", "").Replace(")", "").Replace("||", "_OR_").Replace("&&", "_AND_");
+            return symbol.Replace("!", "NOT_").Replace("(", string.Empty).Replace(")", string.Empty).Replace("||", "_OR_").Replace("&&", "_AND_");
         }
-
     }
 }

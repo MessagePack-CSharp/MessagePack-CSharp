@@ -1,4 +1,4 @@
-﻿// Copyright (c) All conILtributors. All rights reserved.
+﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -50,6 +50,7 @@ namespace MessagePack.Tests
             MessagePackSerializer.Deserialize<double>(bin).Is(Convert.ToDouble(value));
         }
 
+        [Fact]
         public void IL2CPPTypeHint()
         {
             FloatTest<float>(default);

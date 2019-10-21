@@ -1,6 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +10,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePackCompiler
 {
@@ -55,6 +58,7 @@ namespace MessagePackCompiler
                     }
                 }
             }
+
             if (!hasAnnotations)
             {
                 syntaxTrees.Add(CSharpSyntaxTree.ParseText(DummyAnnotation, parseOption));
@@ -75,7 +79,7 @@ namespace MessagePackCompiler
             return compilation;
         }
 
-        static void CollectDocument(string csproj, List<string> source, List<string> metadataLocations)
+        private static void CollectDocument(string csproj, List<string> source, List<string> metadataLocations)
         {
             XDocument document;
             using (var sr = new StreamReader(csproj, true))
@@ -93,7 +97,6 @@ namespace MessagePackCompiler
             // <Project ToolsVersion=...>
             // New
             // <Project Sdk="Microsoft.NET.Sdk">
-
             var proj = document.Element("Project");
             var legacyFormat = proj.Attribute("Sdk")?.Value != "Microsoft.NET.Sdk";
 
@@ -104,6 +107,7 @@ namespace MessagePackCompiler
                 {
                     source.Add(file);
                 }
+
                 // TODO:resolve NuGet reference
                 // RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             }
@@ -179,6 +183,7 @@ namespace MessagePackCompiler
                     }
                 }
             }
+
             if (!hasAnnotations)
             {
                 syntaxTrees.Add(CSharpSyntaxTree.ParseText(DummyAnnotation, parseOption));
@@ -207,16 +212,21 @@ namespace MessagePackCompiler
             return compilation;
         }
 
-        static IEnumerable<string> IterateCsFileWithoutBinObj(string root)
+        private static IEnumerable<string> IterateCsFileWithoutBinObj(string root)
         {
             foreach (var item in Directory.EnumerateFiles(root, "*.cs", SearchOption.TopDirectoryOnly))
             {
                 yield return item;
             }
+
             foreach (var dir in Directory.GetDirectories(root, "*", SearchOption.TopDirectoryOnly))
             {
                 var dirName = new DirectoryInfo(dir).Name;
-                if (dirName == "bin" || dirName == "obj") continue;
+                if (dirName == "bin" || dirName == "obj")
+                {
+                    continue;
+                }
+
                 foreach (var item in IterateCsFileWithoutBinObj(dir))
                 {
                     yield return item;
@@ -224,7 +234,7 @@ namespace MessagePackCompiler
             }
         }
 
-        const string DummyAnnotation = @"
+        private const string DummyAnnotation = @"
 using System;
 
 namespace MessagePack

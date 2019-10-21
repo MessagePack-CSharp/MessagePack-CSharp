@@ -62,6 +62,7 @@ namespace MessagePack.Tests
             this.Convert(y).Is(y);
         }
 
+        [Fact]
         public void IL2CPPHint()
         {
             PrimitiveFormatterTest<Int16>(default, default);
@@ -108,6 +109,7 @@ namespace MessagePack.Tests
             this.Convert(y).Is(y);
         }
 
+        [Fact]
         public void IL2CPPHint2()
         {
             EnumFormatterTest<ByteEnum>(default, default);
@@ -164,6 +166,7 @@ namespace MessagePack.Tests
             where T : struct
             => this.Convert(value).Is(value);
 
+        [Fact]
         public void IL2CPPTypeHint()
         {
             StandardClassLibraryStructFormatterTest_Helper<decimal>(default);

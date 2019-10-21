@@ -56,6 +56,7 @@ namespace MessagePack.Tests
             MessagePackSerializer.Deserialize<IUnionChecker>(hoge).IsNull();
         }
 
+        [Fact(Skip = "Does not yet pass")]
         public void IL2CPPHint()
         {
             Hoge<MySubUnion1, MySubUnion1>(default, default);
@@ -124,6 +125,7 @@ namespace ComplexdUnion
     public class DummyForGenerate
     {
         public A[] MyProperty1 { get; set; }
+
         public A2[] MyProperty2 { get; set; }
     }
 
