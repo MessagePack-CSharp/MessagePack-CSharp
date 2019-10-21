@@ -227,16 +227,19 @@ namespace MessagePack
         /// <param name="source">The buffer to copy into this writer.</param>
         private void WriteMultiBuffer(ReadOnlySpan<byte> source)
         {
-            while (source.Length > 0)
+            int copiedBytes = 0;
+            int bytesLeftToCopy = source.Length;
+            while (bytesLeftToCopy > 0)
             {
                 if (_span.Length == 0)
                 {
                     EnsureMore();
                 }
 
-                var writable = Math.Min(source.Length, _span.Length);
-                source.Slice(0, writable).CopyTo(_span);
-                source = source.Slice(writable);
+                var writable = Math.Min(bytesLeftToCopy, _span.Length);
+                source.Slice(copiedBytes, writable).CopyTo(_span);
+                copiedBytes += writable;
+                bytesLeftToCopy -= writable;
                 Advance(writable);
             }
         }
