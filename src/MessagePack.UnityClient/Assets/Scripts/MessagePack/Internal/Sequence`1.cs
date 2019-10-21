@@ -1,5 +1,10 @@
-// Copyright (c) Andrew Arnott. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* Original license and copyright from file copied from https://github.com/AArnott/Nerdbank.Streams/blob/d656899be26d4d7c72c11c9232b4952c64a89bcb/src/Nerdbank.Streams/Sequence%601.cs
+ * Copyright (c) Andrew Arnott. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+*/
 
 using System;
 using System.Buffers;
@@ -12,7 +17,6 @@ using System.Runtime.InteropServices;
 
 namespace Nerdbank.Streams
 {
-
     /// <summary>
     /// Manages a sequence of elements, readily castable as a <see cref="ReadOnlySequence{T}"/>.
     /// </summary>
