@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
 
     <!-- NuGet Packages for build task. -->
     <NoPackageAnalysis>true</NoPackageAnalysis>
@@ -14,7 +13,6 @@
     <Title>MessagePack CodeGenerator Tasks</Title>
     <Description>MSBuild Tasks of MessagePack for C#.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
-    <AssemblyName>MessagePack.MSBuild.Tasks</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
