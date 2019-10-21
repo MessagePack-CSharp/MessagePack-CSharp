@@ -69,7 +69,7 @@ namespace MessagePack
             return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options);
         }
 
-        private static async ValueTask<object> DeserializeObjectAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken) => await DeserializeAsync<T>(stream, options, cancellationToken);
+        private static async ValueTask<object> DeserializeObjectAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken) => await DeserializeAsync<T>(stream, options, cancellationToken).ConfigureAwait(false);
 
         private static CompiledMethods GetOrAdd(Type type)
         {
