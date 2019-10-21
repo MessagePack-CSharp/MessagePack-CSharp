@@ -33,10 +33,10 @@ namespace MessagePack
             return GetOrAdd(type).Serialize_T_Options.Invoke(obj, options);
         }
 
-        /// <seealso cref="Serialize{T}(Stream, T, MessagePackSerializerOptions)"/>
-        public static void Serialize(Type type, Stream stream, object obj, MessagePackSerializerOptions options = null)
+        /// <seealso cref="Serialize{T}(Stream, T, MessagePackSerializerOptions, CancellationToken)"/>
+        public static void Serialize(Type type, Stream stream, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            GetOrAdd(type).Serialize_Stream_T_Options.Invoke(stream, obj, options);
+            GetOrAdd(type).Serialize_Stream_T_Options_CancellationToken.Invoke(stream, obj, options, cancellationToken);
         }
 
         /// <seealso cref="SerializeAsync{T}(Stream, T, MessagePackSerializerOptions, CancellationToken)"/>
@@ -51,10 +51,10 @@ namespace MessagePack
             return GetOrAdd(type).Deserialize_MessagePackReader_Options.Invoke(ref reader, options);
         }
 
-        /// <seealso cref="Deserialize{T}(Stream, MessagePackSerializerOptions)"/>
-        public static object Deserialize(Type type, Stream stream, MessagePackSerializerOptions options = null)
+        /// <seealso cref="Deserialize{T}(Stream, MessagePackSerializerOptions, CancellationToken)"/>
+        public static object Deserialize(Type type, Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            return GetOrAdd(type).Deserialize_Stream_Options.Invoke(stream, options);
+            return GetOrAdd(type).Deserialize_Stream_Options_CancellationToken.Invoke(stream, options, cancellationToken);
         }
 
         /// <seealso cref="DeserializeAsync{T}(Stream, MessagePackSerializerOptions, CancellationToken)"/>
@@ -86,12 +86,12 @@ namespace MessagePack
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
             internal readonly Func<object, MessagePackSerializerOptions, byte[]> Serialize_T_Options;
-            internal readonly Action<Stream, object, MessagePackSerializerOptions> Serialize_Stream_T_Options;
+            internal readonly Action<Stream, object, MessagePackSerializerOptions, CancellationToken> Serialize_Stream_T_Options_CancellationToken;
             internal readonly Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task> SerializeAsync_Stream_T_Options_CancellationToken;
             internal readonly MessagePackWriterSerialize Serialize_MessagePackWriter_T_Options;
 
             internal readonly MessagePackReaderDeserialize Deserialize_MessagePackReader_Options;
-            internal readonly Func<Stream, MessagePackSerializerOptions, object> Deserialize_Stream_Options;
+            internal readonly Func<Stream, MessagePackSerializerOptions, CancellationToken, object> Deserialize_Stream_Options_CancellationToken;
             internal readonly Func<Stream, MessagePackSerializerOptions, CancellationToken, ValueTask<object>> DeserializeAsync_Stream_Options_CancellationToken;
 
             internal readonly Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object> Deserialize_ReadOnlyMemory_Options;
@@ -120,22 +120,24 @@ namespace MessagePack
                 }
 
                 {
-                    // public static void Serialize<T>(Stream stream, T obj, MessagePackSerializerOptions options)
-                    MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type[] { typeof(Stream), null, typeof(MessagePackSerializerOptions) });
+                    // public static void Serialize<T>(Stream stream, T obj, MessagePackSerializerOptions options, CancellationToken cancellationToken)
+                    MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type[] { typeof(Stream), null, typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
 
                     ParameterExpression param1 = Expression.Parameter(typeof(Stream), "stream");
                     ParameterExpression param2 = Expression.Parameter(typeof(object), "obj");
                     ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    ParameterExpression param4 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
 
                     MethodCallExpression body = Expression.Call(
                         null,
                         serialize,
                         param1,
                         ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
-                        param3);
-                    Action<Stream, object, MessagePackSerializerOptions> lambda = Expression.Lambda<Action<Stream, object, MessagePackSerializerOptions>>(body, param1, param2, param3).Compile();
+                        param3,
+                        param4);
+                    Action<Stream, object, MessagePackSerializerOptions, CancellationToken> lambda = Expression.Lambda<Action<Stream, object, MessagePackSerializerOptions, CancellationToken>>(body, param1, param2, param3, param4).Compile();
 
-                    this.Serialize_Stream_T_Options = lambda;
+                    this.Serialize_Stream_T_Options_CancellationToken = lambda;
                 }
 
                 {
@@ -191,15 +193,16 @@ namespace MessagePack
                 }
 
                 {
-                    // public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options)
-                    MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type[] { typeof(Stream), typeof(MessagePackSerializerOptions) });
+                    // public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken)
+                    MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type[] { typeof(Stream), typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
 
                     ParameterExpression param1 = Expression.Parameter(typeof(Stream), "stream");
                     ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
-                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
-                    Func<Stream, MessagePackSerializerOptions, object> lambda = Expression.Lambda<Func<Stream, MessagePackSerializerOptions, object>>(body, param1, param2).Compile();
+                    ParameterExpression param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
+                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2, param3), typeof(object));
+                    Func<Stream, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<Stream, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile();
 
-                    this.Deserialize_Stream_Options = lambda;
+                    this.Deserialize_Stream_Options_CancellationToken = lambda;
                 }
 
                 {
