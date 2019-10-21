@@ -612,17 +612,15 @@ var rawJson = MessagePackSerializer.ToJson(lz4Bytes);
 Console.WriteLine(rawJson);
 ```
 
-built-in LZ4 support uses primitive LZ4 API. The LZ4 API is more efficient if you know the size of original source length. Therefore, size is written on the top as a MsgPack header. To decompress with a different LZ4 implementation you may need to manually seek past the MsgPack header.
+Built-in LZ4 support uses primitive LZ4 API. The LZ4 API is more efficient if you know the size of original source length. Therefore, size is written as a header to the extension payload as a msgpack Int32 value. To decompress with a different LZ4 implementation you may need to read or manually seek past this length header.
 
 You can directly use the LZ4 support on binary for compression.
 
 ```csharp
 //sufficiently large enough byte array
-byte[] myByteArray = Encoding.Default.GetBytes("".PadLeft(128, 'a'));
-
-byte[] compressed = LZ4MessagePackSerializer.Serialize(myByteArray)
-
-byte[] clonedOriginal = LZ4MessagePackSerializer.Deserialize<byte[]>(compressed)
+byte[] myByteArray = Encoding.Default.GetBytes(new string('a', 128));
+byte[] compressed = LZ4MessagePackSerializer.Serialize(myByteArray);
+byte[] clonedOriginal = LZ4MessagePackSerializer.Deserialize<byte[]>(compressed);
 ```
 Note the deserialization type provided of `byte[]`.
 
