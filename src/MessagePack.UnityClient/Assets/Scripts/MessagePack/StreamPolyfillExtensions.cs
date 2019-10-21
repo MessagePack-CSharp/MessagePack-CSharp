@@ -107,6 +107,31 @@ namespace MessagePack
                 ArrayPool<byte>.Shared.Return(sharedBuffer);
             }
         }
+
+        /// <summary>
+        /// Writes a span to the stream.
+        /// </summary>
+        /// <param name="stream">The stream to write to.</param>
+        /// <param name="buffer">The buffer to write.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        internal static async ValueTask WriteAsync(this Stream stream, ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+        {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+
+            var sharedBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
+            try
+            {
+                buffer.CopyTo(sharedBuffer);
+                await stream.WriteAsync(sharedBuffer, 0, buffer.Length, cancellationToken);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(sharedBuffer);
+            }
+        }
     }
 #endif
 }
