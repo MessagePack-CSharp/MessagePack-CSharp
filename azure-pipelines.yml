@@ -1,0 +1,25 @@
+trigger:
+  branches:
+    include: ["master", "v1.8", "*_validate"]
+  paths:
+    exclude: ["doc", "*.md"]
+
+variables:
+  TreatWarningsAsErrors: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  BuildConfiguration: Release
+  BuildPlatform: Any CPU
+
+jobs:
+- job: Windows
+  pool:
+    vmImage: windows-2019
+  steps:
+  - template: azure-pipelines/build.yml
+
+- job: Unity
+  pool:
+    name: CustomAgents
+    demands: UNITYHUB_EDITORS_FOLDER_LOCATION
+  steps:
+  - template: azure-pipelines/build_unity.yml

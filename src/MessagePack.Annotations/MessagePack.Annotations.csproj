@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <NoWarn>$(NoWarn);CS0649</NoWarn>
+    <RootNamespace>MessagePack</RootNamespace>
+
+    <IsPackable>true</IsPackable>
+    <Title>MessagePack annotations for C#</Title>
+    <Description>Attributes and interfaces for .NET types serializable with MessagePack.</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**\*.cs" />
+  </ItemGroup>
+
+</Project>

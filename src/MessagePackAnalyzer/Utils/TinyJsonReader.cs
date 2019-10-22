@@ -1,57 +1,62 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
 
-// TinyJson is handmade Json reader/writer library.
-// It no needs JSON.NET dependency.
+/* TinyJson is handmade Json reader/writer library.
+ * It no needs JSON.NET dependency. */
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePackAnalyzer
 {
     public class TinyJsonException : Exception
     {
-        public TinyJsonException(string message) : base(message)
+        public TinyJsonException(string message)
+            : base(message)
         {
-
         }
     }
 
     public class KnownTypeSerializer
     {
-        readonly Dictionary<Type, Func<object, string>> serializers = new Dictionary<Type, Func<object, string>>();
-        readonly Dictionary<Type, Func<string, object>> deserializers = new Dictionary<Type, Func<string, object>>();
+        private readonly Dictionary<Type, Func<object, string>> serializers = new Dictionary<Type, Func<object, string>>();
+        private readonly Dictionary<Type, Func<string, object>> deserializers = new Dictionary<Type, Func<string, object>>();
 
-        public static KnownTypeSerializer Default = new KnownTypeSerializer();
+        public static readonly KnownTypeSerializer Default = new KnownTypeSerializer();
 
         public KnownTypeSerializer()
         {
-            serializers.Add(typeof(DateTime), x => ((DateTime)x).ToString("o"));
-            deserializers.Add(typeof(DateTime), x => DateTime.Parse(x));
-            serializers.Add(typeof(DateTimeOffset), x => ((DateTimeOffset)x).ToString("o"));
-            deserializers.Add(typeof(DateTimeOffset), x => DateTimeOffset.Parse(x));
-            serializers.Add(typeof(Uri), x => ((Uri)x).ToString());
-            deserializers.Add(typeof(Uri), x => new Uri(x));
-            serializers.Add(typeof(Guid), x => ((Guid)x).ToString());
-            deserializers.Add(typeof(Guid), x => new Guid(x));
+            this.serializers.Add(typeof(DateTime), x => ((DateTime)x).ToString("o"));
+            this.deserializers.Add(typeof(DateTime), x => DateTime.Parse(x));
+            this.serializers.Add(typeof(DateTimeOffset), x => ((DateTimeOffset)x).ToString("o"));
+            this.deserializers.Add(typeof(DateTimeOffset), x => DateTimeOffset.Parse(x));
+            this.serializers.Add(typeof(Uri), x => ((Uri)x).ToString());
+            this.deserializers.Add(typeof(Uri), x => new Uri(x));
+            this.serializers.Add(typeof(Guid), x => ((Guid)x).ToString());
+            this.deserializers.Add(typeof(Guid), x => new Guid(x));
         }
 
         public bool Contains(Type type)
         {
-            return serializers.ContainsKey(type);
+            return this.serializers.ContainsKey(type);
         }
 
         public void Register(Type type, Func<object, string> serializer, Func<string, object> deserializer)
         {
-            serializers[type] = serializer;
-            deserializers[type] = deserializer;
+            this.serializers[type] = serializer;
+            this.deserializers[type] = deserializer;
         }
 
         public bool TrySerialize(Type type, object obj, out string result)
         {
             Func<object, string> serializer;
-            if (type != null && serializers.TryGetValue(type, out serializer))
+            if (type != null && this.serializers.TryGetValue(type, out serializer))
             {
                 result = serializer(obj);
                 return true;
@@ -66,7 +71,7 @@ namespace MessagePackAnalyzer
         public bool TryDeserialize(Type type, string json, out object result)
         {
             Func<string, object> deserializer;
-            if (type != null && deserializers.TryGetValue(type, out deserializer))
+            if (type != null && this.deserializers.TryGetValue(type, out deserializer))
             {
                 result = deserializer(json);
                 return true;
@@ -95,10 +100,11 @@ namespace MessagePackAnalyzer
 
     public class TinyJsonReader : IDisposable
     {
-        readonly TextReader reader;
-        readonly bool disposeInnerReader;
+        private readonly TextReader reader;
+        private readonly bool disposeInnerReader;
 
         public TinyJsonToken TokenType { get; private set; }
+
         public object Value { get; private set; }
 
         public TinyJsonReader(TextReader reader, bool disposeInnerReader = true)
@@ -109,37 +115,38 @@ namespace MessagePackAnalyzer
 
         public bool Read()
         {
-            ReadNextToken();
-            ReadValue();
-            return TokenType != TinyJsonToken.None;
+            this.ReadNextToken();
+            this.ReadValue();
+            return this.TokenType != TinyJsonToken.None;
         }
 
         public void Dispose()
         {
-            if (reader != null && disposeInnerReader)
+            if (this.reader != null && this.disposeInnerReader)
             {
-                reader.Dispose();
+                this.reader.Dispose();
             }
-            TokenType = TinyJsonToken.None;
-            Value = null;
+
+            this.TokenType = TinyJsonToken.None;
+            this.Value = null;
         }
 
-        void SkipWhiteSpace()
+        private void SkipWhiteSpace()
         {
-            var c = reader.Peek();
+            var c = this.reader.Peek();
             while (c != -1 && Char.IsWhiteSpace((char)c))
             {
-                reader.Read();
-                c = reader.Peek();
+                this.reader.Read();
+                c = this.reader.Peek();
             }
         }
 
-        char ReadChar()
+        private char ReadChar()
         {
-            return (char)reader.Read();
+            return (char)this.reader.Read();
         }
 
-        static bool IsWordBreak(char c)
+        private static bool IsWordBreak(char c)
         {
             switch (c)
             {
@@ -157,14 +164,14 @@ namespace MessagePackAnalyzer
             }
         }
 
-        void ReadNextToken()
+        private void ReadNextToken()
         {
-            SkipWhiteSpace();
+            this.SkipWhiteSpace();
 
-            var intChar = reader.Peek();
+            var intChar = this.reader.Peek();
             if (intChar == -1)
             {
-                TokenType = TinyJsonToken.None;
+                this.TokenType = TinyJsonToken.None;
                 return;
             }
 
@@ -172,19 +179,19 @@ namespace MessagePackAnalyzer
             switch (c)
             {
                 case '{':
-                    TokenType = TinyJsonToken.StartObject;
+                    this.TokenType = TinyJsonToken.StartObject;
                     return;
                 case '}':
-                    TokenType = TinyJsonToken.EndObject;
+                    this.TokenType = TinyJsonToken.EndObject;
                     return;
                 case '[':
-                    TokenType = TinyJsonToken.StartArray;
+                    this.TokenType = TinyJsonToken.StartArray;
                     return;
                 case ']':
-                    TokenType = TinyJsonToken.EndArray;
+                    this.TokenType = TinyJsonToken.EndArray;
                     return;
                 case '"':
-                    TokenType = TinyJsonToken.String;
+                    this.TokenType = TinyJsonToken.String;
                     return;
                 case '0':
                 case '1':
@@ -197,32 +204,32 @@ namespace MessagePackAnalyzer
                 case '8':
                 case '9':
                 case '-':
-                    TokenType = TinyJsonToken.Number;
+                    this.TokenType = TinyJsonToken.Number;
                     return;
                 case 't':
-                    TokenType = TinyJsonToken.True;
+                    this.TokenType = TinyJsonToken.True;
                     return;
                 case 'f':
-                    TokenType = TinyJsonToken.False;
+                    this.TokenType = TinyJsonToken.False;
                     return;
                 case 'n':
-                    TokenType = TinyJsonToken.Null;
+                    this.TokenType = TinyJsonToken.Null;
                     return;
                 case ',':
                 case ':':
-                    reader.Read();
-                    ReadNextToken();
+                    this.reader.Read();
+                    this.ReadNextToken();
                     return;
                 default:
                     throw new TinyJsonException("Invalid String:" + c);
             }
         }
 
-        void ReadValue()
+        private void ReadValue()
         {
-            Value = null;
+            this.Value = null;
 
-            switch (TokenType)
+            switch (this.TokenType)
             {
                 case TinyJsonToken.None:
                     break;
@@ -230,53 +237,109 @@ namespace MessagePackAnalyzer
                 case TinyJsonToken.EndObject:
                 case TinyJsonToken.StartArray:
                 case TinyJsonToken.EndArray:
-                    reader.Read();
+                    this.reader.Read();
                     break;
                 case TinyJsonToken.Number:
-                    ReadNumber();
+                    this.ReadNumber();
                     break;
                 case TinyJsonToken.String:
-                    ReadString();
+                    this.ReadString();
                     break;
                 case TinyJsonToken.True:
-                    if (ReadChar() != 't') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'r') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'u') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'e') throw new TinyJsonException("Invalid Token");
-                    Value = true;
+                    if (this.ReadChar() != 't')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'r')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'u')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'e')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    this.Value = true;
                     break;
                 case TinyJsonToken.False:
-                    if (ReadChar() != 'f') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'a') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 's') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'e') throw new TinyJsonException("Invalid Token");
-                    Value = false;
+                    if (this.ReadChar() != 'f')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'a')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'l')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 's')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'e')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    this.Value = false;
                     break;
                 case TinyJsonToken.Null:
-                    if (ReadChar() != 'n') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'u') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
-                    if (ReadChar() != 'l') throw new TinyJsonException("Invalid Token");
-                    Value = null;
+                    if (this.ReadChar() != 'n')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'u')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'l')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    if (this.ReadChar() != 'l')
+                    {
+                        throw new TinyJsonException("Invalid Token");
+                    }
+
+                    this.Value = null;
                     break;
                 default:
-                    throw new ArgumentException("InvalidTokenState:" + TokenType);
+                    throw new ArgumentException("InvalidTokenState:" + this.TokenType);
             }
         }
 
-        void ReadNumber()
+        private void ReadNumber()
         {
             var numberWord = new StringBuilder();
 
             var isDouble = false;
-            var intChar = reader.Peek();
+            var intChar = this.reader.Peek();
             while (intChar != -1 && !IsWordBreak((char)intChar))
             {
-                var c = ReadChar();
+                var c = this.ReadChar();
                 numberWord.Append(c);
-                if (c == '.') isDouble = true;
-                intChar = reader.Peek();
+                if (c == '.')
+                {
+                    isDouble = true;
+                }
+
+                intChar = this.reader.Peek();
             }
 
             var number = numberWord.ToString();
@@ -284,51 +347,57 @@ namespace MessagePackAnalyzer
             {
                 double parsedDouble;
                 Double.TryParse(number, out parsedDouble);
-                Value = parsedDouble;
+                this.Value = parsedDouble;
             }
             else
             {
                 long parsedInt;
                 if (Int64.TryParse(number, out parsedInt))
                 {
-                    Value = parsedInt;
+                    this.Value = parsedInt;
                     return;
                 }
 
                 ulong parsedULong;
                 if (ulong.TryParse(number, out parsedULong))
                 {
-                    Value = parsedULong;
+                    this.Value = parsedULong;
                     return;
                 }
 
                 Decimal parsedDecimal;
                 if (decimal.TryParse(number, out parsedDecimal))
                 {
-                    Value = parsedDecimal;
+                    this.Value = parsedDecimal;
                     return;
                 }
             }
         }
 
-        void ReadString()
+        private void ReadString()
         {
-            reader.Read(); // skip ["]
+            this.reader.Read(); // skip ["]
 
             var sb = new StringBuilder();
             while (true)
             {
-                if (reader.Peek() == -1) throw new TinyJsonException("Invalid Json String");
+                if (this.reader.Peek() == -1)
+                {
+                    throw new TinyJsonException("Invalid Json String");
+                }
 
-                var c = ReadChar();
+                var c = this.ReadChar();
                 switch (c)
                 {
                     case '"': // endtoken
                         goto END;
                     case '\\': // escape character
-                        if (reader.Peek() == -1) throw new TinyJsonException("Invalid Json String");
+                        if (this.reader.Peek() == -1)
+                        {
+                            throw new TinyJsonException("Invalid Json String");
+                        }
 
-                        c = ReadChar();
+                        c = this.ReadChar();
                         switch (c)
                         {
                             case '"':
@@ -353,13 +422,14 @@ namespace MessagePackAnalyzer
                                 break;
                             case 'u':
                                 var hex = new char[4];
-                                hex[0] = ReadChar();
-                                hex[1] = ReadChar();
-                                hex[2] = ReadChar();
-                                hex[3] = ReadChar();
+                                hex[0] = this.ReadChar();
+                                hex[1] = this.ReadChar();
+                                hex[2] = this.ReadChar();
+                                hex[3] = this.ReadChar();
                                 sb.Append((char)Convert.ToInt32(new string(hex), 16));
                                 break;
                         }
+
                         break;
                     default: // string
                         sb.Append(c);
@@ -367,186 +437,191 @@ namespace MessagePackAnalyzer
                 }
             }
 
-            END:
-            Value = sb.ToString();
+END:
+            this.Value = sb.ToString();
         }
     }
 
     public class TinyJsonWriter : IDisposable
     {
-        enum WritingState
+        private enum WritingState
         {
-            Value, ArrayStart, ObjectStart, Array, Object, ObjectPropertyName
+            Value,
+            ArrayStart,
+            ObjectStart,
+            Array,
+            Object,
+            ObjectPropertyName,
         }
 
-        readonly TextWriter writer;
-        readonly Stack<WritingState> state;
-        readonly bool disposeInnerWriter;
+        private readonly TextWriter writer;
+        private readonly Stack<WritingState> state;
+        private readonly bool disposeInnerWriter;
 
         public TinyJsonWriter(TextWriter writer, bool disposeInnerWriter = true)
         {
             this.writer = writer;
             this.disposeInnerWriter = disposeInnerWriter;
             this.state = new Stack<WritingState>();
-            state.Push(WritingState.Value);
+            this.state.Push(WritingState.Value);
         }
 
         public void WriteStartObject()
         {
-            WritePrefix();
-            writer.Write('{');
-            state.Push(WritingState.ObjectStart);
+            this.WritePrefix();
+            this.writer.Write('{');
+            this.state.Push(WritingState.ObjectStart);
         }
 
         public void WriteEndObject()
         {
-            writer.Write('}');
-            state.Pop();
+            this.writer.Write('}');
+            this.state.Pop();
         }
 
         public void WriteStartArray()
         {
-            WritePrefix();
-            writer.Write('[');
-            state.Push(WritingState.ArrayStart);
+            this.WritePrefix();
+            this.writer.Write('[');
+            this.state.Push(WritingState.ArrayStart);
         }
 
         public void WriteEndArray()
         {
-            writer.Write(']');
-            state.Pop();
+            this.writer.Write(']');
+            this.state.Pop();
         }
 
         public void WritePropertyName(string name)
         {
-            WritePrefix();
-            state.Push(WritingState.ObjectPropertyName);
-            WriteString(name);
+            this.WritePrefix();
+            this.state.Push(WritingState.ObjectPropertyName);
+            this.WriteString(name);
         }
 
         public void WriteValue(object obj)
         {
-            WriteValue(obj, KnownTypeSerializer.Default);
+            this.WriteValue(obj, KnownTypeSerializer.Default);
         }
 
         public void WriteValue(object obj, KnownTypeSerializer serializer)
         {
-            WritePrefix();
+            this.WritePrefix();
 
             // write value
             if (obj == null)
             {
-                writer.Write("null");
+                this.writer.Write("null");
             }
             else if (obj is string)
             {
-                WriteString((string)obj);
+                this.WriteString((string)obj);
             }
             else if (obj is bool)
             {
-                writer.Write(((bool)obj) ? "true" : "false");
+                this.writer.Write(((bool)obj) ? "true" : "false");
             }
             else
             {
-                var t = obj.GetType();
+                Type t = obj.GetType();
                 if (t.GetTypeInfo().IsEnum)
                 {
                     var eValue = Convert.ChangeType(obj, Enum.GetUnderlyingType(t));
-                    writer.Write(eValue); // Enum as WriteNumber
+                    this.writer.Write(eValue); // Enum as WriteNumber
                     return;
                 }
 
                 if (t == typeof(sbyte))
                 {
-                    writer.Write((sbyte)obj);
+                    this.writer.Write((sbyte)obj);
                 }
                 else if (t == typeof(byte))
                 {
-                    writer.Write((byte)obj);
+                    this.writer.Write((byte)obj);
                 }
                 else if (t == typeof(Int16))
                 {
-                    writer.Write((Int16)obj);
+                    this.writer.Write((Int16)obj);
                 }
                 else if (t == typeof(UInt16))
                 {
-                    writer.Write((UInt16)obj);
+                    this.writer.Write((UInt16)obj);
                 }
                 else if (t == typeof(Int32))
                 {
-                    writer.Write((Int32)obj);
+                    this.writer.Write((Int32)obj);
                 }
                 else if (t == typeof(UInt32))
                 {
-                    writer.Write((UInt32)obj);
+                    this.writer.Write((UInt32)obj);
                 }
                 else if (t == typeof(Int64))
                 {
-                    writer.Write((Int64)obj);
+                    this.writer.Write((Int64)obj);
                 }
                 else if (t == typeof(UInt64))
                 {
-                    writer.Write((UInt64)obj);
+                    this.writer.Write((UInt64)obj);
                 }
                 else if (t == typeof(Single))
                 {
-                    writer.Write((Single)obj);
+                    this.writer.Write((Single)obj);
                 }
                 else if (t == typeof(Double))
                 {
-                    writer.Write((Double)obj);
+                    this.writer.Write((Double)obj);
                 }
                 else if (t == typeof(Decimal))
                 {
-                    writer.Write((Decimal)obj);
+                    this.writer.Write((Decimal)obj);
                 }
                 else
                 {
                     string result;
                     if (serializer.TrySerialize(t, obj, out result))
                     {
-                        WriteString(result);
+                        this.WriteString(result);
                     }
                     else
                     {
-                        WriteString(obj.ToString());
+                        this.WriteString(obj.ToString());
                     }
                 }
             }
         }
 
-        void WritePrefix()
+        private void WritePrefix()
         {
             // write prefix by state
-            var currentState = state.Peek();
+            WritingState currentState = this.state.Peek();
             switch (currentState)
             {
                 case WritingState.Value:
                     break;
                 case WritingState.ArrayStart:
-                    state.Pop();
-                    state.Push(WritingState.Array);
+                    this.state.Pop();
+                    this.state.Push(WritingState.Array);
                     break;
                 case WritingState.ObjectStart:
-                    state.Pop();
-                    state.Push(WritingState.Object);
+                    this.state.Pop();
+                    this.state.Push(WritingState.Object);
                     break;
                 case WritingState.Array:
                 case WritingState.Object:
-                    writer.Write(',');
+                    this.writer.Write(',');
                     break;
                 case WritingState.ObjectPropertyName:
-                    state.Pop();
-                    writer.Write(':');
+                    this.state.Pop();
+                    this.writer.Write(':');
                     break;
                 default:
                     break;
             }
         }
 
-        void WriteString(string o)
+        private void WriteString(string o)
         {
-            writer.Write('\"');
+            this.writer.Write('\"');
 
             for (int i = 0; i < o.Length; i++)
             {
@@ -554,40 +629,40 @@ namespace MessagePackAnalyzer
                 switch (c)
                 {
                     case '"':
-                        writer.Write("\\\"");
+                        this.writer.Write("\\\"");
                         break;
                     case '\\':
-                        writer.Write("\\\\");
+                        this.writer.Write("\\\\");
                         break;
                     case '\b':
-                        writer.Write("\\b");
+                        this.writer.Write("\\b");
                         break;
                     case '\f':
-                        writer.Write("\\f");
+                        this.writer.Write("\\f");
                         break;
                     case '\n':
-                        writer.Write("\\n");
+                        this.writer.Write("\\n");
                         break;
                     case '\r':
-                        writer.Write("\\r");
+                        this.writer.Write("\\r");
                         break;
                     case '\t':
-                        writer.Write("\\t");
+                        this.writer.Write("\\t");
                         break;
                     default:
-                        writer.Write(c);
+                        this.writer.Write(c);
                         break;
                 }
             }
 
-            writer.Write('\"');
+            this.writer.Write('\"');
         }
 
         public void Dispose()
         {
-            if (writer != null && disposeInnerWriter)
+            if (this.writer != null && this.disposeInnerWriter)
             {
-                writer.Dispose();
+                this.writer.Dispose();
             }
         }
     }

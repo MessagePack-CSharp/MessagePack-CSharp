@@ -1,0 +1,70 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !UNITY
+
+using System;
+using System.Buffers;
+
+#pragma warning disable SA1649 // File name should match first type name
+
+namespace MessagePack.Formatters
+{<# for(var i = 1; i <= 8; i++) {
+    Func<int, string> toT = x => "T" + ((x == 8) ? "Rest" : x.ToString());
+    Func<int, string> toItem = x => ((x == 8) ? "Rest" : "Item" + x);
+    var ts = string.Join(", ", Enumerable.Range(1, i).Select(x => toT(x)));
+    var t = "Tuple<" + ts + ">";
+#>
+
+    public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
+    {
+        public void Serialize(ref MessagePackWriter writer, <#= t #> value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(<#= i #>);
+
+                IFormatterResolver resolver = options.Resolver;
+<# for(var j = 1; j <= i; j++) { #>
+                resolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref writer, value.<#= toItem(j) #>, options);
+<# } #>
+            }
+        }
+
+        public <#= t #> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+            else
+            {
+                var count = reader.ReadArrayHeader();
+                if (count != <#= i #>)
+                {
+                    throw new InvalidOperationException("Invalid Tuple count");
+                }
+
+                IFormatterResolver resolver = options.Resolver;
+<# for(var j = 1; j <= i; j++) { #>
+                <#= toT(j) #> item<#= j #> = resolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(ref reader, options);
+<# } #>
+
+                return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+            }
+        }
+    }
+<# } #>
+}
+
+#endif

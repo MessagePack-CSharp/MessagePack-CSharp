@@ -1,0 +1,134 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+    var types = new[]
+    {
+        typeof(Int16),
+        typeof(Int32),
+        typeof(Int64),
+        typeof(UInt16),
+        typeof(UInt32),
+        typeof(UInt64),
+        typeof(byte), 
+        typeof(sbyte),
+    };
+#>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Buffers;
+
+#pragma warning disable SA1649 // File name should match first type name
+
+namespace MessagePack.Formatters
+{<# foreach(var t in types) {
+    string writeSuffix = 
+        t.Name == nameof(Byte) ? "UInt8" :
+        t.Name == nameof(SByte) ? "Int8" :
+        t.Name;
+#>
+
+    public sealed class Force<#= t.Name #>BlockFormatter : IMessagePackFormatter<<#= t.Name #>>
+    {
+        public static readonly Force<#= t.Name #>BlockFormatter Instance = new Force<#= t.Name #>BlockFormatter();
+
+        private Force<#= t.Name #>BlockFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, <#= t.Name #> value, MessagePackSerializerOptions options)
+        {
+            writer.Write<#= writeSuffix #>(value);
+        }
+
+        public <#= t.Name #> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return reader.Read<#= t.Name #>();
+        }
+    }
+
+    public sealed class NullableForce<#= t.Name #>BlockFormatter : IMessagePackFormatter<<#= t.Name #>?>
+    {
+        public static readonly NullableForce<#= t.Name #>BlockFormatter Instance = new NullableForce<#= t.Name #>BlockFormatter();
+
+        private NullableForce<#= t.Name #>BlockFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>? value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.Write<#= writeSuffix #>(value.Value);
+            }
+        }
+
+        public <#= t.Name #>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+            else
+            {
+                return reader.Read<#= t.Name #>();
+            }
+        }
+    }
+<# if(t.Name != "Byte") { #>
+
+    public sealed class Force<#= t.Name #>BlockArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
+    {
+        public static readonly Force<#= t.Name #>BlockArrayFormatter Instance = new Force<#= t.Name #>BlockArrayFormatter();
+
+        private Force<#= t.Name #>BlockArrayFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, <#= t.Name #>[] value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.WriteArrayHeader(value.Length);
+                for (int i = 0; i < value.Length; i++)
+                {
+                    writer.Write<#= writeSuffix #>(value[i]);
+                }
+            }
+        }
+
+        public <#= t.Name #>[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+            else
+            {
+                var len = reader.ReadArrayHeader();
+                var array = new <#= t.Name #>[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.Read<#= t.Name #>();
+                }
+
+                return array;
+            }
+        }
+    }
+<# } #>
+<# } #>
+}

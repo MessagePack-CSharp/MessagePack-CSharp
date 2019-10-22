@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net472;netcoreapp2.2</TargetFrameworks>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MsgPack.Cli" version="0.9.0-beta2" />
+    <PackageReference Include="Newtonsoft.Json" version="10.0.3" />
+    <PackageReference Include="protobuf-net" version="2.1.0" />
+    <PackageReference Include="ZeroFormatter" version="1.6.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
+</Project>

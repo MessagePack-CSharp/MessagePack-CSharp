@@ -1,7 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Formatting;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +8,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Formatting;
 
 namespace MessagePackAnalyzer
 {
@@ -17,11 +20,11 @@ namespace MessagePackAnalyzer
     {
         public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
         {
-            foreach (var syntaxTree in compilation.SyntaxTrees)
+            foreach (SyntaxTree syntaxTree in compilation.SyntaxTrees)
             {
-                var semModel = compilation.GetSemanticModel(syntaxTree);
+                SemanticModel semModel = compilation.GetSemanticModel(syntaxTree);
 
-                foreach (var item in syntaxTree.GetRoot()
+                foreach (ISymbol item in syntaxTree.GetRoot()
                     .DescendantNodes()
                     .Select(x => semModel.GetDeclaredSymbol(x))
                     .Where(x => x != null))
@@ -37,7 +40,7 @@ namespace MessagePackAnalyzer
 
         public static IEnumerable<INamedTypeSymbol> EnumerateBaseType(this ITypeSymbol symbol)
         {
-            var t = symbol.BaseType;
+            INamedTypeSymbol t = symbol.BaseType;
             while (t != null)
             {
                 yield return t;
@@ -63,10 +66,15 @@ namespace MessagePackAnalyzer
         {
             do
             {
-                var data = FindAttributeShortName(property.GetAttributes(), typeName);
-                if (data != null) return data;
+                AttributeData data = FindAttributeShortName(property.GetAttributes(), typeName);
+                if (data != null)
+                {
+                    return data;
+                }
+
                 property = property.OverriddenProperty;
-            } while (property != null);
+            }
+            while (property != null);
 
             return null;
         }
@@ -88,7 +96,7 @@ namespace MessagePackAnalyzer
 
         public static object GetSingleNamedArgumentValue(this AttributeData attribute, string key)
         {
-            foreach (var item in attribute.NamedArguments)
+            foreach (KeyValuePair<string, TypedConstant> item in attribute.NamedArguments)
             {
                 if (item.Key == key)
                 {
@@ -108,18 +116,20 @@ namespace MessagePackAnalyzer
                     return true;
                 }
             }
+
             return false;
         }
 
         public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol symbol)
         {
-            var t = symbol;
+            ITypeSymbol t = symbol;
             while (t != null)
             {
-                foreach (var item in t.GetMembers())
+                foreach (ISymbol item in t.GetMembers())
                 {
                     yield return item;
                 }
+
                 t = t.BaseType;
             }
         }
@@ -129,7 +139,6 @@ namespace MessagePackAnalyzer
             return symbol.GetMembers()
                 .Concat(symbol.AllInterfaces.SelectMany(x => x.GetMembers()));
         }
-
 
         public static CompilationUnitSyntax WithUsing(this CompilationUnitSyntax root, string name)
         {
@@ -141,7 +150,8 @@ namespace MessagePackAnalyzer
             return root;
         }
 
-        public static TNode WithFormat<TNode>(this TNode node) where TNode : SyntaxNode
+        public static TNode WithFormat<TNode>(this TNode node)
+            where TNode : SyntaxNode
         {
             return node.WithAdditionalAnnotations(Formatter.Annotation);
         }

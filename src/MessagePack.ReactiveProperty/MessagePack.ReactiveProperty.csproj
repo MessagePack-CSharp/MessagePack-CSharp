@@ -1,15 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;netstandard2.0;net46;net47</TargetFrameworks>
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard2.0\MessagePack.ReactiveProperty.xml</DocumentationFile>
-    <NoWarn>1701;1702;1705;1591</NoWarn>
+    <IsPackable>true</IsPackable>
+    <Title>MessagePack for C# Extension Support for ReactiveProperty</Title>
+    <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for ReactiveProperty.</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;ReactiveProperty</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,34 +16,12 @@
 
   <ItemGroup>
     <PackageReference Include="System.Reactive.PlatformServices" Version="3.1.1" />
+    <PackageReference Include="ReactiveProperty" Version="4.2.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net47'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="ReactiveProperty">
-      <Version>4.2.2</Version>
-    </PackageReference>
+    <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
   </ItemGroup>
 
 </Project>

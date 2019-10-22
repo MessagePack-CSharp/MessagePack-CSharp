@@ -1,0 +1,18 @@
+{
+    "name": "Tests",
+    "references": [
+        "MessagePack",
+        "RuntimeUnitTestToolkit"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
