@@ -527,6 +527,11 @@ namespace MessagePack.CodeGenerator
                         continue;
                     }
 
+                    if (stringMembers.ContainsKey(member.StringKey))
+                    {
+                        throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                    }
+
                     member.IntKey = hiddenIntKey++;
                     stringMembers.Add(member.StringKey, member);
                     this.CollectCore(item.Type); // recursive collect
