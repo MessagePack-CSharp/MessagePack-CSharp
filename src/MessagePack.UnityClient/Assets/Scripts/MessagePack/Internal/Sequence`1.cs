@@ -556,13 +556,13 @@ namespace Nerdbank.Streams
     /// <summary>
     /// Common runtime checks that throw exceptions upon failure.
     /// </summary>
-    public static partial class Verify
+    internal static partial class Verify
     {
         /// <summary>
         /// Throws an <see cref="InvalidOperationException"/> if a condition is false.
         /// </summary>
         [DebuggerStepThrough]
-        public static void Operation(bool condition, string message)
+        internal static void Operation(bool condition, string message)
         {
             if (!condition)
             {
@@ -570,4 +570,4 @@ namespace Nerdbank.Streams
             }
         }
     }
-    }
+}
