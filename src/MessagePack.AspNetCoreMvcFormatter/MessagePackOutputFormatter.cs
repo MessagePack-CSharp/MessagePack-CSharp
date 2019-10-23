@@ -3,6 +3,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Primitives;
 
 namespace MessagePack.AspNetCoreMvcFormatter
 {
@@ -21,8 +22,16 @@ namespace MessagePack.AspNetCoreMvcFormatter
             this.options = options;
         }
 
-        public bool CanWriteResult(OutputFormatterCanWriteContext context) =>
-            context.HttpContext.Request.ContentType == ContentType;
+        public bool CanWriteResult(OutputFormatterCanWriteContext context)
+        {
+            if (!context.ContentType.HasValue)
+            {
+                context.ContentType = new StringSegment(ContentType);
+                return true;
+            }
+
+            return context.ContentType.Value == ContentType;
+        }
 
         public Task WriteAsync(OutputFormatterWriteContext context)
         {

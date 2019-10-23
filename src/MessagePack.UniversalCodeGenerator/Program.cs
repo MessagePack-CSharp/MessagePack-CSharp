@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using MessagePack.CodeGenerator.Generator;
 using Mono.Options;
 
@@ -14,7 +15,7 @@ namespace MessagePack.CodeGenerator
 {
     internal class Program
     {
-        private static int Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
             try
             {
@@ -28,7 +29,7 @@ namespace MessagePack.CodeGenerator
                 var sw = Stopwatch.StartNew();
                 Console.WriteLine("Project Compilation Start:" + cmdArgs.InputPath);
 
-                var collector = new TypeCollector(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
+                var collector = await TypeCollector.CreateAsync(cmdArgs.InputPath, cmdArgs.ConditionalSymbols, true, cmdArgs.IsUseMap);
 
                 Console.WriteLine("Project Compilation Complete:" + sw.Elapsed.ToString());
                 Console.WriteLine();

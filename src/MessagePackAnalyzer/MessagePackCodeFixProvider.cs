@@ -116,19 +116,19 @@ namespace MessagePackAnalyzer
                 }
             }
 
-            var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttribute(context.Document, namedSymbol, c), "MessagePackAnalyzer.AddKeyAttribute");
+            var action = CodeAction.Create("Add MessagePack KeyAttribute", c => AddKeyAttributeAsync(context.Document, namedSymbol, c), "MessagePackAnalyzer.AddKeyAttribute");
 
             context.RegisterCodeFix(action, context.Diagnostics.First()); // use single.
         }
 
-        private static async Task<Document> AddKeyAttribute(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
+        private static async Task<Document> AddKeyAttributeAsync(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
         {
             if (type.DeclaringSyntaxReferences.Length != 0)
             {
                 document = document.Project.GetDocument(type.DeclaringSyntaxReferences[0].SyntaxTree);
             }
 
-            DocumentEditor editor = await DocumentEditor.CreateAsync(document);
+            DocumentEditor editor = await DocumentEditor.CreateAsync(document).ConfigureAwait(false);
 
             ISymbol[] targets = type.GetAllMembers()
                 .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
@@ -164,7 +164,7 @@ namespace MessagePackAnalyzer
 
             foreach (ISymbol item in targets)
             {
-                SyntaxNode node = await item.DeclaringSyntaxReferences[0].GetSyntaxAsync();
+                SyntaxNode node = await item.DeclaringSyntaxReferences[0].GetSyntaxAsync().ConfigureAwait(false);
 
                 AttributeData attr = item.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName);
                 if (attr != null)
@@ -180,7 +180,7 @@ namespace MessagePackAnalyzer
 
             if (type.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.MessagePackObjectAttributeShortName) == null)
             {
-                SyntaxNode rootNode = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync();
+                SyntaxNode rootNode = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync().ConfigureAwait(false);
                 editor.AddAttribute(rootNode, RoslynExtensions.ParseAttributeList("[MessagePackObject]"));
             }
 

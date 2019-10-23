@@ -48,14 +48,14 @@ namespace MessagePack.CodeGenerator
                     {
                         if (stdout != null)
                         {
-                            await RedirectOutputTask(proc.StandardOutput.BaseStream, stdout, exitedct.Token, "stdout");
+                            await RedirectOutputTaskAsync(proc.StandardOutput.BaseStream, stdout, exitedct.Token, "stdout");
                         }
                     }),
                     Task.Run(async () =>
                     {
                         if (stderr != null)
                         {
-                            await RedirectOutputTask(proc.StandardError.BaseStream, stderr, exitedct.Token, "stderr");
+                            await RedirectOutputTaskAsync(proc.StandardError.BaseStream, stderr, exitedct.Token, "stderr");
                         }
                     }));
                 if (exitCode >= 0)
@@ -103,7 +103,7 @@ namespace MessagePack.CodeGenerator
             }
         }
 
-        private static async Task RedirectOutputTask(Stream procStdout, Stream stdout, CancellationToken ct, string suffix)
+        private static async Task RedirectOutputTaskAsync(Stream procStdout, Stream stdout, CancellationToken ct, string suffix)
         {
             if (stdout != null)
             {
@@ -118,7 +118,7 @@ namespace MessagePack.CodeGenerator
                             break;
                         }
 
-                        stdout.Write(buf, 0, bytesread);
+                        await stdout.WriteAsync(buf, 0, bytesread, ct);
                     }
                     catch (NullReferenceException)
                     {

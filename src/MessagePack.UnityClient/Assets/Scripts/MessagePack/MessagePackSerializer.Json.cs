@@ -93,7 +93,7 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// From Json String to MessagePack binary.
+        /// Translates the given JSON to MessagePack.
         /// </summary>
         public static void ConvertFromJson(string str, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
@@ -104,7 +104,25 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// From Json String to MessagePack binary.
+        /// Translates the given JSON to MessagePack.
+        /// </summary>
+        public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions options = null)
+        {
+            using (var seq = new Sequence<byte>())
+            {
+                var writer = new MessagePackWriter(seq);
+                using (var sr = new StringReader(str))
+                {
+                    ConvertFromJson(sr, ref writer, options);
+                }
+
+                writer.Flush();
+                return seq.AsReadOnlySequence.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Translates the given JSON to MessagePack.
         /// </summary>
         public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {

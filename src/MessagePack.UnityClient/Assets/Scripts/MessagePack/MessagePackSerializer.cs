@@ -15,6 +15,7 @@ namespace MessagePack
     /// <summary>
     /// High-Level API of MessagePack for C#.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Each overload has sufficiently unique required parameters.")]
     public static partial class MessagePackSerializer
     {
         public const sbyte LZ4ExtensionTypeCode = 99;
@@ -122,13 +123,16 @@ namespace MessagePack
         /// <param name="stream">The stream to serialize to.</param>
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
-        public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions options = null)
+        /// <param name="cancellationToken">A cancellation token.</param>
+        public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             using (SequencePool.Rental sequenceRental = ReusableSequenceWithMinSize.Rent())
             {
                 Serialize<T>(sequenceRental.Value, value, options);
                 foreach (ReadOnlyMemory<byte> segment in sequenceRental.Value.AsReadOnlySequence)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     stream.Write(segment.Span);
                 }
             }
@@ -244,9 +248,11 @@ namespace MessagePack
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="stream">The stream to deserialize from.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
-        public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options = null)
+        public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (stream is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> streamBuffer))
             {
                 return Deserialize<T>(streamBuffer, options);
@@ -257,6 +263,7 @@ namespace MessagePack
                 int bytesRead;
                 do
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     Span<byte> span = sequence.GetSpan(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
                     bytesRead = stream.Read(span);
                     sequence.Advance(bytesRead);

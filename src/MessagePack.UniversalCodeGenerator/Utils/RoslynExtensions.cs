@@ -61,7 +61,7 @@ namespace MessagePack.CodeGenerator
             }
         }
 
-        private static async Task<bool> TryExecute(string csprojPath, string tempPath, bool useDotNet)
+        private static async Task<bool> TryExecuteAsync(string csprojPath, string tempPath, bool useDotNet)
         {
             // executing build command with output binary log
             (string fname, string args) = GetBuildCommandLine(csprojPath, tempPath, useDotNet);
@@ -142,7 +142,7 @@ namespace MessagePack.CodeGenerator
         {
             try
             {
-                if (!await TryExecute(csprojPath, tempPath, useDotNet).ConfigureAwait(false))
+                if (!await TryExecuteAsync(csprojPath, tempPath, useDotNet).ConfigureAwait(false))
                 {
                     return (null, Array.Empty<StLogger.Error>());
                 }
@@ -160,7 +160,7 @@ namespace MessagePack.CodeGenerator
             }
         }
 
-        private static async Task<StLogger.Build> GetBuildResult(string csprojPath, params string[] preprocessorSymbols)
+        private static async Task<StLogger.Build> GetBuildResultAsync(string csprojPath, params string[] preprocessorSymbols)
         {
             var tempPath = Path.Combine(new FileInfo(csprojPath).Directory.FullName, "__buildtemp");
             try
@@ -276,9 +276,9 @@ namespace MessagePack.CodeGenerator
             return ws;
         }
 
-        public static async Task<Compilation> GetCompilationFromProject(string csprojPath, params string[] preprocessorSymbols)
+        public static async Task<Compilation> GetCompilationFromProjectAsync(string csprojPath, params string[] preprocessorSymbols)
         {
-            StLogger.Build build = await GetBuildResult(csprojPath, preprocessorSymbols).ConfigureAwait(false);
+            StLogger.Build build = await GetBuildResultAsync(csprojPath, preprocessorSymbols).ConfigureAwait(false);
 
             using (Workspace workspace = GetWorkspaceFromBuild(build, preprocessorSymbols))
             {

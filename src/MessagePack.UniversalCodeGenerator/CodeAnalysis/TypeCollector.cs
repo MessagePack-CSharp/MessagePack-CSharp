@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePack.CodeGenerator
@@ -180,10 +181,9 @@ namespace MessagePack.CodeGenerator
         private List<GenericSerializationInfo> collectedGenericInfo;
         private List<UnionSerializationInfo> collectedUnionInfo;
 
-        public TypeCollector(string csProjPath, IEnumerable<string> conditinalSymbols, bool disallowInternal, bool isForceUseMap)
+        private TypeCollector(string csProjPath, Compilation compilation, IEnumerable<string> conditionalSymbols, bool disallowInternal, bool isForceUseMap)
         {
             this.csProjPath = csProjPath;
-            Compilation compilation = RoslynExtensions.GetCompilationFromProject(csProjPath, conditinalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray()).GetAwaiter().GetResult();
             Diagnostic[] compilationErrors = compilation.GetDiagnostics().Where(x => x.Severity == DiagnosticSeverity.Error).ToArray();
             if (compilationErrors.Length != 0)
             {
@@ -215,6 +215,12 @@ namespace MessagePack.CodeGenerator
                     || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass == this.typeReferences.MessagePackObjectAttribute))
                     || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass == this.typeReferences.MessagePackObjectAttribute)))
                 .ToArray();
+        }
+
+        public static async Task<TypeCollector> CreateAsync(string csProjPath, IEnumerable<string> conditionalSymbols, bool disallowInternal, bool isForceUseMap)
+        {
+            Compilation compilation = await RoslynExtensions.GetCompilationFromProjectAsync(csProjPath, conditionalSymbols.Concat(new[] { CodegeneratorOnlyPreprocessorSymbol }).ToArray());
+            return new TypeCollector(csProjPath, compilation, conditionalSymbols, disallowInternal, isForceUseMap);
         }
 
         private void ResetWorkspace()
@@ -519,6 +525,11 @@ namespace MessagePack.CodeGenerator
                     if (!member.IsReadable && !member.IsWritable)
                     {
                         continue;
+                    }
+
+                    if (stringMembers.ContainsKey(member.StringKey))
+                    {
+                        throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
                     }
 
                     member.IntKey = hiddenIntKey++;
