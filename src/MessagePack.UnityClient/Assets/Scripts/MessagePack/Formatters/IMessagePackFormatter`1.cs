@@ -3,6 +3,7 @@
 
 using System.Buffers;
 using System.ComponentModel;
+using System.Threading;
 
 namespace MessagePack.Formatters
 {
@@ -28,15 +29,17 @@ namespace MessagePack.Formatters
         /// </summary>
         /// <param name="writer">The writer to use when serializing the value.</param>
         /// <param name="value">The value to be serialized.</param>
-        /// <param name="options">The serialization settings to use, including the resolver to use to obtain formatters for types that make up the composite type <typeparamref name="T"/>.</param>
-        void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
+        /// <param name="state">State relevant to this serialization operation.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        void Serialize(ref MessagePackWriter writer, T value, ref SerializationState state, CancellationToken cancellationToken);
 
         /// <summary>
         /// Deserializes a value.
         /// </summary>
         /// <param name="reader">The reader to deserialize from.</param>
-        /// <param name="options">The serialization settings to use, including the resolver to use to obtain formatters for types that make up the composite type <typeparamref name="T"/>.</param>
+        /// <param name="state">State relevant to this specific serialization operation.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
-        T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
+        T Deserialize(ref MessagePackReader reader, ref SerializationState state, CancellationToken cancellationToken);
     }
 }
