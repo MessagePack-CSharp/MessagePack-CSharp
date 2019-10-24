@@ -3,16 +3,20 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
     public class ContractlessStandardResolverTest
     {
+        private readonly ITestOutputHelper logger;
+
+        public ContractlessStandardResolverTest(ITestOutputHelper logger)
+        {
+            this.logger = logger;
+        }
+
         public class Address
         {
             public string Street { get; set; }
@@ -99,6 +103,34 @@ namespace MessagePack.Tests
             public int MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty1MyProperty2MyProperty { get; set; }
 
             public int OAFADFZEWFSDFSDFKSLJFWEFNWOZFUSEWWEFWEWFFFFFFFFFFFFFFZFEWBFOWUEGWHOUDGSOGUDSZNOFRWEUFWGOWHOGHWOG000000000000000000000000000000000000000HOGZ { get; set; }
+        }
+
+        public class BaseProperty
+        {
+            public int Y;
+
+            public int X { get; set; }
+        }
+
+        public class NewProperty : BaseProperty
+        {
+            public new string X { get; set; }
+
+            public new string Y { get; set; }
+        }
+
+        public class BaseField
+        {
+            public int X;
+
+            public int Y { get; set; }
+        }
+
+        public class NewField : BaseField
+        {
+            public new string X;
+
+            public new string Y;
         }
 
         [Fact]
@@ -219,6 +251,40 @@ namespace MessagePack.Tests
             LongestString v = MessagePackSerializer.Deserialize<LongestString>(bin, Resolvers.ContractlessStandardResolver.Options);
 
             v.IsStructuralEqual(o);
+        }
+
+        [Fact]
+        public void NewFieldCheck()
+        {
+            var o = new NewField { X = "Foo", Y = "Bar" };
+            BaseField b1 = o;
+            b1.X = 123;
+            var bin = MessagePackSerializer.Serialize(o, Resolvers.ContractlessStandardResolver.Options);
+            this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin));
+            var v = MessagePackSerializer.Deserialize<NewField>(bin, Resolvers.ContractlessStandardResolver.Options);
+            v.IsStructuralEqual(o);
+
+            // Verify that we still maintain compatibility with deserializing the base type.
+            var b2 = MessagePackSerializer.Deserialize<BaseField>(bin, Resolvers.ContractlessStandardResolver.Options);
+            Assert.Equal(b1.X, b2.X);
+            Assert.Equal(b1.Y, b2.Y);
+        }
+
+        [Fact]
+        public void NewPropertyCheck()
+        {
+            var o = new NewProperty { X = "Foo", Y = "Bar" };
+            BaseProperty b1 = o;
+            b1.X = 123;
+            var bin = MessagePackSerializer.Serialize(o, Resolvers.ContractlessStandardResolver.Options);
+            this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin));
+            var v = MessagePackSerializer.Deserialize<NewProperty>(bin, Resolvers.ContractlessStandardResolver.Options);
+            v.IsStructuralEqual(o);
+
+            // Verify that we still maintain compatibility with deserializing the base type.
+            var b2 = MessagePackSerializer.Deserialize<BaseProperty>(bin, Resolvers.ContractlessStandardResolver.Options);
+            Assert.Equal(b1.X, b2.X);
+            Assert.Equal(b1.Y, b2.Y);
         }
     }
 }

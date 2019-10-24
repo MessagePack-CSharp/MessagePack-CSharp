@@ -1400,91 +1400,88 @@ namespace MessagePack.Internal
                 isIntKey = !(forceStringKey || (contractAttr != null && contractAttr.KeyAsPropertyName));
 
                 var hiddenIntKey = 0;
-                foreach (PropertyInfo item in type.GetRuntimeProperties())
+
+                // Group the properties and fields by name to qualify members of the same name
+                // (declared with the 'new' keyword) with the declaring type.
+                IEnumerable<IGrouping<string, MemberInfo>> membersByName = type.GetRuntimeProperties()
+                    .Concat(type.GetRuntimeFields().Cast<MemberInfo>())
+                    .OrderBy(m => m.DeclaringType, OrderBaseTypesBeforeDerivedTypes.Instance)
+                    .GroupBy(m => m.Name);
+                foreach (var memberGroup in membersByName)
                 {
-                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
+                    bool firstMemberByName = true;
+                    foreach (MemberInfo item in memberGroup)
                     {
-                        continue;
-                    }
+                        if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
+                        {
+                            continue;
+                        }
 
-                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
+                        if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
+                        {
+                            continue;
+                        }
 
-                    if (item.IsIndexer())
-                    {
-                        continue;
-                    }
+                        EmittableMember member;
+                        if (item is PropertyInfo property)
+                        {
+                            if (property.IsIndexer())
+                            {
+                                continue;
+                            }
 
-                    MethodInfo getMethod = item.GetGetMethod(true);
-                    MethodInfo setMethod = item.GetSetMethod(true);
+                            MethodInfo getMethod = property.GetGetMethod(true);
+                            MethodInfo setMethod = property.GetSetMethod(true);
 
-                    var member = new EmittableMember
-                    {
-                        PropertyInfo = item,
-                        IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
-                        IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
-                        StringKey = item.Name,
-                    };
-                    if (!member.IsReadable && !member.IsWritable)
-                    {
-                        continue;
-                    }
+                            member = new EmittableMember
+                            {
+                                PropertyInfo = property,
+                                IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
+                                IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
+                                StringKey = firstMemberByName ? item.Name : $"{item.DeclaringType.FullName}.{item.Name}",
+                            };
+                        }
+                        else if (item is FieldInfo field)
+                        {
+                            if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null)
+                            {
+                                continue;
+                            }
 
-                    member.IntKey = hiddenIntKey++;
-                    if (isIntKey)
-                    {
-                        intMembers.Add(member.IntKey, member);
-                    }
-                    else
-                    {
-                        stringMembers.Add(member.StringKey, member);
-                    }
-                }
+                            if (field.IsStatic)
+                            {
+                                continue;
+                            }
 
-                foreach (FieldInfo item in type.GetRuntimeFields())
-                {
-                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
+                            member = new EmittableMember
+                            {
+                                FieldInfo = field,
+                                IsReadable = allowPrivate || field.IsPublic,
+                                IsWritable = allowPrivate || (field.IsPublic && !field.IsInitOnly),
+                                StringKey = firstMemberByName ? item.Name : $"{item.DeclaringType.FullName}.{item.Name}",
+                            };
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("unexpected member type");
+                        }
 
-                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
+                        if (!member.IsReadable && !member.IsWritable)
+                        {
+                            continue;
+                        }
 
-                    if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null)
-                    {
-                        continue;
-                    }
+                        member.IntKey = hiddenIntKey++;
+                        if (isIntKey)
+                        {
+                            intMembers.Add(member.IntKey, member);
+                        }
+                        else
+                        {
+                            stringMembers.Add(member.StringKey, member);
+                        }
 
-                    if (item.IsStatic)
-                    {
-                        continue;
-                    }
-
-                    var member = new EmittableMember
-                    {
-                        FieldInfo = item,
-                        IsReadable = allowPrivate || item.IsPublic,
-                        IsWritable = allowPrivate || (item.IsPublic && !item.IsInitOnly),
-                        StringKey = item.Name,
-                    };
-                    if (!member.IsReadable && !member.IsWritable)
-                    {
-                        continue;
-                    }
-
-                    member.IntKey = hiddenIntKey++;
-                    if (isIntKey)
-                    {
-                        intMembers.Add(member.IntKey, member);
-                    }
-                    else
-                    {
-                        stringMembers.Add(member.StringKey, member);
+                        firstMemberByName = false;
                     }
                 }
             }
@@ -1871,7 +1868,7 @@ namespace MessagePack.Internal
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = members,
+                Members = members.Where(m => constructorParameters.Contains(m) || m.IsWritable).ToArray(),
             };
         }
 
@@ -2011,6 +2008,24 @@ namespace MessagePack.Internal
             ////        FieldInfo.SetValue(obj, value);
             ////    }
             ////}
+        }
+
+        private class OrderBaseTypesBeforeDerivedTypes : IComparer<Type>
+        {
+            internal static readonly OrderBaseTypesBeforeDerivedTypes Instance = new OrderBaseTypesBeforeDerivedTypes();
+
+            private OrderBaseTypesBeforeDerivedTypes()
+            {
+            }
+
+            public int Compare(Type x, Type y)
+            {
+                return
+                    x.IsEquivalentTo(y) ? 0 :
+                    x.IsAssignableFrom(y) ? -1 :
+                    y.IsAssignableFrom(x) ? 1 :
+                    0;
+            }
         }
     }
 
