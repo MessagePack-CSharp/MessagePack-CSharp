@@ -1421,9 +1421,7 @@ namespace MessagePack.Internal
                         }
 
                         EmittableMember member;
-                        var property = item as PropertyInfo;
-                        var field = item as FieldInfo;
-                        if (property != null)
+                        if (item is PropertyInfo property)
                         {
                             if (property.IsIndexer())
                             {
@@ -1441,7 +1439,7 @@ namespace MessagePack.Internal
                                 StringKey = memberGroup.Count() > 1 ? $"{item.DeclaringType.FullName}.{item.Name}" : item.Name,
                             };
                         }
-                        else if (field != null)
+                        else if (item is FieldInfo field)
                         {
                             if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null)
                             {

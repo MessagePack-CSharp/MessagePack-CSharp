@@ -4,11 +4,19 @@
 using System;
 using System.Collections;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
     public class ContractlessStandardResolverTest
     {
+        private readonly ITestOutputHelper logger;
+
+        public ContractlessStandardResolverTest(ITestOutputHelper logger)
+        {
+            this.logger = logger;
+        }
+
         public class Address
         {
             public string Street { get; set; }
@@ -251,6 +259,7 @@ namespace MessagePack.Tests
             var o = new NewField { X = "Foo", Y = "Bar" };
             ((BaseField)o).X = 123;
             var bin = MessagePackSerializer.Serialize(o, Resolvers.ContractlessStandardResolver.Options);
+            this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin));
             NewField v =
                 MessagePackSerializer.Deserialize<NewField>(bin, Resolvers.ContractlessStandardResolver.Options);
 
@@ -263,6 +272,7 @@ namespace MessagePack.Tests
             var o = new NewProperty { X = "Foo", Y = "Bar" };
             ((BaseProperty)o).X = 123;
             var bin = MessagePackSerializer.Serialize(o, Resolvers.ContractlessStandardResolver.Options);
+            this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin));
             NewProperty v =
                 MessagePackSerializer.Deserialize<NewProperty>(bin, Resolvers.ContractlessStandardResolver.Options);
 
