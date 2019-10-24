@@ -1405,9 +1405,11 @@ namespace MessagePack.Internal
                 // (declared with the 'new' keyword) with the declaring type.
                 IEnumerable<IGrouping<string, MemberInfo>> membersByName = type.GetRuntimeProperties()
                     .Concat(type.GetRuntimeFields().Cast<MemberInfo>())
+                    .OrderBy(m => m.DeclaringType, OrderBaseTypesBeforeDerivedTypes.Instance)
                     .GroupBy(m => m.Name);
                 foreach (var memberGroup in membersByName)
                 {
+                    bool firstMemberByName = true;
                     foreach (MemberInfo item in memberGroup)
                     {
                         if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
@@ -1436,7 +1438,7 @@ namespace MessagePack.Internal
                                 PropertyInfo = property,
                                 IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
                                 IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
-                                StringKey = memberGroup.Count() > 1 ? $"{item.DeclaringType.FullName}.{item.Name}" : item.Name,
+                                StringKey = firstMemberByName ? item.Name : $"{item.DeclaringType.FullName}.{item.Name}",
                             };
                         }
                         else if (item is FieldInfo field)
@@ -1456,7 +1458,7 @@ namespace MessagePack.Internal
                                 FieldInfo = field,
                                 IsReadable = allowPrivate || field.IsPublic,
                                 IsWritable = allowPrivate || (field.IsPublic && !field.IsInitOnly),
-                                StringKey = memberGroup.Count() > 1 ? $"{item.DeclaringType.FullName}.{item.Name}" : item.Name,
+                                StringKey = firstMemberByName ? item.Name : $"{item.DeclaringType.FullName}.{item.Name}",
                             };
                         }
                         else
@@ -1478,6 +1480,8 @@ namespace MessagePack.Internal
                         {
                             stringMembers.Add(member.StringKey, member);
                         }
+
+                        firstMemberByName = false;
                     }
                 }
             }
@@ -2004,6 +2008,24 @@ namespace MessagePack.Internal
             ////        FieldInfo.SetValue(obj, value);
             ////    }
             ////}
+        }
+
+        private class OrderBaseTypesBeforeDerivedTypes : IComparer<Type>
+        {
+            internal static readonly OrderBaseTypesBeforeDerivedTypes Instance = new OrderBaseTypesBeforeDerivedTypes();
+
+            private OrderBaseTypesBeforeDerivedTypes()
+            {
+            }
+
+            public int Compare(Type x, Type y)
+            {
+                return
+                    x.IsEquivalentTo(y) ? 0 :
+                    x.IsAssignableFrom(y) ? -1 :
+                    y.IsAssignableFrom(x) ? 1 :
+                    0;
+            }
         }
     }
 

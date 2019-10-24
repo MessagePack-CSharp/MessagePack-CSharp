@@ -257,26 +257,34 @@ namespace MessagePack.Tests
         public void NewFieldCheck()
         {
             var o = new NewField { X = "Foo", Y = "Bar" };
-            ((BaseField)o).X = 123;
+            BaseField b1 = o;
+            b1.X = 123;
             var bin = MessagePackSerializer.Serialize(o, Resolvers.ContractlessStandardResolver.Options);
             this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin));
-            NewField v =
-                MessagePackSerializer.Deserialize<NewField>(bin, Resolvers.ContractlessStandardResolver.Options);
-
+            var v = MessagePackSerializer.Deserialize<NewField>(bin, Resolvers.ContractlessStandardResolver.Options);
             v.IsStructuralEqual(o);
+
+            // Verify that we still maintain compatibility with deserializing the base type.
+            var b2 = MessagePackSerializer.Deserialize<BaseField>(bin, Resolvers.ContractlessStandardResolver.Options);
+            Assert.Equal(b1.X, b2.X);
+            Assert.Equal(b1.Y, b2.Y);
         }
 
         [Fact]
         public void NewPropertyCheck()
         {
             var o = new NewProperty { X = "Foo", Y = "Bar" };
-            ((BaseProperty)o).X = 123;
+            BaseProperty b1 = o;
+            b1.X = 123;
             var bin = MessagePackSerializer.Serialize(o, Resolvers.ContractlessStandardResolver.Options);
             this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin));
-            NewProperty v =
-                MessagePackSerializer.Deserialize<NewProperty>(bin, Resolvers.ContractlessStandardResolver.Options);
-
+            var v = MessagePackSerializer.Deserialize<NewProperty>(bin, Resolvers.ContractlessStandardResolver.Options);
             v.IsStructuralEqual(o);
+
+            // Verify that we still maintain compatibility with deserializing the base type.
+            var b2 = MessagePackSerializer.Deserialize<BaseProperty>(bin, Resolvers.ContractlessStandardResolver.Options);
+            Assert.Equal(b1.X, b2.X);
+            Assert.Equal(b1.Y, b2.Y);
         }
     }
 }
