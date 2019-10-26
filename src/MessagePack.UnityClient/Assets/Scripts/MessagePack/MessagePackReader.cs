@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using MessagePack.Internal;
 
 namespace MessagePack
@@ -45,6 +46,11 @@ namespace MessagePack
         {
             this.reader = new SequenceReader<byte>(readOnlySequence);
         }
+
+        /// <summary>
+        /// Gets or sets the cancellation token for this deserialization operation.
+        /// </summary>
+        public CancellationToken CancellationToken { get; set; }
 
         /// <summary>
         /// Gets the <see cref="ReadOnlySequence{T}"/> originally supplied to the constructor.
@@ -101,6 +107,7 @@ namespace MessagePack
         /// <returns>The new reader.</returns>
         public MessagePackReader Clone(in ReadOnlySequence<byte> readOnlySequence) => new MessagePackReader(readOnlySequence)
         {
+            CancellationToken = this.CancellationToken,
         };
 
         /// <summary>

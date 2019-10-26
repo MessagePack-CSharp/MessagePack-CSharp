@@ -30,6 +30,7 @@ namespace MessagePack.Formatters
 
                 for (int i = 0; i < value.Length; i++)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     formatter.Serialize(ref writer, value[i], options);
                 }
             }
@@ -49,6 +50,7 @@ namespace MessagePack.Formatters
                 var array = new T[len];
                 for (int i = 0; i < array.Length; i++)
                 {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
                     array[i] = formatter.Deserialize(ref reader, options);
                 }
 
@@ -116,6 +118,7 @@ namespace MessagePack.Formatters
                 T[] array = value.Array;
                 for (int i = 0; i < value.Count; i++)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     T item = array[value.Offset + i];
                     formatter.Serialize(ref writer, item, options);
                 }
@@ -154,6 +157,7 @@ namespace MessagePack.Formatters
 
                 for (int i = 0; i < c; i++)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     formatter.Serialize(ref writer, value[i], options);
                 }
             }
@@ -173,6 +177,7 @@ namespace MessagePack.Formatters
                 var list = new List<T>((int)len);
                 for (int i = 0; i < len; i++)
                 {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
                     list.Add(formatter.Deserialize(ref reader, options));
                 }
 
@@ -203,6 +208,7 @@ namespace MessagePack.Formatters
 
                     foreach (TElement item in array)
                     {
+                        writer.CancellationToken.ThrowIfCancellationRequested();
                         formatter.Serialize(ref writer, item, options);
                     }
 
@@ -224,6 +230,7 @@ namespace MessagePack.Formatters
                         {
                             while (e.MoveNext())
                             {
+                                writer.CancellationToken.ThrowIfCancellationRequested();
                                 formatter.Serialize(ref writer, e.Current, options);
                             }
                         }
@@ -245,6 +252,7 @@ namespace MessagePack.Formatters
                             {
                                 while (e.MoveNext())
                                 {
+                                    writer.CancellationToken.ThrowIfCancellationRequested();
                                     count++;
                                     formatter.Serialize(ref scratchWriter, e.Current, options);
                                 }
@@ -278,6 +286,7 @@ namespace MessagePack.Formatters
                 TIntermediate list = this.Create(len);
                 for (int i = 0; i < len; i++)
                 {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
                     this.Add(list, i, formatter.Deserialize(ref reader, options));
                 }
 
@@ -675,6 +684,7 @@ namespace MessagePack.Formatters
             writer.WriteArrayHeader(value.Count);
             foreach (var item in value)
             {
+                writer.CancellationToken.ThrowIfCancellationRequested();
                 formatter.Serialize(ref writer, item, options);
             }
         }
@@ -693,6 +703,7 @@ namespace MessagePack.Formatters
             var list = new T();
             for (int i = 0; i < count; i++)
             {
+                reader.CancellationToken.ThrowIfCancellationRequested();
                 list.Add(formatter.Deserialize(ref reader, options));
             }
 
@@ -721,6 +732,7 @@ namespace MessagePack.Formatters
             writer.WriteArrayHeader(value.Count);
             foreach (var item in value)
             {
+                writer.CancellationToken.ThrowIfCancellationRequested();
                 formatter.Serialize(ref writer, item, options);
             }
         }
@@ -739,6 +751,7 @@ namespace MessagePack.Formatters
             var list = new object[count];
             for (int i = 0; i < count; i++)
             {
+                reader.CancellationToken.ThrowIfCancellationRequested();
                 list[i] = formatter.Deserialize(ref reader, options);
             }
 
@@ -762,6 +775,7 @@ namespace MessagePack.Formatters
             writer.WriteMapHeader(value.Count);
             foreach (DictionaryEntry item in value)
             {
+                writer.CancellationToken.ThrowIfCancellationRequested();
                 formatter.Serialize(ref writer, item.Key, options);
                 formatter.Serialize(ref writer, item.Value, options);
             }
@@ -781,6 +795,7 @@ namespace MessagePack.Formatters
             var dict = new T();
             for (int i = 0; i < count; i++)
             {
+                reader.CancellationToken.ThrowIfCancellationRequested();
                 var key = formatter.Deserialize(ref reader, options);
                 var value = formatter.Deserialize(ref reader, options);
                 dict.Add(key, value);
@@ -811,6 +826,7 @@ namespace MessagePack.Formatters
             writer.WriteMapHeader(value.Count);
             foreach (DictionaryEntry item in value)
             {
+                writer.CancellationToken.ThrowIfCancellationRequested();
                 formatter.Serialize(ref writer, item.Key, options);
                 formatter.Serialize(ref writer, item.Value, options);
             }
@@ -830,6 +846,7 @@ namespace MessagePack.Formatters
             var dict = new Dictionary<object, object>(count);
             for (int i = 0; i < count; i++)
             {
+                reader.CancellationToken.ThrowIfCancellationRequested();
                 var key = formatter.Deserialize(ref reader, options);
                 var value = formatter.Deserialize(ref reader, options);
                 dict.Add(key, value);

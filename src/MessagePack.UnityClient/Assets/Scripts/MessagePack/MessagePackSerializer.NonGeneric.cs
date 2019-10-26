@@ -27,10 +27,10 @@ namespace MessagePack
             GetOrAdd(type).Serialize_MessagePackWriter_T_Options.Invoke(ref writer, obj, options);
         }
 
-        /// <seealso cref="Serialize{T}(T, MessagePackSerializerOptions)"/>
-        public static byte[] Serialize(Type type, object obj, MessagePackSerializerOptions options = null)
+        /// <seealso cref="Serialize{T}(T, MessagePackSerializerOptions, CancellationToken)"/>
+        public static byte[] Serialize(Type type, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            return GetOrAdd(type).Serialize_T_Options.Invoke(obj, options);
+            return GetOrAdd(type).Serialize_T_Options.Invoke(obj, options, cancellationToken);
         }
 
         /// <seealso cref="Serialize{T}(Stream, T, MessagePackSerializerOptions, CancellationToken)"/>
@@ -63,10 +63,10 @@ namespace MessagePack
             return GetOrAdd(type).DeserializeAsync_Stream_Options_CancellationToken.Invoke(stream, options, cancellationToken);
         }
 
-        /// <seealso cref="Deserialize{T}(ReadOnlyMemory{byte}, MessagePackSerializerOptions)"/>
-        public static object Deserialize(Type type, ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null)
+        /// <seealso cref="Deserialize{T}(ReadOnlyMemory{byte}, MessagePackSerializerOptions, CancellationToken)"/>
+        public static object Deserialize(Type type, ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options);
+            return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options, cancellationToken);
         }
 
         private static async ValueTask<object> DeserializeObjectAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken) => await DeserializeAsync<T>(stream, options, cancellationToken).ConfigureAwait(false);
@@ -85,7 +85,7 @@ namespace MessagePack
 #pragma warning disable SA1310 // Field names should not contain underscore
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
-            internal readonly Func<object, MessagePackSerializerOptions, byte[]> Serialize_T_Options;
+            internal readonly Func<object, MessagePackSerializerOptions, CancellationToken, byte[]> Serialize_T_Options;
             internal readonly Action<Stream, object, MessagePackSerializerOptions, CancellationToken> Serialize_Stream_T_Options_CancellationToken;
             internal readonly Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task> SerializeAsync_Stream_T_Options_CancellationToken;
             internal readonly MessagePackWriterSerialize Serialize_MessagePackWriter_T_Options;
@@ -94,7 +94,7 @@ namespace MessagePack
             internal readonly Func<Stream, MessagePackSerializerOptions, CancellationToken, object> Deserialize_Stream_Options_CancellationToken;
             internal readonly Func<Stream, MessagePackSerializerOptions, CancellationToken, ValueTask<object>> DeserializeAsync_Stream_Options_CancellationToken;
 
-            internal readonly Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object> Deserialize_ReadOnlyMemory_Options;
+            internal readonly Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object> Deserialize_ReadOnlyMemory_Options;
 #pragma warning restore SA1401 // Fields should be private
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning restore SA1310 // Field names should not contain underscore
@@ -103,18 +103,20 @@ namespace MessagePack
             {
                 TypeInfo ti = type.GetTypeInfo();
                 {
-                    // public static byte[] Serialize<T>(T obj, MessagePackSerializerOptions options)
-                    MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type[] { null, typeof(MessagePackSerializerOptions) });
+                    // public static byte[] Serialize<T>(T obj, MessagePackSerializerOptions options, CancellationToken cancellationToken)
+                    MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type[] { null, typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
 
                     ParameterExpression param1 = Expression.Parameter(typeof(object), "obj");
                     ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    ParameterExpression param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
 
                     MethodCallExpression body = Expression.Call(
                         null,
                         serialize,
                         ti.IsValueType ? Expression.Unbox(param1, type) : Expression.Convert(param1, type),
-                        param2);
-                    Func<object, MessagePackSerializerOptions, byte[]> lambda = Expression.Lambda<Func<object, MessagePackSerializerOptions, byte[]>>(body, param1, param2).Compile();
+                        param2,
+                        param3);
+                    Func<object, MessagePackSerializerOptions, CancellationToken, byte[]> lambda = Expression.Lambda<Func<object, MessagePackSerializerOptions, CancellationToken, byte[]>>(body, param1, param2, param3).Compile();
 
                     this.Serialize_T_Options = lambda;
                 }
@@ -219,13 +221,14 @@ namespace MessagePack
                 }
 
                 {
-                    // public static T Deserialize<T>(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options)
-                    MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type[] { typeof(ReadOnlyMemory<byte>), typeof(MessagePackSerializerOptions) });
+                    // public static T Deserialize<T>(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options, CancellationToken cancellationToken)
+                    MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type[] { typeof(ReadOnlyMemory<byte>), typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
 
                     ParameterExpression param1 = Expression.Parameter(typeof(ReadOnlyMemory<byte>), "bytes");
                     ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
-                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
-                    Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object> lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, object>>(body, param1, param2).Compile();
+                    ParameterExpression param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
+                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2, param3), typeof(object));
+                    Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile();
 
                     this.Deserialize_ReadOnlyMemory_Options = lambda;
                 }

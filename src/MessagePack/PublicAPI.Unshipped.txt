@@ -502,6 +502,8 @@ MessagePack.Internal.UnsafeMemory64
 MessagePack.MessagePackCode
 MessagePack.MessagePackRange
 MessagePack.MessagePackReader
+MessagePack.MessagePackReader.CancellationToken.get -> System.Threading.CancellationToken
+MessagePack.MessagePackReader.CancellationToken.set -> void
 MessagePack.MessagePackReader.Clone(in System.Buffers.ReadOnlySequence<byte> readOnlySequence) -> MessagePack.MessagePackReader
 MessagePack.MessagePackReader.Consumed.get -> long
 MessagePack.MessagePackReader.CreatePeekReader() -> MessagePack.MessagePackReader
@@ -564,6 +566,8 @@ MessagePack.MessagePackType.Nil = 2 -> MessagePack.MessagePackType
 MessagePack.MessagePackType.String = 5 -> MessagePack.MessagePackType
 MessagePack.MessagePackType.Unknown = 0 -> MessagePack.MessagePackType
 MessagePack.MessagePackWriter
+MessagePack.MessagePackWriter.CancellationToken.get -> System.Threading.CancellationToken
+MessagePack.MessagePackWriter.CancellationToken.set -> void
 MessagePack.MessagePackWriter.Clone(System.Buffers.IBufferWriter<byte> writer) -> MessagePack.MessagePackWriter
 MessagePack.MessagePackWriter.Flush() -> void
 MessagePack.MessagePackWriter.MessagePackWriter(System.Buffers.IBufferWriter<byte> writer) -> void
@@ -800,45 +804,45 @@ static MessagePack.MessagePackCode.IsSignedInteger(byte code) -> bool
 static MessagePack.MessagePackCode.ToFormatName(byte code) -> string
 static MessagePack.MessagePackCode.ToMessagePackType(byte code) -> MessagePack.MessagePackType
 static MessagePack.MessagePackSerializer.ConvertFromJson(System.IO.TextReader reader, ref MessagePack.MessagePackWriter writer, MessagePack.MessagePackSerializerOptions options = null) -> void
-static MessagePack.MessagePackSerializer.ConvertFromJson(string str, MessagePack.MessagePackSerializerOptions options = null) -> byte[]
+static MessagePack.MessagePackSerializer.ConvertFromJson(string str, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.ConvertFromJson(string str, ref MessagePack.MessagePackWriter writer, MessagePack.MessagePackSerializerOptions options = null) -> void
-static MessagePack.MessagePackSerializer.ConvertToJson(System.ReadOnlyMemory<byte> bytes, MessagePack.MessagePackSerializerOptions options = null) -> string
-static MessagePack.MessagePackSerializer.ConvertToJson(in System.Buffers.ReadOnlySequence<byte> bytes, MessagePack.MessagePackSerializerOptions options = null) -> string
+static MessagePack.MessagePackSerializer.ConvertToJson(System.ReadOnlyMemory<byte> bytes, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> string
+static MessagePack.MessagePackSerializer.ConvertToJson(in System.Buffers.ReadOnlySequence<byte> bytes, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> string
 static MessagePack.MessagePackSerializer.ConvertToJson(ref MessagePack.MessagePackReader reader, System.IO.TextWriter jsonWriter, MessagePack.MessagePackSerializerOptions options = null) -> void
 static MessagePack.MessagePackSerializer.DefaultOptions.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.MessagePackSerializer.DefaultOptions.set -> void
 static MessagePack.MessagePackSerializer.Deserialize(System.Type type, System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object
-static MessagePack.MessagePackSerializer.Deserialize(System.Type type, System.ReadOnlyMemory<byte> bytes, MessagePack.MessagePackSerializerOptions options = null) -> object
+static MessagePack.MessagePackSerializer.Deserialize(System.Type type, System.ReadOnlyMemory<byte> bytes, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object
 static MessagePack.MessagePackSerializer.Deserialize(System.Type type, ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options = null) -> object
 static MessagePack.MessagePackSerializer.Deserialize<T>(System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> T
-static MessagePack.MessagePackSerializer.Deserialize<T>(System.ReadOnlyMemory<byte> buffer, MessagePack.MessagePackSerializerOptions options = null) -> T
-static MessagePack.MessagePackSerializer.Deserialize<T>(System.ReadOnlyMemory<byte> buffer, MessagePack.MessagePackSerializerOptions options, out int bytesRead) -> T
-static MessagePack.MessagePackSerializer.Deserialize<T>(System.ReadOnlyMemory<byte> buffer, out int bytesRead) -> T
-static MessagePack.MessagePackSerializer.Deserialize<T>(in System.Buffers.ReadOnlySequence<byte> byteSequence, MessagePack.MessagePackSerializerOptions options = null) -> T
+static MessagePack.MessagePackSerializer.Deserialize<T>(System.ReadOnlyMemory<byte> buffer, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> T
+static MessagePack.MessagePackSerializer.Deserialize<T>(System.ReadOnlyMemory<byte> buffer, MessagePack.MessagePackSerializerOptions options, out int bytesRead, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> T
+static MessagePack.MessagePackSerializer.Deserialize<T>(System.ReadOnlyMemory<byte> buffer, out int bytesRead, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> T
+static MessagePack.MessagePackSerializer.Deserialize<T>(in System.Buffers.ReadOnlySequence<byte> byteSequence, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> T
 static MessagePack.MessagePackSerializer.Deserialize<T>(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options = null) -> T
 static MessagePack.MessagePackSerializer.DeserializeAsync(System.Type type, System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object>
 static MessagePack.MessagePackSerializer.DeserializeAsync<T>(System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<T>
 static MessagePack.MessagePackSerializer.Serialize(System.Type type, System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
-static MessagePack.MessagePackSerializer.Serialize(System.Type type, object obj, MessagePack.MessagePackSerializerOptions options = null) -> byte[]
+static MessagePack.MessagePackSerializer.Serialize(System.Type type, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.Serialize(System.Type type, ref MessagePack.MessagePackWriter writer, object obj, MessagePack.MessagePackSerializerOptions options = null) -> void
-static MessagePack.MessagePackSerializer.Serialize<T>(System.Buffers.IBufferWriter<byte> writer, T value, MessagePack.MessagePackSerializerOptions options = null) -> void
+static MessagePack.MessagePackSerializer.Serialize<T>(System.Buffers.IBufferWriter<byte> writer, T value, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
 static MessagePack.MessagePackSerializer.Serialize<T>(System.IO.Stream stream, T value, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
-static MessagePack.MessagePackSerializer.Serialize<T>(T value, MessagePack.MessagePackSerializerOptions options = null) -> byte[]
+static MessagePack.MessagePackSerializer.Serialize<T>(T value, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.Serialize<T>(ref MessagePack.MessagePackWriter writer, T value, MessagePack.MessagePackSerializerOptions options = null) -> void
 static MessagePack.MessagePackSerializer.SerializeAsync(System.Type type, System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task
 static MessagePack.MessagePackSerializer.SerializeAsync<T>(System.IO.Stream stream, T value, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task
-static MessagePack.MessagePackSerializer.SerializeToJson<T>(System.IO.TextWriter textWriter, T obj, MessagePack.MessagePackSerializerOptions options = null) -> void
-static MessagePack.MessagePackSerializer.SerializeToJson<T>(T obj, MessagePack.MessagePackSerializerOptions options = null) -> string
+static MessagePack.MessagePackSerializer.SerializeToJson<T>(System.IO.TextWriter textWriter, T obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+static MessagePack.MessagePackSerializer.SerializeToJson<T>(T obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> string
 static MessagePack.MessagePackSerializer.Typeless.DefaultOptions.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.MessagePackSerializer.Typeless.DefaultOptions.set -> void
-static MessagePack.MessagePackSerializer.Typeless.Deserialize(System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null) -> object
-static MessagePack.MessagePackSerializer.Typeless.Deserialize(System.Memory<byte> bytes, MessagePack.MessagePackSerializerOptions options = null) -> object
-static MessagePack.MessagePackSerializer.Typeless.Deserialize(in System.Buffers.ReadOnlySequence<byte> byteSequence, MessagePack.MessagePackSerializerOptions options = null) -> object
+static MessagePack.MessagePackSerializer.Typeless.Deserialize(System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object
+static MessagePack.MessagePackSerializer.Typeless.Deserialize(System.Memory<byte> bytes, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object
+static MessagePack.MessagePackSerializer.Typeless.Deserialize(in System.Buffers.ReadOnlySequence<byte> byteSequence, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object
 static MessagePack.MessagePackSerializer.Typeless.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options = null) -> object
 static MessagePack.MessagePackSerializer.Typeless.DeserializeAsync(System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object>
-static MessagePack.MessagePackSerializer.Typeless.Serialize(System.Buffers.IBufferWriter<byte> writer, object obj, MessagePack.MessagePackSerializerOptions options = null) -> void
-static MessagePack.MessagePackSerializer.Typeless.Serialize(System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null) -> void
-static MessagePack.MessagePackSerializer.Typeless.Serialize(object obj, MessagePack.MessagePackSerializerOptions options = null) -> byte[]
+static MessagePack.MessagePackSerializer.Typeless.Serialize(System.Buffers.IBufferWriter<byte> writer, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+static MessagePack.MessagePackSerializer.Typeless.Serialize(System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+static MessagePack.MessagePackSerializer.Typeless.Serialize(object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.Typeless.Serialize(ref MessagePack.MessagePackWriter writer, object obj, MessagePack.MessagePackSerializerOptions options = null) -> void
 static MessagePack.MessagePackSerializer.Typeless.SerializeAsync(System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task
 static MessagePack.MessagePackSerializerOptions.LZ4Standard.get -> MessagePack.MessagePackSerializerOptions

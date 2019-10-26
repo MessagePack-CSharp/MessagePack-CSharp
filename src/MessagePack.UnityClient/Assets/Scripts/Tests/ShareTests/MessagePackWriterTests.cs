@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Threading;
 using Nerdbank.Streams;
 using Xunit;
 
@@ -97,6 +98,18 @@ namespace MessagePack.Tests
 
             Assert.Equal(header.TypeCode, readHeader.TypeCode);
             Assert.Equal(header.Length, readHeader.Length);
+        }
+
+        [Fact]
+        public void CancellationToken()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            Assert.False(writer.CancellationToken.CanBeCanceled);
+
+            var cts = new CancellationTokenSource();
+            writer.CancellationToken = cts.Token;
+            Assert.Equal(cts.Token, writer.CancellationToken);
         }
     }
 }

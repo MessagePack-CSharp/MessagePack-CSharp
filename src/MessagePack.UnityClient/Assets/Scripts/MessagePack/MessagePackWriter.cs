@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using MessagePack.Internal;
 using Microsoft;
 
@@ -52,6 +53,11 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Gets or sets the cancellation token for this serialization operation.
+        /// </summary>
+        public CancellationToken CancellationToken { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to write in <see href="https://github.com/msgpack/msgpack/blob/master/spec-old.md">old spec</see> compatibility mode.
         /// </summary>
         public bool OldSpec { get; set; }
@@ -65,6 +71,7 @@ namespace MessagePack
         public MessagePackWriter Clone(IBufferWriter<byte> writer) => new MessagePackWriter(writer)
         {
             OldSpec = this.OldSpec,
+            CancellationToken = this.CancellationToken,
         };
 
         /// <summary>

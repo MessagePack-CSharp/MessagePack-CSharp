@@ -36,6 +36,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (T item in value)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     formatter.Serialize(ref writer, item, options);
                 }
             }
@@ -67,6 +68,7 @@ namespace MessagePack.Formatters
                 var j = -1;
                 for (int loop = 0; loop < maxLen; loop++)
                 {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
                     if (j < jLength - 1)
                     {
                         j++;
@@ -111,6 +113,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (T item in value)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     formatter.Serialize(ref writer, item, options);
                 }
             }
@@ -144,6 +147,7 @@ namespace MessagePack.Formatters
                 var k = -1;
                 for (int loop = 0; loop < maxLen; loop++)
                 {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
                     if (k < kLength - 1)
                     {
                         k++;
@@ -196,6 +200,7 @@ namespace MessagePack.Formatters
                 writer.WriteArrayHeader(value.Length);
                 foreach (T item in value)
                 {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
                     formatter.Serialize(ref writer, item, options);
                 }
             }
@@ -230,6 +235,7 @@ namespace MessagePack.Formatters
                 var l = -1;
                 for (int loop = 0; loop < maxLen; loop++)
                 {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
                     if (l < lLength - 1)
                     {
                         l++;

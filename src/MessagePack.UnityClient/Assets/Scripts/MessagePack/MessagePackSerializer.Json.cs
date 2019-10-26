@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading;
 using MessagePack.Formatters;
 using Nerdbank.Streams;
 
@@ -17,40 +18,49 @@ namespace MessagePack
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
-        public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions options = null)
+        public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             using (var sequence = new Sequence<byte>())
             {
-                var msgpackWriter = new MessagePackWriter(sequence);
+                var msgpackWriter = new MessagePackWriter(sequence)
+                {
+                    CancellationToken = cancellationToken,
+                };
                 Serialize(ref msgpackWriter, obj, options);
                 msgpackWriter.Flush();
-                var msgpackReader = new MessagePackReader(sequence.AsReadOnlySequence);
-                ConvertToJson(ref msgpackReader, textWriter);
+                var msgpackReader = new MessagePackReader(sequence.AsReadOnlySequence)
+                {
+                    CancellationToken = cancellationToken,
+                };
+                ConvertToJson(ref msgpackReader, textWriter, options);
             }
         }
 
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
-        public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions options = null)
+        public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             var writer = new StringWriter();
-            SerializeToJson(writer, obj, options);
+            SerializeToJson(writer, obj, options, cancellationToken);
             return writer.ToString();
         }
 
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public static string ConvertToJson(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null) => ConvertToJson(new ReadOnlySequence<byte>(bytes), options);
+        public static string ConvertToJson(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => ConvertToJson(new ReadOnlySequence<byte>(bytes), options, cancellationToken);
 
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options = null)
+        public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             var jsonWriter = new StringWriter();
-            var reader = new MessagePackReader(bytes);
+            var reader = new MessagePackReader(bytes)
+            {
+                CancellationToken = cancellationToken,
+            };
             ConvertToJson(ref reader, jsonWriter, options);
             return jsonWriter.ToString();
         }
@@ -72,7 +82,10 @@ namespace MessagePack
                 {
                     if (TryDecompress(ref reader, scratch))
                     {
-                        var scratchReader = new MessagePackReader(scratch.AsReadOnlySequence);
+                        var scratchReader = new MessagePackReader(scratch.AsReadOnlySequence)
+                        {
+                            CancellationToken = reader.CancellationToken,
+                        };
                         if (scratchReader.End)
                         {
                             return;
@@ -106,11 +119,14 @@ namespace MessagePack
         /// <summary>
         /// Translates the given JSON to MessagePack.
         /// </summary>
-        public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions options = null)
+        public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             using (var seq = new Sequence<byte>())
             {
-                var writer = new MessagePackWriter(seq);
+                var writer = new MessagePackWriter(seq)
+                {
+                    CancellationToken = cancellationToken,
+                };
                 using (var sr = new StringReader(str))
                 {
                     ConvertFromJson(sr, ref writer, options);
