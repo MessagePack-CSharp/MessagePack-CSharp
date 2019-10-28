@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.Threading;
 using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
@@ -78,6 +79,17 @@ namespace MessagePack.Tests
                 var reader = new MessagePackReader(sequence);
                 reader.ReadMapHeader();
             });
+        }
+
+        [Fact]
+        public void CancellationToken()
+        {
+            var reader = new MessagePackReader(default);
+            Assert.False(reader.CancellationToken.CanBeCanceled);
+
+            var cts = new CancellationTokenSource();
+            reader.CancellationToken = cts.Token;
+            Assert.Equal(cts.Token, reader.CancellationToken);
         }
 
         private delegate void WriterEncoder(ref MessagePackWriter writer);

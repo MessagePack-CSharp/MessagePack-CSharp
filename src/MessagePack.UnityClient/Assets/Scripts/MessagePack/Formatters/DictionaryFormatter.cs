@@ -55,6 +55,7 @@ namespace MessagePack.Formatters
                 {
                     while (e.MoveNext())
                     {
+                        writer.CancellationToken.ThrowIfCancellationRequested();
                         KeyValuePair<TKey, TValue> item = e.Current;
                         keyFormatter.Serialize(ref writer, item.Key, options);
                         valueFormatter.Serialize(ref writer, item.Value, options);
@@ -84,6 +85,7 @@ namespace MessagePack.Formatters
                 TIntermediate dict = this.Create(len);
                 for (int i = 0; i < len; i++)
                 {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
                     TKey key = keyFormatter.Deserialize(ref reader, options);
 
                     TValue value = valueFormatter.Deserialize(ref reader, options);
