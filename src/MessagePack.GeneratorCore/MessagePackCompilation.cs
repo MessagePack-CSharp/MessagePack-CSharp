@@ -51,7 +51,7 @@ namespace MessagePackCompiler
                 syntaxTrees.Add(syntax);
                 if (Path.GetFileNameWithoutExtension(file) == "Attributes")
                 {
-                    var root = await syntax.GetRootAsync(cancellationToken);
+                    var root = await syntax.GetRootAsync(cancellationToken).ConfigureAwait(false);
                     if (root.DescendantNodes().OfType<ClassDeclarationSyntax>().Any(x => x.Identifier.Text == "MessagePackObjectAttribute"))
                     {
                         hasAnnotations = true;
@@ -176,7 +176,7 @@ namespace MessagePackCompiler
                 syntaxTrees.Add(syntax);
                 if (Path.GetFileNameWithoutExtension(file) == "Attributes")
                 {
-                    var root = await syntax.GetRootAsync(cancellationToken);
+                    var root = await syntax.GetRootAsync(cancellationToken).ConfigureAwait(false);
                     if (root.DescendantNodes().OfType<ClassDeclarationSyntax>().Any(x => x.Identifier.Text == "MessagePackObjectAttribute"))
                     {
                         hasAnnotations = true;

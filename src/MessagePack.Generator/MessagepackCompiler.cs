@@ -12,7 +12,7 @@ namespace MessagePack.Generator
     {
         private static async Task Main(string[] args)
         {
-            await BatchHost.CreateDefaultBuilder().RunBatchEngineAsync<MessagepackCompiler>(args);
+            await BatchHost.CreateDefaultBuilder().RunBatchEngineAsync<MessagepackCompiler>(args).ConfigureAwait(false);
         }
 
         public async Task RunAsync(
@@ -32,7 +32,7 @@ namespace MessagePack.Generator
                     resolverName,
                     @namespace,
                     useMapMode,
-                    multipleIfDiretiveOutputSymbols);
+                    multipleIfDiretiveOutputSymbols).ConfigureAwait(false);
         }
     }
 }

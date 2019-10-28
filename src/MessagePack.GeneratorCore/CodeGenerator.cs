@@ -47,7 +47,7 @@ namespace MessagePackCompiler
 
                 var compilation = (Path.GetExtension(input) == ".csproj")
                     ? await MessagePackCompilation.CreateFromProjectAsync(input.Split(','), conditionalSymbols.Concat(new[] { multioutSymbol }).ToArray(), cancellationToken)
-                    : await MessagePackCompilation.CreateFromDirectoryAsync(input, conditionalSymbols.Concat(new[] { multioutSymbol }).ToArray(), cancellationToken);
+.ConfigureAwait(false) : await MessagePackCompilation.CreateFromDirectoryAsync(input, conditionalSymbols.Concat(new[] { multioutSymbol }).ToArray(), cancellationToken).ConfigureAwait(false);
                 var collector = new TypeCollector(compilation, true, useMapMode, x => Console.WriteLine(x));
 
                 logger("Project Compilation Complete:" + sw.Elapsed.ToString());
@@ -125,13 +125,13 @@ namespace MessagePackCompiler
 
                     if (multioutSymbol == string.Empty)
                     {
-                        await OutputAsync(output, sb.ToString(), cancellationToken);
+                        await OutputAsync(output, sb.ToString(), cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
                         var fname = Path.GetFileNameWithoutExtension(output) + "." + MultiSymbolToSafeFilePath(multioutSymbol) + ".cs";
                         var text = $"#if {multioutSymbol}" + Environment.NewLine + sb.ToString() + Environment.NewLine + "#endif";
-                        await OutputAsync(Path.Combine(Path.GetDirectoryName(output), fname), text, cancellationToken);
+                        await OutputAsync(Path.Combine(Path.GetDirectoryName(output), fname), text, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 else
@@ -146,7 +146,7 @@ namespace MessagePackCompiler
                         };
 
                         var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken).ConfigureAwait(false);
                     }
 
                     foreach (var x in enumInfo)
@@ -158,7 +158,7 @@ namespace MessagePackCompiler
                         };
 
                         var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken).ConfigureAwait(false);
                     }
 
                     foreach (var x in unionInfo)
@@ -170,7 +170,7 @@ namespace MessagePackCompiler
                         };
 
                         var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken).ConfigureAwait(false);
                     }
 
                     var resolverTemplate = new ResolverTemplate()
@@ -181,7 +181,7 @@ namespace MessagePackCompiler
                         RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray(),
                     };
 
-                    await OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken);
+                    await OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken).ConfigureAwait(false);
                 }
             }
 

@@ -59,7 +59,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
                     {
-                        return checked((Byte)code);
+                        return (Byte)code;
                     }
 
                     throw ThrowInvalidCode(code);
@@ -112,7 +112,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
                     {
-                        return checked((UInt16)code);
+                        return (UInt16)code;
                     }
 
                     throw ThrowInvalidCode(code);
@@ -165,7 +165,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
                     {
-                        return checked((UInt32)code);
+                        return (UInt32)code;
                     }
 
                     throw ThrowInvalidCode(code);
@@ -218,7 +218,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
                     {
-                        return checked((UInt64)code);
+                        return (UInt64)code;
                     }
 
                     throw ThrowInvalidCode(code);
@@ -271,7 +271,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
                     {
-                        return checked((SByte)code);
+                        return (SByte)code;
                     }
 
                     throw ThrowInvalidCode(code);
@@ -324,7 +324,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
                     {
-                        return checked((Int16)code);
+                        return (Int16)code;
                     }
 
                     throw ThrowInvalidCode(code);
@@ -377,7 +377,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
                     {
-                        return checked((Int32)code);
+                        return (Int32)code;
                     }
 
                     throw ThrowInvalidCode(code);
@@ -430,7 +430,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
                     {
-                        return checked((Int64)code);
+                        return (Int64)code;
                     }
 
                     throw ThrowInvalidCode(code);

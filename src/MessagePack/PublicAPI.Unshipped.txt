@@ -338,8 +338,8 @@ MessagePack.Formatters.ObservableCollectionFormatter<T>.ObservableCollectionForm
 MessagePack.Formatters.PrimitiveObjectFormatter
 MessagePack.Formatters.PrimitiveObjectFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> object
 MessagePack.Formatters.PrimitiveObjectFormatter.Serialize(ref MessagePack.MessagePackWriter writer, object value, MessagePack.MessagePackSerializerOptions options) -> void
-MessagePack.Formatters.QeueueFormatter<T>
-MessagePack.Formatters.QeueueFormatter<T>.QeueueFormatter() -> void
+MessagePack.Formatters.QueueFormatter<T>
+MessagePack.Formatters.QueueFormatter<T>.QueueFormatter() -> void
 MessagePack.Formatters.ReadOnlyCollectionFormatter<T>
 MessagePack.Formatters.ReadOnlyCollectionFormatter<T>.ReadOnlyCollectionFormatter() -> void
 MessagePack.Formatters.ReadOnlyDictionaryFormatter<TKey, TValue>
@@ -648,6 +648,8 @@ MessagePack.Resolvers.StandardResolver
 MessagePack.Resolvers.StandardResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.Resolvers.StandardResolverAllowPrivate
 MessagePack.Resolvers.StandardResolverAllowPrivate.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.Resolvers.StaticCompositeResolver
+MessagePack.Resolvers.StaticCompositeResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.Resolvers.TypelessContractlessStandardResolver
 MessagePack.Resolvers.TypelessContractlessStandardResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.Resolvers.TypelessContractlessStandardResolver.TypelessContractlessStandardResolver() -> void
@@ -846,6 +848,9 @@ static MessagePack.MessagePackSerializerOptions.Standard.get -> MessagePack.Mess
 static MessagePack.Resolvers.CompositeResolver.Create(System.Collections.Generic.IReadOnlyList<MessagePack.Formatters.IMessagePackFormatter> formatters, System.Collections.Generic.IReadOnlyList<MessagePack.IFormatterResolver> resolvers) -> MessagePack.IFormatterResolver
 static MessagePack.Resolvers.CompositeResolver.Create(params MessagePack.Formatters.IMessagePackFormatter[] formatters) -> MessagePack.IFormatterResolver
 static MessagePack.Resolvers.CompositeResolver.Create(params MessagePack.IFormatterResolver[] resolvers) -> MessagePack.IFormatterResolver
+static MessagePack.Resolvers.StaticCompositeResolver.Register(System.Collections.Generic.IReadOnlyList<MessagePack.Formatters.IMessagePackFormatter> formatters, System.Collections.Generic.IReadOnlyList<MessagePack.IFormatterResolver> resolvers) -> void
+static MessagePack.Resolvers.StaticCompositeResolver.Register(params MessagePack.Formatters.IMessagePackFormatter[] formatters) -> void
+static MessagePack.Resolvers.StaticCompositeResolver.Register(params MessagePack.IFormatterResolver[] resolvers) -> void
 static readonly MessagePack.Formatters.BigIntegerFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.BigInteger>
 static readonly MessagePack.Formatters.BitArrayFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Collections.BitArray>
 static readonly MessagePack.Formatters.BooleanArrayFormatter.Instance -> MessagePack.Formatters.BooleanArrayFormatter
@@ -965,6 +970,7 @@ static readonly MessagePack.Resolvers.StandardResolver.Options -> MessagePack.Me
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Instance -> MessagePack.Resolvers.StandardResolverAllowPrivate
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Options -> MessagePack.MessagePackSerializerOptions
+static readonly MessagePack.Resolvers.StaticCompositeResolver.Instance -> MessagePack.Resolvers.StaticCompositeResolver
 static readonly MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance -> MessagePack.Resolvers.TypelessContractlessStandardResolver
 static readonly MessagePack.Resolvers.TypelessContractlessStandardResolver.Options -> MessagePack.MessagePackSerializerOptions
 virtual MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.GetCount(TCollection sequence) -> int?
