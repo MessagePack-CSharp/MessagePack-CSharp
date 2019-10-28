@@ -1,6 +1,8 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if !UNITY_2018_3_OR_NEWER
+
 using System;
 using MessagePack;
 using MessagePack.Resolvers;
@@ -72,3 +74,5 @@ public class MessagePackSerializerTypelessTests
         protected override MessagePackSerializerOptions Clone() => new MyTypelessOptions(this);
     }
 }
+
+#endif

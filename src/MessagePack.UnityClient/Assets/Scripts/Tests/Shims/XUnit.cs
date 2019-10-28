@@ -87,6 +87,11 @@ namespace Xunit
         {
             NUnit.Framework.Assert.IsNotNull(value);
         }
+
+        public static void Same(object expected, object actual)
+        {
+            NUnit.Framework.Assert.AreSame(expected, actual);
+        }
     }
 
     [Serializable]
