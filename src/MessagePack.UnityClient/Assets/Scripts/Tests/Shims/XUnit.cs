@@ -10,12 +10,11 @@ namespace Xunit
 {
     public class FactAttribute : NUnit.Framework.TestAttribute
     {
-
+        public string Skip { get; set; }
     }
 
     public class TheoryAttribute : FactAttribute
     {
-        public string Skip { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]

@@ -59,6 +59,9 @@ namespace MessagePack.Tests
         [Fact(Skip = "Does not yet pass")]
         public void IL2CPPHint()
         {
+#if UNITY_2018_3_OR_NEWER
+            if (int.Parse("1") == 1) return;
+#endif
             Hoge<MySubUnion1, MySubUnion1>(default, default);
             Hoge<MySubUnion2, MySubUnion2>(default, default);
             Hoge<MySubUnion3, MySubUnion3>(default, default);
