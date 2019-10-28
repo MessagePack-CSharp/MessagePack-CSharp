@@ -6,6 +6,9 @@ using System.Threading;
 using MessagePackCompiler;
 using Microsoft.Build.Framework;
 
+// synchronous blocks aren't a problem in MSBuild tasks
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
+
 namespace MessagePack.MSBuild.Tasks
 {
     public class MessagePackGenerator : Microsoft.Build.Utilities.Task
