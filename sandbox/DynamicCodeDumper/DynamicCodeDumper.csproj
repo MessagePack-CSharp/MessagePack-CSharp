@@ -51,7 +51,7 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ReflectionExtensions.cs">
       <Link>Code\ReflectionExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\UnsafeMemory.cs">
       <Link>Code\UnsafeMemory.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.Low.cs">
@@ -69,7 +69,7 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.cs">
       <Link>Code\MessagePackReader.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.Integers.cs">
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\MessagePackReader.Integers.cs">
       <Link>Code\MessagePackReader.Integers.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackWriter.cs">

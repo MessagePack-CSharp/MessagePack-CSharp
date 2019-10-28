@@ -10,8 +10,16 @@ using MessagePack.Formatters;
 
 namespace MessagePack
 {
+    /// <summary>
+    /// Allows querying for a formatter for serializing or deserializing a particular <see cref="Type" />.
+    /// </summary>
     public interface IFormatterResolver
     {
+        /// <summary>
+        /// Gets an <see cref="IMessagePackFormatter{T}"/> instance that can serialize or deserialize some type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of value to be serialized or deserialized.</typeparam>
+        /// <returns>A formatter, if this resolver supplies one for type <typeparamref name="T"/>; otherwise <c>null</c>.</returns>
         IMessagePackFormatter<T> GetFormatter<T>();
     }
 

@@ -540,7 +540,7 @@ namespace Xunit
                 .Where(x => x.GetGetMethod(false) != null && x.GetIndexParameters().Length == 0);
             IEnumerable<MemberInfo> members = fields.Cast<MemberInfo>().Concat(properties);
 
-            foreach (dynamic mi in fields.Cast<MemberInfo>().Concat(properties))
+            foreach (dynamic mi in members)
             {
                 IEnumerable<string> concatNames = names.Concat(new[] { (string)mi.Name });
 

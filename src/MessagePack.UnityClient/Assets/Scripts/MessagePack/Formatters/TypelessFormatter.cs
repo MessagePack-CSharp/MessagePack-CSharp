@@ -23,23 +23,15 @@ namespace MessagePack.Formatters
     {
         public const sbyte ExtensionTypeCode = 100;
 
-        private static readonly Regex SubtractFullNameRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=\w+, PublicKeyToken=\w+", RegexOptions.Compiled);
-
         private delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
 
         private delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, MessagePackSerializerOptions options);
 
         private readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
         private readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>> deserializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>>();
-        private readonly ThreadsafeTypeKeyHashTable<byte[]> typeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
+        private readonly ThreadsafeTypeKeyHashTable<byte[]> fullTypeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
+        private readonly ThreadsafeTypeKeyHashTable<byte[]> shortenedTypeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
         private readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> typeCache = new AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type>(new StringArraySegmentByteAscymmetricEqualityComparer());
-
-        private static readonly HashSet<string> BlacklistCheck = new HashSet<string>
-        {
-            "System.CodeDom.Compiler.TempFileCollection",
-            "System.IO.FileSystemInfo",
-            "System.Management.IWbemClassObjectFreeThreaded",
-        };
 
         private static readonly HashSet<Type> UseBuiltinTypes = new HashSet<Type>
         {
@@ -86,16 +78,8 @@ namespace MessagePack.Formatters
             typeof(Double?),
         };
 
-        public Func<string, Type> BindToType { get; set; } = (string typeName) => Type.GetType(typeName, false);
-
         // mscorlib or System.Private.CoreLib
         private static readonly bool IsMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to exclude assembly qualifiers from type names.
-        /// </summary>
-        /// <value>The default value is <c>true</c>.</value>
-        public bool RemoveAssemblyVersion { get; set; } = true;
 
         public TypelessFormatter()
         {
@@ -103,15 +87,13 @@ namespace MessagePack.Formatters
             this.deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object, DeserializeMethod>(null, (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object()));
         }
 
-        // see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
-        // subtract Version, Culture and PublicKeyToken from AssemblyQualifiedName
-        private string BuildTypeName(Type type)
+        private string BuildTypeName(Type type, MessagePackSerializerOptions options)
         {
-            if (this.RemoveAssemblyVersion)
+            if (options.OmitAssemblyVersion)
             {
                 string full = type.AssemblyQualifiedName;
 
-                var shortened = SubtractFullNameRegex.Replace(full, string.Empty);
+                var shortened = MessagePackSerializerOptions.AssemblyNameVersionSelectorRegex.Replace(full, string.Empty);
                 if (Type.GetType(shortened, false) == null)
                 {
                     // if type cannot be found with shortened name - use full name
@@ -137,13 +119,9 @@ namespace MessagePack.Formatters
             Type type = value.GetType();
 
             byte[] typeName;
-            if (!this.typeNameCache.TryGetValue(type, out typeName))
+            var typeNameCache = options.OmitAssemblyVersion ? this.shortenedTypeNameCache : this.fullTypeNameCache;
+            if (!typeNameCache.TryGetValue(type, out typeName))
             {
-                if (BlacklistCheck.Contains(type.FullName))
-                {
-                    throw new InvalidOperationException("Type is in blacklist:" + type.FullName);
-                }
-
                 TypeInfo ti = type.GetTypeInfo();
                 if (ti.IsAnonymous() || UseBuiltinTypes.Contains(type))
                 {
@@ -151,10 +129,10 @@ namespace MessagePack.Formatters
                 }
                 else
                 {
-                    typeName = StringEncoding.UTF8.GetBytes(this.BuildTypeName(type));
+                    typeName = StringEncoding.UTF8.GetBytes(this.BuildTypeName(type, options));
                 }
 
-                this.typeNameCache.TryAdd(type, typeName);
+                typeNameCache.TryAdd(type, typeName);
             }
 
             if (typeName == null)
@@ -268,7 +246,7 @@ namespace MessagePack.Formatters
                 var buffer = new byte[typeName.Count];
                 Buffer.BlockCopy(typeName.Array, typeName.Offset, buffer, 0, buffer.Length);
                 var str = StringEncoding.UTF8.GetString(buffer);
-                type = this.BindToType(str);
+                type = options.LoadType(str);
                 if (type == null)
                 {
                     if (IsMscorlib && str.Contains("System.Private.CoreLib"))
@@ -290,6 +268,7 @@ namespace MessagePack.Formatters
                 this.typeCache.TryAdd(buffer, type);
             }
 
+            options.ThrowIfDeserializingTypeIsDisallowed(type);
             KeyValuePair<object, DeserializeMethod> formatterAndDelegate;
             if (!this.deserializers.TryGetValue(type, out formatterAndDelegate))
             {

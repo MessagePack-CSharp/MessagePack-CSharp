@@ -26,9 +26,9 @@ namespace MessagePack.AspNetCoreMvcFormatter
 
         public async Task<InputFormatterResult> ReadAsync(InputFormatterContext context)
         {
-            Microsoft.AspNetCore.Http.HttpRequest request = context.HttpContext.Request;
-            object result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, this.options, context.HttpContext.RequestAborted);
-            return await InputFormatterResult.SuccessAsync(result);
+            var request = context.HttpContext.Request;
+            var result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, this.options, context.HttpContext.RequestAborted).ConfigureAwait(false);
+            return await InputFormatterResult.SuccessAsync(result).ConfigureAwait(false);
         }
     }
 }

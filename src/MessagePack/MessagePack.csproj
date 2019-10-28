@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs" Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs" Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**;..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,12 +24,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Roslyn.Diagnostics.Analyzers" Version="2.9.3" PrivateAssets="all" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.2" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.2.26" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
   </ItemGroup>
@@ -39,59 +44,59 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\ForceSizePrimitiveFormatter.tt">
-      <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
+    <None Update="Formatters\ForceSizePrimitiveFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
     </None>
-    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.tt">
+    <None Update="Formatters\PrimitiveFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
     </None>
-    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\TupleFormatter.tt">
+    <None Update="Formatters\TupleFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>TupleFormatter.cs</LastGenOutput>
     </None>
-    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.tt">
+    <None Update="Formatters\ValueTupleFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ValueTupleFormatter.cs</LastGenOutput>
     </None>
-    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.tt">
+    <None Update="Internal\UnsafeMemory.tt">
       <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </None>
-    <None Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.Integers.tt">
+    <None Update="MessagePackReader.Integers.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>MessagePackReader.Integers.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\ForceSizePrimitiveFormatter.cs">
+    <Compile Update="Formatters\ForceSizePrimitiveFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>ForceSizePrimitiveFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\PrimitiveFormatter.cs">
+    <Compile Update="Formatters\PrimitiveFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\TupleFormatter.cs">
+    <Compile Update="Formatters\TupleFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>TupleFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Formatters\ValueTupleFormatter.cs">
+    <Compile Update="Formatters\ValueTupleFormatter.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
     </Compile>
-    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.cs">
-      <DependentUpon>UnsafeMemory.tt</DependentUpon>
+    <Compile Update="Internal\UnsafeMemory.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
+      <DependentUpon>UnsafeMemory.tt</DependentUpon>
     </Compile>
-    <Compile Update="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.Integers.cs">
+    <Compile Update="MessagePackReader.Integers.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>MessagePackReader.Integers.tt</DependentUpon>
@@ -101,4 +106,14 @@
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
+
+  <Target Name="CopyT4OutputToUnity" BeforeTargets="Compile">
+    <ItemGroup>
+      <!-- Remove the T4 .cs output files that we copy to UnityClient -->
+      <UnityT4Source Include="@(None->'%(RootDir)%(Directory)%(FileName).cs')" Condition=" '%(None.Generator)' == 'TextTemplatingFileGenerator' " />
+      <UnityT4Target Include="@(UnityT4Source->'..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\%(FileName)%(Extension)')" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(UnityT4Source)" DestinationFiles="@(UnityT4Target)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+  </Target>
 </Project>
