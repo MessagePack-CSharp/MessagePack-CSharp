@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if !ENABLE_IL2CPP
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -141,6 +143,8 @@ namespace MessagePack.Tests
             public int X;
         }
 
+#if !ENABLE_IL2CPP
+
         [MessagePackObject]
         public class ImmutablePrivateClass
         {
@@ -174,6 +178,8 @@ namespace MessagePack.Tests
             [IgnoreMember]
             public bool CreatedUsingPrivateCtor { get; }
         }
+
+#endif
 
         [Fact]
         public void AllowPrivate()
@@ -250,6 +256,8 @@ namespace MessagePack.Tests
             MessagePackSerializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Options).X.Is(99);
         }
 
+#if !ENABLE_IL2CPP
+
         [Fact]
         public void PrivateConstructor()
         {
@@ -262,5 +270,9 @@ namespace MessagePack.Tests
             Assert.False(p1.CreatedUsingPrivateCtor);
             Assert.True(p2.CreatedUsingPrivateCtor);
         }
+
+#endif
     }
 }
+
+#endif

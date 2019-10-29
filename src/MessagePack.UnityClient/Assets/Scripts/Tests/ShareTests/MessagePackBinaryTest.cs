@@ -316,7 +316,9 @@ namespace MessagePack.Tests
         [Theory]
         [InlineData(long.MinValue, 9)]
         [InlineData((long)-3372036854775807, 9)]
-        [InlineData((long)int.MinValue, 5)]
+#if !ENABLE_IL2CPP
+        [InlineData((long)-2147483648, 5)]
+#endif
         [InlineData((long)-50000, 5)]
         [InlineData((long)short.MinValue, 3)]
         [InlineData((long)-30000, 3)]
@@ -639,11 +641,13 @@ namespace MessagePack.Tests
         }
 
         [Theory]
-        [InlineData(char.MinValue)]
         [InlineData('a')]
         [InlineData('あ')]
         [InlineData('c')]
+#if !ENABLE_IL2CPP
+        [InlineData(char.MinValue)]
         [InlineData(char.MaxValue)]
+#endif
         public void CharTest(char target)
         {
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();

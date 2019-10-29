@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>dotnet-mpc</ToolCommandName>
+
+    <!-- NuGet Info -->
+    <Title>MessagePack Code Generator</Title>
+    <Description>MessagePack standalone code generator.</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
+    <AssemblyName>MessagePack.Generator</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MicroBatchFramework" Version="1.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack.GeneratorCore\MessagePack.GeneratorCore.csproj" />
+  </ItemGroup>
+
+</Project>

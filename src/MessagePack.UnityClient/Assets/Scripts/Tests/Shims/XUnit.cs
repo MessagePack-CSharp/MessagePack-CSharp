@@ -10,12 +10,11 @@ namespace Xunit
 {
     public class FactAttribute : NUnit.Framework.TestAttribute
     {
-
+        public string Skip { get; set; }
     }
 
     public class TheoryAttribute : FactAttribute
     {
-        public string Skip { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
@@ -87,6 +86,11 @@ namespace Xunit
         public static void NotNull<T>(T value) where T : class
         {
             NUnit.Framework.Assert.IsNotNull(value);
+        }
+
+        public static void Same(object expected, object actual)
+        {
+            NUnit.Framework.Assert.AreSame(expected, actual);
         }
     }
 

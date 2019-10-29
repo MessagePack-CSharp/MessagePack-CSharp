@@ -10,6 +10,8 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
+#if !ENABLE_IL2CPP
+
     public class ValueTupleTest
     {
         private T Convert<T>(T value)
@@ -47,4 +49,6 @@ namespace MessagePack.Tests
             this.Convert(x).Is(x);
         }
     }
+
+#endif
 }

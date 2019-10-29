@@ -30,6 +30,8 @@ namespace MessagePack.Tests
         FooBarBaz = 32,
     }
 
+#if !ENABLE_IL2CPP
+
     public class EnumAsStringTest
     {
         public static object[][] EnumData = new object[][]
@@ -64,4 +66,6 @@ namespace MessagePack.Tests
             MessagePackSerializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.Options).Is(y);
         }
     }
+
+#endif
 }

@@ -28,6 +28,8 @@ namespace MessagePack.Tests
             return result;
         }
 
+#if !ENABLE_IL2CPP
+
         [Fact]
         public void OrderTest()
         {
@@ -44,7 +46,10 @@ namespace MessagePack.Tests
             this.IteratePropertyNames(msgRawData).Is("Id", "Str");
         }
 
+#endif
+
         [MessagePack.MessagePackObject(keyAsPropertyName: true)]
+        [Union(0, typeof(RealClass))]
         public abstract class AbstractBase
         {
             [DataMember(Order = 0)]

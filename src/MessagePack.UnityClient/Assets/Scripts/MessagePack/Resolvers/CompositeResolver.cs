@@ -17,6 +17,9 @@ namespace MessagePack.Resolvers
     /// <remarks>
     /// This class is not thread-safe for mutations. It is thread-safe when not being written to.
     /// </remarks>
+#if ENABLE_IL2CPP
+    [Obsolete("CompositeResolver is not supported in IL2CPP, use StaticCompositeResolver instead.", false)]
+#endif
     public static class CompositeResolver
     {
         private static readonly ReadOnlyDictionary<Type, IMessagePackFormatter> EmptyFormattersByType = new ReadOnlyDictionary<Type, IMessagePackFormatter>(new Dictionary<Type, IMessagePackFormatter>());

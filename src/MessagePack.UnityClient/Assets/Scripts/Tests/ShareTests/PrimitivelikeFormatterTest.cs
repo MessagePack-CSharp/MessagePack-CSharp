@@ -16,6 +16,7 @@ namespace MessagePack.Tests
 {
     public class PrimitivelikeFormatterTest
     {
+#if !ENABLE_IL2CPP
         [Fact]
         public void CanResolve()
         {
@@ -24,6 +25,7 @@ namespace MessagePack.Tests
                 MessagePackSerializer.Serialize(new MyDateTimeResolverTest() { MyProperty1 = DateTime.Now }, PrimitivelikeResolver.Options);
             });
         }
+#endif
 
         [Fact]
         public void NativeDateTime()

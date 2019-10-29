@@ -62,6 +62,24 @@ namespace MessagePack.Tests
             this.Convert(y).Is(y);
         }
 
+        [Fact]
+        public void IL2CPPHint()
+        {
+            PrimitiveFormatterTest<Int16>(default, default);
+            PrimitiveFormatterTest<Int32>(default, default);
+            PrimitiveFormatterTest<Int64>(default, default);
+            PrimitiveFormatterTest<UInt16>(default, default);
+            PrimitiveFormatterTest<UInt32>(default, default);
+            PrimitiveFormatterTest<UInt64>(default, default);
+            PrimitiveFormatterTest<Single>(default, default);
+            PrimitiveFormatterTest<Double>(default, default);
+            PrimitiveFormatterTest<bool>(default, default);
+            PrimitiveFormatterTest<Byte>(default, default);
+            PrimitiveFormatterTest<SByte>(default, default);
+            PrimitiveFormatterTest<Char>(default, default);
+            PrimitiveFormatterTest<DateTime>(default, default);
+        }
+
         public static object[][] EnumFormatterTestData = new object[][]
         {
             new object[] { ByteEnum.A, ByteEnum.B },
@@ -89,6 +107,19 @@ namespace MessagePack.Tests
         {
             this.Convert(x).Is(x);
             this.Convert(y).Is(y);
+        }
+
+        [Fact]
+        public void IL2CPPHint2()
+        {
+            EnumFormatterTest<ByteEnum>(default, default);
+            EnumFormatterTest<SByteEnum>(default, default);
+            EnumFormatterTest<ShortEnum>(default, default);
+            EnumFormatterTest<UShortEnum>(default, default);
+            EnumFormatterTest<IntEnum>(default, default);
+            EnumFormatterTest<UIntEnum>(default, default);
+            EnumFormatterTest<LongEnum>(default, default);
+            EnumFormatterTest<ULongEnum>(default, default);
         }
 
         [Fact]
@@ -134,6 +165,18 @@ namespace MessagePack.Tests
         private void StandardClassLibraryStructFormatterTest_Helper<T>(T? value)
             where T : struct
             => this.Convert(value).Is(value);
+
+        [Fact]
+        public void IL2CPPTypeHint()
+        {
+            StandardClassLibraryStructFormatterTest_Helper<decimal>(default);
+            StandardClassLibraryStructFormatterTest_Helper<TimeSpan>(default);
+            StandardClassLibraryStructFormatterTest_Helper<DateTimeOffset>(default);
+            StandardClassLibraryStructFormatterTest_Helper<Guid>(default);
+            StandardClassLibraryStructFormatterTest_Helper<KeyValuePair<int, string>>(default);
+            StandardClassLibraryStructFormatterTest_Helper<System.Numerics.BigInteger>(default);
+            StandardClassLibraryStructFormatterTest_Helper<System.Numerics.Complex>(default);
+        }
 
         public static object[][] StandardClassFormatterTestData = new object[][]
         {

@@ -13,6 +13,7 @@ namespace MessagePack.Tests
 {
     public class NonGenericCollectionTest
     {
+#if !ENABLE_IL2CPP
         [Fact]
         public void List()
         {
@@ -61,5 +62,7 @@ namespace MessagePack.Tests
                 v["foo"].Is((object)(double)999.888);
             }
         }
+
+#endif
     }
 }

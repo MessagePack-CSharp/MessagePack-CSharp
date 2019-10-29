@@ -154,7 +154,9 @@ namespace MessagePack.Tests
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).ReadByte());
+#endif
                 }
             }
         }
@@ -177,7 +179,9 @@ namespace MessagePack.Tests
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).ReadUInt16());
+#endif
                 }
             }
         }
@@ -200,7 +204,9 @@ namespace MessagePack.Tests
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).ReadUInt32());
+#endif
                 }
             }
         }
@@ -223,7 +229,9 @@ namespace MessagePack.Tests
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).ReadUInt64());
+#endif
                 }
             }
         }
@@ -246,7 +254,9 @@ namespace MessagePack.Tests
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).ReadSByte());
+#endif
                 }
             }
         }
@@ -269,7 +279,9 @@ namespace MessagePack.Tests
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).ReadInt16());
+#endif
                 }
             }
         }
@@ -292,7 +304,9 @@ namespace MessagePack.Tests
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).ReadInt32());
+#endif
                 }
             }
         }
@@ -315,7 +329,9 @@ namespace MessagePack.Tests
                 }
                 else
                 {
+#if !ENABLE_IL2CPP
                     Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).ReadInt64());
+#endif
                 }
             }
         }

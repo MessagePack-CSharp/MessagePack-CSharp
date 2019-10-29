@@ -12,6 +12,8 @@ namespace MessagePack.Tests
 {
     public class PrimitiveResolverTest
     {
+#if !ENABLE_IL2CPP
+
         [Theory]
         [InlineData((bool)true)]
         [InlineData((byte)10)]
@@ -79,5 +81,7 @@ namespace MessagePack.Tests
                 (x[4] as Dictionary<string, int>)["foo"].Is((ushort)(re1[4] as Dictionary<object, object>)["foo"]);
             }
         }
+
+#endif
     }
 }
