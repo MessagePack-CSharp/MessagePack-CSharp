@@ -244,12 +244,12 @@ namespace MessagePack.ReactivePropertyExtension
 
     public class ReactiveCollectionFormatter<T> : CollectionFormatterBase<T, ReactiveCollection<T>>
     {
-        protected override void Add(ReactiveCollection<T> collection, int index, T value)
+        protected override void Add(ReactiveCollection<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.Add(value);
         }
 
-        protected override ReactiveCollection<T> Create(int count)
+        protected override ReactiveCollection<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new ReactiveCollection<T>();
         }

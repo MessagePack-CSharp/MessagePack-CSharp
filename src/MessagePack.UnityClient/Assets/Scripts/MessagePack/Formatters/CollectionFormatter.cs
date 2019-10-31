@@ -283,11 +283,11 @@ namespace MessagePack.Formatters
 
                 var len = reader.ReadArrayHeader();
 
-                TIntermediate list = this.Create(len);
+                TIntermediate list = this.Create(len, options);
                 for (int i = 0; i < len; i++)
                 {
                     reader.CancellationToken.ThrowIfCancellationRequested();
-                    this.Add(list, i, formatter.Deserialize(ref reader, options));
+                    this.Add(list, i, formatter.Deserialize(ref reader, options), options);
                 }
 
                 return this.Complete(list);
@@ -318,9 +318,9 @@ namespace MessagePack.Formatters
         protected abstract TEnumerator GetSourceEnumerator(TCollection source);
 
         // abstraction for deserialize
-        protected abstract TIntermediate Create(int count);
+        protected abstract TIntermediate Create(int count, MessagePackSerializerOptions options);
 
-        protected abstract void Add(TIntermediate collection, int index, TElement value);
+        protected abstract void Add(TIntermediate collection, int index, TElement value, MessagePackSerializerOptions options);
 
         protected abstract TCollection Complete(TIntermediate intermediateCollection);
     }
@@ -346,12 +346,12 @@ namespace MessagePack.Formatters
     public sealed class GenericCollectionFormatter<TElement, TCollection> : CollectionFormatterBase<TElement, TCollection>
          where TCollection : ICollection<TElement>, new()
     {
-        protected override TCollection Create(int count)
+        protected override TCollection Create(int count, MessagePackSerializerOptions options)
         {
             return new TCollection();
         }
 
-        protected override void Add(TCollection collection, int index, TElement value)
+        protected override void Add(TCollection collection, int index, TElement value, MessagePackSerializerOptions options)
         {
             collection.Add(value);
         }
@@ -359,7 +359,7 @@ namespace MessagePack.Formatters
 
     public sealed class LinkedListFormatter<T> : CollectionFormatterBase<T, LinkedList<T>, LinkedList<T>.Enumerator, LinkedList<T>>
     {
-        protected override void Add(LinkedList<T> collection, int index, T value)
+        protected override void Add(LinkedList<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.AddLast(value);
         }
@@ -369,7 +369,7 @@ namespace MessagePack.Formatters
             return intermediateCollection;
         }
 
-        protected override LinkedList<T> Create(int count)
+        protected override LinkedList<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new LinkedList<T>();
         }
@@ -387,12 +387,12 @@ namespace MessagePack.Formatters
             return sequence.Count;
         }
 
-        protected override void Add(Queue<T> collection, int index, T value)
+        protected override void Add(Queue<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.Enqueue(value);
         }
 
-        protected override Queue<T> Create(int count)
+        protected override Queue<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new Queue<T>(count);
         }
@@ -416,13 +416,13 @@ namespace MessagePack.Formatters
             return sequence.Count;
         }
 
-        protected override void Add(T[] collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
         {
             // add reverse
             collection[collection.Length - 1 - index] = value;
         }
 
-        protected override T[] Create(int count)
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
             return new T[count];
         }
@@ -445,7 +445,7 @@ namespace MessagePack.Formatters
             return sequence.Count;
         }
 
-        protected override void Add(HashSet<T> collection, int index, T value)
+        protected override void Add(HashSet<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.Add(value);
         }
@@ -455,7 +455,7 @@ namespace MessagePack.Formatters
             return intermediateCollection;
         }
 
-        protected override HashSet<T> Create(int count)
+        protected override HashSet<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new HashSet<T>();
         }
@@ -468,7 +468,7 @@ namespace MessagePack.Formatters
 
     public sealed class ReadOnlyCollectionFormatter<T> : CollectionFormatterBase<T, T[], ReadOnlyCollection<T>>
     {
-        protected override void Add(T[] collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection[index] = value;
         }
@@ -478,7 +478,7 @@ namespace MessagePack.Formatters
             return new ReadOnlyCollection<T>(intermediateCollection);
         }
 
-        protected override T[] Create(int count)
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
             return new T[count];
         }
@@ -486,12 +486,12 @@ namespace MessagePack.Formatters
 
     public sealed class InterfaceListFormatter<T> : CollectionFormatterBase<T, T[], IList<T>>
     {
-        protected override void Add(T[] collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection[index] = value;
         }
 
-        protected override T[] Create(int count)
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
             return new T[count];
         }
@@ -504,12 +504,12 @@ namespace MessagePack.Formatters
 
     public sealed class InterfaceCollectionFormatter<T> : CollectionFormatterBase<T, T[], ICollection<T>>
     {
-        protected override void Add(T[] collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection[index] = value;
         }
 
-        protected override T[] Create(int count)
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
             return new T[count];
         }
@@ -522,12 +522,12 @@ namespace MessagePack.Formatters
 
     public sealed class InterfaceEnumerableFormatter<T> : CollectionFormatterBase<T, T[], IEnumerable<T>>
     {
-        protected override void Add(T[] collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection[index] = value;
         }
 
-        protected override T[] Create(int count)
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
             return new T[count];
         }
@@ -579,7 +579,7 @@ namespace MessagePack.Formatters
 
     public sealed class InterfaceLookupFormatter<TKey, TElement> : CollectionFormatterBase<IGrouping<TKey, TElement>, Dictionary<TKey, IGrouping<TKey, TElement>>, ILookup<TKey, TElement>>
     {
-        protected override void Add(Dictionary<TKey, IGrouping<TKey, TElement>> collection, int index, IGrouping<TKey, TElement> value)
+        protected override void Add(Dictionary<TKey, IGrouping<TKey, TElement>> collection, int index, IGrouping<TKey, TElement> value, MessagePackSerializerOptions options)
         {
             collection.Add(value.Key, value);
         }
@@ -589,7 +589,7 @@ namespace MessagePack.Formatters
             return new Lookup<TKey, TElement>(intermediateCollection);
         }
 
-        protected override Dictionary<TKey, IGrouping<TKey, TElement>> Create(int count)
+        protected override Dictionary<TKey, IGrouping<TKey, TElement>> Create(int count, MessagePackSerializerOptions options)
         {
             return new Dictionary<TKey, IGrouping<TKey, TElement>>(count);
         }
@@ -858,12 +858,12 @@ namespace MessagePack.Formatters
 
     public sealed class ObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>>
     {
-        protected override void Add(ObservableCollection<T> collection, int index, T value)
+        protected override void Add(ObservableCollection<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.Add(value);
         }
 
-        protected override ObservableCollection<T> Create(int count)
+        protected override ObservableCollection<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new ObservableCollection<T>();
         }
@@ -871,12 +871,12 @@ namespace MessagePack.Formatters
 
     public sealed class ReadOnlyObservableCollectionFormatter<T> : CollectionFormatterBase<T, ObservableCollection<T>, ReadOnlyObservableCollection<T>>
     {
-        protected override void Add(ObservableCollection<T> collection, int index, T value)
+        protected override void Add(ObservableCollection<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.Add(value);
         }
 
-        protected override ObservableCollection<T> Create(int count)
+        protected override ObservableCollection<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new ObservableCollection<T>();
         }
@@ -889,12 +889,12 @@ namespace MessagePack.Formatters
 
     public sealed class InterfaceReadOnlyListFormatter<T> : CollectionFormatterBase<T, T[], IReadOnlyList<T>>
     {
-        protected override void Add(T[] collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection[index] = value;
         }
 
-        protected override T[] Create(int count)
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
             return new T[count];
         }
@@ -907,12 +907,12 @@ namespace MessagePack.Formatters
 
     public sealed class InterfaceReadOnlyCollectionFormatter<T> : CollectionFormatterBase<T, T[], IReadOnlyCollection<T>>
     {
-        protected override void Add(T[] collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection[index] = value;
         }
 
-        protected override T[] Create(int count)
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
             return new T[count];
         }
@@ -925,7 +925,7 @@ namespace MessagePack.Formatters
 
     public sealed class InterfaceSetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, ISet<T>>
     {
-        protected override void Add(HashSet<T> collection, int index, T value)
+        protected override void Add(HashSet<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.Add(value);
         }
@@ -935,7 +935,7 @@ namespace MessagePack.Formatters
             return intermediateCollection;
         }
 
-        protected override HashSet<T> Create(int count)
+        protected override HashSet<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new HashSet<T>();
         }
@@ -948,12 +948,12 @@ namespace MessagePack.Formatters
             return sequence.Count;
         }
 
-        protected override void Add(ConcurrentBag<T> collection, int index, T value)
+        protected override void Add(ConcurrentBag<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.Add(value);
         }
 
-        protected override ConcurrentBag<T> Create(int count)
+        protected override ConcurrentBag<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new ConcurrentBag<T>();
         }
@@ -966,12 +966,12 @@ namespace MessagePack.Formatters
             return sequence.Count;
         }
 
-        protected override void Add(ConcurrentQueue<T> collection, int index, T value)
+        protected override void Add(ConcurrentQueue<T> collection, int index, T value, MessagePackSerializerOptions options)
         {
             collection.Enqueue(value);
         }
 
-        protected override ConcurrentQueue<T> Create(int count)
+        protected override ConcurrentQueue<T> Create(int count, MessagePackSerializerOptions options)
         {
             return new ConcurrentQueue<T>();
         }
@@ -984,13 +984,13 @@ namespace MessagePack.Formatters
             return sequence.Count;
         }
 
-        protected override void Add(T[] collection, int index, T value)
+        protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
         {
             // add reverse
             collection[collection.Length - 1 - index] = value;
         }
 
-        protected override T[] Create(int count)
+        protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
             return new T[count];
         }

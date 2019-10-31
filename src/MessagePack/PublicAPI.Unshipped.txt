@@ -664,13 +664,13 @@ MessagePack.Resolvers.TypelessObjectResolver.GetFormatter<T>() -> MessagePack.Fo
 MessagePack.Resolvers.TypelessObjectResolver.TypelessObjectResolver() -> void
 MessagePack.TinyJsonException
 MessagePack.TinyJsonException.TinyJsonException(string message) -> void
-abstract MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.Add(TIntermediate collection, int index, TElement value) -> void
+abstract MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.Add(TIntermediate collection, int index, TElement value, MessagePack.MessagePackSerializerOptions options) -> void
 abstract MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.Complete(TIntermediate intermediateCollection) -> TCollection
-abstract MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.Create(int count) -> TIntermediate
+abstract MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> TIntermediate
 abstract MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.GetSourceEnumerator(TCollection source) -> TEnumerator
-abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Add(TIntermediate collection, int index, TKey key, TValue value) -> void
+abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Add(TIntermediate collection, int index, TKey key, TValue value, MessagePack.MessagePackSerializerOptions options) -> void
 abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Complete(TIntermediate intermediateCollection) -> TDictionary
-abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Create(int count) -> TIntermediate
+abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> TIntermediate
 abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.GetSourceEnumerator(TDictionary source) -> TEnumerator
 const MessagePack.Formatters.TypelessFormatter.ExtensionTypeCode = 100 -> sbyte
 const MessagePack.MessagePackCode.Array16 = 220 -> byte
