@@ -955,12 +955,8 @@ namespace MessagePack.Internal
                     Label readNext = il.DefineLabel();
                     Label loopEnd = il.DefineLabel();
 
-                    LocalBuilder rosLocal = il.DeclareLocal(typeof(ReadOnlySequence<byte>?));
                     reader.EmitLdarg();
-                    il.EmitCall(MessagePackReaderTypeInfo.ReadStringSequence);
-                    il.EmitStloc(rosLocal);
-                    il.EmitLdloca(rosLocal);
-                    il.EmitCall(ReadOnlySpanFromNullableReadOnlySequence);
+                    il.EmitCall(ReadStringSpan);
                     il.EmitStloc(buffer);
 
                     // gen automata name lookup
@@ -1219,7 +1215,7 @@ namespace MessagePack.Internal
         private static readonly Type refMessagePackReader = typeof(MessagePackReader).MakeByRefType();
 
         private static readonly MethodInfo ReadOnlySpanFromByteArray = typeof(ReadOnlySpan<byte>).GetRuntimeMethod("op_Implicit", new[] { typeof(byte[]) });
-        private static readonly MethodInfo ReadOnlySpanFromNullableReadOnlySequence = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.GetSpanFromSequence), new[] { typeof(ReadOnlySequence<byte>?).MakeByRefType() });
+        private static readonly MethodInfo ReadStringSpan = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.ReadStringSpan), new[] { typeof(MessagePackReader).MakeByRefType() });
         private static readonly MethodInfo ArrayFromNullableReadOnlySequence = typeof(CodeGenHelpers).GetRuntimeMethod(nameof(CodeGenHelpers.GetArrayFromNullableSequence), new[] { typeof(ReadOnlySequence<byte>?).MakeByRefType() });
 
         private static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == nameof(FormatterResolverExtensions.GetFormatterWithVerify));
@@ -1272,7 +1268,6 @@ namespace MessagePack.Internal
             internal static readonly MethodInfo ReadArrayHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadArrayHeader), Type.EmptyTypes);
             internal static readonly MethodInfo ReadMapHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadMapHeader), Type.EmptyTypes);
             internal static readonly MethodInfo ReadBytes = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadBytes), Type.EmptyTypes);
-            internal static readonly MethodInfo ReadStringSequence = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadStringSequence), Type.EmptyTypes);
             internal static readonly MethodInfo TryReadNil = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.TryReadNil), Type.EmptyTypes);
             internal static readonly MethodInfo Skip = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.Skip), Type.EmptyTypes);
         }

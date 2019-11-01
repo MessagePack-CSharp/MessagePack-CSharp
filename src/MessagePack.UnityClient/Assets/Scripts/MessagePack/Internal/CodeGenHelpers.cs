@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.ComponentModel;
 
 namespace MessagePack.Internal
 {
@@ -13,6 +14,7 @@ namespace MessagePack.Internal
     /// This code is used by dynamically generated code as well as AOT generated code,
     /// and thus must be public for the "C# generated and compiled into saved assembly" scenario.
     /// </remarks>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static class CodeGenHelpers
     {
         public static byte[] GetEncodedStringBytes(string value)
@@ -55,11 +57,6 @@ namespace MessagePack.Internal
             }
         }
 
-        public static ReadOnlySpan<byte> GetSpanFromSequence(in ReadOnlySequence<byte>? sequence)
-        {
-            return sequence.HasValue ? GetSpanFromSequence(sequence.Value) : default;
-        }
-
         public static ReadOnlySpan<byte> GetSpanFromSequence(in ReadOnlySequence<byte> sequence)
         {
             if (sequence.IsSingleSegment)
@@ -70,6 +67,21 @@ namespace MessagePack.Internal
             return sequence.ToArray();
         }
 
+        public static ReadOnlySpan<byte> ReadStringSpan(ref MessagePackReader reader)
+        {
+            if (!reader.TryReadStringSpan(out ReadOnlySpan<byte> result))
+            {
+                return GetSpanFromSequence(reader.ReadStringSequence());
+            }
+
+            return result;
+        }
+
         public static byte[] GetArrayFromNullableSequence(in ReadOnlySequence<byte>? sequence) => sequence?.ToArray();
+
+        private static ReadOnlySpan<byte> GetSpanFromSequence(in ReadOnlySequence<byte>? sequence)
+        {
+            return sequence.HasValue ? GetSpanFromSequence(sequence.Value) : default;
+        }
     }
 }
