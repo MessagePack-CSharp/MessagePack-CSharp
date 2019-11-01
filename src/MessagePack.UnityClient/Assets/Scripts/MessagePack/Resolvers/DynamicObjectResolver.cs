@@ -957,7 +957,7 @@ namespace MessagePack.Internal
 
                     LocalBuilder rosLocal = il.DeclareLocal(typeof(ReadOnlySequence<byte>?));
                     reader.EmitLdarg();
-                    il.EmitCall(MessagePackReaderTypeInfo.ReadStringSegment);
+                    il.EmitCall(MessagePackReaderTypeInfo.ReadStringSequence);
                     il.EmitStloc(rosLocal);
                     il.EmitLdloca(rosLocal);
                     il.EmitCall(ReadOnlySpanFromNullableReadOnlySequence);
@@ -1272,7 +1272,7 @@ namespace MessagePack.Internal
             internal static readonly MethodInfo ReadArrayHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadArrayHeader), Type.EmptyTypes);
             internal static readonly MethodInfo ReadMapHeader = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadMapHeader), Type.EmptyTypes);
             internal static readonly MethodInfo ReadBytes = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadBytes), Type.EmptyTypes);
-            internal static readonly MethodInfo ReadStringSegment = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadStringSegment), Type.EmptyTypes);
+            internal static readonly MethodInfo ReadStringSequence = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.ReadStringSequence), Type.EmptyTypes);
             internal static readonly MethodInfo TryReadNil = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.TryReadNil), Type.EmptyTypes);
             internal static readonly MethodInfo Skip = typeof(MessagePackReader).GetRuntimeMethod(nameof(MessagePackReader.Skip), Type.EmptyTypes);
         }

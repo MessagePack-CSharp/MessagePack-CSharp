@@ -585,7 +585,7 @@ namespace MessagePack
         /// The sequence of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
         /// The data is a slice from the original sequence passed to this reader's constructor.
         /// </returns>
-        public ReadOnlySequence<byte>? ReadStringSegment()
+        public ReadOnlySequence<byte>? ReadStringSequence()
         {
             if (this.TryReadNil())
             {

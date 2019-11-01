@@ -374,7 +374,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
             
             #line default
             #line hidden
-            this.Write(@"                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+            this.Write(@"                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {

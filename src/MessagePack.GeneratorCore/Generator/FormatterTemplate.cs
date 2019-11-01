@@ -148,7 +148,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
  } 
             this.Write("\r\n            for (int i = 0; i < length; i++)\r\n            {\r\n");
  if(objInfo.IsStringKey) { 
-            this.Write(@"                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+            this.Write(@"                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {

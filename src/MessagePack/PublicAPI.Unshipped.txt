@@ -532,7 +532,7 @@ MessagePack.MessagePackReader.ReadRaw(long length) -> System.Buffers.ReadOnlySeq
 MessagePack.MessagePackReader.ReadSByte() -> sbyte
 MessagePack.MessagePackReader.ReadSingle() -> float
 MessagePack.MessagePackReader.ReadString() -> string
-MessagePack.MessagePackReader.ReadStringSegment() -> System.Buffers.ReadOnlySequence<byte>?
+MessagePack.MessagePackReader.ReadStringSequence() -> System.Buffers.ReadOnlySequence<byte>?
 MessagePack.MessagePackReader.ReadUInt16() -> ushort
 MessagePack.MessagePackReader.ReadUInt32() -> uint
 MessagePack.MessagePackReader.ReadUInt64() -> ulong
