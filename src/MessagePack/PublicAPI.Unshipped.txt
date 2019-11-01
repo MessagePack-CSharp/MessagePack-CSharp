@@ -539,6 +539,7 @@ MessagePack.MessagePackReader.ReadUInt64() -> ulong
 MessagePack.MessagePackReader.Sequence.get -> System.Buffers.ReadOnlySequence<byte>
 MessagePack.MessagePackReader.Skip() -> void
 MessagePack.MessagePackReader.TryReadNil() -> bool
+MessagePack.MessagePackReader.TryReadStringSpan(out System.ReadOnlySpan<byte> span) -> bool
 MessagePack.MessagePackSerializer
 MessagePack.MessagePackSerializer.Typeless
 MessagePack.MessagePackSerializerOptions
