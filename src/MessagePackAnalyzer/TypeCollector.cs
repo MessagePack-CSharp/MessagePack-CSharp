@@ -191,7 +191,7 @@ namespace MessagePackAnalyzer
         {
             var isClass = !type.IsValueType;
 
-            AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass == this.typeReferences.MessagePackObjectAttribute);
+            AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.MessagePackObjectAttribute));
             if (contractAttr == null)
             {
                 Location location = callerSymbol != null ? callerSymbol.Locations[0] : type.Locations[0];
@@ -213,7 +213,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == this.typeReferences.IgnoreAttribute || x.AttributeClass == this.typeReferences.IgnoreDataMemberAttribute))
+                    if (item.GetAttributes().Any(x => Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
                     {
                         continue;
                     }
@@ -232,7 +232,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == this.typeReferences.IgnoreAttribute || x.AttributeClass == this.typeReferences.IgnoreDataMemberAttribute))
+                    if (item.GetAttributes().Any(x => Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
                     {
                         continue;
                     }
@@ -261,7 +261,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == this.typeReferences.IgnoreAttribute || x.AttributeClass == this.typeReferences.IgnoreDataMemberAttribute))
+                    if (item.GetAttributes().Any(x => Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
                     {
                         continue;
                     }
@@ -274,7 +274,7 @@ namespace MessagePackAnalyzer
                         continue;
                     }
 
-                    TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == this.typeReferences.KeyAttribute)?.ConstructorArguments[0];
+                    TypedConstant? key = item.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                     if (key == null)
                     {
                         ImmutableDictionary<string, string> typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -330,7 +330,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass == this.typeReferences.IgnoreAttribute || x.AttributeClass == this.typeReferences.IgnoreDataMemberAttribute))
+                    if (item.GetAttributes().Any(x => Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
                     {
                         continue;
                     }
@@ -348,7 +348,7 @@ namespace MessagePackAnalyzer
                         continue;
                     }
 
-                    TypedConstant? key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass == this.typeReferences.KeyAttribute)?.ConstructorArguments[0];
+                    TypedConstant? key = item.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                     if (key == null)
                     {
                         ImmutableDictionary<string, string> typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
