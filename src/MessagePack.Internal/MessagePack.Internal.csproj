@@ -15,7 +15,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nerdbank.Streams" Version="2.2.38" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
   </ItemGroup>
 
@@ -34,6 +33,7 @@
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DateTimeConstants.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\GuidBits.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\Sequence`1.cs" />
   </ItemGroup>
 
 </Project>
