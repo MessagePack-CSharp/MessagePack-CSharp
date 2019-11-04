@@ -8,9 +8,9 @@ using System.Buffers;
 
 namespace MessagePack.Formatters
 {
-    public sealed class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>>
+    public sealed class TupleFormatter<T1> : IMessagePackFormatter<Tuple<T1>?>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Tuple<T1>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -25,7 +25,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Tuple<T1> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Tuple<T1>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -47,9 +47,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>>
+    public sealed class TupleFormatter<T1, T2> : IMessagePackFormatter<Tuple<T1, T2>?>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -65,7 +65,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Tuple<T1, T2> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Tuple<T1, T2>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -88,9 +88,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>>
+    public sealed class TupleFormatter<T1, T2, T3> : IMessagePackFormatter<Tuple<T1, T2, T3>?>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -107,7 +107,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Tuple<T1, T2, T3> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Tuple<T1, T2, T3>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -131,9 +131,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>>
+    public sealed class TupleFormatter<T1, T2, T3, T4> : IMessagePackFormatter<Tuple<T1, T2, T3, T4>?>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -151,7 +151,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Tuple<T1, T2, T3, T4> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Tuple<T1, T2, T3, T4>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -176,9 +176,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>>
+    public sealed class TupleFormatter<T1, T2, T3, T4, T5> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5>?>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -197,7 +197,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Tuple<T1, T2, T3, T4, T5> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Tuple<T1, T2, T3, T4, T5>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -223,9 +223,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>>
+    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6>?>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -245,7 +245,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Tuple<T1, T2, T3, T4, T5, T6> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Tuple<T1, T2, T3, T4, T5, T6>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -272,9 +272,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>>
+    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7>?>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -295,7 +295,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Tuple<T1, T2, T3, T4, T5, T6, T7> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Tuple<T1, T2, T3, T4, T5, T6, T7>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -323,9 +323,9 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>>
+    public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest> : IMessagePackFormatter<Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>?>
     {
-        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7, TRest> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -347,7 +347,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Tuple<T1, T2, T3, T4, T5, T6, T7, TRest> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

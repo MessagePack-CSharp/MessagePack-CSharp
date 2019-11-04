@@ -11,7 +11,7 @@ using MessagePack.Resolvers;
 
 namespace MessagePack.Formatters
 {
-    public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
+    public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object?>
     {
         private delegate void SerializeMethod(object dynamicFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
 
@@ -24,7 +24,7 @@ namespace MessagePack.Formatters
             this.innerResolvers = innerResolvers;
         }
 
-        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -49,7 +49,7 @@ namespace MessagePack.Formatters
                 {
                     if (!this.serializers.TryGetValue(type, out formatterAndDelegate))
                     {
-                        object formatter = null;
+                        object? formatter = null;
                         foreach (IFormatterResolver innerResolver in this.innerResolvers)
                         {
                             formatter = innerResolver.GetFormatterDynamic(type);
@@ -94,7 +94,7 @@ namespace MessagePack.Formatters
             formatterAndDelegate.Value(formatterAndDelegate.Key, ref writer, value, options);
         }
 
-        public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return PrimitiveObjectFormatter.Instance.Deserialize(ref reader, options);
         }

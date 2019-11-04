@@ -5,6 +5,8 @@ using System;
 using System.Buffers;
 
 #pragma warning disable SA1649 // File name should match first type name
+#pragma warning disable SA1414 // Tuple element should have names
+#pragma warning disable SA1141 // Use () tuple syntax
 
 namespace MessagePack.Formatters
 {

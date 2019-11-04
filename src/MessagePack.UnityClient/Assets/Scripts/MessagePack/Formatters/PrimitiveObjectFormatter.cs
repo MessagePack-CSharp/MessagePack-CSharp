@@ -8,9 +8,9 @@ using System.Reflection;
 
 namespace MessagePack.Formatters
 {
-    public sealed class PrimitiveObjectFormatter : IMessagePackFormatter<object>
+    public sealed class PrimitiveObjectFormatter : IMessagePackFormatter<object?>
     {
-        public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter();
+        public static readonly IMessagePackFormatter<object?> Instance = new PrimitiveObjectFormatter();
 
         private static readonly Dictionary<Type, int> TypeToJumpCode = new Dictionary<Type, int>()
         {
@@ -69,7 +69,7 @@ namespace MessagePack.Formatters
 
 #endif
 
-        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -173,10 +173,9 @@ namespace MessagePack.Formatters
                             break;
                     }
                 }
-                else if (value is System.Collections.IDictionary)
+                else if (value is System.Collections.IDictionary d)
                 {
                     // check IDictionary first
-                    var d = value as System.Collections.IDictionary;
                     writer.WriteMapHeader(d.Count);
                     foreach (System.Collections.DictionaryEntry item in d)
                     {
@@ -186,9 +185,8 @@ namespace MessagePack.Formatters
 
                     return;
                 }
-                else if (value is System.Collections.ICollection)
+                else if (value is System.Collections.ICollection c)
                 {
-                    var c = value as System.Collections.ICollection;
                     writer.WriteArrayHeader(c.Count);
                     foreach (var item in c)
                     {
@@ -202,7 +200,7 @@ namespace MessagePack.Formatters
             throw new InvalidOperationException("Not supported primitive object resolver. type:" + t.Name);
         }
 
-        public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             MessagePackType type = reader.NextMessagePackType;
             IFormatterResolver resolver = options.Resolver;
@@ -280,8 +278,8 @@ namespace MessagePack.Formatters
                     {
                         var length = reader.ReadArrayHeader();
 
-                        IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
-                        var array = new object[length];
+                        IMessagePackFormatter<object> objectFormatter = resolver.GetFormatterWithVerify<object>();
+                        var array = new object?[length];
                         for (int i = 0; i < length; i++)
                         {
                             array[i] = objectFormatter.Deserialize(ref reader, options);
@@ -294,11 +292,15 @@ namespace MessagePack.Formatters
                     {
                         var length = reader.ReadMapHeader();
 
-                        IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
-                        var hash = new Dictionary<object, object>(length);
+                        IMessagePackFormatter<object> objectFormatter = resolver.GetFormatterWithVerify<object>();
+                        var hash = new Dictionary<object, object?>(length);
                         for (int i = 0; i < length; i++)
                         {
                             var key = objectFormatter.Deserialize(ref reader, options);
+                            if (key is null)
+                            {
+                                MessagePackSerializationException.ThrowNullKeyInMapException();
+                            }
 
                             var value = objectFormatter.Deserialize(ref reader, options);
 

@@ -70,6 +70,6 @@ namespace MessagePack.Internal
             return sequence.ToArray();
         }
 
-        public static byte[] GetArrayFromNullableSequence(in ReadOnlySequence<byte>? sequence) => sequence?.ToArray();
+        public static byte[]? GetArrayFromNullableSequence(in ReadOnlySequence<byte>? sequence) => sequence?.ToArray();
     }
 }

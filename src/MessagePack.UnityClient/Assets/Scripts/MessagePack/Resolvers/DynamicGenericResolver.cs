@@ -26,18 +26,18 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)DynamicGenericResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)DynamicGenericResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -79,7 +79,7 @@ namespace MessagePack.Internal
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
-        internal static object GetFormatter(Type t)
+        internal static object? GetFormatter(Type t)
         {
             TypeInfo ti = t.GetTypeInfo();
 
@@ -118,7 +118,7 @@ namespace MessagePack.Internal
                 Type genericType = ti.GetGenericTypeDefinition();
                 TypeInfo genericTypeInfo = genericType.GetTypeInfo();
                 var isNullable = genericTypeInfo.IsNullable();
-                Type nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
+                Type? nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
 
                 if (genericType == typeof(KeyValuePair<,>))
                 {
@@ -128,7 +128,7 @@ namespace MessagePack.Internal
                 // Tuple
                 else if (ti.FullName.StartsWith("System.Tuple"))
                 {
-                    Type tupleFormatterType = null;
+                    Type? tupleFormatterType = null;
                     switch (ti.GenericTypeArguments.Length)
                     {
                         case 1:
@@ -156,7 +156,7 @@ namespace MessagePack.Internal
                             tupleFormatterType = typeof(TupleFormatter<,,,,,,,>);
                             break;
                         default:
-                            break;
+                            throw new MessagePackSerializationException("Unsupported arity for Tuple generic type: " + ti.Name);
                     }
 
                     return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
@@ -165,7 +165,7 @@ namespace MessagePack.Internal
                 // ValueTuple
                 else if (ti.FullName.StartsWith("System.ValueTuple"))
                 {
-                    Type tupleFormatterType = null;
+                    Type? tupleFormatterType = null;
                     switch (ti.GenericTypeArguments.Length)
                     {
                         case 1:
@@ -193,7 +193,7 @@ namespace MessagePack.Internal
                             tupleFormatterType = typeof(ValueTupleFormatter<,,,,,,,>);
                             break;
                         default:
-                            break;
+                            throw new MessagePackSerializationException("Unsupported arity for ValueTuple generic type: " + ti.Name);
                     }
 
                     return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
@@ -215,7 +215,7 @@ namespace MessagePack.Internal
                 // Standard Nullable
                 else if (isNullable)
                 {
-                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
+                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType! });
                 }
 
                 // Mapped formatter
@@ -276,7 +276,7 @@ namespace MessagePack.Internal
             return null;
         }
 
-        private static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
+        private static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object?[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);
         }

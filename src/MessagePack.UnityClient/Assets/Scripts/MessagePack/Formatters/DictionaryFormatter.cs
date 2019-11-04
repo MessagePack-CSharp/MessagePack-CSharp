@@ -11,11 +11,11 @@ using System.Collections.ObjectModel;
 namespace MessagePack.Formatters
 {
     // unfortunately, can't use IDictionary<KVP> because supports IReadOnlyDictionary.
-    public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary> : IMessagePackFormatter<TDictionary>
-        where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
+    public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary> : IMessagePackFormatter<TDictionary?>
+        where TDictionary : class?, IEnumerable<KeyValuePair<TKey, TValue>>
         where TEnumerator : IEnumerator<KeyValuePair<TKey, TValue>>
     {
-        public void Serialize(ref MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, TDictionary? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -68,7 +68,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public TDictionary Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public TDictionary? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -111,7 +111,7 @@ namespace MessagePack.Formatters
     }
 
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TDictionary> : DictionaryFormatterBase<TKey, TValue, TIntermediate, IEnumerator<KeyValuePair<TKey, TValue>>, TDictionary>
-        where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
+        where TDictionary : class?, IEnumerable<KeyValuePair<TKey, TValue>>
     {
         protected override IEnumerator<KeyValuePair<TKey, TValue>> GetSourceEnumerator(TDictionary source)
         {
@@ -120,7 +120,7 @@ namespace MessagePack.Formatters
     }
 
     public abstract class DictionaryFormatterBase<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary, TDictionary>
-        where TDictionary : IDictionary<TKey, TValue>
+        where TDictionary : class?, IDictionary<TKey, TValue>
     {
         protected override TDictionary Complete(TDictionary intermediateCollection)
         {
@@ -152,7 +152,7 @@ namespace MessagePack.Formatters
     }
 
     public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
-        where TDictionary : IDictionary<TKey, TValue>, new()
+        where TDictionary : class?, IDictionary<TKey, TValue>, new()
     {
         protected override void Add(TDictionary collection, int index, TKey key, TValue value)
         {

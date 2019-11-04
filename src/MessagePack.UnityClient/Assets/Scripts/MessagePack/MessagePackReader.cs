@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -608,7 +609,7 @@ namespace MessagePack
         /// </summary>
         /// <returns>A string, or <c>null</c> if the current msgpack token is <see cref="MessagePackCode.Nil"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string ReadString()
+        public string? ReadString()
         {
             if (this.TryReadNil())
             {
@@ -716,6 +717,7 @@ namespace MessagePack
         /// </summary>
         private static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
 
+        [DoesNotReturn]
         private static Exception ThrowInvalidCode(byte code)
         {
             throw new InvalidOperationException(string.Format("code is invalid. code: {0} format: {1}", code, MessagePackCode.ToFormatName(code)));

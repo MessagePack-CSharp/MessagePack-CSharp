@@ -60,7 +60,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceInt16BlockArrayFormatter : IMessagePackFormatter<Int16[]>
+    public sealed class ForceInt16BlockArrayFormatter : IMessagePackFormatter<Int16[]?>
     {
         public static readonly ForceInt16BlockArrayFormatter Instance = new ForceInt16BlockArrayFormatter();
 
@@ -68,7 +68,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int16[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Int16[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -84,7 +84,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int16[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Int16[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -156,7 +156,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceInt32BlockArrayFormatter : IMessagePackFormatter<Int32[]>
+    public sealed class ForceInt32BlockArrayFormatter : IMessagePackFormatter<Int32[]?>
     {
         public static readonly ForceInt32BlockArrayFormatter Instance = new ForceInt32BlockArrayFormatter();
 
@@ -164,7 +164,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int32[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Int32[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -180,7 +180,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int32[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Int32[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -252,7 +252,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceInt64BlockArrayFormatter : IMessagePackFormatter<Int64[]>
+    public sealed class ForceInt64BlockArrayFormatter : IMessagePackFormatter<Int64[]?>
     {
         public static readonly ForceInt64BlockArrayFormatter Instance = new ForceInt64BlockArrayFormatter();
 
@@ -260,7 +260,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, Int64[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Int64[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -276,7 +276,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Int64[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Int64[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -348,7 +348,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt16BlockArrayFormatter : IMessagePackFormatter<UInt16[]>
+    public sealed class ForceUInt16BlockArrayFormatter : IMessagePackFormatter<UInt16[]?>
     {
         public static readonly ForceUInt16BlockArrayFormatter Instance = new ForceUInt16BlockArrayFormatter();
 
@@ -356,7 +356,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt16[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, UInt16[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -372,7 +372,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt16[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public UInt16[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -444,7 +444,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt32BlockArrayFormatter : IMessagePackFormatter<UInt32[]>
+    public sealed class ForceUInt32BlockArrayFormatter : IMessagePackFormatter<UInt32[]?>
     {
         public static readonly ForceUInt32BlockArrayFormatter Instance = new ForceUInt32BlockArrayFormatter();
 
@@ -452,7 +452,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt32[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, UInt32[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -468,7 +468,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt32[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public UInt32[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -540,7 +540,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceUInt64BlockArrayFormatter : IMessagePackFormatter<UInt64[]>
+    public sealed class ForceUInt64BlockArrayFormatter : IMessagePackFormatter<UInt64[]?>
     {
         public static readonly ForceUInt64BlockArrayFormatter Instance = new ForceUInt64BlockArrayFormatter();
 
@@ -548,7 +548,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, UInt64[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, UInt64[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -564,7 +564,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public UInt64[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public UInt64[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -688,7 +688,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ForceSByteBlockArrayFormatter : IMessagePackFormatter<SByte[]>
+    public sealed class ForceSByteBlockArrayFormatter : IMessagePackFormatter<SByte[]?>
     {
         public static readonly ForceSByteBlockArrayFormatter Instance = new ForceSByteBlockArrayFormatter();
 
@@ -696,7 +696,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, SByte[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, SByte[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -712,7 +712,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public SByte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public SByte[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

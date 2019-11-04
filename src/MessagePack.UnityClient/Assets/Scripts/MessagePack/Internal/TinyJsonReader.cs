@@ -51,7 +51,7 @@ namespace MessagePack
     {
         private readonly TextReader reader;
         private readonly bool disposeInnerReader;
-        private StringBuilder reusableBuilder;
+        private StringBuilder? reusableBuilder;
 
         public TinyJsonToken TokenType { get; private set; }
 
@@ -65,7 +65,7 @@ namespace MessagePack
 
         public decimal DecimalValue { get; private set; }
 
-        public string StringValue { get; private set; }
+        public string? StringValue { get; private set; }
 
         public TinyJsonReader(TextReader reader, bool disposeInnerReader = true)
         {

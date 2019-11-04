@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -20,7 +21,7 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to be serialized or deserialized.</typeparam>
         /// <returns>A formatter, if this resolver supplies one for type <typeparamref name="T"/>; otherwise <c>null</c>.</returns>
-        IMessagePackFormatter<T> GetFormatter<T>();
+        IMessagePackFormatter<T>? GetFormatter<T>();
     }
 
     public static class FormatterResolverExtensions
@@ -28,7 +29,7 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IMessagePackFormatter<T> GetFormatterWithVerify<T>(this IFormatterResolver resolver)
         {
-            IMessagePackFormatter<T> formatter;
+            IMessagePackFormatter<T>? formatter;
             try
             {
                 formatter = resolver.GetFormatter<T>();
@@ -50,11 +51,13 @@ namespace MessagePack
             return formatter;
         }
 
+        [DoesNotReturn]
         private static void Throw(TypeInitializationException ex)
         {
             ExceptionDispatchInfo.Capture(ex.InnerException ?? ex).Throw();
         }
 
+        [DoesNotReturn]
         private static void Throw(Type t, IFormatterResolver resolver)
         {
             throw new FormatterNotRegisteredException(t.FullName + " is not registered in this resolver. resolver:" + resolver.GetType().Name);

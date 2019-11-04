@@ -32,7 +32,7 @@ namespace MessagePack.Formatters
             string name;
             if (!this.valueNameMapping.TryGetValue(value, out name))
             {
-                name = value.ToString(); // fallback for flags etc, But Enum.ToString is too slow.
+                name = value!.ToString(); // fallback for flags etc, But Enum.ToString is too slow.
             }
 
             writer.Write(name);
@@ -41,6 +41,10 @@ namespace MessagePack.Formatters
         public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var name = reader.ReadString();
+            if (name is null)
+            {
+                MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<T>();
+            }
 
             T value;
             if (!this.nameValueMapping.TryGetValue(name, out value))

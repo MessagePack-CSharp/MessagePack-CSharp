@@ -13,7 +13,7 @@ namespace MessagePack.Tests
 {
     public class MessagePackBinaryTest
     {
-        private (MemoryStream, MsgPack.Packer) CreateReferencePacker()
+        private (MemoryStream Stream, MsgPack.Packer Packer) CreateReferencePacker()
         {
             var ms = new MemoryStream();
             var packer = MsgPack.Packer.Create(ms, MsgPack.PackerCompatibilityOptions.None);

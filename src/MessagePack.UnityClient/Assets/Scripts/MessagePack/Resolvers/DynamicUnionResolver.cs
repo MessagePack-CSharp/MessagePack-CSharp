@@ -63,14 +63,14 @@ namespace MessagePack.Resolvers
         }
 #endif
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -89,7 +89,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = BuildType(typeof(T));
+                TypeInfo? formatterTypeInfo = BuildType(typeof(T));
                 if (formatterTypeInfo == null)
                 {
                     return;
@@ -99,7 +99,7 @@ namespace MessagePack.Resolvers
             }
         }
 
-        private static TypeInfo BuildType(Type type)
+        private static TypeInfo? BuildType(Type type)
         {
             TypeInfo ti = type.GetTypeInfo();
 
@@ -132,10 +132,10 @@ namespace MessagePack.Resolvers
             }
 
             Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-            TypeBuilder typeBuilder = DynamicAssembly.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+            TypeBuilder typeBuilder = DynamicAssembly.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, string.Empty).Replace(".", "_") + "Formatter" + +Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null!, new[] { formatterType });
 
-            FieldBuilder typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
-            FieldBuilder keyToJumpMap = null; // Dictionary<int, int>
+            FieldBuilder? typeToKeyAndJumpMap = null; // Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>
+            FieldBuilder? keyToJumpMap = null; // Dictionary<int, int>
 
             // create map dictionary
             {

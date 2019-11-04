@@ -37,7 +37,7 @@ namespace MessagePack.Resolvers
         }
 
         /// <inheritdoc />
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return typeof(T) == typeof(object)
                 ? (IMessagePackFormatter<T>)(object)this.Formatter
@@ -69,18 +69,18 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)Helper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)Helper.GetFormatter(typeof(T));
             }
         }
 
@@ -118,7 +118,7 @@ namespace MessagePack.Resolvers
                 { typeof(SByte[]), ForceSByteBlockArrayFormatter.Instance },
             };
 
-            public static object GetFormatter(Type type)
+            public static object? GetFormatter(Type type)
             {
                 object formatter;
                 return FormatterMap.TryGetValue(type, out formatter)
@@ -140,7 +140,7 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        private static readonly IMessagePackFormatter<object> FallbackFormatter = new DynamicObjectTypeFallbackFormatter(
+        private static readonly IMessagePackFormatter<object?> FallbackFormatter = new DynamicObjectTypeFallbackFormatter(
             ForceSizePrimitiveObjectResolver.Instance,
             ContractlessStandardResolverAllowPrivateCore.Instance);
 
@@ -154,14 +154,14 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {

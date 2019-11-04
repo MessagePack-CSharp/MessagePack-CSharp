@@ -110,7 +110,7 @@ namespace MessagePack.Resolvers
             /// <inheritdoc/>
             protected override IMessagePackFormatter<T> GetFormatterCore<T>()
             {
-                if (!this.formattersByType.TryGetValue(typeof(T), out IMessagePackFormatter formatter))
+                if (!this.formattersByType.TryGetValue(typeof(T), out IMessagePackFormatter? formatter))
                 {
                     foreach (IFormatterResolver resolver in this.subResolvers)
                     {
@@ -139,14 +139,14 @@ namespace MessagePack.Resolvers
             }
 
             /// <inheritdoc/>
-            protected override IMessagePackFormatter<T> GetFormatterCore<T>()
+            protected override IMessagePackFormatter<T>? GetFormatterCore<T>()
             {
                 foreach (IFormatterResolver resolver in this.subResolvers)
                 {
-                    IMessagePackFormatter<T> formatter = resolver.GetFormatter<T>();
+                    IMessagePackFormatter<T>? formatter = resolver.GetFormatter<T>();
                     if (formatter != null)
                     {
-                        return (IMessagePackFormatter<T>)formatter;
+                        return formatter;
                     }
                 }
 

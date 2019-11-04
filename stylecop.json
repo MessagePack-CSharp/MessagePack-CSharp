@@ -13,6 +13,9 @@
     "layoutRules": {
       "newlineAtEndOfFile": "require"
     },
+    "namingRules": {
+      "tupleElementNameCasing": "PascalCase"
+    },
     "orderingRules": {
       "systemUsingDirectivesFirst": true,
       "usingDirectivesPlacement": "outsideNamespace"

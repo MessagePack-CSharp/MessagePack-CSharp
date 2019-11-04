@@ -55,7 +55,7 @@ namespace MessagePack.Formatters
                     deserializer = (ref MessagePackReader reader) => { var v = reader.ReadUInt64(); return Unsafe.As<UInt64, T>(ref v); };
                     break;
                 default:
-                    break;
+                    throw new NotSupportedException("Unsupported base type for generic type argument.");
 #pragma warning restore SA1107 // Avoid multiple statements on same line.
             }
         }

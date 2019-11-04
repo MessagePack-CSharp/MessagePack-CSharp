@@ -45,14 +45,14 @@ namespace MessagePack.Resolvers
         }
 #endif
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -90,7 +90,7 @@ namespace MessagePack.Resolvers
             Type underlyingType = Enum.GetUnderlyingType(enumType);
             Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(enumType);
 
-            TypeBuilder typeBuilder = DynamicAssembly.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
+            TypeBuilder typeBuilder = DynamicAssembly.DefineType("MessagePack.Formatters." + enumType.FullName.Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null!, new[] { formatterType });
 
             // void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options);
             {

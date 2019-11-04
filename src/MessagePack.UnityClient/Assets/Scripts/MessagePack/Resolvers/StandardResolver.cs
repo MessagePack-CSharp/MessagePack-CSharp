@@ -25,7 +25,7 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverCore.Instance);
+        public static readonly IMessagePackFormatter<object?> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverCore.Instance);
 
         static StandardResolver()
         {
@@ -37,14 +37,14 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -83,20 +83,20 @@ namespace MessagePack.Resolvers
             Options = new MessagePackSerializerOptions(Instance);
         }
 
-        public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverCore.Instance);
+        public static readonly IMessagePackFormatter<object?> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverCore.Instance);
 
         private ContractlessStandardResolver()
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -135,20 +135,20 @@ namespace MessagePack.Resolvers
             Options = new MessagePackSerializerOptions(Instance);
         }
 
-        public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverAllowPrivateCore.Instance);
+        public static readonly IMessagePackFormatter<object?> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverAllowPrivateCore.Instance);
 
         private StandardResolverAllowPrivate()
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -187,20 +187,20 @@ namespace MessagePack.Resolvers
             Options = new MessagePackSerializerOptions(Instance);
         }
 
-        public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverAllowPrivateCore.Instance);
+        public static readonly IMessagePackFormatter<object?> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverAllowPrivateCore.Instance);
 
         private ContractlessStandardResolverAllowPrivate()
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -264,20 +264,20 @@ namespace MessagePack.Internal
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
                 foreach (IFormatterResolver item in Resolvers)
                 {
-                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                     if (f != null)
                     {
                         Formatter = f;
@@ -304,20 +304,20 @@ namespace MessagePack.Internal
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
                 foreach (IFormatterResolver item in Resolvers)
                 {
-                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                     if (f != null)
                     {
                         Formatter = f;
@@ -343,20 +343,20 @@ namespace MessagePack.Internal
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
                 foreach (IFormatterResolver item in Resolvers)
                 {
-                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                     if (f != null)
                     {
                         Formatter = f;
@@ -383,20 +383,20 @@ namespace MessagePack.Internal
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
                 foreach (IFormatterResolver item in Resolvers)
                 {
-                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                     if (f != null)
                     {
                         Formatter = f;

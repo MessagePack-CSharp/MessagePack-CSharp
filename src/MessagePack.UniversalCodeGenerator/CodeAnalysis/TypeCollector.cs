@@ -233,7 +233,7 @@ namespace MessagePack.CodeGenerator
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo) Collect()
+        public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo) Collect()
         {
             this.ResetWorkspace();
 

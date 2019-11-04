@@ -23,7 +23,7 @@ namespace MessagePack
     {
         public int? IntKey { get; private set; }
 
-        public string StringKey { get; private set; }
+        public string? StringKey { get; private set; }
 
         public KeyAttribute(int x)
         {
@@ -51,7 +51,7 @@ namespace MessagePack
         public UnionAttribute(int key, Type subType)
         {
             this.Key = key;
-            this.SubType = subType;
+            this.SubType = subType ?? throw new ArgumentNullException(nameof(subType));
         }
     }
 
@@ -65,16 +65,16 @@ namespace MessagePack
     {
         public Type FormatterType { get; private set; }
 
-        public object[] Arguments { get; private set; }
+        public object[]? Arguments { get; private set; }
 
         public MessagePackFormatterAttribute(Type formatterType)
         {
-            this.FormatterType = formatterType;
+            this.FormatterType = formatterType ?? throw new ArgumentNullException(nameof(formatterType));
         }
 
         public MessagePackFormatterAttribute(Type formatterType, params object[] arguments)
         {
-            this.FormatterType = formatterType;
+            this.FormatterType = formatterType ?? throw new ArgumentNullException(nameof(formatterType));
             this.Arguments = arguments;
         }
     }

@@ -18,7 +18,7 @@ namespace MessagePack
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
-        public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             using (var sequence = new Sequence<byte>())
             {
@@ -39,7 +39,7 @@ namespace MessagePack
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
-        public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             var writer = new StringWriter();
             SerializeToJson(writer, obj, options, cancellationToken);
@@ -49,12 +49,12 @@ namespace MessagePack
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public static string ConvertToJson(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => ConvertToJson(new ReadOnlySequence<byte>(bytes), options, cancellationToken);
+        public static string ConvertToJson(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => ConvertToJson(new ReadOnlySequence<byte>(bytes), options, cancellationToken);
 
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             var jsonWriter = new StringWriter();
             var reader = new MessagePackReader(bytes)
@@ -68,7 +68,7 @@ namespace MessagePack
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
-        public static void ConvertToJson(ref MessagePackReader reader, TextWriter jsonWriter, MessagePackSerializerOptions options = null)
+        public static void ConvertToJson(ref MessagePackReader reader, TextWriter jsonWriter, MessagePackSerializerOptions? options = null)
         {
             if (reader.End)
             {
@@ -108,7 +108,7 @@ namespace MessagePack
         /// <summary>
         /// Translates the given JSON to MessagePack.
         /// </summary>
-        public static void ConvertFromJson(string str, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
+        public static void ConvertFromJson(string str, ref MessagePackWriter writer, MessagePackSerializerOptions? options = null)
         {
             using (var sr = new StringReader(str))
             {
@@ -119,7 +119,7 @@ namespace MessagePack
         /// <summary>
         /// Translates the given JSON to MessagePack.
         /// </summary>
-        public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             using (var seq = new Sequence<byte>())
             {
@@ -140,7 +140,7 @@ namespace MessagePack
         /// <summary>
         /// Translates the given JSON to MessagePack.
         /// </summary>
-        public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
+        public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions? options = null)
         {
             options = options ?? DefaultOptions;
             if (options.UseLZ4Compression)
@@ -150,7 +150,7 @@ namespace MessagePack
                     MessagePackWriter scratchWriter = writer.Clone(scratch);
                     using (var jr = new TinyJsonReader(reader, false))
                     {
-                        FromJsonCore(jr, ref scratchWriter);
+                        FromJsonCore(jr, ref scratchWriter, options);
                     }
 
                     scratchWriter.Flush();
@@ -161,12 +161,12 @@ namespace MessagePack
             {
                 using (var jr = new TinyJsonReader(reader, false))
                 {
-                    FromJsonCore(jr, ref writer);
+                    FromJsonCore(jr, ref writer, options);
                 }
             }
         }
 
-        private static uint FromJsonCore(TinyJsonReader jr, ref MessagePackWriter writer)
+        private static uint FromJsonCore(TinyJsonReader jr, ref MessagePackWriter writer, MessagePackSerializerOptions options)
         {
             uint count = 0;
             while (jr.Read())
@@ -180,7 +180,7 @@ namespace MessagePack
                         using (var scratch = new Sequence<byte>())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratch);
-                            var mapCount = FromJsonCore(jr, ref scratchWriter);
+                            var mapCount = FromJsonCore(jr, ref scratchWriter, options);
                             scratchWriter.Flush();
 
                             mapCount = mapCount / 2; // remove propertyname string count.
@@ -197,7 +197,7 @@ namespace MessagePack
                         using (var scratch = new Sequence<byte>())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratch);
-                            var arrayCount = FromJsonCore(jr, ref scratchWriter);
+                            var arrayCount = FromJsonCore(jr, ref scratchWriter, options);
                             scratchWriter.Flush();
 
                             writer.WriteArrayHeader(arrayCount);
@@ -224,7 +224,7 @@ namespace MessagePack
                         }
                         else if (v == ValueType.Decimal)
                         {
-                            DecimalFormatter.Instance.Serialize(ref writer, jr.DecimalValue, null);
+                            DecimalFormatter.Instance.Serialize(ref writer, jr.DecimalValue, options);
                         }
 
                         count++;
@@ -284,7 +284,7 @@ namespace MessagePack
 
                     break;
                 case MessagePackType.String:
-                    WriteJsonString(reader.ReadString(), writer);
+                    WriteJsonString(reader.ReadString()!, writer);
                     break;
                 case MessagePackType.Binary:
                     ArraySegment<byte> segment = ByteArraySegmentFormatter.Instance.Deserialize(ref reader, DefaultOptions);

@@ -19,18 +19,18 @@ namespace MessagePack.Formatters
     /// <summary>
     /// For `object` field that holds derived from `object` value, ex: var arr = new object[] { 1, "a", new Model() };.
     /// </summary>
-    public sealed class TypelessFormatter : IMessagePackFormatter<object>
+    public sealed class TypelessFormatter : IMessagePackFormatter<object?>
     {
         public const sbyte ExtensionTypeCode = 100;
 
-        private delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
+        private delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options);
 
-        private delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, MessagePackSerializerOptions options);
+        private delegate object? DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, MessagePackSerializerOptions options);
 
-        private readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
-        private readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>> deserializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>>();
-        private readonly ThreadsafeTypeKeyHashTable<byte[]> fullTypeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
-        private readonly ThreadsafeTypeKeyHashTable<byte[]> shortenedTypeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
+        private readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object?, SerializeMethod>> serializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object?, SerializeMethod>>();
+        private readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object?, DeserializeMethod>> deserializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object?, DeserializeMethod>>();
+        private readonly ThreadsafeTypeKeyHashTable<byte[]?> fullTypeNameCache = new ThreadsafeTypeKeyHashTable<byte[]?>();
+        private readonly ThreadsafeTypeKeyHashTable<byte[]?> shortenedTypeNameCache = new ThreadsafeTypeKeyHashTable<byte[]?>();
         private readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> typeCache = new AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type>(new StringArraySegmentByteAscymmetricEqualityComparer());
 
         private static readonly HashSet<Type> UseBuiltinTypes = new HashSet<Type>
@@ -83,8 +83,8 @@ namespace MessagePack.Formatters
 
         public TypelessFormatter()
         {
-            this.serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, ref MessagePackWriter p2, object p3, MessagePackSerializerOptions p4) => { }));
-            this.deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object, DeserializeMethod>(null, (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object()));
+            this.serializers.TryAdd(typeof(object), _ => new KeyValuePair<object?, SerializeMethod>(null, (object p1, ref MessagePackWriter p2, object? p3, MessagePackSerializerOptions p4) => { }));
+            this.deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object?, DeserializeMethod>(null, (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object()));
         }
 
         private string BuildTypeName(Type type, MessagePackSerializerOptions options)
@@ -108,7 +108,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -118,7 +118,7 @@ namespace MessagePack.Formatters
 
             Type type = value.GetType();
 
-            byte[] typeName;
+            byte[]? typeName;
             var typeNameCache = options.OmitAssemblyVersion ? this.shortenedTypeNameCache : this.fullTypeNameCache;
             if (!typeNameCache.TryGetValue(type, out typeName))
             {
@@ -137,12 +137,12 @@ namespace MessagePack.Formatters
 
             if (typeName == null)
             {
-                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref writer, value, options);
+                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatterWithVerify<object>().Serialize(ref writer, value, options);
                 return;
             }
 
             // don't use GetOrAdd for avoid closure capture.
-            KeyValuePair<object, SerializeMethod> formatterAndDelegate;
+            KeyValuePair<object?, SerializeMethod> formatterAndDelegate;
             if (!this.serializers.TryGetValue(type, out formatterAndDelegate))
             {
                 // double check locking...
@@ -176,7 +176,7 @@ namespace MessagePack.Formatters
 
                         SerializeMethod lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
 
-                        formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
+                        formatterAndDelegate = new KeyValuePair<object?, SerializeMethod>(formatter, lambda);
                         this.serializers.TryAdd(type, formatterAndDelegate);
                     }
                 }
@@ -187,7 +187,7 @@ namespace MessagePack.Formatters
             {
                 MessagePackWriter scratchWriter = writer.Clone(scratch);
                 scratchWriter.WriteString(typeName);
-                formatterAndDelegate.Value(formatterAndDelegate.Key, ref scratchWriter, value, options);
+                formatterAndDelegate.Value(formatterAndDelegate.Key!, ref scratchWriter, value, options);
                 scratchWriter.Flush();
 
                 // mark as extension with code 100
@@ -195,7 +195,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -208,9 +208,9 @@ namespace MessagePack.Formatters
                 if (ext.TypeCode == TypelessFormatter.ExtensionTypeCode)
                 {
                     // it has type name serialized
-                    ReadOnlySequence<byte> typeName = reader.ReadStringSegment().Value;
+                    ReadOnlySequence<byte> typeName = reader.ReadStringSegment() ?? throw new MessagePackSerializationException("Unexpected nil encountered when looking for type name.");
                     ArraySegment<byte> typeNameArraySegment;
-                    byte[] rented = null;
+                    byte[]? rented = null;
                     if (!typeName.IsSingleSegment || !MemoryMarshal.TryGetArray(typeName.First, out typeNameArraySegment))
                     {
                         rented = ArrayPool<byte>.Shared.Rent((int)typeName.Length);
@@ -230,18 +230,17 @@ namespace MessagePack.Formatters
             }
 
             // fallback
-            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Deserialize(ref reader, options);
+            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatterWithVerify<object>().Deserialize(ref reader, options);
         }
 
         /// <summary>
         /// Does not support deserializing of anonymous types
         /// Type should be covered by preceeding resolvers in complex/standard resolver.
         /// </summary>
-        private object DeserializeByTypeName(ArraySegment<byte> typeName, ref MessagePackReader byteSequence, MessagePackSerializerOptions options)
+        private object? DeserializeByTypeName(ArraySegment<byte> typeName, ref MessagePackReader byteSequence, MessagePackSerializerOptions options)
         {
             // try get type with assembly name, throw if not found
-            Type type;
-            if (!this.typeCache.TryGetValue(typeName, out type))
+            if (!this.typeCache.TryGetValue(typeName, out Type? type))
             {
                 var buffer = new byte[typeName.Count];
                 Buffer.BlockCopy(typeName.Array, typeName.Offset, buffer, 0, buffer.Length);
@@ -269,7 +268,7 @@ namespace MessagePack.Formatters
             }
 
             options.ThrowIfDeserializingTypeIsDisallowed(type);
-            KeyValuePair<object, DeserializeMethod> formatterAndDelegate;
+            KeyValuePair<object?, DeserializeMethod> formatterAndDelegate;
             if (!this.deserializers.TryGetValue(type, out formatterAndDelegate))
             {
                 lock (this.deserializers)
@@ -306,13 +305,13 @@ namespace MessagePack.Formatters
 
                         DeserializeMethod lambda = Expression.Lambda<DeserializeMethod>(body, param0, param1, param2).Compile();
 
-                        formatterAndDelegate = new KeyValuePair<object, DeserializeMethod>(formatter, lambda);
+                        formatterAndDelegate = new KeyValuePair<object?, DeserializeMethod>(formatter, lambda);
                         this.deserializers.TryAdd(type, formatterAndDelegate);
                     }
                 }
             }
 
-            return formatterAndDelegate.Value(formatterAndDelegate.Key, ref byteSequence, options);
+            return formatterAndDelegate.Value(formatterAndDelegate.Key!, ref byteSequence, options);
         }
     }
 }

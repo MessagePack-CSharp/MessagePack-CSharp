@@ -11,6 +11,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -31,13 +32,13 @@ namespace Nerdbank.Streams
 
         private readonly Stack<SequenceSegment> segmentPool = new Stack<SequenceSegment>();
 
-        private readonly MemoryPool<T> memoryPool;
+        private readonly MemoryPool<T>? memoryPool;
 
-        private readonly ArrayPool<T> arrayPool;
+        private readonly ArrayPool<T>? arrayPool;
 
-        private SequenceSegment first;
+        private SequenceSegment? first;
 
-        private SequenceSegment last;
+        private SequenceSegment? last;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Sequence{T}"/> class
@@ -113,7 +114,7 @@ namespace Nerdbank.Streams
         public static implicit operator ReadOnlySequence<T>(Sequence<T> sequence)
         {
             return sequence.first != null
-                ? new ReadOnlySequence<T>(sequence.first, sequence.first.Start, sequence.last, sequence.last.End)
+                ? new ReadOnlySequence<T>(sequence.first, sequence.first.Start, sequence.last, sequence.last!.End)
                 : ReadOnlySequence<T>.Empty;
         }
 
@@ -146,17 +147,12 @@ namespace Nerdbank.Streams
             current = this.first;
             while (current != firstSegment)
             {
-                current = this.RecycleAndGetNext(current);
+                current = this.RecycleAndGetNext(current!);
             }
 
             firstSegment.AdvanceTo(firstIndex);
 
-            if (firstSegment.Length == 0)
-            {
-                firstSegment = this.RecycleAndGetNext(firstSegment);
-            }
-
-            this.first = firstSegment;
+            this.first = firstSegment.Length == 0 ? this.RecycleAndGetNext(firstSegment) : firstSegment;
 
             if (this.first == null)
             {
@@ -171,7 +167,7 @@ namespace Nerdbank.Streams
         /// <param name="count">The number of elements written into memory.</param>
         public void Advance(int count)
         {
-            SequenceSegment last = this.last;
+            SequenceSegment? last = this.last;
             Verify.Operation(last != null, "Cannot advance before acquiring memory.");
             last.Advance(count);
         }
@@ -243,13 +239,13 @@ namespace Nerdbank.Streams
                 }
                 else
                 {
-                    segment.Assign(this.memoryPool.Rent(minBufferSize.Value));
+                    segment.Assign(this.memoryPool!.Rent(minBufferSize.Value));
                 }
 
                 this.Append(segment);
             }
 
-            return this.last;
+            return this.last!;
         }
 
         private void Append(SequenceSegment segment)
@@ -268,10 +264,10 @@ namespace Nerdbank.Streams
                 else
                 {
                     // The last block is completely unused. Replace it instead of appending to it.
-                    var current = this.first;
+                    Sequence<T>.SequenceSegment? current = this.first;
                     if (this.first != this.last)
                     {
-                        while (current.Next != this.last)
+                        while (current!.Next != this.last)
                         {
                             current = current.Next;
                         }
@@ -281,7 +277,7 @@ namespace Nerdbank.Streams
                         this.first = segment;
                     }
 
-                    current.SetNext(segment);
+                    current!.SetNext(segment);
                     this.RecycleAndGetNext(this.last);
                 }
 
@@ -289,13 +285,13 @@ namespace Nerdbank.Streams
             }
         }
 
-        private SequenceSegment RecycleAndGetNext(SequenceSegment segment)
+        private SequenceSegment? RecycleAndGetNext(SequenceSegment segment)
         {
             var recycledSegment = segment;
-            segment = segment.Next;
+            var nextSegment = segment.Next;
             recycledSegment.ResetMemory(this.arrayPool);
             this.segmentPool.Push(recycledSegment);
-            return segment;
+            return nextSegment;
         }
 
         private class SequenceSegment : ReadOnlySequenceSegment<T>
@@ -305,10 +301,12 @@ namespace Nerdbank.Streams
             /// </summary>
             private static readonly bool IsValueTypeElement = typeof(T).GetTypeInfo().IsValueType;
 
+#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
             /// <summary>
             /// Gets the backing array, when using an <see cref="ArrayPool{T}"/> instead of a <see cref="MemoryPool{T}"/>.
             /// </summary>
-            private T[] array;
+            private T[]? array;
+#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
 
             /// <summary>
             /// Gets the position within <see cref="ReadOnlySequenceSegment{T}.Memory"/> where the data starts.
@@ -335,7 +333,7 @@ namespace Nerdbank.Streams
             /// Gets the tracker for the underlying array for this segment, which can be used to recycle the array when we're disposed of.
             /// Will be <c>null</c> if using an array pool, in which case the memory is held by <see cref="array"/>.
             /// </summary>
-            internal IMemoryOwner<T> MemoryOwner { get; private set; }
+            internal IMemoryOwner<T>? MemoryOwner { get; private set; }
 
             /// <summary>
             /// Gets the full memory owned by the <see cref="MemoryOwner"/>.
@@ -356,9 +354,9 @@ namespace Nerdbank.Streams
             /// <summary>
             /// Gets or sets the next segment in the singly linked list of segments.
             /// </summary>
-            internal new SequenceSegment Next
+            internal new SequenceSegment? Next
             {
-                get => (SequenceSegment)base.Next;
+                get => (SequenceSegment?)base.Next;
                 set => base.Next = value;
             }
 
@@ -385,7 +383,7 @@ namespace Nerdbank.Streams
             /// <summary>
             /// Clears all fields in preparation to recycle this instance.
             /// </summary>
-            internal void ResetMemory(ArrayPool<T> arrayPool)
+            internal void ResetMemory(ArrayPool<T>? arrayPool)
             {
                 this.ClearReferences(this.Start, this.End);
                 this.Memory = default;
@@ -395,7 +393,7 @@ namespace Nerdbank.Streams
                 this.End = 0;
                 if (this.array != null)
                 {
-                    arrayPool.Return(this.array);
+                    arrayPool!.Return(this.array);
                     this.array = null;
                 }
                 else
@@ -411,7 +409,6 @@ namespace Nerdbank.Streams
             /// <param name="segment">The next segment in the linked list.</param>
             internal void SetNext(SequenceSegment segment)
             {
-                Debug.Assert(segment != null, "Null not allowed.");
                 this.Next = segment;
                 segment.RunningIndex = this.RunningIndex + this.Start + this.Length;
 
@@ -447,7 +444,7 @@ namespace Nerdbank.Streams
                 // If we store references, clear them to allow the objects to be GC'd.
                 if (!IsValueTypeElement)
                 {
-                    this.AvailableMemory.Span.Slice(startIndex, length).Fill(default);
+                    this.AvailableMemory.Span.Slice(startIndex, length).Fill(default!);
                 }
             }
         }
@@ -459,7 +456,7 @@ namespace Nerdbank.Streams
         /// Throws an <see cref="ArgumentOutOfRangeException"/> if a condition does not evaluate to true.
         /// </summary>
         [DebuggerStepThrough]
-        public static void Range(bool condition, string parameterName, string message = null)
+        public static void Range([DoesNotReturnIf(false)] bool condition, string parameterName, string? message = null)
         {
             if (!condition)
             {
@@ -472,7 +469,7 @@ namespace Nerdbank.Streams
         /// </summary>
         /// <returns>Nothing.  This method always throws.</returns>
         [DebuggerStepThrough]
-        public static Exception FailRange(string parameterName, string message = null)
+        public static Exception FailRange(string parameterName, string? message = null)
         {
             if (string.IsNullOrEmpty(message))
             {
@@ -493,7 +490,7 @@ namespace Nerdbank.Streams
         /// <returns>The value of the parameter.</returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <c>null</c>.</exception>
         [DebuggerStepThrough]
-        public static T NotNull<T>(T value, string parameterName)
+        public static T NotNull<T>([NotNull] T value, string parameterName)
             where T : class // ensures value-types aren't passed to a null checking method
         {
             if (value == null)
@@ -508,7 +505,7 @@ namespace Nerdbank.Streams
         /// Throws an ArgumentException if a condition does not evaluate to true.
         /// </summary>
         [DebuggerStepThrough]
-        public static void Argument(bool condition, string parameterName, string message)
+        public static void Argument([DoesNotReturnIf(false)] bool condition, string parameterName, string message)
         {
             if (!condition)
             {
@@ -520,7 +517,7 @@ namespace Nerdbank.Streams
         /// Throws an ArgumentException if a condition does not evaluate to true.
         /// </summary>
         [DebuggerStepThrough]
-        public static void Argument(bool condition, string parameterName, string message, object arg1)
+        public static void Argument([DoesNotReturnIf(false)] bool condition, string parameterName, string message, object arg1)
         {
             if (!condition)
             {
@@ -532,7 +529,7 @@ namespace Nerdbank.Streams
         /// Throws an ArgumentException if a condition does not evaluate to true.
         /// </summary>
         [DebuggerStepThrough]
-        public static void Argument(bool condition, string parameterName, string message, object arg1, object arg2)
+        public static void Argument([DoesNotReturnIf(false)] bool condition, string parameterName, string message, object arg1, object arg2)
         {
             if (!condition)
             {
@@ -544,7 +541,7 @@ namespace Nerdbank.Streams
         /// Throws an ArgumentException if a condition does not evaluate to true.
         /// </summary>
         [DebuggerStepThrough]
-        public static void Argument(bool condition, string parameterName, string message, params object[] args)
+        public static void Argument([DoesNotReturnIf(false)] bool condition, string parameterName, string message, params object[] args)
         {
             if (!condition)
             {
@@ -562,7 +559,7 @@ namespace Nerdbank.Streams
         /// Throws an <see cref="InvalidOperationException"/> if a condition is false.
         /// </summary>
         [DebuggerStepThrough]
-        internal static void Operation(bool condition, string message)
+        internal static void Operation([DoesNotReturnIf(false)] bool condition, string message)
         {
             if (!condition)
             {

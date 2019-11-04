@@ -3,6 +3,7 @@
     <TargetFramework>net472</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OutputType>exe</OutputType>
+    <Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);DYNAMICCODEDUMPER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
@@ -74,6 +75,9 @@
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackWriter.cs">
       <Link>Code\MessagePackWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\NullabilityAttributes.cs">
+      <Link>Code\NullabilityAttributes.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequencePool.cs">
       <Link>Code\SequencePool.cs</Link>

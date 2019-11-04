@@ -52,7 +52,7 @@ namespace MessagePack.Resolvers
 
         private readonly ResolverCache resolverCache = new ResolverCache(Resolvers);
 
-        public IMessagePackFormatter<T> GetFormatter<T>() => this.resolverCache.GetFormatter<T>();
+        public IMessagePackFormatter<T>? GetFormatter<T>() => this.resolverCache.GetFormatter<T>();
 
         private class ResolverCache : CachingFormatterResolver
         {
@@ -63,11 +63,11 @@ namespace MessagePack.Resolvers
                 this.resolvers = resolvers ?? throw new ArgumentNullException(nameof(resolvers));
             }
 
-            protected override IMessagePackFormatter<T> GetFormatterCore<T>()
+            protected override IMessagePackFormatter<T>? GetFormatterCore<T>()
             {
                 foreach (IFormatterResolver item in this.resolvers)
                 {
-                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                    IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                     if (f != null)
                     {
                         return f;

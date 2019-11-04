@@ -43,7 +43,7 @@ namespace DynamicCodeDumper
                 ////DynamicObjectResolver.Instance.GetFormatter<SimpleStringKeyData2>();
                 ////DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
                 ////DynamicObjectResolver.Instance.GetFormatter<LongestString>();
-                IMessagePackFormatter<MyClass> f = DynamicObjectResolverAllowPrivate.Instance.GetFormatter<MyClass>();
+                IMessagePackFormatter<MyClass> f = DynamicObjectResolverAllowPrivate.Instance.GetFormatterWithVerify<MyClass>();
                 ////DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
                 ////DynamicObjectResolver.Instance.GetFormatter<Callback1>();
                 ////DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();
@@ -113,7 +113,7 @@ namespace DynamicCodeDumper
         {
             internal static readonly MessagePackSerializerOptions Options = new MessagePackSerializerOptions(new EmptyResolver());
 
-            public IMessagePackFormatter<T> GetFormatter<T>() => null;
+            public IMessagePackFormatter<T>? GetFormatter<T>() => null;
         }
     }
 
@@ -126,7 +126,7 @@ namespace DynamicCodeDumper
 
         [Key(1)]
         [MessagePackFormatter(typeof(String_x2Formatter))]
-        public string MyProperty2 { get; set; }
+        public string? MyProperty2 { get; set; }
 
 #pragma warning disable SA1306 // Field names should begin with lower-case letter
         [Key(2)]
@@ -333,7 +333,7 @@ namespace DynamicCodeDumper
     {
         public int MyProperty { get; set; }
 
-        public string MyProperty2 { get; set; }
+        public string? MyProperty2 { get; set; }
     }
 
     public interface IEntity
@@ -363,7 +363,7 @@ namespace DynamicCodeDumper
 
     public abstract class EntityBase
     {
-        public string Name { get; }
+        public string? Name { get; }
 
         public EntityBase()
         {

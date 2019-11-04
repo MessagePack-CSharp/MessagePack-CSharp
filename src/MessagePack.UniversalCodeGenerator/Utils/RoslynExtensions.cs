@@ -20,7 +20,7 @@ namespace MessagePack.CodeGenerator
     // Utility and Extension methods for Roslyn
     internal static class RoslynExtensions
     {
-        private static (string fname, string args) GetBuildCommandLine(string csprojPath, string tempPath, bool useDotNet)
+        private static (string Fname, string Args) GetBuildCommandLine(string csprojPath, string tempPath, bool useDotNet)
         {
             string fname = "dotnet";
             const string tasks = "Restore;ResolveReferences";
@@ -113,7 +113,7 @@ namespace MessagePack.CodeGenerator
             return lst;
         }
 
-        private static (StLogger.Build, IEnumerable<StLogger.Error>) ProcessBuildLog(string tempPath)
+        private static (StLogger.Build Build, IEnumerable<StLogger.Error> Errors) ProcessBuildLog(string tempPath)
         {
             var reader = new StLogger.BinLogReader();
             var stlogger = new StLogger.StructuredLogger();
@@ -138,7 +138,7 @@ namespace MessagePack.CodeGenerator
             }
         }
 
-        private static async Task<(StLogger.Build, IEnumerable<StLogger.Error>)> TryGetBuildResultAsync(string csprojPath, string tempPath, bool useDotNet, params string[] preprocessorSymbols)
+        private static async Task<(StLogger.Build Build, IEnumerable<StLogger.Error> Errors)> TryGetBuildResultAsync(string csprojPath, string tempPath, bool useDotNet, params string[] preprocessorSymbols)
         {
             try
             {

@@ -40,15 +40,20 @@ namespace MessagePack.Formatters
                 throw new Exception("NativeGuidFormatter only allows on little endian env.");
             }
 
-            ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
-            if (valueSequence.Length != sizeof(Guid))
+            ReadOnlySequence<byte>? valueSequence = reader.ReadBytes();
+            if (!valueSequence.HasValue)
+            {
+                MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<Guid>();
+            }
+
+            if (valueSequence.Value.Length != sizeof(Guid))
             {
                 throw new InvalidOperationException("Invalid Guid Size.");
             }
 
             Guid result;
             var resultSpan = new Span<byte>(&result, sizeof(Guid));
-            valueSequence.CopyTo(resultSpan);
+            valueSequence.Value.CopyTo(resultSpan);
             return result;
         }
     }
@@ -85,15 +90,20 @@ namespace MessagePack.Formatters
                 throw new Exception("NativeDecimalFormatter only allows on little endian env.");
             }
 
-            ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
-            if (valueSequence.Length != sizeof(decimal))
+            ReadOnlySequence<byte>? valueSequence = reader.ReadBytes();
+            if (!valueSequence.HasValue)
+            {
+                MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<decimal>();
+            }
+
+            if (valueSequence.Value.Length != sizeof(decimal))
             {
                 throw new MessagePackSerializationException("Invalid decimal Size.");
             }
 
             decimal result;
             var resultSpan = new Span<byte>(&result, sizeof(decimal));
-            valueSequence.CopyTo(resultSpan);
+            valueSequence.Value.CopyTo(resultSpan);
             return result;
         }
     }

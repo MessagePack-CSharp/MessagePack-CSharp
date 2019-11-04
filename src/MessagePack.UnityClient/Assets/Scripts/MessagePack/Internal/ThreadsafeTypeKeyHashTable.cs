@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -52,10 +53,10 @@ namespace MessagePack.Internal
                     var nextBucket = new Entry[nextCapacity];
                     for (int i = 0; i < this.buckets.Length; i++)
                     {
-                        Entry e = this.buckets[i];
+                        Entry? e = this.buckets[i];
                         while (e != null)
                         {
-                            var newEntry = new Entry { Key = e.Key, Value = e.Value, Hash = e.Hash };
+                            var newEntry = new Entry(e.Key, e.Value, e.Hash);
                             this.AddToBuckets(nextBucket, key, newEntry, null, out resultingValue);
                             e = e.Next;
                         }
@@ -88,7 +89,7 @@ namespace MessagePack.Internal
             }
         }
 
-        private bool AddToBuckets(Entry[] buckets, Type newKey, Entry newEntryOrNull, Func<Type, TValue> valueFactory, out TValue resultingValue)
+        private bool AddToBuckets(Entry[] buckets, Type newKey, Entry? newEntryOrNull, Func<Type, TValue>? valueFactory, out TValue resultingValue)
         {
             var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : newKey.GetHashCode();
             if (buckets[h & (buckets.Length - 1)] == null)
@@ -98,10 +99,14 @@ namespace MessagePack.Internal
                     resultingValue = newEntryOrNull.Value;
                     VolatileWrite(ref buckets[h & (buckets.Length - 1)], newEntryOrNull);
                 }
-                else
+                else if (valueFactory is object)
                 {
                     resultingValue = valueFactory(newKey);
-                    VolatileWrite(ref buckets[h & (buckets.Length - 1)], new Entry { Key = newKey, Value = resultingValue, Hash = h });
+                    VolatileWrite(ref buckets[h & (buckets.Length - 1)], new Entry(newKey, resultingValue, h));
+                }
+                else
+                {
+                    throw new ArgumentNullException(nameof(valueFactory), "Either " + nameof(newEntryOrNull) + " or " + nameof(valueFactory) + " must be non-null.");
                 }
             }
             else
@@ -122,10 +127,14 @@ namespace MessagePack.Internal
                             resultingValue = newEntryOrNull.Value;
                             VolatileWrite(ref searchLastEntry.Next, newEntryOrNull);
                         }
-                        else
+                        else if (valueFactory is object)
                         {
                             resultingValue = valueFactory(newKey);
-                            VolatileWrite(ref searchLastEntry.Next, new Entry { Key = newKey, Value = resultingValue, Hash = h });
+                            VolatileWrite(ref searchLastEntry.Next, new Entry(newKey, resultingValue, h));
+                        }
+                        else
+                        {
+                            throw new ArgumentNullException(nameof(valueFactory), "Either " + nameof(newEntryOrNull) + " or " + nameof(valueFactory) + " must be non-null.");
                         }
 
                         break;
@@ -138,7 +147,7 @@ namespace MessagePack.Internal
             return true;
         }
 
-        public bool TryGetValue(Type key, out TValue value)
+        public bool TryGetValue(Type key, [MaybeNullWhen(false)] out TValue value)
         {
             Entry[] table = this.buckets;
             var hash = key.GetHashCode();
@@ -155,7 +164,7 @@ namespace MessagePack.Internal
                 return true;
             }
 
-            Entry next = entry.Next;
+            Entry? next = entry.Next;
             while (next != null)
             {
                 if (next.Key == key)
@@ -168,7 +177,9 @@ namespace MessagePack.Internal
             }
 
 NOT_FOUND:
+#pragma warning disable CS8653 // A default expression introduces a null value for a type parameter.
             value = default(TValue);
+#pragma warning restore CS8653 // A default expression introduces a null value for a type parameter.
             return false;
         }
 
@@ -201,7 +212,8 @@ NOT_FOUND:
             return capacity;
         }
 
-        private static void VolatileWrite(ref Entry location, Entry value)
+        private static void VolatileWrite<T>(ref T location, T value)
+            where T : Entry?
         {
 #if !UNITY_2018_3_OR_NEWER
             System.Threading.Volatile.Write(ref location, value);
@@ -228,11 +240,18 @@ NOT_FOUND:
         private class Entry
         {
 #pragma warning disable SA1401 // Fields should be private
-            internal Type Key;
-            internal TValue Value;
-            internal int Hash;
-            internal Entry Next;
+            internal readonly Type Key;
+            internal readonly TValue Value;
+            internal readonly int Hash;
+            internal Entry? Next;
 #pragma warning restore SA1401 // Fields should be private
+
+            public Entry(Type key, TValue value, int hash)
+            {
+                this.Key = key;
+                this.Value = value;
+                this.Hash = hash;
+            }
 
             // debug only
             public override string ToString()

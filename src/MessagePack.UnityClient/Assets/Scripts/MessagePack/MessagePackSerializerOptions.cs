@@ -113,7 +113,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="typeName">The name of the type to load. This is typically the <see cref="Type.AssemblyQualifiedName"/> but may use the assembly's simple name.</param>
         /// <returns>The loaded type or <c>null</c> if no matching type could be found.</returns>
-        public virtual Type LoadType(string typeName)
+        public virtual Type? LoadType(string typeName)
         {
             Type result = Type.GetType(typeName, false);
             if (result == null && this.AllowAssemblyVersionMismatch)

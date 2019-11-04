@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
+#pragma warning disable SA1141 // Use tuple syntax
+
 namespace MessagePack.Tests
 {
 #if !ENABLE_IL2CPP

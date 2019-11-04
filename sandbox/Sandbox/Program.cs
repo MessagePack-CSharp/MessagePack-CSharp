@@ -207,10 +207,10 @@ namespace Sandbox
         public readonly int Y;
 
         // can't find matched constructor parameter, parameterType mismatch. type:Point parameterIndex:0 paramterType:ValueTuple`2
-        public Point((int, int) p)
+        public Point((int X, int Y) p)
         {
-            this.X = p.Item1;
-            this.Y = p.Item2;
+            this.X = p.X;
+            this.Y = p.Y;
         }
 
         [SerializationConstructor]

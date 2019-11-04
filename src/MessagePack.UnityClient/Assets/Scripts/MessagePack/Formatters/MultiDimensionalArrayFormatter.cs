@@ -12,11 +12,11 @@ namespace MessagePack.Formatters
 {
     /* multi dimensional array serialize to [i, j, [seq]] */
 
-    public sealed class TwoDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,]>
+    public sealed class TwoDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,]?>
     {
         private const int ArrayLength = 3;
 
-        public void Serialize(ref MessagePackWriter writer, T[,] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, T[,]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -42,7 +42,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T[,] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public T[,]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -87,11 +87,11 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class ThreeDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,,]>
+    public sealed class ThreeDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,,]?>
     {
         private const int ArrayLength = 4;
 
-        public void Serialize(ref MessagePackWriter writer, T[,,] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, T[,,]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -119,7 +119,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T[,,] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public T[,,]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -172,11 +172,11 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class FourDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,,,]>
+    public sealed class FourDimensionalArrayFormatter<T> : IMessagePackFormatter<T[,,,]?>
     {
         private const int ArrayLength = 5;
 
-        public void Serialize(ref MessagePackWriter writer, T[,,,] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, T[,,,]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -206,7 +206,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public T[,,,] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public T[,,,]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
