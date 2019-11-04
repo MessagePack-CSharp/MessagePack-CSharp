@@ -87,6 +87,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs">
       <Link>Code\MessagePackCode.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs">
+      <Link>Code\MessagePackSerializationException.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DateTimeConstants.cs">
       <Link>Code\Internal\DateTimeConstants.cs</Link>
     </Compile>

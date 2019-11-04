@@ -39,7 +39,7 @@ namespace MessagePack
         String,
     }
 
-    public class TinyJsonException : Exception
+    public class TinyJsonException : MessagePackSerializationException
     {
         public TinyJsonException(string message)
             : base(message)

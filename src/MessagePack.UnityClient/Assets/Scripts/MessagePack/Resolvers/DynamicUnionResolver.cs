@@ -505,7 +505,7 @@ namespace MessagePack.Internal
         }
     }
 
-    internal class MessagePackDynamicUnionResolverException : Exception
+    internal class MessagePackDynamicUnionResolverException : MessagePackSerializationException
     {
         public MessagePackDynamicUnionResolverException(string message)
             : base(message)
