@@ -540,6 +540,11 @@ MessagePack.MessagePackReader.Sequence.get -> System.Buffers.ReadOnlySequence<by
 MessagePack.MessagePackReader.Skip() -> void
 MessagePack.MessagePackReader.TryReadNil() -> bool
 MessagePack.MessagePackReader.TryReadStringSpan(out System.ReadOnlySpan<byte> span) -> bool
+MessagePack.MessagePackSerializationException
+MessagePack.MessagePackSerializationException.MessagePackSerializationException() -> void
+MessagePack.MessagePackSerializationException.MessagePackSerializationException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
+MessagePack.MessagePackSerializationException.MessagePackSerializationException(string message) -> void
+MessagePack.MessagePackSerializationException.MessagePackSerializationException(string message, System.Exception inner) -> void
 MessagePack.MessagePackSerializer
 MessagePack.MessagePackSerializer.Typeless
 MessagePack.MessagePackSerializerOptions

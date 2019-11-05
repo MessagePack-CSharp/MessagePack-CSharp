@@ -7,6 +7,7 @@
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Analyzer</PackageTags>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackBuildOutputs</TargetsForTfmSpecificContentInPackage>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="tools\*.ps1" Pack="true" PackagePath="tools\" />
@@ -17,7 +18,7 @@
     </PackageReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" version="1.1.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" version="2.9.7" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" version="1.3.2" />
     <PackageReference Include="Microsoft.Composition" version="1.0.31" />
   </ItemGroup>

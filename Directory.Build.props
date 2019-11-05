@@ -3,9 +3,10 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
     <BaseOutputPath Condition=" '$(BaseOutputPath)' == '' ">$(MSBuildThisFileDirectory)bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)bin\Packages\$(Configuration)\NuGet\</PackageOutputPath>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>8.0</LangVersion>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)MessagePack.ruleset</CodeAnalysisRuleSet>
 
@@ -27,7 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0-preview.2" PrivateAssets="All" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.183" PrivateAssets="all" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.0.26" PrivateAssets="all" />
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="16.4.16" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19351-01" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />

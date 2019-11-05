@@ -172,7 +172,7 @@ namespace MessagePackAnalyzer
                     continue; // already tagged Index.
                 }
 
-                AttributeListSyntax attribute = RoslynExtensions.ParseAttributeList($"[Key({startOrder++})]")
+                AttributeListSyntax attribute = RoslynCodeFixExtensions.ParseAttributeList($"[Key({startOrder++})]")
                     .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);
 
                 editor.AddAttribute(node, attribute);
@@ -181,7 +181,7 @@ namespace MessagePackAnalyzer
             if (type.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.MessagePackObjectAttributeShortName) == null)
             {
                 SyntaxNode rootNode = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync().ConfigureAwait(false);
-                editor.AddAttribute(rootNode, RoslynExtensions.ParseAttributeList("[MessagePackObject]"));
+                editor.AddAttribute(rootNode, RoslynCodeFixExtensions.ParseAttributeList("[MessagePackObject]"));
             }
 
             Document newDocument = editor.GetChangedDocument();

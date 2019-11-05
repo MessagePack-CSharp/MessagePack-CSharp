@@ -1,14 +1,19 @@
 steps:
 - task: UseDotNet@2
-  displayName: Install .NET Core SDK 2.2.300
+  displayName: Install .NET Core SDK 3.0.100
   inputs:
     packageType: sdk
-    version: 2.2.300
+    version: 3.0.100
 - task: UseDotNet@2
   displayName: Install .NET Core runtime 2.1.x
   inputs:
     packageType: runtime
     version: 2.1.x
+- task: UseDotNet@2
+  displayName: Install .NET Core runtime 2.2.x
+  inputs:
+    packageType: runtime
+    version: 2.2.x
 - script: dotnet --info
   displayName: Show dotnet SDK info
 
@@ -96,8 +101,8 @@ steps:
 - task: CopyFiles@1
   inputs:
     Contents: |
-      bin/**/$(BuildConfiguration)/**/*.nupkg
-      bin/**/$(BuildConfiguration)/**/*.vsix
+      bin/Packages/$(BuildConfiguration)/**/*.nupkg
+      bin/MessagePackAnalyzer.Vsix/$(BuildConfiguration)/**/*.vsix
       bin/*.unitypackage
     TargetFolder: $(Build.ArtifactStagingDirectory)/deployables
     flattenFolders: true

@@ -88,7 +88,7 @@ namespace MessagePack.Formatters
             ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
             if (valueSequence.Length != sizeof(decimal))
             {
-                throw new InvalidOperationException("Invalid decimal Size.");
+                throw new MessagePackSerializationException("Invalid decimal Size.");
             }
 
             decimal result;
