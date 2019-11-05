@@ -101,8 +101,8 @@ steps:
 - task: CopyFiles@1
   inputs:
     Contents: |
-      bin/**/$(BuildConfiguration)/**/*.nupkg
-      bin/**/$(BuildConfiguration)/**/*.vsix
+      bin/Packages/$(BuildConfiguration)/**/*.nupkg
+      bin/MessagePackAnalyzer.Vsix/$(BuildConfiguration)/**/*.vsix
       bin/*.unitypackage
     TargetFolder: $(Build.ArtifactStagingDirectory)/deployables
     flattenFolders: true
