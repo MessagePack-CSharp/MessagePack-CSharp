@@ -208,7 +208,7 @@ namespace MessagePack.Formatters
                 if (ext.TypeCode == TypelessFormatter.ExtensionTypeCode)
                 {
                     // it has type name serialized
-                    ReadOnlySequence<byte> typeName = reader.ReadStringSegment().Value;
+                    ReadOnlySequence<byte> typeName = reader.ReadStringSequence().Value;
                     ArraySegment<byte> typeNameArraySegment;
                     byte[] rented = null;
                     if (!typeName.IsSingleSegment || !MemoryMarshal.TryGetArray(typeName.First, out typeNameArraySegment))

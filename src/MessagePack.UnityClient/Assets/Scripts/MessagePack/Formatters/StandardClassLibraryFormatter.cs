@@ -189,7 +189,7 @@ namespace MessagePack.Formatters
 
         public Guid Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            ReadOnlySequence<byte> segment = reader.ReadStringSegment().Value;
+            ReadOnlySequence<byte> segment = reader.ReadStringSequence().Value;
             if (segment.Length != 36)
             {
                 throw new InvalidOperationException("Unexpected length of string.");

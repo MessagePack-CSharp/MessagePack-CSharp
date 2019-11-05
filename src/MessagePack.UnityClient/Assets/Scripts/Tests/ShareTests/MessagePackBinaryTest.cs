@@ -633,7 +633,7 @@ namespace MessagePack.Tests
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
-            var segment = sequenceReader.ReadStringSegment().Value.ToArray();
+            var segment = sequenceReader.ReadStringSequence().Value.ToArray();
             Encoding.UTF8.GetString(segment).Is(target);
             sequenceReader.End.IsTrue();
 

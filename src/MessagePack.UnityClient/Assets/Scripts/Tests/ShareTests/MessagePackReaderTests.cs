@@ -82,6 +82,58 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void TryReadStringSpan_Fragmented()
+        {
+            var contiguousSequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(contiguousSequence);
+            var expected = new byte[] { 0x1, 0x2, 0x3 };
+            writer.WriteString(expected);
+            writer.Flush();
+            var fragmentedSequence = BuildSequence(
+               contiguousSequence.AsReadOnlySequence.First.Slice(0, 2),
+               contiguousSequence.AsReadOnlySequence.First.Slice(2));
+
+            var reader = new MessagePackReader(fragmentedSequence);
+            Assert.False(reader.TryReadStringSpan(out ReadOnlySpan<byte> span));
+            Assert.Equal(0, span.Length);
+
+            // After failing to read the span, a caller should still be able to read it as a sequence.
+            var actualSequence = reader.ReadStringSequence();
+            Assert.True(actualSequence.HasValue);
+            Assert.False(actualSequence.Value.IsSingleSegment);
+            Assert.Equal(new byte[] { 1, 2, 3 }, actualSequence.Value.ToArray());
+        }
+
+        [Fact]
+        public void TryReadStringSpan_Contiguous()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            var expected = new byte[] { 0x1, 0x2, 0x3 };
+            writer.WriteString(expected);
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence);
+            Assert.True(reader.TryReadStringSpan(out ReadOnlySpan<byte> span));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.End);
+        }
+
+        [Fact]
+        public void TryReadStringSpan_Nil()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteNil();
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence);
+            Assert.False(reader.TryReadStringSpan(out ReadOnlySpan<byte> span));
+            Assert.Equal(0, span.Length);
+            Assert.Equal(sequence.AsReadOnlySequence.Start, reader.Position);
+        }
+
+        [Fact]
         public void CancellationToken()
         {
             var reader = new MessagePackReader(default);
@@ -101,6 +153,31 @@ namespace MessagePack.Tests
             cb(ref writer);
             writer.Flush();
             return sequence.AsReadOnlySequence;
+        }
+
+        private static ReadOnlySequence<T> BuildSequence<T>(params ReadOnlyMemory<T>[] memoryChunks)
+        {
+            var sequence = new Sequence<T>(new ExactArrayPool<T>())
+            {
+                MinimumSpanLength = -1,
+            };
+            foreach (var chunk in memoryChunks)
+            {
+                var span = sequence.GetSpan(chunk.Length);
+                chunk.Span.CopyTo(span);
+                sequence.Advance(chunk.Length);
+            }
+
+            return sequence;
+        }
+
+        private class ExactArrayPool<T> : ArrayPool<T>
+        {
+            public override T[] Rent(int minimumLength) => new T[minimumLength];
+
+            public override void Return(T[] array, bool clearArray = false)
+            {
+            }
         }
     }
 

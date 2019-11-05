@@ -585,7 +585,7 @@ namespace MessagePack
         /// The sequence of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
         /// The data is a slice from the original sequence passed to this reader's constructor.
         /// </returns>
-        public ReadOnlySequence<byte>? ReadStringSegment()
+        public ReadOnlySequence<byte>? ReadStringSequence()
         {
             if (this.TryReadNil())
             {
@@ -597,6 +597,48 @@ namespace MessagePack
             ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
             this.reader.Advance(length);
             return result;
+        }
+
+        /// <summary>
+        /// Reads a string of bytes, whose length is determined by a header of one of these types:
+        /// <see cref="MessagePackCode.Str8"/>,
+        /// <see cref="MessagePackCode.Str16"/>,
+        /// <see cref="MessagePackCode.Str32"/>,
+        /// or a code between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
+        /// </summary>
+        /// <param name="span">Receives the span to the string.</param>
+        /// <returns>
+        /// <c>true</c> if the string is contiguous in memory such that it could be set as a single span.
+        /// <c>false</c> if the read token is <see cref="MessagePackCode.Nil"/> or the string is not in a contiguous span.
+        /// </returns>
+        /// <remarks>
+        /// Callers should generally be prepared for a <c>false</c> result and failover to calling <see cref="ReadStringSequence"/>
+        /// which can represent a <c>null</c> result and handle strings that are not contiguous in memory.
+        /// </remarks>
+        public bool TryReadStringSpan(out ReadOnlySpan<byte> span)
+        {
+            if (this.IsNil)
+            {
+                span = default;
+                return false;
+            }
+
+            long oldPosition = this.reader.Consumed;
+            int length = this.GetStringLengthInBytes();
+            ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
+
+            if (this.reader.CurrentSpanIndex + length <= this.reader.CurrentSpan.Length)
+            {
+                span = this.reader.CurrentSpan.Slice(this.reader.CurrentSpanIndex, length);
+                this.reader.Advance(length);
+                return true;
+            }
+            else
+            {
+                this.reader.Rewind(this.reader.Consumed - oldPosition);
+                span = default;
+                return false;
+            }
         }
 
         /// <summary>

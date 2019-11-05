@@ -168,7 +168,7 @@ namespace MessagePack.CodeGenerator
                 (StLogger.Build build, IEnumerable<StLogger.Error> errors) = await TryGetBuildResultAsync(csprojPath, tempPath, true, preprocessorSymbols).ConfigureAwait(false);
                 if (build == null)
                 {
-                    Console.WriteLine("execute `dotnet msbuild` failed, retry with `msbuild`");
+                    Console.WriteLine("execute `dotnet msbuild` failed, retrying with `msbuild`");
                     var dotnetException = new InvalidOperationException($"failed to build project with dotnet:{string.Join("\n", errors)}");
                     (build, errors) = await TryGetBuildResultAsync(csprojPath, tempPath, false, preprocessorSymbols).ConfigureAwait(false);
                     if (build == null)

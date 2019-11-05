@@ -532,13 +532,14 @@ MessagePack.MessagePackReader.ReadRaw(long length) -> System.Buffers.ReadOnlySeq
 MessagePack.MessagePackReader.ReadSByte() -> sbyte
 MessagePack.MessagePackReader.ReadSingle() -> float
 MessagePack.MessagePackReader.ReadString() -> string
-MessagePack.MessagePackReader.ReadStringSegment() -> System.Buffers.ReadOnlySequence<byte>?
+MessagePack.MessagePackReader.ReadStringSequence() -> System.Buffers.ReadOnlySequence<byte>?
 MessagePack.MessagePackReader.ReadUInt16() -> ushort
 MessagePack.MessagePackReader.ReadUInt32() -> uint
 MessagePack.MessagePackReader.ReadUInt64() -> ulong
 MessagePack.MessagePackReader.Sequence.get -> System.Buffers.ReadOnlySequence<byte>
 MessagePack.MessagePackReader.Skip() -> void
 MessagePack.MessagePackReader.TryReadNil() -> bool
+MessagePack.MessagePackReader.TryReadStringSpan(out System.ReadOnlySpan<byte> span) -> bool
 MessagePack.MessagePackSerializationException
 MessagePack.MessagePackSerializationException.MessagePackSerializationException() -> void
 MessagePack.MessagePackSerializationException.MessagePackSerializationException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
@@ -744,7 +745,7 @@ static MessagePack.Internal.AutomataKeyGen.GetKey(ref System.ReadOnlySpan<byte> 
 static MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(in System.Buffers.ReadOnlySequence<byte>? sequence) -> byte[]
 static MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes(string value) -> byte[]
 static MessagePack.Internal.CodeGenHelpers.GetSpanFromSequence(in System.Buffers.ReadOnlySequence<byte> sequence) -> System.ReadOnlySpan<byte>
-static MessagePack.Internal.CodeGenHelpers.GetSpanFromSequence(in System.Buffers.ReadOnlySequence<byte>? sequence) -> System.ReadOnlySpan<byte>
+static MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref MessagePack.MessagePackReader reader) -> System.ReadOnlySpan<byte>
 static MessagePack.Internal.UnsafeMemory32.WriteRaw1(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
 static MessagePack.Internal.UnsafeMemory32.WriteRaw10(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
 static MessagePack.Internal.UnsafeMemory32.WriteRaw11(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void

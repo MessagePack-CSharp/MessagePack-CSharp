@@ -864,7 +864,7 @@ Reading directly from `ReadOnlySequence<byte>` means the reader can directly con
 | `Read*` | Read and return a value whose type is named by the method name from the current reader position. Throws if the expected type does not match the actual type. When reading numbers, the type need not match the binary-specified type exactly. The numeric value will be coerced into the desired type or throw if the integer type is too small for a large value. |
 | `TryReadNil` | Advances beyond the current value if the current value is `nil` and returns `true`; otherwise leaves the reader's position unchanged and returns `false`. |
 | `ReadBytes` | Returns a slice of the input sequence representing the contents of a `byte[]`, and advances the reader. |
-| `ReadStringSegment` | Returns a slice of the input sequence representing the contents of a `string` without decoding it, and advances the reader. |
+| `ReadStringSequence` | Returns a slice of the input sequence representing the contents of a `string` without decoding it, and advances the reader. |
 | `Clone` | Creates a new `MessagePackReader` with the specified input sequence and the same settings as the original reader. |
 | `CreatePeekReader` | Creates a new reader with the same position as this one, allowing the caller to "read ahead" without impacting the original reader's position. |
 | `NextCode` | Reads the low-level msgpack `byte` that describes the type of the next value. Does not advance the reader. See [msgpack format of first byte](https://github.com/msgpack/msgpack/blob/master/spec.md#overview). Its static class has `ToMessagePackType` and `ToFormatName` utility methods. `MessagePackRange` means Min-Max fix range of msgpack format. |
