@@ -991,7 +991,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -1121,7 +1121,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -1832,7 +1832,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -1898,7 +1898,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -2530,7 +2530,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -2643,7 +2643,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -3620,7 +3620,7 @@ namespace MessagePack.Formatters
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -3734,7 +3734,7 @@ namespace MessagePack.Formatters
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -3893,7 +3893,7 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
+                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
