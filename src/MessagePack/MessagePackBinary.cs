@@ -2347,7 +2347,10 @@ namespace MessagePack
         /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
         /// the promised data.
         /// </summary>
-        internal static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
+        internal static void ThrowNotEnoughBytesException()
+        {
+            throw new EndOfStreamException();
+        }
     }
 
     // Stream Overload
