@@ -539,6 +539,11 @@ MessagePack.MessagePackReader.ReadUInt64() -> ulong
 MessagePack.MessagePackReader.Sequence.get -> System.Buffers.ReadOnlySequence<byte>
 MessagePack.MessagePackReader.Skip() -> void
 MessagePack.MessagePackReader.TryReadNil() -> bool
+MessagePack.MessagePackSerializationException
+MessagePack.MessagePackSerializationException.MessagePackSerializationException() -> void
+MessagePack.MessagePackSerializationException.MessagePackSerializationException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
+MessagePack.MessagePackSerializationException.MessagePackSerializationException(string message) -> void
+MessagePack.MessagePackSerializationException.MessagePackSerializationException(string message, System.Exception inner) -> void
 MessagePack.MessagePackSerializer
 MessagePack.MessagePackSerializer.Typeless
 MessagePack.MessagePackSerializerOptions

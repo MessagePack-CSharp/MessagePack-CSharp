@@ -69,7 +69,7 @@ namespace MessagePack
         }
     }
 
-    public class FormatterNotRegisteredException : Exception
+    public class FormatterNotRegisteredException : MessagePackSerializationException
     {
         public FormatterNotRegisteredException(string message)
             : base(message)
