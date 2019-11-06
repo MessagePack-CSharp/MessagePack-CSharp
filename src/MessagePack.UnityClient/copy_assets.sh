@@ -7,8 +7,6 @@
 
 @pushd %~dp0
 
-cp "..\..\bin\MessagePack\release\netstandard2.0\publish\Microsoft.VisualStudio.Validation.dll" ".\Assets\Plugins\Microsoft.VisualStudio.Validation.dll"
-cp "..\..\bin\MessagePack\release\netstandard2.0\publish\Microsoft.VisualStudio.Threading.dll" ".\Assets\Plugins\Microsoft.VisualStudio.Threading.dll"
 cp "..\..\bin\MessagePack\release\netstandard2.0\publish\System.IO.Pipelines.dll" ".\Assets\Plugins\System.IO.Pipelines.dll"
 cp "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Buffers.dll" ".\Assets\Plugins\System.Buffers.dll"
 cp "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Memory.dll" ".\Assets\Plugins\System.Memory.dll"
