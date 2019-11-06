@@ -10,7 +10,6 @@
 
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\Microsoft.VisualStudio.Validation.dll" ".\Assets\Plugins\Microsoft.VisualStudio.Validation.dll" /Y /I 
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\Microsoft.VisualStudio.Threading.dll" ".\Assets\Plugins\Microsoft.VisualStudio.Threading.dll" /Y /I 
-echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\Nerdbank.Streams.dll" ".\Assets\Plugins\Nerdbank.Streams.dll" /Y /I 
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.IO.Pipelines.dll" ".\Assets\Plugins\System.IO.Pipelines.dll" /Y /I 
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Buffers.dll" ".\Assets\Plugins\System.Buffers.dll" /Y /I 
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Memory.dll" ".\Assets\Plugins\System.Memory.dll" /Y /I 
