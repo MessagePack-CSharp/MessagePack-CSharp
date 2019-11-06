@@ -9,7 +9,7 @@ done
 SCRIPT_DIR=$(dirname "$(realpath $0)")
 
 if ! [[ -e "${SCRIPT_DIR}/Assets/Microsoft.VisualStudio.Threading.dll" ]] ; then
-   ${SCRIPT_DIR}/link_assets.sh
+   ${SCRIPT_DIR}/copy_assets.sh
 fi
 
 if ! [[ -v LOGFILE ]] ; then
