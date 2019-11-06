@@ -33,7 +33,7 @@ $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -executeMethod PackageExport.Export \
     -logfile ${LOGFILE}
 
-$rc = $?
+rc = $?
 
 echo Log follows...
 
