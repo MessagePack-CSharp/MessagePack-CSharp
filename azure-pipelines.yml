@@ -23,3 +23,19 @@ jobs:
     demands: UNITYHUB_EDITORS_FOLDER_LOCATION
   steps:
   - template: azure-pipelines/build_unity.yml
+
+- job: Linux
+  pool:
+    vmImage: Ubuntu 16.04
+  steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/build_nonWindows.yml
+
+- job: macOS
+  pool:
+    vmImage: macOS 10.13
+  steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/build_nonWindows.yml

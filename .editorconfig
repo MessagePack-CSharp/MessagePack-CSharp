@@ -6,14 +6,14 @@ root = true
 # Don't use tabs for indentation.
 [*]
 indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
 
 # (Please don't specify an indent_size here; that has too many unintended consequences.)
 
 # Code files
 [*.{cs,csx,vb,vbx,h,cpp,idl}]
 indent_size = 4
-insert_final_newline = true
-trim_trailing_whitespace = true
 
 # Xml project files
 [*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
