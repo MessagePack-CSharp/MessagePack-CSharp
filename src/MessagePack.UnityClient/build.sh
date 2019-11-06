@@ -33,10 +33,10 @@ $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -executeMethod PackageExport.Export \
     -logfile ${LOGFILE}
 
-$rc = $?
+UnityExitCode=$?
 
 echo Log follows...
 
 cat ${LOGFILE}
 
-exit $rc
+exit $UnityExitCode
