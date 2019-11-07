@@ -1,0 +1,39 @@
+steps:
+- task: UseDotNet@2
+  displayName: Install .NET Core SDK 3.0.100
+  inputs:
+    packageType: sdk
+    version: 3.0.100
+- task: UseDotNet@2
+  displayName: Install .NET Core runtime 2.1.x
+  inputs:
+    packageType: runtime
+    version: 2.1.x
+- task: UseDotNet@2
+  displayName: Install .NET Core runtime 2.2.x
+  inputs:
+    packageType: runtime
+    version: 2.2.x
+- script: dotnet --info
+  displayName: Show dotnet SDK info
+
+- task: DotNetCoreCLI@2
+  displayName: Restore
+  inputs:
+    command: restore
+    verbosityRestore: normal # detailed, normal, minimal
+    feedsToUse: config
+    nugetConfigPath: nuget.config
+
+- task: DotNetCoreCLI@2
+  displayName: Build MessagePack.sln
+  inputs:
+    command: build
+    arguments: --no-restore /p:platform=NoVSIX -c $(BuildConfiguration)
+
+- task: DotNetCoreCLI@2
+  displayName: Run tests
+  inputs:
+    command: test
+    projects: tests/MessagePack.Tests/MessagePack.Tests.csproj
+    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp2.1 -v n

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using MessagePack.Formatters;
@@ -220,7 +221,8 @@ namespace MessagePack.Tests
         [Fact]
         public void DateTimeOffsetTest()
         {
-            DateTimeOffset now = new DateTime(DateTime.UtcNow.Ticks + TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time").BaseUtcOffset.Ticks, DateTimeKind.Local);
+            string id = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Tokyo Standard Time" : "Cuba";
+            DateTimeOffset now = new DateTime(DateTime.UtcNow.Ticks + TimeZoneInfo.FindSystemTimeZoneById(id).BaseUtcOffset.Ticks, DateTimeKind.Local);
             var binary = MessagePackSerializer.Serialize(now);
             MessagePackSerializer.Deserialize<DateTimeOffset>(binary).Is(now);
         }
