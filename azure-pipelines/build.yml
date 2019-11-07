@@ -1,4 +1,7 @@
 steps:
+- checkout: self
+  clean: true
+
 - task: UseDotNet@2
   displayName: Install .NET Core SDK 3.0.100
   inputs:

@@ -8,8 +8,8 @@ done
 
 SCRIPT_DIR=$(dirname "$(realpath $0)")
 
-if ! [[ -e "${SCRIPT_DIR}/Assets/Microsoft.VisualStudio.Threading.dll" ]] ; then
-   ${SCRIPT_DIR}/link_assets.sh
+if ! [[ -e "${SCRIPT_DIR}/Assets/Plugins/System.Memory.dll" ]] ; then
+   ${SCRIPT_DIR}/copy_assets.sh
 fi
 
 if ! [[ -v LOGFILE ]] ; then
@@ -33,10 +33,10 @@ $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -executeMethod PackageExport.Export \
     -logfile ${LOGFILE}
 
-$rc = $?
+UnityExitCode=$?
 
 echo Log follows...
 
 cat ${LOGFILE}
 
-exit $rc
+exit $UnityExitCode
