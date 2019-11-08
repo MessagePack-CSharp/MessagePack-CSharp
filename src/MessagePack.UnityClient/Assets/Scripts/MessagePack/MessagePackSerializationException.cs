@@ -9,7 +9,12 @@ namespace MessagePack
     /// An exception thrown during serializing an object graph or deserializing a messagepack sequence.
     /// </summary>
     [Serializable]
-    public class MessagePackSerializationException : Exception
+#if MESSAGEPACK_INTERNAL
+    internal
+#else
+    public
+#endif
+    class MessagePackSerializationException : Exception
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSerializationException"/> class.

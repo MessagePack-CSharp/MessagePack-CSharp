@@ -164,7 +164,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadByte_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadByte());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadByte());
         }
 
         [Fact]
@@ -189,7 +189,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadUInt16_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadUInt16());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadUInt16());
         }
 
         [Fact]
@@ -214,7 +214,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadUInt32_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadUInt32());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadUInt32());
         }
 
         [Fact]
@@ -239,7 +239,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadUInt64_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadUInt64());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadUInt64());
         }
 
         [Fact]
@@ -264,7 +264,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadSByte_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadSByte());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadSByte());
         }
 
         [Fact]
@@ -289,7 +289,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadInt16_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadInt16());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadInt16());
         }
 
         [Fact]
@@ -314,7 +314,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadInt32_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadInt32());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadInt32());
         }
 
         [Fact]
@@ -339,7 +339,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ReadInt64_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadInt64());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).ReadInt64());
         }
     }
 }

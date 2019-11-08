@@ -424,7 +424,7 @@ namespace MessagePack.LZ4
             var length = LZ4_uncompress_safe32(input, output, inputOffset, outputOffset, outputLength);
             if (length != inputLength)
             {
-                throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
+                throw new MessagePackSerializationException("LZ4 block is corrupted, or invalid length has been given.");
             }
 
             return outputLength;
@@ -456,7 +456,7 @@ namespace MessagePack.LZ4
             var length = LZ4_uncompress_safe64(input, output, inputOffset, outputOffset, outputLength);
             if (length != inputLength)
             {
-                throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
+                throw new MessagePackSerializationException("LZ4 block is corrupted, or invalid length has been given.");
             }
 
             return outputLength;

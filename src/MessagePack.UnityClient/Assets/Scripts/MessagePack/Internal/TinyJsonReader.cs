@@ -280,7 +280,7 @@ namespace MessagePack
                     this.ValueType = ValueType.Null;
                     break;
                 default:
-                    throw new ArgumentException("InvalidTokenState:" + this.TokenType);
+                    throw new MessagePackSerializationException("InvalidTokenState:" + this.TokenType);
             }
         }
 

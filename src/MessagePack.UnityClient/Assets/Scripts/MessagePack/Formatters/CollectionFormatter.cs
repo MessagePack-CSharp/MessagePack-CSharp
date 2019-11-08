@@ -567,7 +567,7 @@ namespace MessagePack.Formatters
 
                 if (count != 2)
                 {
-                    throw new InvalidOperationException("Invalid Grouping format.");
+                    throw new MessagePackSerializationException("Invalid Grouping format.");
                 }
 
                 TKey key = options.Resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options);

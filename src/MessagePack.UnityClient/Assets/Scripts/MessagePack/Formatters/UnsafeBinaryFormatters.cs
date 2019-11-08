@@ -26,7 +26,7 @@ namespace MessagePack.Formatters
         {
             if (!BitConverter.IsLittleEndian)
             {
-                throw new Exception("NativeGuidFormatter only allows on little endian env.");
+                throw new InvalidOperationException("NativeGuidFormatter only allows on little endian env.");
             }
 
             var valueSpan = new ReadOnlySpan<byte>(&value, sizeof(Guid));
@@ -37,13 +37,13 @@ namespace MessagePack.Formatters
         {
             if (!BitConverter.IsLittleEndian)
             {
-                throw new Exception("NativeGuidFormatter only allows on little endian env.");
+                throw new InvalidOperationException("NativeGuidFormatter only allows on little endian env.");
             }
 
             ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
             if (valueSequence.Length != sizeof(Guid))
             {
-                throw new InvalidOperationException("Invalid Guid Size.");
+                throw new MessagePackSerializationException("Invalid Guid Size.");
             }
 
             Guid result;
@@ -71,7 +71,7 @@ namespace MessagePack.Formatters
         {
             if (!BitConverter.IsLittleEndian)
             {
-                throw new Exception("NativeDecimalFormatter only allows on little endian env.");
+                throw new InvalidOperationException("NativeDecimalFormatter only allows on little endian env.");
             }
 
             var valueSpan = new ReadOnlySpan<byte>(&value, sizeof(Decimal));
@@ -82,7 +82,7 @@ namespace MessagePack.Formatters
         {
             if (!BitConverter.IsLittleEndian)
             {
-                throw new Exception("NativeDecimalFormatter only allows on little endian env.");
+                throw new InvalidOperationException("NativeDecimalFormatter only allows on little endian env.");
             }
 
             ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;

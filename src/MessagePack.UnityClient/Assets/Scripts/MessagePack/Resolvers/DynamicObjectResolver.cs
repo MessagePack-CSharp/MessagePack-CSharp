@@ -1327,7 +1327,7 @@ namespace MessagePack.Internal
         {
             if (this.serialize == null)
             {
-                throw new InvalidOperationException(this.GetType().Name + " does not support Serialize.");
+                throw new MessagePackSerializationException(this.GetType().Name + " does not support Serialize.");
             }
 
             this.serialize(this.stringByteKeysField, this.serializeCustomFormatters, ref writer, value, options);
@@ -1337,7 +1337,7 @@ namespace MessagePack.Internal
         {
             if (this.deserialize == null)
             {
-                throw new InvalidOperationException(this.GetType().Name + " does not support Deserialize.");
+                throw new MessagePackSerializationException(this.GetType().Name + " does not support Deserialize.");
             }
 
             return this.deserialize(this.deserializeCustomFormatters, ref reader, options);
@@ -1458,7 +1458,7 @@ namespace MessagePack.Internal
                         }
                         else
                         {
-                            throw new InvalidOperationException("unexpected member type");
+                            throw new MessagePackSerializationException("unexpected member type");
                         }
 
                         if (!member.IsReadable && !member.IsWritable)

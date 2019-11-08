@@ -55,7 +55,7 @@ namespace MessagePack.Formatters
                 var len = reader.ReadArrayHeader();
                 if (len != ArrayLength)
                 {
-                    throw new InvalidOperationException("Invalid T[,] format");
+                    throw new MessagePackSerializationException("Invalid T[,] format");
                 }
 
                 var iLength = reader.ReadInt32();
@@ -132,7 +132,7 @@ namespace MessagePack.Formatters
                 var len = reader.ReadArrayHeader();
                 if (len != ArrayLength)
                 {
-                    throw new InvalidOperationException("Invalid T[,,] format");
+                    throw new MessagePackSerializationException("Invalid T[,,] format");
                 }
 
                 var iLength = reader.ReadInt32();
@@ -219,7 +219,7 @@ namespace MessagePack.Formatters
                 var len = reader.ReadArrayHeader();
                 if (len != ArrayLength)
                 {
-                    throw new InvalidOperationException("Invalid T[,,,] format");
+                    throw new MessagePackSerializationException("Invalid T[,,,] format");
                 }
 
                 var iLength = reader.ReadInt32();

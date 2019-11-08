@@ -130,7 +130,7 @@ namespace MessagePack.Formatters
                         writer.Write((byte[])value);
                         return;
                     default:
-                        throw new InvalidOperationException("Not supported primitive object resolver. type:" + t.Name);
+                        throw new MessagePackSerializationException("Not supported primitive object resolver. type:" + t.Name);
                 }
             }
             else
@@ -199,7 +199,7 @@ namespace MessagePack.Formatters
                 }
             }
 
-            throw new InvalidOperationException("Not supported primitive object resolver. type:" + t.Name);
+            throw new MessagePackSerializationException("Not supported primitive object resolver. type:" + t.Name);
         }
 
         public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -251,7 +251,7 @@ namespace MessagePack.Formatters
                         return reader.ReadUInt64();
                     }
 
-                    throw new InvalidOperationException("Invalid primitive bytes.");
+                    throw new MessagePackSerializationException("Invalid primitive bytes.");
                 case MessagePackType.Boolean:
                     return reader.ReadBoolean();
                 case MessagePackType.Float:
@@ -275,7 +275,7 @@ namespace MessagePack.Formatters
                         return reader.ReadDateTime(ext);
                     }
 
-                    throw new InvalidOperationException("Invalid primitive bytes.");
+                    throw new MessagePackSerializationException("Invalid primitive bytes.");
                 case MessagePackType.Array:
                     {
                         var length = reader.ReadArrayHeader();
@@ -312,7 +312,7 @@ namespace MessagePack.Formatters
                     reader.ReadNil();
                     return null;
                 default:
-                    throw new InvalidOperationException("Invalid primitive bytes.");
+                    throw new MessagePackSerializationException("Invalid primitive bytes.");
             }
         }
     }

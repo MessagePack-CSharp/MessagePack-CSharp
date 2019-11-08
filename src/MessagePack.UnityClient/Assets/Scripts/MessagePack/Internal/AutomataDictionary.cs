@@ -493,7 +493,7 @@ namespace MessagePack.Internal
                             }
 
                         default:
-                            throw new InvalidOperationException("Not Supported Length");
+                            throw new MessagePackSerializationException("Not Supported Length");
                     }
                 }
 

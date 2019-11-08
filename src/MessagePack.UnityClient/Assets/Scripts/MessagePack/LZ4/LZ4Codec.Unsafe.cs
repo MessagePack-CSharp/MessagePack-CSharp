@@ -43,7 +43,7 @@ namespace MessagePack.LZ4
         {
             if (output.Length == 0)
             {
-                throw new ArgumentException("Output is empty.");
+                throw new MessagePackSerializationException("Output is empty.");
             }
 
             fixed (byte* inputPtr = input)
@@ -90,7 +90,7 @@ namespace MessagePack.LZ4
         {
             if (output.Length == 0)
             {
-                throw new ArgumentException("Output is empty.");
+                throw new MessagePackSerializationException("Output is empty.");
             }
 
             fixed (byte* inputPtr = input)
@@ -108,7 +108,7 @@ namespace MessagePack.LZ4
 
                 if (length != input.Length)
                 {
-                    throw new ArgumentException("LZ4 block is corrupted, or invalid length has been given.");
+                    throw new MessagePackSerializationException("LZ4 block is corrupted, or invalid length has been given.");
                 }
 
                 return output.Length;

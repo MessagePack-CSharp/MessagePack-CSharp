@@ -265,7 +265,7 @@ namespace MessagePack.Resolvers
     ////        }
     ////        else
     ////        {
-    ////            throw new InvalidOperationException("Invalid MessagePackType:" + MessagePackCode.ToFormatName(bytes[offset]));
+    ////            throw new MessagePackSerializationException("Invalid MessagePackType:" + MessagePackCode.ToFormatName(bytes[offset]));
     ////        }
 
     ////        // CreateObject

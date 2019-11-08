@@ -39,7 +39,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != 1)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -79,7 +79,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != 2)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -121,7 +121,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != 3)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -165,7 +165,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != 4)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -211,7 +211,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != 5)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -259,7 +259,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != 6)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -309,7 +309,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != 7)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -361,7 +361,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != 8)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;

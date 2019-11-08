@@ -37,14 +37,14 @@ namespace Xunit
 
     public static class Assert
     {
-        public static void Throws<T>(Action action) where T : Exception
+        public static T Throws<T>(Action action) where T : Exception
         {
-            NUnit.Framework.Assert.Throws<T>(new TestDelegate(action));
+            return NUnit.Framework.Assert.Throws<T>(new TestDelegate(action));
         }
 
-        public static void Throws<T>(Func<object> action) where T : Exception
+        public static T Throws<T>(Func<object> action) where T : Exception
         {
-            NUnit.Framework.Assert.Throws<T>(() => action());
+            return NUnit.Framework.Assert.Throws<T>(() => action());
         }
 
         public static void True(bool value)

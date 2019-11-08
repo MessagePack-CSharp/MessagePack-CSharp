@@ -53,7 +53,7 @@ namespace MessagePack.Formatters
                 var count = reader.ReadArrayHeader();
                 if (count != <#= i #>)
                 {
-                    throw new InvalidOperationException("Invalid Tuple count");
+                    throw new MessagePackSerializationException("Invalid Tuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
