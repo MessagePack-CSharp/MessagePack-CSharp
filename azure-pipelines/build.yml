@@ -117,6 +117,7 @@ steps:
   inputs:
     Contents: |
       bin/**/$(BuildConfiguration)/**/*.nupkg
+      bin/**/$(BuildConfiguration)/**/*.snupkg
       bin/**/$(BuildConfiguration)/**/*.vsix
     TargetFolder: $(Build.ArtifactStagingDirectory)/deployables
     flattenFolders: true
