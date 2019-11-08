@@ -25,7 +25,10 @@ namespace MessagePackCompiler.Generator
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write(@"#pragma warning disable 618
+            this.Write(@"/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
+
+#pragma warning disable 618
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
