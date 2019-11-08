@@ -105,6 +105,7 @@ steps:
   inputs:
     Contents: |
       bin/Packages/$(BuildConfiguration)/**/*.nupkg
+      bin/Packages/$(BuildConfiguration)/**/*.snupkg
       bin/MessagePackAnalyzer.Vsix/$(BuildConfiguration)/**/*.vsix
       bin/*.unitypackage
     TargetFolder: $(Build.ArtifactStagingDirectory)/deployables
