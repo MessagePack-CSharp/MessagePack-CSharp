@@ -11,7 +11,7 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\FarmHash.cs" Link="Link\FarmHash.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" Link="Link\ILGeneratorExtensions.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" Link="Link\StringEncoding.cs" />
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\**\*.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\**\*.cs" Exclude="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\T4\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\sandbox\SharedData\SharedData.csproj" />
@@ -54,4 +54,14 @@
   <ItemGroup>
     <Folder Include="Link\" />
   </ItemGroup>
+
+  <Target Name="CopyT4OutputToUnity" BeforeTargets="Compile">
+    <ItemGroup>
+      <!-- Remove the T4 .cs output files that we copy to UnityClient -->
+      <UnityT4Source Include="@(None->'%(RootDir)%(Directory)%(FileName).cs')" Condition=" '%(None.Generator)' == 'TextTemplatingFileGenerator' " />
+      <UnityT4Target Include="@(UnityT4Source->'..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\T4\%(FileName)%(Extension)')" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(UnityT4Source)" DestinationFiles="@(UnityT4Target)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+  </Target>
 </Project>
