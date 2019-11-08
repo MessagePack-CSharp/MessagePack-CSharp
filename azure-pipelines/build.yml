@@ -1,4 +1,7 @@
 steps:
+- checkout: self
+  clean: true
+
 - task: UseDotNet@2
   displayName: Install .NET Core SDK 3.0.100
   inputs:
@@ -102,6 +105,7 @@ steps:
   inputs:
     Contents: |
       bin/Packages/$(BuildConfiguration)/**/*.nupkg
+      bin/Packages/$(BuildConfiguration)/**/*.snupkg
       bin/MessagePackAnalyzer.Vsix/$(BuildConfiguration)/**/*.vsix
       bin/*.unitypackage
     TargetFolder: $(Build.ArtifactStagingDirectory)/deployables

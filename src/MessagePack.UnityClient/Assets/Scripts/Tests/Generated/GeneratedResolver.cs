@@ -1442,7 +1442,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -1576,7 +1576,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -2313,7 +2313,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -2381,7 +2381,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -3037,7 +3037,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -3154,7 +3154,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -4161,7 +4161,7 @@ namespace MessagePack.Formatters
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -4277,7 +4277,7 @@ namespace MessagePack.Formatters
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -4438,7 +4438,7 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -4583,7 +4583,7 @@ namespace MessagePack.Formatters.MessagePack.Tests
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -4796,7 +4796,7 @@ namespace MessagePack.Formatters.MessagePack.Tests
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -4889,7 +4889,7 @@ namespace MessagePack.Formatters.MessagePack.Tests
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -5102,7 +5102,7 @@ namespace MessagePack.Formatters.MessagePack.Tests
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -5183,7 +5183,7 @@ namespace MessagePack.Formatters.MessagePack.Tests
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -5344,7 +5344,7 @@ namespace MessagePack.Formatters.ComplexdUnion
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySequence<byte> stringKey = reader.ReadStringSegment().Value;
+                ReadOnlySequence<byte> stringKey = reader.ReadStringSequence().Value;
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
