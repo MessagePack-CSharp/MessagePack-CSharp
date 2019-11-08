@@ -25,14 +25,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != 1)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -58,14 +58,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != 2)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -93,14 +93,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != 3)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -130,14 +130,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != 4)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -169,14 +169,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != 5)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -210,14 +210,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != 6)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -253,14 +253,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != 7)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
@@ -299,14 +299,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != 8)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;

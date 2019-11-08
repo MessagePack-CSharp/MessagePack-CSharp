@@ -143,7 +143,7 @@ namespace MessagePack
         {
             if (BlacklistCheck.Contains(type.FullName))
             {
-                throw new TypeAccessException();
+                throw new MessagePackSerializationException("Deserialization attempted to create the type " + type.FullName + " which is not allowed.");
             }
         }
 

@@ -136,7 +136,7 @@ string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).
         [Fact]
         public void Read<#=t1.Name#>_ThrowsOnUnexpectedCode()
         {
-            Assert.Throws<InvalidOperationException>(() => new MessagePackReader(StringEncodedAsFixStr).Read<#=t1.Name#>());
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).Read<#=t1.Name#>());
         }
 <# } #>
     }

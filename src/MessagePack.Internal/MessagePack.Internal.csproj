@@ -25,6 +25,7 @@
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionResult.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackReader.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\MessagePackReader.Integers.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackWriter.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Nil.cs" />

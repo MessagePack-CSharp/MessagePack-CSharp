@@ -43,7 +43,7 @@ namespace MessagePack.Formatters
                         }
                         else
                         {
-                            throw new InvalidOperationException("DictionaryFormatterBase's TDictionary supports only ICollection<KVP> or IReadOnlyCollection<KVP>");
+                            throw new MessagePackSerializationException("DictionaryFormatterBase's TDictionary supports only ICollection<KVP> or IReadOnlyCollection<KVP>");
                         }
                     }
                 }

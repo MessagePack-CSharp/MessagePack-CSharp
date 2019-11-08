@@ -420,7 +420,7 @@ namespace MessagePack
                     writer.Write("null");
                     break;
                 default:
-                    throw new NotSupportedException($"code is invalid. code: {reader.NextCode} format: {MessagePackCode.ToFormatName(reader.NextCode)}");
+                    throw new MessagePackSerializationException($"code is invalid. code: {reader.NextCode} format: {MessagePackCode.ToFormatName(reader.NextCode)}");
             }
         }
 

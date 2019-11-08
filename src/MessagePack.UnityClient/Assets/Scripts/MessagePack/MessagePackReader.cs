@@ -522,7 +522,7 @@ namespace MessagePack
         {
             if (header.TypeCode != ReservedMessagePackExtensionTypeCode.DateTime)
             {
-                throw new InvalidOperationException(string.Format("Extension TypeCode is invalid. typeCode: {0}", header.TypeCode));
+                throw new MessagePackSerializationException(string.Format("Extension TypeCode is invalid. typeCode: {0}", header.TypeCode));
             }
 
             switch (header.Length)
@@ -542,7 +542,7 @@ namespace MessagePack
                     ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out longValue));
                     return DateTimeConstants.UnixEpoch.AddSeconds(longValue).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
                 default:
-                    throw new InvalidOperationException($"Length of extension was {header.Length}. Either 4 or 8 were expected.");
+                    throw new MessagePackSerializationException($"Length of extension was {header.Length}. Either 4 or 8 were expected.");
             }
         }
 
@@ -756,11 +756,11 @@ namespace MessagePack
         /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
         /// the promised data.
         /// </summary>
-        private static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
+        private static void ThrowNotEnoughBytesException() => throw new MessagePackSerializationException(null, new EndOfStreamException());
 
         private static Exception ThrowInvalidCode(byte code)
         {
-            throw new InvalidOperationException(string.Format("code is invalid. code: {0} format: {1}", code, MessagePackCode.ToFormatName(code)));
+            throw new MessagePackSerializationException(string.Format("code is invalid. code: {0} format: {1}", code, MessagePackCode.ToFormatName(code)));
         }
 
         /// <summary>
@@ -772,7 +772,7 @@ namespace MessagePack
         {
             if (!condition)
             {
-                throw new EndOfStreamException();
+                ThrowNotEnoughBytesException();
             }
         }
 

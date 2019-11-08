@@ -160,7 +160,7 @@ namespace MessagePack.Formatters
 
             if (count != 2)
             {
-                throw new InvalidOperationException("Invalid DateTimeOffset format.");
+                throw new MessagePackSerializationException("Invalid DateTimeOffset format.");
             }
 
             DateTime utc = reader.ReadDateTime();
@@ -192,7 +192,7 @@ namespace MessagePack.Formatters
             ReadOnlySequence<byte> segment = reader.ReadStringSequence().Value;
             if (segment.Length != 36)
             {
-                throw new InvalidOperationException("Unexpected length of string.");
+                throw new MessagePackSerializationException("Unexpected length of string.");
             }
 
             GuidBits result;
@@ -294,7 +294,7 @@ namespace MessagePack.Formatters
 
             if (count != 2)
             {
-                throw new InvalidOperationException("Invalid KeyValuePair format.");
+                throw new MessagePackSerializationException("Invalid KeyValuePair format.");
             }
 
             IFormatterResolver resolver = options.Resolver;
@@ -448,7 +448,7 @@ namespace MessagePack.Formatters
 
             if (count != 2)
             {
-                throw new InvalidOperationException("Invalid Complex format.");
+                throw new MessagePackSerializationException("Invalid Complex format.");
             }
 
             var real = reader.ReadDouble();

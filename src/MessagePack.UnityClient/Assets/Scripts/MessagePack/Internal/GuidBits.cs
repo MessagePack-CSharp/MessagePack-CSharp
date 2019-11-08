@@ -176,7 +176,7 @@ namespace MessagePack.Internal
             }
 
 ERROR:
-            throw new ArgumentException("Invalid Guid Pattern.");
+            throw new MessagePackSerializationException("Invalid Guid Pattern.");
         }
 
 #if !UNITY_2018_3_OR_NEWER
@@ -304,7 +304,7 @@ ERROR:
                 case 95:
                 case 96:
                 default:
-                    throw new ArgumentException("Invalid Guid Pattern.");
+                    throw new MessagePackSerializationException("Invalid Guid Pattern.");
             }
         }
 

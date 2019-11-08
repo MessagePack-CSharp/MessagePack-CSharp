@@ -40,14 +40,14 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new InvalidOperationException("Data is Nil, ValueTuple can not be null.");
+                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
             }
             else
             {
                 var count = reader.ReadArrayHeader();
                 if (count != <#= i #>)
                 {
-                    throw new InvalidOperationException("Invalid ValueTuple count");
+                    throw new MessagePackSerializationException("Invalid ValueTuple count");
                 }
 
                 IFormatterResolver resolver = options.Resolver;
