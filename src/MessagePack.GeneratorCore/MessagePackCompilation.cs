@@ -1,11 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -102,14 +105,10 @@ namespace MessagePackCompiler
 
             if (!legacyFormat)
             {
-                // TODO:parase compile remove
                 foreach (var file in IterateCsFileWithoutBinObj(Path.GetDirectoryName(csproj)))
                 {
                     source.Add(file);
                 }
-
-                // TODO:resolve NuGet reference
-                // RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             }
 
             {
@@ -119,7 +118,18 @@ namespace MessagePackCompiler
                     var include = item.Attribute("Include")?.Value;
                     if (include != null)
                     {
-                        source.Add(Path.Combine(csProjRoot, include));
+                        // note: currently not supports Exclude
+                        if (include.Contains("*"))
+                        {
+                            foreach (var item2 in IterateWildcardPath(csProjRoot, include))
+                            {
+                                source.Add(item2);
+                            }
+                        }
+                        else
+                        {
+                            source.Add(Path.Combine(csProjRoot, include));
+                        }
                     }
                 }
 
@@ -158,6 +168,102 @@ namespace MessagePackCompiler
                     else
                     {
                         metadataLocations.Add(Path.Combine(csProjRoot, hintPath));
+                    }
+                }
+
+                // resolve NuGet reference
+                foreach (var item in document.Descendants("PackageReference"))
+                {
+                    var nugetPackagesPath = Environment.GetEnvironmentVariable("NUGET_PACKAGES");
+                    if (nugetPackagesPath == null)
+                    {
+                        // Try default
+                        // Windows: %userprofile%\.nuget\packages
+                        // Mac/Linux: ~/.nuget/packages
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        {
+                            nugetPackagesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), @".nuget\packages");
+                        }
+                        else
+                        {
+                            nugetPackagesPath = "~/nuget/packages";
+                        }
+                    }
+
+                    var targetFramework = document.Descendants("TargetFramework").FirstOrDefault()?.Value ?? document.Descendants("TargetFrameworks").First().Value.Split(';').First();
+                    var includePath = item.Attribute("Include").Value.Trim().ToLower(); // maybe lower
+                    var packageVersion = item.Attribute("Version").Value.Trim();
+
+                    var pathpath = Path.Combine(nugetPackagesPath, includePath, packageVersion, "lib", targetFramework);
+                    if (!Directory.Exists(pathpath))
+                    {
+                        pathpath = pathpath.ToLower(); // try all lower.
+                    }
+
+                    if (Directory.Exists(pathpath))
+                    {
+                        foreach (var dllPath in Directory.GetFiles(pathpath, "*.dll"))
+                        {
+                            metadataLocations.Add(Path.GetFullPath(dllPath));
+                        }
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<string> IterateWildcardPath(string rootPath, string path)
+        {
+            var directory = new StringBuilder();
+            foreach (var item in path.Split('\\', '/'))
+            {
+                // recursive
+                if (item.Contains("**"))
+                {
+                    foreach (var item2 in Directory.GetDirectories(Path.Combine(rootPath, directory.ToString()), "*", SearchOption.AllDirectories))
+                    {
+                        foreach (var item3 in IterateWildcardPath(string.Empty, item2))
+                        {
+                            yield return item3;
+                        }
+                    }
+
+                    yield break;
+                }
+                else if (item.Contains("*"))
+                {
+                    foreach (var item2 in Directory.GetFiles(Path.Combine(directory.ToString())))
+                    {
+                        if (Path.GetExtension(item) == ".cs")
+                        {
+                            yield return item2;
+                        }
+                    }
+
+                    yield break;
+                }
+                else if (!(item == "obj" || item == "bin"))
+                {
+                    if (directory.Length != 0)
+                    {
+                        directory.Append(Path.DirectorySeparatorChar);
+                    }
+
+                    directory.Append(item);
+                }
+            }
+
+            var finalPath = directory.ToString();
+            if (File.Exists(finalPath))
+            {
+                yield return finalPath;
+            }
+            else
+            {
+                foreach (var item in Directory.GetFiles(finalPath))
+                {
+                    if (Path.GetExtension(item) == ".cs")
+                    {
+                        yield return item;
                     }
                 }
             }
