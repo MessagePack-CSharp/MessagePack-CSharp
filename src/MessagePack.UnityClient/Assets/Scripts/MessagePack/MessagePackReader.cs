@@ -122,6 +122,7 @@ namespace MessagePack
         /// </summary>
         /// <remarks>
         /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
+        /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
         /// </remarks>
         public void Skip()
         {
@@ -254,6 +255,20 @@ namespace MessagePack
             ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
             this.reader.Advance(length);
             return result;
+        }
+
+        /// <summary>
+        /// Reads the next MessagePack primitive.
+        /// </summary>
+        /// <returns>The raw MessagePack sequence.</returns>
+        /// <remarks>
+        /// The entire primitive is read, including content of maps or arrays, or any other type with payloads.
+        /// </remarks>
+        public ReadOnlySequence<byte> ReadRaw()
+        {
+            SequencePosition initialPosition = this.Position;
+            this.Skip();
+            return this.Sequence.Slice(initialPosition, this.Position);
         }
 
         /// <summary>

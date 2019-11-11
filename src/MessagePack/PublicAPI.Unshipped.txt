@@ -528,6 +528,7 @@ MessagePack.MessagePackReader.ReadInt32() -> int
 MessagePack.MessagePackReader.ReadInt64() -> long
 MessagePack.MessagePackReader.ReadMapHeader() -> int
 MessagePack.MessagePackReader.ReadNil() -> MessagePack.Nil
+MessagePack.MessagePackReader.ReadRaw() -> System.Buffers.ReadOnlySequence<byte>
 MessagePack.MessagePackReader.ReadRaw(long length) -> System.Buffers.ReadOnlySequence<byte>
 MessagePack.MessagePackReader.ReadSByte() -> sbyte
 MessagePack.MessagePackReader.ReadSingle() -> float
