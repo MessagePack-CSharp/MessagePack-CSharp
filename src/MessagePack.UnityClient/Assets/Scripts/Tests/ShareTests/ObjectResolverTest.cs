@@ -63,7 +63,7 @@ namespace MessagePack.Tests
             MessagePackSerializer.Deserialize<SimpleIntKeyData>(bytes).IsNull();
 
             // deserialize from nil
-            Xunit.Assert.Throws<InvalidOperationException>(() =>
+            Xunit.Assert.Throws<MessagePackSerializationException>(() =>
             {
                 MessagePackSerializer.Deserialize<SimpleStructIntKeyData>(bytes);
             });

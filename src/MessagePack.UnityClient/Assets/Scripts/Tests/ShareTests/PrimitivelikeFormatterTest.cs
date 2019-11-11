@@ -20,10 +20,12 @@ namespace MessagePack.Tests
         [Fact]
         public void CanResolve()
         {
-            Assert.Throws<NotImplementedException>(() =>
+            var ex = Assert.Throws<MessagePackSerializationException>(() =>
             {
                 MessagePackSerializer.Serialize(new MyDateTimeResolverTest() { MyProperty1 = DateTime.Now }, PrimitivelikeResolver.Options);
             });
+
+            Assert.IsType<NotImplementedException>(ex.InnerException);
         }
 #endif
 
