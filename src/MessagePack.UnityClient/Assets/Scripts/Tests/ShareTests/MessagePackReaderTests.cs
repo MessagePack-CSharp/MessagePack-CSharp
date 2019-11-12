@@ -146,6 +146,33 @@ namespace MessagePack.Tests
             Assert.Equal(cts.Token, reader.CancellationToken);
         }
 
+        [Fact]
+        public void ReadRaw()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(3);
+            writer.WriteArrayHeader(2);
+            writer.Write(1);
+            writer.Write("Hi");
+            writer.Write(5);
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence.AsReadOnlySequence);
+
+            var first = reader.ReadRaw();
+            Assert.Equal(1, first.Length);
+            Assert.Equal(3, new MessagePackReader(first).ReadInt32());
+
+            var second = reader.ReadRaw();
+            Assert.Equal(5, second.Length);
+
+            var third = reader.ReadRaw();
+            Assert.Equal(1, third.Length);
+
+            Assert.True(reader.End);
+        }
+
         private delegate void WriterEncoder(ref MessagePackWriter writer);
 
         private static ReadOnlySequence<byte> Encode(WriterEncoder cb)
