@@ -1,5 +1,5 @@
 {
-    "name": "Tests",
+    "name": "MessagePack.Tests",
     "references": [
         "MessagePack",
         "RuntimeUnitTestToolkit"

@@ -16,7 +16,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs" Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**;..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\**" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs"
+             Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;
+                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**;
+                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\**;
+                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\_InternalVisibleTo.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,7 +41,6 @@
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.2.26" PrivateAssets="compile" />
   </ItemGroup>
 
   <ItemGroup>
