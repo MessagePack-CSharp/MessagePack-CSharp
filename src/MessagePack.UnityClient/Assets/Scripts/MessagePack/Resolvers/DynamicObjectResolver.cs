@@ -858,7 +858,7 @@ namespace MessagePack.Internal
             else
             {
                 il.Emit(OpCodes.Ldstr, "typecode is null, struct not supported");
-                il.Emit(OpCodes.Newobj, invalidOperationExceptionConstructor);
+                il.Emit(OpCodes.Newobj, messagePackSerializationExceptionMessageOnlyConstructor);
                 il.Emit(OpCodes.Throw);
             }
 
@@ -1225,7 +1225,7 @@ namespace MessagePack.Internal
         //// static readonly ConstructorInfo dictionaryConstructor = typeof(ByteArrayStringHashTable).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });
         //// static readonly MethodInfo dictionaryAdd = typeof(ByteArrayStringHashTable).GetRuntimeMethod("Add", new[] { typeof(string), typeof(int) });
         //// static readonly MethodInfo dictionaryTryGetValue = typeof(ByteArrayStringHashTable).GetRuntimeMethod("TryGetValue", new[] { typeof(ArraySegment<byte>), refInt });
-        private static readonly ConstructorInfo invalidOperationExceptionConstructor = typeof(System.InvalidOperationException).GetTypeInfo().DeclaredConstructors.First(x =>
+        private static readonly ConstructorInfo messagePackSerializationExceptionMessageOnlyConstructor = typeof(MessagePackSerializationException).GetTypeInfo().DeclaredConstructors.First(x =>
         {
             ParameterInfo[] p = x.GetParameters();
             return p.Length == 1 && p[0].ParameterType == typeof(string);

@@ -32,7 +32,8 @@ public class MessagePackSerializerTypelessTests
         var myOptions = new MyTypelessOptions();
         byte[] msgpack = MessagePackSerializer.Typeless.Serialize(new MyObject { SomeValue = 5 }, myOptions);
         this.logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack, myOptions));
-        Assert.Throws<TypeAccessException>(() => MessagePackSerializer.Typeless.Deserialize(msgpack, myOptions));
+        var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Typeless.Deserialize(msgpack, myOptions));
+        Assert.IsType<TypeAccessException>(ex.InnerException);
     }
 
     [Fact]
