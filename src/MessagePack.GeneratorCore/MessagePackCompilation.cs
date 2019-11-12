@@ -47,7 +47,7 @@ namespace MessagePackCompiler
             }
 
             var hasAnnotations = false;
-            foreach (var file in sources.Distinct())
+            foreach (var file in sources.Select(Path.GetFullPath).Distinct())
             {
                 var text = File.ReadAllText(file.Replace('\\', Path.DirectorySeparatorChar), Encoding.UTF8);
                 var syntax = CSharpSyntaxTree.ParseText(text, parseOption);
