@@ -118,6 +118,6 @@
   <ItemGroup>
     <PackageReference Include="Nerdbank.Streams" Version="2.4.37" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.6.0" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
   </ItemGroup>
 </Project>
