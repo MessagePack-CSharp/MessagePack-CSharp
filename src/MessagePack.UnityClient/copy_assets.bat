@@ -8,7 +8,6 @@
 
 @pushd %~dp0
 
-echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\Nerdbank.Streams.dll" ".\Assets\Plugins\Nerdbank.Streams.dll" /Y /I 
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Buffers.dll" ".\Assets\Plugins\System.Buffers.dll" /Y /I 
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Memory.dll" ".\Assets\Plugins\System.Memory.dll" /Y /I 
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Runtime.CompilerServices.Unsafe.dll" ".\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll" /Y /I 
