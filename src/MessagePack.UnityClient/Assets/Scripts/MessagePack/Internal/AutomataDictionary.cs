@@ -131,7 +131,7 @@ namespace MessagePack.Internal
 
         /* IL Emit */
 
-#if !NET_STANDARD_2_0
+#if REF_EMIT
 
         public void EmitMatch(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
         {
@@ -285,7 +285,7 @@ namespace MessagePack.Internal
                 }
             }
 
-#if !NET_STANDARD_2_0
+#if REF_EMIT
 
             // SearchNext(ref ReadOnlySpan<byte> bytes)
             public void EmitSearchNext(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)

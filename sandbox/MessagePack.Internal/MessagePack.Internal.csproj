@@ -32,6 +32,7 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequencePool.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReader.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions2.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DateTimeConstants.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\GuidBits.cs" />

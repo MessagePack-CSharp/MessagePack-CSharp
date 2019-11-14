@@ -1,14 +1,9 @@
 steps:
-- task: DotNetCoreCLI@2
-  displayName: Build MessagePack.sln
-  inputs:
-    command: build
-    arguments: --no-restore /p:platform=NoVSIX -c $(BuildConfiguration)
 
 - task: DotNetCoreCLI@2
-  displayName: Run tests
+  displayName: Test
   inputs:
     command: test
     projects: tests/MessagePack.Tests/MessagePack.Tests.csproj
-    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp2.1 -v n
+    arguments: /p:platform=NoVSIX -c $(BuildConfiguration) -f netcoreapp2.1 -v n
     testRunTitle: netcoreapp2.1-$(Agent.JobName)

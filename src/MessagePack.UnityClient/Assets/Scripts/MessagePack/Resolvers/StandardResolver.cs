@@ -27,7 +27,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if REF_EMIT
             DynamicObjectResolver.Instance, // Try Object
 #endif
         }).ToArray();
@@ -92,7 +92,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if REF_EMIT
             DynamicObjectResolver.Instance, // Try Object
             DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
 #endif
@@ -158,7 +158,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if REF_EMIT
             DynamicObjectResolverAllowPrivate.Instance, // Try Object
 #endif
         }).ToArray();
@@ -223,7 +223,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if REF_EMIT
             DynamicObjectResolverAllowPrivate.Instance, // Try Object
             DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
 #endif
@@ -289,7 +289,7 @@ namespace MessagePack.Internal
             MessagePack.Unity.UnityResolver.Instance,
 #endif
 
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if REF_EMIT
             DynamicEnumResolver.Instance, // Try Enum
 #endif
 
@@ -297,7 +297,7 @@ namespace MessagePack.Internal
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)
 #endif
 
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if REF_EMIT
             DynamicUnionResolver.Instance, // Try Union(Interface)
 #endif
         };

@@ -1,11 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netcoreapp2.1;uap10.0.16299;xamarin.ios10</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK</DefineConstants>
     <DefineConstants Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
+    <DefineConstants Condition=" $(TargetFramework.StartsWith('net')) ">$(DefineConstants);REF_EMIT</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
 
     <IsPackable>true</IsPackable>
@@ -16,11 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs"
-             Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;
-                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**;
-                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\**;
-                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\_InternalVisibleTo.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs" Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;&#xD;&#xA;                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**;&#xD;&#xA;                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\**;&#xD;&#xA;                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\_InternalVisibleTo.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,19 +25,26 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
-    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <AdditionalFiles Include="$(TargetFramework)\PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="$(TargetFramework)\PublicAPI.Unshipped.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Roslyn.Diagnostics.Analyzers" Version="2.9.7" PrivateAssets="all" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.6.0" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.6.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-    <PackageReference Include="System.Memory" Version="4.5.3" />
+    <PackageReference Include="System.Memory" Version="4.5.3" Condition=" '$(TargetFramework)' != 'xamarin.ios10' " />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'xamarin.ios10' ">
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" $(TargetFramework.StartsWith('net')) ">
+    <PackageReference Include="System.Reflection.Emit" Version="4.6.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup>

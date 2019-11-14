@@ -11,7 +11,7 @@ variables:
   TreatWarningsAsErrors: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   BuildConfiguration: Release
-  BuildPlatform: Any CPU
+  BuildPlatform: x64
 
 jobs:
 - job: Windows

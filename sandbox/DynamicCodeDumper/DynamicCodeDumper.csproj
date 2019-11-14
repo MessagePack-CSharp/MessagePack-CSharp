@@ -3,7 +3,7 @@
     <TargetFramework>net472</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OutputType>exe</OutputType>
-    <DefineConstants>$(DefineConstants);DYNAMICCODEDUMPER</DefineConstants>
+    <DefineConstants>$(DefineConstants);DYNAMICCODEDUMPER;REF_EMIT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\Attributes.cs">
@@ -86,6 +86,9 @@
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions.cs">
       <Link>Code\SequenceReaderExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions2.cs">
+      <Link>Code\SequenceReaderExtensions2.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs">
       <Link>Code\MessagePackCode.cs</Link>

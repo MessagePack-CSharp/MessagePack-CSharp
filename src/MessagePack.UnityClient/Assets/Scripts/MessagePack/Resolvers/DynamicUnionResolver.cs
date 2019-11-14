@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
-
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -16,6 +14,9 @@ using MessagePack.Internal;
 
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1509 // Opening braces should not be preceded by blank line
+#pragma warning disable SA1649 // File name should match first type name
+
+#if REF_EMIT
 
 namespace MessagePack.Resolvers
 {
@@ -482,6 +483,8 @@ namespace MessagePack.Resolvers
     }
 }
 
+#endif
+
 namespace MessagePack.Internal
 {
     // RuntimeTypeHandle can embed directly by OpCodes.Ldtoken
@@ -513,5 +516,3 @@ namespace MessagePack.Internal
         }
     }
 }
-
-#endif

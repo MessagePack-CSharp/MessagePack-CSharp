@@ -35,12 +35,18 @@ namespace MessagePack.Resolvers
             BuiltinResolver.Instance, // Try Builtin
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
 #if !ENABLE_IL2CPP
+#if REF_EMIT
             DynamicEnumResolver.Instance, // Try Enum
+#endif
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
+#if REF_EMIT
             DynamicUnionResolver.Instance, // Try Union(Interface)
             DynamicObjectResolver.Instance, // Try Object
 #endif
+#endif
+#if REF_EMIT
             DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
+#endif
             TypelessObjectResolver.Instance,
         };
 
