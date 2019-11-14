@@ -1,1 +1,0 @@
-tools\mpc.exe -i ..\sandbox\SharedData\SharedData.csproj -o mpc_check.cs

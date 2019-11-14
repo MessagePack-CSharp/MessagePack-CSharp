@@ -15,7 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		LICENSE = LICENSE
-		make_unity_symlink.bat = make_unity_symlink.bat
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -55,8 +54,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{301F812B
 		stylecop.json = stylecop.json
 		version.json = version.json
 	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.UniversalCodeGenerator", "src\MessagePack.UniversalCodeGenerator\MessagePack.UniversalCodeGenerator.csproj", "{10AD85DD-929D-49B8-BD43-45242C2644B7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.AspNetCoreMvcFormatter.Tests", "tests\MessagePack.AspNetCoreMvcFormatter.Tests\MessagePack.AspNetCoreMvcFormatter.Tests.csproj", "{79C2B2CB-872A-4BA9-82DC-60F6DD77F940}"
 EndProject
