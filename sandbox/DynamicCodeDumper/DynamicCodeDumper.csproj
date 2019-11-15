@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);REF_EMIT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\src\MessagePack\Attributes.cs">
