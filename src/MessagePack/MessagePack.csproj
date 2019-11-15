@@ -1,4 +1,4 @@
-﻿<Project Sdk="MSBuild.Sdk.Extras/1.6.68">
+﻿<Project Sdk="MSBuild.Sdk.Extras/2.0.54">
   <!-- Using MSBuild.Sdk.Extras from oren novotny to support uap.10 and xamarin.ios10 platform targets out of the box
         see: https://github.com/onovotny/MSBuildSdkExtras -->
   <PropertyGroup>
