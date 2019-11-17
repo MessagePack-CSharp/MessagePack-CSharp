@@ -7,6 +7,7 @@ using MessagePack;
 #pragma warning disable SA1300 // Field should begin with upper-case letter
 #pragma warning disable IDE1006 // Field should begin with upper-case letter
 #pragma warning disable SA1649 // type name matches file name
+#pragma warning disable SA1401 // Fields should be private (we need fields rather than auto-properties for .NET Native compilation to work).
 
 namespace UnityEngine
 {
@@ -125,10 +126,10 @@ namespace UnityEngine
     public struct Bounds
     {
         [Key(0)]
-        public Vector3 center { get; set; }
+        public Vector3 center;
 
         [IgnoreMember]
-        public Vector3 extents { get; set; }
+        public Vector3 extents;
 
         [Key(1)]
         public Vector3 size
@@ -156,16 +157,16 @@ namespace UnityEngine
     public struct Rect
     {
         [Key(0)]
-        public float x { get; set; }
+        public float x;
 
         [Key(1)]
-        public float y { get; set; }
+        public float y;
 
         [Key(2)]
-        public float width { get; set; }
+        public float width;
 
         [Key(3)]
-        public float height { get; set; }
+        public float height;
 
         [SerializationConstructor]
         public Rect(float x, float y, float width, float height)
@@ -198,7 +199,7 @@ namespace UnityEngine
     public sealed class AnimationCurve
     {
         [Key(0)]
-        public Keyframe[] keys { get; set; }
+        public Keyframe[] keys;
 
         [IgnoreMember]
         public int length
@@ -207,26 +208,26 @@ namespace UnityEngine
         }
 
         [Key(1)]
-        public WrapMode postWrapMode { get; set; }
+        public WrapMode postWrapMode;
 
         [Key(2)]
-        public WrapMode preWrapMode { get; set; }
+        public WrapMode preWrapMode;
     }
 
     [MessagePackObject]
     public struct Keyframe
     {
         [Key(0)]
-        public float time { get; set; }
+        public float time;
 
         [Key(1)]
-        public float value { get; set; }
+        public float value;
 
         [Key(2)]
-        public float inTangent { get; set; }
+        public float inTangent;
 
         [Key(3)]
-        public float outTangent { get; set; }
+        public float outTangent;
 
         public Keyframe(float time, float value)
         {
@@ -297,13 +298,13 @@ namespace UnityEngine
     public sealed class Gradient
     {
         [Key(0)]
-        public GradientColorKey[] colorKeys { get; set; }
+        public GradientColorKey[] colorKeys;
 
         [Key(1)]
-        public GradientAlphaKey[] alphaKeys { get; set; }
+        public GradientAlphaKey[] alphaKeys;
 
         [Key(2)]
-        public GradientMode mode { get; set; }
+        public GradientMode mode;
     }
 
     [MessagePackObject]
@@ -367,16 +368,16 @@ namespace UnityEngine
     public sealed class RectOffset
     {
         [Key(0)]
-        public int left { get; set; }
+        public int left;
 
         [Key(1)]
-        public int right { get; set; }
+        public int right;
 
         [Key(2)]
-        public int top { get; set; }
+        public int top;
 
         [Key(3)]
-        public int bottom { get; set; }
+        public int bottom;
 
         public RectOffset()
         {
@@ -395,7 +396,7 @@ namespace UnityEngine
     public struct LayerMask
     {
         [Key(0)]
-        public int value { get; set; }
+        public int value;
     }
 
     // from Unity2017.2
@@ -458,16 +459,16 @@ namespace UnityEngine
     public struct RectInt
     {
         [Key(0)]
-        public int x { get; set; }
+        public int x;
 
         [Key(1)]
-        public int y { get; set; }
+        public int y;
 
         [Key(2)]
-        public int width { get; set; }
+        public int width;
 
         [Key(3)]
-        public int height { get; set; }
+        public int height;
 
         [SerializationConstructor]
         public RectInt(int x, int y, int width, int height)
@@ -499,10 +500,10 @@ namespace UnityEngine
     public struct BoundsInt
     {
         [Key(0)]
-        public Vector3Int position { get; set; }
+        public Vector3Int position;
 
         [Key(1)]
-        public Vector3Int size { get; set; }
+        public Vector3Int size;
 
         [SerializationConstructor]
         public BoundsInt(Vector3Int position, Vector3Int size)

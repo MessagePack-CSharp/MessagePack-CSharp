@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.2.26" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.4.48" />
   </ItemGroup>
 
   <ItemGroup>
