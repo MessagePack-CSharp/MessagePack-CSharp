@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.4.48" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,6 +28,7 @@
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\MessagePackReader.Integers.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackWriter.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Nil.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\Sequence`1.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequencePool.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReader.cs" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions.cs" />
