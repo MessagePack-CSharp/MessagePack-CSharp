@@ -33,11 +33,11 @@ namespace MessagePackCompiler
            string resolverName,
            string @namespace,
            bool useMapMode,
-           string multipleIfDiretiveOutputSymbols)
+           string multipleIfDirectiveOutputSymbols)
         {
             var namespaceDot = string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace + ".";
             var conditionalSymbols = conditionalSymbol?.Split(',') ?? Array.Empty<string>();
-            var multipleOutputSymbols = multipleIfDiretiveOutputSymbols?.Split(',') ?? Array.Empty<string>();
+            var multipleOutputSymbols = multipleIfDirectiveOutputSymbols?.Split(',') ?? Array.Empty<string>();
 
             var sw = Stopwatch.StartNew();
 
