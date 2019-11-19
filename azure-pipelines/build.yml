@@ -1,63 +1,4 @@
 steps:
-- checkout: self
-  clean: true
-
-- task: UseDotNet@2
-  displayName: Install .NET Core SDK 3.0.100
-  inputs:
-    packageType: sdk
-    version: 3.0.100
-- task: UseDotNet@2
-  displayName: Install .NET Core runtime 2.1.x
-  inputs:
-    packageType: runtime
-    version: 2.1.x
-- task: UseDotNet@2
-  displayName: Install .NET Core runtime 2.2.x
-  inputs:
-    packageType: runtime
-    version: 2.2.x
-- script: dotnet --info
-  displayName: Show dotnet SDK info
-
-- script: |
-    dotnet tool install --tool-path . nbgv
-    .\nbgv cloud -p src
-  displayName: Set build number
-
-- task: PowerShell@2
-  displayName: Set VSTS variables
-  inputs:
-    targetType: inline
-    script: |
-      if ($env:SignType -eq 'Real') {
-        $feedGuid = '09d8d03c-1ac8-456e-9274-4d2364527d99'
-      } else {
-        $feedGuid = 'da484c78-f942-44ef-b197-99e2a1bef53c'
-      }
-
-      Write-Host "##vso[task.setvariable variable=feedGuid]$feedGuid"
-
-      if ($env:ComputerName.StartsWith('factoryvm', [StringComparison]::OrdinalIgnoreCase)) {
-        Write-Host "Running on hosted queue"
-        Write-Host "##vso[task.setvariable variable=Hosted]true"
-      }
-
-      if ($env:SYSTEM_COLLECTIONID -eq '011b8bdf-6d56-4f87-be0d-0092136884d9') {
-        Write-Host "Running on official devdiv account: $env:System_TeamFoundationCollectionUri"
-      } else {
-        Write-Host "Running under OSS account: $env:System_TeamFoundationCollectionUri"
-      }
-
-- task: DotNetCoreCLI@2
-  displayName: Restore
-  inputs:
-    command: restore
-    verbosityRestore: normal # detailed, normal, minimal
-    projects: '**\*.sln'
-    feedsToUse: config
-    nugetConfigPath: nuget.config
-
 # Use VSBuild to pack because `dotnet pack` can't build VSIX projects.
 - task: VSBuild@1
   inputs:
@@ -81,59 +22,18 @@ steps:
     dotnet publish src/MessagePack.Generator -r linux-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
   displayName: Building standalone mpc tool for all OSs
 
-- task: CopyFiles@1
-  inputs:
-    Contents: |
-      obj/**/project.assets.json
-    TargetFolder: $(Build.ArtifactStagingDirectory)/projectAssetsJson
-  displayName: Collecting project.assets.json artifacts
-  condition: succeededOrFailed()
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: $(Build.ArtifactStagingDirectory)/projectAssetsJson
-    ArtifactName: projectAssetsJson
-    ArtifactType: Container
-  displayName: Publish projectAssetsJson artifacts
-  condition: succeededOrFailed()
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: $(Build.ArtifactStagingDirectory)/build_logs
-    ArtifactName: build_logs
-    ArtifactType: Container
-  displayName: Publish build_logs artifacts
-  condition: succeededOrFailed()
-
 ## The rest of these steps are for deployment and skipped for PR builds
 
-- task: CopyFiles@1
+- task: PowerShell@2
   inputs:
-    Contents: |
-      bin/Packages/$(BuildConfiguration)/**/*.nupkg
-      bin/Packages/$(BuildConfiguration)/**/*.snupkg
-      bin/MessagePackAnalyzer.Vsix/$(BuildConfiguration)/**/*.vsix
-      bin/*.unitypackage
-    TargetFolder: $(Build.ArtifactStagingDirectory)/deployables
-    flattenFolders: true
-  displayName: Collecting deployables
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: $(Build.ArtifactStagingDirectory)/deployables
-    ArtifactName: deployables
-    ArtifactType: Container
-  displayName: Publish deployables artifacts
+    filePath: azure-pipelines/variables/_pipelines.ps1
+    failOnStderr: true
+  displayName: Update pipeline variables based on build outputs
   condition: succeededOrFailed()
 
-- publish: bin/MessagePack.Generator/$(BuildConfiguration)/netcoreapp3.0/win-x64/publish
-  artifact: mpc-win
-  displayName: Publish mpc for Windows
-
-- publish: bin/MessagePack.Generator/$(BuildConfiguration)/netcoreapp3.0/osx-x64/publish
-  artifact: mpc-osx
-  displayName: Publish mpc for OSX
-
-- publish: bin/MessagePack.Generator/$(BuildConfiguration)/netcoreapp3.0/linux-x64/publish
-  artifact: mpc-linux
-  displayName: Publish mpc for Linux
+- task: PowerShell@2
+  inputs:
+    filePath: azure-pipelines/artifacts/_pipelines.ps1
+    # arguments: -ArtifactNameSuffix "-$(Agent.JobName)"
+  displayName: Publish artifacts
+  condition: succeededOrFailed()
