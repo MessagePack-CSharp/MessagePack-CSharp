@@ -160,9 +160,9 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SharedData\SharedData.csproj">
-      <Project>{3abc5c4c-2ce4-459e-8666-f2b181c3def3}</Project>
-      <Name>SharedData</Name>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">
+      <Project>{7abb33ee-a2f1-492b-8daf-5df89f0f0b79}</Project>
+      <Name>MessagePack</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
