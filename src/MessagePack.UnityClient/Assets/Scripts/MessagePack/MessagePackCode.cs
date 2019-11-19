@@ -201,7 +201,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="code">The messagepack code.</param>
         /// <returns>A boolean value.</returns>
-        public static bool IsSignedInteger(byte code)
+        internal static bool IsSignedInteger(byte code)
         {
             switch (code)
             {
@@ -224,6 +224,8 @@ namespace MessagePack
     static class ReservedMessagePackExtensionTypeCode
     {
         public const sbyte DateTime = -1;
+
+        public const sbyte LZ4 = 99;
     }
 
 #if MESSAGEPACK_INTERNAL

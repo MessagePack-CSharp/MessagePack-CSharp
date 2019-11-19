@@ -18,8 +18,6 @@ namespace MessagePack
     [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Each overload has sufficiently unique required parameters.")]
     public static partial class MessagePackSerializer
     {
-        public const sbyte LZ4ExtensionTypeCode = 99;
-
         private const int LZ4NotCompressionSize = 64;
 
         /// <summary>
@@ -422,7 +420,7 @@ namespace MessagePack
             {
                 MessagePackReader peekReader = reader.CreatePeekReader();
                 ExtensionHeader header = peekReader.ReadExtensionFormatHeader();
-                if (header.TypeCode == LZ4ExtensionTypeCode)
+                if (header.TypeCode == ReservedMessagePackExtensionTypeCode.LZ4)
                 {
                     // Read the extension using the original reader, so we "consume" it.
                     ExtensionResult extension = reader.ReadExtensionFormat();
@@ -461,7 +459,7 @@ namespace MessagePack
                     int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4Codec.Encode);
 
                     const int LengthOfUncompressedDataSizeHeader = 5;
-                    writer.WriteExtensionFormatHeader(new ExtensionHeader(LZ4ExtensionTypeCode, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
+                    writer.WriteExtensionFormatHeader(new ExtensionHeader(ReservedMessagePackExtensionTypeCode.LZ4, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
                     writer.WriteInt32((int)msgpackUncompressedData.Length);
                     writer.WriteRaw(lz4Span.AsSpan(0, lz4Length));
                 }
