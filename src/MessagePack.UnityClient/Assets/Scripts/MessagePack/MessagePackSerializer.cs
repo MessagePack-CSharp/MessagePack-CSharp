@@ -112,6 +112,16 @@ namespace MessagePack
         /// Serializes a given value with the specified buffer writer.
         /// </summary>
         /// <param name="value">The value to serialize.</param>
+        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
+        public static byte[] Serialize<T>(T value)
+        {
+            return Serialize(value, options: null, cancellationToken: default);
+        }
+
+        /// <summary>
+        /// Serializes a given value with the specified buffer writer.
+        /// </summary>
+        /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A byte array with the serialized value.</returns>
@@ -130,6 +140,16 @@ namespace MessagePack
             };
             Serialize(ref msgpackWriter, value, options);
             return msgpackWriter.FlushAndGetArray();
+        }
+
+        /// <summary>
+        /// Serializes a given value to the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream to serialize to.</param>
+        /// <param name="value">The value to serialize.</param>
+        public static void Serialize<T>(Stream stream, T value)
+        {
+            Serialize(stream, value, options: null, cancellationToken: default);
         }
 
         /// <summary>
@@ -256,6 +276,18 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="buffer">The buffer to deserialize from.</param>
+        /// <returns>The deserialized value.</returns>
+        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
+        public static T Deserialize<T>(byte[] buffer)
+        {
+            return Deserialize<T>(buffer, options: null, cancellationToken: default);
+        }
+
+        /// <summary>
+        /// Deserializes a value of a given type from a sequence of bytes.
+        /// </summary>
+        /// <typeparam name="T">The type of value to deserialize.</typeparam>
+        /// <param name="buffer">The buffer to deserialize from.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
@@ -306,6 +338,18 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="stream">The stream to deserialize from.</param>
+        /// <returns>The deserialized value.</returns>
+        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
+        public static T Deserialize<T>(Stream stream)
+        {
+            return Deserialize<T>(stream, options: null, cancellationToken: default);
+        }
+
+        /// <summary>
+        /// Deserializes the entire content of a <see cref="Stream"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of value to deserialize.</typeparam>
+        /// <param name="stream">The stream to deserialize from.</param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
@@ -339,6 +383,18 @@ namespace MessagePack
 
                 return Deserialize<T>(sequence.AsReadOnlySequence, options, cancellationToken);
             }
+        }
+
+        /// <summary>
+        /// Deserializes the entire content of a <see cref="Stream"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of value to deserialize.</typeparam>
+        /// <param name="stream">The stream to deserialize from.</param>
+        /// <returns>The deserialized value.</returns>
+        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
+        public static async Task<T> DeserializeAsync<T>(Stream stream)
+        {
+            return await DeserializeAsync<T>(stream, options: null, cancellationToken: default).ConfigureAwait(false);
         }
 
         /// <summary>
