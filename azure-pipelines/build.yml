@@ -75,6 +75,12 @@ steps:
     projects: tests/**/*.Tests.csproj
     arguments: --configuration $(BuildConfiguration) --no-build -v n
 
+- script: |
+    dotnet publish src/MessagePack.Generator -r win-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+    dotnet publish src/MessagePack.Generator -r osx-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+    dotnet publish src/MessagePack.Generator -r linux-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+  displayName: Building standalone mpc tool for all OSs
+
 - task: CopyFiles@1
   inputs:
     Contents: |
@@ -119,3 +125,15 @@ steps:
     ArtifactType: Container
   displayName: Publish deployables artifacts
   condition: succeededOrFailed()
+
+- publish: bin/MessagePack.Generator/$(BuildConfiguration)/netcoreapp3.0/win-x64/publish
+  artifact: mpc-win
+  displayName: Publish mpc for Windows
+
+- publish: bin/MessagePack.Generator/$(BuildConfiguration)/netcoreapp3.0/osx-x64/publish
+  artifact: mpc-osx
+  displayName: Publish mpc for OSX
+
+- publish: bin/MessagePack.Generator/$(BuildConfiguration)/netcoreapp3.0/linux-x64/publish
+  artifact: mpc-linux
+  displayName: Publish mpc for Linux
