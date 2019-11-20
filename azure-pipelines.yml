@@ -15,6 +15,13 @@ jobs:
   pool:
     vmImage: windows-2019
   steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/install-dependencies.yml
+
+  - powershell: '& (./azure-pipelines/Get-nbgv.ps1) cloud'
+    displayName: Set build number
+
   - template: azure-pipelines/build.yml
 
 - job: Unity
@@ -22,6 +29,9 @@ jobs:
     name: CustomAgents
     demands: UNITYHUB_EDITORS_FOLDER_LOCATION
   steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/install-dependencies.yml
   - template: azure-pipelines/build_unity.yml
 
 - job: Linux
@@ -30,6 +40,7 @@ jobs:
   steps:
   - checkout: self
     clean: true
+  - template: azure-pipelines/install-dependencies.yml
   - template: azure-pipelines/build_nonWindows.yml
 
 - job: macOS
@@ -38,4 +49,5 @@ jobs:
   steps:
   - checkout: self
     clean: true
+  - template: azure-pipelines/install-dependencies.yml
   - template: azure-pipelines/build_nonWindows.yml

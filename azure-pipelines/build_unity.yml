@@ -1,15 +1,4 @@
 steps:
-- checkout: self
-  clean: true
-
-- task: UseDotNet@2
-  displayName: Install .NET Core SDK 3.0.100
-  inputs:
-    packageType: sdk
-    version: 3.0.100
-- script: dotnet --info
-  displayName: Show dotnet SDK info
-
 - script: dotnet publish src/MessagePack -c $(BuildConfiguration) -f netstandard2.0
   displayName: Build MessagePack
 
@@ -28,15 +17,15 @@ steps:
   inputs:
     Contents: |
       bin/*.unitypackage
-    TargetFolder: $(Build.ArtifactStagingDirectory)/deployables
+    TargetFolder: $(Build.ArtifactStagingDirectory)/unity
     flattenFolders: true
   displayName: Collecting deployables
   condition: succeededOrFailed()
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: $(Build.ArtifactStagingDirectory)/deployables
-    ArtifactName: deployables
+    PathtoPublish: $(Build.ArtifactStagingDirectory)/unity
+    ArtifactName: unity
     ArtifactType: Container
   displayName: Publish deployables artifacts
   condition: succeededOrFailed()
