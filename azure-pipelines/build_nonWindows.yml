@@ -11,3 +11,4 @@ steps:
     command: test
     projects: tests/MessagePack.Tests/MessagePack.Tests.csproj
     arguments: --no-build -c $(BuildConfiguration) -f netcoreapp2.1 -v n
+    testRunTitle: netcoreapp2.1-$(Agent.JobName)

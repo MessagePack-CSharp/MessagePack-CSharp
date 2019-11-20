@@ -15,6 +15,7 @@ steps:
     command: test
     projects: tests/**/*.Tests.csproj
     arguments: --configuration $(BuildConfiguration) --no-build -v n
+    testRunTitle: $(Agent.JobName)
 
 - script: |
     dotnet publish src/MessagePack.Generator -r win-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
