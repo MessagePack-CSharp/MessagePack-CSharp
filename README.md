@@ -44,6 +44,10 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 For Unity, download from [releases](https://github.com/neuecc/MessagePack-CSharp/releases) page, providing `.unitypackage`. Unity IL2CPP or Xamarin AOT Environment, check the [pre-code generation section](#aot).
 
+### Migration notes from v1.x
+
+If you were using MessagePack-CSharp v1.x, check out [how to update to our new v2.x version](doc/migration.md).
+
 ## Quick Start
 
 Define the class to be serialized and attribute the class with `[MessagePackObject]`.
