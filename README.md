@@ -1184,16 +1184,36 @@ Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime 
 
 > Note: When Unity targets the PC it allows dynamic code generation, so AOT is not required.
 
-If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc.exe`(MessagePackCompiler) is the code generator of MessagePack for C#. You can download mpc from the [releases](https://github.com/neuecc/MessagePack-CSharp/releases/) page, `mpc.zip`. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
+If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
+
+The easiest way to acquire and run mpc is as a dotnet tool.
+It works as a global tool, but installing it as a local tool allows you to include the tools and versions that you use in your source control system. Run these commands in the root of your repo:
 
 ```
-mpc arguments help:
--i, --input              [required]Input path of analyze csproj
--o, --output             [required]Output file path
--c, --conditionalsymbol  [optional, default=empty]conditional compiler symbol
--r, --resolvername       [optional, default=GeneratedResolver]Set resolver name
--n, --namespace          [optional, default=MessagePack]Set namespace root name
--m, --usemapmode         [optional, default=false]Force use map mode serialization
+dotnet new tool-manifest
+dotnet tool install MessagePack.Generator
+```
+
+Check in your `.config\dotnet-tools.json` file.
+On another machine you can "restore" your tool using the `dotnet tool restore` command.
+
+Once you have the tool installed, simply invoke using `dotnet mpc` within your repo:
+
+```
+dotnet mpc -h
+```
+
+Alternatively, you can download mpc from the [releases](https://github.com/neuecc/MessagePack-CSharp/releases/) page.
+
+```
+argument list:
+-i, -input: Input path of analyze csproj or directory, if input multiple csproj split with ','.
+-o, -output: Output file path(.cs) or directory(multiple generate file).
+-c, -conditionalSymbol: [default=null]Conditional compiler symbols, split with ','.
+-r, -resolverName: [default=GeneratedResolver]Set resolver name.
+-n, -namespace: [default=MessagePack]Set namespace root name.
+-m, -useMapMode: [default=False]Force use map mode serialization.
+-ms, -multipleIfDirectiveOutputSymbols: [default=null]Generate #if-- files by symbols, split with ','.
 ```
 
 ```cmd
