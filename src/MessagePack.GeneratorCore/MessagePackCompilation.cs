@@ -8,7 +8,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -16,6 +15,7 @@ using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace MessagePackCompiler
 {
@@ -39,7 +39,7 @@ namespace MessagePackCompiler
                .Select(x => MetadataReference.CreateFromFile(x))
                .ToList();
 
-            var sources = new List<string>();
+            var sources = new HashSet<string>();
             var locations = new List<string>();
             foreach (var csproj in csprojs)
             {
@@ -82,7 +82,7 @@ namespace MessagePackCompiler
             return compilation;
         }
 
-        private static void CollectDocument(string csproj, List<string> source, List<string> metadataLocations)
+        private static void CollectDocument(string csproj, HashSet<string> source, List<string> metadataLocations)
         {
             XDocument document;
             using (var sr = new StreamReader(csproj, true))
@@ -105,30 +105,54 @@ namespace MessagePackCompiler
 
             if (!legacyFormat)
             {
-                foreach (var file in IterateCsFileWithoutBinObj(Path.GetDirectoryName(csproj)))
+                // try to find EnableDefaultCompileItems
+                if (document.Descendants("EnableDefaultCompileItems")?.FirstOrDefault()?.Value == "false"
+                 || document.Descendants("EnableDefaultItems")?.FirstOrDefault()?.Value == "false")
                 {
-                    source.Add(file);
+                    legacyFormat = true;
                 }
             }
 
             {
-                // files
-                foreach (var item in document.Descendants("Compile"))
+                // compile files
                 {
-                    var include = item.Attribute("Include")?.Value;
-                    if (include != null)
+                    // default include
+                    if (!legacyFormat)
                     {
-                        // note: currently not supports Exclude
-                        if (include.Contains("*"))
+                        foreach (var path in GetCompileFullPaths(null, "**/*.cs", csProjRoot))
                         {
-                            foreach (var item2 in IterateWildcardPath(csProjRoot, include))
+                            source.Add(path);
+                        }
+                    }
+
+                    // custom elements
+                    foreach (var item in document.Descendants("Compile"))
+                    {
+                        var include = item.Attribute("Include")?.Value;
+                        if (include != null)
+                        {
+                            foreach (var path in GetCompileFullPaths(item, include, csProjRoot))
                             {
-                                source.Add(item2);
+                                source.Add(path);
                             }
                         }
-                        else
+
+                        var remove = item.Attribute("Remove")?.Value;
+                        if (remove != null)
                         {
-                            source.Add(Path.Combine(csProjRoot, include));
+                            foreach (var path in GetCompileFullPaths(item, remove, csProjRoot))
+                            {
+                                source.Remove(path);
+                            }
+                        }
+                    }
+
+                    // default remove
+                    if (!legacyFormat)
+                    {
+                        foreach (var path in GetCompileFullPaths(null, "./bin/**;./obj/**", csProjRoot))
+                        {
+                            source.Remove(path);
                         }
                     }
                 }
@@ -211,61 +235,19 @@ namespace MessagePackCompiler
             }
         }
 
-        private static IEnumerable<string> IterateWildcardPath(string rootPath, string path)
+        private static IEnumerable<string> GetCompileFullPaths(XElement compile, string includeOrRemovePattern, string csProjRoot)
         {
-            var directory = new StringBuilder();
-            foreach (var item in path.Split('\\', '/'))
+            var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
+            matcher.AddIncludePatterns(includeOrRemovePattern.Split(';'));
+            var exclude = compile?.Attribute("Exclude")?.Value;
+            if (exclude != null)
             {
-                // recursive
-                if (item.Contains("**"))
-                {
-                    foreach (var item2 in Directory.GetDirectories(Path.Combine(rootPath, directory.ToString()), "*", SearchOption.AllDirectories))
-                    {
-                        foreach (var item3 in IterateWildcardPath(string.Empty, item2))
-                        {
-                            yield return item3;
-                        }
-                    }
-
-                    yield break;
-                }
-                else if (item.Contains("*"))
-                {
-                    foreach (var item2 in Directory.GetFiles(Path.Combine(directory.ToString())))
-                    {
-                        if (Path.GetExtension(item) == ".cs")
-                        {
-                            yield return item2;
-                        }
-                    }
-
-                    yield break;
-                }
-                else if (!(item == "obj" || item == "bin"))
-                {
-                    if (directory.Length != 0)
-                    {
-                        directory.Append(Path.DirectorySeparatorChar);
-                    }
-
-                    directory.Append(item);
-                }
+                matcher.AddExcludePatterns(exclude.Split(';'));
             }
 
-            var finalPath = directory.ToString();
-            if (File.Exists(finalPath))
+            foreach (var path in matcher.GetResultsInFullPath(csProjRoot))
             {
-                yield return finalPath;
-            }
-            else
-            {
-                foreach (var item in Directory.GetFiles(finalPath))
-                {
-                    if (Path.GetExtension(item) == ".cs")
-                    {
-                        yield return item;
-                    }
-                }
+                yield return path;
             }
         }
 
