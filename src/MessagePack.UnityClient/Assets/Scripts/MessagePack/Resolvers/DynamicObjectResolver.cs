@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
@@ -345,6 +345,11 @@ namespace MessagePack.Internal
             if (serializationInfo == null)
             {
                 return null;
+            }
+
+            if (type.IsNotPublic)
+            {
+                throw new MessagePackSerializationException("Building dynamic formatter only allows public type. Type: " + type.FullName);
             }
 
             Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
