@@ -110,7 +110,15 @@ In v1.x any exception thrown during serialization or deserialization was uncaugh
 In v2.x all exceptions are caught by the `MessagePackSerializer` and rethrown as an inner exception of `MessagePackSerializationException`.
 This makes it easier to write code to catch exceptions during serialization since you can now catch just one specific type of exception.
 
-### CompositeResolver
+### Built-in resolvers
+
+The following resolvers have been *removed*:
+
+| Removed v1.x formatter | v2.x alternative |
+|--|--|
+| `UnsafeBinaryResolver` | `NativeDecimalResolver`, `NativeGuidResolver`
+
+#### CompositeResolver
 
 In v1.x the `CompositeResolver` type could only be used once and mutated a static property.
 In v2.x the `CompositeResolver` type no longer mutates any statics and thus can be used safely by many callers that simply want to aggregate many formatters and/or resolvers into one resolver. This often removes the need for you to define your own `IFormatterResolver`.
@@ -133,8 +141,8 @@ The following formatters have been *removed*:
 
 | Removed v1.x formatter | v2.x alternative |
 |--|--|
-| `BinaryDecimalFormatter`
-| `BinaryGuidFormatter`
+| `BinaryDecimalFormatter` | `NativeDecimalFormatter`
+| `BinaryGuidFormatter` | `NativeGuidFormatter`
 | `FourDimentionalArrayFormatter` | `FourDimensionalArrayFormatter`
 | `OldSpecBinaryFormatter` | Use `MessagePackSerializerOptions.OldSpec` or `MessagePackWriter.OldSpec` instead.
 | `OldSpecStringFormatter` | Use `MessagePackSerializerOptions.OldSpec` or `MessagePackWriter.OldSpec` instead.
