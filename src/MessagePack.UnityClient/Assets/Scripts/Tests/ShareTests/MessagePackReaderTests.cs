@@ -59,12 +59,11 @@ namespace MessagePack.Tests
             writer.WriteArrayHeader(9999);
             writer.Flush();
 
-            var ex = Assert.Throws<MessagePackSerializationException>(() =>
+            Assert.Throws<EndOfStreamException>(() =>
             {
                 var reader = new MessagePackReader(sequence);
                 reader.ReadArrayHeader();
             });
-            Assert.IsType<EndOfStreamException>(ex.InnerException);
         }
 
         [Fact]
@@ -75,12 +74,11 @@ namespace MessagePack.Tests
             writer.WriteMapHeader(9999);
             writer.Flush();
 
-            var ex = Assert.Throws<MessagePackSerializationException>(() =>
+            Assert.Throws<EndOfStreamException>(() =>
             {
                 var reader = new MessagePackReader(sequence);
                 reader.ReadMapHeader();
             });
-            Assert.IsType<EndOfStreamException>(ex.InnerException);
         }
 
         [Fact]

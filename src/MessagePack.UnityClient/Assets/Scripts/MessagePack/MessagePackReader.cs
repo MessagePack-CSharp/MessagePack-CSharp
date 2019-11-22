@@ -17,6 +17,8 @@ namespace MessagePack
     /// <remarks>
     /// <see href="https://github.com/msgpack/msgpack/blob/master/spec.md">The MessagePack spec.</see>.
     /// </remarks>
+    /// <exception cref="MessagePackSerializationException">Thrown when reading methods fail due to invalid data.</exception>
+    /// <exception cref="EndOfStreamException">Thrown by reading methods when there are not enough bytes to read the required value.</exception>
 #if MESSAGEPACK_INTERNAL
     internal
 #else
@@ -771,7 +773,7 @@ namespace MessagePack
         /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
         /// the promised data.
         /// </summary>
-        private static void ThrowNotEnoughBytesException() => throw new MessagePackSerializationException(null, new EndOfStreamException());
+        private static void ThrowNotEnoughBytesException() => throw new EndOfStreamException();
 
         private static Exception ThrowInvalidCode(byte code)
         {
