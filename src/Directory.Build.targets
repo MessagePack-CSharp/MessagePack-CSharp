@@ -5,6 +5,7 @@
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\opensource.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <!-- ignore compilation temp files and unity generated .meta files -->
     <None Remove="**/bin/**;**/obj/**;**/*.meta" />
   </ItemGroup>
   <Import Project="..\Directory.Build.targets" Condition="Exists('..\Directory.Build.targets')" />

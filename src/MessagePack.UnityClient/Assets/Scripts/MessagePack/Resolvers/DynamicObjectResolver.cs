@@ -347,7 +347,7 @@ namespace MessagePack.Internal
                 return null;
             }
 
-            if (type.IsNotPublic)
+            if (!(type.IsPublic || type.IsNestedPublic))
             {
                 throw new MessagePackSerializationException("Building dynamic formatter only allows public type. Type: " + type.FullName);
             }
