@@ -303,17 +303,20 @@ namespace MessagePack
         /// Deserializes the entire content of a <see cref="Stream"/>.
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="stream">The stream to deserialize from.</param>
+        /// <param name="stream">
+        /// The stream to deserialize from.
+        /// The entire stream will be read, and the first msgpack token deserialized will be returned.
+        /// If <see cref="Stream.CanSeek"/> is true on the stream, its position will be set to just after the last deserialized byte.
+        /// </param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (stream is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> streamBuffer))
+            if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T result))
             {
-                return Deserialize<T>(streamBuffer, options, cancellationToken);
+                return result;
             }
 
             using (var sequence = new Sequence<byte>())
@@ -335,7 +338,7 @@ namespace MessagePack
                     throw new MessagePackSerializationException("Error occurred while reading from the stream.", ex);
                 }
 
-                return Deserialize<T>(sequence.AsReadOnlySequence, options, cancellationToken);
+                return DeserializeFromSequenceAndRewindStreamIfPossible<T>(stream, options, sequence, cancellationToken);
             }
         }
 
@@ -343,16 +346,20 @@ namespace MessagePack
         /// Deserializes the entire content of a <see cref="Stream"/>.
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
-        /// <param name="stream">The stream to deserialize from.</param>
+        /// <param name="stream">
+        /// The stream to deserialize from.
+        /// The entire stream will be read, and the first msgpack token deserialized will be returned.
+        /// If <see cref="Stream.CanSeek"/> is true on the stream, its position will be set to just after the last deserialized byte.
+        /// </param>
         /// <param name="options">The options. Use <c>null</c> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            if (stream is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> streamBuffer))
+            if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T result))
             {
-                return Deserialize<T>(streamBuffer, options, cancellationToken);
+                return result;
             }
 
             using (var sequence = new Sequence<byte>())
@@ -373,11 +380,50 @@ namespace MessagePack
                     throw new MessagePackSerializationException("Error occurred while reading from the stream.", ex);
                 }
 
-                return Deserialize<T>(sequence.AsReadOnlySequence, options, cancellationToken);
+                return DeserializeFromSequenceAndRewindStreamIfPossible<T>(stream, options, sequence, cancellationToken);
             }
         }
 
         private delegate int LZ4Transform(ReadOnlySpan<byte> input, Span<byte> output);
+
+        private static bool TryDeserializeFromMemoryStream<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken, out T result)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (stream is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> streamBuffer))
+            {
+                result = Deserialize<T>(streamBuffer.AsMemory(checked((int)ms.Position)), options, out int bytesRead, cancellationToken);
+
+                // Emulate that we had actually "read" from the stream.
+                ms.Seek(bytesRead, SeekOrigin.Current);
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        private static T DeserializeFromSequenceAndRewindStreamIfPossible<T>(Stream streamToRewind, MessagePackSerializerOptions options, ReadOnlySequence<byte> sequence, CancellationToken cancellationToken)
+        {
+            if (streamToRewind is null)
+            {
+                throw new ArgumentNullException(nameof(streamToRewind));
+            }
+
+            var reader = new MessagePackReader(sequence)
+            {
+                CancellationToken = cancellationToken,
+            };
+            T result = Deserialize<T>(ref reader, options);
+
+            if (streamToRewind.CanSeek && !reader.End)
+            {
+                // Reverse the stream as many bytes as we left unread.
+                int bytesNotRead = checked((int)reader.Sequence.Slice(reader.Position).Length);
+                streamToRewind.Seek(-bytesNotRead, SeekOrigin.Current);
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Performs LZ4 compression or decompression.
