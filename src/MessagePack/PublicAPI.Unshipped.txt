@@ -679,7 +679,6 @@ abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermedi
 abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Complete(TIntermediate intermediateCollection) -> TDictionary
 abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> TIntermediate
 abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.GetSourceEnumerator(TDictionary source) -> TEnumerator
-const MessagePack.Formatters.TypelessFormatter.ExtensionTypeCode = 100 -> sbyte
 const MessagePack.MessagePackCode.Array16 = 220 -> byte
 const MessagePack.MessagePackCode.Array32 = 221 -> byte
 const MessagePack.MessagePackCode.Bin16 = 197 -> byte

@@ -21,8 +21,6 @@ namespace MessagePack.Formatters
     /// </summary>
     public sealed class TypelessFormatter : IMessagePackFormatter<object>
     {
-        public const sbyte ExtensionTypeCode = 100;
-
         private delegate void SerializeMethod(object dynamicContractlessFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
 
         private delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, MessagePackSerializerOptions options);
@@ -191,7 +189,7 @@ namespace MessagePack.Formatters
                 scratchWriter.Flush();
 
                 // mark as extension with code 100
-                writer.WriteExtensionFormat(new ExtensionResult((sbyte)TypelessFormatter.ExtensionTypeCode, scratch.AsReadOnlySequence));
+                writer.WriteExtensionFormat(new ExtensionResult((sbyte)ThisLibraryExtensionTypeCodes.TypelessFormatter, scratch.AsReadOnlySequence));
             }
         }
 
@@ -205,7 +203,7 @@ namespace MessagePack.Formatters
             if (reader.NextMessagePackType == MessagePackType.Extension)
             {
                 ExtensionHeader ext = reader.ReadExtensionFormatHeader();
-                if (ext.TypeCode == TypelessFormatter.ExtensionTypeCode)
+                if (ext.TypeCode == ThisLibraryExtensionTypeCodes.TypelessFormatter)
                 {
                     // it has type name serialized
                     ReadOnlySequence<byte> typeName = reader.ReadStringSequence().Value;

@@ -357,7 +357,7 @@ namespace MessagePack
                         writer.Write("\"");
                     }
 #if !UNITY_2018_3_OR_NEWER
-                    else if (extHeader.TypeCode == TypelessFormatter.ExtensionTypeCode)
+                    else if (extHeader.TypeCode == ThisLibraryExtensionTypeCodes.TypelessFormatter)
                     {
                         // prepare type name token
                         var privateBuilder = new StringBuilder();

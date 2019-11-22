@@ -16,20 +16,6 @@ using UnityEngine;
 
 namespace MessagePack.Unity.Extension
 {
-    public static class ReservedUnityExtensionTypeCode
-    {
-        public const sbyte Vector2 = 30;
-        public const sbyte Vector3 = 31;
-        public const sbyte Vector4 = 32;
-        public const sbyte Quaternion = 33;
-        public const sbyte Color = 34;
-        public const sbyte Bounds = 35;
-        public const sbyte Rect = 36;
-        public const sbyte Int = 37;
-        public const sbyte Float = 38;
-        public const sbyte Double = 39;
-    }
-
     // use ext instead of ArrayFormatter to extremely boost up performance.
     // Layout: [extHeader, byteSize(integer), isLittleEndian(bool), bytes()]
     // Used Ext:30~36
@@ -98,7 +84,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ReservedUnityExtensionTypeCode.Vector2;
+                return ThisLibraryExtensionTypeCodes.UnityVector2;
             }
         }
     }
@@ -109,7 +95,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ReservedUnityExtensionTypeCode.Vector3;
+                return ThisLibraryExtensionTypeCodes.UnityVector3;
             }
         }
     }
@@ -120,7 +106,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ReservedUnityExtensionTypeCode.Vector4;
+                return ThisLibraryExtensionTypeCodes.UnityVector4;
             }
         }
     }
@@ -131,7 +117,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ReservedUnityExtensionTypeCode.Quaternion;
+                return ThisLibraryExtensionTypeCodes.UnityQuaternion;
             }
         }
     }
@@ -142,7 +128,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ReservedUnityExtensionTypeCode.Color;
+                return ThisLibraryExtensionTypeCodes.UnityColor;
             }
         }
     }
@@ -153,7 +139,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ReservedUnityExtensionTypeCode.Bounds;
+                return ThisLibraryExtensionTypeCodes.UnityBounds;
             }
         }
     }
@@ -164,7 +150,7 @@ namespace MessagePack.Unity.Extension
         {
             get
             {
-                return ReservedUnityExtensionTypeCode.Rect;
+                return ThisLibraryExtensionTypeCodes.UnityRect;
             }
         }
     }
@@ -173,7 +159,7 @@ namespace MessagePack.Unity.Extension
     {
         protected override sbyte TypeCode
         {
-            get { return ReservedUnityExtensionTypeCode.Int; }
+            get { return ThisLibraryExtensionTypeCodes.UnityInt; }
         }
     }
 
@@ -181,7 +167,7 @@ namespace MessagePack.Unity.Extension
     {
         protected override sbyte TypeCode
         {
-            get { return ReservedUnityExtensionTypeCode.Float; }
+            get { return ThisLibraryExtensionTypeCodes.UnityFloat; }
         }
     }
 
@@ -189,7 +175,7 @@ namespace MessagePack.Unity.Extension
     {
         protected override sbyte TypeCode
         {
-            get { return ReservedUnityExtensionTypeCode.Double; }
+            get { return ThisLibraryExtensionTypeCodes.UnityDouble; }
         }
     }
 }
