@@ -177,4 +177,3 @@ namespace MessagePack.Unity.Extension
         }
     }
 }
-
