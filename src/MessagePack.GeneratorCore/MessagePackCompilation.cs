@@ -210,7 +210,7 @@ namespace MessagePackCompiler
                         }
                         else
                         {
-                            nugetPackagesPath = "~/nuget/packages";
+                            nugetPackagesPath = "~/.nuget/packages";
                         }
                     }
 
