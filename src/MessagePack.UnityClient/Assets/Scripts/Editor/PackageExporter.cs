@@ -11,13 +11,20 @@ public static class PackageExporter
     {
         // configure
         var root = "Scripts/MessagePack";
-        var exportPath = "./MessagePack.Unity.unitypackage"; // missing version:)
+        var exportPath = "../../bin/MessagePack.unitypackage";
 
         var path = Path.Combine(Application.dataPath, root);
-        var assets = Directory.GetFiles(path, "*", SearchOption.AllDirectories)
-            .Where(x => Path.GetExtension(x) == ".cs" || Path.GetExtension(x) == ".asmdef" || Path.GetExtension(x) == ".json" || Path.GetExtension(x) == ".meta")
+        var assets = Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
+            .Where(x => Path.GetExtension(x) == ".cs" || Path.GetExtension(x) == ".meta")
+            .Where(x => Path.GetFileNameWithoutExtension(x) != "_InternalVisibleTo")
             .Select(x => "Assets" + x.Replace(Application.dataPath, "").Replace(@"\", "/"))
             .ToArray();
+
+        var netStandardsAsset = Directory.EnumerateFiles(Path.Combine(Application.dataPath, "Plugins/"), "*", SearchOption.AllDirectories)
+            .Select(x => "Assets" + x.Replace(Application.dataPath, "").Replace(@"\", "/"))
+            .ToArray();
+
+        assets = assets.Concat(netStandardsAsset).ToArray();
 
         UnityEngine.Debug.Log("Export below files" + Environment.NewLine + string.Join(Environment.NewLine, assets));
 

@@ -18,7 +18,7 @@
   <ItemGroup>
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs"
              Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;
-                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**;
+                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**;
                       ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\**;
                       ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\_InternalVisibleTo.cs" />
   </ItemGroup>

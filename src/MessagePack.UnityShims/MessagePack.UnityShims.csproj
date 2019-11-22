@@ -13,7 +13,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\UnityShims\**\*.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**\*.cs"
+             Exclude="**\MessagePackWindow.cs"/>
   </ItemGroup>
 
   <ItemGroup>
