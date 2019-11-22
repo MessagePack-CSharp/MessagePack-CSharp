@@ -730,7 +730,6 @@ const MessagePack.MessagePackRange.MaxFixStringLength = 31 -> int
 const MessagePack.MessagePackRange.MinFixNegativeInt = -32 -> int
 const MessagePack.MessagePackRange.MinFixStringLength = 0 -> int
 const MessagePack.ReservedMessagePackExtensionTypeCode.DateTime = -1 -> sbyte
-const MessagePack.ReservedMessagePackExtensionTypeCode.LZ4 = 99 -> sbyte
 override MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TCollection>.GetSourceEnumerator(TCollection source) -> System.Collections.Generic.IEnumerator<TElement>
 override MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TDictionary>.Complete(TDictionary intermediateCollection) -> TDictionary
 override MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TDictionary>.GetSourceEnumerator(TDictionary source) -> System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<TKey, TValue>>

@@ -420,7 +420,7 @@ namespace MessagePack
             {
                 MessagePackReader peekReader = reader.CreatePeekReader();
                 ExtensionHeader header = peekReader.ReadExtensionFormatHeader();
-                if (header.TypeCode == ReservedMessagePackExtensionTypeCode.LZ4)
+                if (header.TypeCode == ThisLibraryExtensionTypeCodes.LZ4)
                 {
                     // Read the extension using the original reader, so we "consume" it.
                     ExtensionResult extension = reader.ReadExtensionFormat();
@@ -459,7 +459,7 @@ namespace MessagePack
                     int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4Codec.Encode);
 
                     const int LengthOfUncompressedDataSizeHeader = 5;
-                    writer.WriteExtensionFormatHeader(new ExtensionHeader(ReservedMessagePackExtensionTypeCode.LZ4, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
+                    writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.LZ4, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
                     writer.WriteInt32((int)msgpackUncompressedData.Length);
                     writer.WriteRaw(lz4Span.AsSpan(0, lz4Length));
                 }

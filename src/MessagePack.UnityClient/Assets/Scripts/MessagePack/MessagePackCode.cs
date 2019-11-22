@@ -31,8 +31,9 @@ namespace MessagePack
     }
 
     /// <summary>
-    /// https://github.com/msgpack/msgpack/blob/master/spec.md#overview.
+    /// The core type codes as defined by msgpack.
     /// </summary>
+    /// <seealso href="https://github.com/msgpack/msgpack/blob/master/spec.md#overview" />
 #if MESSAGEPACK_INTERNAL
     internal
 #else
@@ -216,6 +217,9 @@ namespace MessagePack
         }
     }
 
+    /// <summary>
+    /// The officially defined messagepack extension type codes.
+    /// </summary>
 #if MESSAGEPACK_INTERNAL
     internal
 #else
@@ -224,8 +228,6 @@ namespace MessagePack
     static class ReservedMessagePackExtensionTypeCode
     {
         public const sbyte DateTime = -1;
-
-        public const sbyte LZ4 = 99;
     }
 
 #if MESSAGEPACK_INTERNAL
