@@ -11,6 +11,7 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\FarmHash.cs" Link="Link\FarmHash.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" Link="Link\ILGeneratorExtensions.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" Link="Link\StringEncoding.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\ThisLibraryExtensionTypeCodes.cs" Link="ExtensionTests\ThisLibraryExtensionTypeCodes.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\**\*.cs" Exclude="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\T4\**\*.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -679,7 +679,6 @@ abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermedi
 abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Complete(TIntermediate intermediateCollection) -> TDictionary
 abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> TIntermediate
 abstract MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary>.GetSourceEnumerator(TDictionary source) -> TEnumerator
-const MessagePack.Formatters.TypelessFormatter.ExtensionTypeCode = 100 -> sbyte
 const MessagePack.MessagePackCode.Array16 = 220 -> byte
 const MessagePack.MessagePackCode.Array32 = 221 -> byte
 const MessagePack.MessagePackCode.Bin16 = 197 -> byte
@@ -729,7 +728,6 @@ const MessagePack.MessagePackRange.MaxFixPositiveInt = 127 -> int
 const MessagePack.MessagePackRange.MaxFixStringLength = 31 -> int
 const MessagePack.MessagePackRange.MinFixNegativeInt = -32 -> int
 const MessagePack.MessagePackRange.MinFixStringLength = 0 -> int
-const MessagePack.MessagePackSerializer.LZ4ExtensionTypeCode = 99 -> sbyte
 const MessagePack.ReservedMessagePackExtensionTypeCode.DateTime = -1 -> sbyte
 override MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TCollection>.GetSourceEnumerator(TCollection source) -> System.Collections.Generic.IEnumerator<TElement>
 override MessagePack.Formatters.DictionaryFormatterBase<TKey, TValue, TDictionary>.Complete(TDictionary intermediateCollection) -> TDictionary
@@ -809,7 +807,6 @@ static MessagePack.Internal.UnsafeMemory64.WriteRaw6(ref MessagePack.MessagePack
 static MessagePack.Internal.UnsafeMemory64.WriteRaw7(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
 static MessagePack.Internal.UnsafeMemory64.WriteRaw8(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
 static MessagePack.Internal.UnsafeMemory64.WriteRaw9(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
-static MessagePack.MessagePackCode.IsSignedInteger(byte code) -> bool
 static MessagePack.MessagePackCode.ToFormatName(byte code) -> string
 static MessagePack.MessagePackCode.ToMessagePackType(byte code) -> MessagePack.MessagePackType
 static MessagePack.MessagePackSerializer.ConvertFromJson(System.IO.TextReader reader, ref MessagePack.MessagePackWriter writer, MessagePack.MessagePackSerializerOptions options = null) -> void
