@@ -1,4 +1,7 @@
 steps:
+- powershell: Write-Host "##vso[task.setvariable variable=unity_package_version;]$((& (./azure-pipelines/Get-nbgv.ps1) get-version -f json | ConvertFrom-Json).NuGetPackageVersion)"
+  displayName: Get unity package version
+
 - script: dotnet publish src/MessagePack -c $(BuildConfiguration) -f netstandard2.0
   displayName: Build MessagePack
 
