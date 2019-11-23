@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.Text;
 using System.Threading;
 using Nerdbank.Streams;
 using Xunit;
@@ -59,12 +60,11 @@ namespace MessagePack.Tests
             writer.WriteArrayHeader(9999);
             writer.Flush();
 
-            var ex = Assert.Throws<MessagePackSerializationException>(() =>
+            Assert.Throws<EndOfStreamException>(() =>
             {
                 var reader = new MessagePackReader(sequence);
                 reader.ReadArrayHeader();
             });
-            Assert.IsType<EndOfStreamException>(ex.InnerException);
         }
 
         [Fact]
@@ -75,12 +75,11 @@ namespace MessagePack.Tests
             writer.WriteMapHeader(9999);
             writer.Flush();
 
-            var ex = Assert.Throws<MessagePackSerializationException>(() =>
+            Assert.Throws<EndOfStreamException>(() =>
             {
                 var reader = new MessagePackReader(sequence);
                 reader.ReadMapHeader();
             });
-            Assert.IsType<EndOfStreamException>(ex.InnerException);
         }
 
         [Fact]
@@ -173,7 +172,93 @@ namespace MessagePack.Tests
             Assert.True(reader.End);
         }
 
+        [Fact]
+        public void Read_CheckOperations_WithNoBytesLeft()
+        {
+            ReadOnlySequence<byte> partialMessage = default;
+
+            AssertThrowsEndOfStreamException(partialMessage, (ref MessagePackReader reader) => reader.NextCode);
+            AssertThrowsEndOfStreamException(partialMessage, (ref MessagePackReader reader) => reader.NextMessagePackType);
+
+            // These Try methods are meant to return false when it's not a matching code. End of stream when calling these methods is still unexpected.
+            AssertThrowsEndOfStreamException(partialMessage, (ref MessagePackReader reader) => reader.TryReadNil());
+            AssertThrowsEndOfStreamException(partialMessage, (ref MessagePackReader reader) => reader.TryReadStringSpan(out _));
+            AssertThrowsEndOfStreamException(partialMessage, (ref MessagePackReader reader) => reader.IsNil);
+        }
+
+        [Fact]
+        public void Read_WithInsufficientBytesLeft()
+        {
+            void AssertIncomplete<T>(WriterEncoder encoder, ReadOperation<T> decoder, bool validMsgPack = true)
+            {
+                var sequence = Encode(encoder);
+
+                // Test with every possible truncated length.
+                for (long len = sequence.Length - 1; len >= 0; len--)
+                {
+                    var truncated = sequence.Slice(0, len);
+                    AssertThrowsEndOfStreamException<T>(truncated, decoder);
+
+                    if (validMsgPack)
+                    {
+                        AssertThrowsEndOfStreamException(truncated, (ref MessagePackReader reader) => reader.Skip());
+                    }
+                }
+            }
+
+            AssertIncomplete((ref MessagePackWriter writer) => writer.WriteArrayHeader(0xfffffff), (ref MessagePackReader reader) => reader.ReadArrayHeader());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(true), (ref MessagePackReader reader) => reader.ReadBoolean());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadByte());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.WriteString(Encoding.UTF8.GetBytes("hi")), (ref MessagePackReader reader) => reader.ReadBytes());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write('c'), (ref MessagePackReader reader) => reader.ReadChar());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(DateTime.Now), (ref MessagePackReader reader) => reader.ReadDateTime());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(double.MaxValue), (ref MessagePackReader reader) => reader.ReadDouble());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.WriteExtensionFormat(new ExtensionResult(5, new byte[3])), (ref MessagePackReader reader) => reader.ReadExtensionFormat());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.WriteExtensionFormatHeader(new ExtensionHeader(5, 3)), (ref MessagePackReader reader) => reader.ReadExtensionFormatHeader());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadInt16());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadInt32());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadInt64());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.WriteMapHeader(0xfffffff), (ref MessagePackReader reader) => reader.ReadMapHeader());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.WriteNil(), (ref MessagePackReader reader) => reader.ReadNil());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write("hi"), (ref MessagePackReader reader) => reader.ReadRaw());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.WriteRaw(new byte[10]), (ref MessagePackReader reader) => reader.ReadRaw(10), validMsgPack: false);
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadSByte());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadSingle());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write("hi"), (ref MessagePackReader reader) => reader.ReadString());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.WriteString(Encoding.UTF8.GetBytes("hi")), (ref MessagePackReader reader) => reader.ReadStringSequence());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadUInt16());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadUInt32());
+            AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadUInt64());
+        }
+
+        private delegate void ReaderOperation(ref MessagePackReader reader);
+
+        private delegate T ReadOperation<T>(ref MessagePackReader reader);
+
         private delegate void WriterEncoder(ref MessagePackWriter writer);
+
+        private static void AssertThrowsEndOfStreamException(ReadOnlySequence<byte> sequence, ReaderOperation readOperation)
+        {
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var reader = new MessagePackReader(sequence);
+                readOperation(ref reader);
+            });
+        }
+
+        private static void AssertThrowsEndOfStreamException<T>(ReadOnlySequence<byte> sequence, ReadOperation<T> readOperation)
+        {
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                Decode(sequence, readOperation);
+            });
+        }
+
+        private static T Decode<T>(ReadOnlySequence<byte> sequence, ReadOperation<T> readOperation)
+        {
+            var reader = new MessagePackReader(sequence);
+            return readOperation(ref reader);
+        }
 
         private static ReadOnlySequence<byte> Encode(WriterEncoder cb)
         {

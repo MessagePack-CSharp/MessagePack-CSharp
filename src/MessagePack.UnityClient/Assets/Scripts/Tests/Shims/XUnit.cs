@@ -5,6 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace Xunit
 {
@@ -40,6 +41,11 @@ namespace Xunit
         public static T Throws<T>(Action action) where T : Exception
         {
             return NUnit.Framework.Assert.Throws<T>(new TestDelegate(action));
+        }
+
+        public static Task<T> ThrowsAsync<T>(Func<Task> action) where T : Exception
+        {
+            return Task.FromResult(Throws<T>(() => action().GetAwaiter().GetResult()));
         }
 
         public static T Throws<T>(Func<object> action) where T : Exception

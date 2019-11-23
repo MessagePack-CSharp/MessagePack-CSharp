@@ -17,6 +17,8 @@ namespace MessagePack
     /// <remarks>
     /// <see href="https://github.com/msgpack/msgpack/blob/master/spec.md">The MessagePack spec.</see>.
     /// </remarks>
+    /// <exception cref="MessagePackSerializationException">Thrown when reading methods fail due to invalid data.</exception>
+    /// <exception cref="EndOfStreamException">Thrown by reading methods when there are not enough bytes to read the required value.</exception>
 #if MESSAGEPACK_INTERNAL
     internal
 #else
@@ -126,93 +128,100 @@ namespace MessagePack
         /// </remarks>
         public void Skip()
         {
-            byte code = this.NextCode;
-            switch (code)
+            try
             {
-                case MessagePackCode.Nil:
-                case MessagePackCode.True:
-                case MessagePackCode.False:
-                    this.reader.Advance(1);
-                    break;
-                case MessagePackCode.Int8:
-                case MessagePackCode.UInt8:
-                    this.reader.Advance(2);
-                    break;
-                case MessagePackCode.Int16:
-                case MessagePackCode.UInt16:
-                    this.reader.Advance(3);
-                    break;
-                case MessagePackCode.Int32:
-                case MessagePackCode.UInt32:
-                case MessagePackCode.Float32:
-                    this.reader.Advance(5);
-                    break;
-                case MessagePackCode.Int64:
-                case MessagePackCode.UInt64:
-                case MessagePackCode.Float64:
-                    this.reader.Advance(9);
-                    break;
-                case MessagePackCode.Map16:
-                case MessagePackCode.Map32:
-                    this.ReadNextMap();
-                    break;
-                case MessagePackCode.Array16:
-                case MessagePackCode.Array32:
-                    this.ReadNextArray();
-                    break;
-                case MessagePackCode.Str8:
-                case MessagePackCode.Str16:
-                case MessagePackCode.Str32:
-                    int length = this.GetStringLengthInBytes();
-                    this.reader.Advance(length);
-                    break;
-                case MessagePackCode.Bin8:
-                case MessagePackCode.Bin16:
-                case MessagePackCode.Bin32:
-                    length = this.GetBytesLength();
-                    this.reader.Advance(length);
-                    break;
-                case MessagePackCode.FixExt1:
-                case MessagePackCode.FixExt2:
-                case MessagePackCode.FixExt4:
-                case MessagePackCode.FixExt8:
-                case MessagePackCode.FixExt16:
-                case MessagePackCode.Ext8:
-                case MessagePackCode.Ext16:
-                case MessagePackCode.Ext32:
-                    ExtensionHeader header = this.ReadExtensionFormatHeader();
-                    this.reader.Advance(header.Length);
-                    break;
-                default:
-                    if ((code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt) ||
-                        (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt))
-                    {
+                byte code = this.NextCode;
+                switch (code)
+                {
+                    case MessagePackCode.Nil:
+                    case MessagePackCode.True:
+                    case MessagePackCode.False:
                         this.reader.Advance(1);
                         break;
-                    }
-
-                    if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
-                    {
+                    case MessagePackCode.Int8:
+                    case MessagePackCode.UInt8:
+                        this.reader.Advance(2);
+                        break;
+                    case MessagePackCode.Int16:
+                    case MessagePackCode.UInt16:
+                        this.reader.Advance(3);
+                        break;
+                    case MessagePackCode.Int32:
+                    case MessagePackCode.UInt32:
+                    case MessagePackCode.Float32:
+                        this.reader.Advance(5);
+                        break;
+                    case MessagePackCode.Int64:
+                    case MessagePackCode.UInt64:
+                    case MessagePackCode.Float64:
+                        this.reader.Advance(9);
+                        break;
+                    case MessagePackCode.Map16:
+                    case MessagePackCode.Map32:
                         this.ReadNextMap();
                         break;
-                    }
-
-                    if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
-                    {
+                    case MessagePackCode.Array16:
+                    case MessagePackCode.Array32:
                         this.ReadNextArray();
                         break;
-                    }
-
-                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                    {
-                        length = this.GetStringLengthInBytes();
+                    case MessagePackCode.Str8:
+                    case MessagePackCode.Str16:
+                    case MessagePackCode.Str32:
+                        int length = this.GetStringLengthInBytes();
                         this.reader.Advance(length);
                         break;
-                    }
+                    case MessagePackCode.Bin8:
+                    case MessagePackCode.Bin16:
+                    case MessagePackCode.Bin32:
+                        length = this.GetBytesLength();
+                        this.reader.Advance(length);
+                        break;
+                    case MessagePackCode.FixExt1:
+                    case MessagePackCode.FixExt2:
+                    case MessagePackCode.FixExt4:
+                    case MessagePackCode.FixExt8:
+                    case MessagePackCode.FixExt16:
+                    case MessagePackCode.Ext8:
+                    case MessagePackCode.Ext16:
+                    case MessagePackCode.Ext32:
+                        ExtensionHeader header = this.ReadExtensionFormatHeader();
+                        this.reader.Advance(header.Length);
+                        break;
+                    default:
+                        if ((code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt) ||
+                            (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt))
+                        {
+                            this.reader.Advance(1);
+                            break;
+                        }
 
-                    // We don't actually expect to ever hit this point, since every code is supported.
-                    Debug.Fail("Missing handler for code: " + code);
-                    throw ThrowInvalidCode(code);
+                        if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
+                        {
+                            this.ReadNextMap();
+                            break;
+                        }
+
+                        if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
+                        {
+                            this.ReadNextArray();
+                            break;
+                        }
+
+                        if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
+                        {
+                            length = this.GetStringLengthInBytes();
+                            this.reader.Advance(length);
+                            break;
+                        }
+
+                        // We don't actually expect to ever hit this point, since every code is supported.
+                        Debug.Fail("Missing handler for code: " + code);
+                        throw ThrowInvalidCode(code);
+                }
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                ThrowNotEnoughBytesException(ex);
             }
         }
 
@@ -252,9 +261,16 @@ namespace MessagePack
         /// <returns>The sequence of bytes read.</returns>
         public ReadOnlySequence<byte> ReadRaw(long length)
         {
-            ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
-            this.reader.Advance(length);
-            return result;
+            try
+            {
+                ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
+                this.reader.Advance(length);
+                return result;
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw ThrowNotEnoughBytesException(ex);
+            }
         }
 
         /// <summary>
@@ -762,16 +778,29 @@ namespace MessagePack
         public ExtensionResult ReadExtensionFormat()
         {
             ExtensionHeader header = this.ReadExtensionFormatHeader();
-            ReadOnlySequence<byte> data = this.reader.Sequence.Slice(this.reader.Position, header.Length);
-            this.reader.Advance(header.Length);
-            return new ExtensionResult(header.TypeCode, data);
+            try
+            {
+                ReadOnlySequence<byte> data = this.reader.Sequence.Slice(this.reader.Position, header.Length);
+                this.reader.Advance(header.Length);
+                return new ExtensionResult(header.TypeCode, data);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw ThrowNotEnoughBytesException(ex);
+            }
         }
 
         /// <summary>
         /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
         /// the promised data.
         /// </summary>
-        private static void ThrowNotEnoughBytesException() => throw new MessagePackSerializationException(null, new EndOfStreamException());
+        private static EndOfStreamException ThrowNotEnoughBytesException() => throw new EndOfStreamException();
+
+        /// <summary>
+        /// Throws an exception indicating that there aren't enough bytes remaining in the buffer to store
+        /// the promised data.
+        /// </summary>
+        private static EndOfStreamException ThrowNotEnoughBytesException(Exception innerException) => throw new EndOfStreamException(new EndOfStreamException().Message, innerException);
 
         private static Exception ThrowInvalidCode(byte code)
         {

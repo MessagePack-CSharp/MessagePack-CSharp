@@ -624,6 +624,7 @@ namespace MessagePack
         /// Writes a <see cref="DateTime"/> using the message code <see cref="ReservedMessagePackExtensionTypeCode.DateTime"/>.
         /// </summary>
         /// <param name="dateTime">The value to write.</param>
+        /// <exception cref="NotSupportedException">Thrown when <see cref="OldSpec"/> is true because the old spec does not define a <see cref="DateTime"/> format.</exception>
         public void Write(DateTime dateTime)
         {
             if (this.OldSpec)
