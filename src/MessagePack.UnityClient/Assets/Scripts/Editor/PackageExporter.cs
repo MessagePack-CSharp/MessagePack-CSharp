@@ -9,9 +9,12 @@ public static class PackageExporter
     [MenuItem("Tools/Export Unitypackage")]
     public static void Export()
     {
+        var version = ParseVersionFromCommandLineArgs();
+
         // configure
         var root = "Scripts/MessagePack";
-        var exportPath = "../../bin/MessagePack.unitypackage";
+        var fileName = (version == null) ? "MessagePack.Unity.unitypackage" : $"MessagePack.Unity.{version}.unitypackage";
+        var exportPath = "../../bin/" + fileName;
 
         var path = Path.Combine(Application.dataPath, root);
         var assets = Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
@@ -34,5 +37,19 @@ public static class PackageExporter
             ExportPackageOptions.Default);
 
         UnityEngine.Debug.Log("Export complete: " + Path.GetFullPath(exportPath));
+    }
+
+    static string ParseVersionFromCommandLineArgs()
+    {
+        var cmdArgs = Environment.GetCommandLineArgs();
+        for (int i = 0; i < cmdArgs.Length; i++)
+        {
+            if (string.Equals(cmdArgs[i].Trim('-', '/'), "version", StringComparison.OrdinalIgnoreCase))
+            {
+                return cmdArgs[++i];
+            }
+        }
+
+        return null;
     }
 }

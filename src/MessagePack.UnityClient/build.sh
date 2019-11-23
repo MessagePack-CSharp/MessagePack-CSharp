@@ -30,7 +30,7 @@ $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -noUpm \
     -buildTarget standalone \
     -projectPath ${SCRIPT_DIR} \
-    -executeMethod PackageExport.Export \
+    -executeMethod PackageExporter.Export \
     -logfile ${LOGFILE}
 
 UnityExitCode=$?
