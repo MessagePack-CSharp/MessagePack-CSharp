@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if ENABLE_UNSAFE_MSGPACK || true
-
 #region LZ4 original
 
 /*
@@ -796,6 +794,3 @@ _output_error:
         }
     }
 }
-
-
-#endif

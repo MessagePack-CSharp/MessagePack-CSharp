@@ -12,11 +12,11 @@
     <Title>MessagePack Code Generator</Title>
     <Description>MessagePack standalone code generator.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
-    <AssemblyName>MessagePack.Generator</AssemblyName>
+    <AssemblyName>mpc</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MicroBatchFramework" Version="1.5.0" />
+    <PackageReference Include="MicroBatchFramework" Version="1.6.1" />
   </ItemGroup>
 
   <ItemGroup>

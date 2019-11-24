@@ -67,8 +67,7 @@ namespace MessagePackCompiler
                 syntaxTrees.Add(CSharpSyntaxTree.ParseText(DummyAnnotation, parseOption));
             }
 
-            var nazoloc = locations.Distinct();
-            foreach (var item in locations.Distinct().Where(x => !x.Contains("MonoBleedingEdge")))
+            foreach (var item in locations.Select(Path.GetFullPath).Distinct().Where(x => !x.Contains("MonoBleedingEdge")))
             {
                 metadata.Add(MetadataReference.CreateFromFile(item));
             }
