@@ -135,6 +135,9 @@ namespace MessagePack.Unity.Editor
             EditorGUILayout.LabelField("-r(optional) generated resolver name:");
             TextField(mpcArgument, x => x.ResolverName, (x, y) => x.ResolverName = y);
 
+            EditorGUILayout.LabelField("-n(optional) namespace root name:");
+            TextField(mpcArgument, x => x.Namespace, (x, y) => x.Namespace = y);
+
             EditorGUILayout.LabelField("-ms(optional) Generate #if-- files by symbols, split with ','");
             TextField(mpcArgument, x => x.MultipleIfDirectiveOutputSymbols, (x, y) => x.MultipleIfDirectiveOutputSymbols = y);
 
@@ -218,6 +221,10 @@ namespace MessagePack.Unity.Editor
             {
                 sb.Append(" -m");
             }
+            if (!string.IsNullOrWhiteSpace(Namespace))
+            {
+                sb.Append(" -n "); sb.Append(Namespace);
+            }
             if (!string.IsNullOrWhiteSpace(MultipleIfDirectiveOutputSymbols))
             {
                 sb.Append(" -ms "); sb.Append(MultipleIfDirectiveOutputSymbols);
@@ -229,7 +236,7 @@ namespace MessagePack.Unity.Editor
 
     internal static class ProcessHelper
     {
-        const string InstallName = "messagePack.generator";
+        const string InstallName = "messagepack.generator";
 
         public static async Task<bool> IsInstalledMpc()
         {
