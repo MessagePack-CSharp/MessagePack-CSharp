@@ -24,3 +24,13 @@ Alternatively you may build from the command line using `msbuild.exe` or:
 
 Unity Project requires several dependency DLL's. At first, run `copy_assets.bat` under `src\MessagePack.UnityClient`.
 Then open that directory in the Unity Editor.
+
+## Where to find our CI feed
+
+Once a change is in a shipping branch (e.g. `v1.8`, `v2.0`, `master`), our CI will build it and push the built package
+to [our CI feed](https://dev.azure.com/ils0086/MessagePack-CSharp/_packaging?_a=feed&feed=MessagePack-CI). To depend on
+one of the packages that are on our CI feed (but not yet on nuget.org) you can add this to your nuget.config file:
+
+```xml
+<add key="MessagePack-CI" value="https://pkgs.dev.azure.com/ils0086/MessagePack-CSharp/_packaging/MessagePack-CI/nuget/v3/index.json" />
+```
