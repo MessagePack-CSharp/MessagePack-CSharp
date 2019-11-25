@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AssemblyName>mpc</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <LangVersion>latest</LangVersion>
@@ -9,10 +10,10 @@
     <ToolCommandName>dotnet-mpc</ToolCommandName>
 
     <!-- NuGet Info -->
+    <PackageId>MessagePack.Generator</PackageId>
     <Title>MessagePack Code Generator</Title>
     <Description>MessagePack standalone code generator.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
-    <AssemblyName>mpc</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
