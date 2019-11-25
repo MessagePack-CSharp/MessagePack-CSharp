@@ -706,11 +706,11 @@ For many common uses, MessagePack for C# would be better.
 
 ## Hint to achieve maximum performance to use MessagePack-CSharp
 
-MessagePack for C# treats to earn maximize performance by default. However, there are also default options that sacrifice max performance for convenience.
+MessagePack for C# prioritizes maximize performance by default. However, there are also default options that sacrifice max performance for convenience.
 
 ### Use IntKey instead of StringKey(Contractless)
 
-In [Deserialize Perfomance per options](https://github.com/neuecc/MessagePack-CSharp#deserialize-performance-per-options) sections shows the result of IntKey vs StringKey. IntKey serializes object-graph as msgpack-array format. StringKey serializes object-graph as msgpack-map format.
+In [Deserialize Performance per options](https://github.com/neuecc/MessagePack-CSharp#deserialize-performance-per-options) sections shows the result of IntKey vs StringKey. IntKey serializes object-graph as msgpack-array format. StringKey serializes object-graph as msgpack-map format.
 
 For example this type is serialized to
 
@@ -727,13 +727,13 @@ public class Person
 new Person { Name = "foobar", Age = 999 }
 ```
 
-IntKey: `["foobar", 999]`, MapKey: `{"name:"foobar","age":999}`. IntKey is always fast in both serialize and deserialize because does not handle map key name, and always being the small binary size.
+IntKey: `["foobar", 999]`, MapKey: `{"name:"foobar","age":999}`. IntKey is always fast in both serialize and deserialize because does not handle map key name, and always has the smallest binary size.
 
 StringKey is often useful, contractless, simple replacement of JSON, interoperability with other languages, and more certain versioning. But to achieve maximum performance, use IntKey.
 
 ### Create own custom composite resolver
- 
-`CompositeResolver.Create` is easy way to create combine resolvers. But formatter lookup has some overhead. If you create custom resolver(or use `StaticCompositeResolver.Instance`), you can avoid overhead.
+
+`CompositeResolver.Create` is easy way to create combine resolvers. But formatter lookup has some overhead. If you create custom resolver (or use `StaticCompositeResolver.Instance`), you can avoid overhead.
 
 ```csharp
 public class MyApplicationResolver : IFormatterResolver
