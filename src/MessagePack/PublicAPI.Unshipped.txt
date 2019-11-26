@@ -500,6 +500,9 @@ MessagePack.Internal.UnsafeMemory
 MessagePack.Internal.UnsafeMemory32
 MessagePack.Internal.UnsafeMemory64
 MessagePack.MessagePackCode
+MessagePack.MessagePackCompression
+MessagePack.MessagePackCompression.LZ4Block = 1 -> MessagePack.MessagePackCompression
+MessagePack.MessagePackCompression.None = 0 -> MessagePack.MessagePackCompression
 MessagePack.MessagePackRange
 MessagePack.MessagePackReader
 MessagePack.MessagePackReader.CancellationToken.get -> System.Threading.CancellationToken
@@ -550,14 +553,14 @@ MessagePack.MessagePackSerializer
 MessagePack.MessagePackSerializer.Typeless
 MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.AllowAssemblyVersionMismatch.get -> bool
-MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.IFormatterResolver resolver, bool useLZ4Compression = false) -> void
+MessagePack.MessagePackSerializerOptions.Compression.get -> MessagePack.MessagePackCompression
+MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.IFormatterResolver resolver) -> void
 MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.MessagePackSerializerOptions copyFrom) -> void
 MessagePack.MessagePackSerializerOptions.OldSpec.get -> bool?
 MessagePack.MessagePackSerializerOptions.OmitAssemblyVersion.get -> bool
 MessagePack.MessagePackSerializerOptions.Resolver.get -> MessagePack.IFormatterResolver
-MessagePack.MessagePackSerializerOptions.UseLZ4Compression.get -> bool
 MessagePack.MessagePackSerializerOptions.WithAllowAssemblyVersionMismatch(bool allowAssemblyVersionMismatch) -> MessagePack.MessagePackSerializerOptions
-MessagePack.MessagePackSerializerOptions.WithLZ4Compression(bool useLZ4Compression = true) -> MessagePack.MessagePackSerializerOptions
+MessagePack.MessagePackSerializerOptions.WithCompression(MessagePack.MessagePackCompression compression) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithOldSpec(bool? oldSpec = true) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithOmitAssemblyVersion(bool omitAssemblyVersion) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithResolver(MessagePack.IFormatterResolver resolver) -> MessagePack.MessagePackSerializerOptions

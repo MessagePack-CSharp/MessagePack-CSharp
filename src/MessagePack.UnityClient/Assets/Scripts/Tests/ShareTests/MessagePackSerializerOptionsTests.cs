@@ -8,7 +8,7 @@ using Xunit;
 public class MessagePackSerializerOptionsTests
 {
     private static readonly MessagePackSerializerOptions NonDefaultOptions = MessagePackSerializerOptions.Standard
-        .WithLZ4Compression(true)
+        .WithCompression(MessagePackCompression.LZ4Block)
         .WithAllowAssemblyVersionMismatch(true)
         .WithOmitAssemblyVersion(true)
         .WithResolver(BuiltinResolver.Instance)
@@ -29,10 +29,10 @@ public class MessagePackSerializerOptionsTests
     }
 
     [Fact]
-    public void UseLZ4Compression()
+    public void Compression()
     {
-        Assert.False(MessagePackSerializerOptions.Standard.UseLZ4Compression);
-        Assert.True(MessagePackSerializerOptions.Standard.WithLZ4Compression(true).UseLZ4Compression);
+        Assert.Equal(MessagePackCompression.None, MessagePackSerializerOptions.Standard.Compression);
+        Assert.Equal(MessagePackCompression.LZ4Block, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.LZ4Block).Compression);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class MessagePackSerializerOptionsTests
     {
         var mutated = NonDefaultOptions.WithOldSpec(true);
         Assert.True(mutated.OldSpec.Value);
-        Assert.Equal(NonDefaultOptions.UseLZ4Compression, mutated.UseLZ4Compression);
+        Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
         Assert.Same((object)NonDefaultOptions.Resolver, (object)mutated.Resolver);
@@ -63,8 +63,8 @@ public class MessagePackSerializerOptionsTests
     [Fact]
     public void WithLZ4Compression_PreservesOtherProperties()
     {
-        var mutated = NonDefaultOptions.WithLZ4Compression(false);
-        Assert.False(mutated.UseLZ4Compression);
+        var mutated = NonDefaultOptions.WithCompression(MessagePackCompression.None);
+        Assert.Equal(MessagePackCompression.None, mutated.Compression);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
@@ -76,7 +76,7 @@ public class MessagePackSerializerOptionsTests
     {
         var mutated = NonDefaultOptions.WithAllowAssemblyVersionMismatch(false);
         Assert.False(mutated.AllowAssemblyVersionMismatch);
-        Assert.Equal(NonDefaultOptions.UseLZ4Compression, mutated.UseLZ4Compression);
+        Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
         Assert.Same((object)NonDefaultOptions.Resolver, (object)mutated.Resolver);
@@ -87,7 +87,7 @@ public class MessagePackSerializerOptionsTests
     {
         var mutated = NonDefaultOptions.WithOmitAssemblyVersion(false);
         Assert.False(mutated.OmitAssemblyVersion);
-        Assert.Equal(NonDefaultOptions.UseLZ4Compression, mutated.UseLZ4Compression);
+        Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Same((object)NonDefaultOptions.Resolver, (object)mutated.Resolver);
@@ -98,7 +98,7 @@ public class MessagePackSerializerOptionsTests
     {
         var mutated = NonDefaultOptions.WithResolver(ContractlessStandardResolver.Instance);
         Assert.Same((object)ContractlessStandardResolver.Instance, (object)mutated.Resolver);
-        Assert.Equal(NonDefaultOptions.UseLZ4Compression, mutated.UseLZ4Compression);
+        Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
