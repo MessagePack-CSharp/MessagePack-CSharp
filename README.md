@@ -167,13 +167,13 @@ public class Sample3
 }
 
 // [10,20]
-Console.WriteLine(MessagePackSerializer.ToJson(new Sample1 { Foo = 10, Bar = 20 }));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample1 { Foo = 10, Bar = 20 }));
 
 // {"foo":10,"bar":20}
-Console.WriteLine(MessagePackSerializer.ToJson(new Sample2 { Foo = 10, Bar = 20 }));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample2 { Foo = 10, Bar = 20 }));
 
 // {"Foo":10}
-Console.WriteLine(MessagePackSerializer.ToJson(new Sample3 { Foo = 10, Bar = 20 }));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample3 { Foo = 10, Bar = 20 }));
 ```
 
 All patterns serialization target are public instance member(field or property). If you want to avoid serialization target, you can add `[IgnoreMember]` to target member.
@@ -195,7 +195,7 @@ public class IntKeySample
 }
 
 // [null,null,null,0,null,null,null,null,null,null,0]
-Console.WriteLine(MessagePackSerializer.ToJson(new IntKeySample()));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new IntKeySample()));
 ```
 
 I want to use like JSON.NET! I don't want to put attribute! If you think that way, you can use a contractless resolver.
@@ -211,7 +211,7 @@ var data = new ContractlessSample { MyProperty1 = 99, MyProperty2 = 9999 };
 var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
 // {"MyProperty1":99,"MyProperty2":9999}
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // You can set ContractlessStandardResolver as default.
 MessagePackSerializer.SetDefaultResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
@@ -397,7 +397,7 @@ var bin = MessagePackSerializer.Serialize(data);
 
 // Union is serialized to two-length array, [key, object]
 // [1,["FooBar"]]
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 ```
 
 Using Union in Abstract Class, you can use same of interface.
@@ -456,14 +456,14 @@ var objects = new object[] { 1, "aaa", new ObjectFieldType { Anything = 9999 } }
 var bin = MessagePackSerializer.Serialize(objects);
 
 // [1,"aaa",[9999]]
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // Support Anonymous Type Serialize
 var anonType = new { Foo = 100, Bar = "foobar" };
 var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
 // {"Foo":100,"Bar":"foobar"}
-Console.WriteLine(MessagePackSerializer.ToJson(bin2));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin2));
 ```
 
 > Unity supports is limited.
@@ -487,7 +487,7 @@ var bin = MessagePackSerializer.Typeless.Serialize(mc);
 
 // binary data is embeded type-assembly information.
 // ["Sandbox.MyClass, Sandbox",10,"hoge","huga"]
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // can deserialize to MyClass with typeless
 var objModel = MessagePackSerializer.Typeless.Deserialize(bin) as MyClass;
