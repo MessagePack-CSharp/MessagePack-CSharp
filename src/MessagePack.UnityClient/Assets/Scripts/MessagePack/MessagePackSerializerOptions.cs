@@ -32,11 +32,6 @@ namespace MessagePack
         /// Gets a good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
         public static MessagePackSerializerOptions Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.Standard;
-
-        /// <summary>
-        /// Gets a good default set of options that includes LZ4 compression and uses the <see cref="Resolvers.StandardResolver"/>.
-        /// </summary>
-        public static MessagePackSerializerOptions LZ4Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.LZ4Standard;
 #endif
 
         /// <summary>
@@ -252,7 +247,6 @@ namespace MessagePack
         private static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
         {
             public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance);
-            public static readonly MessagePackSerializerOptions LZ4Standard = Standard.WithCompression(MessagePackCompression.LZ4Block);
         }
 #endif
     }

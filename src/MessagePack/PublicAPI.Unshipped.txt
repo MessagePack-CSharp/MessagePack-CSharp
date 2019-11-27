@@ -854,7 +854,6 @@ static MessagePack.MessagePackSerializer.Typeless.Serialize(System.IO.Stream str
 static MessagePack.MessagePackSerializer.Typeless.Serialize(object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.Typeless.Serialize(ref MessagePack.MessagePackWriter writer, object obj, MessagePack.MessagePackSerializerOptions options = null) -> void
 static MessagePack.MessagePackSerializer.Typeless.SerializeAsync(System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task
-static MessagePack.MessagePackSerializerOptions.LZ4Standard.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.MessagePackSerializerOptions.Standard.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.Resolvers.CompositeResolver.Create(System.Collections.Generic.IReadOnlyList<MessagePack.Formatters.IMessagePackFormatter> formatters, System.Collections.Generic.IReadOnlyList<MessagePack.IFormatterResolver> resolvers) -> MessagePack.IFormatterResolver
 static MessagePack.Resolvers.CompositeResolver.Create(params MessagePack.Formatters.IMessagePackFormatter[] formatters) -> MessagePack.IFormatterResolver

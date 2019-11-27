@@ -29,6 +29,8 @@ namespace MessagePack.Tests.ExtensionTests
     {
         private const string MsgPackContentType = "application/x-msgpack";
 
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.LZ4Block);
+
         [Fact]
         public async Task MessagePackFormatter()
         {
@@ -117,11 +119,11 @@ namespace MessagePack.Tests.ExtensionTests
             };
 
             var messagePackBinary = MessagePackSerializer.Serialize(person);
-            var lz4MessagePackBinary = MessagePackSerializer.Serialize(person, MessagePackSerializerOptions.LZ4Standard);
+            var lz4MessagePackBinary = MessagePackSerializer.Serialize(person, LZ4Standard);
 
             // OutputFormatter
             OutputFormatterWriteContext outputFormatterContext = GetOutputFormatterContext(person, typeof(User), MsgPackContentType);
-            var outputFormatter = new MessagePackOutputFormatter(MessagePackSerializerOptions.LZ4Standard);
+            var outputFormatter = new MessagePackOutputFormatter(LZ4Standard);
             await outputFormatter.WriteAsync(outputFormatterContext);
             Stream body = outputFormatterContext.HttpContext.Response.Body;
 
@@ -145,7 +147,7 @@ namespace MessagePack.Tests.ExtensionTests
 
             InputFormatterContext inputFormatterContext = this.CreateInputFormatterContext(typeof(User), httpContext);
 
-            var inputFormatter = new MessagePackInputFormatter(MessagePackSerializerOptions.LZ4Standard);
+            var inputFormatter = new MessagePackInputFormatter(LZ4Standard);
 
             InputFormatterResult result = await inputFormatter.ReadAsync(inputFormatterContext);
 
@@ -162,7 +164,7 @@ namespace MessagePack.Tests.ExtensionTests
 
             // OutputFormatter
             OutputFormatterWriteContext outputFormatterContext = GetOutputFormatterContext(person, typeof(User), "application/json");
-            var outputFormatter = new MessagePackOutputFormatter(MessagePackSerializerOptions.LZ4Standard);
+            var outputFormatter = new MessagePackOutputFormatter(LZ4Standard);
 
             outputFormatter.CanWriteResult(outputFormatterContext).IsFalse();
 
@@ -174,7 +176,7 @@ namespace MessagePack.Tests.ExtensionTests
 
             InputFormatterContext inputFormatterContext = this.CreateInputFormatterContext(typeof(User), httpContext);
 
-            var inputFormatter = new MessagePackInputFormatter(MessagePackSerializerOptions.LZ4Standard);
+            var inputFormatter = new MessagePackInputFormatter(LZ4Standard);
 
             inputFormatter.CanRead(inputFormatterContext).IsFalse();
         }
