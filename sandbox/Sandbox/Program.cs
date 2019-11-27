@@ -358,7 +358,7 @@ namespace Sandbox
 
     internal class Program
     {
-        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.LZ4Block);
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
 
         private static void Main(string[] args)
         {

@@ -8,7 +8,7 @@ using Xunit;
 public class MessagePackSerializerOptionsTests
 {
     private static readonly MessagePackSerializerOptions NonDefaultOptions = MessagePackSerializerOptions.Standard
-        .WithCompression(MessagePackCompression.LZ4Block)
+        .WithCompression(MessagePackCompression.Lz4Block)
         .WithAllowAssemblyVersionMismatch(true)
         .WithOmitAssemblyVersion(true)
         .WithResolver(BuiltinResolver.Instance)
@@ -32,7 +32,7 @@ public class MessagePackSerializerOptionsTests
     public void Compression()
     {
         Assert.Equal(MessagePackCompression.None, MessagePackSerializerOptions.Standard.Compression);
-        Assert.Equal(MessagePackCompression.LZ4Block, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.LZ4Block).Compression);
+        Assert.Equal(MessagePackCompression.Lz4Block, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block).Compression);
     }
 
     [Fact]

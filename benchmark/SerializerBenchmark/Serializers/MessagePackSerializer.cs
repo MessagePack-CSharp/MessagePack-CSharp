@@ -49,7 +49,7 @@ public class MessagePackLz4_v1 : SerializerBase
 
 public class MessagePackLz4_v2 : SerializerBase
 {
-    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions LZ4Standard = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithCompression(newmsgpack::MessagePack.MessagePackCompression.LZ4Block);
+    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions LZ4Standard = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithCompression(newmsgpack::MessagePack.MessagePackCompression.Lz4Block);
 
     public override T Deserialize<T>(object input)
     {

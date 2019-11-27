@@ -81,7 +81,7 @@ namespace MessagePack
 
             try
             {
-                if (options.Compression == MessagePackCompression.LZ4Block)
+                if (options.Compression == MessagePackCompression.Lz4Block)
                 {
                     using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                     {
@@ -223,7 +223,7 @@ namespace MessagePack
 
             try
             {
-                if (options.Compression == MessagePackCompression.LZ4Block)
+                if (options.Compression == MessagePackCompression.Lz4Block)
                 {
                     using (var msgPackUncompressed = new Nerdbank.Streams.Sequence<byte>())
                     {

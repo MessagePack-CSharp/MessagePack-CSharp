@@ -15,7 +15,7 @@ namespace MessagePack.Tests.ExtensionTests
 {
     public class LZ4Test
     {
-        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.LZ4Block);
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
 
         private T Convert<T>(T value)
         {
@@ -107,7 +107,7 @@ namespace MessagePack.Tests.ExtensionTests
             var decompress1 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), ms.ToArray(), LZ4Standard);
             var decompress2 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), lz4normal, LZ4Standard);
             var decompress3 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), ms, LZ4Standard);
-            FirstSimpleData[] decompress4 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(lz4normal, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.LZ4Block));
+            FirstSimpleData[] decompress4 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(lz4normal, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block));
             FirstSimpleData[] decompress5 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(new ArraySegment<byte>(lz4normal), LZ4Standard);
             FirstSimpleData[] decompress6 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(new ArraySegment<byte>(paddedLz4Normal, paddingOffset, lz4normal.Length), LZ4Standard);
 

@@ -29,7 +29,7 @@ namespace MessagePack.Tests.ExtensionTests
     {
         private const string MsgPackContentType = "application/x-msgpack";
 
-        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.LZ4Block);
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
 
         [Fact]
         public async Task MessagePackFormatter()

@@ -24,6 +24,6 @@ namespace MessagePack
         /// <devremarks>
         /// See also ThisLibraryExtensionTypeCodes.LZ4
         /// </devremarks>
-        LZ4Block,
+        Lz4Block,
     }
 }

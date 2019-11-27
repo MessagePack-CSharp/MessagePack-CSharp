@@ -501,7 +501,7 @@ MessagePack.Internal.UnsafeMemory32
 MessagePack.Internal.UnsafeMemory64
 MessagePack.MessagePackCode
 MessagePack.MessagePackCompression
-MessagePack.MessagePackCompression.LZ4Block = 1 -> MessagePack.MessagePackCompression
+MessagePack.MessagePackCompression.Lz4Block = 1 -> MessagePack.MessagePackCompression
 MessagePack.MessagePackCompression.None = 0 -> MessagePack.MessagePackCompression
 MessagePack.MessagePackRange
 MessagePack.MessagePackReader
