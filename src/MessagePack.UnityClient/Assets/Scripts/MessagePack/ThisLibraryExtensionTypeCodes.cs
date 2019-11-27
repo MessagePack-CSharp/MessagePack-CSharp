@@ -61,6 +61,11 @@ namespace MessagePack
         /// <summary>
         /// The LZ4 compression extension.
         /// </summary>
+        internal const sbyte LZ4Contiguous = 98;
+
+        /// <summary>
+        /// The LZ4 compression extension.
+        /// </summary>
         internal const sbyte LZ4 = 99;
 
         /// <summary>

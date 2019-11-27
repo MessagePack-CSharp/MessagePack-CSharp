@@ -83,8 +83,9 @@ namespace MessagePack
             {
                 if (options.Compression.IsCompression())
                 {
-                    using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                    using (SequencePool.Rental sequenceRental = ReusableSequenceWithMinSize.Rent())
                     {
+                        var scratch = sequenceRental.Value;
                         MessagePackWriter scratchWriter = writer.Clone(scratch);
                         options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
                         scratchWriter.Flush();
@@ -225,8 +226,9 @@ namespace MessagePack
             {
                 if (options.Compression.IsCompression())
                 {
-                    using (var msgPackUncompressed = new Nerdbank.Streams.Sequence<byte>())
+                    using (SequencePool.Rental sequenceRental = ReusableSequenceWithMinSize.Rent())
                     {
+                        var msgPackUncompressed = sequenceRental.Value;
                         if (TryDecompress(ref reader, msgPackUncompressed))
                         {
                             MessagePackReader uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
@@ -386,6 +388,9 @@ namespace MessagePack
 
         private delegate int LZ4Transform(ReadOnlySpan<byte> input, Span<byte> output);
 
+        private static readonly LZ4Transform LZ4CodecEncode = LZ4Codec.Encode;
+        private static readonly LZ4Transform LZ4CodecDecode = LZ4Codec.Decode;
+
         private static bool TryDeserializeFromMemoryStream<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken, out T result)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -483,7 +488,7 @@ namespace MessagePack
                         ReadOnlySequence<byte> compressedData = extReader.Sequence.Slice(extReader.Position);
 
                         Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
-                        int actualUncompressedLength = LZ4Operation(compressedData, uncompressedSpan, LZ4Codec.Decode);
+                        int actualUncompressedLength = LZ4Operation(compressedData, uncompressedSpan, LZ4CodecDecode);
                         Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
                         writer.Advance(actualUncompressedLength);
                         return true;
@@ -513,18 +518,14 @@ namespace MessagePack
                                 for (int i = 0; i < sequenceCount; i++)
                                 {
                                     var uncompressedLength = uncompressedLengthes[i];
-                                    var lz4Block = reader.ReadBytes();
-                                    var decompressBuffer = ArrayPool<byte>.Shared.Rent(uncompressedLength);
-                                    try
-                                    {
-                                        var decodeLength = LZ4Operation(lz4Block.Value, decompressBuffer.AsSpan(0, uncompressedLength), LZ4Codec.Decode);
-                                        writer.Write(decompressBuffer.AsSpan(0, decodeLength));
-                                    }
-                                    finally
-                                    {
-                                        ArrayPool<byte>.Shared.Return(decompressBuffer);
-                                    }
+                                    var lz4Block = peekReader.ReadBytes();
+                                    Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
+                                    var actualUncompressedLength = LZ4Operation(lz4Block.Value, uncompressedSpan, LZ4CodecDecode);
+                                    Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
+                                    writer.Advance(actualUncompressedLength);
                                 }
+
+                                return true;
                             }
                             finally
                             {
@@ -546,13 +547,13 @@ namespace MessagePack
             }
             else
             {
-                if (compression == MessagePackCompression.LZ4Block)
+                if (compression == MessagePackCompression.Lz4Block)
                 {
                     var maxCompressedLength = LZ4Codec.MaximumOutputLength((int)msgpackUncompressedData.Length);
                     var lz4Span = ArrayPool<byte>.Shared.Rent(maxCompressedLength);
                     try
                     {
-                        int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4Codec.Encode);
+                        int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4CodecEncode);
 
                         const int LengthOfUncompressedDataSizeHeader = 5;
                         writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.LZ4, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
@@ -564,7 +565,7 @@ namespace MessagePack
                         ArrayPool<byte>.Shared.Return(lz4Span);
                     }
                 }
-                else if (compression == MessagePackCompression.LZ4ContiguousBlock)
+                else if (compression == MessagePackCompression.Lz4ContiguousBlock)
                 {
                     // Write to [Ext(98:int,int...), bin,bin,bin...]
                     // Reading count from Sequence<T> is better but not yet do.
@@ -586,7 +587,7 @@ namespace MessagePack
 
                     foreach (var item in msgpackUncompressedData)
                     {
-                        var maxCompressedLength = LZ4Codec.MaximumOutputLength((int)msgpackUncompressedData.Length);
+                        var maxCompressedLength = LZ4Codec.MaximumOutputLength(item.Length);
                         var lz4Span = ArrayPool<byte>.Shared.Rent(maxCompressedLength);
                         try
                         {
