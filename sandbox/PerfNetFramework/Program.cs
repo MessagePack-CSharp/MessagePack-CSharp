@@ -14,6 +14,8 @@ namespace PerfNetFramework
 {
     internal class Program
     {
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+
         internal static bool Deserializing { get; set; }
 
         private static void Main(string[] args)
@@ -56,7 +58,7 @@ namespace PerfNetFramework
             MsgPack.Serialization.SerializationContext msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
             MessagePackSerializer.Serialize(target);
-            MessagePackSerializer.Serialize(target, MessagePackSerializerOptions.LZ4Standard);
+            MessagePackSerializer.Serialize(target, LZ4Standard);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
@@ -88,7 +90,7 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data3 = MessagePackSerializer.Serialize(target, MessagePackSerializerOptions.LZ4Standard);
+                    data3 = MessagePackSerializer.Serialize(target, LZ4Standard);
                 }
             }
 
@@ -179,7 +181,7 @@ namespace PerfNetFramework
             MessagePackSerializer.Deserialize<T>(data0);
             ////ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
-            MessagePackSerializer.Deserialize<T>(data3, MessagePackSerializerOptions.LZ4Standard);
+            MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
@@ -198,7 +200,7 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    MessagePackSerializer.Deserialize<T>(data3, MessagePackSerializerOptions.LZ4Standard);
+                    MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
                 }
             }
 

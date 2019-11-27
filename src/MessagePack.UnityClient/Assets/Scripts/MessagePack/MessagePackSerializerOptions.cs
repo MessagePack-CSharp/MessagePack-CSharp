@@ -32,20 +32,14 @@ namespace MessagePack
         /// Gets a good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
         public static MessagePackSerializerOptions Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.Standard;
-
-        /// <summary>
-        /// Gets a good default set of options that includes LZ4 compression and uses the <see cref="Resolvers.StandardResolver"/>.
-        /// </summary>
-        public static MessagePackSerializerOptions LZ4Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.LZ4Standard;
 #endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class.
         /// </summary>
-        protected internal MessagePackSerializerOptions(IFormatterResolver resolver, bool useLZ4Compression = false)
+        protected internal MessagePackSerializerOptions(IFormatterResolver resolver)
         {
             this.Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-            this.UseLZ4Compression = useLZ4Compression;
         }
 
         /// <summary>
@@ -61,7 +55,7 @@ namespace MessagePack
             }
 
             this.Resolver = copyFrom.Resolver;
-            this.UseLZ4Compression = copyFrom.UseLZ4Compression;
+            this.Compression = copyFrom.Compression;
             this.OldSpec = copyFrom.OldSpec;
             this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
@@ -75,12 +69,14 @@ namespace MessagePack
         public IFormatterResolver Resolver { get; private set; }
 
         /// <summary>
-        /// Gets a value indicating whether to apply LZ4 to the MessagePack stream.
+        /// Gets the compression scheme to apply to serialized sequences.
         /// </summary>
         /// <remarks>
-        /// When set to <c>true</c>, uncompressed MessagePack can still be deserialized and a small MessagePack stream may not be compressed.
+        /// When set to something other than <see cref="MessagePackCompression.None"/>,
+        /// deserialization can still work on uncompressed sequences,
+        /// and serialization may not compress if msgpack sequences are short enough that compression would not likely be advantageous.
         /// </remarks>
-        public bool UseLZ4Compression { get; private set; }
+        public MessagePackCompression Compression { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether to serialize with <see cref="MessagePackWriter.OldSpec"/> set to some value
@@ -165,19 +161,19 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Gets a copy of these options with the <see cref="UseLZ4Compression"/> property set to a new value.
+        /// Gets a copy of these options with the <see cref="Compression"/> property set to a new value.
         /// </summary>
-        /// <param name="useLZ4Compression">The new value for the <see cref="UseLZ4Compression"/>.</param>
+        /// <param name="compression">The new value for the <see cref="Compression"/> property.</param>
         /// <returns>The new instance; or the original if the value is unchanged.</returns>
-        public MessagePackSerializerOptions WithLZ4Compression(bool useLZ4Compression = true)
+        public MessagePackSerializerOptions WithCompression(MessagePackCompression compression)
         {
-            if (this.UseLZ4Compression == useLZ4Compression)
+            if (this.Compression == compression)
             {
                 return this;
             }
 
             var result = this.Clone();
-            result.UseLZ4Compression = useLZ4Compression;
+            result.Compression = compression;
             return result;
         }
 
@@ -250,8 +246,7 @@ namespace MessagePack
 #if !DYNAMICCODEDUMPER
         private static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
         {
-            public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance, useLZ4Compression: false);
-            public static readonly MessagePackSerializerOptions LZ4Standard = Standard.WithLZ4Compression(true);
+            public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance);
         }
 #endif
     }
