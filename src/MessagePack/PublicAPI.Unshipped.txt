@@ -500,6 +500,9 @@ MessagePack.Internal.UnsafeMemory
 MessagePack.Internal.UnsafeMemory32
 MessagePack.Internal.UnsafeMemory64
 MessagePack.MessagePackCode
+MessagePack.MessagePackCompression
+MessagePack.MessagePackCompression.Lz4Block = 1 -> MessagePack.MessagePackCompression
+MessagePack.MessagePackCompression.None = 0 -> MessagePack.MessagePackCompression
 MessagePack.MessagePackRange
 MessagePack.MessagePackReader
 MessagePack.MessagePackReader.CancellationToken.get -> System.Threading.CancellationToken
@@ -550,14 +553,14 @@ MessagePack.MessagePackSerializer
 MessagePack.MessagePackSerializer.Typeless
 MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.AllowAssemblyVersionMismatch.get -> bool
-MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.IFormatterResolver resolver, bool useLZ4Compression = false) -> void
+MessagePack.MessagePackSerializerOptions.Compression.get -> MessagePack.MessagePackCompression
+MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.IFormatterResolver resolver) -> void
 MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.MessagePackSerializerOptions copyFrom) -> void
 MessagePack.MessagePackSerializerOptions.OldSpec.get -> bool?
 MessagePack.MessagePackSerializerOptions.OmitAssemblyVersion.get -> bool
 MessagePack.MessagePackSerializerOptions.Resolver.get -> MessagePack.IFormatterResolver
-MessagePack.MessagePackSerializerOptions.UseLZ4Compression.get -> bool
 MessagePack.MessagePackSerializerOptions.WithAllowAssemblyVersionMismatch(bool allowAssemblyVersionMismatch) -> MessagePack.MessagePackSerializerOptions
-MessagePack.MessagePackSerializerOptions.WithLZ4Compression(bool useLZ4Compression = true) -> MessagePack.MessagePackSerializerOptions
+MessagePack.MessagePackSerializerOptions.WithCompression(MessagePack.MessagePackCompression compression) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithOldSpec(bool? oldSpec = true) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithOmitAssemblyVersion(bool omitAssemblyVersion) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithResolver(MessagePack.IFormatterResolver resolver) -> MessagePack.MessagePackSerializerOptions
@@ -851,7 +854,6 @@ static MessagePack.MessagePackSerializer.Typeless.Serialize(System.IO.Stream str
 static MessagePack.MessagePackSerializer.Typeless.Serialize(object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.Typeless.Serialize(ref MessagePack.MessagePackWriter writer, object obj, MessagePack.MessagePackSerializerOptions options = null) -> void
 static MessagePack.MessagePackSerializer.Typeless.SerializeAsync(System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task
-static MessagePack.MessagePackSerializerOptions.LZ4Standard.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.MessagePackSerializerOptions.Standard.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.Resolvers.CompositeResolver.Create(System.Collections.Generic.IReadOnlyList<MessagePack.Formatters.IMessagePackFormatter> formatters, System.Collections.Generic.IReadOnlyList<MessagePack.IFormatterResolver> resolvers) -> MessagePack.IFormatterResolver
 static MessagePack.Resolvers.CompositeResolver.Create(params MessagePack.Formatters.IMessagePackFormatter[] formatters) -> MessagePack.IFormatterResolver

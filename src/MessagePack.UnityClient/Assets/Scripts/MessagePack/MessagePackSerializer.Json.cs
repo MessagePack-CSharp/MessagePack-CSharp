@@ -76,7 +76,7 @@ namespace MessagePack
             }
 
             options = options ?? DefaultOptions;
-            if (options.UseLZ4Compression)
+            if (options.Compression == MessagePackCompression.Lz4Block)
             {
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                 {
@@ -143,7 +143,7 @@ namespace MessagePack
         public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
             options = options ?? DefaultOptions;
-            if (options.UseLZ4Compression)
+            if (options.Compression == MessagePackCompression.Lz4Block)
             {
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                 {
