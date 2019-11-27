@@ -613,20 +613,27 @@ Extra note, this is serialize benchmark result.
 
 MessagePack is a fast and *compact* format but it is not compression. [LZ4](https://github.com/lz4/lz4) is extremely fast compression algorithm, with MessagePack for C# can achive extremely fast perfrormance and extremely compact binary size!
 
-MessagePack for C# has built-in LZ4 support. You can use `MessagePackSerializerOptions.LZ4Standard` instead of `MessagePackSerializerOptions.Standard`. Builtin support is special, I've created serialize-compression pipeline and special tuned for the pipeline so share the working memory, don't allocate, don't resize until finished.
+MessagePack for C# has built-in LZ4 support. You can activate it using a modified options object and passing it into an API like this:
+
+```cs
+var lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+MessagePackSerializer.Serialize(obj, lz4Options);
+```
+
+Builtin support is special, I've created serialize-compression pipeline and special tuned for the pipeline so share the working memory, don't allocate, don't resize until finished.
 
 Serialized binary is not simply compressed lz4 binary. Serialized binary is valid MessagePack binary used ext-format and custom typecode(99).
 
 ```csharp
-var array= Enumerable.Range(1, 100).Select(x => new MyClass { Age = 5, FirstName = "foo", LastName = "bar" }).ToArray();
+var array = Enumerable.Range(1, 100).Select(x => new MyClass { Age = 5, FirstName = "foo", LastName = "bar" }).ToArray();
 
-// call MessagePackSerializerOptions.LZ4Standard instead of default
-var lz4Bytes = MessagePackSerializer.Serialize(array, MessagePackSerializerOptions.LZ4Standard);
-var mc2 = MessagePackSerializer.Deserialize<MyClass[]>(lz4Bytes, MessagePackSerializerOptions.LZ4Standard);
+// Use lz4Options instead of default
+var lz4Bytes = MessagePackSerializer.Serialize(array, lz4Options);
+var mc2 = MessagePackSerializer.Deserialize<MyClass[]>(lz4Bytes, lz4Options);
 
 // you can dump lz4 message pack
 // [[5,"hoge","huga"],[5,"hoge","huga"],....]
-var json = MessagePackSerializer.ConvertToJson(lz4Bytes, MessagePackSerializerOptions.LZ4Standard);
+var json = MessagePackSerializer.ConvertToJson(lz4Bytes, lz4Options);
 Console.WriteLine(json);
 
 // lz4Bytes is valid MessagePack, it is using ext-format( [TypeCode:99, SourceLength|CompressedBinary] )
