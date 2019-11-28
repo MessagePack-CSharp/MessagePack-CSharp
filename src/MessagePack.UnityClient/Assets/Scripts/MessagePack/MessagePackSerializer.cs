@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -81,7 +81,7 @@ namespace MessagePack
 
             try
             {
-                if (options.Compression.IsCompression())
+                if (options.Compression.IsCompression() && !PrimitiveChecker<T>.IsFixedSizePrimitive)
                 {
                     using (SequencePool.Rental sequenceRental = ReusableSequenceWithMinSize.Rent())
                     {
@@ -605,6 +605,33 @@ namespace MessagePack
                     throw new MessagePackSerializationException("Invalid MessagePackCompression Code.");
                 }
             }
+        }
+
+        private static class PrimitiveChecker<T>
+        {
+            public static readonly bool IsFixedSizePrimitive;
+
+            static PrimitiveChecker()
+            {
+                IsFixedSizePrimitive = IsFixedSizePrimitiveTypeHelper(typeof(T));
+            }
+        }
+
+        private static bool IsFixedSizePrimitiveTypeHelper(Type type)
+        {
+            return type == typeof(short)
+                || type == typeof(int)
+                || type == typeof(long)
+                || type == typeof(ushort)
+                || type == typeof(uint)
+                || type == typeof(ulong)
+                || type == typeof(float)
+                || type == typeof(double)
+                || type == typeof(bool)
+                || type == typeof(byte)
+                || type == typeof(sbyte)
+                || type == typeof(char)
+            ;
         }
     }
 }
