@@ -27,6 +27,7 @@ namespace PerfBenchmarkDotNet
                 typeof(MessagePackReaderBenchmark),
                 typeof(MessagePackWriterBenchmark),
                 typeof(SpanBenchmarks),
+                typeof(Lz4Benchmark),
             });
 
             // args = new[] { "0" };
