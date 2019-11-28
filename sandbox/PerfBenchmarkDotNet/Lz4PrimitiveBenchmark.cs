@@ -13,12 +13,9 @@ using newmsgpack::MessagePack;
 namespace PerfBenchmarkDotNet
 {
     [Config(typeof(BenchmarkConfig))]
-    public class Lz4Benchmark
+    public class Lz4PrimitiveBenchmark
     {
-        [Params(1, 10, 100, 1000, 10000)]
-        public int Length { get; set; }
-
-        private StringKeySerializerTarget2[] data;
+        private int data;
         private MessagePackSerializerOptions lz4BlockOptions = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4Block);
         private MessagePackSerializerOptions lz4ContiguousBlockOptions = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4ContiguousBlock);
         private byte[] bin;
@@ -28,7 +25,7 @@ namespace PerfBenchmarkDotNet
         [GlobalSetup]
         public void Setup()
         {
-            data = RandomFixtureKit.FixtureFactory.CreateMany<StringKeySerializerTarget2>(Length);
+            data = 9999;
             bin = MessagePackSerializer.Serialize(data);
             binLz4Block = MessagePackSerializer.Serialize(data, lz4BlockOptions);
             binLz4ContiguousBlock = MessagePackSerializer.Serialize(data, lz4ContiguousBlockOptions);
@@ -44,13 +41,13 @@ namespace PerfBenchmarkDotNet
         public byte[] SerializeLz4ContiguousBlock() => MessagePackSerializer.Serialize(data, lz4ContiguousBlockOptions);
 
         [Benchmark]
-        public StringKeySerializerTarget2[] DeserializeNone() => MessagePackSerializer.Deserialize<StringKeySerializerTarget2[]>(bin);
+        public int DeserializeNone() => MessagePackSerializer.Deserialize<int>(bin);
 
         [Benchmark]
-        public StringKeySerializerTarget2[] DeserializeLz4Block() => MessagePackSerializer.Deserialize<StringKeySerializerTarget2[]>(binLz4Block, lz4BlockOptions);
+        public int DeserializeLz4Block() => MessagePackSerializer.Deserialize<int>(binLz4Block, lz4BlockOptions);
 
         [Benchmark]
-        public StringKeySerializerTarget2[] DeserializeLz4ContiguousBlock() => MessagePackSerializer.Deserialize<StringKeySerializerTarget2[]>(binLz4ContiguousBlock, lz4ContiguousBlockOptions);
+        public int DeserializeLz4ContiguousBlock() => MessagePackSerializer.Deserialize<int>(binLz4ContiguousBlock, lz4ContiguousBlockOptions);
     }
 }
 
