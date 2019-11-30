@@ -42,7 +42,7 @@ namespace MessagePack.Tests.ExtensionTests
             PeekMessagePackType(lz4Data).Is(MessagePackType.Extension);
             var lz4DataReader = new MessagePackReader(lz4Data);
             ExtensionHeader header = lz4DataReader.ReadExtensionFormatHeader();
-            header.TypeCode.Is(ThisLibraryExtensionTypeCodes.LZ4);
+            header.TypeCode.Is(ThisLibraryExtensionTypeCodes.Lz4Block);
 
             var decompress = MessagePackSerializer.Deserialize<int[]>(lz4Data, LZ4Standard);
 
@@ -59,7 +59,7 @@ namespace MessagePack.Tests.ExtensionTests
             PeekMessagePackType(lz4Data).Is(MessagePackType.Extension);
             var lz4DataReader = new MessagePackReader(lz4Data);
             ExtensionHeader header = lz4DataReader.ReadExtensionFormatHeader();
-            header.TypeCode.Is(ThisLibraryExtensionTypeCodes.LZ4);
+            header.TypeCode.Is(ThisLibraryExtensionTypeCodes.Lz4Block);
 
             var decompress = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), lz4Data, LZ4Standard);
 

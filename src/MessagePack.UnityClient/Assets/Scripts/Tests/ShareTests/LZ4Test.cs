@@ -46,7 +46,7 @@ namespace MessagePack.Tests
                     .ToArray();
 
                 var lz4Option = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4Block);
-                var lz4Contiguous = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4ContiguousBlock);
+                var lz4Contiguous = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4BlockArray);
 
                 // check bin1, 2, 3 size...
                 var bin2 = MessagePackSerializer.Serialize(data, lz4Option);

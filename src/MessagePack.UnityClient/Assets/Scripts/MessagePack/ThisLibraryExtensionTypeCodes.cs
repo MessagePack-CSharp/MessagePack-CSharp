@@ -59,14 +59,14 @@ namespace MessagePack
         internal const sbyte UnityDouble = 39;
 
         /// <summary>
-        /// The LZ4 compression extension.
+        /// The LZ4 array block compression extension.
         /// </summary>
-        internal const sbyte LZ4Contiguous = 98;
+        internal const sbyte Lz4BlockArray = 98;
 
         /// <summary>
-        /// The LZ4 compression extension.
+        /// The LZ4 single block compression extension.
         /// </summary>
-        internal const sbyte LZ4 = 99;
+        internal const sbyte Lz4Block = 99;
 
         /// <summary>
         /// For the <see cref="Formatters.TypelessFormatter"/>.

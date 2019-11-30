@@ -17,7 +17,7 @@ namespace PerfBenchmarkDotNet
     {
         private int data;
         private MessagePackSerializerOptions lz4BlockOptions = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4Block);
-        private MessagePackSerializerOptions lz4ContiguousBlockOptions = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4ContiguousBlock);
+        private MessagePackSerializerOptions lz4ContiguousBlockOptions = MessagePackSerializer.DefaultOptions.WithCompression(MessagePackCompression.Lz4BlockArray);
         private byte[] bin;
         private byte[] binLz4Block;
         private byte[] binLz4ContiguousBlock;
@@ -38,7 +38,7 @@ namespace PerfBenchmarkDotNet
         public byte[] SerializeLz4Block() => MessagePackSerializer.Serialize(data, lz4BlockOptions);
 
         [Benchmark]
-        public byte[] SerializeLz4ContiguousBlock() => MessagePackSerializer.Serialize(data, lz4ContiguousBlockOptions);
+        public byte[] SerializeLz4BlockArray() => MessagePackSerializer.Serialize(data, lz4ContiguousBlockOptions);
 
         [Benchmark]
         public int DeserializeNone() => MessagePackSerializer.Deserialize<int>(bin);
@@ -47,7 +47,7 @@ namespace PerfBenchmarkDotNet
         public int DeserializeLz4Block() => MessagePackSerializer.Deserialize<int>(binLz4Block, lz4BlockOptions);
 
         [Benchmark]
-        public int DeserializeLz4ContiguousBlock() => MessagePackSerializer.Deserialize<int>(binLz4ContiguousBlock, lz4ContiguousBlockOptions);
+        public int DeserializeLz4BlockArray() => MessagePackSerializer.Deserialize<int>(binLz4ContiguousBlock, lz4ContiguousBlockOptions);
     }
 }
 
