@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -18,7 +18,7 @@ namespace MessagePack
     [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Each overload has sufficiently unique required parameters.")]
     public static partial class MessagePackSerializer
     {
-        private const int LZ4NotCompressionSize = 64;
+        private const int LZ4NotCompressionSizeInLz4BlockType = 64;
 
         /// <summary>
         /// Gets or sets the default set of options to use when not explicitly specified for a method call.
@@ -85,7 +85,7 @@ namespace MessagePack
 
             try
             {
-                if (options.Compression == MessagePackCompression.Lz4Block)
+                if (options.Compression.IsCompression() && !PrimitiveChecker<T>.IsMessagePackFixedSizePrimitive)
                 {
                     using (var scratchRental = ReusableSequenceWithMinSize.Rent())
                     {
@@ -93,7 +93,7 @@ namespace MessagePack
                         MessagePackWriter scratchWriter = writer.Clone(scratch);
                         options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
                         scratchWriter.Flush();
-                        ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                        ToLZ4BinaryCore(scratch, ref writer, options.Compression);
                     }
                 }
                 else
@@ -228,7 +228,7 @@ namespace MessagePack
 
             try
             {
-                if (options.Compression == MessagePackCompression.Lz4Block)
+                if (options.Compression.IsCompression())
                 {
                     using (var msgPackUncompressedRental = ReusableSequenceWithMinSize.Rent())
                     {
@@ -394,6 +394,9 @@ namespace MessagePack
 
         private delegate int LZ4Transform(ReadOnlySpan<byte> input, Span<byte> output);
 
+        private static readonly LZ4Transform LZ4CodecEncode = LZ4Codec.Encode;
+        private static readonly LZ4Transform LZ4CodecDecode = LZ4Codec.Decode;
+
         private static bool TryDeserializeFromMemoryStream<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken, out T result)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -470,50 +473,99 @@ namespace MessagePack
 
         private static bool TryDecompress(ref MessagePackReader reader, IBufferWriter<byte> writer)
         {
-            if (!reader.End && reader.NextMessagePackType == MessagePackType.Extension)
+            if (!reader.End)
             {
-                MessagePackReader peekReader = reader.CreatePeekReader();
-                ExtensionHeader header = peekReader.ReadExtensionFormatHeader();
-                if (header.TypeCode == ThisLibraryExtensionTypeCodes.LZ4)
+                // Try to find LZ4Block
+                if (reader.NextMessagePackType == MessagePackType.Extension)
                 {
-                    // Read the extension using the original reader, so we "consume" it.
-                    ExtensionResult extension = reader.ReadExtensionFormat();
-                    var extReader = new MessagePackReader(extension.Data);
+                    MessagePackReader peekReader = reader.CreatePeekReader();
+                    ExtensionHeader header = peekReader.ReadExtensionFormatHeader();
+                    if (header.TypeCode == ThisLibraryExtensionTypeCodes.Lz4Block)
+                    {
+                        // Read the extension using the original reader, so we "consume" it.
+                        ExtensionResult extension = reader.ReadExtensionFormat();
+                        var extReader = new MessagePackReader(extension.Data);
 
-                    // The first part of the extension payload is a MessagePack-encoded Int32 that
-                    // tells us the length the data will be AFTER decompression.
-                    int uncompressedLength = extReader.ReadInt32();
+                        // The first part of the extension payload is a MessagePack-encoded Int32 that
+                        // tells us the length the data will be AFTER decompression.
+                        int uncompressedLength = extReader.ReadInt32();
 
-                    // The rest of the payload is the compressed data itself.
-                    ReadOnlySequence<byte> compressedData = extReader.Sequence.Slice(extReader.Position);
+                        // The rest of the payload is the compressed data itself.
+                        ReadOnlySequence<byte> compressedData = extReader.Sequence.Slice(extReader.Position);
 
-                    Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
-                    int actualUncompressedLength = LZ4Operation(compressedData, uncompressedSpan, LZ4Codec.Decode);
-                    Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
-                    writer.Advance(actualUncompressedLength);
-                    return true;
+                        Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
+                        int actualUncompressedLength = LZ4Operation(compressedData, uncompressedSpan, LZ4CodecDecode);
+                        Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
+                        writer.Advance(actualUncompressedLength);
+                        return true;
+                    }
+                }
+
+                // Try to find LZ4BlockArray
+                if (reader.NextMessagePackType == MessagePackType.Array)
+                {
+                    MessagePackReader peekReader = reader.CreatePeekReader();
+                    var arrayLength = peekReader.ReadArrayHeader();
+                    if (arrayLength != 0 && peekReader.NextMessagePackType == MessagePackType.Extension)
+                    {
+                        ExtensionHeader header = peekReader.ReadExtensionFormatHeader();
+                        if (header.TypeCode == ThisLibraryExtensionTypeCodes.Lz4BlockArray)
+                        {
+                            // switch peekReader as original reader.
+                            reader = peekReader;
+
+                            // Read from [Ext(98:int,int...), bin,bin,bin...]
+                            var sequenceCount = arrayLength - 1;
+                            var uncompressedLengths = ArrayPool<int>.Shared.Rent(sequenceCount);
+                            try
+                            {
+                                for (int i = 0; i < sequenceCount; i++)
+                                {
+                                    uncompressedLengths[i] = reader.ReadInt32();
+                                }
+
+                                for (int i = 0; i < sequenceCount; i++)
+                                {
+                                    var uncompressedLength = uncompressedLengths[i];
+                                    var lz4Block = reader.ReadBytes();
+                                    Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
+                                    var actualUncompressedLength = LZ4Operation(lz4Block.Value, uncompressedSpan, LZ4CodecDecode);
+                                    Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
+                                    writer.Advance(actualUncompressedLength);
+                                }
+
+                                return true;
+                            }
+                            finally
+                            {
+                                ArrayPool<int>.Shared.Return(uncompressedLengths);
+                            }
+                        }
+                    }
                 }
             }
 
             return false;
         }
 
-        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer)
+        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer, MessagePackCompression compression)
         {
-            if (msgpackUncompressedData.Length < LZ4NotCompressionSize)
+            if (compression == MessagePackCompression.Lz4Block)
             {
-                writer.WriteRaw(msgpackUncompressedData);
-            }
-            else
-            {
+                if (msgpackUncompressedData.Length < LZ4NotCompressionSizeInLz4BlockType)
+                {
+                    writer.WriteRaw(msgpackUncompressedData);
+                    return;
+                }
+
                 var maxCompressedLength = LZ4Codec.MaximumOutputLength((int)msgpackUncompressedData.Length);
                 var lz4Span = ArrayPool<byte>.Shared.Rent(maxCompressedLength);
                 try
                 {
-                    int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4Codec.Encode);
+                    int lz4Length = LZ4Operation(msgpackUncompressedData, lz4Span, LZ4CodecEncode);
 
                     const int LengthOfUncompressedDataSizeHeader = 5;
-                    writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.LZ4, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
+                    writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.Lz4Block, LengthOfUncompressedDataSizeHeader + (uint)lz4Length));
                     writer.WriteInt32((int)msgpackUncompressedData.Length);
                     writer.WriteRaw(lz4Span.AsSpan(0, lz4Length));
                 }
@@ -522,6 +574,100 @@ namespace MessagePack
                     ArrayPool<byte>.Shared.Return(lz4Span);
                 }
             }
+            else if (compression == MessagePackCompression.Lz4BlockArray)
+            {
+                // Write to [Ext(98:int,int...), bin,bin,bin...]
+                var sequenceCount = 0;
+                var extHeaderSize = 0;
+                foreach (var item in msgpackUncompressedData)
+                {
+                    sequenceCount++;
+                    extHeaderSize += GetUInt32WriteSize((uint)item.Length);
+                }
+
+                writer.WriteArrayHeader(sequenceCount + 1);
+                writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.Lz4BlockArray, extHeaderSize));
+                {
+                    foreach (var item in msgpackUncompressedData)
+                    {
+                        writer.Write(item.Length);
+                    }
+                }
+
+                foreach (var item in msgpackUncompressedData)
+                {
+                    var maxCompressedLength = LZ4Codec.MaximumOutputLength(item.Length);
+                    var lz4Span = writer.GetSpan(maxCompressedLength + 5);
+                    int lz4Length = LZ4Codec.Encode(item.Span, lz4Span.Slice(5, lz4Span.Length - 5));
+                    WriteBin32Header((uint)lz4Length, lz4Span);
+                    writer.Advance(lz4Length + 5);
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Invalid MessagePackCompression Code. Code:" + compression);
+            }
+        }
+
+        private static int GetUInt32WriteSize(uint value)
+        {
+            if (value <= MessagePackRange.MaxFixPositiveInt)
+            {
+                return 1;
+            }
+            else if (value <= byte.MaxValue)
+            {
+                return 2;
+            }
+            else if (value <= ushort.MaxValue)
+            {
+                return 3;
+            }
+            else
+            {
+                return 5;
+            }
+        }
+
+        private static void WriteBin32Header(uint value, Span<byte> span)
+        {
+            unchecked
+            {
+                span[0] = MessagePackCode.Bin32;
+
+                // Write to highest index first so the JIT skips bounds checks on subsequent writes.
+                span[4] = (byte)value;
+                span[3] = (byte)(value >> 8);
+                span[2] = (byte)(value >> 16);
+                span[1] = (byte)(value >> 24);
+            }
+        }
+
+        private static class PrimitiveChecker<T>
+        {
+            public static readonly bool IsMessagePackFixedSizePrimitive;
+
+            static PrimitiveChecker()
+            {
+                IsMessagePackFixedSizePrimitive = IsMessagePackFixedSizePrimitiveTypeHelper(typeof(T));
+            }
+        }
+
+        private static bool IsMessagePackFixedSizePrimitiveTypeHelper(Type type)
+        {
+            return type == typeof(short)
+                || type == typeof(int)
+                || type == typeof(long)
+                || type == typeof(ushort)
+                || type == typeof(uint)
+                || type == typeof(ulong)
+                || type == typeof(float)
+                || type == typeof(double)
+                || type == typeof(bool)
+                || type == typeof(byte)
+                || type == typeof(sbyte)
+                || type == typeof(char)
+            ;
         }
     }
 }

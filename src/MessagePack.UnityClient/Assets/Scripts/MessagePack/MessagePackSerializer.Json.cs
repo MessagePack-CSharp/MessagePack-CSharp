@@ -143,7 +143,7 @@ namespace MessagePack
         public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
             options = options ?? DefaultOptions;
-            if (options.Compression == MessagePackCompression.Lz4Block)
+            if (options.Compression.IsCompression())
             {
                 using (var scratch = new Nerdbank.Streams.Sequence<byte>())
                 {
@@ -154,7 +154,7 @@ namespace MessagePack
                     }
 
                     scratchWriter.Flush();
-                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer, options.Compression);
                 }
             }
             else
