@@ -37,7 +37,11 @@ namespace MessagePack
         /// <summary>
         /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
         /// </summary>
-        private static readonly SequencePool ReusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount);
+        /// <remarks>
+        /// We use a value that allows every processor to be involved in messagepack serialization concurrently,
+        /// plus one nested serialization per processor (since LZ4 and sometimes other nested serializations may exist).
+        /// </remarks>
+        private static readonly SequencePool ReusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount * 2);
 
         /// <summary>
         /// A thread-local, recyclable array that may be used for short bursts of code.
@@ -83,8 +87,9 @@ namespace MessagePack
             {
                 if (options.Compression == MessagePackCompression.Lz4Block)
                 {
-                    using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                    using (var scratchRental = ReusableSequenceWithMinSize.Rent())
                     {
+                        var scratch = scratchRental.Value;
                         MessagePackWriter scratchWriter = writer.Clone(scratch);
                         options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
                         scratchWriter.Flush();
@@ -225,8 +230,9 @@ namespace MessagePack
             {
                 if (options.Compression == MessagePackCompression.Lz4Block)
                 {
-                    using (var msgPackUncompressed = new Nerdbank.Streams.Sequence<byte>())
+                    using (var msgPackUncompressedRental = ReusableSequenceWithMinSize.Rent())
                     {
+                        var msgPackUncompressed = msgPackUncompressedRental.Value;
                         if (TryDecompress(ref reader, msgPackUncompressed))
                         {
                             MessagePackReader uncompressedReader = reader.Clone(msgPackUncompressed.AsReadOnlySequence);
@@ -319,8 +325,9 @@ namespace MessagePack
                 return result;
             }
 
-            using (var sequence = new Sequence<byte>())
+            using (var sequenceRental = ReusableSequenceWithMinSize.Rent())
             {
+                var sequence = sequenceRental.Value;
                 try
                 {
                     int bytesRead;
@@ -362,8 +369,9 @@ namespace MessagePack
                 return result;
             }
 
-            using (var sequence = new Sequence<byte>())
+            using (var sequenceRental = ReusableSequenceWithMinSize.Rent())
             {
+                var sequence = sequenceRental.Value;
                 try
                 {
                     int bytesRead;
