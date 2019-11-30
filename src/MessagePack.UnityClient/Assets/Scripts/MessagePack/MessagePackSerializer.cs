@@ -578,18 +578,19 @@ namespace MessagePack
             {
                 // Write to [Ext(98:int,int...), bin,bin,bin...]
                 var sequenceCount = 0;
+                var extHeaderSize = 0;
                 foreach (var item in msgpackUncompressedData)
                 {
                     sequenceCount++;
+                    extHeaderSize += GetUInt32WriteSize((uint)item.Length);
                 }
 
                 writer.WriteArrayHeader(sequenceCount + 1);
-                writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.Lz4BlockArray, sequenceCount * 5));
+                writer.WriteExtensionFormatHeader(new ExtensionHeader(ThisLibraryExtensionTypeCodes.Lz4BlockArray, extHeaderSize));
                 {
                     foreach (var item in msgpackUncompressedData)
                     {
-                        // force write Int32 block(size = 5).
-                        writer.WriteInt32(item.Length);
+                        writer.Write(item.Length);
                     }
                 }
 
@@ -605,6 +606,26 @@ namespace MessagePack
             else
             {
                 throw new ArgumentException("Invalid MessagePackCompression Code. Code:" + compression);
+            }
+        }
+
+        private static int GetUInt32WriteSize(uint value)
+        {
+            if (value <= MessagePackRange.MaxFixPositiveInt)
+            {
+                return 1;
+            }
+            else if (value <= byte.MaxValue)
+            {
+                return 2;
+            }
+            else if (value <= ushort.MaxValue)
+            {
+                return 3;
+            }
+            else
+            {
+                return 5;
             }
         }
 
