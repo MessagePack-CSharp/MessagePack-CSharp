@@ -198,12 +198,11 @@ namespace MessagePack.Formatters
             }
             else
             {
-                // Optimize iteration(array is fastest)
-                var array = value as TElement[];
-                if (array != null)
-                {
-                    IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
+                IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
 
+                // Optimize iteration(array is fastest)
+                if (value is TElement[] array)
+                {
                     writer.WriteArrayHeader(array.Length);
 
                     foreach (TElement item in array)
@@ -211,60 +210,19 @@ namespace MessagePack.Formatters
                         writer.CancellationToken.ThrowIfCancellationRequested();
                         formatter.Serialize(ref writer, item, options);
                     }
-
-                    return;
                 }
                 else
                 {
-                    IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
+                    int count = this.GetCountEnumerateIfNecessary(value);
+                    writer.WriteArrayHeader(count);
 
-                    // knows count or not.
-                    var seqCount = this.GetCount(value);
-                    if (seqCount != null)
+                    // Unity's foreach struct enumerator causes boxing so iterate manually.
+                    using (var e = this.GetSourceEnumerator(value))
                     {
-                        writer.WriteArrayHeader(seqCount.Value);
-
-                        // Unity's foreach struct enumerator causes boxing so iterate manually.
-                        TEnumerator e = this.GetSourceEnumerator(value);
-                        try
+                        while (e.MoveNext())
                         {
-                            while (e.MoveNext())
-                            {
-                                writer.CancellationToken.ThrowIfCancellationRequested();
-                                formatter.Serialize(ref writer, e.Current, options);
-                            }
-                        }
-                        finally
-                        {
-                            e.Dispose();
-                        }
-
-                        return;
-                    }
-                    else
-                    {
-                        using (var scratch = new Nerdbank.Streams.Sequence<byte>())
-                        {
-                            MessagePackWriter scratchWriter = writer.Clone(scratch);
-                            var count = 0;
-                            TEnumerator e = this.GetSourceEnumerator(value);
-                            try
-                            {
-                                while (e.MoveNext())
-                                {
-                                    writer.CancellationToken.ThrowIfCancellationRequested();
-                                    count++;
-                                    formatter.Serialize(ref scratchWriter, e.Current, options);
-                                }
-                            }
-                            finally
-                            {
-                                e.Dispose();
-                            }
-
-                            scratchWriter.Flush();
-                            writer.WriteArrayHeader(count);
-                            writer.WriteRaw(scratch.AsReadOnlySequence);
+                            writer.CancellationToken.ThrowIfCancellationRequested();
+                            formatter.Serialize(ref writer, e.Current, options);
                         }
                     }
                 }
@@ -323,6 +281,24 @@ namespace MessagePack.Formatters
         protected abstract void Add(TIntermediate collection, int index, TElement value, MessagePackSerializerOptions options);
 
         protected abstract TCollection Complete(TIntermediate intermediateCollection);
+
+        private int GetCountEnumerateIfNecessary(TCollection sequence)
+        {
+            int? count = this.GetCount(sequence);
+            if (!count.HasValue)
+            {
+                count = 0;
+                using (var e = this.GetSourceEnumerator(sequence))
+                {
+                    while (e.MoveNext())
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            return count.Value;
+        }
     }
 
     public abstract class CollectionFormatterBase<TElement, TIntermediate, TCollection> : CollectionFormatterBase<TElement, TIntermediate, IEnumerator<TElement>, TCollection>
