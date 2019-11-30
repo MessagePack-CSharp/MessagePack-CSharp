@@ -416,7 +416,6 @@ MessagePack.Formatters.TwoDimensionalArrayFormatter<T>.TwoDimensionalArrayFormat
 MessagePack.Formatters.TypelessFormatter
 MessagePack.Formatters.TypelessFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> object
 MessagePack.Formatters.TypelessFormatter.Serialize(ref MessagePack.MessagePackWriter writer, object value, MessagePack.MessagePackSerializerOptions options) -> void
-MessagePack.Formatters.TypelessFormatter.TypelessFormatter() -> void
 MessagePack.Formatters.UInt16ArrayFormatter
 MessagePack.Formatters.UInt16ArrayFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> ushort[]
 MessagePack.Formatters.UInt16ArrayFormatter.Serialize(ref MessagePack.MessagePackWriter writer, ushort[] value, MessagePack.MessagePackSerializerOptions options) -> void
@@ -668,10 +667,7 @@ MessagePack.Resolvers.TypelessContractlessStandardResolver
 MessagePack.Resolvers.TypelessContractlessStandardResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.Resolvers.TypelessContractlessStandardResolver.TypelessContractlessStandardResolver() -> void
 MessagePack.Resolvers.TypelessObjectResolver
-MessagePack.Resolvers.TypelessObjectResolver.Formatter.get -> MessagePack.Formatters.TypelessFormatter
-MessagePack.Resolvers.TypelessObjectResolver.Formatter.set -> void
 MessagePack.Resolvers.TypelessObjectResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
-MessagePack.Resolvers.TypelessObjectResolver.TypelessObjectResolver() -> void
 MessagePack.TinyJsonException
 MessagePack.TinyJsonException.TinyJsonException(string message) -> void
 abstract MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.Add(TIntermediate collection, int index, TElement value, MessagePack.MessagePackSerializerOptions options) -> void
@@ -938,6 +934,7 @@ static readonly MessagePack.Formatters.SingleArrayFormatter.Instance -> MessageP
 static readonly MessagePack.Formatters.SingleFormatter.Instance -> MessagePack.Formatters.SingleFormatter
 static readonly MessagePack.Formatters.StringBuilderFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Text.StringBuilder>
 static readonly MessagePack.Formatters.TimeSpanFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.TimeSpan>
+static readonly MessagePack.Formatters.TypelessFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Formatters.UInt16ArrayFormatter.Instance -> MessagePack.Formatters.UInt16ArrayFormatter
 static readonly MessagePack.Formatters.UInt16Formatter.Instance -> MessagePack.Formatters.UInt16Formatter
 static readonly MessagePack.Formatters.UInt32ArrayFormatter.Instance -> MessagePack.Formatters.UInt32ArrayFormatter
@@ -980,6 +977,7 @@ static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Options -> Me
 static readonly MessagePack.Resolvers.StaticCompositeResolver.Instance -> MessagePack.Resolvers.StaticCompositeResolver
 static readonly MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance -> MessagePack.Resolvers.TypelessContractlessStandardResolver
 static readonly MessagePack.Resolvers.TypelessContractlessStandardResolver.Options -> MessagePack.MessagePackSerializerOptions
+static readonly MessagePack.Resolvers.TypelessObjectResolver.Instance -> MessagePack.IFormatterResolver
 virtual MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.GetCount(TCollection sequence) -> int?
 virtual MessagePack.MessagePackSerializerOptions.Clone() -> MessagePack.MessagePackSerializerOptions
 virtual MessagePack.MessagePackSerializerOptions.LoadType(string typeName) -> System.Type
