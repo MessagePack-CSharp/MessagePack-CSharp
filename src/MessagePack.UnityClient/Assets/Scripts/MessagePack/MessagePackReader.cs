@@ -117,7 +117,11 @@ namespace MessagePack
         /// The two readers may then be used independently without impacting each other.
         /// </summary>
         /// <returns>A new <see cref="MessagePackReader"/>.</returns>
-        public MessagePackReader CreatePeekReader() => this.Clone(this.reader.Sequence.Slice(this.reader.Position));
+        /// <devremarks>
+        /// Since this is a struct, copying it completely is as simple as returning itself
+        /// from a property that isn't a "ref return" property.
+        /// </devremarks>
+        public MessagePackReader CreatePeekReader() => this;
 
         /// <summary>
         /// Advances the reader to the next MessagePack primitive to be read.
