@@ -34,9 +34,52 @@ public class MessagePack_v2 : SerializerBase
     }
 }
 
-public class MessagePack_v2_opt : SerializerBase
+public class MsgPack_v2_string : SerializerBase
 {
-    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions Options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(OptimizedResolver.Instance);
+    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions Options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+
+    public override T Deserialize<T>(object input)
+    {
+        return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<T>((byte[])input, options: Options);
+    }
+
+    public override object Serialize<T>(T input)
+    {
+        return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, options: Options);
+    }
+}
+
+public class MessagePackLz4_v1 : SerializerBase
+{
+    public override T Deserialize<T>(object input)
+    {
+        return oldmsgpack::MessagePack.LZ4MessagePackSerializer.Deserialize<T>((byte[])input);
+    }
+
+    public override object Serialize<T>(T input)
+    {
+        return oldmsgpack::MessagePack.LZ4MessagePackSerializer.Serialize<T>(input);
+    }
+}
+
+public class MessagePackLz4_v2 : SerializerBase
+{
+    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions LZ4BlockArray = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithCompression(newmsgpack::MessagePack.MessagePackCompression.Lz4BlockArray);
+
+    public override T Deserialize<T>(object input)
+    {
+        return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<T>((byte[])input, LZ4BlockArray);
+    }
+
+    public override object Serialize<T>(T input)
+    {
+        return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, LZ4BlockArray);
+    }
+}
+
+public class MsgPack_v2_string_lz4 : SerializerBase
+{
+    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions Options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance).WithCompression(newmsgpack::MessagePack.MessagePackCompression.Lz4BlockArray);
 
     public override T Deserialize<T>(object input)
     {
@@ -49,9 +92,9 @@ public class MessagePack_v2_opt : SerializerBase
     }
 }
 
-public class MessagePack_v2_opt_lz4 : SerializerBase
+public class MsgPack_v2_opt : SerializerBase
 {
-    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions Options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(OptimizedResolver.Instance).WithCompression(newmsgpack::MessagePack.MessagePackCompression.Lz4BlockArray);
+    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions Options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(OptimizedResolver.Instance);
 
     public override T Deserialize<T>(object input)
     {
@@ -102,33 +145,5 @@ public class OptimizedResolver : newmsgpack::MessagePack.IFormatterResolver
                 }
             }
         }
-    }
-}
-
-public class MessagePackLz4_v1 : SerializerBase
-{
-    public override T Deserialize<T>(object input)
-    {
-        return oldmsgpack::MessagePack.LZ4MessagePackSerializer.Deserialize<T>((byte[])input);
-    }
-
-    public override object Serialize<T>(T input)
-    {
-        return oldmsgpack::MessagePack.LZ4MessagePackSerializer.Serialize<T>(input);
-    }
-}
-
-public class MessagePackLz4_v2 : SerializerBase
-{
-    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions LZ4BlockArray = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithCompression(newmsgpack::MessagePack.MessagePackCompression.Lz4BlockArray);
-
-    public override T Deserialize<T>(object input)
-    {
-        return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<T>((byte[])input, LZ4BlockArray);
-    }
-
-    public override object Serialize<T>(T input)
-    {
-        return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, LZ4BlockArray);
     }
 }
