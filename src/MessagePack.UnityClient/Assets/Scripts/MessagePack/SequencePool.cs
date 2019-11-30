@@ -20,7 +20,11 @@ namespace MessagePack
         /// Individual users that want a different value for this can modify the setting on the rented <see cref="Sequence{T}"/>
         /// or by supplying their own <see cref="IBufferWriter{T}" />.
         /// </remarks>
-        private const int MinimumSpanLength = 64 * 1024;
+        /// <devremarks>
+        /// We use 32KB so that when LZ4Codec.MaximumOutputLength is used on this length it does not require a
+        /// buffer that would require the Large Object Heap.
+        /// </devremarks>
+        private const int MinimumSpanLength = 32 * 1024;
 
         private readonly int maxSize;
         private readonly Stack<Sequence<byte>> pool = new Stack<Sequence<byte>>();
