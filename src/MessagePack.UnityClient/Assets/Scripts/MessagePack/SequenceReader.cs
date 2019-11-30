@@ -385,6 +385,22 @@ namespace System.Buffers
             Debug.Assert(this.CurrentSpanIndex < this.CurrentSpan.Length, "this.CurrentSpanIndex < this.CurrentSpan.Length");
         }
 
+        /// <summary>
+        /// Move the reader ahead the specified number of items
+        /// if there are enough elements remaining in the sequence.
+        /// </summary>
+        /// <returns><c>true</c> if there were enough elements to advance; otherwise <c>false</c>.</returns>
+        internal bool TryAdvance(long count)
+        {
+            if (this.Remaining < count)
+            {
+                return false;
+            }
+
+            this.Advance(count);
+            return true;
+        }
+
         private void AdvanceToNextSpan(long count)
         {
             Debug.Assert(this.usingSequence, "usingSequence");

@@ -796,7 +796,7 @@ Also, DateTime is serialized using the MessagePack timestamp format. By using th
 
 ### Careful to copying buffer
 
-`MessagePackSerializer.Serialize` returns `byte[]` in default. The final `byte[]` is copied from an internal buffer pool. That is an extra cost.  You can use `IBufferWriter<T>` or `Stream` API, it writes buffer directly. If you want to require a buffer pool outside of serializer, you should implement custom `IBufferWriter<byte>`.
+`MessagePackSerializer.Serialize` returns `byte[]` in default. The final `byte[]` is copied from an internal buffer pool. That is an extra cost.  You can use `IBufferWriter<T>` or `Stream` API, it writes buffer directly. If you want to require a buffer pool outside of serializer, you should implement custom `IBufferWriter<byte>` or use an existing one such as [`Sequence<T>`](https://github.com/AArnott/Nerdbank.Streams/blob/master/doc/Sequence.md) from the [Nerdbank.Streams](https://nuget.org/packages/Nerdbank.Streams) package.
 
 In deserialization, `MessagePackSerializer.Deserialize(ReadOnlyMemory<byte> buffer)` is better than `Deserialize(Stream stream)` overload. This is because the overload of Stream starts reading the data, generating `ReadOnlySequence<byte>`, and then starting deserialization.
 
@@ -888,6 +888,28 @@ MessagePack for C# fundamentally serializes with `IBufferWriter<byte>` level and
 High-Level API uses memory pool internally to avoid unnecessary memory allocation. If result size is under 64K, allocates GC memory only for the return bytes.
 
 Each serialize/deserialize method takes an optional `MessagePackSerializerOptions` parameter which can be used to specify a custom `IFormatterResolver` to use or to activate LZ4 compression support.
+
+### Multiple MessagePack structures on a single `Stream`
+
+To deserialize a `Stream` that contains multiple consecutive messagepack data structures,
+you can use the `MessagePackStreamReader` class to efficiently identify the `ReadOnlySequence<byte>`
+for each data structure and deserialize it. For example:
+
+```cs
+static async Task<List<T>> DeserializeListFromStreamAsync<T>(Stream stream, CancellationToken cancellationToken)
+{
+    var dataStructures = new List<T>();
+    using (var streamReader = new MessagePackStreamReader(stream))
+    {
+        while (await streamReader.ReadAsync(cancellationToken) is ReadOnlySequence<byte> msgpack)
+        {
+            dataStructures.Add(MessagePackSerializer.Deserialize<T>(msgpack, cancellationToken: cancellationToken));
+        }
+    }
+
+    return dataStructures;
+}
+```
 
 ## Low-Level API (`IMessagePackFormatter<T>`)
 
@@ -1383,7 +1405,7 @@ I've created gRPC based MessagePack HTTP/2 RPC streaming framework called [Magic
 
 ### StreamJsonRpc
 
-The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and includes [a pluggable formatter architecture](https://github.com/microsoft/vs-streamjsonrpc/blob/master/doc/extensibility.md#alternative-formatters) and includes [a sample MessagePack plugin](https://github.com/microsoft/vs-streamjsonrpc/blob/master/src/StreamJsonRpc.Tests/MessagePackFormatter.cs).
+The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and includes [a pluggable formatter architecture](https://github.com/microsoft/vs-streamjsonrpc/blob/master/doc/extensibility.md#alternative-formatters) and as of v2.3 includes [MessagePack support](https://github.com/microsoft/vs-streamjsonrpc/blob/master/doc/extensibility.md#message-formatterss).
 
 ## How to build
 

@@ -563,6 +563,11 @@ MessagePack.MessagePackSerializerOptions.WithCompression(MessagePack.MessagePack
 MessagePack.MessagePackSerializerOptions.WithOldSpec(bool? oldSpec = true) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithOmitAssemblyVersion(bool omitAssemblyVersion) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithResolver(MessagePack.IFormatterResolver resolver) -> MessagePack.MessagePackSerializerOptions
+MessagePack.MessagePackStreamReader
+MessagePack.MessagePackStreamReader.Dispose() -> void
+MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream) -> void
+MessagePack.MessagePackStreamReader.ReadAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Buffers.ReadOnlySequence<byte>?>
+MessagePack.MessagePackStreamReader.RemainingBytes.get -> System.Buffers.ReadOnlySequence<byte>
 MessagePack.MessagePackType
 MessagePack.MessagePackType.Array = 7 -> MessagePack.MessagePackType
 MessagePack.MessagePackType.Binary = 6 -> MessagePack.MessagePackType

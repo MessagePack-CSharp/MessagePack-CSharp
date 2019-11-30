@@ -130,102 +130,87 @@ namespace MessagePack
         /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
         /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
         /// </remarks>
-        public void Skip()
+        public void Skip() => ThrowInsufficientBufferUnless(this.TrySkip());
+
+        /// <summary>
+        /// Advances the reader to the next MessagePack primitive to be read.
+        /// </summary>
+        /// <returns><c>true</c> if the entire structure beginning at the current <see cref="Position"/> is found in the <see cref="Sequence"/>; <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
+        /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
+        /// </remarks>
+        internal bool TrySkip()
         {
-            try
+            byte code = this.NextCode;
+            switch (code)
             {
-                byte code = this.NextCode;
-                switch (code)
-                {
-                    case MessagePackCode.Nil:
-                    case MessagePackCode.True:
-                    case MessagePackCode.False:
-                        this.reader.Advance(1);
-                        break;
-                    case MessagePackCode.Int8:
-                    case MessagePackCode.UInt8:
-                        this.reader.Advance(2);
-                        break;
-                    case MessagePackCode.Int16:
-                    case MessagePackCode.UInt16:
-                        this.reader.Advance(3);
-                        break;
-                    case MessagePackCode.Int32:
-                    case MessagePackCode.UInt32:
-                    case MessagePackCode.Float32:
-                        this.reader.Advance(5);
-                        break;
-                    case MessagePackCode.Int64:
-                    case MessagePackCode.UInt64:
-                    case MessagePackCode.Float64:
-                        this.reader.Advance(9);
-                        break;
-                    case MessagePackCode.Map16:
-                    case MessagePackCode.Map32:
-                        this.ReadNextMap();
-                        break;
-                    case MessagePackCode.Array16:
-                    case MessagePackCode.Array32:
-                        this.ReadNextArray();
-                        break;
-                    case MessagePackCode.Str8:
-                    case MessagePackCode.Str16:
-                    case MessagePackCode.Str32:
-                        int length = this.GetStringLengthInBytes();
-                        this.reader.Advance(length);
-                        break;
-                    case MessagePackCode.Bin8:
-                    case MessagePackCode.Bin16:
-                    case MessagePackCode.Bin32:
-                        length = this.GetBytesLength();
-                        this.reader.Advance(length);
-                        break;
-                    case MessagePackCode.FixExt1:
-                    case MessagePackCode.FixExt2:
-                    case MessagePackCode.FixExt4:
-                    case MessagePackCode.FixExt8:
-                    case MessagePackCode.FixExt16:
-                    case MessagePackCode.Ext8:
-                    case MessagePackCode.Ext16:
-                    case MessagePackCode.Ext32:
-                        ExtensionHeader header = this.ReadExtensionFormatHeader();
-                        this.reader.Advance(header.Length);
-                        break;
-                    default:
-                        if ((code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt) ||
-                            (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt))
-                        {
-                            this.reader.Advance(1);
-                            break;
-                        }
+                case MessagePackCode.Nil:
+                case MessagePackCode.True:
+                case MessagePackCode.False:
+                    return this.reader.TryAdvance(1);
+                case MessagePackCode.Int8:
+                case MessagePackCode.UInt8:
+                    return this.reader.TryAdvance(2);
+                case MessagePackCode.Int16:
+                case MessagePackCode.UInt16:
+                    return this.reader.TryAdvance(3);
+                case MessagePackCode.Int32:
+                case MessagePackCode.UInt32:
+                case MessagePackCode.Float32:
+                    return this.reader.TryAdvance(5);
+                case MessagePackCode.Int64:
+                case MessagePackCode.UInt64:
+                case MessagePackCode.Float64:
+                    return this.reader.TryAdvance(9);
+                case MessagePackCode.Map16:
+                case MessagePackCode.Map32:
+                    return this.TryReadNextMap();
+                case MessagePackCode.Array16:
+                case MessagePackCode.Array32:
+                    return this.TryReadNextArray();
+                case MessagePackCode.Str8:
+                case MessagePackCode.Str16:
+                case MessagePackCode.Str32:
+                    return this.reader.TryAdvance(this.GetStringLengthInBytes());
+                case MessagePackCode.Bin8:
+                case MessagePackCode.Bin16:
+                case MessagePackCode.Bin32:
+                    return this.reader.TryAdvance(this.GetBytesLength());
+                case MessagePackCode.FixExt1:
+                case MessagePackCode.FixExt2:
+                case MessagePackCode.FixExt4:
+                case MessagePackCode.FixExt8:
+                case MessagePackCode.FixExt16:
+                case MessagePackCode.Ext8:
+                case MessagePackCode.Ext16:
+                case MessagePackCode.Ext32:
+                    return this.TryReadExtensionFormatHeader(out ExtensionHeader header) && this.reader.TryAdvance(header.Length);
+                default:
+                    if ((code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt) ||
+                        (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt))
+                    {
+                        return this.reader.TryAdvance(1);
+                    }
 
-                        if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
-                        {
-                            this.ReadNextMap();
-                            break;
-                        }
+                    if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
+                    {
+                        return this.TryReadNextMap();
+                    }
 
-                        if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
-                        {
-                            this.ReadNextArray();
-                            break;
-                        }
+                    if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
+                    {
+                        return this.TryReadNextArray();
+                    }
 
-                        if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-                        {
-                            length = this.GetStringLengthInBytes();
-                            this.reader.Advance(length);
-                            break;
-                        }
+                    if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
+                    {
+                        return this.reader.TryAdvance(this.GetStringLengthInBytes());
+                    }
 
-                        // We don't actually expect to ever hit this point, since every code is supported.
-                        Debug.Fail("Missing handler for code: " + code);
-                        throw ThrowInvalidCode(code);
-                }
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                ThrowNotEnoughBytesException(ex);
+                    // We don't actually expect to ever hit this point, since every code is supported.
+                    Debug.Fail("Missing handler for code: " + code);
+                    throw ThrowInvalidCode(code);
             }
         }
 
@@ -297,20 +282,37 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Array32"/>, or
         /// some built-in code between <see cref="MessagePackCode.MinFixArray"/> and <see cref="MessagePackCode.MaxFixArray"/>.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadArrayHeader()
         {
-            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
+            ThrowInsufficientBufferUnless(this.TryReadArrayHeader(out int count));
+            return count;
+        }
 
-            int count;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool TryReadArrayHeader(out int count)
+        {
+            count = -1;
+            if (!this.reader.TryRead(out byte code))
+            {
+                return false;
+            }
+
             switch (code)
             {
                 case MessagePackCode.Array16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortValue));
+                    if (!this.reader.TryReadBigEndian(out short shortValue))
+                    {
+                        return false;
+                    }
+
                     count = unchecked((ushort)shortValue);
                     break;
                 case MessagePackCode.Array32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
+                    if (!this.reader.TryReadBigEndian(out int intValue))
+                    {
+                        return false;
+                    }
+
                     count = intValue;
                     break;
                 default:
@@ -328,10 +330,10 @@ namespace MessagePack
             // Formatters that know each element is larger can double-check our work.
             if (count > this.reader.Remaining)
             {
-                ThrowNotEnoughBytesException();
+                return false;
             }
 
-            return count;
+            return true;
         }
 
         /// <summary>
@@ -342,17 +344,40 @@ namespace MessagePack
         /// </summary>
         public int ReadMapHeader()
         {
-            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
+            ThrowInsufficientBufferUnless(this.TryReadMapHeader(out int count));
+            return count;
+        }
 
-            int count;
+        /// <summary>
+        /// Read a map header from
+        /// <see cref="MessagePackCode.Map16"/>,
+        /// <see cref="MessagePackCode.Map32"/>, or
+        /// some built-in code between <see cref="MessagePackCode.MinFixMap"/> and <see cref="MessagePackCode.MaxFixMap"/>.
+        /// </summary>
+        private bool TryReadMapHeader(out int count)
+        {
+            count = -1;
+            if (!this.reader.TryRead(out byte code))
+            {
+                return false;
+            }
+
             switch (code)
             {
                 case MessagePackCode.Map16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortValue));
+                    if (!this.reader.TryReadBigEndian(out short shortValue))
+                    {
+                        return false;
+                    }
+
                     count = unchecked((ushort)shortValue);
                     break;
                 case MessagePackCode.Map32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
+                    if (!this.reader.TryReadBigEndian(out int intValue))
+                    {
+                        return false;
+                    }
+
                     count = intValue;
                     break;
                 default:
@@ -370,10 +395,10 @@ namespace MessagePack
             // Formatters that know each element is larger can double-check our work.
             if (count * 2 > this.reader.Remaining)
             {
-                ThrowNotEnoughBytesException();
+                return false;
             }
 
-            return count;
+            return true;
         }
 
         /// <summary>
@@ -724,7 +749,17 @@ namespace MessagePack
         /// <returns>The extension header.</returns>
         public ExtensionHeader ReadExtensionFormatHeader()
         {
-            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
+            ThrowInsufficientBufferUnless(this.TryReadExtensionFormatHeader(out ExtensionHeader header));
+            return header;
+        }
+
+        private bool TryReadExtensionFormatHeader(out ExtensionHeader extensionHeader)
+        {
+            extensionHeader = default;
+            if (!this.reader.TryRead(out byte code))
+            {
+                return false;
+            }
 
             uint length;
             switch (code)
@@ -745,23 +780,40 @@ namespace MessagePack
                     length = 16;
                     break;
                 case MessagePackCode.Ext8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteLength));
+                    if (!this.reader.TryRead(out byte byteLength))
+                    {
+                        return false;
+                    }
+
                     length = byteLength;
                     break;
                 case MessagePackCode.Ext16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortLength));
+                    if (!this.reader.TryReadBigEndian(out short shortLength))
+                    {
+                        return false;
+                    }
+
                     length = unchecked((ushort)shortLength);
                     break;
                 case MessagePackCode.Ext32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intLength));
+                    if (!this.reader.TryReadBigEndian(out int intLength))
+                    {
+                        return false;
+                    }
+
                     length = unchecked((uint)intLength);
                     break;
                 default:
                     throw ThrowInvalidCode(code);
             }
 
-            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte typeCode));
-            return new ExtensionHeader(unchecked((sbyte)typeCode), length);
+            if (!this.reader.TryRead(out byte typeCode))
+            {
+                return false;
+            }
+
+            extensionHeader = new ExtensionHeader(unchecked((sbyte)typeCode), length);
+            return true;
         }
 
         /// <summary>
@@ -940,23 +992,21 @@ namespace MessagePack
             return value;
         }
 
-        private void ReadNextArray()
-        {
-            int count = this.ReadArrayHeader();
-            for (int i = 0; i < count; i++)
-            {
-                this.Skip();
-            }
-        }
+        private bool TryReadNextArray() => this.TryReadArrayHeader(out int count) && this.TrySkip(count);
 
-        private void ReadNextMap()
+        private bool TryReadNextMap() => this.TryReadMapHeader(out int count) && this.TrySkip(count * 2);
+
+        private bool TrySkip(int count)
         {
-            int count = this.ReadMapHeader();
             for (int i = 0; i < count; i++)
             {
-                this.Skip(); // key
-                this.Skip(); // value
+                if (!this.TrySkip())
+                {
+                    return false;
+                }
             }
+
+            return true;
         }
     }
 }
