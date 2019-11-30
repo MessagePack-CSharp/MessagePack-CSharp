@@ -213,16 +213,42 @@ namespace MessagePack.Formatters
                 }
                 else
                 {
-                    int count = this.GetCountEnumerateIfNecessary(value);
-                    writer.WriteArrayHeader(count);
-
-                    // Unity's foreach struct enumerator causes boxing so iterate manually.
-                    using (var e = this.GetSourceEnumerator(value))
+                    // knows count or not.
+                    var seqCount = this.GetCount(value);
+                    if (seqCount != null)
                     {
-                        while (e.MoveNext())
+                        writer.WriteArrayHeader(seqCount.Value);
+
+                        // Unity's foreach struct enumerator causes boxing so iterate manually.
+                        using (var e = this.GetSourceEnumerator(value))
                         {
-                            writer.CancellationToken.ThrowIfCancellationRequested();
-                            formatter.Serialize(ref writer, e.Current, options);
+                            while (e.MoveNext())
+                            {
+                                writer.CancellationToken.ThrowIfCancellationRequested();
+                                formatter.Serialize(ref writer, e.Current, options);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        using (var scratchRental = SequencePool.Shared.Rent())
+                        {
+                            var scratch = scratchRental.Value;
+                            MessagePackWriter scratchWriter = writer.Clone(scratch);
+                            var count = 0;
+                            using (var e = this.GetSourceEnumerator(value))
+                            {
+                                while (e.MoveNext())
+                                {
+                                    writer.CancellationToken.ThrowIfCancellationRequested();
+                                    count++;
+                                    formatter.Serialize(ref scratchWriter, e.Current, options);
+                                }
+                            }
+
+                            scratchWriter.Flush();
+                            writer.WriteArrayHeader(count);
+                            writer.WriteRaw(scratch.AsReadOnlySequence);
                         }
                     }
                 }
@@ -281,24 +307,6 @@ namespace MessagePack.Formatters
         protected abstract void Add(TIntermediate collection, int index, TElement value, MessagePackSerializerOptions options);
 
         protected abstract TCollection Complete(TIntermediate intermediateCollection);
-
-        private int GetCountEnumerateIfNecessary(TCollection sequence)
-        {
-            int? count = this.GetCount(sequence);
-            if (!count.HasValue)
-            {
-                count = 0;
-                using (var e = this.GetSourceEnumerator(sequence))
-                {
-                    while (e.MoveNext())
-                    {
-                        count++;
-                    }
-                }
-            }
-
-            return count.Value;
-        }
     }
 
     public abstract class CollectionFormatterBase<TElement, TIntermediate, TCollection> : CollectionFormatterBase<TElement, TIntermediate, IEnumerator<TElement>, TCollection>
