@@ -32,7 +32,7 @@ var deserializedGraph = MessagePackSerializer.Deserialize<MyType>(msgpack, Stand
 If you want to combine a particular resolver with other options changes (e.g. enabling LZ4 compression), you may do that too:
 
 ```cs
-var options = StandardResolverAllowPrivate.Options.WithLZ4Compression(true);
+var options = StandardResolverAllowPrivate.Options.WithCompression(MessagePackCompression.Lz4BlockArray);
 var msgpack = MessagePackSerializer.Serialize(objectGraph, options);
 var deserializedGraph = MessagePackSerializer.Deserialize<MyType>(msgpack, options);
 ```
@@ -41,7 +41,7 @@ An equivalent options instance can be created manually:
 
 ```cs
 var options = MessagePackSerializerOptions.Standard
-    .WithLZ4Compression(true)
+    .WithCompression(MessagePackCompression.Lz4BlockArray)
     .WithResolver(StandardResolverAllowPrivate.Instance);
 ```
 
@@ -95,14 +95,18 @@ The method `SerializeToJson` translates an object graph to JSON.
 #### LZ4MessagePackSerializer
 
 The `LZ4MessagePackSerializer` class has been removed.
-Instead, use `MessagePackSerializer` and pass in a `MessagePackSerializerOptions` with `UseLZ4Compression` set to true.
+Instead, use `MessagePackSerializer` and pass in a `MessagePackSerializerOptions` with `WithCompression` set to `MessagePackCompression.Lz4Block` or `MessagePackCompression.Lz4BlockArray`.
 
 For example, make this change:
 
 ```diff
 -byte[] buffer = LZ4MessagePackSerializer.Serialize("hi");
-+byte[] buffer = MessagePackSerializer.Serialize("hi", MessagePackSerializerOptions.LZ4Standard);
++static readonly lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
++byte[] buffer = MessagePackSerializer.Serialize("hi", lz4Options);
 ```
+
+`Lz4Block` is same as v1 LZ4MessagePackSerializer. `Lz4BlockArray` is new compression mode of v2.  Regardless of which Lz4 option is set at the deserialization, both data can be deserialized. For example, when the option is `Lz4BlockArray`, binary data of both `Lz4Block` and `Lz4BlockArray` can be deserialized.
+
 
 ### Thrown exceptions
 

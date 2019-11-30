@@ -616,35 +616,19 @@ MessagePack is a fast and *compact* format but it is not compression. [LZ4](http
 MessagePack for C# has built-in LZ4 support. You can activate it using a modified options object and passing it into an API like this:
 
 ```cs
-var lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+var lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
 MessagePackSerializer.Serialize(obj, lz4Options);
 ```
 
-Builtin support is special, I've created serialize-compression pipeline and special tuned for the pipeline so share the working memory, don't allocate, don't resize until finished.
+`MessagePackCompression` has two modes, `Lz4Block` and `Lz4BlockArray`. Neither is a simple binary LZ4 compression, but a special compression integrated into the serialization pipeline, using MsgPack's ExtCode(`Lz4BlockArray(98)` or `Lz4Block(99)`). Therefore, it is not compatible with compression in other languages.
 
-Serialized binary is not simply compressed lz4 binary. Serialized binary is valid MessagePack binary used ext-format and custom typecode(99).
+`Lz4Block` compresses an entire msgpack sequence as a single lz4 block format. This is the simple compression that achieves best compression ratio, at the cost of copying the entire sequence when necessary to get contiguous memory.
 
-```csharp
-var array = Enumerable.Range(1, 100).Select(x => new MyClass { Age = 5, FirstName = "foo", LastName = "bar" }).ToArray();
+`Lz4BlockArray` compresses an entire msgpack sequence as a array of lz4 block format. This is compressed/decompressed in chunks that do not consume LOH, but the compression ratio is slightly sacrificed.
 
-// Use lz4Options instead of default
-var lz4Bytes = MessagePackSerializer.Serialize(array, lz4Options);
-var mc2 = MessagePackSerializer.Deserialize<MyClass[]>(lz4Bytes, lz4Options);
+We're recommend to use `Lz4BlockArray` as default when use compression.
 
-// you can dump lz4 message pack
-// [[5,"hoge","huga"],[5,"hoge","huga"],....]
-var json = MessagePackSerializer.ConvertToJson(lz4Bytes, lz4Options);
-Console.WriteLine(json);
-
-// lz4Bytes is valid MessagePack, it is using ext-format( [TypeCode:99, SourceLength|CompressedBinary] )
-// [99,"0gAAA+vf3ABkkwWjZm9vo2JhcgoA////yVBvo2Jhcg=="]
-var rawJson = MessagePackSerializer.ConvertToJson(lz4Bytes);
-Console.WriteLine(rawJson);
-```
-
-Built-in LZ4 support uses primitive LZ4 API(LZ4 Block Format). The LZ4 API is more efficient if you know the size of original source length. Therefore, size is written as a header to the extension payload as a msgpack Int32 value. To decompress with a different LZ4 implementation you may need to read or manually seek past this length header.
-
-If target binary size under 64 bytes, LZ4MessagePackSerializer does not compress to optimize small size serialization.
+Regardless of which Lz4 option is set at the deserialization, both data can be deserialized. For example, when the option is `Lz4BlockArray`, binary data of both `Lz4Block` and `Lz4BlockArray` can be deserialized. Neither can be expanded if the option is set to `None`.
 
 ### Attributions
 
@@ -799,6 +783,21 @@ Also, DateTime is serialized using the MessagePack timestamp format. By using th
 `MessagePackSerializer.Serialize` returns `byte[]` in default. The final `byte[]` is copied from an internal buffer pool. That is an extra cost.  You can use `IBufferWriter<T>` or `Stream` API, it writes buffer directly. If you want to require a buffer pool outside of serializer, you should implement custom `IBufferWriter<byte>`.
 
 In deserialization, `MessagePackSerializer.Deserialize(ReadOnlyMemory<byte> buffer)` is better than `Deserialize(Stream stream)` overload. This is because the overload of Stream starts reading the data, generating `ReadOnlySequence<byte>`, and then starting deserialization.
+
+### Choose compression
+
+Compression is generally effective when there are duplicate data. In MessagePack, StringKey(Contractless) arrays can be compressed efficiently because compression can be applied to many duplicate property name. But IntKey is not as effective as StringKey.
+
+This is the sample data of performance.
+
+|         Serializer |      Mean |  DataSize |
+|------------------- |----------:|----------:|
+|             IntKey |  2.941 us |  469.00 B |
+|        IntKey(Lz4) |  3.449 us |  451.00 B |
+|          StringKey |  4.340 us | 1023.00 B |
+|     StringKey(Lz4) |  5.469 us |  868.00 B |
+
+IntKey(Lz4) is not effectively compressed, but performance is degraded. On the other hand, StringKey can be expected to have a sufficient effect. However, this is an example. Compression is effective and sometimes shrinks more, sometimes not. There are also cases in which compression-enabled data exists in the value (such as long strings). It is important to verify the actual type and data.
 
 ## Extensions
 
@@ -1220,7 +1219,8 @@ MessagePack for C# already used some messagepack ext type codes, be careful to u
 | 37 | Int[] | for Unity, UnsafeBlitFormatter |
 | 38 | Float[] | for Unity, UnsafeBlitFormatter |
 | 39 | Double[] | for Unity, UnsafeBlitFormatter |
-| 99 | All | LZ4MessagePackSerializer |
+| 98 | All | MessagePackCompression.Lz4BlockArray |
+| 99 | All | MessagePackCompression.Lz4Block |
 | 100 | object | TypelessFormatter |
 
 ## Unity support
