@@ -76,6 +76,9 @@ namespace MessagePack.Formatters
             typeof(Double?),
         };
 
+        //ForceSizePrimitiveObjectResolver.Instance,
+        //ContractlessStandardResolverAllowPrivate.Instance);
+
         // mscorlib or System.Private.CoreLib
         private static readonly bool IsMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
 
@@ -135,7 +138,7 @@ namespace MessagePack.Formatters
 
             if (typeName == null)
             {
-                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref writer, value, options);
+                DynamicObjectTypeFallbackFormatter.Instance.Serialize(ref writer, value, options);
                 return;
             }
 
@@ -228,7 +231,7 @@ namespace MessagePack.Formatters
             }
 
             // fallback
-            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Deserialize(ref reader, options);
+            return DynamicObjectTypeFallbackFormatter.Instance.Deserialize(ref reader, options);
         }
 
         /// <summary>
