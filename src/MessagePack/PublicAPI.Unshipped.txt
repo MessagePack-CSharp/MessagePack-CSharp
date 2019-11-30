@@ -504,7 +504,6 @@ MessagePack.MessagePackCompression
 MessagePack.MessagePackCompression.Lz4Block = 1 -> MessagePack.MessagePackCompression
 MessagePack.MessagePackCompression.Lz4BlockArray = 2 -> MessagePack.MessagePackCompression
 MessagePack.MessagePackCompression.None = 0 -> MessagePack.MessagePackCompression
-MessagePack.MessagePackCompressionExtensions
 MessagePack.MessagePackRange
 MessagePack.MessagePackReader
 MessagePack.MessagePackReader.CancellationToken.get -> System.Threading.CancellationToken
@@ -814,7 +813,6 @@ static MessagePack.Internal.UnsafeMemory64.WriteRaw8(ref MessagePack.MessagePack
 static MessagePack.Internal.UnsafeMemory64.WriteRaw9(ref MessagePack.MessagePackWriter writer, System.ReadOnlySpan<byte> src) -> void
 static MessagePack.MessagePackCode.ToFormatName(byte code) -> string
 static MessagePack.MessagePackCode.ToMessagePackType(byte code) -> MessagePack.MessagePackType
-static MessagePack.MessagePackCompressionExtensions.IsCompression(this MessagePack.MessagePackCompression compression) -> bool
 static MessagePack.MessagePackSerializer.ConvertFromJson(System.IO.TextReader reader, ref MessagePack.MessagePackWriter writer, MessagePack.MessagePackSerializerOptions options = null) -> void
 static MessagePack.MessagePackSerializer.ConvertFromJson(string str, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.ConvertFromJson(string str, ref MessagePack.MessagePackWriter writer, MessagePack.MessagePackSerializerOptions options = null) -> void
