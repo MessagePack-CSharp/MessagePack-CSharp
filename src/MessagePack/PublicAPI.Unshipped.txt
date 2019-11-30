@@ -96,7 +96,6 @@ MessagePack.Formatters.DoubleFormatter.Deserialize(ref MessagePack.MessagePackRe
 MessagePack.Formatters.DoubleFormatter.Serialize(ref MessagePack.MessagePackWriter writer, double value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.DynamicObjectTypeFallbackFormatter
 MessagePack.Formatters.DynamicObjectTypeFallbackFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> object
-MessagePack.Formatters.DynamicObjectTypeFallbackFormatter.DynamicObjectTypeFallbackFormatter(params MessagePack.IFormatterResolver[] innerResolvers) -> void
 MessagePack.Formatters.DynamicObjectTypeFallbackFormatter.Serialize(ref MessagePack.MessagePackWriter writer, object value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.EnumAsStringFormatter<T>
 MessagePack.Formatters.EnumAsStringFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> T
@@ -877,6 +876,7 @@ static readonly MessagePack.Formatters.DateTimeOffsetFormatter.Instance -> Messa
 static readonly MessagePack.Formatters.DecimalFormatter.Instance -> MessagePack.Formatters.DecimalFormatter
 static readonly MessagePack.Formatters.DoubleArrayFormatter.Instance -> MessagePack.Formatters.DoubleArrayFormatter
 static readonly MessagePack.Formatters.DoubleFormatter.Instance -> MessagePack.Formatters.DoubleFormatter
+static readonly MessagePack.Formatters.DynamicObjectTypeFallbackFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Formatters.ForceByteBlockFormatter.Instance -> MessagePack.Formatters.ForceByteBlockFormatter
 static readonly MessagePack.Formatters.ForceInt16BlockArrayFormatter.Instance -> MessagePack.Formatters.ForceInt16BlockArrayFormatter
 static readonly MessagePack.Formatters.ForceInt16BlockFormatter.Instance -> MessagePack.Formatters.ForceInt16BlockFormatter
@@ -952,10 +952,8 @@ static readonly MessagePack.Nil.Default -> MessagePack.Nil
 static readonly MessagePack.Resolvers.AttributeFormatterResolver.Instance -> MessagePack.Resolvers.AttributeFormatterResolver
 static readonly MessagePack.Resolvers.BuiltinResolver.Instance -> MessagePack.Resolvers.BuiltinResolver
 static readonly MessagePack.Resolvers.ContractlessStandardResolver.Instance -> MessagePack.Resolvers.ContractlessStandardResolver
-static readonly MessagePack.Resolvers.ContractlessStandardResolver.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.ContractlessStandardResolver.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Instance -> MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate
-static readonly MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance -> MessagePack.Resolvers.DynamicContractlessObjectResolver
 static readonly MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate.Instance -> MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate
@@ -975,10 +973,8 @@ static readonly MessagePack.Resolvers.NativeGuidResolver.Instance -> MessagePack
 static readonly MessagePack.Resolvers.PrimitiveObjectResolver.Instance -> MessagePack.Resolvers.PrimitiveObjectResolver
 static readonly MessagePack.Resolvers.PrimitiveObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.StandardResolver.Instance -> MessagePack.Resolvers.StandardResolver
-static readonly MessagePack.Resolvers.StandardResolver.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.StandardResolver.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Instance -> MessagePack.Resolvers.StandardResolverAllowPrivate
-static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.StaticCompositeResolver.Instance -> MessagePack.Resolvers.StaticCompositeResolver
 static readonly MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance -> MessagePack.Resolvers.TypelessContractlessStandardResolver

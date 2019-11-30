@@ -20,6 +20,12 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class TypelessObjectResolver : IFormatterResolver
     {
+        private static readonly IFormatterResolver[] Resolvers = new IFormatterResolver[]
+        {
+            ForceSizePrimitiveObjectResolver.Instance,
+            ContractlessStandardResolverAllowPrivate.Instance,
+        };
+
         /// <summary>
         /// Backing field for the <see cref="Formatter"/> property.
         /// </summary>
@@ -39,9 +45,23 @@ namespace MessagePack.Resolvers
         /// <inheritdoc />
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return typeof(T) == typeof(object)
-                ? (IMessagePackFormatter<T>)(object)this.Formatter
-                : null;
+            if (typeof(T) == typeof(object))
+            {
+                return (IMessagePackFormatter<T>)(object)this.Formatter;
+            }
+            else
+            {
+                foreach (IFormatterResolver item in Resolvers)
+                {
+                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                    if (f != null)
+                    {
+                        return f;
+                    }
+                }
+
+                return null;
+            }
         }
     }
 
@@ -124,51 +144,6 @@ namespace MessagePack.Resolvers
                 return FormatterMap.TryGetValue(type, out formatter)
                     ? formatter
                     : null;
-            }
-        }
-    }
-
-    internal sealed class TypelessFormatterFallbackResolver : IFormatterResolver
-    {
-        /// <summary>
-        /// The singleton instance that can be used.
-        /// </summary>
-        public static readonly TypelessFormatterFallbackResolver Instance;
-
-        /// <summary>
-        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
-        /// </summary>
-        public static readonly MessagePackSerializerOptions Options;
-
-        private static readonly IMessagePackFormatter<object> FallbackFormatter = new DynamicObjectTypeFallbackFormatter(
-            ForceSizePrimitiveObjectResolver.Instance,
-            ContractlessStandardResolverAllowPrivateCore.Instance);
-
-        static TypelessFormatterFallbackResolver()
-        {
-            Instance = new TypelessFormatterFallbackResolver();
-            Options = new MessagePackSerializerOptions(Instance);
-        }
-
-        private TypelessFormatterFallbackResolver()
-        {
-        }
-
-        public IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.Formatter;
-        }
-
-        private static class FormatterCache<T>
-        {
-            public static readonly IMessagePackFormatter<T> Formatter;
-
-            static FormatterCache()
-            {
-                if (typeof(T) == typeof(object))
-                {
-                    Formatter = (IMessagePackFormatter<T>)FallbackFormatter;
-                }
             }
         }
     }

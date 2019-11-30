@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -28,6 +27,11 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IMessagePackFormatter<T> GetFormatterWithVerify<T>(this IFormatterResolver resolver)
         {
+            if (resolver is null)
+            {
+                throw new ArgumentNullException(nameof(resolver));
+            }
+
             IMessagePackFormatter<T> formatter;
             try
             {
@@ -57,15 +61,36 @@ namespace MessagePack
 
         private static void Throw(Type t, IFormatterResolver resolver)
         {
-            throw new FormatterNotRegisteredException(t.FullName + " is not registered in this resolver. resolver:" + resolver.GetType().Name);
+            throw new FormatterNotRegisteredException(t.FullName + " is not registered in resolver: " + resolver.GetType());
         }
 
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
+            if (resolver is null)
+            {
+                throw new ArgumentNullException(nameof(resolver));
+            }
+
+            if (type is null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             MethodInfo methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
 
             var formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
             return formatter;
+        }
+
+        internal static object GetFormatterDynamicWithVerify(this IFormatterResolver resolver, Type type)
+        {
+            object result = GetFormatterDynamic(resolver, type);
+            if (result == null)
+            {
+                Throw(type, resolver);
+            }
+
+            return result;
         }
     }
 
