@@ -77,7 +77,7 @@ public class MessagePackLz4_v2 : SerializerBase
     }
 }
 
-public class MsgPack_v2_string_lz4 : SerializerBase
+public class MsgPack_v2_str_lz4 : SerializerBase
 {
     private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions Options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance).WithCompression(newmsgpack::MessagePack.MessagePackCompression.Lz4BlockArray);
 
