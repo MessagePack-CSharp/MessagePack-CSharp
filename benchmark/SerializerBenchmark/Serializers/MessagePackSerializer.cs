@@ -120,7 +120,9 @@ public class OptimizedResolver : newmsgpack::MessagePack.IFormatterResolver
         newmsgpack::MessagePack.Resolvers.StandardResolver.Instance,
     };
 
-    private OptimizedResolver() { }
+    private OptimizedResolver()
+    {
+    }
 
     public newmsgpack::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
     {
