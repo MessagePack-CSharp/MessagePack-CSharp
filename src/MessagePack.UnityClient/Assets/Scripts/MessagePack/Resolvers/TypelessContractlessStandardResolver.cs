@@ -41,7 +41,7 @@ namespace MessagePack.Resolvers
             DynamicObjectResolver.Instance, // Try Object
 #endif
             DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
-            new TypelessObjectResolver(),
+            TypelessObjectResolver.Instance,
         };
 
         static TypelessContractlessStandardResolver()

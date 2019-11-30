@@ -20,26 +20,16 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class TypelessObjectResolver : IFormatterResolver
     {
+        public static readonly IFormatterResolver Instance = new TypelessObjectResolver();
+
         private static readonly IFormatterResolver[] Resolvers = new IFormatterResolver[]
         {
             ForceSizePrimitiveObjectResolver.Instance,
             ContractlessStandardResolverAllowPrivate.Instance,
         };
 
-        /// <summary>
-        /// Backing field for the <see cref="Formatter"/> property.
-        /// </summary>
-        private TypelessFormatter formatter = new TypelessFormatter();
-
-        /// <summary>
-        /// Gets or sets the <see cref="TypelessFormatter"/> used when serializing/deserializing values typed as <see cref="object"/>/.
-        /// </summary>
-        /// <value>A instance of a formatter. Never null.</value>
-        /// <exception cref="ArgumentNullException">Thrown if assigned a value of null.</exception>
-        public TypelessFormatter Formatter
+        private TypelessObjectResolver()
         {
-            get => this.formatter;
-            set => this.formatter = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <inheritdoc />
@@ -47,7 +37,7 @@ namespace MessagePack.Resolvers
         {
             if (typeof(T) == typeof(object))
             {
-                return (IMessagePackFormatter<T>)(object)this.Formatter;
+                return (IMessagePackFormatter<T>)TypelessFormatter.Instance;
             }
             else
             {
