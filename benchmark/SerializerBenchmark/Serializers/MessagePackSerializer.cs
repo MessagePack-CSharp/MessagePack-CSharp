@@ -34,6 +34,19 @@ public class MessagePack_v2 : SerializerBase
     }
 }
 
+public class MsgPack_v1_string : SerializerBase
+{
+    public override T Deserialize<T>(object input)
+    {
+        return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<T>((byte[])input, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+    }
+
+    public override object Serialize<T>(T input)
+    {
+        return oldmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+    }
+}
+
 public class MsgPack_v2_string : SerializerBase
 {
     private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions Options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(newmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
@@ -74,6 +87,19 @@ public class MessagePackLz4_v2 : SerializerBase
     public override object Serialize<T>(T input)
     {
         return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, LZ4BlockArray);
+    }
+}
+
+public class MsgPack_v1_str_lz4 : SerializerBase
+{
+    public override T Deserialize<T>(object input)
+    {
+        return oldmsgpack::MessagePack.LZ4MessagePackSerializer.Deserialize<T>((byte[])input, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+    }
+
+    public override object Serialize<T>(T input)
+    {
+        return oldmsgpack::MessagePack.LZ4MessagePackSerializer.Serialize<T>(input, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
     }
 }
 

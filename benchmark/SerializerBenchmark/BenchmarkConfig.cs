@@ -100,6 +100,7 @@ namespace Benchmark
                 {
                     var instance = Activator.CreateInstance(mi.DeclaringType);
                     mi.DeclaringType.GetField("Serializer").SetValue(instance, benchmarkCase.Parameters[0].Value);
+                    mi.DeclaringType.GetMethod("Setup").Invoke(instance, null);
 
                     var bytes = (byte[])mi.Invoke(instance, null);
                     return ToHumanReadableSize(bytes.Length);

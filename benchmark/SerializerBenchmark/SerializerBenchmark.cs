@@ -1096,16 +1096,20 @@ namespace Benchmark
         [ParamsSource(nameof(Serializers))]
         public SerializerBase Serializer;
 
+        private bool isContractless;
+
         // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),
             new MessagePack_v2(),
+            new MsgPack_v2_opt(),
             new MessagePackLz4_v1(),
             new MessagePackLz4_v2(),
-            new MsgPack_v2_opt(),
-            // new MsgPack_v2_string(),
-            // new MsgPack_v2_str_lz4(),
+            new MsgPack_v1_string(),
+            new MsgPack_v2_string(),
+            new MsgPack_v1_str_lz4(),
+            new MsgPack_v2_str_lz4(),
             new ProtobufNet(),
             new JsonNet(),
             new BinaryFormatter_(),
@@ -1127,6 +1131,8 @@ namespace Benchmark
 
         // models
         protected static readonly Benchmark.Models.Answer AnswerInput = ExpressionTreeFixture.Create<Benchmark.Models.Answer>();
+        // not same data so does not gurantee correctly.
+        protected static readonly Benchmark.Models.Answer2 Answer2Input = ExpressionTreeFixture.Create<Benchmark.Models.Answer2>();
 
         private object IntOutput;
         private object AnswerOutput;
@@ -1134,22 +1140,53 @@ namespace Benchmark
         [GlobalSetup]
         public void Setup()
         {
+            this.isContractless = (Serializer is MsgPack_v1_string) || (Serializer is MsgPack_v2_string) || (Serializer is MsgPack_v1_str_lz4) || (Serializer is MsgPack_v2_str_lz4);
+
             // primitives
             this.IntOutput = this.Serializer.Serialize(IntInput);
 
             // models
-            this.AnswerOutput = this.Serializer.Serialize(AnswerInput);
+            if (isContractless)
+            {
+                this.AnswerOutput = this.Serializer.Serialize(Answer2Input);
+            }
+            else
+            {
+                this.AnswerOutput = this.Serializer.Serialize(AnswerInput);
+            }
         }
 
         // Serialize
-        [Benchmark] public object _PrimitiveIntSerialize() => this.Serializer.Serialize(IntInput);
+        /* [Benchmark] public object _PrimitiveIntSerialize() => this.Serializer.Serialize(IntInput); */
 
-        [Benchmark] public object AnswerSerialize() => this.Serializer.Serialize(AnswerInput);
+        [Benchmark]
+        public object AnswerSerialize()
+        {
+            if (isContractless)
+            {
+                return this.Serializer.Serialize(Answer2Input);
+            }
+            else
+            {
+                return this.Serializer.Serialize(AnswerInput);
+            }
+        }
 
         // Deserialize
-        [Benchmark] public Int32 _PrimitiveIntDeserialize() => this.Serializer.Deserialize<Int32>(this.IntOutput);
+        /* [Benchmark] public Int32 _PrimitiveIntDeserialize() => this.Serializer.Deserialize<Int32>(this.IntOutput); */
 
-        [Benchmark] public Answer AnswerDeserialize() => this.Serializer.Deserialize<Answer>(this.AnswerOutput);
+        [Benchmark]
+        public object AnswerDeserialize()
+        {
+            if (isContractless)
+            {
+                return this.Serializer.Deserialize<Answer2>(this.AnswerOutput);
+            }
+            else
+            {
+                return this.Serializer.Deserialize<Answer>(this.AnswerOutput);
+            }
+        }
     }
 
     [Config(typeof(BenchmarkConfig))]
