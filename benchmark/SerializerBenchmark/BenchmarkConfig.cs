@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Benchmark.Serializers;
 using BenchmarkDotNet.Columns;
@@ -26,7 +27,7 @@ namespace Benchmark
             Job baseConfig = Job.ShortRun.WithIterationCount(1).WithWarmupCount(1);
 
             // Add(baseConfig.With(Runtime.Clr).With(Jit.RyuJit).With(Platform.X64));
-            this.Add(baseConfig.With(Runtime.Core).With(Jit.RyuJit).With(Platform.X64));
+            this.Add(baseConfig.With(CoreRuntime.Core30).With(Jit.RyuJit).With(Platform.X64));
 
             this.Add(MarkdownExporter.GitHub);
             this.Add(CsvExporter.Default);
@@ -34,16 +35,14 @@ namespace Benchmark
 
             this.Add(new DataSizeColumn());
 
-            this.Set(new CustomOrderer());
+            this.Orderer = new CustomOrderer();
         }
 
-        // 0.11.4 has bug of set CustomOrderer https://github.com/dotnet/BenchmarkDotNet/issues/1070
-        // so skip update to 0.11.4.
         public class CustomOrderer : IOrderer
         {
             public bool SeparateLogicalGroups => false;
 
-            public IEnumerable<BenchmarkCase> GetExecutionOrder(BenchmarkCase[] benchmarksCase)
+            public IEnumerable<BenchmarkCase> GetExecutionOrder(ImmutableArray<BenchmarkCase> benchmarksCase)
             {
                 return benchmarksCase;
             }
@@ -53,7 +52,7 @@ namespace Benchmark
                 return benchmarkCase.Descriptor.MethodIndex.ToString();
             }
 
-            public string GetLogicalGroupKey(IConfig config, BenchmarkCase[] allBenchmarksCases, BenchmarkCase benchmarkCase)
+            public string GetLogicalGroupKey(ImmutableArray<BenchmarkCase> allBenchmarksCases, BenchmarkCase benchmarkCase)
             {
                 return null;
             }
@@ -63,7 +62,7 @@ namespace Benchmark
                 return logicalGroups;
             }
 
-            public IEnumerable<BenchmarkCase> GetSummaryOrder(BenchmarkCase[] benchmarksCases, Summary summary)
+            public IEnumerable<BenchmarkCase> GetSummaryOrder(ImmutableArray<BenchmarkCase> benchmarksCases, Summary summary)
             {
                 return benchmarksCases
                     .OrderBy(x => x.Descriptor.WorkloadMethod.Name)
@@ -94,7 +93,7 @@ namespace Benchmark
                 return this.GetValue(summary, benchmarkCase, null);
             }
 
-            public string GetValue(Summary summary, BenchmarkCase benchmarkCase, ISummaryStyle style)
+            public string GetValue(Summary summary, BenchmarkCase benchmarkCase, SummaryStyle style)
             {
                 System.Reflection.MethodInfo mi = benchmarkCase.Descriptor.WorkloadMethod;
                 if (mi.Name.Contains("Serialize"))
