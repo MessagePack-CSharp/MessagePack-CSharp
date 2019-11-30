@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using Nerdbank.Streams;
 
@@ -12,6 +13,15 @@ namespace MessagePack
     /// </summary>
     internal class SequencePool
     {
+        /// <summary>
+        /// The value to use for <see cref="Sequence{T}.MinimumSpanLength"/>.
+        /// </summary>
+        /// <remarks>
+        /// Individual users that want a different value for this can modify the setting on the rented <see cref="Sequence{T}"/>
+        /// or by supplying their own <see cref="IBufferWriter{T}" />.
+        /// </remarks>
+        private const int MinimumSpanLength = 64 * 1024;
+
         private readonly int maxSize;
         private readonly Stack<Sequence<byte>> pool = new Stack<Sequence<byte>>();
 
@@ -39,7 +49,7 @@ namespace MessagePack
                 }
             }
 
-            return new Rental(this, new Sequence<byte> { MinimumSpanLength = 4096 });
+            return new Rental(this, new Sequence<byte> { MinimumSpanLength = MinimumSpanLength });
         }
 
         private void Return(Sequence<byte> value)
@@ -49,6 +59,9 @@ namespace MessagePack
             {
                 if (this.pool.Count < this.maxSize)
                 {
+                    // Reset to preferred settings in case the renter changed them.
+                    value.MinimumSpanLength = MinimumSpanLength;
+
                     this.pool.Push(value);
                 }
             }
