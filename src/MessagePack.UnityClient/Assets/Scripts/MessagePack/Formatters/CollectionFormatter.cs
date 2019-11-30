@@ -243,8 +243,9 @@ namespace MessagePack.Formatters
                     }
                     else
                     {
-                        using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                        using (var scratchRental = SequencePool.Shared.Rent())
                         {
+                            var scratch = scratchRental.Value;
                             MessagePackWriter scratchWriter = writer.Clone(scratch);
                             var count = 0;
                             TEnumerator e = this.GetSourceEnumerator(value);

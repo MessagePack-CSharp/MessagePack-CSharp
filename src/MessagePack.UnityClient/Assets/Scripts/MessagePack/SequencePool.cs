@@ -14,6 +14,15 @@ namespace MessagePack
     internal class SequencePool
     {
         /// <summary>
+        /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
+        /// </summary>
+        /// <remarks>
+        /// We use a <see cref="maxSize"/> that allows every processor to be involved in messagepack serialization concurrently,
+        /// plus one nested serialization per processor (since LZ4 and sometimes other nested serializations may exist).
+        /// </remarks>
+        internal static readonly SequencePool Shared = new SequencePool(Environment.ProcessorCount * 2);
+
+        /// <summary>
         /// The value to use for <see cref="Sequence{T}.MinimumSpanLength"/>.
         /// </summary>
         /// <remarks>
@@ -28,6 +37,14 @@ namespace MessagePack
 
         private readonly int maxSize;
         private readonly Stack<Sequence<byte>> pool = new Stack<Sequence<byte>>();
+
+        /// <summary>
+        /// The array pool which we share with all <see cref="Sequence{T}"/> objects created by this <see cref="SequencePool"/> instance.
+        /// </summary>
+        /// <devremarks>
+        /// We allow 100 arrays to be shared (instead of the default 50) and reduce the max array length from the default 1MB to something more reasonable for our expected use.
+        /// </devremarks>
+        private readonly ArrayPool<byte> arrayPool = ArrayPool<byte>.Create(80 * 1024, 100);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SequencePool"/> class.
@@ -53,7 +70,9 @@ namespace MessagePack
                 }
             }
 
-            return new Rental(this, new Sequence<byte> { MinimumSpanLength = MinimumSpanLength });
+            // Configure the newly created object to share a common array pool with the other instances,
+            // otherwise each one will have its own ArrayPool which would likely waste a lot of memory.
+            return new Rental(this, new Sequence<byte>(this.arrayPool) { MinimumSpanLength = MinimumSpanLength });
         }
 
         private void Return(Sequence<byte> value)

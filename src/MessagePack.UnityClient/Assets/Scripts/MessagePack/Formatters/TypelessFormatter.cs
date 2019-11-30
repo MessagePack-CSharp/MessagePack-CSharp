@@ -182,15 +182,15 @@ namespace MessagePack.Formatters
             }
 
             // mark will be written at the end, when size is known
-            using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+            using (var scratchRental = SequencePool.Shared.Rent())
             {
-                MessagePackWriter scratchWriter = writer.Clone(scratch);
+                MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                 scratchWriter.WriteString(typeName);
                 serializeMethod(formatter, ref scratchWriter, value, options);
                 scratchWriter.Flush();
 
                 // mark as extension with code 100
-                writer.WriteExtensionFormat(new ExtensionResult((sbyte)ThisLibraryExtensionTypeCodes.TypelessFormatter, scratch.AsReadOnlySequence));
+                writer.WriteExtensionFormat(new ExtensionResult((sbyte)ThisLibraryExtensionTypeCodes.TypelessFormatter, scratchRental.Value));
             }
         }
 

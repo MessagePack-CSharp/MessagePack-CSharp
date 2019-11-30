@@ -35,15 +35,6 @@ namespace MessagePack
         public static MessagePackSerializerOptions DefaultOptions { get; set; } = MessagePackSerializerOptions.Standard;
 
         /// <summary>
-        /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
-        /// </summary>
-        /// <remarks>
-        /// We use a value that allows every processor to be involved in messagepack serialization concurrently,
-        /// plus one nested serialization per processor (since LZ4 and sometimes other nested serializations may exist).
-        /// </remarks>
-        private static readonly SequencePool ReusableSequenceWithMinSize = new SequencePool(Environment.ProcessorCount * 2);
-
-        /// <summary>
         /// A thread-local, recyclable array that may be used for short bursts of code.
         /// </summary>
         [ThreadStatic]
@@ -87,7 +78,7 @@ namespace MessagePack
             {
                 if (options.Compression.IsCompression() && !PrimitiveChecker<T>.IsMessagePackFixedSizePrimitive)
                 {
-                    using (var scratchRental = ReusableSequenceWithMinSize.Rent())
+                    using (var scratchRental = SequencePool.Shared.Rent())
                     {
                         var scratch = scratchRental.Value;
                         MessagePackWriter scratchWriter = writer.Clone(scratch);
@@ -127,7 +118,7 @@ namespace MessagePack
                 scratchArray = array = new byte[65536];
             }
 
-            var msgpackWriter = new MessagePackWriter(ReusableSequenceWithMinSize, array)
+            var msgpackWriter = new MessagePackWriter(SequencePool.Shared, array)
             {
                 CancellationToken = cancellationToken,
             };
@@ -146,7 +137,7 @@ namespace MessagePack
         public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            using (SequencePool.Rental sequenceRental = ReusableSequenceWithMinSize.Rent())
+            using (SequencePool.Rental sequenceRental = SequencePool.Shared.Rent())
             {
                 Serialize<T>(sequenceRental.Value, value, options, cancellationToken);
 
@@ -177,7 +168,7 @@ namespace MessagePack
         public static async Task SerializeAsync<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            using (SequencePool.Rental sequenceRental = ReusableSequenceWithMinSize.Rent())
+            using (SequencePool.Rental sequenceRental = SequencePool.Shared.Rent())
             {
                 Serialize<T>(sequenceRental.Value, value, options, cancellationToken);
 
@@ -230,7 +221,7 @@ namespace MessagePack
             {
                 if (options.Compression.IsCompression())
                 {
-                    using (var msgPackUncompressedRental = ReusableSequenceWithMinSize.Rent())
+                    using (var msgPackUncompressedRental = SequencePool.Shared.Rent())
                     {
                         var msgPackUncompressed = msgPackUncompressedRental.Value;
                         if (TryDecompress(ref reader, msgPackUncompressed))
@@ -325,7 +316,7 @@ namespace MessagePack
                 return result;
             }
 
-            using (var sequenceRental = ReusableSequenceWithMinSize.Rent())
+            using (var sequenceRental = SequencePool.Shared.Rent())
             {
                 var sequence = sequenceRental.Value;
                 try
@@ -369,7 +360,7 @@ namespace MessagePack
                 return result;
             }
 
-            using (var sequenceRental = ReusableSequenceWithMinSize.Rent())
+            using (var sequenceRental = SequencePool.Shared.Rent())
             {
                 var sequence = sequenceRental.Value;
                 try
