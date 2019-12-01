@@ -1247,7 +1247,7 @@ Here is sample of configuration.
 StaticCompositeResolver.Instance.Register(
     MessagePack.Unity.UnityResolver.Instance,
     MessagePack.Unity.Extension.UnityBlitWithPrimitiveArrayResolver.Instance,
-    MessagePack.Resolvers.StandardResolver.Instance,
+    MessagePack.Resolvers.StandardResolver.Instance
 );
 
 var options = MessagePackSerializerOptions.Standard.WithResolver(StaticCompositeResolver.Instance);
@@ -1324,7 +1324,7 @@ By default, `mpc.exe` generates resolver to `MessagePack.Resolvers.GeneratedReso
 StaticCompositeResolver.Instance.Register(new IFormatterResolver[]
 {
     MessagePack.Resolvers.GeneratedResolver.Instance,
-    MessagePack.Resolvers.StandardResolver.Instance,
+    MessagePack.Resolvers.StandardResolver.Instance
 });
 
 // Store it for reuse.
