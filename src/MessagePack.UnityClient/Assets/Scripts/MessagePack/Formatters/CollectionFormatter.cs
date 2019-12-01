@@ -198,12 +198,11 @@ namespace MessagePack.Formatters
             }
             else
             {
-                // Optimize iteration(array is fastest)
-                var array = value as TElement[];
-                if (array != null)
-                {
-                    IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
+                IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
 
+                // Optimize iteration(array is fastest)
+                if (value is TElement[] array)
+                {
                     writer.WriteArrayHeader(array.Length);
 
                     foreach (TElement item in array)
@@ -211,13 +210,9 @@ namespace MessagePack.Formatters
                         writer.CancellationToken.ThrowIfCancellationRequested();
                         formatter.Serialize(ref writer, item, options);
                     }
-
-                    return;
                 }
                 else
                 {
-                    IMessagePackFormatter<TElement> formatter = options.Resolver.GetFormatterWithVerify<TElement>();
-
                     // knows count or not.
                     var seqCount = this.GetCount(value);
                     if (seqCount != null)
@@ -225,8 +220,7 @@ namespace MessagePack.Formatters
                         writer.WriteArrayHeader(seqCount.Value);
 
                         // Unity's foreach struct enumerator causes boxing so iterate manually.
-                        TEnumerator e = this.GetSourceEnumerator(value);
-                        try
+                        using (var e = this.GetSourceEnumerator(value))
                         {
                             while (e.MoveNext())
                             {
@@ -234,21 +228,15 @@ namespace MessagePack.Formatters
                                 formatter.Serialize(ref writer, e.Current, options);
                             }
                         }
-                        finally
-                        {
-                            e.Dispose();
-                        }
-
-                        return;
                     }
                     else
                     {
-                        using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                        using (var scratchRental = SequencePool.Shared.Rent())
                         {
+                            var scratch = scratchRental.Value;
                             MessagePackWriter scratchWriter = writer.Clone(scratch);
                             var count = 0;
-                            TEnumerator e = this.GetSourceEnumerator(value);
-                            try
+                            using (var e = this.GetSourceEnumerator(value))
                             {
                                 while (e.MoveNext())
                                 {
@@ -256,10 +244,6 @@ namespace MessagePack.Formatters
                                     count++;
                                     formatter.Serialize(ref scratchWriter, e.Current, options);
                                 }
-                            }
-                            finally
-                            {
-                                e.Dispose();
                             }
 
                             scratchWriter.Flush();

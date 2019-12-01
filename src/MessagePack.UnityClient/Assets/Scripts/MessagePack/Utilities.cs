@@ -18,12 +18,12 @@ namespace MessagePack
 
         internal static byte[] GetWriterBytes<TArg>(TArg arg, GetWriterBytesAction<TArg> action)
         {
-            using (var sequence = new Sequence<byte>())
+            using (var sequenceRental = SequencePool.Shared.Rent())
             {
-                var writer = new MessagePackWriter(sequence);
+                var writer = new MessagePackWriter(sequenceRental.Value);
                 action(ref writer, arg);
                 writer.Flush();
-                return sequence.AsReadOnlySequence.ToArray();
+                return sequenceRental.Value.AsReadOnlySequence.ToArray();
             }
         }
     }

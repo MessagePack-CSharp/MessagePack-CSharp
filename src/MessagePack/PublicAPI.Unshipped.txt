@@ -96,7 +96,6 @@ MessagePack.Formatters.DoubleFormatter.Deserialize(ref MessagePack.MessagePackRe
 MessagePack.Formatters.DoubleFormatter.Serialize(ref MessagePack.MessagePackWriter writer, double value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.DynamicObjectTypeFallbackFormatter
 MessagePack.Formatters.DynamicObjectTypeFallbackFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> object
-MessagePack.Formatters.DynamicObjectTypeFallbackFormatter.DynamicObjectTypeFallbackFormatter(params MessagePack.IFormatterResolver[] innerResolvers) -> void
 MessagePack.Formatters.DynamicObjectTypeFallbackFormatter.Serialize(ref MessagePack.MessagePackWriter writer, object value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.EnumAsStringFormatter<T>
 MessagePack.Formatters.EnumAsStringFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> T
@@ -417,7 +416,6 @@ MessagePack.Formatters.TwoDimensionalArrayFormatter<T>.TwoDimensionalArrayFormat
 MessagePack.Formatters.TypelessFormatter
 MessagePack.Formatters.TypelessFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> object
 MessagePack.Formatters.TypelessFormatter.Serialize(ref MessagePack.MessagePackWriter writer, object value, MessagePack.MessagePackSerializerOptions options) -> void
-MessagePack.Formatters.TypelessFormatter.TypelessFormatter() -> void
 MessagePack.Formatters.UInt16ArrayFormatter
 MessagePack.Formatters.UInt16ArrayFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> ushort[]
 MessagePack.Formatters.UInt16ArrayFormatter.Serialize(ref MessagePack.MessagePackWriter writer, ushort[] value, MessagePack.MessagePackSerializerOptions options) -> void
@@ -500,6 +498,10 @@ MessagePack.Internal.UnsafeMemory
 MessagePack.Internal.UnsafeMemory32
 MessagePack.Internal.UnsafeMemory64
 MessagePack.MessagePackCode
+MessagePack.MessagePackCompression
+MessagePack.MessagePackCompression.Lz4Block = 1 -> MessagePack.MessagePackCompression
+MessagePack.MessagePackCompression.Lz4BlockArray = 2 -> MessagePack.MessagePackCompression
+MessagePack.MessagePackCompression.None = 0 -> MessagePack.MessagePackCompression
 MessagePack.MessagePackRange
 MessagePack.MessagePackReader
 MessagePack.MessagePackReader.CancellationToken.get -> System.Threading.CancellationToken
@@ -550,14 +552,14 @@ MessagePack.MessagePackSerializer
 MessagePack.MessagePackSerializer.Typeless
 MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.AllowAssemblyVersionMismatch.get -> bool
-MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.IFormatterResolver resolver, bool useLZ4Compression = false) -> void
+MessagePack.MessagePackSerializerOptions.Compression.get -> MessagePack.MessagePackCompression
+MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.IFormatterResolver resolver) -> void
 MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.MessagePackSerializerOptions copyFrom) -> void
 MessagePack.MessagePackSerializerOptions.OldSpec.get -> bool?
 MessagePack.MessagePackSerializerOptions.OmitAssemblyVersion.get -> bool
 MessagePack.MessagePackSerializerOptions.Resolver.get -> MessagePack.IFormatterResolver
-MessagePack.MessagePackSerializerOptions.UseLZ4Compression.get -> bool
 MessagePack.MessagePackSerializerOptions.WithAllowAssemblyVersionMismatch(bool allowAssemblyVersionMismatch) -> MessagePack.MessagePackSerializerOptions
-MessagePack.MessagePackSerializerOptions.WithLZ4Compression(bool useLZ4Compression = true) -> MessagePack.MessagePackSerializerOptions
+MessagePack.MessagePackSerializerOptions.WithCompression(MessagePack.MessagePackCompression compression) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithOldSpec(bool? oldSpec = true) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithOmitAssemblyVersion(bool omitAssemblyVersion) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithResolver(MessagePack.IFormatterResolver resolver) -> MessagePack.MessagePackSerializerOptions
@@ -665,10 +667,7 @@ MessagePack.Resolvers.TypelessContractlessStandardResolver
 MessagePack.Resolvers.TypelessContractlessStandardResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.Resolvers.TypelessContractlessStandardResolver.TypelessContractlessStandardResolver() -> void
 MessagePack.Resolvers.TypelessObjectResolver
-MessagePack.Resolvers.TypelessObjectResolver.Formatter.get -> MessagePack.Formatters.TypelessFormatter
-MessagePack.Resolvers.TypelessObjectResolver.Formatter.set -> void
 MessagePack.Resolvers.TypelessObjectResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
-MessagePack.Resolvers.TypelessObjectResolver.TypelessObjectResolver() -> void
 MessagePack.TinyJsonException
 MessagePack.TinyJsonException.TinyJsonException(string message) -> void
 abstract MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.Add(TIntermediate collection, int index, TElement value, MessagePack.MessagePackSerializerOptions options) -> void
@@ -851,7 +850,6 @@ static MessagePack.MessagePackSerializer.Typeless.Serialize(System.IO.Stream str
 static MessagePack.MessagePackSerializer.Typeless.Serialize(object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.Typeless.Serialize(ref MessagePack.MessagePackWriter writer, object obj, MessagePack.MessagePackSerializerOptions options = null) -> void
 static MessagePack.MessagePackSerializer.Typeless.SerializeAsync(System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task
-static MessagePack.MessagePackSerializerOptions.LZ4Standard.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.MessagePackSerializerOptions.Standard.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.Resolvers.CompositeResolver.Create(System.Collections.Generic.IReadOnlyList<MessagePack.Formatters.IMessagePackFormatter> formatters, System.Collections.Generic.IReadOnlyList<MessagePack.IFormatterResolver> resolvers) -> MessagePack.IFormatterResolver
 static MessagePack.Resolvers.CompositeResolver.Create(params MessagePack.Formatters.IMessagePackFormatter[] formatters) -> MessagePack.IFormatterResolver
@@ -875,6 +873,7 @@ static readonly MessagePack.Formatters.DateTimeOffsetFormatter.Instance -> Messa
 static readonly MessagePack.Formatters.DecimalFormatter.Instance -> MessagePack.Formatters.DecimalFormatter
 static readonly MessagePack.Formatters.DoubleArrayFormatter.Instance -> MessagePack.Formatters.DoubleArrayFormatter
 static readonly MessagePack.Formatters.DoubleFormatter.Instance -> MessagePack.Formatters.DoubleFormatter
+static readonly MessagePack.Formatters.DynamicObjectTypeFallbackFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Formatters.ForceByteBlockFormatter.Instance -> MessagePack.Formatters.ForceByteBlockFormatter
 static readonly MessagePack.Formatters.ForceInt16BlockArrayFormatter.Instance -> MessagePack.Formatters.ForceInt16BlockArrayFormatter
 static readonly MessagePack.Formatters.ForceInt16BlockFormatter.Instance -> MessagePack.Formatters.ForceInt16BlockFormatter
@@ -935,6 +934,7 @@ static readonly MessagePack.Formatters.SingleArrayFormatter.Instance -> MessageP
 static readonly MessagePack.Formatters.SingleFormatter.Instance -> MessagePack.Formatters.SingleFormatter
 static readonly MessagePack.Formatters.StringBuilderFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Text.StringBuilder>
 static readonly MessagePack.Formatters.TimeSpanFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.TimeSpan>
+static readonly MessagePack.Formatters.TypelessFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Formatters.UInt16ArrayFormatter.Instance -> MessagePack.Formatters.UInt16ArrayFormatter
 static readonly MessagePack.Formatters.UInt16Formatter.Instance -> MessagePack.Formatters.UInt16Formatter
 static readonly MessagePack.Formatters.UInt32ArrayFormatter.Instance -> MessagePack.Formatters.UInt32ArrayFormatter
@@ -950,10 +950,8 @@ static readonly MessagePack.Nil.Default -> MessagePack.Nil
 static readonly MessagePack.Resolvers.AttributeFormatterResolver.Instance -> MessagePack.Resolvers.AttributeFormatterResolver
 static readonly MessagePack.Resolvers.BuiltinResolver.Instance -> MessagePack.Resolvers.BuiltinResolver
 static readonly MessagePack.Resolvers.ContractlessStandardResolver.Instance -> MessagePack.Resolvers.ContractlessStandardResolver
-static readonly MessagePack.Resolvers.ContractlessStandardResolver.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.ContractlessStandardResolver.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Instance -> MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate
-static readonly MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance -> MessagePack.Resolvers.DynamicContractlessObjectResolver
 static readonly MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate.Instance -> MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate
@@ -973,14 +971,13 @@ static readonly MessagePack.Resolvers.NativeGuidResolver.Instance -> MessagePack
 static readonly MessagePack.Resolvers.PrimitiveObjectResolver.Instance -> MessagePack.Resolvers.PrimitiveObjectResolver
 static readonly MessagePack.Resolvers.PrimitiveObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.StandardResolver.Instance -> MessagePack.Resolvers.StandardResolver
-static readonly MessagePack.Resolvers.StandardResolver.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.StandardResolver.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Instance -> MessagePack.Resolvers.StandardResolverAllowPrivate
-static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.ObjectFallbackFormatter -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.StaticCompositeResolver.Instance -> MessagePack.Resolvers.StaticCompositeResolver
 static readonly MessagePack.Resolvers.TypelessContractlessStandardResolver.Instance -> MessagePack.Resolvers.TypelessContractlessStandardResolver
 static readonly MessagePack.Resolvers.TypelessContractlessStandardResolver.Options -> MessagePack.MessagePackSerializerOptions
+static readonly MessagePack.Resolvers.TypelessObjectResolver.Instance -> MessagePack.IFormatterResolver
 virtual MessagePack.Formatters.CollectionFormatterBase<TElement, TIntermediate, TEnumerator, TCollection>.GetCount(TCollection sequence) -> int?
 virtual MessagePack.MessagePackSerializerOptions.Clone() -> MessagePack.MessagePackSerializerOptions
 virtual MessagePack.MessagePackSerializerOptions.LoadType(string typeName) -> System.Type

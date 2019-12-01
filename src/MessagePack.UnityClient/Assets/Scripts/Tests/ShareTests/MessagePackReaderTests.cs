@@ -231,6 +231,26 @@ namespace MessagePack.Tests
             AssertIncomplete((ref MessagePackWriter writer) => writer.Write(0xff), (ref MessagePackReader reader) => reader.ReadUInt64());
         }
 
+        [Fact]
+        public void CreatePeekReader()
+        {
+            var cts = new CancellationTokenSource();
+            var reader = new MessagePackReader(StringEncodedAsFixStr) { CancellationToken = cts.Token };
+            reader.ReadRaw(1); // advance to test that the peek reader starts from a non-initial position.
+            var peek = reader.CreatePeekReader();
+
+            // Verify equivalence
+            Assert.Equal(reader.CancellationToken, peek.CancellationToken);
+            Assert.Equal(reader.Position, peek.Position);
+            Assert.Equal(reader.Sequence, peek.Sequence);
+
+            // Verify that advancing the peek reader does not advance the original.
+            var originalPosition = reader.Position;
+            peek.ReadRaw(1);
+            Assert.NotEqual(originalPosition, peek.Position);
+            Assert.Equal(originalPosition, reader.Position);
+        }
+
         private delegate void ReaderOperation(ref MessagePackReader reader);
 
         private delegate T ReadOperation<T>(ref MessagePackReader reader);

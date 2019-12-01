@@ -356,36 +356,39 @@ namespace Sandbox
         ////public int Prop7 { get; set; }
     }
 
+    [MessagePack.MessagePackObject(true)]
+    public class StringKeySerializerTarget2
+    {
+        public int TotalQuestions { get; set; }
+
+        public int TotalUnanswered { get; set; }
+
+        public int QuestionsPerMinute { get; set; }
+
+        public int AnswersPerMinute { get; set; }
+
+        public int TotalVotes { get; set; }
+
+        public int BadgesPerMinute { get; set; }
+
+        public int NewActiveUsers { get; set; }
+
+        public int ApiRevision { get; set; }
+
+        public int Site { get; set; }
+    }
+
     internal class Program
     {
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+
         private static void Main(string[] args)
         {
-            var o = new SimpleIntKeyData()
-            {
-                Prop1 = 100,
-                Prop2 = ByteEnum.C,
-                Prop3 = "abcde",
-                Prop4 = new SimpleStringKeyData
-                {
-                    Prop1 = 99999,
-                    Prop2 = ByteEnum.E,
-                    Prop3 = 3,
-                },
-                Prop5 = new SimpleStructIntKeyData
-                {
-                    X = 100,
-                    Y = 300,
-                    BytesSpecial = new byte[] { 9, 99, 122 },
-                },
-                Prop6 = new SimpleStructStringKeyData
-                {
-                    X = 9999,
-                    Y = new[] { 1, 10, 100 },
-                },
-                BytesSpecial = new byte[] { 1, 4, 6 },
-            };
+            var option = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
+            var data = Enumerable.Range(0, 10000).Select(x => new StringKeySerializerTarget2()).ToArray();
 
-            MessagePackSerializer.Serialize(o);
+            var bin = MessagePackSerializer.Serialize(data, option);
+            Console.WriteLine(bin.Length);
         }
 
         private static void Benchmark<T>(T target)
@@ -396,7 +399,7 @@ namespace Sandbox
             MsgPack.Serialization.SerializationContext msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
             MessagePackSerializer.Serialize(target);
-            MessagePackSerializer.Serialize(target, MessagePackSerializerOptions.LZ4Standard);
+            MessagePackSerializer.Serialize(target, LZ4Standard);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
@@ -432,7 +435,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data3 = MessagePackSerializer.Serialize(target, MessagePackSerializerOptions.LZ4Standard);
+                    data3 = MessagePackSerializer.Serialize(target, LZ4Standard);
                 }
             }
 
@@ -515,7 +518,7 @@ namespace Sandbox
             MessagePackSerializer.Deserialize<T>(data0);
             ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
-            MessagePackSerializer.Deserialize<T>(data3, MessagePackSerializerOptions.LZ4Standard);
+            MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
@@ -541,7 +544,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    MessagePackSerializer.Deserialize<T>(data3, MessagePackSerializerOptions.LZ4Standard);
+                    MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
                 }
             }
 

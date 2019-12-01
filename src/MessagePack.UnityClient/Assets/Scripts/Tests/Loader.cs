@@ -93,7 +93,7 @@ namespace Assets.Scripts.Tests
 
                 new ArrayFormatter<ComplexdUnion.A>(),
                 new ArrayFormatter<ComplexdUnion.A2>(),
-
+                new ArrayFormatter<SharedData.SimpleStringKeyData>(),
 
         },
             new IFormatterResolver[]{

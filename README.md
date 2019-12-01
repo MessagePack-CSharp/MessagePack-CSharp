@@ -167,13 +167,13 @@ public class Sample3
 }
 
 // [10,20]
-Console.WriteLine(MessagePackSerializer.ToJson(new Sample1 { Foo = 10, Bar = 20 }));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample1 { Foo = 10, Bar = 20 }));
 
 // {"foo":10,"bar":20}
-Console.WriteLine(MessagePackSerializer.ToJson(new Sample2 { Foo = 10, Bar = 20 }));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample2 { Foo = 10, Bar = 20 }));
 
 // {"Foo":10}
-Console.WriteLine(MessagePackSerializer.ToJson(new Sample3 { Foo = 10, Bar = 20 }));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new Sample3 { Foo = 10, Bar = 20 }));
 ```
 
 All patterns serialization target are public instance member(field or property). If you want to avoid serialization target, you can add `[IgnoreMember]` to target member.
@@ -195,7 +195,7 @@ public class IntKeySample
 }
 
 // [null,null,null,0,null,null,null,null,null,null,0]
-Console.WriteLine(MessagePackSerializer.ToJson(new IntKeySample()));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(new IntKeySample()));
 ```
 
 I want to use like JSON.NET! I don't want to put attribute! If you think that way, you can use a contractless resolver.
@@ -211,7 +211,7 @@ var data = new ContractlessSample { MyProperty1 = 99, MyProperty2 = 9999 };
 var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
 // {"MyProperty1":99,"MyProperty2":9999}
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // You can set ContractlessStandardResolver as default.
 MessagePackSerializer.SetDefaultResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
@@ -397,7 +397,7 @@ var bin = MessagePackSerializer.Serialize(data);
 
 // Union is serialized to two-length array, [key, object]
 // [1,["FooBar"]]
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 ```
 
 Using Union in Abstract Class, you can use same of interface.
@@ -456,14 +456,14 @@ var objects = new object[] { 1, "aaa", new ObjectFieldType { Anything = 9999 } }
 var bin = MessagePackSerializer.Serialize(objects);
 
 // [1,"aaa",[9999]]
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // Support Anonymous Type Serialize
 var anonType = new { Foo = 100, Bar = "foobar" };
 var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
 
 // {"Foo":100,"Bar":"foobar"}
-Console.WriteLine(MessagePackSerializer.ToJson(bin2));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin2));
 ```
 
 > Unity supports is limited.
@@ -487,7 +487,7 @@ var bin = MessagePackSerializer.Typeless.Serialize(mc);
 
 // binary data is embeded type-assembly information.
 // ["Sandbox.MyClass, Sandbox",10,"hoge","huga"]
-Console.WriteLine(MessagePackSerializer.ToJson(bin));
+Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // can deserialize to MyClass with typeless
 var objModel = MessagePackSerializer.Typeless.Deserialize(bin) as MyClass;
@@ -613,20 +613,27 @@ Extra note, this is serialize benchmark result.
 
 MessagePack is a fast and *compact* format but it is not compression. [LZ4](https://github.com/lz4/lz4) is extremely fast compression algorithm, with MessagePack for C# can achive extremely fast perfrormance and extremely compact binary size!
 
-MessagePack for C# has built-in LZ4 support. You can use `MessagePackSerializerOptions.LZ4Standard` instead of `MessagePackSerializerOptions.Standard`. Builtin support is special, I've created serialize-compression pipeline and special tuned for the pipeline so share the working memory, don't allocate, don't resize until finished.
+MessagePack for C# has built-in LZ4 support. You can activate it using a modified options object and passing it into an API like this:
+
+```cs
+var lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+MessagePackSerializer.Serialize(obj, lz4Options);
+```
+
+Builtin support is special, I've created serialize-compression pipeline and special tuned for the pipeline so share the working memory, don't allocate, don't resize until finished.
 
 Serialized binary is not simply compressed lz4 binary. Serialized binary is valid MessagePack binary used ext-format and custom typecode(99).
 
 ```csharp
-var array= Enumerable.Range(1, 100).Select(x => new MyClass { Age = 5, FirstName = "foo", LastName = "bar" }).ToArray();
+var array = Enumerable.Range(1, 100).Select(x => new MyClass { Age = 5, FirstName = "foo", LastName = "bar" }).ToArray();
 
-// call MessagePackSerializerOptions.LZ4Standard instead of default
-var lz4Bytes = MessagePackSerializer.Serialize(array, MessagePackSerializerOptions.LZ4Standard);
-var mc2 = MessagePackSerializer.Deserialize<MyClass[]>(lz4Bytes, MessagePackSerializerOptions.LZ4Standard);
+// Use lz4Options instead of default
+var lz4Bytes = MessagePackSerializer.Serialize(array, lz4Options);
+var mc2 = MessagePackSerializer.Deserialize<MyClass[]>(lz4Bytes, lz4Options);
 
 // you can dump lz4 message pack
 // [[5,"hoge","huga"],[5,"hoge","huga"],....]
-var json = MessagePackSerializer.ConvertToJson(lz4Bytes, MessagePackSerializerOptions.LZ4Standard);
+var json = MessagePackSerializer.ConvertToJson(lz4Bytes, lz4Options);
 Console.WriteLine(json);
 
 // lz4Bytes is valid MessagePack, it is using ext-format( [TypeCode:99, SourceLength|CompressedBinary] )

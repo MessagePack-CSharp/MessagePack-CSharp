@@ -2,31 +2,31 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using MessagePack.Resolvers;
 
 namespace MessagePack.Formatters
 {
+    /// <summary>
+    /// This formatter can serialize any value whose static type is <see cref="object"/>
+    /// for which another resolver can provide a formatter for the runtime type.
+    /// Its deserialization is limited to forwarding all calls to the <see cref="PrimitiveObjectFormatter"/>.
+    /// </summary>
     public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
     {
+        public static readonly IMessagePackFormatter<object> Instance = new DynamicObjectTypeFallbackFormatter();
+
         private delegate void SerializeMethod(object dynamicFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
 
-        private readonly MessagePack.Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new Internal.ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
+        private static readonly Internal.ThreadsafeTypeKeyHashTable<SerializeMethod> SerializerDelegates = new Internal.ThreadsafeTypeKeyHashTable<SerializeMethod>();
 
-        private readonly IFormatterResolver[] innerResolvers;
-
-        public DynamicObjectTypeFallbackFormatter(params IFormatterResolver[] innerResolvers)
+        private DynamicObjectTypeFallbackFormatter()
         {
-            this.innerResolvers = innerResolvers;
         }
 
         public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
         {
-            if (value == null)
+            if (value is null)
             {
                 writer.WriteNil();
                 return;
@@ -42,56 +42,36 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            KeyValuePair<object, SerializeMethod> formatterAndDelegate;
-            if (!this.serializers.TryGetValue(type, out formatterAndDelegate))
+            object formatter = options.Resolver.GetFormatterDynamicWithVerify(type);
+            if (!SerializerDelegates.TryGetValue(type, out SerializeMethod serializerDelegate))
             {
-                lock (this.serializers)
+                lock (SerializerDelegates)
                 {
-                    if (!this.serializers.TryGetValue(type, out formatterAndDelegate))
+                    if (!SerializerDelegates.TryGetValue(type, out serializerDelegate))
                     {
-                        object formatter = null;
-                        foreach (IFormatterResolver innerResolver in this.innerResolvers)
-                        {
-                            formatter = innerResolver.GetFormatterDynamic(type);
-                            if (formatter != null)
-                            {
-                                break;
-                            }
-                        }
+                        Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
+                        ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
+                        ParameterExpression param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
+                        ParameterExpression param2 = Expression.Parameter(typeof(object), "value");
+                        ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
 
-                        if (formatter == null)
-                        {
-                            throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolvers:" + string.Join(", ", this.innerResolvers.Select(x => x.GetType().Name).ToArray()));
-                        }
+                        MethodInfo serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
 
-                        Type t = type;
-                        {
-                            Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(t);
-                            ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
-                            ParameterExpression param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
-                            ParameterExpression param2 = Expression.Parameter(typeof(object), "value");
-                            ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                        MethodCallExpression body = Expression.Call(
+                            Expression.Convert(param0, formatterType),
+                            serializeMethodInfo,
+                            param1,
+                            ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                            param3);
 
-                            MethodInfo serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), t, typeof(MessagePackSerializerOptions) });
+                        serializerDelegate = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
 
-                            MethodCallExpression body = Expression.Call(
-                                Expression.Convert(param0, formatterType),
-                                serializeMethodInfo,
-                                param1,
-                                ti.IsValueType ? Expression.Unbox(param2, t) : Expression.Convert(param2, t),
-                                param3);
-
-                            SerializeMethod lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
-
-                            formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
-                        }
-
-                        this.serializers.TryAdd(t, formatterAndDelegate);
+                        SerializerDelegates.TryAdd(type, serializerDelegate);
                     }
                 }
             }
 
-            formatterAndDelegate.Value(formatterAndDelegate.Key, ref writer, value, options);
+            serializerDelegate(formatter, ref writer, value, options);
         }
 
         public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)

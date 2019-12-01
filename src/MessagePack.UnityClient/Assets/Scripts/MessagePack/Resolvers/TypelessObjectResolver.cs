@@ -20,28 +20,38 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class TypelessObjectResolver : IFormatterResolver
     {
-        /// <summary>
-        /// Backing field for the <see cref="Formatter"/> property.
-        /// </summary>
-        private TypelessFormatter formatter = new TypelessFormatter();
+        public static readonly IFormatterResolver Instance = new TypelessObjectResolver();
 
-        /// <summary>
-        /// Gets or sets the <see cref="TypelessFormatter"/> used when serializing/deserializing values typed as <see cref="object"/>/.
-        /// </summary>
-        /// <value>A instance of a formatter. Never null.</value>
-        /// <exception cref="ArgumentNullException">Thrown if assigned a value of null.</exception>
-        public TypelessFormatter Formatter
+        private static readonly IFormatterResolver[] Resolvers = new IFormatterResolver[]
         {
-            get => this.formatter;
-            set => this.formatter = value ?? throw new ArgumentNullException(nameof(value));
+            ForceSizePrimitiveObjectResolver.Instance,
+            ContractlessStandardResolverAllowPrivate.Instance,
+        };
+
+        private TypelessObjectResolver()
+        {
         }
 
         /// <inheritdoc />
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return typeof(T) == typeof(object)
-                ? (IMessagePackFormatter<T>)(object)this.Formatter
-                : null;
+            if (typeof(T) == typeof(object))
+            {
+                return (IMessagePackFormatter<T>)TypelessFormatter.Instance;
+            }
+            else
+            {
+                foreach (IFormatterResolver item in Resolvers)
+                {
+                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                    if (f != null)
+                    {
+                        return f;
+                    }
+                }
+
+                return null;
+            }
         }
     }
 
@@ -124,51 +134,6 @@ namespace MessagePack.Resolvers
                 return FormatterMap.TryGetValue(type, out formatter)
                     ? formatter
                     : null;
-            }
-        }
-    }
-
-    internal sealed class TypelessFormatterFallbackResolver : IFormatterResolver
-    {
-        /// <summary>
-        /// The singleton instance that can be used.
-        /// </summary>
-        public static readonly TypelessFormatterFallbackResolver Instance;
-
-        /// <summary>
-        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
-        /// </summary>
-        public static readonly MessagePackSerializerOptions Options;
-
-        private static readonly IMessagePackFormatter<object> FallbackFormatter = new DynamicObjectTypeFallbackFormatter(
-            ForceSizePrimitiveObjectResolver.Instance,
-            ContractlessStandardResolverAllowPrivateCore.Instance);
-
-        static TypelessFormatterFallbackResolver()
-        {
-            Instance = new TypelessFormatterFallbackResolver();
-            Options = new MessagePackSerializerOptions(Instance);
-        }
-
-        private TypelessFormatterFallbackResolver()
-        {
-        }
-
-        public IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.Formatter;
-        }
-
-        private static class FormatterCache<T>
-        {
-            public static readonly IMessagePackFormatter<T> Formatter;
-
-            static FormatterCache()
-            {
-                if (typeof(T) == typeof(object))
-                {
-                    Formatter = (IMessagePackFormatter<T>)FallbackFormatter;
-                }
             }
         }
     }

@@ -20,15 +20,15 @@ namespace MessagePack
         /// </summary>
         public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            using (var sequence = new Sequence<byte>())
+            using (var sequenceRental = SequencePool.Shared.Rent())
             {
-                var msgpackWriter = new MessagePackWriter(sequence)
+                var msgpackWriter = new MessagePackWriter(sequenceRental.Value)
                 {
                     CancellationToken = cancellationToken,
                 };
                 Serialize(ref msgpackWriter, obj, options);
                 msgpackWriter.Flush();
-                var msgpackReader = new MessagePackReader(sequence.AsReadOnlySequence)
+                var msgpackReader = new MessagePackReader(sequenceRental.Value)
                 {
                     CancellationToken = cancellationToken,
                 };
@@ -76,13 +76,13 @@ namespace MessagePack
             }
 
             options = options ?? DefaultOptions;
-            if (options.UseLZ4Compression)
+            if (options.Compression == MessagePackCompression.Lz4Block)
             {
-                using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                using (var scratchRental = SequencePool.Shared.Rent())
                 {
-                    if (TryDecompress(ref reader, scratch))
+                    if (TryDecompress(ref reader, scratchRental.Value))
                     {
-                        var scratchReader = new MessagePackReader(scratch.AsReadOnlySequence)
+                        var scratchReader = new MessagePackReader(scratchRental.Value)
                         {
                             CancellationToken = reader.CancellationToken,
                         };
@@ -121,9 +121,9 @@ namespace MessagePack
         /// </summary>
         public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            using (var seq = new Sequence<byte>())
+            using (var scratchRental = SequencePool.Shared.Rent())
             {
-                var writer = new MessagePackWriter(seq)
+                var writer = new MessagePackWriter(scratchRental.Value)
                 {
                     CancellationToken = cancellationToken,
                 };
@@ -133,7 +133,7 @@ namespace MessagePack
                 }
 
                 writer.Flush();
-                return seq.AsReadOnlySequence.ToArray();
+                return scratchRental.Value.AsReadOnlySequence.ToArray();
             }
         }
 
@@ -143,18 +143,18 @@ namespace MessagePack
         public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
             options = options ?? DefaultOptions;
-            if (options.UseLZ4Compression)
+            if (options.Compression.IsCompression())
             {
-                using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+                using (var scratchRental = SequencePool.Shared.Rent())
                 {
-                    MessagePackWriter scratchWriter = writer.Clone(scratch);
+                    MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                     using (var jr = new TinyJsonReader(reader, false))
                     {
                         FromJsonCore(jr, ref scratchWriter);
                     }
 
                     scratchWriter.Flush();
-                    ToLZ4BinaryCore(scratch.AsReadOnlySequence, ref writer);
+                    ToLZ4BinaryCore(scratchRental.Value, ref writer, options.Compression);
                 }
             }
             else
@@ -177,15 +177,15 @@ namespace MessagePack
                         break;
                     case TinyJsonToken.StartObject:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        using (var scratch = new Sequence<byte>())
+                        using (var scratchRental = SequencePool.Shared.Rent())
                         {
-                            MessagePackWriter scratchWriter = writer.Clone(scratch);
+                            MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                             var mapCount = FromJsonCore(jr, ref scratchWriter);
                             scratchWriter.Flush();
 
                             mapCount = mapCount / 2; // remove propertyname string count.
                             writer.WriteMapHeader(mapCount);
-                            writer.WriteRaw(scratch.AsReadOnlySequence);
+                            writer.WriteRaw(scratchRental.Value);
                         }
 
                         count++;
@@ -194,14 +194,14 @@ namespace MessagePack
                         return count; // break
                     case TinyJsonToken.StartArray:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        using (var scratch = new Sequence<byte>())
+                        using (var scratchRental = SequencePool.Shared.Rent())
                         {
-                            MessagePackWriter scratchWriter = writer.Clone(scratch);
+                            MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                             var arrayCount = FromJsonCore(jr, ref scratchWriter);
                             scratchWriter.Flush();
 
                             writer.WriteArrayHeader(arrayCount);
-                            writer.WriteRaw(scratch.AsReadOnlySequence);
+                            writer.WriteRaw(scratchRental.Value);
                         }
 
                         count++;

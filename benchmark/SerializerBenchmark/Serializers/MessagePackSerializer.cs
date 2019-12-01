@@ -49,13 +49,15 @@ public class MessagePackLz4_v1 : SerializerBase
 
 public class MessagePackLz4_v2 : SerializerBase
 {
+    private static readonly newmsgpack::MessagePack.MessagePackSerializerOptions LZ4Standard = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithCompression(newmsgpack::MessagePack.MessagePackCompression.Lz4Block);
+
     public override T Deserialize<T>(object input)
     {
-        return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<T>((byte[])input, newmsgpack::MessagePack.MessagePackSerializerOptions.LZ4Standard);
+        return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<T>((byte[])input, LZ4Standard);
     }
 
     public override object Serialize<T>(T input)
     {
-        return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, newmsgpack::MessagePack.MessagePackSerializerOptions.LZ4Standard);
+        return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, LZ4Standard);
     }
 }

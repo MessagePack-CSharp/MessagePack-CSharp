@@ -25,8 +25,13 @@ namespace MessagePack.Formatters
 
         private delegate object DeserializeMethod(object dynamicContractlessFormatter, ref MessagePackReader reader, MessagePackSerializerOptions options);
 
-        private readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>> serializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, SerializeMethod>>();
-        private readonly ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>> deserializers = new ThreadsafeTypeKeyHashTable<KeyValuePair<object, DeserializeMethod>>();
+        /// <summary>
+        /// The singleton instance that can be used.
+        /// </summary>
+        public static readonly IMessagePackFormatter<object> Instance = new TypelessFormatter();
+
+        private readonly ThreadsafeTypeKeyHashTable<SerializeMethod> serializers = new ThreadsafeTypeKeyHashTable<SerializeMethod>();
+        private readonly ThreadsafeTypeKeyHashTable<DeserializeMethod> deserializers = new ThreadsafeTypeKeyHashTable<DeserializeMethod>();
         private readonly ThreadsafeTypeKeyHashTable<byte[]> fullTypeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
         private readonly ThreadsafeTypeKeyHashTable<byte[]> shortenedTypeNameCache = new ThreadsafeTypeKeyHashTable<byte[]>();
         private readonly AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type> typeCache = new AsymmetricKeyHashTable<byte[], ArraySegment<byte>, Type>(new StringArraySegmentByteAscymmetricEqualityComparer());
@@ -48,7 +53,7 @@ namespace MessagePack.Formatters
             typeof(string),
             typeof(byte[]),
 
-            // array should save there types.
+            // array should save their types.
             ////typeof(Boolean[]),
             ////typeof(Char[]),
             ////typeof(SByte[]),
@@ -76,13 +81,16 @@ namespace MessagePack.Formatters
             typeof(Double?),
         };
 
+        //ForceSizePrimitiveObjectResolver.Instance,
+        //ContractlessStandardResolverAllowPrivate.Instance);
+
         // mscorlib or System.Private.CoreLib
         private static readonly bool IsMscorlib = typeof(int).AssemblyQualifiedName.Contains("mscorlib");
 
-        public TypelessFormatter()
+        private TypelessFormatter()
         {
-            this.serializers.TryAdd(typeof(object), _ => new KeyValuePair<object, SerializeMethod>(null, (object p1, ref MessagePackWriter p2, object p3, MessagePackSerializerOptions p4) => { }));
-            this.deserializers.TryAdd(typeof(object), _ => new KeyValuePair<object, DeserializeMethod>(null, (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object()));
+            this.serializers.TryAdd(typeof(object), _ => (object p1, ref MessagePackWriter p2, object p3, MessagePackSerializerOptions p4) => { });
+            this.deserializers.TryAdd(typeof(object), _ => (object p1, ref MessagePackReader p2, MessagePackSerializerOptions p3) => new object());
         }
 
         private string BuildTypeName(Type type, MessagePackSerializerOptions options)
@@ -135,27 +143,21 @@ namespace MessagePack.Formatters
 
             if (typeName == null)
             {
-                Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Serialize(ref writer, value, options);
+                DynamicObjectTypeFallbackFormatter.Instance.Serialize(ref writer, value, options);
                 return;
             }
 
+            var formatter = options.Resolver.GetFormatterDynamicWithVerify(type);
+
             // don't use GetOrAdd for avoid closure capture.
-            KeyValuePair<object, SerializeMethod> formatterAndDelegate;
-            if (!this.serializers.TryGetValue(type, out formatterAndDelegate))
+            if (!this.serializers.TryGetValue(type, out SerializeMethod serializeMethod))
             {
                 // double check locking...
                 lock (this.serializers)
                 {
-                    if (!this.serializers.TryGetValue(type, out formatterAndDelegate))
+                    if (!this.serializers.TryGetValue(type, out serializeMethod))
                     {
                         TypeInfo ti = type.GetTypeInfo();
-
-                        IFormatterResolver resolver = options.Resolver;
-                        var formatter = resolver.GetFormatterDynamic(type);
-                        if (formatter == null)
-                        {
-                            throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolver:" + resolver.GetType().Name);
-                        }
 
                         Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                         ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
@@ -172,24 +174,23 @@ namespace MessagePack.Formatters
                             ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                             param3);
 
-                        SerializeMethod lambda = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
+                        serializeMethod = Expression.Lambda<SerializeMethod>(body, param0, param1, param2, param3).Compile();
 
-                        formatterAndDelegate = new KeyValuePair<object, SerializeMethod>(formatter, lambda);
-                        this.serializers.TryAdd(type, formatterAndDelegate);
+                        this.serializers.TryAdd(type, serializeMethod);
                     }
                 }
             }
 
             // mark will be written at the end, when size is known
-            using (var scratch = new Nerdbank.Streams.Sequence<byte>())
+            using (var scratchRental = SequencePool.Shared.Rent())
             {
-                MessagePackWriter scratchWriter = writer.Clone(scratch);
+                MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                 scratchWriter.WriteString(typeName);
-                formatterAndDelegate.Value(formatterAndDelegate.Key, ref scratchWriter, value, options);
+                serializeMethod(formatter, ref scratchWriter, value, options);
                 scratchWriter.Flush();
 
                 // mark as extension with code 100
-                writer.WriteExtensionFormat(new ExtensionResult((sbyte)ThisLibraryExtensionTypeCodes.TypelessFormatter, scratch.AsReadOnlySequence));
+                writer.WriteExtensionFormat(new ExtensionResult((sbyte)ThisLibraryExtensionTypeCodes.TypelessFormatter, scratchRental.Value));
             }
         }
 
@@ -228,7 +229,7 @@ namespace MessagePack.Formatters
             }
 
             // fallback
-            return Resolvers.TypelessFormatterFallbackResolver.Instance.GetFormatter<object>().Deserialize(ref reader, options);
+            return DynamicObjectTypeFallbackFormatter.Instance.Deserialize(ref reader, options);
         }
 
         /// <summary>
@@ -267,21 +268,16 @@ namespace MessagePack.Formatters
             }
 
             options.ThrowIfDeserializingTypeIsDisallowed(type);
-            KeyValuePair<object, DeserializeMethod> formatterAndDelegate;
-            if (!this.deserializers.TryGetValue(type, out formatterAndDelegate))
+
+            var formatter = options.Resolver.GetFormatterDynamicWithVerify(type);
+
+            if (!this.deserializers.TryGetValue(type, out DeserializeMethod deserializeMethod))
             {
                 lock (this.deserializers)
                 {
-                    if (!this.deserializers.TryGetValue(type, out formatterAndDelegate))
+                    if (!this.deserializers.TryGetValue(type, out deserializeMethod))
                     {
                         TypeInfo ti = type.GetTypeInfo();
-
-                        IFormatterResolver resolver = options.Resolver;
-                        var formatter = resolver.GetFormatterDynamic(type);
-                        if (formatter == null)
-                        {
-                            throw new FormatterNotRegisteredException(type.FullName + " is not registered in this resolver. resolver:" + resolver.GetType().Name);
-                        }
 
                         Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
                         ParameterExpression param0 = Expression.Parameter(typeof(object), "formatter");
@@ -302,15 +298,14 @@ namespace MessagePack.Formatters
                             body = Expression.Convert(deserialize, typeof(object));
                         }
 
-                        DeserializeMethod lambda = Expression.Lambda<DeserializeMethod>(body, param0, param1, param2).Compile();
+                        deserializeMethod = Expression.Lambda<DeserializeMethod>(body, param0, param1, param2).Compile();
 
-                        formatterAndDelegate = new KeyValuePair<object, DeserializeMethod>(formatter, lambda);
-                        this.deserializers.TryAdd(type, formatterAndDelegate);
+                        this.deserializers.TryAdd(type, deserializeMethod);
                     }
                 }
             }
 
-            return formatterAndDelegate.Value(formatterAndDelegate.Key, ref byteSequence, options);
+            return deserializeMethod(formatter, ref byteSequence, options);
         }
     }
 }
