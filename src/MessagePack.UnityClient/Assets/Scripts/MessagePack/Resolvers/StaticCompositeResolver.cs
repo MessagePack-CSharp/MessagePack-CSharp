@@ -26,41 +26,41 @@ namespace MessagePack.Resolvers
 
         /// <summary>
         /// Initializes a singleton instance with the specified formatters.
-        /// This method can only call before use StaticCompositeResolver.Instance.
+        /// This method can only call before use StaticCompositeResolver.Instance.GetFormatter.
         /// If call twice in the Register methods, registered formatters and resolvers will be overridden.
         /// </summary>
         /// <param name="formatters">
         /// A list of instances of <see cref="IMessagePackFormatter{T}"/>.
         /// The formatters are searched in the order given, so if two formatters support serializing the same type, the first one is used.
         /// </param>
-        public static void Register(params IMessagePackFormatter[] formatters)
+        public void Register(params IMessagePackFormatter[] formatters)
         {
-            if (Instance.freezed)
+            if (this.freezed)
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
 
-            if (formatters is null)
+            if (this.formatters is null)
             {
                 throw new ArgumentNullException(nameof(formatters));
             }
 
-            Instance.formatters = formatters;
-            Instance.resolvers = Array.Empty<IFormatterResolver>();
+            this.formatters = formatters;
+            this.resolvers = Array.Empty<IFormatterResolver>();
         }
 
         /// <summary>
         /// Initializes a singleton instance with the specified formatters and sub-resolvers.
-        /// This method can only call before use StaticCompositeResolver.Instance.
+        /// This method can only call before use StaticCompositeResolver.Instance.GetFormatter.
         /// If call twice in the Register methods, registered formatters and resolvers will be overridden.
         /// </summary>
         /// <param name="resolvers">
         /// A list of resolvers to use for serializing types.
         /// The resolvers are searched in the order given, so if two resolvers support serializing the same type, the first one is used.
         /// </param>
-        public static void Register(params IFormatterResolver[] resolvers)
+        public void Register(params IFormatterResolver[] resolvers)
         {
-            if (Instance.freezed)
+            if (this.freezed)
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
@@ -70,13 +70,13 @@ namespace MessagePack.Resolvers
                 throw new ArgumentNullException(nameof(resolvers));
             }
 
-            Instance.formatters = Array.Empty<IMessagePackFormatter>();
-            Instance.resolvers = resolvers;
+            this.formatters = Array.Empty<IMessagePackFormatter>();
+            this.resolvers = resolvers;
         }
 
         /// <summary>
         /// Initializes a singleton instance with the specified formatters and sub-resolvers.
-        /// This method can only call before use StaticCompositeResolver.Instance.
+        /// This method can only call before use StaticCompositeResolver.Instance.GetFormatter.
         /// If call twice in the Register methods, registered formatters and resolvers will be overridden.
         /// </summary>
         /// <param name="formatters">
@@ -87,9 +87,9 @@ namespace MessagePack.Resolvers
         /// A list of resolvers to use for serializing types for which <paramref name="formatters"/> does not include a formatter.
         /// The resolvers are searched in the order given, so if two resolvers support serializing the same type, the first one is used.
         /// </param>
-        public static void Register(IReadOnlyList<IMessagePackFormatter> formatters, IReadOnlyList<IFormatterResolver> resolvers)
+        public void Register(IReadOnlyList<IMessagePackFormatter> formatters, IReadOnlyList<IFormatterResolver> resolvers)
         {
-            if (Instance.freezed)
+            if (this.freezed)
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
@@ -104,8 +104,8 @@ namespace MessagePack.Resolvers
                 throw new ArgumentNullException(nameof(resolvers));
             }
 
-            Instance.formatters = formatters;
-            Instance.resolvers = resolvers;
+            this.formatters = formatters;
+            this.resolvers = resolvers;
         }
 
         /// <summary>

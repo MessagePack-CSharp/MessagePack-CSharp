@@ -663,6 +663,9 @@ MessagePack.Resolvers.StandardResolverAllowPrivate
 MessagePack.Resolvers.StandardResolverAllowPrivate.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.Resolvers.StaticCompositeResolver
 MessagePack.Resolvers.StaticCompositeResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.Resolvers.StaticCompositeResolver.Register(System.Collections.Generic.IReadOnlyList<MessagePack.Formatters.IMessagePackFormatter> formatters, System.Collections.Generic.IReadOnlyList<MessagePack.IFormatterResolver> resolvers) -> void
+MessagePack.Resolvers.StaticCompositeResolver.Register(params MessagePack.Formatters.IMessagePackFormatter[] formatters) -> void
+MessagePack.Resolvers.StaticCompositeResolver.Register(params MessagePack.IFormatterResolver[] resolvers) -> void
 MessagePack.Resolvers.TypelessContractlessStandardResolver
 MessagePack.Resolvers.TypelessContractlessStandardResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.Resolvers.TypelessContractlessStandardResolver.TypelessContractlessStandardResolver() -> void
@@ -854,9 +857,6 @@ static MessagePack.MessagePackSerializerOptions.Standard.get -> MessagePack.Mess
 static MessagePack.Resolvers.CompositeResolver.Create(System.Collections.Generic.IReadOnlyList<MessagePack.Formatters.IMessagePackFormatter> formatters, System.Collections.Generic.IReadOnlyList<MessagePack.IFormatterResolver> resolvers) -> MessagePack.IFormatterResolver
 static MessagePack.Resolvers.CompositeResolver.Create(params MessagePack.Formatters.IMessagePackFormatter[] formatters) -> MessagePack.IFormatterResolver
 static MessagePack.Resolvers.CompositeResolver.Create(params MessagePack.IFormatterResolver[] resolvers) -> MessagePack.IFormatterResolver
-static MessagePack.Resolvers.StaticCompositeResolver.Register(System.Collections.Generic.IReadOnlyList<MessagePack.Formatters.IMessagePackFormatter> formatters, System.Collections.Generic.IReadOnlyList<MessagePack.IFormatterResolver> resolvers) -> void
-static MessagePack.Resolvers.StaticCompositeResolver.Register(params MessagePack.Formatters.IMessagePackFormatter[] formatters) -> void
-static MessagePack.Resolvers.StaticCompositeResolver.Register(params MessagePack.IFormatterResolver[] resolvers) -> void
 static readonly MessagePack.Formatters.BigIntegerFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Numerics.BigInteger>
 static readonly MessagePack.Formatters.BitArrayFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Collections.BitArray>
 static readonly MessagePack.Formatters.BooleanArrayFormatter.Instance -> MessagePack.Formatters.BooleanArrayFormatter
