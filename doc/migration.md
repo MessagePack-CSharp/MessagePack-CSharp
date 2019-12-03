@@ -68,6 +68,44 @@ Instead of deserializing from `byte[]` or `ArraySegment<byte>` only, you can des
 
 Many overloads of the `Deserialize` method exists which ultimately all call the overload that accepts a `MessagePackReader`.
 
+#### Deserializing from a Stream
+
+Deserializing from a `Stream` has changed from v1.x to v2.0. The `readStrict` parameter has been removed and in v2.x
+the `MessagePackSerializer.Deserialize{Async}(Stream)` methods act as if `readStrict: false` in v1.x.
+This works great and is the preferred API to use when the entire `Stream` is expected to contain exactly one
+top-level messagepack structure that you want to deserialize.
+
+For performance reasons, the entire `Stream` is read into memory before deserialization begins.
+If there is more data on the `Stream` than the messagepack structure to be deserialized,
+the deserialization will ignore the excess data, but the excess data wouldn't be on the `Stream`
+any more to be read later.
+
+If the `Stream` is seekable (that is, its `CanSeek` property returns `true`) then after deserialization
+is complete the `Stream` will be repositioned to the first byte after the messagepack data structure
+that was deserialized. This means you'll get the `Stream` back as you might expect it, but only after
+you paid a perf cost of "reading" more data than was necessary to deserialize.
+
+If the `Stream` is *not* seekable (e.g. a network stream) or contains multiple top-level messagepack
+data structures consecutively, MessagePack 2.0 adds a new, more performant way to read each
+messagepack structure. It's analogous to v1.x's `readStrict: true` mode, but is much more performant.
+It comes in the form of the new `MessagePackStreamReader` class, and can be easily used as follows:
+
+```cs
+static async Task<List<T>> DeserializeListFromStreamAsync<T>(Stream stream, CancellationToken cancellationToken)
+{
+    var dataStructures = new List<T>();
+    using (var streamReader = new MessagePackStreamReader(stream))
+    {
+        while (await streamReader.ReadAsync(cancellationToken) is ReadOnlySequence<byte> msgpack)
+        {
+            dataStructures.Add(MessagePackSerializer.Deserialize<T>(msgpack, cancellationToken: cancellationToken));
+        }
+    }
+
+    return dataStructures;
+}
+```
+
 #### Default behavior
 
 The `DefaultResolver` static property has been replaced with the `DefaultOptions` static property.
