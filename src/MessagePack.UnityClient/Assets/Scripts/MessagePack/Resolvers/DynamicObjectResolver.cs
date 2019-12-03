@@ -1031,6 +1031,12 @@ namespace MessagePack.Internal
                         if (item.MemberInfo != null)
                         {
                             il.MarkLabel(item.SwitchLabel);
+
+                            // skip deserialization if nil
+                            reader.EmitLdarg();
+                            il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
+                            il.Emit(OpCodes.Brtrue, loopEnd);
+
                             EmitDeserializeValue(il, item, i++, tryEmitLoadCustomFormatter, reader, argResolver, localResolver);
                             il.Emit(OpCodes.Br, loopEnd);
                         }

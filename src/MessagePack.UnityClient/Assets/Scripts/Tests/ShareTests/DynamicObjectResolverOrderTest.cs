@@ -73,6 +73,31 @@ namespace MessagePack.Tests
             Assert.Equal(c.Year, c2.Year);
             Assert.Equal(c.Memo, c2.Memo);
         }
+
+        [Fact]
+        public void ClassWithMissingKeyTest()
+        {
+            var c = new ClassWithMissingKey
+            {
+                Id = 2,
+                Year = 2017,
+            };
+            var c2 = new ClassWithMissingKey2
+            {
+                Id = 3,
+                Memo = "some memo",
+            };
+
+            byte[] s = MessagePackSerializer.Serialize(c);
+            this.logger.WriteLine(MessagePackSerializer.ConvertToJson(s));
+            ClassWithMissingKey2 d = MessagePackSerializer.Deserialize<ClassWithMissingKey2>(s);
+            Assert.Equal(c.Id, d.Id);
+
+            byte[] s2 = MessagePackSerializer.Serialize(c2);
+            this.logger.WriteLine(MessagePackSerializer.ConvertToJson(s2));
+            ClassWithMissingKey d2 = MessagePackSerializer.Deserialize<ClassWithMissingKey>(s2);
+            Assert.Equal(c2.Id, d2.Id);
+        }
 #endif
 
         [MessagePack.MessagePackObject(keyAsPropertyName: true)]
@@ -125,6 +150,34 @@ namespace MessagePack.Tests
 
             [Key(3)]
             internal string Memo { get; set; }
+        }
+
+        [MessagePackObject]
+        public class ClassWithMissingKey
+        {
+            public ClassWithMissingKey()
+            {
+            }
+
+            [Key(0)]
+            public int Id { get; set; }
+
+            [Key(1)]
+            public int Year { get; set; }
+        }
+
+        [MessagePackObject]
+        public class ClassWithMissingKey2
+        {
+            public ClassWithMissingKey2()
+            {
+            }
+
+            [Key(0)]
+            public int Id { get; set; }
+
+            [Key(2)]
+            public string Memo { get; set; }
         }
     }
 }
