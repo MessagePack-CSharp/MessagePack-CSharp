@@ -49,7 +49,7 @@ namespace MessagePackCompiler
             var hasAnnotations = false;
             foreach (var file in sources.Select(Path.GetFullPath).Distinct())
             {
-                var text = File.ReadAllText(file.Replace('\\', Path.DirectorySeparatorChar), Encoding.UTF8);
+                var text = File.ReadAllText(NormalizeDirectorySeparators(file), Encoding.UTF8);
                 var syntax = CSharpSyntaxTree.ParseText(text, parseOption);
                 syntaxTrees.Add(syntax);
                 if (Path.GetFileNameWithoutExtension(file) == "Attributes")
@@ -175,7 +175,7 @@ namespace MessagePackCompiler
                     var refCsProjPath = item.Attribute("Include")?.Value;
                     if (refCsProjPath != null)
                     {
-                        CollectDocument(Path.Combine(csProjRoot, refCsProjPath), source, metadataLocations);
+                        CollectDocument(Path.Combine(csProjRoot, NormalizeDirectorySeparators(refCsProjPath)), source, metadataLocations);
                     }
                 }
 
@@ -190,7 +190,7 @@ namespace MessagePackCompiler
                     }
                     else
                     {
-                        metadataLocations.Add(Path.Combine(csProjRoot, hintPath));
+                        metadataLocations.Add(Path.Combine(csProjRoot, NormalizeDirectorySeparators(hintPath)));
                     }
                 }
 
@@ -258,7 +258,7 @@ namespace MessagePackCompiler
             var syntaxTrees = new List<SyntaxTree>();
             foreach (var file in IterateCsFileWithoutBinObj(directoryRoot))
             {
-                var text = File.ReadAllText(file.Replace('\\', Path.DirectorySeparatorChar), Encoding.UTF8);
+                var text = File.ReadAllText(NormalizeDirectorySeparators(file), Encoding.UTF8);
                 var syntax = CSharpSyntaxTree.ParseText(text, parseOption);
                 syntaxTrees.Add(syntax);
                 if (Path.GetFileNameWithoutExtension(file) == "Attributes")
@@ -320,6 +320,13 @@ namespace MessagePackCompiler
                 }
             }
         }
+
+        /// <summary>
+        /// Replaces slashes or backslashes with whatever is standard on the current platform.
+        /// </summary>
+        /// <param name="path">The path to normalize.</param>
+        /// <returns>The same path, but with conventional directory separators.</returns>
+        private static string NormalizeDirectorySeparators(string path) => path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
 
         private const string DummyAnnotation = @"
 using System;
