@@ -59,6 +59,7 @@ namespace MessagePack
             this.OldSpec = copyFrom.OldSpec;
             this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
+            this.AllowMissingKey = copyFrom.AllowMissingKey;
         }
 
         /// <summary>
@@ -103,6 +104,8 @@ namespace MessagePack
         /// </summary>
         /// <value>The default value is <c>false</c>.</value>
         public bool AllowAssemblyVersionMismatch { get; private set; }
+
+        public bool AllowMissingKey { get; private set; }
 
         /// <summary>
         /// Gets a type given a string representation of the type.
@@ -225,6 +228,23 @@ namespace MessagePack
 
             var result = this.Clone();
             result.AllowAssemblyVersionMismatch = allowAssemblyVersionMismatch;
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="AllowMissingKey"/> property set to a new value.
+        /// </summary>
+        /// <param name="allowMissingKey">The new value for the <see cref="AllowMissingKey"/> property.</param>
+        /// <returns>The new instance; or the original if the value is unchanged.</returns>
+        public MessagePackSerializerOptions WithAllowMissingKey(bool allowMissingKey)
+        {
+            if (this.AllowMissingKey == allowMissingKey)
+            {
+                return this;
+            }
+
+            var result = this.Clone();
+            result.AllowMissingKey = allowMissingKey;
             return result;
         }
 

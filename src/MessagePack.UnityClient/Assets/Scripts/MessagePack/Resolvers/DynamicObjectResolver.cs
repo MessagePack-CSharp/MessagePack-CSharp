@@ -851,6 +851,12 @@ namespace MessagePack.Internal
             var reader = new ArgumentField(il, firstArgIndex, @ref: true);
             var argResolver = new ArgumentField(il, firstArgIndex + 1);
 
+            //AllowMissingKey
+            LocalBuilder allowMissingKey = il.DeclareLocal(typeof(bool));
+            argResolver.EmitLoad();
+            il.EmitCall(typeof(MessagePackSerializerOptions).GetProperty(nameof(MessagePackSerializerOptions.AllowMissingKey), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetGetMethod());
+            il.EmitStloc(allowMissingKey);
+
             // if(reader.TryReadNil()) { return null; }
             Label falseLabel = il.DefineLabel();
             reader.EmitLdarg();
@@ -1007,6 +1013,16 @@ namespace MessagePack.Internal
                     il.EmitLdloc(forILocal);
                     il.EmitStloc(key);
 
+                    // allow missing key option
+                    Label skipMissingKeyLabel = il.DefineLabel();
+                    il.EmitLdloc(allowMissingKey);
+                    il.Emit(OpCodes.Brfalse_S, skipMissingKeyLabel);
+                    // skip deserialization if nil
+                    reader.EmitLdarg();
+                    il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
+                    il.Emit(OpCodes.Brtrue, loopEnd);
+                    il.MarkLabel(skipMissingKeyLabel);
+
                     // switch... local = Deserialize
                     il.EmitLdloc(key);
 
@@ -1031,12 +1047,6 @@ namespace MessagePack.Internal
                         if (item.MemberInfo != null)
                         {
                             il.MarkLabel(item.SwitchLabel);
-
-                            // skip deserialization if nil
-                            reader.EmitLdarg();
-                            il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
-                            il.Emit(OpCodes.Brtrue, loopEnd);
-
                             EmitDeserializeValue(il, item, i++, tryEmitLoadCustomFormatter, reader, argResolver, localResolver);
                             il.Emit(OpCodes.Br, loopEnd);
                         }

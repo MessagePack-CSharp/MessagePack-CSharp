@@ -88,6 +88,8 @@ namespace MessagePack.Tests
                 Memo = "some memo",
             };
 
+            var options = MessagePackSerializerOptions.Standard.WithAllowMissingKey(true);
+
             byte[] s = MessagePackSerializer.Serialize(c);
             this.logger.WriteLine(MessagePackSerializer.ConvertToJson(s));
             ClassWithMissingKey2 d = MessagePackSerializer.Deserialize<ClassWithMissingKey2>(s);
@@ -95,8 +97,13 @@ namespace MessagePack.Tests
 
             byte[] s2 = MessagePackSerializer.Serialize(c2);
             this.logger.WriteLine(MessagePackSerializer.ConvertToJson(s2));
-            ClassWithMissingKey d2 = MessagePackSerializer.Deserialize<ClassWithMissingKey>(s2);
-            Assert.Equal(c2.Id, d2.Id);
+            Assert.Throws<MessagePackSerializationException>(() =>
+            {
+                ClassWithMissingKey d2 = MessagePackSerializer.Deserialize<ClassWithMissingKey>(s2);
+            });
+
+            ClassWithMissingKey d3 = MessagePackSerializer.Deserialize<ClassWithMissingKey>(s2, options);
+            Assert.Equal(c2.Id, d3.Id);
         }
 #endif
 

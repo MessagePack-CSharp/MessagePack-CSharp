@@ -552,12 +552,14 @@ MessagePack.MessagePackSerializer
 MessagePack.MessagePackSerializer.Typeless
 MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.AllowAssemblyVersionMismatch.get -> bool
+MessagePack.MessagePackSerializerOptions.AllowMissingKey.get -> bool
 MessagePack.MessagePackSerializerOptions.Compression.get -> MessagePack.MessagePackCompression
 MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.IFormatterResolver resolver) -> void
 MessagePack.MessagePackSerializerOptions.MessagePackSerializerOptions(MessagePack.MessagePackSerializerOptions copyFrom) -> void
 MessagePack.MessagePackSerializerOptions.OldSpec.get -> bool?
 MessagePack.MessagePackSerializerOptions.OmitAssemblyVersion.get -> bool
 MessagePack.MessagePackSerializerOptions.Resolver.get -> MessagePack.IFormatterResolver
+MessagePack.MessagePackSerializerOptions.WithAllowMissingKey(bool allowMissingKey) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithAllowAssemblyVersionMismatch(bool allowAssemblyVersionMismatch) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithCompression(MessagePack.MessagePackCompression compression) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithOldSpec(bool? oldSpec = true) -> MessagePack.MessagePackSerializerOptions
