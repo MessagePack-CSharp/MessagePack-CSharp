@@ -27,7 +27,7 @@ namespace MessagePack.Resolvers
 
         private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if !ENABLE_IL2CPP && !NETSTANDARD2_0
             DynamicObjectResolver.Instance, // Try Object
 #endif
         }).ToArray();
@@ -289,7 +289,7 @@ namespace MessagePack.Internal
             MessagePack.Unity.UnityResolver.Instance,
 #endif
 
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if !ENABLE_IL2CPP && !NETSTANDARD2_0
             DynamicEnumResolver.Instance, // Try Enum
 #endif
 
@@ -297,7 +297,7 @@ namespace MessagePack.Internal
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)
 #endif
 
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
+#if !ENABLE_IL2CPP && !NETSTANDARD2_0
             DynamicUnionResolver.Instance, // Try Union(Interface)
 #endif
         };
