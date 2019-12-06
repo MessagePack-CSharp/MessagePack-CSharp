@@ -89,7 +89,7 @@ namespace Xunit
             NUnit.Framework.Assert.IsTrue(source.Count != 0);
         }
 
-        public static void NotNull<T>(T value) where T : class
+        public static void NotNull(object value)
         {
             NUnit.Framework.Assert.IsNotNull(value);
         }

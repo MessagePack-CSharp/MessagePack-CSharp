@@ -32,7 +32,7 @@ var deserializedGraph = MessagePackSerializer.Deserialize<MyType>(msgpack, Stand
 If you want to combine a particular resolver with other options changes (e.g. enabling LZ4 compression), you may do that too:
 
 ```cs
-var options = StandardResolverAllowPrivate.Options.WithLZ4Compression(true);
+var options = StandardResolverAllowPrivate.Options.WithCompression(MessagePackCompression.Lz4BlockArray);
 var msgpack = MessagePackSerializer.Serialize(objectGraph, options);
 var deserializedGraph = MessagePackSerializer.Deserialize<MyType>(msgpack, options);
 ```
@@ -41,7 +41,7 @@ An equivalent options instance can be created manually:
 
 ```cs
 var options = MessagePackSerializerOptions.Standard
-    .WithLZ4Compression(true)
+    .WithCompression(MessagePackCompression.Lz4BlockArray)
     .WithResolver(StandardResolverAllowPrivate.Instance);
 ```
 
@@ -67,6 +67,44 @@ Instead of deserializing from `byte[]` or `ArraySegment<byte>` only, you can des
 `ReadOnlySequence<byte>` allows for deserialization from non-continguously allocated memory, enabling you to deserialize very large msgpack sequences without risking an `OutOfMemoryException` due simply to the inability to find large amounts of free contiguous memory.
 
 Many overloads of the `Deserialize` method exists which ultimately all call the overload that accepts a `MessagePackReader`.
+
+#### Deserializing from a Stream
+
+Deserializing from a `Stream` has changed from v1.x to v2.0. The `readStrict` parameter has been removed and in v2.x
+the `MessagePackSerializer.Deserialize{Async}(Stream)` methods act as if `readStrict: false` in v1.x.
+This works great and is the preferred API to use when the entire `Stream` is expected to contain exactly one
+top-level messagepack structure that you want to deserialize.
+
+For performance reasons, the entire `Stream` is read into memory before deserialization begins.
+If there is more data on the `Stream` than the messagepack structure to be deserialized,
+the deserialization will ignore the excess data, but the excess data wouldn't be on the `Stream`
+any more to be read later.
+
+If the `Stream` is seekable (that is, its `CanSeek` property returns `true`) then after deserialization
+is complete the `Stream` will be repositioned to the first byte after the messagepack data structure
+that was deserialized. This means you'll get the `Stream` back as you might expect it, but only after
+you paid a perf cost of "reading" more data than was necessary to deserialize.
+
+If the `Stream` is *not* seekable (e.g. a network stream) or contains multiple top-level messagepack
+data structures consecutively, MessagePack 2.0 adds a new, more performant way to read each
+messagepack structure. It's analogous to v1.x's `readStrict: true` mode, but is much more performant.
+It comes in the form of the new `MessagePackStreamReader` class, and can be easily used as follows:
+
+```cs
+static async Task<List<T>> DeserializeListFromStreamAsync<T>(Stream stream, CancellationToken cancellationToken)
+{
+    var dataStructures = new List<T>();
+    using (var streamReader = new MessagePackStreamReader(stream))
+    {
+        while (await streamReader.ReadAsync(cancellationToken) is ReadOnlySequence<byte> msgpack)
+        {
+            dataStructures.Add(MessagePackSerializer.Deserialize<T>(msgpack, cancellationToken: cancellationToken));
+        }
+    }
+
+    return dataStructures;
+}
+```
 
 #### Default behavior
 
@@ -95,14 +133,18 @@ The method `SerializeToJson` translates an object graph to JSON.
 #### LZ4MessagePackSerializer
 
 The `LZ4MessagePackSerializer` class has been removed.
-Instead, use `MessagePackSerializer` and pass in a `MessagePackSerializerOptions` with `UseLZ4Compression` set to true.
+Instead, use `MessagePackSerializer` and pass in a `MessagePackSerializerOptions` with `WithCompression` set to `MessagePackCompression.Lz4Block` or `MessagePackCompression.Lz4BlockArray`.
 
 For example, make this change:
 
 ```diff
 -byte[] buffer = LZ4MessagePackSerializer.Serialize("hi");
-+byte[] buffer = MessagePackSerializer.Serialize("hi", MessagePackSerializerOptions.LZ4Standard);
++static readonly lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
++byte[] buffer = MessagePackSerializer.Serialize("hi", lz4Options);
 ```
+
+`Lz4Block` is same as v1 LZ4MessagePackSerializer. `Lz4BlockArray` is new compression mode of v2.  Regardless of which Lz4 option is set at the deserialization, both data can be deserialized. For example, when the option is `Lz4BlockArray`, binary data of both `Lz4Block` and `Lz4BlockArray` can be deserialized.
+
 
 ### Thrown exceptions
 

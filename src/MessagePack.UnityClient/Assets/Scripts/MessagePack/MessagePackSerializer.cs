@@ -309,6 +309,9 @@ namespace MessagePack
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
+        /// <remarks>
+        /// If multiple top-level msgpack data structures are expected on the stream, use <see cref="MessagePackStreamReader"/> instead.
+        /// </remarks>
         public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T result))
@@ -353,6 +356,9 @@ namespace MessagePack
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
+        /// <remarks>
+        /// If multiple top-level msgpack data structures are expected on the stream, use <see cref="MessagePackStreamReader"/> instead.
+        /// </remarks>
         public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T result))

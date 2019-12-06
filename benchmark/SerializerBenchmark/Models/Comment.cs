@@ -1,6 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#pragma warning disable IDE1006
+#pragma warning disable SA1516
+
 extern alias oldmsgpack;
 extern alias newmsgpack;
 
@@ -55,6 +58,58 @@ namespace Benchmark.Models
         public bool? upvoted { get; set; }
 
         public bool Equals(Comment obj)
+        {
+            return
+                this.body.TrueEqualsString(obj.body) &&
+                this.body_markdown.TrueEqualsString(obj.body_markdown) &&
+                this.comment_id.TrueEquals(obj.comment_id) &&
+                this.creation_date.TrueEquals(obj.creation_date) &&
+                this.edited.TrueEquals(obj.edited) &&
+                this.link.TrueEqualsString(obj.link) &&
+                this.owner.TrueEquals(obj.owner) &&
+                this.post_id.TrueEquals(obj.post_id) &&
+                this.post_type.TrueEquals(obj.post_type) &&
+                this.reply_to_user.TrueEquals(obj.reply_to_user) &&
+                this.score.TrueEquals(obj.score) &&
+                this.upvoted.TrueEquals(obj.upvoted);
+        }
+
+        public bool EqualsDynamic(dynamic obj)
+        {
+            return
+                this.body.TrueEqualsString((string)obj.body) &&
+                this.body_markdown.TrueEqualsString((string)obj.body_markdown) &&
+                this.comment_id.TrueEquals((int?)obj.comment_id) &&
+                this.creation_date.TrueEquals((DateTime?)obj.creation_date) &&
+                this.edited.TrueEquals((bool?)obj.edited) &&
+                this.link.TrueEqualsString((string)obj.link) &&
+                ((this.owner == null && obj.owner == null) || this.owner.EqualsDynamic(obj.owner)) &&
+                this.post_id.TrueEquals((int?)obj.post_id) &&
+                this.post_type.TrueEquals((PostType?)obj.post_type) &&
+                ((this.reply_to_user == null && obj.reply_to_user == null) ||
+                 this.reply_to_user.EqualsDynamic(obj.reply_to_user)) &&
+                this.score.TrueEquals((int?)obj.score) &&
+                this.upvoted.TrueEquals((bool?)obj.upvoted);
+        }
+    }
+
+    [oldmsgpack::MessagePack.MessagePackObject(true), newmsgpack::MessagePack.MessagePackObject(true)]
+    public class Comment2 : IGenericEquality<Comment2>
+    {
+        public int? comment_id { get; set; }
+        public int? post_id { get; set; }
+        public DateTime? creation_date { get; set; }
+        public PostType? post_type { get; set; }
+        public int? score { get; set; }
+        public bool? edited { get; set; }
+        public string body { get; set; }
+        public ShallowUser2 owner { get; set; }
+        public ShallowUser2 reply_to_user { get; set; }
+        public string link { get; set; }
+        public string body_markdown { get; set; }
+        public bool? upvoted { get; set; }
+
+        public bool Equals(Comment2 obj)
         {
             return
                 this.body.TrueEqualsString(obj.body) &&

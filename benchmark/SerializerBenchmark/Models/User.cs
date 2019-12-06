@@ -1,6 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#pragma warning disable IDE1006
+#pragma warning disable SA1516
+
 extern alias oldmsgpack;
 extern alias newmsgpack;
 
@@ -175,6 +178,30 @@ namespace Benchmark.Models
             public int? bronze { get; set; }
 
             public bool Equals(BadgeCount obj)
+            {
+                return
+                    this.bronze.TrueEquals(obj.bronze) &&
+                    this.silver.TrueEquals(obj.silver) &&
+                    this.gold.TrueEquals(obj.gold);
+            }
+
+            public bool EqualsDynamic(dynamic obj)
+            {
+                return
+                    this.bronze.TrueEquals((int?)obj.bronze) &&
+                    this.silver.TrueEquals((int?)obj.silver) &&
+                    this.gold.TrueEquals((int?)obj.gold);
+            }
+        }
+
+        [oldmsgpack::MessagePack.MessagePackObject(true), newmsgpack::MessagePack.MessagePackObject(true)]
+        public class BadgeCount2 : IGenericEquality<BadgeCount2>
+        {
+            public int? gold { get; set; }
+            public int? silver { get; set; }
+            public int? bronze { get; set; }
+
+            public bool Equals(BadgeCount2 obj)
             {
                 return
                     this.bronze.TrueEquals(obj.bronze) &&
