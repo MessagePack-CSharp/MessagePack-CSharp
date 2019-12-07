@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-* [Visual Studio 2019](https://visualstudio.microsoft.com/)
+* [Visual Studio 2019](https://visualstudio.microsoft.com/). Use the `.vsconfig` file to install the required workloads.
 * [Unity Editor](https://unity3d.com/unity/editor) (optional)
 * .NET Core SDK and runtimes (run `init` to install)
 
