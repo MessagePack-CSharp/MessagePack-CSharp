@@ -580,10 +580,12 @@ MessagePack.MessagePackType.Nil = 2 -> MessagePack.MessagePackType
 MessagePack.MessagePackType.String = 5 -> MessagePack.MessagePackType
 MessagePack.MessagePackType.Unknown = 0 -> MessagePack.MessagePackType
 MessagePack.MessagePackWriter
+MessagePack.MessagePackWriter.Advance(int length) -> void
 MessagePack.MessagePackWriter.CancellationToken.get -> System.Threading.CancellationToken
 MessagePack.MessagePackWriter.CancellationToken.set -> void
 MessagePack.MessagePackWriter.Clone(System.Buffers.IBufferWriter<byte> writer) -> MessagePack.MessagePackWriter
 MessagePack.MessagePackWriter.Flush() -> void
+MessagePack.MessagePackWriter.GetSpan(int length) -> System.Span<byte>
 MessagePack.MessagePackWriter.MessagePackWriter(System.Buffers.IBufferWriter<byte> writer) -> void
 MessagePack.MessagePackWriter.OldSpec.get -> bool
 MessagePack.MessagePackWriter.OldSpec.set -> void
