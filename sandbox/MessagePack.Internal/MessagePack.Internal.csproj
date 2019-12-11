@@ -35,6 +35,7 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DateTimeConstants.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\GuidBits.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Utilities.cs" Link="Utilities.cs" />
   </ItemGroup>
 
 </Project>
