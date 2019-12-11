@@ -46,6 +46,15 @@ public class MessagePackSerializerTypelessTests
         Assert.IsType(boxedValue.Value.GetType(), roundTripValue.Value);
     }
 
+    [Fact(Skip = "Known bug https://github.com/neuecc/MessagePack-CSharp/issues/651")]
+    public void GuidShouldBeDeserializedAsGuid()
+    {
+        var boxedValue = new TypelessBox { Value = Guid.NewGuid() };
+        var roundTripValue = MessagePackSerializer.Deserialize<TypelessBox>(MessagePackSerializer.Serialize(boxedValue));
+        Assert.Equal(boxedValue.Value, roundTripValue.Value);
+        Assert.IsType(boxedValue.Value.GetType(), roundTripValue.Value);
+    }
+
     [Fact]
     public void OmitAssemblyVersion()
     {
