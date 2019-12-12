@@ -50,6 +50,34 @@ namespace MessagePack.Tests
             new[] { data1.Prop3, data2.Prop3, data3.Prop3, data4.Prop3, data5.Prop3 }.Distinct().Is(data.Prop3);
         }
 
+        [Fact]
+        public void NonGeneric_BufferWriter_ReadOnlySequence()
+        {
+            var data = new FirstSimpleData { Prop1 = 9, Prop2 = "hoge", Prop3 = 999 };
+            Type t = typeof(FirstSimpleData);
+            var ms = new MemoryStream();
+            var writerBytes = new Sequence<byte>();
+
+            var data1 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data)) as FirstSimpleData;
+            var data2 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data, StandardResolver.Options)) as FirstSimpleData;
+
+            MessagePackSerializer.Serialize(t, ms, data);
+            ms.Position = 0;
+            var data3 = MessagePackSerializer.Deserialize(t, ms) as FirstSimpleData;
+
+            ms = new MemoryStream();
+            MessagePackSerializer.Serialize(t, ms, data, StandardResolver.Options);
+            ms.Position = 0;
+            var data4 = MessagePackSerializer.Deserialize(t, ms, StandardResolver.Options) as FirstSimpleData;
+
+            MessagePackSerializer.Serialize(t, writerBytes, data, StandardResolver.Options);
+            var data5 = MessagePackSerializer.Deserialize(t, writerBytes.AsReadOnlySequence, StandardResolver.Options) as FirstSimpleData;
+
+            new[] { data1.Prop1, data2.Prop1, data3.Prop1, data4.Prop1, data5.Prop1 }.Distinct().Is(data.Prop1);
+            new[] { data1.Prop2, data2.Prop2, data3.Prop2, data4.Prop2, data5.Prop2 }.Distinct().Is(data.Prop2);
+            new[] { data1.Prop3, data2.Prop3, data3.Prop3, data4.Prop3, data5.Prop3 }.Distinct().Is(data.Prop3);
+        }
+
 #endif
 
 #if !UNITY_2018_3_OR_NEWER
