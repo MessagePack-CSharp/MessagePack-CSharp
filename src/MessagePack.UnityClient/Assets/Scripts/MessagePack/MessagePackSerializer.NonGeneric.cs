@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -25,6 +26,12 @@ namespace MessagePack
         public static void Serialize(Type type, ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options = null)
         {
             GetOrAdd(type).Serialize_MessagePackWriter_T_Options.Invoke(ref writer, obj, options);
+        }
+
+        /// <seealso cref="Serialize{T}(IBufferWriter{byte}, T, MessagePackSerializerOptions, CancellationToken)"/>
+        public static void Serialize(Type type, IBufferWriter<byte> writer, object obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        {
+            GetOrAdd(type).Serialize_IBufferWriter_T_Options_CancellationToken.Invoke(writer, obj, options, cancellationToken);
         }
 
         /// <seealso cref="Serialize{T}(T, MessagePackSerializerOptions, CancellationToken)"/>
@@ -69,6 +76,12 @@ namespace MessagePack
             return GetOrAdd(type).Deserialize_ReadOnlyMemory_Options.Invoke(bytes, options, cancellationToken);
         }
 
+        /// <seealso cref="Deserialize{T}(in ReadOnlySequence{byte}, MessagePackSerializerOptions, CancellationToken)"/>
+        public static object Deserialize(Type type, ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        {
+            return GetOrAdd(type).Deserialize_ReadOnlySequence_Options_CancellationToken.Invoke(bytes, options, cancellationToken);
+        }
+
         private static async ValueTask<object> DeserializeObjectAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken) => await DeserializeAsync<T>(stream, options, cancellationToken).ConfigureAwait(false);
 
         private static CompiledMethods GetOrAdd(Type type)
@@ -89,12 +102,14 @@ namespace MessagePack
             internal readonly Action<Stream, object, MessagePackSerializerOptions, CancellationToken> Serialize_Stream_T_Options_CancellationToken;
             internal readonly Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task> SerializeAsync_Stream_T_Options_CancellationToken;
             internal readonly MessagePackWriterSerialize Serialize_MessagePackWriter_T_Options;
+            internal readonly Action<IBufferWriter<byte>, object, MessagePackSerializerOptions, CancellationToken> Serialize_IBufferWriter_T_Options_CancellationToken;
 
             internal readonly MessagePackReaderDeserialize Deserialize_MessagePackReader_Options;
             internal readonly Func<Stream, MessagePackSerializerOptions, CancellationToken, object> Deserialize_Stream_Options_CancellationToken;
             internal readonly Func<Stream, MessagePackSerializerOptions, CancellationToken, ValueTask<object>> DeserializeAsync_Stream_Options_CancellationToken;
 
             internal readonly Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object> Deserialize_ReadOnlyMemory_Options;
+            internal readonly Func<ReadOnlySequence<byte>, MessagePackSerializerOptions, CancellationToken, object> Deserialize_ReadOnlySequence_Options_CancellationToken;
 #pragma warning restore SA1401 // Fields should be private
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning restore SA1310 // Field names should not contain underscore
@@ -161,6 +176,27 @@ namespace MessagePack
                     Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task> lambda = Expression.Lambda<Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task>>(body, param1, param2, param3, param4).Compile();
 
                     this.SerializeAsync_Stream_T_Options_CancellationToken = lambda;
+                }
+
+                {
+                    // public static Task Serialize<T>(IBufferWriter<byte> writer, T obj, MessagePackSerializerOptions options, CancellationToken cancellationToken)
+                    MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type[] { typeof(IBufferWriter<byte>), null, typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
+
+                    ParameterExpression param1 = Expression.Parameter(typeof(IBufferWriter<byte>), "writer");
+                    ParameterExpression param2 = Expression.Parameter(typeof(object), "obj");
+                    ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    ParameterExpression param4 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
+
+                    MethodCallExpression body = Expression.Call(
+                        null,
+                        serialize,
+                        param1,
+                        ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
+                        param3,
+                        param4);
+                    Action<IBufferWriter<byte>, object, MessagePackSerializerOptions, CancellationToken> lambda = Expression.Lambda<Action<IBufferWriter<byte>, object, MessagePackSerializerOptions, CancellationToken>>(body, param1, param2, param3, param4).Compile();
+
+                    this.Serialize_IBufferWriter_T_Options_CancellationToken = lambda;
                 }
 
                 {
@@ -231,6 +267,19 @@ namespace MessagePack
                     Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile();
 
                     this.Deserialize_ReadOnlyMemory_Options = lambda;
+                }
+
+                {
+                    // public static T Deserialize<T>(ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options, CancellationToken cancellationToken)
+                    MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type[] { typeof(ReadOnlySequence<byte>).MakeByRefType(), typeof(MessagePackSerializerOptions), typeof(CancellationToken) });
+
+                    ParameterExpression param1 = Expression.Parameter(typeof(ReadOnlySequence<byte>), "bytes");
+                    ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
+                    ParameterExpression param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
+                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2, param3), typeof(object));
+                    Func<ReadOnlySequence<byte>, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<ReadOnlySequence<byte>, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile();
+
+                    this.Deserialize_ReadOnlySequence_Options_CancellationToken = lambda;
                 }
             }
 
