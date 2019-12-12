@@ -47,6 +47,22 @@ public class MessagePackSerializerTypelessTests
         Assert.DoesNotContain(ThisAssembly.AssemblyVersion, json);
     }
 
+    [Theory]
+    [InlineData((sbyte)1)]
+    [InlineData((byte)1)]
+    [InlineData((short)1)]
+    [InlineData((ushort)1)]
+    [InlineData((int)1)]
+    [InlineData((uint)1)]
+    [InlineData((long)1)]
+    [InlineData((ulong)1)]
+    public void PrimitiveIntTypePreservation(object boxedValue)
+    {
+        object roundTripValue = MessagePackSerializer.Typeless.Deserialize(MessagePackSerializer.Typeless.Serialize(boxedValue));
+        Assert.Equal(boxedValue, roundTripValue);
+        Assert.IsType(boxedValue.GetType(), roundTripValue);
+    }
+
     public class MyObject
     {
         public object SomeValue { get; set; }
