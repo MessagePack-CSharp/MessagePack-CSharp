@@ -231,6 +231,7 @@ namespace MessagePack
         /// Reads nil if it is the next token.
         /// </summary>
         /// <returns><c>true</c> if the next token was nil; <c>false</c> otherwise.</returns>
+        /// <exception cref="EndOfStreamException">Thrown if the end of the sequence provided to the constructor is reached before the expected end of the data.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryReadNil()
         {
@@ -289,7 +290,7 @@ namespace MessagePack
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryReadArrayHeader(out int count)
+        internal bool TryReadArrayHeader(out int count)
         {
             count = -1;
             if (!this.reader.TryRead(out byte code))
