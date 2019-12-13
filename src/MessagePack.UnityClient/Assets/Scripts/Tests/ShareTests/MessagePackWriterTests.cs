@@ -111,5 +111,31 @@ namespace MessagePack.Tests
             writer.CancellationToken = cts.Token;
             Assert.Equal(cts.Token, writer.CancellationToken);
         }
+
+        [Fact]
+        public void TryWriteWithBuggyWriter()
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                var writer = new MessagePackWriter(new BuggyBufferWriter());
+                writer.WriteRaw(new byte[10]);
+            });
+        }
+
+        /// <summary>
+        /// Besides being effectively a no-op, this <see cref="IBufferWriter{T}"/>
+        /// is buggy because it can return empty arrays, which should never happen.
+        /// A sizeHint=0 means give me whatever memory is available, but should never be empty.
+        /// </summary>
+        private class BuggyBufferWriter : IBufferWriter<byte>
+        {
+            public void Advance(int count)
+            {
+            }
+
+            public Memory<byte> GetMemory(int sizeHint = 0) => new byte[sizeHint];
+
+            public Span<byte> GetSpan(int sizeHint = 0) => new byte[sizeHint];
+        }
     }
 }

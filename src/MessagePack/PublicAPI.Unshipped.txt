@@ -580,10 +580,12 @@ MessagePack.MessagePackType.Nil = 2 -> MessagePack.MessagePackType
 MessagePack.MessagePackType.String = 5 -> MessagePack.MessagePackType
 MessagePack.MessagePackType.Unknown = 0 -> MessagePack.MessagePackType
 MessagePack.MessagePackWriter
+MessagePack.MessagePackWriter.Advance(int length) -> void
 MessagePack.MessagePackWriter.CancellationToken.get -> System.Threading.CancellationToken
 MessagePack.MessagePackWriter.CancellationToken.set -> void
 MessagePack.MessagePackWriter.Clone(System.Buffers.IBufferWriter<byte> writer) -> MessagePack.MessagePackWriter
 MessagePack.MessagePackWriter.Flush() -> void
+MessagePack.MessagePackWriter.GetSpan(int length) -> System.Span<byte>
 MessagePack.MessagePackWriter.MessagePackWriter(System.Buffers.IBufferWriter<byte> writer) -> void
 MessagePack.MessagePackWriter.OldSpec.get -> bool
 MessagePack.MessagePackWriter.OldSpec.set -> void
@@ -824,6 +826,7 @@ static MessagePack.MessagePackSerializer.ConvertToJson(in System.Buffers.ReadOnl
 static MessagePack.MessagePackSerializer.ConvertToJson(ref MessagePack.MessagePackReader reader, System.IO.TextWriter jsonWriter, MessagePack.MessagePackSerializerOptions options = null) -> void
 static MessagePack.MessagePackSerializer.DefaultOptions.get -> MessagePack.MessagePackSerializerOptions
 static MessagePack.MessagePackSerializer.DefaultOptions.set -> void
+static MessagePack.MessagePackSerializer.Deserialize(System.Type type, System.Buffers.ReadOnlySequence<byte> bytes, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object
 static MessagePack.MessagePackSerializer.Deserialize(System.Type type, System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object
 static MessagePack.MessagePackSerializer.Deserialize(System.Type type, System.ReadOnlyMemory<byte> bytes, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> object
 static MessagePack.MessagePackSerializer.Deserialize(System.Type type, ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options = null) -> object
@@ -835,6 +838,7 @@ static MessagePack.MessagePackSerializer.Deserialize<T>(in System.Buffers.ReadOn
 static MessagePack.MessagePackSerializer.Deserialize<T>(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options = null) -> T
 static MessagePack.MessagePackSerializer.DeserializeAsync(System.Type type, System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object>
 static MessagePack.MessagePackSerializer.DeserializeAsync<T>(System.IO.Stream stream, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<T>
+static MessagePack.MessagePackSerializer.Serialize(System.Type type, System.Buffers.IBufferWriter<byte> writer, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
 static MessagePack.MessagePackSerializer.Serialize(System.Type type, System.IO.Stream stream, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
 static MessagePack.MessagePackSerializer.Serialize(System.Type type, object obj, MessagePack.MessagePackSerializerOptions options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> byte[]
 static MessagePack.MessagePackSerializer.Serialize(System.Type type, ref MessagePack.MessagePackWriter writer, object obj, MessagePack.MessagePackSerializerOptions options = null) -> void
