@@ -31,8 +31,15 @@ namespace MessagePackCompiler
                     typeof(Enumerable),
                     typeof(Task<>),
                     typeof(IgnoreDataMemberAttribute),
+                    typeof(System.Collections.Hashtable),
                     typeof(System.Collections.Generic.List<>),
+                    typeof(System.Collections.Generic.HashSet<>),
+                    typeof(System.Collections.Immutable.IImmutableList<>),
+                    typeof(System.Linq.ILookup<,>),
+                    typeof(System.Tuple<>),
+                    typeof(System.ValueTuple<>),
                     typeof(System.Collections.Concurrent.ConcurrentDictionary<,>),
+                    typeof(System.Collections.ObjectModel.ObservableCollection<>),
                 }
                .Select(x => x.Assembly.Location)
                .Distinct()
@@ -282,8 +289,15 @@ namespace MessagePackCompiler
                     typeof(Enumerable),
                     typeof(Task<>),
                     typeof(IgnoreDataMemberAttribute),
+                    typeof(System.Collections.Hashtable),
                     typeof(System.Collections.Generic.List<>),
+                    typeof(System.Collections.Generic.HashSet<>),
+                    typeof(System.Collections.Immutable.IImmutableList<>),
+                    typeof(System.Linq.ILookup<,>),
+                    typeof(System.Tuple<>),
+                    typeof(System.ValueTuple<>),
                     typeof(System.Collections.Concurrent.ConcurrentDictionary<,>),
+                    typeof(System.Collections.ObjectModel.ObservableCollection<>),
                 }
                 .Select(x => x.Assembly.Location)
                 .Distinct()
