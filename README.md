@@ -1251,6 +1251,8 @@ Unity lower support version is `2018.3`, Api Compatibility Level is supporrt bot
 
 You can install by unitypackage in [releases](https://github.com/neuecc/MessagePack-CSharp/releases/) page. If build target as PC, you can use as is but if build target uses IL2CPP, you can not use `Dynamic***Resolver` so require to use pre-code generation. Please see [pre-code generation section](#aot).
 
+MessagePack for C# includes some additional `System.*.dll` libraries that originally provides in NuGet. There are located under `Plugins`. If other package using there libraries(e.g. Unity Collections package using `System.Runtime.CompilerServices.Unsafe.dll`), to avoid conflicts, please delete the target DLL under `Plugins`.
+
 Currently `CompositeResolver.Create` can not work on IL2CPP so recommend to use `StaticCompositeResolver.Instance.Register` instead.
 
 In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and there nullable, there array, there list by built-in extension `UnityResolver`. It is included StandardResolver by default.
@@ -1300,7 +1302,7 @@ If you want to avoid the upfront dynamic generation cost or you need to run on X
 The easiest way to acquire and run mpc is as a dotnet tool.
 
 ```
-dotnet tool install --global MasterMemory.Generator
+dotnet tool install --global MessagePack.Generator
 ```
 
 Installing it as a local tool allows you to include the tools and versions that you use in your source control system. Run these commands in the root of your repo:
@@ -1330,6 +1332,8 @@ argument list:
 -m, -useMapMode: [default=False]Force use map mode serialization.
 -ms, -multipleIfDirectiveOutputSymbols: [default=null]Generate #if-- files by symbols, split with ','.
 ```
+
+`mpc` targets C# code that annotates with `[MessagePackObject]` or `[Union]`.
 
 ```cmd
 // Simple Sample:
