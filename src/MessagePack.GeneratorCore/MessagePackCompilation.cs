@@ -74,7 +74,10 @@ namespace MessagePackCompiler
                 syntaxTrees.Add(CSharpSyntaxTree.ParseText(DummyAnnotation, parseOption));
             }
 
-            foreach (var item in locations.Select(Path.GetFullPath).Distinct().Where(x => !x.Contains("MonoBleedingEdge")))
+            // ignore Unity's default metadatas(to avoid conflict .NET Core runtime import)
+            // MonoBleedingEdge = .NET 4.x Unity metadata
+            // 2.0.0 = .NET Standard 2.0 Unity metadata
+            foreach (var item in locations.Select(Path.GetFullPath).Distinct().Where(x => !(x.Contains("MonoBleedingEdge") || x.Contains("2.0.0"))))
             {
                 metadata.Add(MetadataReference.CreateFromFile(item));
             }
