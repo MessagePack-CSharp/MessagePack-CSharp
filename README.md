@@ -1251,6 +1251,8 @@ Unity lower support version is `2018.3`, Api Compatibility Level is supporrt bot
 
 You can install by unitypackage in [releases](https://github.com/neuecc/MessagePack-CSharp/releases/) page. If build target as PC, you can use as is but if build target uses IL2CPP, you can not use `Dynamic***Resolver` so require to use pre-code generation. Please see [pre-code generation section](#aot).
 
+MessagePack for C# includes some additional `System.*.dll` libraries that originally provides in NuGet. There are located under `Plugins`. If other package using there libraries(e.g. Unity Collections package using `System.Runtime.CompilerServices.Unsafe.dll`), to avoid conflicts, please delete the target DLL under `Plugins`.
+
 Currently `CompositeResolver.Create` can not work on IL2CPP so recommend to use `StaticCompositeResolver.Instance.Register` instead.
 
 In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and there nullable, there array, there list by built-in extension `UnityResolver`. It is included StandardResolver by default.
@@ -1297,10 +1299,10 @@ Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime 
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
 
-The easiest way to acquire and run mpc is as a dotnet tool.
+In the first, mpc requires [.NET Core 3 Runtime](https://dotnet.microsoft.com/download), the easiest way to acquire and run mpc is as a dotnet tool. 
 
 ```
-dotnet tool install --global MasterMemory.Generator
+dotnet tool install --global MessagePack.Generator
 ```
 
 Installing it as a local tool allows you to include the tools and versions that you use in your source control system. Run these commands in the root of your repo:
@@ -1331,6 +1333,8 @@ argument list:
 -ms, -multipleIfDirectiveOutputSymbols: [default=null]Generate #if-- files by symbols, split with ','.
 ```
 
+`mpc` targets C# code that annotates with `[MessagePackObject]` or `[Union]`.
+
 ```cmd
 // Simple Sample:
 mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs"
@@ -1341,23 +1345,45 @@ mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
 
 By default, `mpc.exe` generates resolver to `MessagePack.Resolvers.GeneratedResolver` and formatters generates to `MessagePack.Formatters.***`.
 
+Here is the full sample code of register generated resolver in Unity.
+
 ```csharp
-// Do this once
-StaticCompositeResolver.Instance.Register(new IFormatterResolver[]
+using MessagePack;
+using MessagePack.Resolvers;
+using UnityEngine;
+
+public class Startup
 {
-    MessagePack.Resolvers.GeneratedResolver.Instance,
-    MessagePack.Resolvers.StandardResolver.Instance
-});
+    static bool serializerRegistered = false;
 
-// Store it for reuse.
-var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Initialize()
+    {
+        if (!serializerRegistered)
+        {
+            StaticCompositeResolver.Instance.Register(
+                 MessagePack.Resolvers.GeneratedResolver.Instance,
+                 MessagePack.Resolvers.StandardResolver.Instance
+            );
 
-// Each time you serialize/deserialize, specify the options:
-byte[] msgpackBytes = MessagePackSerializer.Serialize(myObject, options);
-T myObject2 = MessagePackSerializer.Deserialize<MyObject>(msgpackBytes, options);
+            var option = MessagePackSerializerOptions.Standard.WithResolver(StaticCompositeResolver.Instance);
 
-// or set as application default.
-MessagePackSerializer.DefaultOptions = options;
+            MessagePackSerializer.DefaultOptions = option;
+            serializerRegistered = true;
+        }
+    }
+
+#if UNITY_EDITOR
+
+
+    [UnityEditor.InitializeOnLoadMethod]
+    static void EditorInitialize()
+    {
+        Initialize();
+    }
+
+#endif
+}
 ```
 
 In Unity, you can use MessagePack CodeGen windows at `Windows -> MessagePack -> CodeGenerator`.
