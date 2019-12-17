@@ -199,6 +199,47 @@ A few formatters that remain have changed to remove mutable properties where tho
 as public static instances. This helps to avoid malfunctions when one MessagePack user changes a static setting
 to suit their need but in a way that conflicts with another MessagePack user within the same process.
 
+#### `TypelessFormatter` changes
+
+The `TypelessFormatter.BindToType` static property has been removed.
+If you were using this property, you can find equivalent functionality in the virtual `Type MessagePackSerializerOptions.LoadType(string typeName)` method. The `TypelessFormatter` will call this method on
+the `MessagePackSerializerOptions` instance passed to it during deserialization.
+
+For example, you can override this virtual method in your own derived type:
+
+```cs
+class LoadTypeCustomizedOptions : MessagePackSerializerOptions
+{
+    internal LoadTypeCustomizedOptions(MessagePackSerializerOptions copyFrom)
+        : base(copyFrom)
+    {
+    }
+
+    internal LoadTypeCustomizedOptions(IFormatterResolver resolver)
+        : base(resolver)
+    {
+    }
+
+    public override Type LoadType(string typeName)
+    {
+        Type type = base.LoadType(typeName);
+        if (type == null)
+        {
+            // custom logic here
+        }
+
+        return type;
+    }
+}
+```
+
+You can then instantiate this options type and pass it to your deserializer:
+
+```cs
+var options = new LoadTypeCustomizedOptions(MessagePackSerializerOptions.Standard);
+T value = MessagePackSerializer.Deserialize<T>(sequence, options);
+```
+
 ### Custom formatters
 
 If you have written a custom `IMessagePackFormatter<T>` implementation you will have to adapt to the interface changes and APIs used to implement such a class.
