@@ -4,6 +4,7 @@
 #if !UNITY_2018_3_OR_NEWER
 
 using System;
+using System.Runtime.Serialization;
 using MessagePack;
 using MessagePack.Resolvers;
 using Xunit;
@@ -36,6 +37,24 @@ public class MessagePackSerializerTypelessTests
         Assert.IsType<TypeAccessException>(ex.InnerException);
     }
 
+    [Fact(Skip = "Known bug https://github.com/neuecc/MessagePack-CSharp/issues/651")]
+    public void DecimalShouldBeDeserializedAsDecimal()
+    {
+        var boxedValue = new TypelessBox { Value = 2049905m };
+        var roundTripValue = MessagePackSerializer.Deserialize<TypelessBox>(MessagePackSerializer.Serialize(boxedValue));
+        Assert.Equal(boxedValue.Value, roundTripValue.Value);
+        Assert.IsType(boxedValue.Value.GetType(), roundTripValue.Value);
+    }
+
+    [Fact(Skip = "Known bug https://github.com/neuecc/MessagePack-CSharp/issues/651")]
+    public void GuidShouldBeDeserializedAsGuid()
+    {
+        var boxedValue = new TypelessBox { Value = Guid.NewGuid() };
+        var roundTripValue = MessagePackSerializer.Deserialize<TypelessBox>(MessagePackSerializer.Serialize(boxedValue));
+        Assert.Equal(boxedValue.Value, roundTripValue.Value);
+        Assert.IsType(boxedValue.Value.GetType(), roundTripValue.Value);
+    }
+
     [Fact]
     public void OmitAssemblyVersion()
     {
@@ -66,6 +85,13 @@ public class MessagePackSerializerTypelessTests
     public class MyObject
     {
         public object SomeValue { get; set; }
+    }
+
+    [DataContract]
+    public class TypelessBox
+    {
+        [DataMember]
+        public object Value { get; set; }
     }
 
     private class MyTypelessOptions : MessagePackSerializerOptions
