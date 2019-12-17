@@ -578,7 +578,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="header">The extension header that was already read.</param>
         /// <returns>The value.</returns>
-        internal DateTime ReadDateTime(ExtensionHeader header)
+        public DateTime ReadDateTime(ExtensionHeader header)
         {
             if (header.TypeCode != ReservedMessagePackExtensionTypeCode.DateTime)
             {
