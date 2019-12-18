@@ -626,7 +626,8 @@ MessagePackSerializer.Serialize(obj, lz4Options);
 
 `Lz4BlockArray` compresses an entire msgpack sequence as a array of lz4 block format. This is compressed/decompressed in chunks that do not consume LOH, but the compression ratio is slightly sacrificed.
 
-We're recommend to use `Lz4BlockArray` as default when use compression.
+We recommend to use `Lz4BlockArray` as default when use compression.
+For compatibility with MessagePack v1.x, use `Lz4Block`.
 
 Regardless of which Lz4 option is set at the deserialization, both data can be deserialized. For example, when the option is `Lz4BlockArray`, binary data of both `Lz4Block` and `Lz4BlockArray` can be deserialized. Neither can be expanded if the option is set to `None`.
 
