@@ -319,7 +319,12 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.CollectCore(item);
             }
 
-            return (this.collectedObjectInfo.ToArray(), this.collectedEnumInfo.ToArray(), this.collectedGenericInfo.Distinct().ToArray(), this.collectedUnionInfo.ToArray());
+            return (
+                this.collectedObjectInfo.OrderBy(x => x.FullName).ToArray(),
+                this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
+                this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
+                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray()
+            );
         }
 
         // Gate of recursive collect
