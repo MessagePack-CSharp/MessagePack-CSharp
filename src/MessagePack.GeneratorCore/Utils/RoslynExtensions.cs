@@ -141,5 +141,17 @@ namespace MessagePackCompiler
             return symbol.GetMembers()
                 .Concat(symbol.AllInterfaces.SelectMany(x => x.GetMembers()));
         }
+
+        public static bool ApproximatelyEqual(this INamedTypeSymbol left, INamedTypeSymbol right)
+        {
+            if (left is IErrorTypeSymbol || right is IErrorTypeSymbol)
+            {
+                return left.ToDisplayString() == right.ToDisplayString();
+            }
+            else
+            {
+                return SymbolEqualityComparer.Default.Equals(left, right);
+            }
+        }
     }
 }
