@@ -265,14 +265,7 @@ namespace MessagePack.GeneratorCore.Utils
                     // Try default
                     // Windows: %userprofile%\.nuget\packages
                     // Mac/Linux: ~/.nuget/packages
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        nugetPackagesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), @".nuget\packages");
-                    }
-                    else
-                    {
-                        nugetPackagesPath = "~/.nuget/packages";
-                    }
+                    nugetPackagesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
                 }
 
                 var resolvedDllPaths = new HashSet<string>();
