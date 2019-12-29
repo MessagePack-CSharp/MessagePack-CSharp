@@ -208,7 +208,7 @@ public class ContractlessSample
 }
 
 var data = new ContractlessSample { MyProperty1 = 99, MyProperty2 = 9999 };
-var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
 // {"MyProperty1":99,"MyProperty2":9999}
 Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
@@ -244,7 +244,7 @@ var data = new PrivateSample();
 data.SetX(9999);
 
 // You can choose StandardResolverAllowPrivate or  ContractlessStandardResolverAllowPrivate
-var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.Instance);
+var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.Options);
 ```
 
 I don't need type, I want to use like BinaryFormatter! You can use as typeless resolver and helpers. Please see [Typeless section](https://github.com/neuecc/MessagePack-CSharp#typeless).
@@ -436,7 +436,7 @@ If use `MessagePackSerializer.Deserialize<object>` or `MessagePackSerializer.Des
 ```csharp
 // sample binary.
 var model = new DynamicModel { Name = "foobar", Items = new[] { 1, 10, 100, 1000 } };
-var bin = MessagePackSerializer.Serialize(model, ContractlessStandardResolver.Instance);
+var bin = MessagePackSerializer.Serialize(model, ContractlessStandardResolver.Options);
 
 // dynamic, untyped
 var dynamicModel = MessagePackSerializer.Deserialize<dynamic>(bin, ContractlessStandardResolver.Instance);
@@ -460,7 +460,7 @@ Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // Support Anonymous Type Serialize
 var anonType = new { Foo = 100, Bar = "foobar" };
-var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
 // {"Foo":100,"Bar":"foobar"}
 Console.WriteLine(MessagePackSerializer.SerializeToJson(bin2));
