@@ -5,6 +5,8 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using MessagePack.Resolvers;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -287,6 +289,19 @@ namespace MessagePack.Tests
             var b2 = MessagePackSerializer.Deserialize<BaseProperty>(bin, Resolvers.ContractlessStandardResolver.Options);
             Assert.Equal(b1.X, b2.X);
             Assert.Equal(b1.Y, b2.Y);
+        }
+
+        [Fact]
+        public void SerializeReadOnlySequenceOfByte()
+        {
+            var obj = new
+            {
+                nestedProp = new byte[10],
+            };
+
+            byte[] sr1 = MessagePackSerializer.Serialize(obj, ContractlessStandardResolver.Options);
+            var obj2 = (Dictionary<object, object>)MessagePackSerializer.Deserialize<object>(sr1, ContractlessStandardResolver.Options);
+            MessagePackSerializer.Serialize(obj2["nestedProp"], ContractlessStandardResolver.Options);
         }
     }
 }

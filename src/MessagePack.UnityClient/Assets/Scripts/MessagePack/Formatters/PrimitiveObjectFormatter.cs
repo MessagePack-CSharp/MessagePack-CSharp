@@ -267,7 +267,8 @@ namespace MessagePack.Formatters
                 case MessagePackType.String:
                     return reader.ReadString();
                 case MessagePackType.Binary:
-                    return reader.ReadBytes();
+                    // We must copy the sequence returned by ReadBytes since the reader's sequence is only valid during deserialization.
+                    return reader.ReadBytes()?.ToArray();
                 case MessagePackType.Extension:
                     ExtensionHeader ext = reader.ReadExtensionFormatHeader();
                     if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
