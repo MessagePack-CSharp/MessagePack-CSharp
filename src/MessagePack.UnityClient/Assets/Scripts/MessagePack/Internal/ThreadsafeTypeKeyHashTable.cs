@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -138,36 +139,24 @@ namespace MessagePack.Internal
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetValue(Type key, out TValue value)
         {
             Entry[] table = this.buckets;
             var hash = key.GetHashCode();
             Entry entry = table[hash & table.Length - 1];
 
-            if (entry == null)
+            while (entry != null)
             {
-                goto NOT_FOUND;
-            }
-
-            if (entry.Key == key)
-            {
-                value = entry.Value;
-                return true;
-            }
-
-            Entry next = entry.Next;
-            while (next != null)
-            {
-                if (next.Key == key)
+                if (entry.Key == key)
                 {
-                    value = next.Value;
+                    value = entry.Value;
                     return true;
                 }
 
-                next = next.Next;
+                entry = entry.Next;
             }
 
-NOT_FOUND:
             value = default(TValue);
             return false;
         }
