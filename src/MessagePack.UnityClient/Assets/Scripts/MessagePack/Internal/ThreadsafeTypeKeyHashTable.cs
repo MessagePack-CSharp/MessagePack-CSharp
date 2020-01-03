@@ -146,30 +146,17 @@ namespace MessagePack.Internal
             var hash = key.GetHashCode();
             Entry entry = table[hash & table.Length - 1];
 
-            if (entry == null)
+            while (entry != null)
             {
-                goto NOT_FOUND;
-            }
-
-            if (entry.Key == key)
-            {
-                value = entry.Value;
-                return true;
-            }
-
-            Entry next = entry.Next;
-            while (next != null)
-            {
-                if (next.Key == key)
+                if (entry.Key == key)
                 {
-                    value = next.Value;
+                    value = entry.Value;
                     return true;
                 }
 
-                next = next.Next;
+                entry = entry.Next;
             }
 
-NOT_FOUND:
             value = default(TValue);
             return false;
         }
