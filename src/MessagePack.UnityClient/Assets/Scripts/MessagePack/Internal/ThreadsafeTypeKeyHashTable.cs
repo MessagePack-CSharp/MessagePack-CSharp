@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -138,6 +139,7 @@ namespace MessagePack.Internal
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetValue(Type key, out TValue value)
         {
             Entry[] table = this.buckets;
