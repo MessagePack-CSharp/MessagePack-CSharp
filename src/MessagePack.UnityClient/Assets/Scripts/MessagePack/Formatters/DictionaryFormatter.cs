@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reflection;
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -142,7 +143,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, TValue> Create(int count, MessagePackSerializerOptions options)
         {
-            return new Dictionary<TKey, TValue>(count);
+            return new Dictionary<TKey, TValue>(count, options.Security.GetEqualityComparer<TKey>());
         }
 
         protected override Dictionary<TKey, TValue>.Enumerator GetSourceEnumerator(Dictionary<TKey, TValue> source)
@@ -161,7 +162,7 @@ namespace MessagePack.Formatters
 
         protected override TDictionary Create(int count, MessagePackSerializerOptions options)
         {
-            return new TDictionary();
+            return CollectionHelpers<TDictionary, IEqualityComparer<TKey>>.CreateHashCollection(count, options.Security.GetEqualityComparer<TKey>());
         }
     }
 
@@ -174,7 +175,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, TValue> Create(int count, MessagePackSerializerOptions options)
         {
-            return new Dictionary<TKey, TValue>(count);
+            return new Dictionary<TKey, TValue>(count, options.Security.GetEqualityComparer<TKey>());
         }
 
         protected override IDictionary<TKey, TValue> Complete(Dictionary<TKey, TValue> intermediateCollection)
@@ -233,7 +234,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, TValue> Create(int count, MessagePackSerializerOptions options)
         {
-            return new Dictionary<TKey, TValue>(count);
+            return new Dictionary<TKey, TValue>(count, options.Security.GetEqualityComparer<TKey>());
         }
     }
 
@@ -251,7 +252,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, TValue> Create(int count, MessagePackSerializerOptions options)
         {
-            return new Dictionary<TKey, TValue>(count);
+            return new Dictionary<TKey, TValue>(count, options.Security.GetEqualityComparer<TKey>());
         }
     }
 
@@ -265,7 +266,7 @@ namespace MessagePack.Formatters
         protected override ConcurrentDictionary<TKey, TValue> Create(int count, MessagePackSerializerOptions options)
         {
             // concurrent dictionary can't access defaultConcurrecyLevel so does not use count overload.
-            return new ConcurrentDictionary<TKey, TValue>();
+            return new ConcurrentDictionary<TKey, TValue>(options.Security.GetEqualityComparer<TKey>());
         }
     }
 }

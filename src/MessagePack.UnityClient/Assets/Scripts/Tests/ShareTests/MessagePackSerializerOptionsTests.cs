@@ -12,7 +12,8 @@ public class MessagePackSerializerOptionsTests
         .WithAllowAssemblyVersionMismatch(true)
         .WithOmitAssemblyVersion(true)
         .WithResolver(BuiltinResolver.Instance)
-        .WithOldSpec(false);
+        .WithOldSpec(false)
+        .WithSecurity(MySecurityOptions.Instance);
 
     [Fact]
     public void AllowAssemblyVersionMismatch()
@@ -45,8 +46,15 @@ public class MessagePackSerializerOptionsTests
     [Fact]
     public void Resolver()
     {
-        Assert.Same((object)StandardResolver.Instance, (object)MessagePackSerializerOptions.Standard.Resolver);
+        Assert.Same(StandardResolver.Instance, MessagePackSerializerOptions.Standard.Resolver);
         Assert.Same(BuiltinResolver.Instance, MessagePackSerializerOptions.Standard.WithResolver(BuiltinResolver.Instance).Resolver);
+    }
+
+    [Fact]
+    public void Security()
+    {
+        Assert.Same(MessagePackSecurity.TrustedData, MessagePackSerializerOptions.Standard.Security);
+        Assert.Same(MessagePackSecurity.UntrustedData, MessagePackSerializerOptions.Standard.WithSecurity(MessagePackSecurity.UntrustedData).Security);
     }
 
     [Fact]
@@ -57,7 +65,8 @@ public class MessagePackSerializerOptionsTests
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
-        Assert.Same((object)NonDefaultOptions.Resolver, (object)mutated.Resolver);
+        Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
+        Assert.Same(MySecurityOptions.Instance, mutated.Security);
     }
 
     [Fact]
@@ -68,7 +77,8 @@ public class MessagePackSerializerOptionsTests
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
-        Assert.Same((object)NonDefaultOptions.Resolver, (object)mutated.Resolver);
+        Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
+        Assert.Same(MySecurityOptions.Instance, mutated.Security);
     }
 
     [Fact]
@@ -79,7 +89,8 @@ public class MessagePackSerializerOptionsTests
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
-        Assert.Same((object)NonDefaultOptions.Resolver, (object)mutated.Resolver);
+        Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
+        Assert.Same(MySecurityOptions.Instance, mutated.Security);
     }
 
     [Fact]
@@ -90,17 +101,41 @@ public class MessagePackSerializerOptionsTests
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
-        Assert.Same((object)NonDefaultOptions.Resolver, (object)mutated.Resolver);
+        Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
+        Assert.Same(MySecurityOptions.Instance, mutated.Security);
     }
 
     [Fact]
     public void WithResolver_PreservesOtherProperties()
     {
         var mutated = NonDefaultOptions.WithResolver(ContractlessStandardResolver.Instance);
-        Assert.Same((object)ContractlessStandardResolver.Instance, (object)mutated.Resolver);
+        Assert.Same(ContractlessStandardResolver.Instance, mutated.Resolver);
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
+        Assert.Same(MySecurityOptions.Instance, mutated.Security);
+    }
+
+    [Fact]
+    public void WithSecurity_PreservesOtherProperties()
+    {
+        var mutated = NonDefaultOptions.WithSecurity(MessagePackSecurity.TrustedData);
+        Assert.Same(MessagePackSecurity.TrustedData, mutated.Security);
+        Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
+        Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
+        Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
+        Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
+        Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
+    }
+
+    private class MySecurityOptions : MessagePackSecurity
+    {
+        internal static readonly MySecurityOptions Instance = new MySecurityOptions();
+
+        private MySecurityOptions()
+            : base(TrustedData)
+        {
+        }
     }
 }

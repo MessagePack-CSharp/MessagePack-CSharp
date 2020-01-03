@@ -59,6 +59,7 @@ namespace MessagePack
             this.OldSpec = copyFrom.OldSpec;
             this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
+            this.Security = copyFrom.Security;
         }
 
         /// <summary>
@@ -103,6 +104,14 @@ namespace MessagePack
         /// </summary>
         /// <value>The default value is <c>false</c>.</value>
         public bool AllowAssemblyVersionMismatch { get; private set; }
+
+        /// <summary>
+        /// Gets the security-related options for deserializing messagepack sequences.
+        /// </summary>
+        /// <value>
+        /// The default value is to use <see cref="MessagePackSecurity.TrustedData"/>.
+        /// </value>
+        public MessagePackSecurity Security { get; private set; } = MessagePackSecurity.TrustedData;
 
         /// <summary>
         /// Gets a type given a string representation of the type.
@@ -225,6 +234,28 @@ namespace MessagePack
 
             var result = this.Clone();
             result.AllowAssemblyVersionMismatch = allowAssemblyVersionMismatch;
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="Security"/> property set to a new value.
+        /// </summary>
+        /// <param name="security">The new value for the <see cref="Security"/> property.</param>
+        /// <returns>The new instance; or the original if the value is unchanged.</returns>
+        public MessagePackSerializerOptions WithSecurity(MessagePackSecurity security)
+        {
+            if (security is null)
+            {
+                throw new ArgumentNullException(nameof(security));
+            }
+
+            if (this.Security == security)
+            {
+                return this;
+            }
+
+            var result = this.Clone();
+            result.Security = security;
             return result;
         }
 

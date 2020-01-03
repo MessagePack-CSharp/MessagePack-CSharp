@@ -425,7 +425,7 @@ namespace MessagePack.Formatters
 
         protected override HashSet<T> Create(int count, MessagePackSerializerOptions options)
         {
-            return new HashSet<T>();
+            return new HashSet<T>(options.Security.GetEqualityComparer<T>());
         }
 
         protected override HashSet<T>.Enumerator GetSourceEnumerator(HashSet<T> source)
@@ -760,7 +760,7 @@ namespace MessagePack.Formatters
 
             var count = reader.ReadMapHeader();
 
-            var dict = new T();
+            var dict = CollectionHelpers<T, IEqualityComparer>.CreateHashCollection(count, options.Security.GetEqualityComparer());
             for (int i = 0; i < count; i++)
             {
                 reader.CancellationToken.ThrowIfCancellationRequested();
@@ -811,7 +811,7 @@ namespace MessagePack.Formatters
 
             var count = reader.ReadMapHeader();
 
-            var dict = new Dictionary<object, object>(count);
+            var dict = new Dictionary<object, object>(count, options.Security.GetEqualityComparer<object>());
             for (int i = 0; i < count; i++)
             {
                 reader.CancellationToken.ThrowIfCancellationRequested();
@@ -905,7 +905,7 @@ namespace MessagePack.Formatters
 
         protected override HashSet<T> Create(int count, MessagePackSerializerOptions options)
         {
-            return new HashSet<T>();
+            return new HashSet<T>(options.Security.GetEqualityComparer<T>());
         }
     }
 

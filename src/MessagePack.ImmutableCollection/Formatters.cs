@@ -92,7 +92,7 @@ namespace MessagePack.ImmutableCollection
 
         protected override ImmutableDictionary<TKey, TValue>.Builder Create(int count, MessagePackSerializerOptions options)
         {
-            return ImmutableDictionary.CreateBuilder<TKey, TValue>();
+            return ImmutableDictionary.CreateBuilder<TKey, TValue>(options.Security.GetEqualityComparer<TKey>());
         }
 
         protected override ImmutableDictionary<TKey, TValue>.Enumerator GetSourceEnumerator(ImmutableDictionary<TKey, TValue> source)
@@ -115,7 +115,7 @@ namespace MessagePack.ImmutableCollection
 
         protected override ImmutableHashSet<T>.Builder Create(int count, MessagePackSerializerOptions options)
         {
-            return ImmutableHashSet.CreateBuilder<T>();
+            return ImmutableHashSet.CreateBuilder<T>(options.Security.GetEqualityComparer<T>());
         }
 
         protected override ImmutableHashSet<T>.Enumerator GetSourceEnumerator(ImmutableHashSet<T> source)
@@ -240,7 +240,7 @@ namespace MessagePack.ImmutableCollection
 
         protected override ImmutableDictionary<TKey, TValue>.Builder Create(int count, MessagePackSerializerOptions options)
         {
-            return ImmutableDictionary.CreateBuilder<TKey, TValue>();
+            return ImmutableDictionary.CreateBuilder<TKey, TValue>(options.Security.GetEqualityComparer<TKey>());
         }
     }
 
@@ -258,7 +258,7 @@ namespace MessagePack.ImmutableCollection
 
         protected override ImmutableHashSet<T>.Builder Create(int count, MessagePackSerializerOptions options)
         {
-            return ImmutableHashSet.CreateBuilder<T>();
+            return ImmutableHashSet.CreateBuilder<T>(options.Security.GetEqualityComparer<T>());
         }
     }
 

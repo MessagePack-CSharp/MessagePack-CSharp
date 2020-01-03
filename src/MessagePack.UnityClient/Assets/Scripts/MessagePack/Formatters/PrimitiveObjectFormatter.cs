@@ -14,6 +14,7 @@ namespace MessagePack.Formatters
 
         private static readonly Dictionary<Type, int> TypeToJumpCode = new Dictionary<Type, int>()
         {
+            // When adding types whose size exceeds 32-bits, add support in MessagePackSecurity.GetHashCollisionResistantEqualityComparer<T>()
             { typeof(Boolean), 0 },
             { typeof(Char), 1 },
             { typeof(SByte), 2 },
@@ -296,7 +297,7 @@ namespace MessagePack.Formatters
                         var length = reader.ReadMapHeader();
 
                         IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
-                        var hash = new Dictionary<object, object>(length);
+                        var hash = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
                         for (int i = 0; i < length; i++)
                         {
                             var key = objectFormatter.Deserialize(ref reader, options);

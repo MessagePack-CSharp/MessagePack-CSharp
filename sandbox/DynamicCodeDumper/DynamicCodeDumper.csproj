@@ -30,6 +30,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataDictionary.cs">
       <Link>Code\AutomataDictionary.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ThreadsafeTypeKeyHashTable.cs">
+      <Link>Code\ThreadsafeTypeKeyHashTable.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ByteArrayStringHashTable.cs">
       <Link>Code\ByteArrayStringHashTable.cs</Link>
     </Compile>
@@ -65,6 +68,15 @@
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializerOptions.cs">
       <Link>Code\MessagePackSerializerOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSecurity.cs">
+      <Link>Code\MessagePackSecurity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\HashCode.cs">
+      <Link>Code\HashCode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\BitOperations.cs">
+      <Link>Code\BitOperations.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCompression.cs">
       <Link>Code\MessagePackCompression.cs</Link>

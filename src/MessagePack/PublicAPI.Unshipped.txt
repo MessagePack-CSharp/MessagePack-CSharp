@@ -3,6 +3,19 @@ MessagePack.MessagePackReader.ReadDateTime(MessagePack.ExtensionHeader header) -
 MessagePack.MessagePackReader.TryReadArrayHeader(out int count) -> bool
 MessagePack.MessagePackReader.TryReadExtensionFormatHeader(out MessagePack.ExtensionHeader extensionHeader) -> bool
 MessagePack.MessagePackReader.TryReadMapHeader(out int count) -> bool
+MessagePack.MessagePackSecurity
+MessagePack.MessagePackSecurity.GetEqualityComparer() -> System.Collections.IEqualityComparer
+MessagePack.MessagePackSecurity.GetEqualityComparer<T>() -> System.Collections.Generic.IEqualityComparer<T>
+MessagePack.MessagePackSecurity.HashCollisionResistant.get -> bool
+MessagePack.MessagePackSecurity.MessagePackSecurity(MessagePack.MessagePackSecurity copyFrom) -> void
+MessagePack.MessagePackSecurity.WithHashCollisionResistant(bool hashCollisionResistant) -> MessagePack.MessagePackSecurity
+MessagePack.MessagePackSerializerOptions.Security.get -> MessagePack.MessagePackSecurity
+MessagePack.MessagePackSerializerOptions.WithSecurity(MessagePack.MessagePackSecurity security) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackStreamReader.ReadArrayAsync(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<System.Buffers.ReadOnlySequence<byte>>
 MessagePack.MessagePackWriter.WriteBinHeader(int length) -> void
 MessagePack.MessagePackWriter.WriteStringHeader(int byteCount) -> void
+static readonly MessagePack.MessagePackSecurity.TrustedData -> MessagePack.MessagePackSecurity
+static readonly MessagePack.MessagePackSecurity.UntrustedData -> MessagePack.MessagePackSecurity
+virtual MessagePack.MessagePackSecurity.Clone() -> MessagePack.MessagePackSecurity
+virtual MessagePack.MessagePackSecurity.GetHashCollisionResistantEqualityComparer() -> System.Collections.IEqualityComparer
+virtual MessagePack.MessagePackSecurity.GetHashCollisionResistantEqualityComparer<T>() -> System.Collections.Generic.IEqualityComparer<T>
