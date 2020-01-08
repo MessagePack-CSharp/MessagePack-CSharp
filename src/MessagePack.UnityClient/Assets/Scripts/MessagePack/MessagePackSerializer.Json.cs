@@ -18,6 +18,7 @@ namespace MessagePack
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
+        /// <exception cref="MessagePackSerializationException">Thrown if an error occurs during serialization.</exception>
         public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             using (var sequenceRental = SequencePool.Shared.Rent())
@@ -39,6 +40,7 @@ namespace MessagePack
         /// <summary>
         /// Serialize an object to JSON string.
         /// </summary>
+        /// <exception cref="MessagePackSerializationException">Thrown if an error occurs during serialization.</exception>
         public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             var writer = new StringWriter();
@@ -49,11 +51,13 @@ namespace MessagePack
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
+        /// <exception cref="MessagePackSerializationException">Thrown if an error occurs while reading the messagepack data or writing out the JSON.</exception>
         public static string ConvertToJson(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => ConvertToJson(new ReadOnlySequence<byte>(bytes), options, cancellationToken);
 
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
+        /// <exception cref="MessagePackSerializationException">Thrown if an error occurs while reading the messagepack data or writing out the JSON.</exception>
         public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
             var jsonWriter = new StringWriter();
@@ -68,6 +72,7 @@ namespace MessagePack
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
+        /// <exception cref="MessagePackSerializationException">Thrown if an error occurs while reading the messagepack data or writing out the JSON.</exception>
         public static void ConvertToJson(ref MessagePackReader reader, TextWriter jsonWriter, MessagePackSerializerOptions options = null)
         {
             if (reader.End)
@@ -76,32 +81,39 @@ namespace MessagePack
             }
 
             options = options ?? DefaultOptions;
-            if (options.Compression == MessagePackCompression.Lz4Block)
+            try
             {
-                using (var scratchRental = SequencePool.Shared.Rent())
+                if (options.Compression == MessagePackCompression.Lz4Block)
                 {
-                    if (TryDecompress(ref reader, scratchRental.Value))
+                    using (var scratchRental = SequencePool.Shared.Rent())
                     {
-                        var scratchReader = new MessagePackReader(scratchRental.Value)
+                        if (TryDecompress(ref reader, scratchRental.Value))
                         {
-                            CancellationToken = reader.CancellationToken,
-                        };
-                        if (scratchReader.End)
-                        {
-                            return;
-                        }
+                            var scratchReader = new MessagePackReader(scratchRental.Value)
+                            {
+                                CancellationToken = reader.CancellationToken,
+                            };
+                            if (scratchReader.End)
+                            {
+                                return;
+                            }
 
-                        ToJsonCore(ref scratchReader, jsonWriter);
-                    }
-                    else
-                    {
-                        ToJsonCore(ref reader, jsonWriter);
+                            ToJsonCore(ref scratchReader, jsonWriter);
+                        }
+                        else
+                        {
+                            ToJsonCore(ref reader, jsonWriter);
+                        }
                     }
                 }
+                else
+                {
+                    ToJsonCore(ref reader, jsonWriter);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                ToJsonCore(ref reader, jsonWriter);
+                throw new MessagePackSerializationException("Error occurred while translating msgpack to JSON.", ex);
             }
         }
 

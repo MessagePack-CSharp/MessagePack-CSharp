@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -64,6 +65,19 @@ namespace MessagePack.Tests
         {
             this.JsonConvert(inputJson, MessagePackSerializerOptions.Standard).Is(expectedRoundTripJson);
             this.JsonConvert(inputJson, LZ4Standard).Is(expectedRoundTripJson);
+        }
+
+        [Fact]
+        public void ConvertToJson_InvalidMsgPack()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteInt32(1);
+            writer.Flush();
+
+            var truncatedSequence = sequence.AsReadOnlySequence.Slice(0, sequence.Length - 1);
+            var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.ConvertToJson(truncatedSequence));
+            Assert.IsType<EndOfStreamException>(ex.InnerException);
         }
     }
 }
