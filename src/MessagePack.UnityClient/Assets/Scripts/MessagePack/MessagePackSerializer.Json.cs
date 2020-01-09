@@ -416,12 +416,12 @@ namespace MessagePack
 #endif
                     else
                     {
-                        ExtensionResult ext = reader.ReadExtensionFormat();
+                        var data = reader.ReadRaw((long)extHeader.Length);
                         writer.Write("[");
-                        writer.Write(ext.TypeCode);
+                        writer.Write(extHeader.TypeCode);
                         writer.Write(",");
                         writer.Write("\"");
-                        writer.Write(Convert.ToBase64String(ext.Data.ToArray()));
+                        writer.Write(Convert.ToBase64String(data.ToArray()));
                         writer.Write("\"");
                         writer.Write("]");
                     }
