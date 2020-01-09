@@ -286,6 +286,50 @@ Notice the structure is very similar, but arrays and offsets are no longer neces
 The underlying msgpack format is unchanged, allowing code to be upgraded to v2.x while maintaining
 compatibility with a file or network party that uses MessagePack v1.x.
 
+#### Subtle change in method naming
+
+When writing integers, the method name pattern has changed such that although your v1.x->v2.0 code will compile
+it may produce slightly different (and less efficient) msgpack binary than before. Here is the translation table:
+
+|v1.x|v2.x|
+|--|--|
+|`MessagePackBinary.WriteMapHeaderForceMap32Block`|(removed)
+|`MessagePackBinary.WriteArrayHeaderForceArray32Block`|(removed)
+|`MessagePackBinary.WriteByteForceByteBlock`|`MessagePackWriter.WriteUInt8(byte)`
+|`MessagePackBinary.WriteSByteForceSByteBlock`|`MessagePackWriter.WriteInt8(sbyte)`
+|`MessagePackBinary.WriteInt16ForceInt16Block`|`MessagePackWriter.WriteInt16(short)`
+|`MessagePackBinary.WriteInt64ForceInt64Block`|`MessagePackWriter.WriteInt64(long)`
+|`MessagePackBinary.MessagePackBinary.WriteInt32ForceInt32Block`|`MessagePackWriter.WriteInt32(int)`
+|`MessagePackBinary.WriteUInt16ForceUInt16Block`|`MessagePackWriter.WriteUInt16(ushort)`
+|`MessagePackBinary.WriteUInt32ForceUInt32Block`|`MessagePackWriter.WriteUInt32(uint)`
+|`MessagePackBinary.WriteUInt64ForceUInt64Block`|`MessagePackWriter.WriteUInt64(ulong)`
+|`MessagePackBinary.WriteStringForceStr32Block`|(removed)
+|`MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block`|(removed)
+|`MessagePackBinary.WriteMapHeader`|`MessagePackWriter.WriteMapHeader`
+|`MessagePackBinary.WriteArrayHeader`|`MessagePackWriter.WriteArrayHeader`
+|`MessagePackBinary.WriteByte`|`MessagePackWriter.Write(byte)`
+|`MessagePackBinary.WriteBytes`|`MessagePackWriter.Write(byte[])`
+|`MessagePackBinary.WriteSByte`|`MessagePackWriter.Write(sbyte)`
+|`MessagePackBinary.WriteSingle`|`MessagePackWriter.Write(float)`
+|`MessagePackBinary.WriteDouble`|`MessagePackWriter.Write(double)`
+|`MessagePackBinary.WriteInt16`|`MessagePackWriter.Write(short)`
+|`MessagePackBinary.WriteInt32`|`MessagePackWriter.Write(int)`
+|`MessagePackBinary.WriteInt64`|`MessagePackWriter.Write(long)`
+|`MessagePackBinary.WriteUInt16`|`MessagePackWriter.Write(ushort)`
+|`MessagePackBinary.WriteUInt32`|`MessagePackWriter.Write(uint)`
+|`MessagePackBinary.WriteUInt64`|`MessagePackWriter.Write(ulong)`
+|`MessagePackBinary.WriteChar`|`MessagePackWriter.Write(char)`
+|`MessagePackBinary.WriteStringBytes`|`MessagePackWriter.WriteString(ReadOnlySpan<byte>)`
+|`MessagePackBinary.WriteString`|`MessagePackWriter.Write(string)`
+|`MessagePackBinary.WriteExtensionFormatHeader`|`MessagePackWriter.WriteExtensionFormatHeader`
+|`MessagePackBinary.WriteExtensionFormat`|`MessagePackWriter.WriteExtensionFormat`
+|`MessagePackBinary.WriteDateTime`|`MessagePackWriter.Write(DateTime)` ([notes](#DateTime))
+
+The essence here is that you can typically just call `MessagePackWriter.Write(*)`
+for primitive types and the most efficient msgpack binary will be written out.
+You only should call the explicit `WriteX(x)` methods if you need to force a particular
+(fixed length) format of a value to be written out.
+
 ## Behavioral changes
 
 ### DateTime
