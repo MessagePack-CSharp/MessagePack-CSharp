@@ -79,5 +79,29 @@ namespace MessagePack.Tests
             var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.ConvertToJson(truncatedSequence));
             Assert.IsType<EndOfStreamException>(ex.InnerException);
         }
+
+        [Fact]
+        public void ExtJson()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteExtensionFormat(new ExtensionResult(47, new byte[] { 1, 10, 100 }));
+            writer.Flush();
+
+            var msgpack = sequence.AsReadOnlySequence;
+            var str = MessagePackSerializer.ConvertToJson(msgpack);
+            var b64 = Convert.ToBase64String(new byte[] { 1, 10, 100 });
+
+            str.Is(@"[47,""" + b64 + @"""]");
+        }
+
+        [Fact]
+        public void DateTimeJson()
+        {
+            var now = new DateTime(1999, 12, 19, 11, 19, 19, DateTimeKind.Utc);
+            var bin = MessagePackSerializer.Serialize(now);
+            var json = MessagePackSerializer.ConvertToJson(bin);
+            json.Is(@"""1999-12-19T11:19:19.0000000Z""");
+        }
     }
 }
