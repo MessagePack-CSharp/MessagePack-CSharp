@@ -145,7 +145,6 @@ For example, make this change:
 
 `Lz4Block` is same as v1 LZ4MessagePackSerializer. `Lz4BlockArray` is new compression mode of v2.  Regardless of which Lz4 option is set at the deserialization, both data can be deserialized. For example, when the option is `Lz4BlockArray`, binary data of both `Lz4Block` and `Lz4BlockArray` can be deserialized.
 
-
 ### Thrown exceptions
 
 In v1.x any exception thrown during serialization or deserialization was uncaught and propagated to the application.
@@ -286,3 +285,15 @@ class NullableInt16Formatter : IMessagePackFormatter<Int16?>
 Notice the structure is very similar, but arrays and offsets are no longer necessary.
 The underlying msgpack format is unchanged, allowing code to be upgraded to v2.x while maintaining
 compatibility with a file or network party that uses MessagePack v1.x.
+
+## Behavioral changes
+
+### DateTime
+
+When writing out `DateTime` v1.x would *always* call `DateTime.ToUniversalTime()` before serializing the value.
+In v2.x [we only call this method if `DateTime.Kind == DateTimeKind.Local`](https://github.com/neuecc/MessagePack-CSharp/pull/520/files).
+The impact of this is that if you were writing `DateTimeKind.Unspecified` the serialized value will no longer be changed
+under some unjustified assumption that the underlying value was `Local`.
+Your should specify `DateTimeKind` explicitly for all your `DateTime` values.
+When upgrading to MessagePack v2.x this is a breaking change if your `Unspecified` values actually represented the `Local`
+time zone and needed the conversion.
