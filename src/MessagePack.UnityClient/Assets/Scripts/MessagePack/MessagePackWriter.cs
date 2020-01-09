@@ -559,16 +559,7 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Writes an <see cref="long"/> using a built-in 1-byte code when within specific MessagePack-supported ranges,
-        /// or the most compact of
-        /// <see cref="MessagePackCode.UInt8"/>,
-        /// <see cref="MessagePackCode.UInt16"/>,
-        /// <see cref="MessagePackCode.UInt32"/>,
-        /// <see cref="MessagePackCode.UInt64"/>,
-        /// <see cref="MessagePackCode.Int8"/>,
-        /// <see cref="MessagePackCode.Int16"/>,
-        /// <see cref="MessagePackCode.Int32"/>,
-        /// <see cref="MessagePackCode.Int64"/>.
+        /// Writes a <see cref="long"/> using <see cref="MessagePackCode.Int64"/>.
         /// </summary>
         /// <param name="value">The value to write.</param>
         public void WriteInt64(long value)
