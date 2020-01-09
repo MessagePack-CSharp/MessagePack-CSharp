@@ -145,7 +145,6 @@ For example, make this change:
 
 `Lz4Block` is same as v1 LZ4MessagePackSerializer. `Lz4BlockArray` is new compression mode of v2.  Regardless of which Lz4 option is set at the deserialization, both data can be deserialized. For example, when the option is `Lz4BlockArray`, binary data of both `Lz4Block` and `Lz4BlockArray` can be deserialized.
 
-
 ### Thrown exceptions
 
 In v1.x any exception thrown during serialization or deserialization was uncaught and propagated to the application.
@@ -327,3 +326,68 @@ class NullableInt16Formatter : IMessagePackFormatter<Int16?>
 Notice the structure is very similar, but arrays and offsets are no longer necessary.
 The underlying msgpack format is unchanged, allowing code to be upgraded to v2.x while maintaining
 compatibility with a file or network party that uses MessagePack v1.x.
+
+#### Subtle change in method naming
+
+When writing integers, the method name pattern has changed such that although your v1.x->v2.0 code will compile
+it may produce slightly different (and less efficient) msgpack binary than before. Here is the translation table:
+
+|v1.x|v2.x|
+|--|--|
+|`MessagePackBinary.WriteMapHeaderForceMap32Block`|(removed)
+|`MessagePackBinary.WriteArrayHeaderForceArray32Block`|(removed)
+|`MessagePackBinary.WriteByteForceByteBlock`|`MessagePackWriter.WriteUInt8(byte)`
+|`MessagePackBinary.WriteSByteForceSByteBlock`|`MessagePackWriter.WriteInt8(sbyte)`
+|`MessagePackBinary.WriteInt16ForceInt16Block`|`MessagePackWriter.WriteInt16(short)`
+|`MessagePackBinary.WriteInt64ForceInt64Block`|`MessagePackWriter.WriteInt64(long)`
+|`MessagePackBinary.MessagePackBinary.WriteInt32ForceInt32Block`|`MessagePackWriter.WriteInt32(int)`
+|`MessagePackBinary.WriteUInt16ForceUInt16Block`|`MessagePackWriter.WriteUInt16(ushort)`
+|`MessagePackBinary.WriteUInt32ForceUInt32Block`|`MessagePackWriter.WriteUInt32(uint)`
+|`MessagePackBinary.WriteUInt64ForceUInt64Block`|`MessagePackWriter.WriteUInt64(ulong)`
+|`MessagePackBinary.WriteStringForceStr32Block`|(removed)
+|`MessagePackBinary.WriteExtensionFormatHeaderForceExt32Block`|(removed)
+|`MessagePackBinary.WriteMapHeader`|`MessagePackWriter.WriteMapHeader`
+|`MessagePackBinary.WriteArrayHeader`|`MessagePackWriter.WriteArrayHeader`
+|`MessagePackBinary.WriteByte`|`MessagePackWriter.Write(byte)`
+|`MessagePackBinary.WriteBytes`|`MessagePackWriter.Write(byte[])`
+|`MessagePackBinary.WriteSByte`|`MessagePackWriter.Write(sbyte)`
+|`MessagePackBinary.WriteSingle`|`MessagePackWriter.Write(float)`
+|`MessagePackBinary.WriteDouble`|`MessagePackWriter.Write(double)`
+|`MessagePackBinary.WriteInt16`|`MessagePackWriter.Write(short)`
+|`MessagePackBinary.WriteInt32`|`MessagePackWriter.Write(int)`
+|`MessagePackBinary.WriteInt64`|`MessagePackWriter.Write(long)`
+|`MessagePackBinary.WriteUInt16`|`MessagePackWriter.Write(ushort)`
+|`MessagePackBinary.WriteUInt32`|`MessagePackWriter.Write(uint)`
+|`MessagePackBinary.WriteUInt64`|`MessagePackWriter.Write(ulong)`
+|`MessagePackBinary.WriteChar`|`MessagePackWriter.Write(char)`
+|`MessagePackBinary.WriteStringBytes`|`MessagePackWriter.WriteString(ReadOnlySpan<byte>)`
+|`MessagePackBinary.WriteString`|`MessagePackWriter.Write(string)`
+|`MessagePackBinary.WriteExtensionFormatHeader`|`MessagePackWriter.WriteExtensionFormatHeader`
+|`MessagePackBinary.WriteExtensionFormat`|`MessagePackWriter.WriteExtensionFormat`
+|`MessagePackBinary.WriteDateTime`|`MessagePackWriter.Write(DateTime)` ([notes](#DateTime))
+
+The essence here is that you can typically just call `MessagePackWriter.Write(*)`
+for primitive types and the most efficient msgpack binary will be written out.
+You only should call the explicit `WriteX(x)` methods if you need to force a particular
+(fixed length) format of a value to be written out.
+
+As for the integer *reading* methods, these are much more interchangeable than in v1.x.
+You can call *any* `ReadInt*` or `ReadUInt*` method and it will successfully read an integer
+value and fit it into the desired return type so long as the value doesn't overflow.
+So for example you can call `Write(byte)` and later read the value with `ReadInt32()`.
+You can even call `Write(long)` and later read it with `ReadByte()` and it will work
+so long as the actual value fits inside a `byte`.
+An `OverflowException` is thrown if the integer value exceeds the max or min value
+that can be stored by the required return type.
+
+## Behavioral changes
+
+### DateTime
+
+When writing out `DateTime` v1.x would *always* call `DateTime.ToUniversalTime()` before serializing the value.
+In v2.x [we only call this method if `DateTime.Kind == DateTimeKind.Local`](https://github.com/neuecc/MessagePack-CSharp/pull/520/files).
+The impact of this is that if you were writing `DateTimeKind.Unspecified` the serialized value will no longer be changed
+under some unjustified assumption that the underlying value was `Local`.
+Your should specify `DateTimeKind` explicitly for all your `DateTime` values.
+When upgrading to MessagePack v2.x this is a breaking change if your `Unspecified` values actually represented the `Local`
+time zone and needed the conversion.
