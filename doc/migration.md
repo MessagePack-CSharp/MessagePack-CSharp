@@ -330,6 +330,15 @@ for primitive types and the most efficient msgpack binary will be written out.
 You only should call the explicit `WriteX(x)` methods if you need to force a particular
 (fixed length) format of a value to be written out.
 
+As for the integer *reading* methods, these are much more interchangeable than in v1.x.
+You can call *any* `ReadInt*` or `ReadUInt*` method and it will successfully read an integer
+value and fit it into the desired return type so long as the value doesn't overflow.
+So for example you can call `Write(byte)` and later read the value with `ReadInt32()`.
+You can even call `Write(long)` and later read it with `ReadByte()` and it will work
+so long as the actual value fits inside a `byte`.
+An `OverflowException` is thrown if the integer value exceeds the max or min value
+that can be stored by the required return type.
+
 ## Behavioral changes
 
 ### DateTime
