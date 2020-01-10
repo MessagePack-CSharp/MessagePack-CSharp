@@ -90,6 +90,7 @@ namespace MessagePack.Tests
 
             var header = new ExtensionHeader(-1, 10);
             writer.WriteExtensionFormatHeader(header);
+            writer.WriteRaw(new byte[10]);
             writer.Flush();
 
             var written = sequence.AsReadOnlySequence;

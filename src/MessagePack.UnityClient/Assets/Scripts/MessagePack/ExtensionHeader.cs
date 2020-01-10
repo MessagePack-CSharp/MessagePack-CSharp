@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+
 namespace MessagePack
 {
 #if MESSAGEPACK_INTERNAL
@@ -8,7 +10,7 @@ namespace MessagePack
 #else
     public
 #endif
-    struct ExtensionHeader
+    struct ExtensionHeader : IEquatable<ExtensionHeader>
     {
         public sbyte TypeCode { get; private set; }
 
@@ -25,5 +27,7 @@ namespace MessagePack
             this.TypeCode = typeCode;
             this.Length = (uint)length;
         }
+
+        public bool Equals(ExtensionHeader other) => this.TypeCode == other.TypeCode && this.Length == other.Length;
     }
 }

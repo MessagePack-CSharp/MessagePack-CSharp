@@ -1,2 +1,6 @@
-﻿MessagePack.MessagePackReader.ReadDateTime(MessagePack.ExtensionHeader header) -> System.DateTime
+﻿MessagePack.ExtensionHeader.Equals(MessagePack.ExtensionHeader other) -> bool
+MessagePack.MessagePackReader.ReadDateTime(MessagePack.ExtensionHeader header) -> System.DateTime
+MessagePack.MessagePackReader.TryReadArrayHeader(out int count) -> bool
+MessagePack.MessagePackReader.TryReadExtensionFormatHeader(out MessagePack.ExtensionHeader extensionHeader) -> bool
+MessagePack.MessagePackReader.TryReadMapHeader(out int count) -> bool
 MessagePack.MessagePackStreamReader.ReadArrayAsync(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<System.Buffers.ReadOnlySequence<byte>>
