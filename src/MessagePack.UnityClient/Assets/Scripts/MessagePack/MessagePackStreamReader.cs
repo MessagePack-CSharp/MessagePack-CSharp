@@ -17,7 +17,7 @@ namespace MessagePack
     /// This class is *not* thread-safe. Do not call more than one member at once and be sure any call completes (including asynchronous tasks)
     /// before calling the next one.
     /// </remarks>
-    public class MessagePackStreamReader : IDisposable
+    public partial class MessagePackStreamReader : IDisposable
     {
         private readonly Stream stream;
         private SequencePool.Rental sequenceRental = SequencePool.Shared.Rent();
@@ -57,12 +57,7 @@ namespace MessagePack
         /// </remarks>
         public async ValueTask<ReadOnlySequence<byte>?> ReadAsync(CancellationToken cancellationToken)
         {
-            if (this.endOfLastMessage.HasValue)
-            {
-                // A previously returned message can now be safely recycled since the caller wants more.
-                this.ReadData.AdvanceTo(this.endOfLastMessage.Value);
-                this.endOfLastMessage = null;
-            }
+            this.RecycleLastMessage();
 
             while (true)
             {
@@ -74,23 +69,11 @@ namespace MessagePack
                     return completeMessage;
                 }
 
-                cancellationToken.ThrowIfCancellationRequested();
-                Memory<byte> buffer = this.ReadData.GetMemory(sizeHint: 0);
-                int bytesRead = 0;
-                try
+                if (!await this.TryReadMoreDataAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    bytesRead = await this.stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-                    if (bytesRead == 0)
-                    {
-                        // We've reached the end of the stream.
-                        // We already checked for a complete message with what we already had, so evidently it's not a complete message.
-                        return null;
-                    }
-                }
-                finally
-                {
-                    // Keep our state clean in case the caller wants to call us again.
-                    this.ReadData.Advance(bytesRead);
+                    // We've reached the end of the stream.
+                    // We already checked for a complete message with what we already had, so evidently it's not a complete message.
+                    return null;
                 }
             }
         }
@@ -101,6 +84,41 @@ namespace MessagePack
             this.stream.Dispose();
             this.sequenceRental.Dispose();
             this.sequenceRental = default;
+        }
+
+        /// <summary>
+        /// Recycle memory from a previously returned message.
+        /// </summary>
+        private void RecycleLastMessage()
+        {
+            if (this.endOfLastMessage.HasValue)
+            {
+                // A previously returned message can now be safely recycled since the caller wants more.
+                this.ReadData.AdvanceTo(this.endOfLastMessage.Value);
+                this.endOfLastMessage = null;
+            }
+        }
+
+        /// <summary>
+        /// Read more data from the stream into the <see cref="ReadData"/> buffer.
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns><c>true</c> if more data was read; <c>false</c> if the end of the stream had already been reached.</returns>
+        private async Task<bool> TryReadMoreDataAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Memory<byte> buffer = this.ReadData.GetMemory(sizeHint: 0);
+            int bytesRead = 0;
+            try
+            {
+                bytesRead = await this.stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+                return bytesRead > 0;
+            }
+            finally
+            {
+                // Keep our state clean in case the caller wants to call us again.
+                this.ReadData.Advance(bytesRead);
+            }
         }
 
         /// <summary>

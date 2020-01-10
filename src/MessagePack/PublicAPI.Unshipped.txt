@@ -1,1 +1,2 @@
 ﻿MessagePack.MessagePackReader.ReadDateTime(MessagePack.ExtensionHeader header) -> System.DateTime
+MessagePack.MessagePackStreamReader.ReadArrayAsync(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<System.Buffers.ReadOnlySequence<byte>>

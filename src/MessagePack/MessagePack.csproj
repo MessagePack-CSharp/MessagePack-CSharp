@@ -7,6 +7,7 @@
     <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK</DefineConstants>
     <DefineConstants Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <LangVersion>8.0</LangVersion>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C#</Title>
@@ -34,6 +35,7 @@
 
   <ItemGroup>
     <PackageReference Include="Roslyn.Diagnostics.Analyzers" Version="2.9.7" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.0.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.6.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.6.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
