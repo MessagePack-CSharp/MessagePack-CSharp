@@ -14,12 +14,10 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
-    public class MessagePackStreamReaderTests
+    public class MessagePackStreamReaderTests : TestBase
     {
-        private static readonly TimeSpan TestTimeoutSpan = Debugger.IsAttached ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(5);
         private readonly ReadOnlySequence<byte> twoMessages;
         private readonly IReadOnlyList<SequencePosition> messagePositions;
-        private readonly CancellationToken timeoutToken = new CancellationTokenSource(TestTimeoutSpan).Token;
 
         public MessagePackStreamReaderTests()
         {
@@ -63,7 +61,7 @@ namespace MessagePack.Tests
         {
             using (var reader = new MessagePackStreamReader(new MemoryStream()))
             {
-                Assert.Null(await reader.ReadAsync(this.timeoutToken));
+                Assert.Null(await reader.ReadAsync(this.TimeoutToken));
                 Assert.True(reader.RemainingBytes.IsEmpty);
             }
         }
@@ -74,12 +72,12 @@ namespace MessagePack.Tests
             var oneMessage = this.twoMessages.Slice(0, this.messagePositions[0]).ToArray();
             using (var reader = new MessagePackStreamReader(new MemoryStream(oneMessage)))
             {
-                var message1 = await reader.ReadAsync(this.timeoutToken);
+                var message1 = await reader.ReadAsync(this.TimeoutToken);
                 Assert.NotNull(message1);
                 Assert.Equal(oneMessage, message1.Value.ToArray());
 
                 Assert.True(reader.RemainingBytes.IsEmpty);
-                Assert.Null(await reader.ReadAsync(this.timeoutToken));
+                Assert.Null(await reader.ReadAsync(this.TimeoutToken));
                 Assert.True(reader.RemainingBytes.IsEmpty);
             }
         }
@@ -89,15 +87,15 @@ namespace MessagePack.Tests
         {
             using (var reader = new MessagePackStreamReader(new MemoryStream(this.twoMessages.ToArray())))
             {
-                var message1 = await reader.ReadAsync(this.timeoutToken);
+                var message1 = await reader.ReadAsync(this.TimeoutToken);
                 Assert.NotNull(message1);
                 Assert.Equal(this.twoMessages.Slice(0, this.messagePositions[0]).ToArray(), message1.Value.ToArray());
 
-                var message2 = await reader.ReadAsync(this.timeoutToken);
+                var message2 = await reader.ReadAsync(this.TimeoutToken);
                 Assert.NotNull(message2);
                 Assert.Equal(this.twoMessages.Slice(this.messagePositions[0], this.messagePositions[1]).ToArray(), message2.Value.ToArray());
 
-                Assert.Null(await reader.ReadAsync(this.timeoutToken));
+                Assert.Null(await reader.ReadAsync(this.TimeoutToken));
             }
         }
 
@@ -108,7 +106,7 @@ namespace MessagePack.Tests
             var partialMessage = this.twoMessages.Slice(messagePositions[0], 1).ToArray();
             using (var reader = new MessagePackStreamReader(new MemoryStream(partialMessage)))
             {
-                Assert.Null(await reader.ReadAsync(this.timeoutToken));
+                Assert.Null(await reader.ReadAsync(this.TimeoutToken));
                 Assert.Equal(partialMessage, reader.RemainingBytes.ToArray());
             }
         }
@@ -120,12 +118,12 @@ namespace MessagePack.Tests
             var partialMessage = this.twoMessages.Slice(0, 2).ToArray();
             using (var reader = new MessagePackStreamReader(new MemoryStream(partialMessage)))
             {
-                var firstMessage = await reader.ReadAsync(this.timeoutToken);
+                var firstMessage = await reader.ReadAsync(this.TimeoutToken);
                 Assert.NotNull(firstMessage);
                 Assert.Equal(partialMessage.Take(1), firstMessage.Value.ToArray());
 
                 Assert.Equal(partialMessage.Skip(1), reader.RemainingBytes.ToArray());
-                Assert.Null(await reader.ReadAsync(this.timeoutToken));
+                Assert.Null(await reader.ReadAsync(this.TimeoutToken));
                 Assert.Equal(partialMessage.Skip(1), reader.RemainingBytes.ToArray());
             }
         }
@@ -135,9 +133,9 @@ namespace MessagePack.Tests
         {
             using (var reader = new MessagePackStreamReader(new OneByteAtATimeStream(this.twoMessages)))
             {
-                Assert.True((await reader.ReadAsync(this.timeoutToken)).HasValue);
-                Assert.True((await reader.ReadAsync(this.timeoutToken)).HasValue);
-                Assert.False((await reader.ReadAsync(this.timeoutToken)).HasValue);
+                Assert.True((await reader.ReadAsync(this.TimeoutToken)).HasValue);
+                Assert.True((await reader.ReadAsync(this.TimeoutToken)).HasValue);
+                Assert.False((await reader.ReadAsync(this.TimeoutToken)).HasValue);
             }
         }
 
