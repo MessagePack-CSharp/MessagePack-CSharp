@@ -142,6 +142,11 @@ namespace MessagePack
         /// </remarks>
         internal bool TrySkip()
         {
+            if (this.reader.Remaining == 0)
+            {
+                return false;
+            }
+
             byte code = this.NextCode;
             switch (code)
             {

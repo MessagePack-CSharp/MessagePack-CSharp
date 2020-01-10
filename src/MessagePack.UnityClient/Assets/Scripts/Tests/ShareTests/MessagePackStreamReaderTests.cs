@@ -131,6 +131,17 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public async Task ReadAsync_EveryTruncationPositionPossible()
+        {
+            using (var reader = new MessagePackStreamReader(new OneByteAtATimeStream(this.twoMessages)))
+            {
+                Assert.True((await reader.ReadAsync(this.timeoutToken)).HasValue);
+                Assert.True((await reader.ReadAsync(this.timeoutToken)).HasValue);
+                Assert.False((await reader.ReadAsync(this.timeoutToken)).HasValue);
+            }
+        }
+
+        [Fact]
         public void DisposeClosesStream()
         {
             var ms = new MemoryStream();
