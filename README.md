@@ -182,7 +182,7 @@ All patterns serialization target are public instance member(field or property).
 
 Which should uses int key or string key? I recommend use int key because faster and compact than string key. But string key has key name information, it is useful for debugging.
 
-MessagePackSerializer requests target must put attribute is for robustness. If class is grown, you need to be conscious of versioning. MessagePackSerializer uses default value if key does not exists. If uses int key, should be start from 0 and should be sequential. If unnecessary properties come out, please make a missing number. Reuse is bad. Also, if Int Key's jump number is too large, it affects binary size.
+MessagePackSerializer requests target must put attribute is for robustness. If class is grown, you need to be conscious of versioning. MessagePackSerializer uses default value if key does not exists. If uses int key, should be start from 0 and should be sequential, if unnecessary properties come out, please make a obsolete and keep type, until all clients will update. Also, if Int Key's jump number is too large, it affects binary size.
 
 ```csharp
 [MessagePackObject]
@@ -1324,14 +1324,16 @@ dotnet mpc -h
 Alternatively, you can download mpc from the [releases](https://github.com/neuecc/MessagePack-CSharp/releases/) page, that includes platform native binaries(don't require dotnet runtime).
 
 ```
-argument list:
--i, -input: Input path of analyze csproj or directory, if input multiple csproj split with ','.
--o, -output: Output file path(.cs) or directory(multiple generate file).
--c, -conditionalSymbol: [default=null]Conditional compiler symbols, split with ','.
--r, -resolverName: [default=GeneratedResolver]Set resolver name.
--n, -namespace: [default=MessagePack]Set namespace root name.
--m, -useMapMode: [default=False]Force use map mode serialization.
--ms, -multipleIfDirectiveOutputSymbols: [default=null]Generate #if-- files by symbols, split with ','.
+Usage: mpc [options...]
+
+Options:
+  -i, -input <String>                                Input path of analyze csproj or directory, if input multiple csproj split with ','. (Required)
+  -o, -output <String>                               Output file path(.cs) or directory(multiple generate file). (Required)
+  -c, -conditionalSymbol <String>                    Conditional compiler symbols, split with ','. (Default: null)
+  -r, -resolverName <String>                         Set resolver name. (Default: GeneratedResolver)
+  -n, -namespace <String>                            Set namespace root name. (Default: MessagePack)
+  -m, -useMapMode <Boolean>                          Force use map mode serialization. (Default: False)
+  -ms, -multipleIfDirectiveOutputSymbols <String>    Generate #if-- files by symbols, split with ','. (Default: null)
 ```
 
 `mpc` targets C# code that annotates with `[MessagePackObject]` or `[Union]`.
