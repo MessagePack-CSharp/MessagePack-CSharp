@@ -6,6 +6,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 
+#nullable disable
+
 namespace MessagePackAnalyzer
 {
     internal class TypeCollector

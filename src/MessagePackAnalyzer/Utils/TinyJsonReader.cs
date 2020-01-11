@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -53,7 +54,7 @@ namespace MessagePackAnalyzer
             this.deserializers[type] = deserializer;
         }
 
-        public bool TrySerialize(Type type, object obj, out string result)
+        public bool TrySerialize(Type type, object obj, [NotNullWhen(true)] out string? result)
         {
             Func<object, string> serializer;
             if (type != null && this.serializers.TryGetValue(type, out serializer))
@@ -68,7 +69,7 @@ namespace MessagePackAnalyzer
             }
         }
 
-        public bool TryDeserialize(Type type, string json, out object result)
+        public bool TryDeserialize(Type type, string json, out object? result)
         {
             Func<string, object> deserializer;
             if (type != null && this.deserializers.TryGetValue(type, out deserializer))
@@ -105,7 +106,7 @@ namespace MessagePackAnalyzer
 
         public TinyJsonToken TokenType { get; private set; }
 
-        public object Value { get; private set; }
+        public object? Value { get; private set; }
 
         public TinyJsonReader(TextReader reader, bool disposeInnerReader = true)
         {
@@ -577,7 +578,7 @@ END:
                 }
                 else
                 {
-                    string result;
+                    string? result;
                     if (serializer.TrySerialize(t, obj, out result))
                     {
                         this.WriteString(result);
