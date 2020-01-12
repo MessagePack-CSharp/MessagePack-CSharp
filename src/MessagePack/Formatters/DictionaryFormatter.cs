@@ -147,7 +147,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, TValue> Create(int count)
         {
-            return new Dictionary<TKey, TValue>(count);
+            return new Dictionary<TKey, TValue>(count, MessagePackSecurity.Active.GetEqualityComparer<TKey>());
         }
 
         protected override Dictionary<TKey, TValue>.Enumerator GetSourceEnumerator(Dictionary<TKey, TValue> source)
@@ -166,7 +166,7 @@ namespace MessagePack.Formatters
 
         protected override TDictionary Create(int count)
         {
-            return new TDictionary();
+            return CollectionHelpers<TDictionary, IEqualityComparer<TKey>>.CreateHashCollection(count, MessagePackSecurity.Active.GetEqualityComparer<TKey>());
         }
     }
 
@@ -179,7 +179,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, TValue> Create(int count)
         {
-            return new Dictionary<TKey, TValue>(count);
+            return new Dictionary<TKey, TValue>(count, MessagePackSecurity.Active.GetEqualityComparer<TKey>());
         }
 
         protected override IDictionary<TKey, TValue> Complete(Dictionary<TKey, TValue> intermediateCollection)
@@ -238,7 +238,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, TValue> Create(int count)
         {
-            return new Dictionary<TKey, TValue>(count);
+            return new Dictionary<TKey, TValue>(count, MessagePackSecurity.Active.GetEqualityComparer<TKey>());
         }
     }
 
@@ -256,7 +256,7 @@ namespace MessagePack.Formatters
 
         protected override Dictionary<TKey, TValue> Create(int count)
         {
-            return new Dictionary<TKey, TValue>(count);
+            return new Dictionary<TKey, TValue>(count, MessagePackSecurity.Active.GetEqualityComparer<TKey>());
         }
     }
 
@@ -270,7 +270,7 @@ namespace MessagePack.Formatters
         protected override ConcurrentDictionary<TKey, TValue> Create(int count)
         {
             // concurrent dictionary can't access defaultConcurrecyLevel so does not use count overload.
-            return new ConcurrentDictionary<TKey, TValue>();
+            return new ConcurrentDictionary<TKey, TValue>(MessagePackSecurity.Active.GetEqualityComparer<TKey>());
         }
     }
 

@@ -487,7 +487,7 @@ namespace MessagePack.Formatters
 
         protected override HashSet<T> Create(int count)
         {
-            return new HashSet<T>();
+            return new HashSet<T>(MessagePackSecurity.Active.GetEqualityComparer<T>());
         }
 
         protected override HashSet<T>.Enumerator GetSourceEnumerator(HashSet<T> source)
@@ -847,7 +847,7 @@ namespace MessagePack.Formatters
             var count = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            var dict = new T();
+            var dict = CollectionHelpers<T, IEqualityComparer>.CreateHashCollection(count, MessagePackSecurity.Active.GetEqualityComparer());
             for (int i = 0; i < count; i++)
             {
                 var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
@@ -906,7 +906,7 @@ namespace MessagePack.Formatters
             var count = MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
             offset += readSize;
 
-            var dict = new Dictionary<object, object>(count);
+            var dict = new Dictionary<object, object>(count, MessagePackSecurity.Active.GetEqualityComparer<object>());
             for (int i = 0; i < count; i++)
             {
                 var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
@@ -1004,7 +1004,7 @@ namespace MessagePack.Formatters
 
         protected override HashSet<T> Create(int count)
         {
-            return new HashSet<T>();
+            return new HashSet<T>(MessagePackSecurity.Active.GetEqualityComparer<T>());
         }
     }
 
