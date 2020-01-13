@@ -36,7 +36,7 @@ namespace DynamicCodeDumper
                 //DynamicObjectResolver.Instance.GetFormatter<SimpleStringKeyData>();
                 //DynamicObjectResolver.Instance.GetFormatter<SimpleStringKeyData2>();
                 //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
-                //DynamicObjectResolver.Instance.GetFormatter<LongestString>();
+                DynamicObjectResolver.Instance.GetFormatter<LongestString>();
                 var f = DynamicObjectResolverAllowPrivate.Instance.GetFormatter<MyClass>();
                 //DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
                 //DynamicObjectResolver.Instance.GetFormatter<Callback1>();

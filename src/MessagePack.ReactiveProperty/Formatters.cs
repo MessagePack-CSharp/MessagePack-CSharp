@@ -146,12 +146,15 @@ namespace MessagePack.ReactivePropertyExtension
 
                 var scheduler = ReactivePropertySchedulerMapper.GetScheduler(schedulerId);
 
-                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
 
-                readSize = offset - startOffset;
+                    readSize = offset - startOffset;
 
-                return new ReactiveProperty<T>(scheduler, v, mode);
+                    return new ReactiveProperty<T>(scheduler, v, mode);
+                }
             }
 
         }
@@ -187,14 +190,17 @@ namespace MessagePack.ReactivePropertyExtension
         {
             var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
 
-            switch (length)
+            using (MessagePackSecurity.DepthStep())
             {
-                case 2:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                case 3:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                default:
-                    throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+                switch (length)
+                {
+                    case 2:
+                        return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    case 3:
+                        return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    default:
+                        throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+                }
             }
         }
     }
@@ -229,14 +235,17 @@ namespace MessagePack.ReactivePropertyExtension
         {
             var length = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
 
-            switch (length)
+            using (MessagePackSecurity.DepthStep())
             {
-                case 2:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                case 3:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                default:
-                    throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+                switch (length)
+                {
+                    case 2:
+                        return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    case 3:
+                        return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    default:
+                        throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+                }
             }
         }
     }
@@ -350,14 +359,16 @@ namespace MessagePack.ReactivePropertyExtension
                 var mode = (ReactivePropertyMode)MessagePackBinary.ReadInt32(bytes, offset, out readSize);
                 offset += readSize;
 
-                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
 
-                readSize = offset - startOffset;
+                    readSize = offset - startOffset;
 
-                return new ReactivePropertySlim<T>(v, mode);
+                    return new ReactivePropertySlim<T>(v, mode);
+                }
             }
-
         }
     }
 }

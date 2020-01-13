@@ -302,14 +302,17 @@ namespace MessagePack.Formatters
 
             if (count != 2) throw new InvalidOperationException("Invalid KeyValuePair format.");
 
-            var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize);
-            offset += readSize;
+            using (MessagePackSecurity.DepthStep())
+            {
+                var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
 
-            var value = formatterResolver.GetFormatterWithVerify<TValue>().Deserialize(bytes, offset, formatterResolver, out readSize);
-            offset += readSize;
+                var value = formatterResolver.GetFormatterWithVerify<TValue>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                offset += readSize;
 
-            readSize = offset - startOffset;
-            return new KeyValuePair<TKey, TValue>(key, value);
+                readSize = offset - startOffset;
+                return new KeyValuePair<TKey, TValue>(key, value);
+            }
         }
     }
 
@@ -486,9 +489,12 @@ namespace MessagePack.Formatters
             }
             else
             {
-                // deserialize immediately(no delay, because capture byte[] causes memory leak)
-                var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                return new Lazy<T>(() => v);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    // deserialize immediately(no delay, because capture byte[] causes memory leak)
+                    var v = formatterResolver.GetFormatterWithVerify<T>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    return new Lazy<T>(() => v);
+                }
             }
         }
     }

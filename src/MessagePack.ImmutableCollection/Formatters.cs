@@ -45,11 +45,15 @@ namespace MessagePack.ImmutableCollection
                 offset += readSize;
 
                 var builder = ImmutableArray.CreateBuilder<T>(len);
-                for (int i = 0; i < len; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    builder.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
-                    offset += readSize;
+                    for (int i = 0; i < len; i++)
+                    {
+                        builder.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
 
                 return builder.ToImmutable();

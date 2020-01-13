@@ -51,14 +51,16 @@ namespace MessagePack.Formatters
                 var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 if (count != <#= i #>) throw new InvalidOperationException("Invalid Tuple count");
                 offset += readSize;
-
+                using (MessagePackSecurity.DepthStep())
+                {
 <# for(var j = 1; j <= i; j++) { #>
-                var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                    var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
 <# } #>
-            
-                readSize = offset - startOffset;
-                return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+
+                    readSize = offset - startOffset;
+                    return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+                }
             }
         }
     }

@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Threading;
+using MessagePack.Formatters;
 using MessagePack.Internal;
 
 namespace MessagePack
@@ -16,6 +18,11 @@ namespace MessagePack
     /// </summary>
     public class MessagePackSecurity
     {
+        /// <summary>
+        /// The thread-local value tracking recursion for an ongoing deserialization operation.
+        /// </summary>
+        private static readonly ThreadLocal<int> ObjectGraphDepth = new ThreadLocal<int>();
+
         /// <summary>
         /// Gets an instance preconfigured with settings that omit all protections. Useful for deserializing fully-trusted and valid msgpack sequences.
         /// </summary>
@@ -27,6 +34,7 @@ namespace MessagePack
         public static readonly MessagePackSecurity UntrustedData = new MessagePackSecurity
         {
             HashCollisionResistant = true,
+            MaximumObjectGraphDepth = 500,
         };
 
         /// <summary>
@@ -55,6 +63,7 @@ namespace MessagePack
             }
 
             this.HashCollisionResistant = copyFrom.HashCollisionResistant;
+            this.MaximumObjectGraphDepth = copyFrom.MaximumObjectGraphDepth;
         }
 
         /// <summary>
@@ -66,6 +75,35 @@ namespace MessagePack
         /// The value is <c>false</c> for <see cref="TrustedData"/> and <c>true</c> for <see cref="UntrustedData"/>.
         /// </value>
         public bool HashCollisionResistant { get; private set; }
+
+        /// <summary>
+        /// Gets the maximum depth of an object graph that may be deserialized.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This value can be reduced to avoid a stack overflow that would crash the process when deserializing a msgpack sequence designed to cause deep recursion.
+        /// A very short callstack on a thread with 1MB of total stack space might deserialize ~2000 nested arrays before crashing due to a stack overflow.
+        /// Since stack space occupied may vary by the kind of object deserialized, a conservative value for this property to defend against stack overflow attacks might be 500.
+        /// </para>
+        /// </remarks>
+        public int MaximumObjectGraphDepth { get; private set; } = int.MaxValue;
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="MaximumObjectGraphDepth"/> property set to a new value.
+        /// </summary>
+        /// <param name="maximumObjectGraphDepth">The new value for the <see cref="MaximumObjectGraphDepth"/> property.</param>
+        /// <returns>The new instance; or the original if the value is unchanged.</returns>
+        public MessagePackSecurity WithMaximumObjectGraphDepth(int maximumObjectGraphDepth)
+        {
+            if (this.MaximumObjectGraphDepth == maximumObjectGraphDepth)
+            {
+                return this;
+            }
+
+            var clone = this.Clone();
+            clone.MaximumObjectGraphDepth = maximumObjectGraphDepth;
+            return clone;
+        }
 
         /// <summary>
         /// Gets a copy of these options with the <see cref="HashCollisionResistant"/> property set to a new value.
@@ -152,6 +190,35 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Should be called within the expression of a <c>using</c> statement around which a <see cref="IMessagePackFormatter{T}.Deserialize"/> method
+        /// deserializes a sub-element.
+        /// </summary>
+        /// <returns>A value to be disposed of when deserializing the sub-element is complete.</returns>
+        /// <exception cref="InsufficientExecutionStackException">Thrown when the depth of the object graph being deserialized exceeds <see cref="MaximumObjectGraphDepth"/>.</exception>
+        /// <remarks>
+        /// Rather than wrap the body of every <see cref="IMessagePackFormatter{T}.Deserialize"/> method,
+        /// this should wrap *calls* to these methods. They need not appear in pure "thunk" methods that simply delegate the deserialization to another formatter.
+        /// In this way, we can avoid repeatedly incrementing and decrementing the counter when deserializing each element of a collection.
+        /// </remarks>
+        public static ObjectGraphDepthStep DepthStep()
+        {
+            int max = Active.MaximumObjectGraphDepth;
+            if (max < int.MaxValue)
+            {
+                int current = ObjectGraphDepth.Value;
+                if (current >= max)
+                {
+                    throw new InsufficientExecutionStackException($"This msgpack sequence has an object graph that exceeds the maximum depth allowed of {max}.");
+                }
+
+                ObjectGraphDepth.Value = current + 1;
+                return new ObjectGraphDepthStep(true);
+            }
+
+            return default;
+        }
+
+        /// <summary>
         /// Returns a hash collision resistant equality comparer.
         /// </summary>
         /// <returns>A hash collision resistant equality comparer.</returns>
@@ -164,6 +231,30 @@ namespace MessagePack
         /// Derived types should override this method to instantiate their own derived type.
         /// </remarks>
         protected virtual MessagePackSecurity Clone() => new MessagePackSecurity(this);
+
+        /// <summary>
+        /// The struct returned from <see cref="DepthStep"/>
+        /// that when disposed will decrement the object graph depth counter to reverse
+        /// the effect of the call to <see cref="DepthStep"/>.
+        /// </summary>
+        public struct ObjectGraphDepthStep : IDisposable
+        {
+            private readonly bool active;
+
+            internal ObjectGraphDepthStep(bool active)
+            {
+                this.active = active;
+            }
+
+            /// <inheritdoc />
+            public void Dispose()
+            {
+                if (this.active)
+                {
+                    ObjectGraphDepth.Value--;
+                }
+            }
+        }
 
         /// <summary>
         /// A hash collision resistant implementation of <see cref="IEqualityComparer{T}"/>.

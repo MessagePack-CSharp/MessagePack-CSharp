@@ -43,13 +43,16 @@ namespace MessagePack.Formatters
                 if (count != <#= i #>) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
+                using (MessagePackSecurity.DepthStep())
+                {
 <# for(var j = 1; j <= i; j++) { #>
-                var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                    var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
 <# } #>
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+                }
             }
         }
     }

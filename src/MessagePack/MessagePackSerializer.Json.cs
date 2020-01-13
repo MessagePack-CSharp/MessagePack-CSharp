@@ -194,19 +194,22 @@ namespace MessagePack
                         var length = MessagePackBinary.ReadArrayHeaderRaw(bytes, offset, out readSize);
                         var totalReadSize = readSize;
                         offset += readSize;
-                        builder.Append("[");
-                        for (int i = 0; i < length; i++)
+                        using (MessagePackSecurity.DepthStep())
                         {
-                            readSize = ToJsonCore(bytes, offset, builder);
-                            offset += readSize;
-                            totalReadSize += readSize;
-
-                            if (i != length - 1)
+                            builder.Append("[");
+                            for (int i = 0; i < length; i++)
                             {
-                                builder.Append(",");
+                                readSize = ToJsonCore(bytes, offset, builder);
+                                offset += readSize;
+                                totalReadSize += readSize;
+
+                                if (i != length - 1)
+                                {
+                                    builder.Append(",");
+                                }
                             }
+                            builder.Append("]");
                         }
-                        builder.Append("]");
 
                         return totalReadSize;
                     }
@@ -215,41 +218,44 @@ namespace MessagePack
                         var length = MessagePackBinary.ReadMapHeaderRaw(bytes, offset, out readSize);
                         var totalReadSize = readSize;
                         offset += readSize;
-                        builder.Append("{");
-                        for (int i = 0; i < length; i++)
+                        using (MessagePackSecurity.DepthStep())
                         {
-                            // write key
+                            builder.Append("{");
+                            for (int i = 0; i < length; i++)
                             {
-                                var keyType = MessagePackBinary.GetMessagePackType(bytes, offset);
-                                if (keyType == MessagePackType.String || keyType == MessagePackType.Binary)
+                                // write key
+                                {
+                                    var keyType = MessagePackBinary.GetMessagePackType(bytes, offset);
+                                    if (keyType == MessagePackType.String || keyType == MessagePackType.Binary)
+                                    {
+                                        readSize = ToJsonCore(bytes, offset, builder);
+                                    }
+                                    else
+                                    {
+                                        builder.Append("\"");
+                                        readSize = ToJsonCore(bytes, offset, builder);
+                                        builder.Append("\"");
+                                    }
+                                    offset += readSize;
+                                    totalReadSize += readSize;
+                                }
+
+                                builder.Append(":");
+
+                                // write body
                                 {
                                     readSize = ToJsonCore(bytes, offset, builder);
+                                    offset += readSize;
+                                    totalReadSize += readSize;
                                 }
-                                else
+
+                                if (i != length - 1)
                                 {
-                                    builder.Append("\"");
-                                    readSize = ToJsonCore(bytes, offset, builder);
-                                    builder.Append("\"");
+                                    builder.Append(",");
                                 }
-                                offset += readSize;
-                                totalReadSize += readSize;
                             }
-
-                            builder.Append(":");
-
-                            // write body
-                            {
-                                readSize = ToJsonCore(bytes, offset, builder);
-                                offset += readSize;
-                                totalReadSize += readSize;
-                            }
-
-                            if (i != length - 1)
-                            {
-                                builder.Append(",");
-                            }
+                            builder.Append("}");
                         }
-                        builder.Append("}");
 
                         return totalReadSize;
                     }

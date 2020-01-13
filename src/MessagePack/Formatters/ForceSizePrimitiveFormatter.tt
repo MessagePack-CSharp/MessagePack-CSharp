@@ -118,11 +118,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new <#= t.Name #>[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = MessagePackBinary.Read<#= t.Name #>(bytes, offset, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }

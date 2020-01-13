@@ -205,10 +205,13 @@ namespace MessagePack.Formatters
 
                         var objectFormatter = formatterResolver.GetFormatter<object>();
                         var array = new object[length];
-                        for (int i = 0; i < length; i++)
+                        using (MessagePackSecurity.DepthStep())
                         {
-                            array[i] = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
+                            for (int i = 0; i < length; i++)
+                            {
+                                array[i] = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                                offset += readSize;
+                            }
                         }
 
                         readSize = offset - startOffset;
@@ -222,15 +225,18 @@ namespace MessagePack.Formatters
 
                         var objectFormatter = formatterResolver.GetFormatter<object>();
                         var hash = new Dictionary<object, object>(length, MessagePackSecurity.Active.GetEqualityComparer<object>());
-                        for (int i = 0; i < length; i++)
+                        using (MessagePackSecurity.DepthStep())
                         {
-                            var key = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
+                            for (int i = 0; i < length; i++)
+                            {
+                                var key = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                                offset += readSize;
 
-                            var value = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                            offset += readSize;
+                                var value = objectFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                                offset += readSize;
 
-                            hash.Add(key, value);
+                                hash.Add(key, value);
+                            }
                         }
 
                         readSize = offset - startOffset;

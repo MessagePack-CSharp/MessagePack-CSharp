@@ -49,11 +49,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new T[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }
@@ -179,11 +183,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var list = new List<T>(len);
-                for (int i = 0; i < len; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
-                    offset += readSize;
+                    for (int i = 0; i < len; i++)
+                    {
+                        list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return list;
             }
@@ -313,11 +321,15 @@ namespace MessagePack.Formatters
                 offset += readSize;
 
                 var list = Create(len);
-                for (int i = 0; i < len; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    Add(list, i, formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
-                    offset += readSize;
+                    for (int i = 0; i < len; i++)
+                    {
+                        Add(list, i, formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
 
                 return Complete(list);
@@ -602,14 +614,17 @@ namespace MessagePack.Formatters
 
                 if (count != 2) throw new InvalidOperationException("Invalid Grouping format.");
 
-                var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var key = formatterResolver.GetFormatterWithVerify<TKey>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
 
-                var value = formatterResolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                    var value = formatterResolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
 
-                readSize = offset - startOffset;
-                return new Grouping<TKey, TElement>(key, value);
+                    readSize = offset - startOffset;
+                    return new Grouping<TKey, TElement>(key, value);
+                }
             }
         }
     }
@@ -743,10 +758,13 @@ namespace MessagePack.Formatters
             offset += readSize;
 
             var list = new T();
-            for (int i = 0; i < count; i++)
+            using (MessagePackSecurity.DepthStep())
             {
-                list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
-                offset += readSize;
+                for (int i = 0; i < count; i++)
+                {
+                    list.Add(formatter.Deserialize(bytes, offset, formatterResolver, out readSize));
+                    offset += readSize;
+                }
             }
 
             readSize = offset - startOffset;
@@ -798,10 +816,13 @@ namespace MessagePack.Formatters
             offset += readSize;
 
             var list = new object[count];
-            for (int i = 0; i < count; i++)
+            using (MessagePackSecurity.DepthStep())
             {
-                list[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
+                for (int i = 0; i < count; i++)
+                {
+                    list[i] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                }
             }
 
             readSize = offset - startOffset;
@@ -848,13 +869,16 @@ namespace MessagePack.Formatters
             offset += readSize;
 
             var dict = CollectionHelpers<T, IEqualityComparer>.CreateHashCollection(count, MessagePackSecurity.Active.GetEqualityComparer());
-            for (int i = 0; i < count; i++)
+            using (MessagePackSecurity.DepthStep())
             {
-                var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                dict.Add(key, value);
+                for (int i = 0; i < count; i++)
+                {
+                    var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    dict.Add(key, value);
+                }
             }
 
             readSize = offset - startOffset;
@@ -907,13 +931,16 @@ namespace MessagePack.Formatters
             offset += readSize;
 
             var dict = new Dictionary<object, object>(count, MessagePackSecurity.Active.GetEqualityComparer<object>());
-            for (int i = 0; i < count; i++)
+            using (MessagePackSecurity.DepthStep())
             {
-                var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                dict.Add(key, value);
+                for (int i = 0; i < count; i++)
+                {
+                    var key = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var value = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    dict.Add(key, value);
+                }
             }
 
             readSize = offset - startOffset;

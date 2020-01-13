@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MSBuild.StructuredLogger" Version="2.0.68"/>
+    <PackageReference Include="MSBuild.StructuredLogger" Version="2.0.68" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.10.0" />
   </ItemGroup>
 
@@ -30,6 +30,15 @@
 
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Generator\FormatterTemplate.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Update="Generator\UnionTemplate.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
   </ItemGroup>
 
 </Project>

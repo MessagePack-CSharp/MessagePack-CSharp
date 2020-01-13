@@ -804,8 +804,9 @@ namespace MessagePack.Internal
                 il.Emit(OpCodes.Throw);
             }
 
-            // var startOffset = offset;
             il.MarkLabel(falseLabel);
+
+            // var startOffset = offset;
             var startOffsetLocal = il.DeclareLocal(typeof(int)); // [loc:0]
             argOffset.EmitLoad();
             il.EmitStloc(startOffsetLocal);
@@ -877,6 +878,12 @@ namespace MessagePack.Internal
                     })
                     .ToArray();
             }
+
+            // using (MessagePackSecurity.DepthStep()) {
+            var depthStepLocal = il.DeclareLocal(typeof(MessagePackSecurity.ObjectGraphDepthStep));
+            il.EmitCall(securityDepthStep);
+            il.EmitStloc(depthStepLocal);
+            il.BeginExceptionBlock();
 
             // Read Loop(for var i = 0; i< length; i++)
             if (info.IsStringKey)
@@ -1018,6 +1025,13 @@ namespace MessagePack.Internal
             il.EmitLdloc(startOffsetLocal);
             il.Emit(OpCodes.Sub);
             il.Emit(OpCodes.Stind_I4);
+
+            // } // using (MessagePackSecurity.DepthStep())
+            il.BeginFinallyBlock();
+            il.EmitLdloca(depthStepLocal);
+            il.Emit(OpCodes.Constrained, typeof(MessagePackSecurity.ObjectGraphDepthStep));
+            il.Emit(OpCodes.Callvirt, idisposableDispose);
+            il.EndExceptionBlock();
 
             // create result object
             var structLocal = EmitNewObject(il, type, info, infoList);
@@ -1195,6 +1209,8 @@ namespace MessagePack.Internal
         static readonly Type refByte = typeof(byte[]).MakeByRefType();
         static readonly Type refInt = typeof(int).MakeByRefType();
         static readonly MethodInfo getFormatterWithVerify = typeof(FormatterResolverExtensions).GetRuntimeMethods().First(x => x.Name == "GetFormatterWithVerify");
+        private static readonly MethodInfo securityDepthStep = typeof(MessagePackSecurity).GetRuntimeMethod(nameof(MessagePackSecurity.DepthStep), Type.EmptyTypes);
+        private static readonly MethodInfo idisposableDispose = typeof(IDisposable).GetRuntimeMethod(nameof(IDisposable.Dispose), Type.EmptyTypes);
         static readonly Func<Type, MethodInfo> getSerialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Serialize", new[] { refByte, typeof(int), t, typeof(IFormatterResolver) });
         static readonly Func<Type, MethodInfo> getDeserialize = t => typeof(IMessagePackFormatter<>).MakeGenericType(t).GetRuntimeMethod("Deserialize", new[] { typeof(byte[]), typeof(int), typeof(IFormatterResolver), refInt });
         // static readonly ConstructorInfo dictionaryConstructor = typeof(ByteArrayStringHashTable).GetTypeInfo().DeclaredConstructors.First(x => { var p = x.GetParameters(); return p.Length == 1 && p[0].ParameterType == typeof(int); });

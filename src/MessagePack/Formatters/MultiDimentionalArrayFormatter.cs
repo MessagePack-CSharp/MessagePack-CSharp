@@ -67,20 +67,23 @@ namespace MessagePack.Formatters
 
                 var i = 0;
                 var j = -1;
-                for (int loop = 0; loop < maxLen; loop++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    if (j < jLength - 1)
+                    for (int loop = 0; loop < maxLen; loop++)
                     {
-                        j++;
-                    }
-                    else
-                    {
-                        j = 0;
-                        i++;
-                    }
+                        if (j < jLength - 1)
+                        {
+                            j++;
+                        }
+                        else
+                        {
+                            j = 0;
+                            i++;
+                        }
 
-                    array[i, j] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                        array[i, j] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
+                    }
                 }
 
                 readSize = offset - startOffset;
@@ -156,26 +159,29 @@ namespace MessagePack.Formatters
                 var i = 0;
                 var j = 0;
                 var k = -1;
-                for (int loop = 0; loop < maxLen; loop++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    if (k < kLength - 1)
+                    for (int loop = 0; loop < maxLen; loop++)
                     {
-                        k++;
-                    }
-                    else if (j < jLength - 1)
-                    {
-                        k = 0;
-                        j++;
-                    }
-                    else
-                    {
-                        k = 0;
-                        j = 0;
-                        i++;
-                    }
+                        if (k < kLength - 1)
+                        {
+                            k++;
+                        }
+                        else if (j < jLength - 1)
+                        {
+                            k = 0;
+                            j++;
+                        }
+                        else
+                        {
+                            k = 0;
+                            j = 0;
+                            i++;
+                        }
 
-                    array[i, j, k] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                        array[i, j, k] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
+                    }
                 }
 
                 readSize = offset - startOffset;
@@ -257,33 +263,36 @@ namespace MessagePack.Formatters
                 var j = 0;
                 var k = 0;
                 var l = -1;
-                for (int loop = 0; loop < maxLen; loop++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    if (l < lLength - 1)
+                    for (int loop = 0; loop < maxLen; loop++)
                     {
-                        l++;
-                    }
-                    else if (k < kLength - 1)
-                    {
-                        l = 0;
-                        k++;
-                    }
-                    else if (j < jLength - 1)
-                    {
-                        l = 0;
-                        k = 0;
-                        j++;
-                    }
-                    else
-                    {
-                        l = 0;
-                        k = 0;
-                        j = 0;
-                        i++;
-                    }
+                        if (l < lLength - 1)
+                        {
+                            l++;
+                        }
+                        else if (k < kLength - 1)
+                        {
+                            l = 0;
+                            k++;
+                        }
+                        else if (j < jLength - 1)
+                        {
+                            l = 0;
+                            k = 0;
+                            j++;
+                        }
+                        else
+                        {
+                            l = 0;
+                            k = 0;
+                            j = 0;
+                            i++;
+                        }
 
-                    array[i, j, k, l] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                        array[i, j, k, l] = formatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
+                    }
                 }
 
                 readSize = offset - startOffset;

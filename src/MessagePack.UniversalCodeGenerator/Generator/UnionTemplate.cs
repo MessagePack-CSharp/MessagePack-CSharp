@@ -217,86 +217,89 @@ namespace MessagePack.CodeGenerator.Generator
                 return null;
             }
 
-            var startOffset = offset;
-            
-            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+            using (MessagePackSecurity.DepthStep())
             {
-                throw new InvalidOperationException(""Invalid Union data was detected. Type:");
+                var startOffset = offset;
             
-            #line 76 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
+                if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+                {
+                    throw new InvalidOperationException(""Invalid Union data was detected. Type:");
+            
+            #line 78 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
             this.Write(@""");
-            }
-            offset += readSize;
+                }
+                offset += readSize;
 
-            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-            offset += readSize;
+                var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
 
-            if (!this.keyToJumpMap.TryGetValue(key, out key))
-            {
-                key = -1;
-            }
+                if (!this.keyToJumpMap.TryGetValue(key, out key))
+                {
+                    key = -1;
+                }
 
-            ");
+                ");
             
-            #line 88 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
+            #line 90 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
-            this.Write(" result = null;\r\n            switch (key)\r\n            {\r\n");
+            this.Write(" result = null;\r\n                switch (key)\r\n                {\r\n");
             
-            #line 91 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
+            #line 93 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
  for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
             
             #line default
             #line hidden
-            this.Write("                case ");
+            this.Write("                    case ");
             
-            #line 92 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
+            #line 94 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             
             #line default
             #line hidden
-            this.Write(":\r\n                    result = (");
+            this.Write(":\r\n                        result = (");
             
-            #line 93 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
+            #line 95 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             
             #line default
             #line hidden
             this.Write(")formatterResolver.GetFormatterWithVerify<");
             
-            #line 93 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
+            #line 95 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
             
             #line default
             #line hidden
             this.Write(">().Deserialize(bytes, offset, formatterResolver, out readSize);\r\n               " +
-                    "     offset += readSize;\r\n                    break;\r\n");
+                    "         offset += readSize;\r\n                        break;\r\n");
             
-            #line 96 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
+            #line 98 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
  } 
             
             #line default
             #line hidden
-            this.Write(@"                default:
-                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
-                    break;
+            this.Write(@"                    default:
+                        offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+            
+                readSize = offset - startOffset;
+            
+                return result;
             }
-            
-            readSize = offset - startOffset;
-            
-            return result;
         }
     }
 
 ");
             
-            #line 108 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
+            #line 111 "D:\git\MessagePack-CSharp\src\MessagePack.UniversalCodeGenerator\Generator\UnionTemplate.tt"
  } 
             
             #line default

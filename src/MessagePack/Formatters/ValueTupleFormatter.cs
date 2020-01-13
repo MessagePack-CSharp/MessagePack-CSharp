@@ -29,11 +29,14 @@ namespace MessagePack.Formatters
                 if (count != 1) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<T1>(item1);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<T1>(item1);
+                }
             }
         }
     }
@@ -65,13 +68,16 @@ namespace MessagePack.Formatters
                 if (count != 2) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<T1, T2>(item1, item2);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<T1, T2>(item1, item2);
+                }
             }
         }
     }
@@ -104,15 +110,18 @@ namespace MessagePack.Formatters
                 if (count != 3) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<T1, T2, T3>(item1, item2, item3);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<T1, T2, T3>(item1, item2, item3);
+                }
             }
         }
     }
@@ -146,17 +155,20 @@ namespace MessagePack.Formatters
                 if (count != 4) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<T1, T2, T3, T4>(item1, item2, item3, item4);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<T1, T2, T3, T4>(item1, item2, item3, item4);
+                }
             }
         }
     }
@@ -191,19 +203,22 @@ namespace MessagePack.Formatters
                 if (count != 5) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<T1, T2, T3, T4, T5>(item1, item2, item3, item4, item5);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<T1, T2, T3, T4, T5>(item1, item2, item3, item4, item5);
+                }
             }
         }
     }
@@ -239,21 +254,24 @@ namespace MessagePack.Formatters
                 if (count != 6) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<T1, T2, T3, T4, T5, T6>(item1, item2, item3, item4, item5, item6);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<T1, T2, T3, T4, T5, T6>(item1, item2, item3, item4, item5, item6);
+                }
             }
         }
     }
@@ -290,23 +308,26 @@ namespace MessagePack.Formatters
                 if (count != 7) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item7 = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<T1, T2, T3, T4, T5, T6, T7>(item1, item2, item3, item4, item5, item6, item7);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item7 = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<T1, T2, T3, T4, T5, T6, T7>(item1, item2, item3, item4, item5, item6, item7);
+                }
             }
         }
     }
@@ -344,25 +365,28 @@ namespace MessagePack.Formatters
                 if (count != 8) throw new InvalidOperationException("Invalid ValueTuple count");
                 offset += readSize;
 
-                var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item7 = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-                var item8 = formatterResolver.GetFormatterWithVerify<TRest>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                offset += readSize;
-            
-                readSize = offset - startOffset;
-                return new ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest>(item1, item2, item3, item4, item5, item6, item7, item8);
+                using (MessagePackSecurity.DepthStep())
+                {
+                    var item1 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item2 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item3 = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item4 = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item5 = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item6 = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item7 = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+                    var item8 = formatterResolver.GetFormatterWithVerify<TRest>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                    offset += readSize;
+
+                    readSize = offset - startOffset;
+                    return new ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest>(item1, item2, item3, item4, item5, item6, item7, item8);
+                }
             }
         }
     }

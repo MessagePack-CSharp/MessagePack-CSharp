@@ -97,11 +97,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new Int16[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = MessagePackBinary.ReadInt16(bytes, offset, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = MessagePackBinary.ReadInt16(bytes, offset, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }
@@ -203,11 +207,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new Int32[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }
@@ -309,11 +317,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new Int64[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = MessagePackBinary.ReadInt64(bytes, offset, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }
@@ -415,11 +427,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new UInt16[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = MessagePackBinary.ReadUInt16(bytes, offset, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = MessagePackBinary.ReadUInt16(bytes, offset, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }
@@ -521,11 +537,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new UInt32[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = MessagePackBinary.ReadUInt32(bytes, offset, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = MessagePackBinary.ReadUInt32(bytes, offset, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }
@@ -627,11 +647,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new UInt64[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = MessagePackBinary.ReadUInt64(bytes, offset, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = MessagePackBinary.ReadUInt64(bytes, offset, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }
@@ -787,11 +811,15 @@ namespace MessagePack.Formatters
                 var len = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
                 offset += readSize;
                 var array = new SByte[len];
-                for (int i = 0; i < array.Length; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    array[i] = MessagePackBinary.ReadSByte(bytes, offset, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = MessagePackBinary.ReadSByte(bytes, offset, out readSize);
+                        offset += readSize;
+                    }
                 }
+
                 readSize = offset - startOffset;
                 return array;
             }

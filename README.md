@@ -809,11 +809,19 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
             return null;
         }
 
-        var path = MessagePackBinary.ReadString(bytes, offset, out readSize);
-        return new FileInfo(path);
+        using (MessagePackSecurity.DepthStep())
+        {
+            var path = MessagePackBinary.ReadString(bytes, offset, out readSize);
+            return new FileInfo(path);
+        }
     }
 }
 ```
+
+The `using (MessagePackSecurity.DepthStep())` block provides a level of security while deserializing untrusted data
+that might otherwise be able to execute a denial of service attack by sending messagepack data that would
+deserialize into a very deep object graph leading to a `StackOverflowException` that would crash the process.
+This block  should surround the bulk of any `IMessagePackFormatter<T>.Deserialize` method.
 
 Created formatter needs to register to `IFormatterResolver`. Please see [Extension Point section](https://github.com/neuecc/MessagePack-CSharp#extension-pointiformatterresolver).
 

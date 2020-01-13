@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -67,6 +68,136 @@ namespace MessagePack.Tests
             decompress2.IsStructuralEqual(originalData);
             decompress3.IsStructuralEqual(originalData);
             decompress4.IsStructuralEqual(originalData);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void StackDepthCheck_Arrays(bool convertToJson)
+        {
+            var (buffer, depthExceeded) = StackDepthCheck_Helper((ref byte[] b, int offset) => MessagePackBinary.WriteArrayHeader(ref b, offset, 1));
+
+            if (convertToJson)
+            {
+                AssertConvertToJsonRecursionCheckThrows(buffer, depthExceeded);
+            }
+            else
+            {
+                AssertDeserializationRecursionCheckThrows(buffer, depthExceeded);
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void StackDepthCheck_Maps(bool convertToJson)
+        {
+            var (sequence, options) = StackDepthCheck_Helper((ref byte[] b, int offset) =>
+            {
+                int written = MessagePackBinary.WriteMapHeader(ref b, offset, 1);
+                written += MessagePackBinary.WriteByte(ref b, offset + written, 1);
+                return written;
+            });
+            if (convertToJson)
+            {
+                AssertConvertToJsonRecursionCheckThrows(sequence, options);
+            }
+            else
+            {
+                AssertDeserializationRecursionCheckThrows(sequence, options);
+            }
+        }
+
+        [Fact]
+        public void StackDepthCheck_DynamicObjectResolver()
+        {
+            var graph = new RecursiveObjectGraph
+            {
+                Child1 = new RecursiveObjectGraph
+                {
+                    Child1 = new RecursiveObjectGraph { },
+                },
+                Child2 = new RecursiveObjectGraph
+                {
+                    Child1 = new RecursiveObjectGraph { },
+                },
+                Child3 = new RecursiveObjectGraph
+                {
+                    Child1 = new RecursiveObjectGraph { },
+                },
+            };
+            byte[] msgpack = MessagePackSerializer.Serialize(graph);
+
+            MessagePackSecurity.Active = MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(3);
+            try
+            {
+                MessagePackSerializer.Deserialize<RecursiveObjectGraph>(msgpack);
+
+                MessagePackSecurity.Active = MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(2);
+                Assert.Throws<InsufficientExecutionStackException>(() => MessagePackSerializer.Deserialize<RecursiveObjectGraph>(msgpack));
+            }
+            finally
+            {
+                MessagePackSecurity.Active = MessagePackSecurity.TrustedData;
+            }
+        }
+
+        private delegate int WriterHelper(ref byte[] buffer, int offset);
+
+        private static (byte[] buffer, int depthExceeded) StackDepthCheck_Helper(WriterHelper recursiveWriteOperation)
+        {
+            const int maxDepth = 3;
+
+            var buffer = new byte[20];
+            int offset = 0;
+            for (int i = 0; i <= maxDepth; i++)
+            {
+                offset += recursiveWriteOperation(ref buffer, offset);
+            }
+
+            offset += MessagePackBinary.WriteByte(ref buffer, offset, 1);
+            Array.Resize(ref buffer, offset);
+
+            return (buffer, maxDepth);
+        }
+
+        private static void AssertDeserializationRecursionCheckThrows(byte[] buffer, int depthExceeded)
+        {
+            MessagePackSecurity.Active = MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(depthExceeded);
+            try
+            {
+                Assert.Throws<InsufficientExecutionStackException>(() => MessagePackSerializer.Deserialize<object>(buffer));
+            }
+            finally
+            {
+                MessagePackSecurity.Active = MessagePackSecurity.TrustedData;
+            }
+        }
+
+        private static void AssertConvertToJsonRecursionCheckThrows(byte[] buffer, int depthExceeded)
+        {
+            MessagePackSecurity.Active = MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(depthExceeded);
+            try
+            {
+                Assert.Throws<InsufficientExecutionStackException>(() => MessagePackSerializer.ToJson(buffer));
+            }
+            finally
+            {
+                MessagePackSecurity.Active = MessagePackSecurity.TrustedData;
+            }
+        }
+
+        [DataContract]
+        public class RecursiveObjectGraph
+        {
+            [DataMember]
+            public RecursiveObjectGraph Child1 { get; set; }
+
+            [DataMember]
+            public RecursiveObjectGraph Child2 { get; set; }
+
+            [DataMember]
+            public RecursiveObjectGraph Child3 { get; set; }
         }
     }
 

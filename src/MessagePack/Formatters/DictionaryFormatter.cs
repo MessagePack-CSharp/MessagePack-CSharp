@@ -87,16 +87,20 @@ namespace MessagePack.Formatters
                 offset += readSize;
 
                 var dict = Create(len);
-                for (int i = 0; i < len; i++)
+                using (MessagePackSecurity.DepthStep())
                 {
-                    var key = keyFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                    for (int i = 0; i < len; i++)
+                    {
+                        var key = keyFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
 
-                    var value = valueFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                        var value = valueFormatter.Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
 
-                    Add(dict, i, key, value);
+                        Add(dict, i, key, value);
+                    }
                 }
+
                 readSize = offset - startOffset;
 
                 return Complete(dict);

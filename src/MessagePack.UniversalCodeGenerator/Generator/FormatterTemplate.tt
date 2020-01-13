@@ -90,62 +90,65 @@ namespace <#= Namespace #>
 <# } #>
             }
 
-            var startOffset = offset;
-<# if(objInfo.IsStringKey) { #>
-            var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
-<# } else { #>
-            var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-<# } #>
-            offset += readSize;
-
-<# foreach(var x in objInfo.Members) { #>
-            var __<#= x.Name #>__ = default(<#= x.Type #>);
-<# } #>
-
-            for (int i = 0; i < length; i++)
+            using (MessagePackSecurity.DepthStep())
             {
+                var startOffset = offset;
 <# if(objInfo.IsStringKey) { #>
-                var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
-                offset += readSize;
-                int key;
-                if (!____keyMapping.TryGetValueSafe(stringKey, out key))
-                {
-                    readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
-                    goto NEXT_LOOP;
-                }
+                var length = global::MessagePack.MessagePackBinary.ReadMapHeader(bytes, offset, out readSize);
 <# } else { #>
-                var key = i;
-<# } #>
-
-                switch (key)
-                {
-<# foreach(var x in objInfo.Members) { #>
-                    case <#= x.IntKey #>:
-                        __<#= x.Name #>__ = <#= x.GetDeserializeMethodString() #>;
-                        break;
-<# } #>
-                    default:
-                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
-                        break;
-                }
-<# if(objInfo.IsStringKey) { #>                
-                NEXT_LOOP:
+                var length = global::MessagePack.MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
 <# } #>
                 offset += readSize;
-            }
 
-            readSize = offset - startOffset;
+<# foreach(var x in objInfo.Members) { #>
+                var __<#= x.Name #>__ = default(<#= x.Type #>);
+<# } #>
 
-            var ____result = new <#= objInfo.GetConstructorString()  #>;
+                for (int i = 0; i < length; i++)
+                {
+<# if(objInfo.IsStringKey) { #>
+                    var stringKey = global::MessagePack.MessagePackBinary.ReadStringSegment(bytes, offset, out readSize);
+                    offset += readSize;
+                    int key;
+                    if (!____keyMapping.TryGetValueSafe(stringKey, out key))
+                    {
+                        readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                        goto NEXT_LOOP;
+                    }
+<# } else { #>
+                    var key = i;
+<# } #>
+
+                    switch (key)
+                    {
+<# foreach(var x in objInfo.Members) { #>
+                        case <#= x.IntKey #>:
+                            __<#= x.Name #>__ = <#= x.GetDeserializeMethodString() #>;
+                            break;
+<# } #>
+                        default:
+                            readSize = global::MessagePack.MessagePackBinary.ReadNextBlock(bytes, offset);
+                            break;
+                    }
+<# if(objInfo.IsStringKey) { #>                
+                    NEXT_LOOP:
+<# } #>
+                    offset += readSize;
+                }
+
+                readSize = offset - startOffset;
+
+                var ____result = new <#= objInfo.GetConstructorString()  #>;
 <# foreach(var x in objInfo.Members.Where(x => x.IsWritable)) { #>
-            ____result.<#= x.Name #> = __<#= x.Name #>__;
+                ____result.<#= x.Name #> = __<#= x.Name #>__;
 <# } #>
 <#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnAfter) { #>
-            ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+                ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
-            ____result.OnAfterDeserialize();
+                ____result.OnAfterDeserialize();
 <# } #>
-            return ____result;
+                return ____result;
+            }
         }
     }
 

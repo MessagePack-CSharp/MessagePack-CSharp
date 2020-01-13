@@ -74,6 +74,18 @@
     <Compile Include="..\..\src\MessagePack\StringEncoding.cs">
       <Link>Code\StringEncoding.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack\MessagePackSecurity.cs">
+      <Link>Code\MessagePackSecurity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\HashCode.cs">
+      <Link>Code\HashCode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\BitOperations.cs">
+      <Link>Code\BitOperations.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack\Internal\ThreadsafeTypeKeyHashTable.cs">
+      <Link>Code\ThreadsafeTypeKeyHashTable.cs</Link>
+    </Compile>
     <Compile Include="..\SharedData\Class1.cs">
       <Link>Class1.cs</Link>
     </Compile>

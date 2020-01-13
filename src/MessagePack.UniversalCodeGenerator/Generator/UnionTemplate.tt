@@ -69,39 +69,42 @@ namespace <#= Namespace #>
                 return null;
             }
 
-            var startOffset = offset;
+            using (MessagePackSecurity.DepthStep())
+            {
+                var startOffset = offset;
             
-            if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
-            {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:<#= info.FullName #>");
-            }
-            offset += readSize;
+                if (MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize) != 2)
+                {
+                    throw new InvalidOperationException("Invalid Union data was detected. Type:<#= info.FullName #>");
+                }
+                offset += readSize;
 
-            var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
-            offset += readSize;
+                var key = MessagePackBinary.ReadInt32(bytes, offset, out readSize);
+                offset += readSize;
 
-            if (!this.keyToJumpMap.TryGetValue(key, out key))
-            {
-                key = -1;
-            }
+                if (!this.keyToJumpMap.TryGetValue(key, out key))
+                {
+                    key = -1;
+                }
 
-            <#= info.FullName #> result = null;
-            switch (key)
-            {
+                <#= info.FullName #> result = null;
+                switch (key)
+                {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
-                case <#= i #>:
-                    result = (<#= info.FullName #>)formatterResolver.GetFormatterWithVerify<<#= item.Type #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
-                    break;
+                    case <#= i #>:
+                        result = (<#= info.FullName #>)formatterResolver.GetFormatterWithVerify<<#= item.Type #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                        offset += readSize;
+                        break;
 <# } #>
-                default:
-                    offset += MessagePackBinary.ReadNextBlock(bytes, offset);
-                    break;
+                    default:
+                        offset += MessagePackBinary.ReadNextBlock(bytes, offset);
+                        break;
+                }
+            
+                readSize = offset - startOffset;
+            
+                return result;
             }
-            
-            readSize = offset - startOffset;
-            
-            return result;
         }
     }
 
