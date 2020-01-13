@@ -734,47 +734,16 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Bin32"/>.
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
+        /// <remarks>
+        /// When <see cref="OldSpec"/> is <c>true</c>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// </remarks>
         public void Write(ReadOnlySpan<byte> src)
         {
-            if (this.OldSpec)
-            {
-                this.WriteString(src);
-                return;
-            }
-
-            if (src.Length <= byte.MaxValue)
-            {
-                var size = src.Length + 2;
-                Span<byte> span = this.writer.GetSpan(size);
-
-                span[0] = MessagePackCode.Bin8;
-                span[1] = (byte)src.Length;
-
-                src.CopyTo(span.Slice(2));
-                this.writer.Advance(size);
-            }
-            else if (src.Length <= UInt16.MaxValue)
-            {
-                var size = src.Length + 3;
-                Span<byte> span = this.writer.GetSpan(size);
-
-                span[0] = MessagePackCode.Bin16;
-                WriteBigEndian((ushort)src.Length, span.Slice(1));
-
-                src.CopyTo(span.Slice(3));
-                this.writer.Advance(size);
-            }
-            else
-            {
-                var size = src.Length + 5;
-                Span<byte> span = this.writer.GetSpan(size);
-
-                span[0] = MessagePackCode.Bin32;
-                WriteBigEndian(src.Length, span.Slice(1));
-
-                src.CopyTo(span.Slice(5));
-                this.writer.Advance(size);
-            }
+            int length = (int)src.Length;
+            this.WriteBinHeader(length);
+            var span = this.writer.GetSpan(length);
+            src.CopyTo(span);
+            this.writer.Advance(length);
         }
 
         /// <summary>
@@ -784,46 +753,74 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Bin32"/>.
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
+        /// <remarks>
+        /// When <see cref="OldSpec"/> is <c>true</c>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// </remarks>
         public void Write(in ReadOnlySequence<byte> src)
+        {
+            int length = (int)src.Length;
+            this.WriteBinHeader(length);
+            var span = this.writer.GetSpan(length);
+            src.CopyTo(span);
+            this.writer.Advance(length);
+        }
+
+        /// <summary>
+        /// Writes the header that precedes a raw binary sequence with a length encoded as the smallest fitting from:
+        /// <see cref="MessagePackCode.Bin8"/>,
+        /// <see cref="MessagePackCode.Bin16"/>, or
+        /// <see cref="MessagePackCode.Bin32"/>.
+        /// </summary>
+        /// <param name="length">The length of bytes that will be written next.</param>
+        /// <remarks>
+        /// <para>
+        /// The caller should use <see cref="WriteRaw(in ReadOnlySequence{byte})"/> or <see cref="WriteRaw(ReadOnlySpan{byte})"/>
+        /// after calling this method to actually write the content.
+        /// Alternatively a single call to <see cref="Write(ReadOnlySpan{byte})"/> or <see cref="Write(in ReadOnlySequence{byte})"/> will take care of the header and content in one call.
+        /// </para>
+        /// <para>
+        /// When <see cref="OldSpec"/> is <c>true</c>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// </para>
+        /// </remarks>
+        public void WriteBinHeader(int length)
         {
             if (this.OldSpec)
             {
-                this.WriteString(src);
+                this.WriteStringHeader(length);
                 return;
             }
 
-            if (src.Length <= byte.MaxValue)
+            // When we write the header, we'll ask for all the space we need for the payload as well
+            // as that may help ensure we only allocate a buffer once.
+            if (length <= byte.MaxValue)
             {
-                var size = (int)src.Length + 2;
+                var size = length + 2;
                 Span<byte> span = this.writer.GetSpan(size);
 
                 span[0] = MessagePackCode.Bin8;
-                span[1] = (byte)src.Length;
+                span[1] = (byte)length;
 
-                src.CopyTo(span.Slice(2));
-                this.writer.Advance(size);
+                this.writer.Advance(2);
             }
-            else if (src.Length <= UInt16.MaxValue)
+            else if (length <= UInt16.MaxValue)
             {
-                var size = (int)src.Length + 3;
+                var size = length + 3;
                 Span<byte> span = this.writer.GetSpan(size);
 
                 span[0] = MessagePackCode.Bin16;
-                WriteBigEndian((ushort)src.Length, span.Slice(1));
+                WriteBigEndian((ushort)length, span.Slice(1));
 
-                src.CopyTo(span.Slice(3));
-                this.writer.Advance(size);
+                this.writer.Advance(3);
             }
             else
             {
-                var size = (int)src.Length + 5;
+                var size = length + 5;
                 Span<byte> span = this.writer.GetSpan(size);
 
                 span[0] = MessagePackCode.Bin32;
-                WriteBigEndian(src.Length, span.Slice(1));
+                WriteBigEndian(length, span.Slice(1));
 
-                src.CopyTo(span.Slice(5));
-                this.writer.Advance(size);
+                this.writer.Advance(5);
             }
         }
 
@@ -837,38 +834,11 @@ namespace MessagePack
         /// <param name="utf8stringBytes">The bytes to write.</param>
         public void WriteString(in ReadOnlySequence<byte> utf8stringBytes)
         {
-            var byteCount = (int)utf8stringBytes.Length;
-            if (byteCount <= MessagePackRange.MaxFixStringLength)
-            {
-                Span<byte> span = this.writer.GetSpan(byteCount + 1);
-                span[0] = (byte)(MessagePackCode.MinFixStr | byteCount);
-                utf8stringBytes.CopyTo(span.Slice(1));
-                this.writer.Advance(byteCount + 1);
-            }
-            else if (byteCount <= byte.MaxValue && !this.OldSpec)
-            {
-                Span<byte> span = this.writer.GetSpan(byteCount + 2);
-                span[0] = MessagePackCode.Str8;
-                span[1] = unchecked((byte)byteCount);
-                utf8stringBytes.CopyTo(span.Slice(2));
-                this.writer.Advance(byteCount + 2);
-            }
-            else if (byteCount <= ushort.MaxValue)
-            {
-                Span<byte> span = this.writer.GetSpan(byteCount + 3);
-                span[0] = MessagePackCode.Str16;
-                WriteBigEndian((ushort)byteCount, span.Slice(1));
-                utf8stringBytes.CopyTo(span.Slice(3));
-                this.writer.Advance(byteCount + 3);
-            }
-            else
-            {
-                Span<byte> span = this.writer.GetSpan(byteCount + 5);
-                span[0] = MessagePackCode.Str32;
-                WriteBigEndian(byteCount, span.Slice(1));
-                utf8stringBytes.CopyTo(span.Slice(5));
-                this.writer.Advance(byteCount + 5);
-            }
+            var length = (int)utf8stringBytes.Length;
+            this.WriteStringHeader(length);
+            Span<byte> span = this.writer.GetSpan(length);
+            utf8stringBytes.CopyTo(span);
+            this.writer.Advance(length);
         }
 
         /// <summary>
@@ -881,37 +851,56 @@ namespace MessagePack
         /// <param name="utf8stringBytes">The bytes to write.</param>
         public void WriteString(ReadOnlySpan<byte> utf8stringBytes)
         {
-            var byteCount = utf8stringBytes.Length;
+            var length = utf8stringBytes.Length;
+            this.WriteStringHeader(length);
+            Span<byte> span = this.writer.GetSpan(length);
+            utf8stringBytes.CopyTo(span);
+            this.writer.Advance(length);
+        }
+
+        /// <summary>
+        /// Writes out the header that may precede a UTF-8 encoded string, prefixed with the length using one of these message codes:
+        /// <see cref="MessagePackCode.MinFixStr"/>,
+        /// <see cref="MessagePackCode.Str8"/>,
+        /// <see cref="MessagePackCode.Str16"/>, or
+        /// <see cref="MessagePackCode.Str32"/>.
+        /// </summary>
+        /// <param name="byteCount">The number of bytes in the string that will follow this header.</param>
+        /// <remarks>
+        /// The caller should use <see cref="WriteRaw(in ReadOnlySequence{byte})"/> or <see cref="WriteRaw(ReadOnlySpan{byte})"/>
+        /// after calling this method to actually write the content.
+        /// Alternatively a single call to <see cref="WriteString(ReadOnlySpan{byte})"/> or <see cref="WriteString(in ReadOnlySequence{byte})"/> will take care of the header and content in one call.
+        /// </remarks>
+        public void WriteStringHeader(int byteCount)
+        {
+            // When we write the header, we'll ask for all the space we need for the payload as well
+            // as that may help ensure we only allocate a buffer once.
             if (byteCount <= MessagePackRange.MaxFixStringLength)
             {
                 Span<byte> span = this.writer.GetSpan(byteCount + 1);
                 span[0] = (byte)(MessagePackCode.MinFixStr | byteCount);
-                utf8stringBytes.CopyTo(span.Slice(1));
-                this.writer.Advance(byteCount + 1);
+                this.writer.Advance(1);
             }
             else if (byteCount <= byte.MaxValue && !this.OldSpec)
             {
                 Span<byte> span = this.writer.GetSpan(byteCount + 2);
                 span[0] = MessagePackCode.Str8;
                 span[1] = unchecked((byte)byteCount);
-                utf8stringBytes.CopyTo(span.Slice(2));
-                this.writer.Advance(byteCount + 2);
+                this.writer.Advance(2);
             }
             else if (byteCount <= ushort.MaxValue)
             {
                 Span<byte> span = this.writer.GetSpan(byteCount + 3);
                 span[0] = MessagePackCode.Str16;
                 WriteBigEndian((ushort)byteCount, span.Slice(1));
-                utf8stringBytes.CopyTo(span.Slice(3));
-                this.writer.Advance(byteCount + 3);
+                this.writer.Advance(3);
             }
             else
             {
                 Span<byte> span = this.writer.GetSpan(byteCount + 5);
                 span[0] = MessagePackCode.Str32;
                 WriteBigEndian(byteCount, span.Slice(1));
-                utf8stringBytes.CopyTo(span.Slice(5));
-                this.writer.Advance(byteCount + 5);
+                this.writer.Advance(5);
             }
         }
 

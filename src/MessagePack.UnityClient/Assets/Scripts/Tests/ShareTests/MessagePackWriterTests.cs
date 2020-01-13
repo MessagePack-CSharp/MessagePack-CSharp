@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Text;
 using System.Threading;
 using Nerdbank.Streams;
 using Xunit;
@@ -80,6 +81,33 @@ namespace MessagePack.Tests
             writer.Flush();
             var reader = new MessagePackReader(sequence.AsReadOnlySequence);
             Assert.Equal(expected, reader.ReadString());
+        }
+
+        [Fact]
+        public void WriteStringHeader()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            byte[] strBytes = Encoding.UTF8.GetBytes("hello");
+            writer.WriteStringHeader(strBytes.Length);
+            writer.WriteRaw(strBytes);
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence);
+            Assert.Equal("hello", reader.ReadString());
+        }
+
+        [Fact]
+        public void WriteBinHeader()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.WriteBinHeader(5);
+            writer.WriteRaw(new byte[] { 1, 2, 3, 4, 5 });
+            writer.Flush();
+
+            var reader = new MessagePackReader(sequence);
+            Assert.Equal(new byte[] { 1, 2, 3, 4, 5 }, reader.ReadBytes().Value.ToArray());
         }
 
         [Fact]
