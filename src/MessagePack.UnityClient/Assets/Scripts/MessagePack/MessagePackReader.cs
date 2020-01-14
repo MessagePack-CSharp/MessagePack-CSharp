@@ -170,10 +170,10 @@ namespace MessagePack
                     return this.reader.TryAdvance(9);
                 case MessagePackCode.Map16:
                 case MessagePackCode.Map32:
-                    return this.TryReadNextMap();
+                    return this.TrySkipNextMap();
                 case MessagePackCode.Array16:
                 case MessagePackCode.Array32:
-                    return this.TryReadNextArray();
+                    return this.TrySkipNextArray();
                 case MessagePackCode.Str8:
                 case MessagePackCode.Str16:
                 case MessagePackCode.Str32:
@@ -200,12 +200,12 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixMap && code <= MessagePackCode.MaxFixMap)
                     {
-                        return this.TryReadNextMap();
+                        return this.TrySkipNextMap();
                     }
 
                     if (code >= MessagePackCode.MinFixArray && code <= MessagePackCode.MaxFixArray)
                     {
-                        return this.TryReadNextArray();
+                        return this.TrySkipNextArray();
                     }
 
                     if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
@@ -288,14 +288,39 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Array32"/>, or
         /// some built-in code between <see cref="MessagePackCode.MinFixArray"/> and <see cref="MessagePackCode.MaxFixArray"/>.
         /// </summary>
+        /// <exception cref="EndOfStreamException">
+        /// Thrown if the header cannot be read in the bytes left in the <see cref="Sequence"/>
+        /// or if it is clear that there are insufficient bytes remaining after the header to include all the elements the header claims to be there.
+        /// </exception>
+        /// <exception cref="MessagePackSerializationException">Thrown if a code other than an array header is encountered.</exception>
         public int ReadArrayHeader()
         {
             ThrowInsufficientBufferUnless(this.TryReadArrayHeader(out int count));
+
+            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            // We allow for each primitive to be the minimal 1 byte in size.
+            // Formatters that know each element is larger can optionally add a stronger check.
+            ThrowInsufficientBufferUnless(this.reader.Remaining >= count);
+
             return count;
         }
 
+        /// <summary>
+        /// Reads an array header from
+        /// <see cref="MessagePackCode.Array16"/>,
+        /// <see cref="MessagePackCode.Array32"/>, or
+        /// some built-in code between <see cref="MessagePackCode.MinFixArray"/> and <see cref="MessagePackCode.MaxFixArray"/>
+        /// if there is sufficient buffer to read it.
+        /// </summary>
+        /// <param name="count">Receives the number of elements in the array if the entire array header could be read.</param>
+        /// <returns><c>true</c> if there was sufficient buffer and an array header was found; <c>false</c> if the buffer incompletely describes an array header.</returns>
+        /// <exception cref="MessagePackSerializationException">Thrown if a code other than an array header is encountered.</exception>
+        /// <remarks>
+        /// When this method returns <c>false</c> the position of the reader is left in an undefined position.
+        /// The caller is expected to recreate the reader (presumably with a longer sequence to read from) before continuing.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool TryReadArrayHeader(out int count)
+        public bool TryReadArrayHeader(out int count)
         {
             count = -1;
             if (!this.reader.TryRead(out byte code))
@@ -331,14 +356,6 @@ namespace MessagePack
                     throw ThrowInvalidCode(code);
             }
 
-            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
-            // We allow for each primitive to be the minimal 1 byte in size.
-            // Formatters that know each element is larger can double-check our work.
-            if (count > this.reader.Remaining)
-            {
-                return false;
-            }
-
             return true;
         }
 
@@ -348,19 +365,39 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Map32"/>, or
         /// some built-in code between <see cref="MessagePackCode.MinFixMap"/> and <see cref="MessagePackCode.MaxFixMap"/>.
         /// </summary>
+        /// <returns>The number of key=value pairs in the map.</returns>
+        /// <exception cref="EndOfStreamException">
+        /// Thrown if the header cannot be read in the bytes left in the <see cref="Sequence"/>
+        /// or if it is clear that there are insufficient bytes remaining after the header to include all the elements the header claims to be there.
+        /// </exception>
+        /// <exception cref="MessagePackSerializationException">Thrown if a code other than an map header is encountered.</exception>
         public int ReadMapHeader()
         {
             ThrowInsufficientBufferUnless(this.TryReadMapHeader(out int count));
+
+            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
+            // Formatters that know each element is larger can optionally add a stronger check.
+            ThrowInsufficientBufferUnless(this.reader.Remaining >= count * 2);
+
             return count;
         }
 
         /// <summary>
-        /// Read a map header from
+        /// Reads a map header from
         /// <see cref="MessagePackCode.Map16"/>,
         /// <see cref="MessagePackCode.Map32"/>, or
-        /// some built-in code between <see cref="MessagePackCode.MinFixMap"/> and <see cref="MessagePackCode.MaxFixMap"/>.
+        /// some built-in code between <see cref="MessagePackCode.MinFixMap"/> and <see cref="MessagePackCode.MaxFixMap"/>
+        /// if there is sufficient buffer to read it.
         /// </summary>
-        private bool TryReadMapHeader(out int count)
+        /// <param name="count">Receives the number of key=value pairs in the map if the entire map header can be read.</param>
+        /// <returns><c>true</c> if there was sufficient buffer and a map header was found; <c>false</c> if the buffer incompletely describes an map header.</returns>
+        /// <exception cref="MessagePackSerializationException">Thrown if a code other than an map header is encountered.</exception>
+        /// <remarks>
+        /// When this method returns <c>false</c> the position of the reader is left in an undefined position.
+        /// The caller is expected to recreate the reader (presumably with a longer sequence to read from) before continuing.
+        /// </remarks>
+        public bool TryReadMapHeader(out int count)
         {
             count = -1;
             if (!this.reader.TryRead(out byte code))
@@ -394,14 +431,6 @@ namespace MessagePack
                     }
 
                     throw ThrowInvalidCode(code);
-            }
-
-            // Protected against corrupted or mischievious data that may lead to allocating way too much memory.
-            // We allow for each primitive to be the minimal 1 byte in size, and we have a key=value map, so that's 2 bytes.
-            // Formatters that know each element is larger can double-check our work.
-            if (count * 2 > this.reader.Remaining)
-            {
-                return false;
             }
 
             return true;
@@ -753,13 +782,41 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Ext32"/>.
         /// </summary>
         /// <returns>The extension header.</returns>
+        /// <exception cref="EndOfStreamException">
+        /// Thrown if the header cannot be read in the bytes left in the <see cref="Sequence"/>
+        /// or if it is clear that there are insufficient bytes remaining after the header to include all the bytes the header claims to be there.
+        /// </exception>
+        /// <exception cref="MessagePackSerializationException">Thrown if a code other than an extension format header is encountered.</exception>
         public ExtensionHeader ReadExtensionFormatHeader()
         {
             ThrowInsufficientBufferUnless(this.TryReadExtensionFormatHeader(out ExtensionHeader header));
+
+            // Protect against corrupted or mischievious data that may lead to allocating way too much memory.
+            ThrowInsufficientBufferUnless(this.reader.Remaining >= header.Length);
+
             return header;
         }
 
-        private bool TryReadExtensionFormatHeader(out ExtensionHeader extensionHeader)
+        /// <summary>
+        /// Reads an extension format header, based on one of these codes:
+        /// <see cref="MessagePackCode.FixExt1"/>,
+        /// <see cref="MessagePackCode.FixExt2"/>,
+        /// <see cref="MessagePackCode.FixExt4"/>,
+        /// <see cref="MessagePackCode.FixExt8"/>,
+        /// <see cref="MessagePackCode.FixExt16"/>,
+        /// <see cref="MessagePackCode.Ext8"/>,
+        /// <see cref="MessagePackCode.Ext16"/>, or
+        /// <see cref="MessagePackCode.Ext32"/>
+        /// if there is sufficient buffer to read it.
+        /// </summary>
+        /// <param name="extensionHeader">Receives the extension header if the remaining bytes in the <see cref="Sequence"/> fully describe the header.</param>
+        /// <returns>The number of key=value pairs in the map.</returns>
+        /// <exception cref="MessagePackSerializationException">Thrown if a code other than an extension format header is encountered.</exception>
+        /// <remarks>
+        /// When this method returns <c>false</c> the position of the reader is left in an undefined position.
+        /// The caller is expected to recreate the reader (presumably with a longer sequence to read from) before continuing.
+        /// </remarks>
+        public bool TryReadExtensionFormatHeader(out ExtensionHeader extensionHeader)
         {
             extensionHeader = default;
             if (!this.reader.TryRead(out byte code))
@@ -864,9 +921,14 @@ namespace MessagePack
         /// </summary>
         private static EndOfStreamException ThrowNotEnoughBytesException(Exception innerException) => throw new EndOfStreamException(new EndOfStreamException().Message, innerException);
 
+        /// <summary>
+        /// Throws an <see cref="MessagePackSerializationException"/> explaining an unexpected code was encountered.
+        /// </summary>
+        /// <param name="code">The code that was encountered.</param>
+        /// <returns>Nothing. This method always throws.</returns>
         private static Exception ThrowInvalidCode(byte code)
         {
-            throw new MessagePackSerializationException(string.Format("code is invalid. code: {0} format: {1}", code, MessagePackCode.ToFormatName(code)));
+            throw new MessagePackSerializationException(string.Format("Unexpected msgpack code {0} ({1}) encountered.", code, MessagePackCode.ToFormatName(code)));
         }
 
         /// <summary>
@@ -998,9 +1060,9 @@ namespace MessagePack
             return value;
         }
 
-        private bool TryReadNextArray() => this.TryReadArrayHeader(out int count) && this.TrySkip(count);
+        private bool TrySkipNextArray() => this.TryReadArrayHeader(out int count) && this.TrySkip(count);
 
-        private bool TryReadNextMap() => this.TryReadMapHeader(out int count) && this.TrySkip(count * 2);
+        private bool TrySkipNextMap() => this.TryReadMapHeader(out int count) && this.TrySkip(count * 2);
 
         private bool TrySkip(int count)
         {
