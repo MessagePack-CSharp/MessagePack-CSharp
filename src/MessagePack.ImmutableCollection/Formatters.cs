@@ -45,9 +45,17 @@ namespace MessagePack.ImmutableCollection
                 var len = reader.ReadArrayHeader();
 
                 ImmutableArray<T>.Builder builder = ImmutableArray.CreateBuilder<T>(len);
-                for (int i = 0; i < len; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    builder.Add(formatter.Deserialize(ref reader, options));
+                    for (int i = 0; i < len; i++)
+                    {
+                        builder.Add(formatter.Deserialize(ref reader, options));
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return builder.ToImmutable();

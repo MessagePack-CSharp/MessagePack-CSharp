@@ -284,9 +284,17 @@ namespace MessagePack.Formatters
 
                         IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
                         var array = new object[length];
-                        for (int i = 0; i < length; i++)
+                        options.Security.DepthStep(ref reader);
+                        try
                         {
-                            array[i] = objectFormatter.Deserialize(ref reader, options);
+                            for (int i = 0; i < length; i++)
+                            {
+                                array[i] = objectFormatter.Deserialize(ref reader, options);
+                            }
+                        }
+                        finally
+                        {
+                            reader.Depth--;
                         }
 
                         return array;
@@ -298,13 +306,21 @@ namespace MessagePack.Formatters
 
                         IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
                         var hash = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
-                        for (int i = 0; i < length; i++)
+                        options.Security.DepthStep(ref reader);
+                        try
                         {
-                            var key = objectFormatter.Deserialize(ref reader, options);
+                            for (int i = 0; i < length; i++)
+                            {
+                                var key = objectFormatter.Deserialize(ref reader, options);
 
-                            var value = objectFormatter.Deserialize(ref reader, options);
+                                var value = objectFormatter.Deserialize(ref reader, options);
 
-                            hash.Add(key, value);
+                                hash.Add(key, value);
+                            }
+                        }
+                        finally
+                        {
+                            reader.Depth--;
                         }
 
                         return hash;

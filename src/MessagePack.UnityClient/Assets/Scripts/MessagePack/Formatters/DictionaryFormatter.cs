@@ -84,14 +84,22 @@ namespace MessagePack.Formatters
                 var len = reader.ReadMapHeader();
 
                 TIntermediate dict = this.Create(len, options);
-                for (int i = 0; i < len; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    reader.CancellationToken.ThrowIfCancellationRequested();
-                    TKey key = keyFormatter.Deserialize(ref reader, options);
+                    for (int i = 0; i < len; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        TKey key = keyFormatter.Deserialize(ref reader, options);
 
-                    TValue value = valueFormatter.Deserialize(ref reader, options);
+                        TValue value = valueFormatter.Deserialize(ref reader, options);
 
-                    this.Add(dict, i, key, value, options);
+                        this.Add(dict, i, key, value, options);
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return this.Complete(dict);

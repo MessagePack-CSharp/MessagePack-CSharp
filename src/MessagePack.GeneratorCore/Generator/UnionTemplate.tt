@@ -81,6 +81,7 @@ namespace <#= Namespace #>
                 throw new InvalidOperationException("Invalid Union data was detected. Type:<#= info.FullName #>");
             }
 
+            options.Security.DepthStep(ref reader);
             var key = reader.ReadInt32();
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
@@ -101,6 +102,7 @@ namespace <#= Namespace #>
                     break;
             }
 
+            reader.Depth--;
             return result;
         }
     }

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using MessagePack.Formatters;
 using MessagePack.Internal;
 
 namespace MessagePack
@@ -27,6 +28,7 @@ namespace MessagePack
         public static readonly MessagePackSecurity UntrustedData = new MessagePackSecurity
         {
             HashCollisionResistant = true,
+            MaximumObjectGraphDepth = 500,
         };
 
         private readonly ObjectFallbackEqualityComparer objectFallbackEqualityComparer;
@@ -49,6 +51,7 @@ namespace MessagePack
             }
 
             this.HashCollisionResistant = copyFrom.HashCollisionResistant;
+            this.MaximumObjectGraphDepth = copyFrom.MaximumObjectGraphDepth;
         }
 
         /// <summary>
@@ -60,6 +63,35 @@ namespace MessagePack
         /// The value is <c>false</c> for <see cref="TrustedData"/> and <c>true</c> for <see cref="UntrustedData"/>.
         /// </value>
         public bool HashCollisionResistant { get; private set; }
+
+        /// <summary>
+        /// Gets the maximum depth of an object graph that may be deserialized.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This value can be reduced to avoid a stack overflow that would crash the process when deserializing a msgpack sequence designed to cause deep recursion.
+        /// A very short callstack on a thread with 1MB of total stack space might deserialize ~2000 nested arrays before crashing due to a stack overflow.
+        /// Since stack space occupied may vary by the kind of object deserialized, a conservative value for this property to defend against stack overflow attacks might be 500.
+        /// </para>
+        /// </remarks>
+        public int MaximumObjectGraphDepth { get; private set; } = int.MaxValue;
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="MaximumObjectGraphDepth"/> property set to a new value.
+        /// </summary>
+        /// <param name="maximumObjectGraphDepth">The new value for the <see cref="MaximumObjectGraphDepth"/> property.</param>
+        /// <returns>The new instance; or the original if the value is unchanged.</returns>
+        public MessagePackSecurity WithMaximumObjectGraphDepth(int maximumObjectGraphDepth)
+        {
+            if (this.MaximumObjectGraphDepth == maximumObjectGraphDepth)
+            {
+                return this;
+            }
+
+            var clone = this.Clone();
+            clone.MaximumObjectGraphDepth = maximumObjectGraphDepth;
+            return clone;
+        }
 
         /// <summary>
         /// Gets a copy of these options with the <see cref="HashCollisionResistant"/> property set to a new value.
@@ -143,6 +175,29 @@ namespace MessagePack
                 // This method can of course be overridden to add more hash collision resistant type support, or the deserializing party can indicate that the data is Trusted
                 // so that this method doesn't even get called.
                 throw new TypeAccessException($"No hash-resistant equality comparer available for type: {typeof(T)}");
+        }
+
+        /// <summary>
+        /// Checks the depth of the deserializing graph and increments it by 1.
+        /// </summary>
+        /// <param name="reader">The reader that is involved in deserialization.</param>
+        /// <remarks>
+        /// Callers should decrement <see cref="MessagePackReader.Depth"/> after exiting that edge in the graph.
+        /// </remarks>
+        /// <exception cref="InsufficientExecutionStackException">Thrown if <see cref="MessagePackReader.Depth"/> is already at or exceeds <see cref="MaximumObjectGraphDepth"/>.</exception>
+        /// <remarks>
+        /// Rather than wrap the body of every <see cref="IMessagePackFormatter{T}.Deserialize"/> method,
+        /// this should wrap *calls* to these methods. They need not appear in pure "thunk" methods that simply delegate the deserialization to another formatter.
+        /// In this way, we can avoid repeatedly incrementing and decrementing the counter when deserializing each element of a collection.
+        /// </remarks>
+        public void DepthStep(ref MessagePackReader reader)
+        {
+            if (reader.Depth >= this.MaximumObjectGraphDepth)
+            {
+                throw new InsufficientExecutionStackException($"This msgpack sequence has an object graph that exceeds the maximum depth allowed of {MaximumObjectGraphDepth}.");
+            }
+
+            reader.Depth++;
         }
 
         /// <summary>

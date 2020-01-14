@@ -950,13 +950,22 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
             return null;
         }
 
+        options.Security.DepthStep(ref reader);
+
         var path = reader.ReadString();
+
+        reader.Depth--;
         return new FileInfo(path);
     }
 }
 ```
 
-Your custom formatters must be discoverable via some `IFormatterResolver`. Learn more in our [resolvers](#resolvers).
+The `DepthStep` and `Depth--` statements provide a level of security while deserializing untrusted data
+that might otherwise be able to execute a denial of service attack by sending messagepack data that would
+deserialize into a very deep object graph leading to a `StackOverflowException` that would crash the process.
+This pair of statements should surround the bulk of any `IMessagePackFormatter<T>.Deserialize` method.
+
+Your custom formatters must be discoverable via some `IFormatterResolver`. Learn more in our [resolvers](#resolvers) section.
 
 You can see many other samples from [builtin formatters](https://github.com/neuecc/MessagePack-CSharp/tree/master/src/MessagePack/Formatters).
 
@@ -1300,7 +1309,7 @@ Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime 
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
 
-In the first, mpc requires [.NET Core 3 Runtime](https://dotnet.microsoft.com/download), the easiest way to acquire and run mpc is as a dotnet tool. 
+In the first, mpc requires [.NET Core 3 Runtime](https://dotnet.microsoft.com/download), the easiest way to acquire and run mpc is as a dotnet tool.
 
 ```
 dotnet tool install --global MessagePack.Generator

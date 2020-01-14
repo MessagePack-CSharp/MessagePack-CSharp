@@ -48,10 +48,18 @@ namespace MessagePack.Formatters
 
                 var len = reader.ReadArrayHeader();
                 var array = new T[len];
-                for (int i = 0; i < array.Length; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    reader.CancellationToken.ThrowIfCancellationRequested();
-                    array[i] = formatter.Deserialize(ref reader, options);
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        array[i] = formatter.Deserialize(ref reader, options);
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -159,10 +167,18 @@ namespace MessagePack.Formatters
 
                 var len = reader.ReadArrayHeader();
                 var list = new List<T>((int)len);
-                for (int i = 0; i < len; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    reader.CancellationToken.ThrowIfCancellationRequested();
-                    list.Add(formatter.Deserialize(ref reader, options));
+                    for (int i = 0; i < len; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        list.Add(formatter.Deserialize(ref reader, options));
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return list;
@@ -252,10 +268,18 @@ namespace MessagePack.Formatters
                 var len = reader.ReadArrayHeader();
 
                 TIntermediate list = this.Create(len, options);
-                for (int i = 0; i < len; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    reader.CancellationToken.ThrowIfCancellationRequested();
-                    this.Add(list, i, formatter.Deserialize(ref reader, options), options);
+                    for (int i = 0; i < len; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        this.Add(list, i, formatter.Deserialize(ref reader, options), options);
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return this.Complete(list);
@@ -538,9 +562,17 @@ namespace MessagePack.Formatters
                     throw new MessagePackSerializationException("Invalid Grouping format.");
                 }
 
-                TKey key = options.Resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options);
-                IEnumerable<TElement> value = options.Resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(ref reader, options);
-                return new Grouping<TKey, TElement>(key, value);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    TKey key = options.Resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options);
+                    IEnumerable<TElement> value = options.Resolver.GetFormatterWithVerify<IEnumerable<TElement>>().Deserialize(ref reader, options);
+                    return new Grouping<TKey, TElement>(key, value);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -669,10 +701,18 @@ namespace MessagePack.Formatters
             var count = reader.ReadArrayHeader();
 
             var list = new T();
-            for (int i = 0; i < count; i++)
+            options.Security.DepthStep(ref reader);
+            try
             {
-                reader.CancellationToken.ThrowIfCancellationRequested();
-                list.Add(formatter.Deserialize(ref reader, options));
+                for (int i = 0; i < count; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    list.Add(formatter.Deserialize(ref reader, options));
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
 
             return list;
@@ -717,10 +757,18 @@ namespace MessagePack.Formatters
             var count = reader.ReadArrayHeader();
 
             var list = new object[count];
-            for (int i = 0; i < count; i++)
+            options.Security.DepthStep(ref reader);
+            try
             {
-                reader.CancellationToken.ThrowIfCancellationRequested();
-                list[i] = formatter.Deserialize(ref reader, options);
+                for (int i = 0; i < count; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    list[i] = formatter.Deserialize(ref reader, options);
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
 
             return list;
@@ -761,12 +809,20 @@ namespace MessagePack.Formatters
             var count = reader.ReadMapHeader();
 
             var dict = CollectionHelpers<T, IEqualityComparer>.CreateHashCollection(count, options.Security.GetEqualityComparer());
-            for (int i = 0; i < count; i++)
+            options.Security.DepthStep(ref reader);
+            try
             {
-                reader.CancellationToken.ThrowIfCancellationRequested();
-                var key = formatter.Deserialize(ref reader, options);
-                var value = formatter.Deserialize(ref reader, options);
-                dict.Add(key, value);
+                for (int i = 0; i < count; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    var key = formatter.Deserialize(ref reader, options);
+                    var value = formatter.Deserialize(ref reader, options);
+                    dict.Add(key, value);
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
 
             return dict;
@@ -812,12 +868,20 @@ namespace MessagePack.Formatters
             var count = reader.ReadMapHeader();
 
             var dict = new Dictionary<object, object>(count, options.Security.GetEqualityComparer<object>());
-            for (int i = 0; i < count; i++)
+            options.Security.DepthStep(ref reader);
+            try
             {
-                reader.CancellationToken.ThrowIfCancellationRequested();
-                var key = formatter.Deserialize(ref reader, options);
-                var value = formatter.Deserialize(ref reader, options);
-                dict.Add(key, value);
+                for (int i = 0; i < count; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    var key = formatter.Deserialize(ref reader, options);
+                    var value = formatter.Deserialize(ref reader, options);
+                    dict.Add(key, value);
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
 
             return dict;

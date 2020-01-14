@@ -1,14 +1,19 @@
 ﻿MessagePack.ExtensionHeader.Equals(MessagePack.ExtensionHeader other) -> bool
+MessagePack.MessagePackReader.Depth.get -> int
+MessagePack.MessagePackReader.Depth.set -> void
 MessagePack.MessagePackReader.ReadDateTime(MessagePack.ExtensionHeader header) -> System.DateTime
 MessagePack.MessagePackReader.TryReadArrayHeader(out int count) -> bool
 MessagePack.MessagePackReader.TryReadExtensionFormatHeader(out MessagePack.ExtensionHeader extensionHeader) -> bool
 MessagePack.MessagePackReader.TryReadMapHeader(out int count) -> bool
 MessagePack.MessagePackSecurity
+MessagePack.MessagePackSecurity.DepthStep(ref MessagePack.MessagePackReader reader) -> void
 MessagePack.MessagePackSecurity.GetEqualityComparer() -> System.Collections.IEqualityComparer
 MessagePack.MessagePackSecurity.GetEqualityComparer<T>() -> System.Collections.Generic.IEqualityComparer<T>
 MessagePack.MessagePackSecurity.HashCollisionResistant.get -> bool
+MessagePack.MessagePackSecurity.MaximumObjectGraphDepth.get -> int
 MessagePack.MessagePackSecurity.MessagePackSecurity(MessagePack.MessagePackSecurity copyFrom) -> void
 MessagePack.MessagePackSecurity.WithHashCollisionResistant(bool hashCollisionResistant) -> MessagePack.MessagePackSecurity
+MessagePack.MessagePackSecurity.WithMaximumObjectGraphDepth(int maximumObjectGraphDepth) -> MessagePack.MessagePackSecurity
 MessagePack.MessagePackSerializerOptions.Security.get -> MessagePack.MessagePackSecurity
 MessagePack.MessagePackSerializerOptions.WithSecurity(MessagePack.MessagePackSecurity security) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackStreamReader.ReadArrayAsync(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<System.Buffers.ReadOnlySequence<byte>>

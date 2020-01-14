@@ -51,11 +51,19 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
+                options.Security.DepthStep(ref reader);
+                try
+                {
 <# for(var j = 1; j <= i; j++) { #>
-                <#= toT(j) #> item<#= j #> = resolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(ref reader, options);
+                    <#= toT(j) #> item<#= j #> = resolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(ref reader, options);
 <# } #>
 
-                return new ValueTuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+                    return new ValueTuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
