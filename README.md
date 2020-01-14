@@ -527,6 +527,27 @@ MessagePack.Formatters.TypelessFormatter.BindToType = typeName =>
 };
 ```
 
+## <a name="security"></a>Security
+
+Deserializing data from an untrusted source can introduce security vulnerabilities to your application.
+Depending on the settings used during deserialization, untrusted data may be able to execute arbitrary code or a denial of service attack.
+Untrusted data might come from over the Internet over an unauthenticated connection, from the local disk if it may have been tampered with, or many other sources.
+
+When deserializing untrusted data, put MessagePack into a more secure mode by configuring your `MessagePackSerializerOptions.Security` property:
+
+```cs
+var options = MessagePackSerializerOptions.Standard
+    .WithSecurity(MessagePackSecurity.UntrustedData);
+
+// Pass the options explicitly for the greatest control.
+T object = MessagePackSerializer.Deserialize<T>(data, options);
+
+// Or set the security level as the default.
+MessagePackSerializer.DefaultOptions = options;
+```
+
+You should also avoid the Typeless serializer/formatters/resolvers for untrusted data as that opens the door for the untrusted data to potentially deserialize unanticipated types that can compromise security.
+
 ## Performance
 
 Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and there [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config), ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) has infinitely fast deserializer so ignore deserialize performance.
