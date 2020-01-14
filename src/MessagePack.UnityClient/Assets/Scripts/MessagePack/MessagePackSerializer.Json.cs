@@ -83,7 +83,7 @@ namespace MessagePack
             options = options ?? DefaultOptions;
             try
             {
-                if (options.Compression == MessagePackCompression.Lz4Block)
+                if (options.Compression.IsCompression())
                 {
                     using (var scratchRental = SequencePool.Shared.Rent())
                     {
