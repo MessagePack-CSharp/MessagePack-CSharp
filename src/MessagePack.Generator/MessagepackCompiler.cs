@@ -3,16 +3,19 @@
 
 using System;
 using System.Threading.Tasks;
-using MicroBatchFramework;
+using ConsoleAppFramework;
 using Microsoft.Extensions.Hosting;
 
 namespace MessagePack.Generator
 {
-    public class MessagepackCompiler : BatchBase
+    public class MessagepackCompiler : ConsoleAppBase
     {
         private static async Task Main(string[] args)
         {
-            await BatchHost.CreateDefaultBuilder().RunBatchEngineAsync<MessagepackCompiler>(args).ConfigureAwait(false);
+            await Host.CreateDefaultBuilder()
+                .ConfigureLogging(logging => logging.ReplaceToSimpleConsole())
+                .RunConsoleAppFrameworkAsync<MessagepackCompiler>(args)
+                .ConfigureAwait(false);
         }
 
         public async Task RunAsync(
