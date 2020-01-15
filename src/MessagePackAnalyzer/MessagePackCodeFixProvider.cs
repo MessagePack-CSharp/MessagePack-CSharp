@@ -17,6 +17,8 @@ using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
 
+#nullable disable
+
 namespace MessagePackAnalyzer
 {
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MessagePackCodeFixProvider)), Shared]

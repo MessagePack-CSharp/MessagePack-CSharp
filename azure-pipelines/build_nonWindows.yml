@@ -6,9 +6,17 @@ steps:
     arguments: --no-restore /p:platform=NoVSIX -c $(BuildConfiguration)
 
 - task: DotNetCoreCLI@2
-  displayName: Run tests
+  displayName: Run MessagePack.Tests
   inputs:
     command: test
     projects: tests/MessagePack.Tests/MessagePack.Tests.csproj
     arguments: --no-build -c $(BuildConfiguration) -f netcoreapp2.1 -v n
     testRunTitle: netcoreapp2.1-$(Agent.JobName)
+
+- task: DotNetCoreCLI@2
+  displayName: Run MessagePackAnalyzer.Tests
+  inputs:
+    command: test
+    projects: tests/MessagePackAnalyzer.Tests/MessagePackAnalyzer.Tests.csproj
+    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp3.1 -v n
+    testRunTitle: netcoreapp3.1-$(Agent.JobName)-Analyzers

@@ -31,7 +31,7 @@ namespace MessagePackAnalyzer
                         {
                             if (tr.TokenType == TinyJsonToken.String)
                             {
-                                l.Add(tr.Value as string);
+                                l.Add((string)tr.Value!);
                             }
                         }
                     }
