@@ -111,12 +111,14 @@ namespace MessagePack.Formatters
             var dest = writer.GetSpan(MessagePackRange.MaxFixStringLength);
             if (System.Buffers.Text.Utf8Formatter.TryFormat(value, dest.Slice(1), out var written))
             {
-                // write string header
+                // write header
                 dest[0] = (byte)(MessagePackCode.MinFixStr | written);
                 writer.Advance(written + 1);
             }
             else
             {
+                // reset writer's span previously acquired that does not use
+                writer.Advance(0);
                 writer.Write(value.ToString(CultureInfo.InvariantCulture));
             }
         }
