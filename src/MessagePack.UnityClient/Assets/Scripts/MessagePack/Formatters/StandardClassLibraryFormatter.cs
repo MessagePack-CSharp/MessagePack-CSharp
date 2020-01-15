@@ -165,7 +165,19 @@ namespace MessagePack.Formatters
             }
 
             // fallback
-            return decimal.Parse(reader.ReadString(), CultureInfo.InvariantCulture);
+            {
+                var rentArray = ArrayPool<byte>.Shared.Rent((int)sequence.Length);
+                try
+                {
+                    sequence.CopyTo(rentArray);
+                    var str = Encoding.UTF8.GetString(rentArray.AsSpan(0, (int)sequence.Length));
+                    return decimal.Parse(str, CultureInfo.InvariantCulture);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(rentArray);
+                }
+            }
         }
     }
 
