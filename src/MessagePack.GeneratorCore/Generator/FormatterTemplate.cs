@@ -152,7 +152,7 @@ if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBe
  } 
             this.Write("\r\n            for (int i = 0; i < length; i++)\r\n            {\r\n");
  if(objInfo.IsStringKey) { 
-            this.Write(@"                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+            this.Write(@"                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
