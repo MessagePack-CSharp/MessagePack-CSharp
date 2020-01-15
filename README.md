@@ -25,7 +25,7 @@ We target .NET Standard 2.0 with special optimizations for .NET Core 2.1+.
 Install-Package MessagePack
 ```
 
-Install the optional C# analyzer to get warnings for coding mistakes and code fixes to save you time:
+Install the optional C# [analyzers](doc/analyzers/index.md) to get warnings for coding mistakes and code fixes to save you time:
 
 ```ps1
 Install-Package MessagePackAnalyzer

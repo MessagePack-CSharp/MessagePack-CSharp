@@ -61,7 +61,7 @@ namespace MessagePackAnalyzer
                 .FirstOrDefault();
         }
 
-        public static AttributeData FindAttributeIncludeBasePropertyShortName(this IPropertySymbol property, string typeName)
+        public static AttributeData? FindAttributeIncludeBasePropertyShortName(this IPropertySymbol property, string typeName)
         {
             do
             {
@@ -93,7 +93,7 @@ namespace MessagePackAnalyzer
                 .FirstOrDefault();
         }
 
-        public static object GetSingleNamedArgumentValue(this AttributeData attribute, string key)
+        public static object? GetSingleNamedArgumentValue(this AttributeData attribute, string key)
         {
             foreach (KeyValuePair<string, TypedConstant> item in attribute.NamedArguments)
             {
