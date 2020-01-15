@@ -108,63 +108,12 @@ namespace MessagePack.Formatters
 
         public void Serialize(ref MessagePackWriter writer, decimal value, MessagePackSerializerOptions options)
         {
-            var dest = writer.GetSpan(MessagePackRange.MaxFixStringLength);
-            if (System.Buffers.Text.Utf8Formatter.TryFormat(value, dest.Slice(1), out var written))
-            {
-                // write string header
-                dest[0] = (byte)(MessagePackCode.MinFixStr | written);
-                writer.Advance(written + 1);
-            }
-            else
-            {
-                writer.Write(value.ToString(CultureInfo.InvariantCulture));
-            }
+            writer.Write(value.ToString(CultureInfo.InvariantCulture));
+            return;
         }
 
         public decimal Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            if (!(reader.ReadStringSequence() is ReadOnlySequence<byte> sequence))
-            {
-                throw new MessagePackSerializationException(string.Format("Unexpected msgpack code {0} ({1}) encountered.", MessagePackCode.Nil, MessagePackCode.ToFormatName(MessagePackCode.Nil)));
-            }
-
-            if (sequence.IsSingleSegment)
-            {
-                if (System.Buffers.Text.Utf8Parser.TryParse(sequence.First.Span, out decimal result, out _))
-                {
-                    return result;
-                }
-            }
-            else
-            {
-                if (sequence.Length < 128)
-                {
-                    Span<byte> span = stackalloc byte[(int)sequence.Length];
-                    sequence.CopyTo(span);
-                    if (System.Buffers.Text.Utf8Parser.TryParse(span, out decimal result, out _))
-                    {
-                        return result;
-                    }
-                }
-                else
-                {
-                    var rentArray = ArrayPool<byte>.Shared.Rent((int)sequence.Length);
-                    try
-                    {
-                        sequence.CopyTo(rentArray);
-                        if (System.Buffers.Text.Utf8Parser.TryParse(rentArray.AsSpan(0, (int)sequence.Length), out decimal result, out _))
-                        {
-                            return result;
-                        }
-                    }
-                    finally
-                    {
-                        ArrayPool<byte>.Shared.Return(rentArray);
-                    }
-                }
-            }
-
-            // fallback
             return decimal.Parse(reader.ReadString(), CultureInfo.InvariantCulture);
         }
     }
