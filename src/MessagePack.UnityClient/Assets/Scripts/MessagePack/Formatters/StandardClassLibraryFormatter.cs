@@ -184,21 +184,7 @@ namespace MessagePack.Formatters
                 }
             }
 
-            // fallback
-            {
-                var seqLen = (int)sequence.Length;
-                var rentArray = ArrayPool<byte>.Shared.Rent(seqLen);
-                try
-                {
-                    sequence.CopyTo(rentArray);
-                    var str = Encoding.UTF8.GetString(rentArray.AsSpan(0, seqLen));
-                    return decimal.Parse(str, CultureInfo.InvariantCulture);
-                }
-                finally
-                {
-                    ArrayPool<byte>.Shared.Return(rentArray);
-                }
-            }
+            throw new MessagePackSerializationException("Can't parse to decimal, input string was not in a correct format.");
         }
     }
 
