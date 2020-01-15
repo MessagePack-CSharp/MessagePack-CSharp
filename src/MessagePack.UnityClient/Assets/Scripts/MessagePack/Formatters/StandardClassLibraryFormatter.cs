@@ -132,30 +132,48 @@ namespace MessagePack.Formatters
 
             if (sequence.IsSingleSegment)
             {
-                if (System.Buffers.Text.Utf8Parser.TryParse(sequence.First.Span, out decimal result, out _))
+                var span = sequence.First.Span;
+                if (System.Buffers.Text.Utf8Parser.TryParse(span, out decimal result, out var bytesConsumed))
                 {
+                    if (span.Length != bytesConsumed)
+                    {
+                        throw new MessagePackSerializationException("Unexpected length of string.");
+                    }
+
                     return result;
                 }
             }
             else
             {
-                if (sequence.Length < 128)
+                // sequence.Length is not free
+                var seqLen = (int)sequence.Length;
+                if (seqLen < 128)
                 {
-                    Span<byte> span = stackalloc byte[(int)sequence.Length];
+                    Span<byte> span = stackalloc byte[seqLen];
                     sequence.CopyTo(span);
-                    if (System.Buffers.Text.Utf8Parser.TryParse(span, out decimal result, out _))
+                    if (System.Buffers.Text.Utf8Parser.TryParse(span, out decimal result, out var bytesConsumed))
                     {
+                        if (seqLen != bytesConsumed)
+                        {
+                            throw new MessagePackSerializationException("Unexpected length of string.");
+                        }
+
                         return result;
                     }
                 }
                 else
                 {
-                    var rentArray = ArrayPool<byte>.Shared.Rent((int)sequence.Length);
+                    var rentArray = ArrayPool<byte>.Shared.Rent(seqLen);
                     try
                     {
                         sequence.CopyTo(rentArray);
-                        if (System.Buffers.Text.Utf8Parser.TryParse(rentArray.AsSpan(0, (int)sequence.Length), out decimal result, out _))
+                        if (System.Buffers.Text.Utf8Parser.TryParse(rentArray.AsSpan(0, seqLen), out decimal result, out var bytesConsumed))
                         {
+                            if (seqLen != bytesConsumed)
+                            {
+                                throw new MessagePackSerializationException("Unexpected length of string.");
+                            }
+
                             return result;
                         }
                     }
@@ -168,11 +186,12 @@ namespace MessagePack.Formatters
 
             // fallback
             {
-                var rentArray = ArrayPool<byte>.Shared.Rent((int)sequence.Length);
+                var seqLen = (int)sequence.Length;
+                var rentArray = ArrayPool<byte>.Shared.Rent(seqLen);
                 try
                 {
                     sequence.CopyTo(rentArray);
-                    var str = Encoding.UTF8.GetString(rentArray.AsSpan(0, (int)sequence.Length));
+                    var str = Encoding.UTF8.GetString(rentArray.AsSpan(0, seqLen));
                     return decimal.Parse(str, CultureInfo.InvariantCulture);
                 }
                 finally
