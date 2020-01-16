@@ -76,6 +76,22 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void InterfaceCollectionsAreDeserializedMutable()
+        {
+            var list = this.Convert<IList<int>>(new[] { 1, 2, 3 });
+            list.Add(4);
+            Assert.Equal(new[] { 1, 2, 3, 4 }, list);
+
+            var collection = this.Convert<ICollection<int>>(new[] { 1, 2, 3 });
+            collection.Add(4);
+            Assert.Equal(new[] { 1, 2, 3, 4 }, collection);
+
+            var setCollection = this.Convert<ISet<int>>(new HashSet<int> { 1, 2, 3 });
+            setCollection.Add(4);
+            Assert.Equal(new[] { 1, 2, 3, 4 }, setCollection.OrderBy(n => n).ToArray());
+        }
+
+        [Fact]
         public void StackTest()
         {
             var stack = new Stack<int>(new[] { 1, 10, 100 });

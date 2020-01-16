@@ -135,7 +135,7 @@ namespace MessagePack.Resolvers
                 case 1: return new global::MessagePack.Formatters.ArrayFormatter<global::GlobalMyEnum>();
                 case 2: return new global::MessagePack.Formatters.ArrayFormatter<global::QuestMessageBody>();
                 case 3: return new global::MessagePack.Formatters.InterfaceDictionaryFormatter<string, string>();
-                case 4: return new global::MessagePack.Formatters.InterfaceListFormatter<global::SimpleModel>();
+                case 4: return new global::MessagePack.Formatters.InterfaceListFormatter2<global::SimpleModel>();
                 case 5: return new global::MessagePack.Formatters.FourDimensionalArrayFormatter<int>();
                 case 6: return new global::MessagePack.Formatters.ThreeDimensionalArrayFormatter<int>();
                 case 7: return new global::MessagePack.Formatters.TwoDimensionalArrayFormatter<int>();
