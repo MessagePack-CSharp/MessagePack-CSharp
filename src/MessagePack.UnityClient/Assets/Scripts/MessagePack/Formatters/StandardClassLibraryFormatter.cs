@@ -108,13 +108,83 @@ namespace MessagePack.Formatters
 
         public void Serialize(ref MessagePackWriter writer, decimal value, MessagePackSerializerOptions options)
         {
-            writer.Write(value.ToString(CultureInfo.InvariantCulture));
-            return;
+            var dest = writer.GetSpan(MessagePackRange.MaxFixStringLength);
+            if (System.Buffers.Text.Utf8Formatter.TryFormat(value, dest.Slice(1), out var written))
+            {
+                // write header
+                dest[0] = (byte)(MessagePackCode.MinFixStr | written);
+                writer.Advance(written + 1);
+            }
+            else
+            {
+                // reset writer's span previously acquired that does not use
+                writer.Advance(0);
+                writer.Write(value.ToString(CultureInfo.InvariantCulture));
+            }
         }
 
         public decimal Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            return decimal.Parse(reader.ReadString(), CultureInfo.InvariantCulture);
+            if (!(reader.ReadStringSequence() is ReadOnlySequence<byte> sequence))
+            {
+                throw new MessagePackSerializationException(string.Format("Unexpected msgpack code {0} ({1}) encountered.", MessagePackCode.Nil, MessagePackCode.ToFormatName(MessagePackCode.Nil)));
+            }
+
+            if (sequence.IsSingleSegment)
+            {
+                var span = sequence.First.Span;
+                if (System.Buffers.Text.Utf8Parser.TryParse(span, out decimal result, out var bytesConsumed))
+                {
+                    if (span.Length != bytesConsumed)
+                    {
+                        throw new MessagePackSerializationException("Unexpected length of string.");
+                    }
+
+                    return result;
+                }
+            }
+            else
+            {
+                // sequence.Length is not free
+                var seqLen = (int)sequence.Length;
+                if (seqLen < 128)
+                {
+                    Span<byte> span = stackalloc byte[seqLen];
+                    sequence.CopyTo(span);
+                    if (System.Buffers.Text.Utf8Parser.TryParse(span, out decimal result, out var bytesConsumed))
+                    {
+                        if (seqLen != bytesConsumed)
+                        {
+                            throw new MessagePackSerializationException("Unexpected length of string.");
+                        }
+
+                        return result;
+                    }
+                }
+                else
+                {
+                    var rentArray = ArrayPool<byte>.Shared.Rent(seqLen);
+                    try
+                    {
+                        sequence.CopyTo(rentArray);
+                        if (System.Buffers.Text.Utf8Parser.TryParse(rentArray.AsSpan(0, seqLen), out decimal result, out var bytesConsumed))
+                        {
+                            if (seqLen != bytesConsumed)
+                            {
+                                throw new MessagePackSerializationException("Unexpected length of string.");
+                            }
+
+                            return result;
+                        }
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(rentArray);
+                    }
+                }
+            }
+
+            throw new MessagePackSerializationException("Can't parse to decimal, input string was not in a correct format.");
         }
     }
 
