@@ -1,4 +1,8 @@
 ﻿MessagePack.ExtensionHeader.Equals(MessagePack.ExtensionHeader other) -> bool
+MessagePack.Formatters.InterfaceCollectionFormatter2<T>
+MessagePack.Formatters.InterfaceCollectionFormatter2<T>.InterfaceCollectionFormatter2() -> void
+MessagePack.Formatters.InterfaceListFormatter2<T>
+MessagePack.Formatters.InterfaceListFormatter2<T>.InterfaceListFormatter2() -> void
 MessagePack.MessagePackReader.ReadDateTime(MessagePack.ExtensionHeader header) -> System.DateTime
 MessagePack.MessagePackReader.TryReadArrayHeader(out int count) -> bool
 MessagePack.MessagePackReader.TryReadExtensionFormatHeader(out MessagePack.ExtensionHeader extensionHeader) -> bool
