@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
@@ -24,7 +23,6 @@ namespace MessagePack.GeneratorCore.Utils
         {
             var parseOption = new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.Parse, SourceCodeKind.Regular, CleanPreprocessorSymbols(preprocessorSymbols));
             var syntaxTrees = new List<SyntaxTree>();
-            var metadata = GetStandardReferences();
 
             var sources = new HashSet<string>();
             var locations = new List<string>();
@@ -43,9 +41,14 @@ namespace MessagePack.GeneratorCore.Utils
             // ignore Unity's default metadatas(to avoid conflict .NET Core runtime import)
             // MonoBleedingEdge = .NET 4.x Unity metadata
             // 2.0.0 = .NET Standard 2.0 Unity metadata
-            foreach (var item in locations.Select(Path.GetFullPath).Distinct().Where(x => !(x.Contains("MonoBleedingEdge") || x.Contains("2.0.0"))))
+            var metadata = new List<PortableExecutableReference>();
+            var targetMetadataLocations = locations.Select(Path.GetFullPath).Concat(GetStandardReferences()).Distinct().Where(x => !(x.Contains("MonoBleedingEdge") || x.Contains("2.0.0")));
+            foreach (var item in targetMetadataLocations)
             {
-                metadata.Add(MetadataReference.CreateFromFile(item));
+                if (File.Exists(item))
+                {
+                    metadata.Add(MetadataReference.CreateFromFile(item));
+                }
             }
 
             var compilation = CSharpCompilation.Create(
@@ -78,7 +81,7 @@ namespace MessagePack.GeneratorCore.Utils
 
             syntaxTrees.Add(CSharpSyntaxTree.ParseText(dummyAnnotation, parseOption));
 
-            var metadata = GetStandardReferences();
+            var metadata = GetStandardReferences().Select(x => MetadataReference.CreateFromFile(x)).ToArray();
 
             var compilation = CSharpCompilation.Create(
                 "CodeGenTemp",
@@ -89,7 +92,7 @@ namespace MessagePack.GeneratorCore.Utils
             return compilation;
         }
 
-        private static List<PortableExecutableReference> GetStandardReferences()
+        private static List<string> GetStandardReferences()
         {
             var standardMetadataType = new[]
             {
@@ -112,7 +115,6 @@ namespace MessagePack.GeneratorCore.Utils
             var metadata = standardMetadataType
                .Select(x => x.Assembly.Location)
                .Distinct()
-               .Select(x => MetadataReference.CreateFromFile(x))
                .ToList();
 
             var dir = new FileInfo(typeof(object).Assembly.Location).Directory;
@@ -120,7 +122,7 @@ namespace MessagePack.GeneratorCore.Utils
                 var path = Path.Combine(dir.FullName, "netstandard.dll");
                 if (File.Exists(path))
                 {
-                    metadata.Add(MetadataReference.CreateFromFile(path));
+                    metadata.Add(path);
                 }
             }
 
@@ -128,7 +130,7 @@ namespace MessagePack.GeneratorCore.Utils
                 var path = Path.Combine(dir.FullName, "System.Runtime.dll");
                 if (File.Exists(path))
                 {
-                    metadata.Add(MetadataReference.CreateFromFile(path));
+                    metadata.Add(path);
                 }
             }
 
@@ -157,6 +159,7 @@ namespace MessagePack.GeneratorCore.Utils
             }
 
             var csProjRoot = Path.GetDirectoryName(csproj);
+            // .NET Core root
             var framworkRoot = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
             // Legacy
@@ -254,7 +257,8 @@ namespace MessagePack.GeneratorCore.Utils
                     }
                     else
                     {
-                        metadataLocations.Add(Path.Combine(csProjRoot, NormalizeDirectorySeparators(hintPath)));
+                        var path = Path.Combine(csProjRoot, NormalizeDirectorySeparators(hintPath));
+                        metadataLocations.Add(path);
                     }
                 }
 
