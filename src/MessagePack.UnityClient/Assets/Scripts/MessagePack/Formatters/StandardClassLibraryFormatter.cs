@@ -478,6 +478,11 @@ namespace MessagePack.Formatters
                     writer.Advance(written + 2);
                     return;
                 }
+                else
+                {
+                    // reset writer's span previously acquired that does not use
+                    writer.Advance(0);
+                }
             }
 #endif
 
