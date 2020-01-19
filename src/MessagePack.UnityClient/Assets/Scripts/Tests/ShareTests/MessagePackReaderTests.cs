@@ -3,7 +3,9 @@
 
 using System;
 using System.Buffers;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Nerdbank.Streams;
@@ -202,6 +204,14 @@ namespace MessagePack.Tests
             Assert.False(reader.TryReadStringSpan(out ReadOnlySpan<byte> span));
             Assert.Equal(0, span.Length);
             Assert.Equal(sequence.AsReadOnlySequence.Start, reader.Position);
+        }
+
+        [Fact]
+        public void ReadString_MultibyteChars()
+        {
+            var reader = new MessagePackReader(TestConstants.MsgPackEncodedMultibyteCharString);
+            string actual = reader.ReadString();
+            Assert.Equal(TestConstants.MultibyteCharString, actual);
         }
 
         [Fact]
