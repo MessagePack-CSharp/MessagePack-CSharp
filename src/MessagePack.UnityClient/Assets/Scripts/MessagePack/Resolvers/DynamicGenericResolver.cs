@@ -249,7 +249,7 @@ namespace MessagePack.Internal
             }
             else if (ti.IsEnum)
             {
-                return typeof(GenericEnumFormatter<>).MakeGenericType(ti.GetElementType());
+                return CreateInstance(typeof(GenericEnumFormatter<>), new[] { t });
             }
             else
             {
