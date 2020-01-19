@@ -465,6 +465,22 @@ namespace MessagePack.Formatters
 
         public void Serialize(ref MessagePackWriter writer, System.Numerics.BigInteger value, MessagePackSerializerOptions options)
         {
+#if NETCOREAPP2_1
+            if (!writer.OldSpec)
+            {
+                // try to get bin8 buffer.
+                var span = writer.GetSpan(byte.MaxValue);
+                if (value.TryWriteBytes(span.Slice(2), out var written))
+                {
+                    span[0] = MessagePackCode.Bin8;
+                    span[1] = (byte)written;
+
+                    writer.Advance(written + 2);
+                    return;
+                }
+            }
+#endif
+
             writer.Write(value.ToByteArray());
             return;
         }
