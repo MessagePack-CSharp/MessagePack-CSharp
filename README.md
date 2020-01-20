@@ -25,7 +25,7 @@ We target .NET Standard 2.0 with special optimizations for .NET Core 2.1+.
 Install-Package MessagePack
 ```
 
-Install the optional C# analyzer to get warnings for coding mistakes and code fixes to save you time:
+Install the optional C# [analyzers](doc/analyzers/index.md) to get warnings for coding mistakes and code fixes to save you time:
 
 ```ps1
 Install-Package MessagePackAnalyzer
@@ -182,7 +182,7 @@ All patterns serialization target are public instance member(field or property).
 
 Which should uses int key or string key? I recommend use int key because faster and compact than string key. But string key has key name information, it is useful for debugging.
 
-MessagePackSerializer requests target must put attribute is for robustness. If class is grown, you need to be conscious of versioning. MessagePackSerializer uses default value if key does not exists. If uses int key, should be start from 0 and should be sequential. If unnecessary properties come out, please make a missing number. Reuse is bad. Also, if Int Key's jump number is too large, it affects binary size.
+MessagePackSerializer requests target must put attribute is for robustness. If class is grown, you need to be conscious of versioning. MessagePackSerializer uses default value if key does not exists. If uses int key, should be start from 0 and should be sequential, if unnecessary properties come out, please make a obsolete and keep type, until all clients will update. Also, if Int Key's jump number is too large, it affects binary size.
 
 ```csharp
 [MessagePackObject]
@@ -208,7 +208,7 @@ public class ContractlessSample
 }
 
 var data = new ContractlessSample { MyProperty1 = 99, MyProperty2 = 9999 };
-var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
 // {"MyProperty1":99,"MyProperty2":9999}
 Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
@@ -244,7 +244,7 @@ var data = new PrivateSample();
 data.SetX(9999);
 
 // You can choose StandardResolverAllowPrivate or  ContractlessStandardResolverAllowPrivate
-var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.Instance);
+var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.Options);
 ```
 
 I don't need type, I want to use like BinaryFormatter! You can use as typeless resolver and helpers. Please see [Typeless section](https://github.com/neuecc/MessagePack-CSharp#typeless).
@@ -436,7 +436,7 @@ If use `MessagePackSerializer.Deserialize<object>` or `MessagePackSerializer.Des
 ```csharp
 // sample binary.
 var model = new DynamicModel { Name = "foobar", Items = new[] { 1, 10, 100, 1000 } };
-var bin = MessagePackSerializer.Serialize(model, ContractlessStandardResolver.Instance);
+var bin = MessagePackSerializer.Serialize(model, ContractlessStandardResolver.Options);
 
 // dynamic, untyped
 var dynamicModel = MessagePackSerializer.Deserialize<dynamic>(bin, ContractlessStandardResolver.Instance);
@@ -460,7 +460,7 @@ Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // Support Anonymous Type Serialize
 var anonType = new { Foo = 100, Bar = "foobar" };
-var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
 // {"Foo":100,"Bar":"foobar"}
 Console.WriteLine(MessagePackSerializer.SerializeToJson(bin2));
@@ -626,7 +626,8 @@ MessagePackSerializer.Serialize(obj, lz4Options);
 
 `Lz4BlockArray` compresses an entire msgpack sequence as a array of lz4 block format. This is compressed/decompressed in chunks that do not consume LOH, but the compression ratio is slightly sacrificed.
 
-We're recommend to use `Lz4BlockArray` as default when use compression.
+We recommend to use `Lz4BlockArray` as default when use compression.
+For compatibility with MessagePack v1.x, use `Lz4Block`.
 
 Regardless of which Lz4 option is set at the deserialization, both data can be deserialized. For example, when the option is `Lz4BlockArray`, binary data of both `Lz4Block` and `Lz4BlockArray` can be deserialized. Neither can be expanded if the option is set to `None`.
 
@@ -1251,6 +1252,8 @@ Unity lower support version is `2018.3`, Api Compatibility Level is supporrt bot
 
 You can install by unitypackage in [releases](https://github.com/neuecc/MessagePack-CSharp/releases/) page. If build target as PC, you can use as is but if build target uses IL2CPP, you can not use `Dynamic***Resolver` so require to use pre-code generation. Please see [pre-code generation section](#aot).
 
+MessagePack for C# includes some additional `System.*.dll` libraries that originally provides in NuGet. There are located under `Plugins`. If other package using there libraries(e.g. Unity Collections package using `System.Runtime.CompilerServices.Unsafe.dll`), to avoid conflicts, please delete the target DLL under `Plugins`.
+
 Currently `CompositeResolver.Create` can not work on IL2CPP so recommend to use `StaticCompositeResolver.Instance.Register` instead.
 
 In Unity, MessagePackSerializer can serialize `Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt` and there nullable, there array, there list by built-in extension `UnityResolver`. It is included StandardResolver by default.
@@ -1297,10 +1300,10 @@ Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime 
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
 
-The easiest way to acquire and run mpc is as a dotnet tool.
+In the first, mpc requires [.NET Core 3 Runtime](https://dotnet.microsoft.com/download), the easiest way to acquire and run mpc is as a dotnet tool. 
 
 ```
-dotnet tool install --global MasterMemory.Generator
+dotnet tool install --global MessagePack.Generator
 ```
 
 Installing it as a local tool allows you to include the tools and versions that you use in your source control system. Run these commands in the root of your repo:
@@ -1321,15 +1324,19 @@ dotnet mpc -h
 Alternatively, you can download mpc from the [releases](https://github.com/neuecc/MessagePack-CSharp/releases/) page, that includes platform native binaries(don't require dotnet runtime).
 
 ```
-argument list:
--i, -input: Input path of analyze csproj or directory, if input multiple csproj split with ','.
--o, -output: Output file path(.cs) or directory(multiple generate file).
--c, -conditionalSymbol: [default=null]Conditional compiler symbols, split with ','.
--r, -resolverName: [default=GeneratedResolver]Set resolver name.
--n, -namespace: [default=MessagePack]Set namespace root name.
--m, -useMapMode: [default=False]Force use map mode serialization.
--ms, -multipleIfDirectiveOutputSymbols: [default=null]Generate #if-- files by symbols, split with ','.
+Usage: mpc [options...]
+
+Options:
+  -i, -input <String>                                Input path of analyze csproj or directory, if input multiple csproj split with ','. (Required)
+  -o, -output <String>                               Output file path(.cs) or directory(multiple generate file). (Required)
+  -c, -conditionalSymbol <String>                    Conditional compiler symbols, split with ','. (Default: null)
+  -r, -resolverName <String>                         Set resolver name. (Default: GeneratedResolver)
+  -n, -namespace <String>                            Set namespace root name. (Default: MessagePack)
+  -m, -useMapMode <Boolean>                          Force use map mode serialization. (Default: False)
+  -ms, -multipleIfDirectiveOutputSymbols <String>    Generate #if-- files by symbols, split with ','. (Default: null)
 ```
+
+`mpc` targets C# code that annotates with `[MessagePackObject]` or `[Union]`.
 
 ```cmd
 // Simple Sample:
@@ -1341,23 +1348,45 @@ mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
 
 By default, `mpc.exe` generates resolver to `MessagePack.Resolvers.GeneratedResolver` and formatters generates to `MessagePack.Formatters.***`.
 
+Here is the full sample code of register generated resolver in Unity.
+
 ```csharp
-// Do this once
-StaticCompositeResolver.Instance.Register(new IFormatterResolver[]
+using MessagePack;
+using MessagePack.Resolvers;
+using UnityEngine;
+
+public class Startup
 {
-    MessagePack.Resolvers.GeneratedResolver.Instance,
-    MessagePack.Resolvers.StandardResolver.Instance
-});
+    static bool serializerRegistered = false;
 
-// Store it for reuse.
-var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Initialize()
+    {
+        if (!serializerRegistered)
+        {
+            StaticCompositeResolver.Instance.Register(
+                 MessagePack.Resolvers.GeneratedResolver.Instance,
+                 MessagePack.Resolvers.StandardResolver.Instance
+            );
 
-// Each time you serialize/deserialize, specify the options:
-byte[] msgpackBytes = MessagePackSerializer.Serialize(myObject, options);
-T myObject2 = MessagePackSerializer.Deserialize<MyObject>(msgpackBytes, options);
+            var option = MessagePackSerializerOptions.Standard.WithResolver(StaticCompositeResolver.Instance);
 
-// or set as application default.
-MessagePackSerializer.DefaultOptions = options;
+            MessagePackSerializer.DefaultOptions = option;
+            serializerRegistered = true;
+        }
+    }
+
+#if UNITY_EDITOR
+
+
+    [UnityEditor.InitializeOnLoadMethod]
+    static void EditorInitialize()
+    {
+        Initialize();
+    }
+
+#endif
+}
 ```
 
 In Unity, you can use MessagePack CodeGen windows at `Windows -> MessagePack -> CodeGenerator`.

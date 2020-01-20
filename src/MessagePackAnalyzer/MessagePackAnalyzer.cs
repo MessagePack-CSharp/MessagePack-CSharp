@@ -13,9 +13,10 @@ namespace MessagePackAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class MessagePackAnalyzer : DiagnosticAnalyzer
     {
-        private const string DiagnosticIdBase = "MessagePackAnalyzer";
+        public const string UseMessagePackObjectAttributeId = "MsgPack003";
+        public const string AttributeMessagePackObjectMembersId = "MsgPack004";
+        public const string InvalidMessagePackObjectId = "MsgPack005";
 
-        internal const string Title = "Lint of MessagePack Type.";
         internal const string Category = "Usage";
 
         internal const string MessagePackObjectAttributeShortName = "MessagePackObjectAttribute";
@@ -25,31 +26,34 @@ namespace MessagePackAnalyzer
         internal const string UnionAttributeShortName = "UnionAttribute";
 
         internal static readonly DiagnosticDescriptor TypeMustBeMessagePackObject = new DiagnosticDescriptor(
-            id: DiagnosticIdBase + "_" + nameof(TypeMustBeMessagePackObject),
-            title: Title,
+            id: UseMessagePackObjectAttributeId,
+            title: "Use MessagePackObjectAttribute",
             category: Category,
             messageFormat: "Type must be marked with MessagePackObjectAttribute. {0}.", // type.Name
             description: "Type must be marked with MessagePackObjectAttribute.",
             defaultSeverity: DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true,
+            helpLinkUri: AnalyzerUtilities.GetHelpLink(UseMessagePackObjectAttributeId));
 
         internal static readonly DiagnosticDescriptor PublicMemberNeedsKey = new DiagnosticDescriptor(
-            id: DiagnosticIdBase + "_" + nameof(PublicMemberNeedsKey),
-            title: Title,
+            id: AttributeMessagePackObjectMembersId,
+            title: "Attribute public members of MessagePack objects",
             category: Category,
-            messageFormat: "Public member requires KeyAttribute or IgnoreMemberAttribute. {0}.{1}.", // type.Name + "." + item.Name
+            messageFormat: "Public members of MessagePackObject-attributed types require either KeyAttribute or IgnoreMemberAttribute. {0}.{1}.", // type.Name + "." + item.Name
             description: "Public member must be marked with KeyAttribute or IgnoreMemberAttribute.",
             defaultSeverity: DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true,
+            helpLinkUri: AnalyzerUtilities.GetHelpLink(AttributeMessagePackObjectMembersId));
 
         internal static readonly DiagnosticDescriptor InvalidMessagePackObject = new DiagnosticDescriptor(
-            id: DiagnosticIdBase + "_" + nameof(InvalidMessagePackObject),
-            title: Title,
+            id: InvalidMessagePackObjectId,
+            title: "MessagePackObject validation",
             category: Category,
             messageFormat: "Invalid MessagePackObject definition. {0}", // details
             description: "Invalid MessagePackObject definition.",
             defaultSeverity: DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true,
+            helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
             TypeMustBeMessagePackObject,

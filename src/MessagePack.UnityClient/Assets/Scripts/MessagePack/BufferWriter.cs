@@ -61,7 +61,7 @@ namespace MessagePack
             _sequencePool = default;
             _rental = default;
 
-            var memory = _output.GetMemory();
+            var memory = _output.GetMemoryCheckResult();
             MemoryMarshal.TryGetArray(memory, out _segment);
             _span = memory.Span;
         }
@@ -216,7 +216,7 @@ namespace MessagePack
                 this.MigrateToSequence();
             }
 
-            var memory = _output.GetMemory(count);
+            var memory = _output.GetMemoryCheckResult(count);
             MemoryMarshal.TryGetArray(memory, out _segment);
             _span = memory.Span;
         }

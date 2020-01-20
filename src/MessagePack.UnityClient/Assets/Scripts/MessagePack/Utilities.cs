@@ -3,9 +3,6 @@
 
 using System;
 using System.Buffers;
-using MessagePack.Formatters;
-using Microsoft;
-using Nerdbank.Streams;
 
 namespace MessagePack
 {
@@ -14,6 +11,15 @@ namespace MessagePack
     /// </summary>
     internal static class Utilities
     {
+        /// <summary>
+        /// A value indicating whether we're running on mono.
+        /// </summary>
+#if UNITY_2018_3_OR_NEWER
+        internal const bool IsMono = true; // hard code since we haven't tested whether mono is detected on all unity platforms.
+#else
+        internal static readonly bool IsMono = Type.GetType("Mono.Runtime") is Type;
+#endif
+
         internal delegate void GetWriterBytesAction<TArg>(ref MessagePackWriter writer, TArg argument);
 
         internal static byte[] GetWriterBytes<TArg>(TArg arg, GetWriterBytesAction<TArg> action)
@@ -25,6 +31,17 @@ namespace MessagePack
                 writer.Flush();
                 return sequenceRental.Value.AsReadOnlySequence.ToArray();
             }
+        }
+
+        internal static Memory<T> GetMemoryCheckResult<T>(this IBufferWriter<T> bufferWriter, int size = 0)
+        {
+            var memory = bufferWriter.GetMemory(size);
+            if (memory.IsEmpty)
+            {
+                throw new InvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) method returned an empty memory block, which is not allowed. This is a bug in " + bufferWriter.GetType().FullName);
+            }
+
+            return memory;
         }
     }
 }

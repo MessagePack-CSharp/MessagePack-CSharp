@@ -8,6 +8,7 @@
     <DefineConstants Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <DefineConstants Condition=" $(TargetFramework.StartsWith('net')) ">$(DefineConstants);REF_EMIT</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <LangVersion>8.0</LangVersion>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C#</Title>
@@ -31,11 +32,10 @@
 
   <ItemGroup>
     <PackageReference Include="Roslyn.Diagnostics.Analyzers" Version="2.9.7" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.0.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Memory" Version="4.5.3" Condition=" '$(TargetFramework)' != 'xamarin.ios10' " />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'xamarin.ios10' ">

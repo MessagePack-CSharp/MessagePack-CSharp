@@ -1533,6 +1533,7 @@ namespace MessagePack.Internal
                             throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
                         }
 
+                        member.IsExplicitContract = true;
                         if (key.IntKey == null && key.StringKey == null)
                         {
                             throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
@@ -1548,6 +1549,8 @@ namespace MessagePack.Internal
                             // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
                             continue;
                         }
+
+                        member.IsExplicitContract = true;
 
                         // use Order first
                         if (pseudokey.Order != -1)
@@ -1643,6 +1646,7 @@ namespace MessagePack.Internal
                             throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
                         }
 
+                        member.IsExplicitContract = true;
                         if (key.IntKey == null && key.StringKey == null)
                         {
                             throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
@@ -1658,6 +1662,8 @@ namespace MessagePack.Internal
                             // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
                             continue;
                         }
+
+                        member.IsExplicitContract = true;
 
                         // use Order first
                         if (pseudokey.Order != -1)
@@ -1869,7 +1875,7 @@ namespace MessagePack.Internal
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = members.Where(m => constructorParameters.Contains(m) || m.IsWritable).ToArray(),
+                Members = members.Where(m => m.IsExplicitContract || constructorParameters.Contains(m) || m.IsWritable).ToArray(),
             };
         }
 
@@ -1937,6 +1943,11 @@ namespace MessagePack.Internal
                     return mi.DeclaringType.GetTypeInfo().IsValueType;
                 }
             }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether this member is explicitly opted in with an attribute.
+            /// </summary>
+            public bool IsExplicitContract { get; set; }
 
             public MessagePackFormatterAttribute GetMessagePackFormatterAttribute()
             {

@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -81,23 +82,7 @@ namespace MessagePack.Formatters
 
         public ArraySegment<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            ReadOnlySequence<byte>? bytes = reader.ReadBytes();
-            if (bytes.HasValue)
-            {
-                // Don't allocate and copy an array if we can return a segment directly into the sequence.
-                if (bytes.Value.IsSingleSegment && MemoryMarshal.TryGetArray(bytes.Value.First, out ArraySegment<byte> segment))
-                {
-                    return segment;
-                }
-                else
-                {
-                    return new ArraySegment<byte>(bytes.Value.ToArray());
-                }
-            }
-            else
-            {
-                return default;
-            }
+            return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new ArraySegment<byte>(bytes.ToArray()) : default;
         }
     }
 
@@ -468,6 +453,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Obsolete("Use " + nameof(InterfaceListFormatter2<int>) + " instead.")]
     public sealed class InterfaceListFormatter<T> : CollectionFormatterBase<T, T[], IList<T>>
     {
         protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
@@ -486,6 +472,7 @@ namespace MessagePack.Formatters
         }
     }
 
+    [Obsolete("Use " + nameof(InterfaceCollectionFormatter2<int>) + " instead.")]
     public sealed class InterfaceCollectionFormatter<T> : CollectionFormatterBase<T, T[], ICollection<T>>
     {
         protected override void Add(T[] collection, int index, T value, MessagePackSerializerOptions options)
@@ -499,6 +486,42 @@ namespace MessagePack.Formatters
         }
 
         protected override ICollection<T> Complete(T[] intermediateCollection)
+        {
+            return intermediateCollection;
+        }
+    }
+
+    public sealed class InterfaceListFormatter2<T> : CollectionFormatterBase<T, List<T>, IList<T>>
+    {
+        protected override void Add(List<T> collection, int index, T value, MessagePackSerializerOptions options)
+        {
+            collection.Add(value);
+        }
+
+        protected override List<T> Create(int count, MessagePackSerializerOptions options)
+        {
+            return new List<T>(count);
+        }
+
+        protected override IList<T> Complete(List<T> intermediateCollection)
+        {
+            return intermediateCollection;
+        }
+    }
+
+    public sealed class InterfaceCollectionFormatter2<T> : CollectionFormatterBase<T, List<T>, ICollection<T>>
+    {
+        protected override void Add(List<T> collection, int index, T value, MessagePackSerializerOptions options)
+        {
+            collection.Add(value);
+        }
+
+        protected override List<T> Create(int count, MessagePackSerializerOptions options)
+        {
+            return new List<T>(count);
+        }
+
+        protected override ICollection<T> Complete(List<T> intermediateCollection)
         {
             return intermediateCollection;
         }
