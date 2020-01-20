@@ -27,11 +27,6 @@ namespace MessagePack
     ref struct MessagePackWriter
     {
         /// <summary>
-        /// Returns a value indicating whether we're running on mono.
-        /// </summary>
-        private static readonly bool IsMono = Type.GetType("Mono.Runtime") is Type;
-
-        /// <summary>
         /// The writer to use.
         /// </summary>
         private BufferWriter writer;
@@ -1298,7 +1293,7 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
         {
-            if (IsMono)
+            if (Utilities.IsMono)
             {
                 // mono does not guarantee overlapped memcpy so for Unity and NETSTANDARD use slow path.
                 // https://github.com/neuecc/MessagePack-CSharp/issues/562
