@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\MessagePackBinaryTest.cs" />
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\TestConstants.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\MessagePackReaderTests.cs" />
     <Compile Include="..\MessagePack.Tests\MessagePackReaderTests.ReadInt.cs" />
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\ShareTests\MessagePackReaderTests.ReadString.cs" />
