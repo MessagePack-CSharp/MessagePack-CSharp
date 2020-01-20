@@ -3,15 +3,35 @@
 
 using System;
 using System.Buffers;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Nerdbank.Streams;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
     public class MessagePackWriterTests
     {
+        private readonly ITestOutputHelper logger;
+
+#if !UNITY_2018_3_OR_NEWER
+
+        public MessagePackWriterTests(ITestOutputHelper logger)
+        {
+            this.logger = logger;
+        }
+
+#else
+        public MessagePackWriterTests()
+        {
+            this.logger = new NullTestOutputHelper();
+        }
+
+#endif
+
         /// <summary>
         /// Verifies that <see cref="MessagePackWriter.WriteRaw(ReadOnlySpan{byte})"/>
         /// accepts a span that came from stackalloc.
@@ -81,6 +101,18 @@ namespace MessagePack.Tests
             writer.Flush();
             var reader = new MessagePackReader(sequence.AsReadOnlySequence);
             Assert.Equal(expected, reader.ReadString());
+        }
+
+        [Fact]
+        public void Write_String_MultibyteChars()
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.Write(TestConstants.MultibyteCharString);
+            writer.Flush();
+
+            this.logger.WriteLine("Written bytes: [{0}]", string.Join(", ", sequence.AsReadOnlySequence.ToArray().Select(b => string.Format(CultureInfo.InvariantCulture, "0x{0:x2}", b))));
+            Assert.Equal(TestConstants.MsgPackEncodedMultibyteCharString.ToArray(), sequence.AsReadOnlySequence.ToArray());
         }
 
         [Fact]

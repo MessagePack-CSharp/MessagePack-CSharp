@@ -11,6 +11,15 @@ namespace MessagePack
     /// </summary>
     internal static class Utilities
     {
+        /// <summary>
+        /// A value indicating whether we're running on mono.
+        /// </summary>
+#if UNITY_2018_3_OR_NEWER
+        internal const bool IsMono = true; // hard code since we haven't tested whether mono is detected on all unity platforms.
+#else
+        internal static readonly bool IsMono = Type.GetType("Mono.Runtime") is Type;
+#endif
+
         internal delegate void GetWriterBytesAction<TArg>(ref MessagePackWriter writer, TArg argument);
 
         internal static byte[] GetWriterBytes<TArg>(TArg arg, GetWriterBytesAction<TArg> action)

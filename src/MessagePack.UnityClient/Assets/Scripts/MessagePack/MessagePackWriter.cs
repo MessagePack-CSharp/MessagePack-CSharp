@@ -1293,26 +1293,28 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
         {
-#if !UNITY_2018_3_OR_NEWER
-            Buffer.MemoryCopy(source, destination, destinationSizeInBytes, sourceBytesToCopy);
-#else
-            // Unity(mono) does not gurantee overlapped memcpy.
-            // https://github.com/neuecc/MessagePack-CSharp/issues/562
-
-            var buffer = ArrayPool<byte>.Shared.Rent((int)sourceBytesToCopy);
-            try
+            if (Utilities.IsMono)
             {
-                fixed (byte* p = buffer)
+                // mono does not guarantee overlapped memcpy so for Unity and NETSTANDARD use slow path.
+                // https://github.com/neuecc/MessagePack-CSharp/issues/562
+                var buffer = ArrayPool<byte>.Shared.Rent((int)sourceBytesToCopy);
+                try
                 {
-                    Buffer.MemoryCopy(source, p, sourceBytesToCopy, sourceBytesToCopy);
-                    Buffer.MemoryCopy(p, destination, destinationSizeInBytes, sourceBytesToCopy);
+                    fixed (byte* p = buffer)
+                    {
+                        Buffer.MemoryCopy(source, p, sourceBytesToCopy, sourceBytesToCopy);
+                        Buffer.MemoryCopy(p, destination, destinationSizeInBytes, sourceBytesToCopy);
+                    }
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
                 }
             }
-            finally
+            else
             {
-                ArrayPool<byte>.Shared.Return(buffer);
+                Buffer.MemoryCopy(source, destination, destinationSizeInBytes, sourceBytesToCopy);
             }
-#endif
         }
     }
 }
