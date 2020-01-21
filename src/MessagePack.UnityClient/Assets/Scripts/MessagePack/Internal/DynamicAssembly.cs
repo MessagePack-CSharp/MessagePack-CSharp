@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if REF_EMIT
+#if !(UNITY_2018_3_OR_NEWER && NET_STANDARD_2_0)
 
 using System;
 using System.Reflection;
@@ -14,8 +14,8 @@ namespace MessagePack.Internal
 #if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes
         private readonly string moduleName;
 #endif
-        private readonly AssemblyBuilder assemblyBuilder;
-        private readonly ModuleBuilder moduleBuilder;
+        private readonly Lazy<AssemblyBuilder> assemblyBuilder;
+        private readonly Lazy<ModuleBuilder> moduleBuilder;
 
         // don't expose ModuleBuilder
         //// public ModuleBuilder ModuleBuilder { get { return moduleBuilder; } }
@@ -30,8 +30,8 @@ namespace MessagePack.Internal
 #else
             AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.Run;
 #endif
-            this.assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(moduleName), builderAccess);
-            this.moduleBuilder = this.assemblyBuilder.DefineDynamicModule(moduleName + ".dll");
+            this.assemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(moduleName), builderAccess));
+            this.moduleBuilder = new Lazy<ModuleBuilder>(() => this.assemblyBuilder.Value.DefineDynamicModule(moduleName + ".dll"));
         }
 
         /* requires lock on mono environment. see: https://github.com/neuecc/MessagePack-CSharp/issues/161 */
@@ -40,7 +40,7 @@ namespace MessagePack.Internal
         {
             lock (this.gate)
             {
-                return this.moduleBuilder.DefineType(name, attr);
+                return this.moduleBuilder.Value.DefineType(name, attr);
             }
         }
 
@@ -48,7 +48,7 @@ namespace MessagePack.Internal
         {
             lock (this.gate)
             {
-                return this.moduleBuilder.DefineType(name, attr, parent);
+                return this.moduleBuilder.Value.DefineType(name, attr, parent);
             }
         }
 
@@ -56,7 +56,7 @@ namespace MessagePack.Internal
         {
             lock (this.gate)
             {
-                return this.moduleBuilder.DefineType(name, attr, parent, interfaces);
+                return this.moduleBuilder.Value.DefineType(name, attr, parent, interfaces);
             }
         }
 
@@ -64,8 +64,8 @@ namespace MessagePack.Internal
 
         public AssemblyBuilder Save()
         {
-            this.assemblyBuilder.Save(this.moduleName + ".dll");
-            return this.assemblyBuilder;
+            this.assemblyBuilder.Value.Save(this.moduleName + ".dll");
+            return this.assemblyBuilder.Value;
         }
 
 #endif
