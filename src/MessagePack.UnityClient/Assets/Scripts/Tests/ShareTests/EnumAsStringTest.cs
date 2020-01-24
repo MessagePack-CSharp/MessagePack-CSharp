@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Runtime.Serialization;
 using MessagePack.Resolvers;
 using Xunit;
 
@@ -16,6 +17,25 @@ namespace MessagePack.Tests
         FooBaz = 4,
         BarBaz = 5,
         FooBarBaz = 6,
+    }
+
+    public enum AsStringWithEnumMember
+    {
+        [EnumMember(Value = "FooValue")]
+        Foo = 0,
+        [EnumMember(Value = "BarValue")]
+        Bar = 1,
+        [EnumMember(Value = "BazValue")]
+        Baz = 2,
+        [EnumMember(Value = "FooBarValue")]
+        FooBar = 3,
+        [EnumMember(Value = "FooBazValue")]
+        FooBaz = 4,
+        [EnumMember(Value = "BarBazValue")]
+        BarBaz = 5,
+        [EnumMember(Value = "FooBarBazValue")]
+        FooBarBaz = 6,
+        FooBarBazOther = 7,
     }
 
     [Flags]
@@ -42,7 +62,7 @@ namespace MessagePack.Tests
             new object[] { AsString.FooBar, AsString.FooBaz, "FooBar", "FooBaz" },
             new object[] { AsString.BarBaz, AsString.FooBarBaz, "BarBaz", "FooBarBaz" },
             new object[] { (AsString)10, (AsString)999, "10", "999" },
-
+            new object[] { (AsStringWithEnumMember)10, (AsStringWithEnumMember)999, "10", "999" },
             // flags
             new object[] { AsStringFlag.Foo, null, "Foo", "null" },
             new object[] { AsStringFlag.Bar, AsStringFlag.Baz, "Bar", "Baz" },
@@ -52,9 +72,35 @@ namespace MessagePack.Tests
             new object[] { (AsStringFlag)10, (AsStringFlag)999, "Baz, FooBaz", "999" },
         };
 
+
+        public static object[][] EnumDataForEnumMember =
+        {
+            new object[] { AsStringWithEnumMember.Foo, null, "FooValue", "null" },
+            new object[] { AsStringWithEnumMember.Bar, AsStringWithEnumMember.Baz, "BarValue", "BazValue" },
+            new object[] { AsStringWithEnumMember.FooBar, AsStringWithEnumMember.FooBaz, "FooBarValue", "FooBazValue" },
+            new object[] { AsStringWithEnumMember.BarBaz, AsStringWithEnumMember.FooBarBaz, "BarBazValue", "FooBarBazValue" },
+            new object[] { (AsStringWithEnumMember)10, (AsStringWithEnumMember)999, "10", "999" },
+            new object[] { (AsStringWithEnumMember)10, (AsStringWithEnumMember)999, "10", "999" },
+            new object[] { (AsStringWithEnumMember)7, (AsStringWithEnumMember)7, "FooBarBazOther", "FooBarBazOther" },
+        };
+
         [Theory]
         [MemberData(nameof(EnumData))]
         public void EnumTest<T>(T x, T? y, string xName, string yName)
+            where T : struct
+        {
+            var bin = MessagePackSerializer.Serialize(x, DynamicEnumAsStringResolver.Options);
+            MessagePackSerializer.ConvertToJson(bin).Trim('\"').Is(xName);
+            MessagePackSerializer.Deserialize<T>(bin, DynamicEnumAsStringResolver.Options).Is(x);
+
+            var bin2 = MessagePackSerializer.Serialize(y, DynamicEnumAsStringResolver.Options);
+            MessagePackSerializer.ConvertToJson(bin2).Trim('\"').Is(yName);
+            MessagePackSerializer.Deserialize<T?>(bin2, DynamicEnumAsStringResolver.Options).Is(y);
+        }
+
+        [Theory]
+        [MemberData(nameof(EnumDataForEnumMember))]
+        public void EnumTestEnumMember<T>(T x, T? y, string xName, string yName)
             where T : struct
         {
             var bin = MessagePackSerializer.Serialize(x, DynamicEnumAsStringResolver.Options);
