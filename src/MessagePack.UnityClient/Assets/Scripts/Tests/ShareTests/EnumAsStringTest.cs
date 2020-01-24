@@ -72,7 +72,6 @@ namespace MessagePack.Tests
             new object[] { (AsStringFlag)10, (AsStringFlag)999, "Baz, FooBaz", "999" },
         };
 
-
         public static object[][] EnumDataForEnumMember =
         {
             new object[] { AsStringWithEnumMember.Foo, null, "FooValue", "null" },
