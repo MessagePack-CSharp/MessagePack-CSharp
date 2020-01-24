@@ -39,6 +39,25 @@ namespace MessagePack.Tests
     }
 
     [Flags]
+    public enum AsStringFlagWithEnumMember
+    {
+        [EnumMember(Value = "FooValue")]
+        Foo = 0,
+        [EnumMember(Value = "BarValue")]
+        Bar = 1,
+        [EnumMember(Value = "BazValue")]
+        Baz = 2,
+        [EnumMember(Value = "FooBarValue")]
+        FooBar = 4,
+        [EnumMember(Value = "FooBazValue")]
+        FooBaz = 8,
+        [EnumMember(Value = "BarBazValue")]
+        BarBaz = 16,
+        [EnumMember(Value = "FooBarBazValue")]
+        FooBarBaz = 32,
+    }
+
+    [Flags]
     public enum AsStringFlag
     {
         Foo = 0,
@@ -80,7 +99,15 @@ namespace MessagePack.Tests
             new object[] { AsStringWithEnumMember.BarBaz, AsStringWithEnumMember.FooBarBaz, "BarBazValue", "FooBarBazValue" },
             new object[] { (AsStringWithEnumMember)10, (AsStringWithEnumMember)999, "10", "999" },
             new object[] { (AsStringWithEnumMember)10, (AsStringWithEnumMember)999, "10", "999" },
-            new object[] { (AsStringWithEnumMember)7, (AsStringWithEnumMember)7, "FooBarBazOther", "FooBarBazOther" },
+            new object[] { AsStringWithEnumMember.FooBarBazOther, AsStringWithEnumMember.FooBarBazOther, "FooBarBazOther", "FooBarBazOther" },
+
+            // flags (for flags enumMember is partially supported)
+            new object[] { AsStringFlagWithEnumMember.Foo, null, "FooValue", "null" },
+            new object[] { AsStringFlagWithEnumMember.Bar, AsStringFlagWithEnumMember.Baz, "BarValue", "BazValue" },
+            new object[] { AsStringFlagWithEnumMember.FooBar, AsStringFlagWithEnumMember.FooBaz, "FooBarValue", "FooBazValue" },
+            new object[] { AsStringFlagWithEnumMember.BarBaz, AsStringFlagWithEnumMember.FooBarBaz, "BarBazValue", "FooBarBazValue" },
+            new object[] { AsStringFlagWithEnumMember.Bar | AsStringFlagWithEnumMember.FooBaz, AsStringFlagWithEnumMember.BarBaz | AsStringFlagWithEnumMember.FooBarBaz, "Bar, FooBaz", "BarBaz, FooBarBaz" },
+            new object[] { (AsStringFlagWithEnumMember)10, (AsStringFlagWithEnumMember)999, "Baz, FooBaz", "999" },
         };
 
         [Theory]
