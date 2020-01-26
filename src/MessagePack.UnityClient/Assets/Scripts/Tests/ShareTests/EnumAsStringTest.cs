@@ -106,8 +106,8 @@ namespace MessagePack.Tests
             new object[] { AsStringFlagWithEnumMember.Bar, AsStringFlagWithEnumMember.Baz, "BarValue", "BazValue" },
             new object[] { AsStringFlagWithEnumMember.FooBar, AsStringFlagWithEnumMember.FooBaz, "FooBarValue", "FooBazValue" },
             new object[] { AsStringFlagWithEnumMember.BarBaz, AsStringFlagWithEnumMember.FooBarBaz, "BarBazValue", "FooBarBazValue" },
-            new object[] { AsStringFlagWithEnumMember.Bar | AsStringFlagWithEnumMember.FooBaz, AsStringFlagWithEnumMember.BarBaz | AsStringFlagWithEnumMember.FooBarBaz, "Bar, FooBaz", "BarBaz, FooBarBaz" },
-            new object[] { (AsStringFlagWithEnumMember)10, (AsStringFlagWithEnumMember)999, "Baz, FooBaz", "999" },
+            new object[] { AsStringFlagWithEnumMember.Bar | AsStringFlagWithEnumMember.FooBaz, AsStringFlagWithEnumMember.BarBaz | AsStringFlagWithEnumMember.FooBarBaz, "BarValue, FooBazValue", "BarBazValue, FooBarBazValue" },
+            new object[] { (AsStringFlagWithEnumMember)10, (AsStringFlagWithEnumMember)999, "BazValue, FooBazValue", "999" },
         };
 
         [Theory]
