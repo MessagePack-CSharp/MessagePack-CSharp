@@ -7,6 +7,7 @@
 #endif
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -21,7 +22,7 @@ namespace PerfNetFramework
 {
     internal class Program
     {
-        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
 
         internal static bool Deserializing { get; set; }
 
@@ -79,12 +80,12 @@ namespace PerfNetFramework
             Deserializing = false;
 
             byte[] data = null;
-            var data0 = new Nerdbank.Streams.Sequence<byte>();
+            var data0 = new Nerdbank.Streams.Sequence<byte>(ArrayPool<byte>.Create(80 * 1024, 100)) { MinimumSpanLength = 32 * 1024 };
 #if ZeroFormatter
             byte[] data1 = null;
 #endif
             byte[] data2 = null;
-            byte[] data3 = null;
+            var data3 = new Nerdbank.Streams.Sequence<byte>(ArrayPool<byte>.Create(80 * 1024, 100)) { MinimumSpanLength = 32 * 1024 };
             byte[] dataJson = null;
             byte[] dataGzipJson = null;
 
@@ -101,7 +102,8 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data3 = MessagePackSerializer.Serialize(target, LZ4Standard);
+                    data3.Reset();
+                    MessagePackSerializer.Serialize(data3, target, LZ4Standard);
                 }
             }
 
