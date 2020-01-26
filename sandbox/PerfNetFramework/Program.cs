@@ -1,6 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if NETFRAMEWORK
+// ZeroFormatter generates invalid IL that .NET Core throws for.
+#define ZeroFormatter
+#endif
+
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -8,7 +13,9 @@ using System.Linq;
 using System.Text;
 using MessagePack;
 using Newtonsoft.Json;
+#if ZeroFormatter
 using ZeroFormatter;
+#endif
 
 namespace PerfNetFramework
 {
@@ -59,7 +66,9 @@ namespace PerfNetFramework
             msgpack.GetSerializer<T>().PackSingleObject(target);
             MessagePackSerializer.Serialize(target);
             MessagePackSerializer.Serialize(target, LZ4Standard);
-            ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
+#if ZeroFormatter
+            ZeroFormatterSerializer.Serialize(target);
+#endif
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
 
@@ -71,7 +80,9 @@ namespace PerfNetFramework
 
             byte[] data = null;
             var data0 = new Nerdbank.Streams.Sequence<byte>();
+#if ZeroFormatter
             byte[] data1 = null;
+#endif
             byte[] data2 = null;
             byte[] data3 = null;
             byte[] dataJson = null;
@@ -113,13 +124,15 @@ namespace PerfNetFramework
                 }
             }
 
+#if ZeroFormatter
             using (new Measure("ZeroFormatter"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data1 = ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
+                    data1 = ZeroFormatterSerializer.Serialize(target);
                 }
             }
+#endif
 
             using (new Measure("Json.NET"))
             {
@@ -179,7 +192,9 @@ namespace PerfNetFramework
 
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
             MessagePackSerializer.Deserialize<T>(data0);
-            ////ZeroFormatterSerializer.Deserialize<T>(data1);
+#if ZeroFormatter
+            ZeroFormatterSerializer.Deserialize<T>(data1);
+#endif
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
             MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
@@ -223,6 +238,7 @@ namespace PerfNetFramework
                 }
             }
 
+#if ZeroFormatter
             using (new Measure("ZeroFormatter"))
             {
                 for (int i = 0; i < Iteration; i++)
@@ -230,6 +246,7 @@ namespace PerfNetFramework
                     ZeroFormatterSerializer.Deserialize<T>(data1);
                 }
             }
+#endif
 
             using (new Measure("Json.NET"))
             {
@@ -269,8 +286,10 @@ namespace PerfNetFramework
             Console.WriteLine($"{label,-25} {data.Length,14} byte");
             label = "protobuf-net";
             Console.WriteLine($"{label,-25} {data2.Length,14} byte");
+#if ZeroFormatter
             label = "ZeroFormatter";
             Console.WriteLine($"{label,-25} {data1.Length,14} byte");
+#endif
             label = "Json.NET";
             Console.WriteLine($"{label,-25} {dataJson.Length,14} byte");
             label = "Json.NET(+GZip)";
