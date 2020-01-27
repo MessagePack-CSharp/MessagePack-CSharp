@@ -20,16 +20,28 @@ namespace MessagePack
     public partial class MessagePackStreamReader : IDisposable
     {
         private readonly Stream stream;
+        private readonly bool leaveOpen;
         private SequencePool.Rental sequenceRental = SequencePool.Shared.Rent();
         private SequencePosition? endOfLastMessage;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackStreamReader"/> class.
         /// </summary>
-        /// <param name="stream">The stream to read from.</param>
+        /// <param name="stream">The stream to read from. This stream will be disposed of when this <see cref="MessagePackStreamReader"/> is disposed.</param>
         public MessagePackStreamReader(Stream stream)
+            : this(stream, leaveOpen: false)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackStreamReader"/> class.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <param name="leaveOpen">If true, leaves the stream open after this <see cref="MessagePackStreamReader"/> is disposed; otherwise, false.</param>
+        public MessagePackStreamReader(Stream stream, bool leaveOpen)
         {
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
+            this.leaveOpen = leaveOpen;
         }
 
         /// <summary>
@@ -78,10 +90,28 @@ namespace MessagePack
             }
         }
 
+        /// <summary>
+        /// Arranges for the next read operation to start by reading from the underlying <see cref="Stream"/>
+        /// instead of any data buffered from a previous read.
+        /// </summary>
+        /// <remarks>
+        /// This is appropriate if the underlying <see cref="Stream"/> has been repositioned such that
+        /// any previously buffered data is no longer applicable to what the caller wants to read.
+        /// </remarks>
+        public void DiscardBufferedData()
+        {
+            this.sequenceRental.Value.Reset();
+            this.endOfLastMessage = default;
+        }
+
         /// <inheritdoc/>
         public void Dispose()
         {
-            this.stream.Dispose();
+            if (!this.leaveOpen)
+            {
+                this.stream.Dispose();
+            }
+
             this.sequenceRental.Dispose();
             this.sequenceRental = default;
         }
