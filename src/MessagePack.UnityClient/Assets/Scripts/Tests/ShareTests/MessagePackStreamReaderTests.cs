@@ -140,6 +140,26 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public async Task DiscardBufferedData()
+        {
+            var ms = new MemoryStream(this.twoMessages.ToArray());
+            using (var reader = new MessagePackStreamReader(ms))
+            {
+                var message1a = await reader.ReadAsync(this.TimeoutToken);
+                Assert.NotNull(message1a);
+                Assert.Equal(this.twoMessages.Slice(0, this.messagePositions[0]).ToArray(), message1a.Value.ToArray());
+
+                ms.Position = 0;
+                reader.DiscardBufferedData();
+
+                // Verify that we can read the message at the start of the new position.
+                var message1b = await reader.ReadAsync(this.TimeoutToken);
+                Assert.NotNull(message1b);
+                Assert.Equal(this.twoMessages.Slice(0, this.messagePositions[0]).ToArray(), message1b.Value.ToArray());
+            }
+        }
+
+        [Fact]
         public void DisposeClosesStream()
         {
             var ms = new MemoryStream();

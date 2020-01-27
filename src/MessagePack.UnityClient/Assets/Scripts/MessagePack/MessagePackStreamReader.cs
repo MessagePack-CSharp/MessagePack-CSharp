@@ -90,6 +90,20 @@ namespace MessagePack
             }
         }
 
+        /// <summary>
+        /// Arranges for the next read operation to start by reading from the underlying <see cref="Stream"/>
+        /// instead of any data buffered from a previous read.
+        /// </summary>
+        /// <remarks>
+        /// This is appropriate if the underlying <see cref="Stream"/> has been repositioned such that
+        /// any previously buffered data is no longer applicable to what the caller wants to read.
+        /// </remarks>
+        public void DiscardBufferedData()
+        {
+            this.sequenceRental.Value.Reset();
+            this.endOfLastMessage = default;
+        }
+
         /// <inheritdoc/>
         public void Dispose()
         {
