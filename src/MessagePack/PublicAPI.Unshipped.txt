@@ -7,6 +7,7 @@ MessagePack.MessagePackReader.ReadDateTime(MessagePack.ExtensionHeader header) -
 MessagePack.MessagePackReader.TryReadArrayHeader(out int count) -> bool
 MessagePack.MessagePackReader.TryReadExtensionFormatHeader(out MessagePack.ExtensionHeader extensionHeader) -> bool
 MessagePack.MessagePackReader.TryReadMapHeader(out int count) -> bool
+MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, bool leaveOpen) -> void
 MessagePack.MessagePackStreamReader.ReadArrayAsync(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<System.Buffers.ReadOnlySequence<byte>>
 MessagePack.MessagePackWriter.WriteBinHeader(int length) -> void
 MessagePack.MessagePackWriter.WriteStringHeader(int byteCount) -> void

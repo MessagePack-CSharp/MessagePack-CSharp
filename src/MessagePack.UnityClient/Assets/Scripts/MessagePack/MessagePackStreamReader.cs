@@ -20,16 +20,25 @@ namespace MessagePack
     public partial class MessagePackStreamReader : IDisposable
     {
         private readonly Stream stream;
+        private readonly bool leaveOpen;
         private SequencePool.Rental sequenceRental = SequencePool.Shared.Rent();
         private SequencePosition? endOfLastMessage;
-        private bool leaveOpen;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackStreamReader"/> class.
+        /// </summary>
+        /// <param name="stream">The stream to read from. This stream will be disposed of when this <see cref="MessagePackStreamReader"/> is disposed.</param>
+        public MessagePackStreamReader(Stream stream)
+            : this(stream, leaveOpen: false)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackStreamReader"/> class.
         /// </summary>
         /// <param name="stream">The stream to read from.</param>
-        /// <param name="leaveOpen">If true, leaves the stream open after the reader object is disposed; otherwise, false.</param>
-        public MessagePackStreamReader(Stream stream, bool leaveOpen = false)
+        /// <param name="leaveOpen">If true, leaves the stream open after this <see cref="MessagePackStreamReader"/> is disposed; otherwise, false.</param>
+        public MessagePackStreamReader(Stream stream, bool leaveOpen)
         {
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
             this.leaveOpen = leaveOpen;
@@ -88,7 +97,7 @@ namespace MessagePack
             {
                 this.stream.Dispose();
             }
-            
+
             this.sequenceRental.Dispose();
             this.sequenceRental = default;
         }
