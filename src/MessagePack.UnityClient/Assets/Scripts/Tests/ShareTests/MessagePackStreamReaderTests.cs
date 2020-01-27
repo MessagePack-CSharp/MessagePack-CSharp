@@ -146,5 +146,13 @@ namespace MessagePack.Tests
             new MessagePackStreamReader(ms).Dispose();
             Assert.False(ms.CanSeek);
         }
+
+        [Fact]
+        public void DisposeDoesNotCloseStream_IfAskedNotTo()
+        {
+            var ms = new MemoryStream();
+            new MessagePackStreamReader(ms, leaveOpen: true).Dispose();
+            Assert.True(ms.CanSeek);
+        }
     }
 }
