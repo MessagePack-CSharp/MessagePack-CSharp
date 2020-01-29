@@ -42,7 +42,13 @@ namespace System.Buffers
         }
 
 #if UNITY_ANDROID
-
+        
+        /// <summary>
+        /// In Android 32bit device(armv7) + IL2CPP does not work correctly on Unsafe.ReadUnaligned.
+        /// Perhaps it is about memory alignment bug of Unity's IL2CPP VM.
+        /// For a workaround, read memory manually.
+        /// https://github.com/neuecc/MessagePack-CSharp/issues/748
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe bool TryRead(ref this SequenceReader<byte> reader, out long value)
         {
@@ -52,12 +58,12 @@ namespace System.Buffers
                 return TryReadMultisegment(ref reader, out value);
             }
 
-            value = BitConveterToInt64(span, 0);
+            value = BitConverterToInt64(span, 0);
             reader.Advance(sizeof(long));
             return true;
         }
 
-        private static unsafe long BitConveterToInt64(ReadOnlySpan<byte> value, int startIndex)
+        private static unsafe long BitConverterToInt64(ReadOnlySpan<byte> value, int startIndex)
         {
             fixed (byte* pbyte = &value[startIndex])
             {
@@ -121,7 +127,7 @@ namespace System.Buffers
                 return false;
             }
 
-            value = BitConveterToInt64(tempSpan, 0);
+            value = BitConverterToInt64(tempSpan, 0);
             reader.Advance(sizeof(long));
             return true;
         }
