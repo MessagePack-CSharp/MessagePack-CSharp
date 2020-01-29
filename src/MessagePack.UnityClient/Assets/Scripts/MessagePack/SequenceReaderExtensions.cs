@@ -41,6 +41,50 @@ namespace System.Buffers
             return true;
         }
 
+#if UNITY_ANDROID
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static unsafe bool TryRead(ref this SequenceReader<byte> reader, out long value)
+        {
+            ReadOnlySpan<byte> span = reader.UnreadSpan;
+            if (span.Length < sizeof(long))
+            {
+                return TryReadMultisegment(ref reader, out value);
+            }
+
+            value = BitConveterToInt64(span, 0);
+            reader.Advance(sizeof(long));
+            return true;
+        }
+
+        private static unsafe long BitConveterToInt64(ReadOnlySpan<byte> value, int startIndex)
+        {
+            fixed (byte* pbyte = &value[startIndex])
+            {
+                if (startIndex % 8 == 0)
+                {
+                    return *((long*)pbyte);
+                }
+                else
+                {
+                    if (BitConverter.IsLittleEndian)
+                    {
+                        int i1 = (*pbyte) | (*(pbyte + 1) << 8) | (*(pbyte + 2) << 16) | (*(pbyte + 3) << 24);
+                        int i2 = (*(pbyte + 4)) | (*(pbyte + 5) << 8) | (*(pbyte + 6) << 16) | (*(pbyte + 7) << 24);
+                        return (uint)i1 | ((long)i2 << 32);
+                    }
+                    else
+                    {
+                        int i1 = (*pbyte << 24) | (*(pbyte + 1) << 16) | (*(pbyte + 2) << 8) | (*(pbyte + 3));
+                        int i2 = (*(pbyte + 4) << 24) | (*(pbyte + 5) << 16) | (*(pbyte + 6) << 8) | (*(pbyte + 7));
+                        return (uint)i2 | ((long)i1 << 32);
+                    }
+                }
+            }
+        }
+
+#endif
+
         private static unsafe bool TryReadMultisegment<T>(ref SequenceReader<byte> reader, out T value)
             where T : unmanaged
         {
@@ -60,6 +104,29 @@ namespace System.Buffers
             reader.Advance(sizeof(T));
             return true;
         }
+
+#if UNITY_ANDROID
+
+        private static unsafe bool TryReadMultisegment(ref SequenceReader<byte> reader, out long value)
+        {
+            Debug.Assert(reader.UnreadSpan.Length < sizeof(T), "reader.UnreadSpan.Length < sizeof(T)");
+
+            // Not enough data in the current segment, try to peek for the data we need.
+            long buffer = default;
+            Span<byte> tempSpan = new Span<byte>(&buffer, sizeof(long));
+
+            if (!reader.TryCopyTo(tempSpan))
+            {
+                value = default;
+                return false;
+            }
+
+            value = BitConveterToInt64(tempSpan, 0);
+            reader.Advance(sizeof(long));
+            return true;
+        }
+
+#endif
 
         /// <summary>
         /// Reads an <see cref="sbyte"/> from the next position in the sequence.
