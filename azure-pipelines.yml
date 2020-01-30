@@ -2,8 +2,8 @@ trigger:
   branches:
     include:
     - master
-    - v2.0
-    - "*_validate"
+    - 'v?.*'
+    - 'validate/*'
   paths:
     exclude: ["doc", "*.md"]
 
