@@ -368,9 +368,17 @@ namespace MessagePack.Formatters
             }
 
             IFormatterResolver resolver = options.Resolver;
-            TKey key = resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options);
-            TValue value = resolver.GetFormatterWithVerify<TValue>().Deserialize(ref reader, options);
-            return new KeyValuePair<TKey, TValue>(key, value);
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                TKey key = resolver.GetFormatterWithVerify<TKey>().Deserialize(ref reader, options);
+                TValue value = resolver.GetFormatterWithVerify<TValue>().Deserialize(ref reader, options);
+                return new KeyValuePair<TKey, TValue>(key, value);
+            }
+            finally
+            {
+                reader.Depth--;
+            }
         }
     }
 
@@ -573,10 +581,18 @@ namespace MessagePack.Formatters
             }
             else
             {
-                // deserialize immediately(no delay, because capture byte[] causes memory leak)
-                IFormatterResolver resolver = options.Resolver;
-                T v = resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
-                return new Lazy<T>(() => v);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    // deserialize immediately(no delay, because capture byte[] causes memory leak)
+                    IFormatterResolver resolver = options.Resolver;
+                    T v = resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+                    return new Lazy<T>(() => v);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }

@@ -147,9 +147,17 @@ namespace MessagePack.ReactivePropertyExtension
 
                 IScheduler scheduler = ReactivePropertySchedulerMapper.GetScheduler(schedulerId);
 
-                T v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
 
-                return new ReactiveProperty<T>(scheduler, v, mode);
+                    return new ReactiveProperty<T>(scheduler, v, mode);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -186,14 +194,22 @@ namespace MessagePack.ReactivePropertyExtension
         {
             var length = reader.ReadArrayHeader();
 
-            switch (length)
+            options.Security.DepthStep(ref reader);
+            try
             {
-                case 2:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(ref reader, options);
-                case 3:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(ref reader, options);
-                default:
-                    throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+                switch (length)
+                {
+                    case 2:
+                        return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(ref reader, options);
+                    case 3:
+                        return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(ref reader, options);
+                    default:
+                        throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
         }
     }
@@ -230,14 +246,22 @@ namespace MessagePack.ReactivePropertyExtension
         {
             var length = reader.ReadArrayHeader();
 
-            switch (length)
+            options.Security.DepthStep(ref reader);
+            try
             {
-                case 2:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(ref reader, options);
-                case 3:
-                    return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(ref reader, options);
-                default:
-                    throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+                switch (length)
+                {
+                    case 2:
+                        return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactivePropertySlim<T>>().Deserialize(ref reader, options);
+                    case 3:
+                        return ReactivePropertyResolver.Instance.GetFormatterWithVerify<ReactiveProperty<T>>().Deserialize(ref reader, options);
+                    default:
+                        throw new InvalidOperationException("Invalid ReactiveProperty or ReactivePropertySlim data.");
+                }
+            }
+            finally
+            {
+                reader.Depth--;
             }
         }
     }
@@ -339,11 +363,19 @@ namespace MessagePack.ReactivePropertyExtension
                     throw new InvalidOperationException("Invalid ReactivePropertySlim data.");
                 }
 
-                var mode = (ReactivePropertyMode)reader.ReadInt32();
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    var mode = (ReactivePropertyMode)reader.ReadInt32();
 
-                T v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
+                    T v = options.Resolver.GetFormatterWithVerify<T>().Deserialize(ref reader, options);
 
-                return new ReactivePropertySlim<T>(v, mode);
+                    return new ReactivePropertySlim<T>(v, mode);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }

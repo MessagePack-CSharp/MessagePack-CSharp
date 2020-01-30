@@ -97,9 +97,17 @@ namespace MessagePack.Formatters
             {
                 var len = reader.ReadArrayHeader();
                 var array = new Int16[len];
-                for (int i = 0; i < array.Length; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    array[i] = reader.ReadInt16();
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = reader.ReadInt16();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -193,9 +201,17 @@ namespace MessagePack.Formatters
             {
                 var len = reader.ReadArrayHeader();
                 var array = new Int32[len];
-                for (int i = 0; i < array.Length; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    array[i] = reader.ReadInt32();
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = reader.ReadInt32();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -289,9 +305,17 @@ namespace MessagePack.Formatters
             {
                 var len = reader.ReadArrayHeader();
                 var array = new Int64[len];
-                for (int i = 0; i < array.Length; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    array[i] = reader.ReadInt64();
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = reader.ReadInt64();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -385,9 +409,17 @@ namespace MessagePack.Formatters
             {
                 var len = reader.ReadArrayHeader();
                 var array = new UInt16[len];
-                for (int i = 0; i < array.Length; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    array[i] = reader.ReadUInt16();
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = reader.ReadUInt16();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -481,9 +513,17 @@ namespace MessagePack.Formatters
             {
                 var len = reader.ReadArrayHeader();
                 var array = new UInt32[len];
-                for (int i = 0; i < array.Length; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    array[i] = reader.ReadUInt32();
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = reader.ReadUInt32();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -577,9 +617,17 @@ namespace MessagePack.Formatters
             {
                 var len = reader.ReadArrayHeader();
                 var array = new UInt64[len];
-                for (int i = 0; i < array.Length; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    array[i] = reader.ReadUInt64();
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = reader.ReadUInt64();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -725,9 +773,17 @@ namespace MessagePack.Formatters
             {
                 var len = reader.ReadArrayHeader();
                 var array = new SByte[len];
-                for (int i = 0; i < array.Length; i++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    array[i] = reader.ReadSByte();
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = reader.ReadSByte();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;

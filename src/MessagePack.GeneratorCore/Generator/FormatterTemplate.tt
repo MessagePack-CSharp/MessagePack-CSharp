@@ -102,6 +102,7 @@ namespace <#= Namespace #>
 <# } #>
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
 <# if(objInfo.IsStringKey) { #>
             var length = reader.ReadMapHeader();
@@ -148,6 +149,7 @@ namespace <#= Namespace #>
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
             ____result.OnAfterDeserialize();
 <# } #>
+            reader.Depth--;
             return ____result;
         }
     }

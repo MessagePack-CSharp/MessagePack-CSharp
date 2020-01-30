@@ -43,9 +43,17 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
-                T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
 
-                return new Tuple<T1>(item1);
+                    return new Tuple<T1>(item1);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -83,10 +91,18 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
-                T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
-                T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                    T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
 
-                return new Tuple<T1, T2>(item1, item2);
+                    return new Tuple<T1, T2>(item1, item2);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -125,11 +141,19 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
-                T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
-                T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
-                T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                    T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                    T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
 
-                return new Tuple<T1, T2, T3>(item1, item2, item3);
+                    return new Tuple<T1, T2, T3>(item1, item2, item3);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -169,12 +193,20 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
-                T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
-                T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
-                T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
-                T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                    T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                    T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                    T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
 
-                return new Tuple<T1, T2, T3, T4>(item1, item2, item3, item4);
+                    return new Tuple<T1, T2, T3, T4>(item1, item2, item3, item4);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -215,13 +247,21 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
-                T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
-                T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
-                T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
-                T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
-                T5 item5 = resolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                    T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                    T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                    T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
+                    T5 item5 = resolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
 
-                return new Tuple<T1, T2, T3, T4, T5>(item1, item2, item3, item4, item5);
+                    return new Tuple<T1, T2, T3, T4, T5>(item1, item2, item3, item4, item5);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -263,14 +303,22 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
-                T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
-                T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
-                T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
-                T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
-                T5 item5 = resolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
-                T6 item6 = resolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                    T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                    T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                    T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
+                    T5 item5 = resolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
+                    T6 item6 = resolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, options);
 
-                return new Tuple<T1, T2, T3, T4, T5, T6>(item1, item2, item3, item4, item5, item6);
+                    return new Tuple<T1, T2, T3, T4, T5, T6>(item1, item2, item3, item4, item5, item6);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -313,15 +361,23 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
-                T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
-                T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
-                T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
-                T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
-                T5 item5 = resolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
-                T6 item6 = resolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, options);
-                T7 item7 = resolver.GetFormatterWithVerify<T7>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                    T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                    T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                    T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
+                    T5 item5 = resolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
+                    T6 item6 = resolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, options);
+                    T7 item7 = resolver.GetFormatterWithVerify<T7>().Deserialize(ref reader, options);
 
-                return new Tuple<T1, T2, T3, T4, T5, T6, T7>(item1, item2, item3, item4, item5, item6, item7);
+                    return new Tuple<T1, T2, T3, T4, T5, T6, T7>(item1, item2, item3, item4, item5, item6, item7);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }
@@ -365,16 +421,24 @@ namespace MessagePack.Formatters
                 }
 
                 IFormatterResolver resolver = options.Resolver;
-                T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
-                T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
-                T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
-                T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
-                T5 item5 = resolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
-                T6 item6 = resolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, options);
-                T7 item7 = resolver.GetFormatterWithVerify<T7>().Deserialize(ref reader, options);
-                TRest item8 = resolver.GetFormatterWithVerify<TRest>().Deserialize(ref reader, options);
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    T1 item1 = resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                    T2 item2 = resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                    T3 item3 = resolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                    T4 item4 = resolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
+                    T5 item5 = resolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
+                    T6 item6 = resolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, options);
+                    T7 item7 = resolver.GetFormatterWithVerify<T7>().Deserialize(ref reader, options);
+                    TRest item8 = resolver.GetFormatterWithVerify<TRest>().Deserialize(ref reader, options);
 
-                return new Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>(item1, item2, item3, item4, item5, item6, item7, item8);
+                    return new Tuple<T1, T2, T3, T4, T5, T6, T7, TRest>(item1, item2, item3, item4, item5, item6, item7, item8);
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
             }
         }
     }

@@ -66,20 +66,28 @@ namespace MessagePack.Formatters
 
                 var i = 0;
                 var j = -1;
-                for (int loop = 0; loop < maxLen; loop++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    reader.CancellationToken.ThrowIfCancellationRequested();
-                    if (j < jLength - 1)
+                    for (int loop = 0; loop < maxLen; loop++)
                     {
-                        j++;
-                    }
-                    else
-                    {
-                        j = 0;
-                        i++;
-                    }
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        if (j < jLength - 1)
+                        {
+                            j++;
+                        }
+                        else
+                        {
+                            j = 0;
+                            i++;
+                        }
 
-                    array[i, j] = formatter.Deserialize(ref reader, options);
+                        array[i, j] = formatter.Deserialize(ref reader, options);
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -145,26 +153,34 @@ namespace MessagePack.Formatters
                 var i = 0;
                 var j = 0;
                 var k = -1;
-                for (int loop = 0; loop < maxLen; loop++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    reader.CancellationToken.ThrowIfCancellationRequested();
-                    if (k < kLength - 1)
+                    for (int loop = 0; loop < maxLen; loop++)
                     {
-                        k++;
-                    }
-                    else if (j < jLength - 1)
-                    {
-                        k = 0;
-                        j++;
-                    }
-                    else
-                    {
-                        k = 0;
-                        j = 0;
-                        i++;
-                    }
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        if (k < kLength - 1)
+                        {
+                            k++;
+                        }
+                        else if (j < jLength - 1)
+                        {
+                            k = 0;
+                            j++;
+                        }
+                        else
+                        {
+                            k = 0;
+                            j = 0;
+                            i++;
+                        }
 
-                    array[i, j, k] = formatter.Deserialize(ref reader, options);
+                        array[i, j, k] = formatter.Deserialize(ref reader, options);
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;
@@ -233,33 +249,41 @@ namespace MessagePack.Formatters
                 var j = 0;
                 var k = 0;
                 var l = -1;
-                for (int loop = 0; loop < maxLen; loop++)
+                options.Security.DepthStep(ref reader);
+                try
                 {
-                    reader.CancellationToken.ThrowIfCancellationRequested();
-                    if (l < lLength - 1)
+                    for (int loop = 0; loop < maxLen; loop++)
                     {
-                        l++;
-                    }
-                    else if (k < kLength - 1)
-                    {
-                        l = 0;
-                        k++;
-                    }
-                    else if (j < jLength - 1)
-                    {
-                        l = 0;
-                        k = 0;
-                        j++;
-                    }
-                    else
-                    {
-                        l = 0;
-                        k = 0;
-                        j = 0;
-                        i++;
-                    }
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        if (l < lLength - 1)
+                        {
+                            l++;
+                        }
+                        else if (k < kLength - 1)
+                        {
+                            l = 0;
+                            k++;
+                        }
+                        else if (j < jLength - 1)
+                        {
+                            l = 0;
+                            k = 0;
+                            j++;
+                        }
+                        else
+                        {
+                            l = 0;
+                            k = 0;
+                            j = 0;
+                            i++;
+                        }
 
-                    array[i, j, k, l] = formatter.Deserialize(ref reader, options);
+                        array[i, j, k, l] = formatter.Deserialize(ref reader, options);
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
 
                 return array;

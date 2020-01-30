@@ -366,6 +366,46 @@ namespace Xunit
 
         #region StructuralEqual
 
+        public static void IsStructuralEqualIgnoreCollectionOrder(this object actual, object expected)
+        {
+            if (object.ReferenceEquals(actual, expected))
+            {
+                return;
+            }
+
+            if (actual == null)
+            {
+                throw new AssertException("actual is null");
+            }
+
+            if (expected == null)
+            {
+                throw new AssertException("actual is not null");
+            }
+
+            Assert.Equal(expected.GetType(), actual.GetType());
+
+            var actualCollection = (ICollection)actual;
+            var expectedCollection = (ICollection)expected;
+
+            Assert.Equal(expectedCollection.Count, actualCollection.Count);
+            var names = new[] { actual.GetType().Name };
+            foreach (var expectedEntry in expectedCollection)
+            {
+                bool matchFound = false;
+                foreach (var actualEntry in actualCollection)
+                {
+                    if (StructuralEqual(actualEntry, expectedEntry, names).IsEquals)
+                    {
+                        matchFound = true;
+                        break;
+                    }
+                }
+
+                Assert.True(matchFound);
+            }
+        }
+
         /// <summary>Assert by deep recursive value equality compare.</summary>
         public static void IsStructuralEqual(this object actual, object expected, string message = "")
         {

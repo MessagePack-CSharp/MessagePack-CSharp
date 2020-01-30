@@ -253,6 +253,17 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void Depth()
+        {
+            var reader = new MessagePackReader(Encode((ref MessagePackWriter w) => w.Write(1.23)));
+            Assert.Equal(0, reader.Depth);
+            reader.Depth++;
+            Assert.Equal(1, reader.Depth);
+            reader.Depth--;
+            Assert.Equal(0, reader.Depth);
+        }
+
+        [Fact]
         public void Read_CheckOperations_WithNoBytesLeft()
         {
             ReadOnlySequence<byte> partialMessage = default;

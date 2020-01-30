@@ -527,6 +527,27 @@ MessagePack.Formatters.TypelessFormatter.BindToType = typeName =>
 };
 ```
 
+## <a name="security"></a>Security
+
+Deserializing data from an untrusted source can introduce security vulnerabilities to your application.
+Depending on the settings used during deserialization, untrusted data may be able to execute arbitrary code or a denial of service attack.
+Untrusted data might come from over the Internet over an unauthenticated connection, from the local disk if it may have been tampered with, or many other sources.
+
+When deserializing untrusted data, put MessagePack into a more secure mode by configuring your `MessagePackSerializerOptions.Security` property:
+
+```cs
+var options = MessagePackSerializerOptions.Standard
+    .WithSecurity(MessagePackSecurity.UntrustedData);
+
+// Pass the options explicitly for the greatest control.
+T object = MessagePackSerializer.Deserialize<T>(data, options);
+
+// Or set the security level as the default.
+MessagePackSerializer.DefaultOptions = options;
+```
+
+You should also avoid the Typeless serializer/formatters/resolvers for untrusted data as that opens the door for the untrusted data to potentially deserialize unanticipated types that can compromise security.
+
 ## Performance
 
 Benchmarks comparing to other serializers run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and there [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config), ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) has infinitely fast deserializer so ignore deserialize performance.
@@ -950,13 +971,22 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
             return null;
         }
 
+        options.Security.DepthStep(ref reader);
+
         var path = reader.ReadString();
+
+        reader.Depth--;
         return new FileInfo(path);
     }
 }
 ```
 
-Your custom formatters must be discoverable via some `IFormatterResolver`. Learn more in our [resolvers](#resolvers).
+The `DepthStep` and `Depth--` statements provide a level of security while deserializing untrusted data
+that might otherwise be able to execute a denial of service attack by sending messagepack data that would
+deserialize into a very deep object graph leading to a `StackOverflowException` that would crash the process.
+This pair of statements should surround the bulk of any `IMessagePackFormatter<T>.Deserialize` method.
+
+Your custom formatters must be discoverable via some `IFormatterResolver`. Learn more in our [resolvers](#resolvers) section.
 
 You can see many other samples from [builtin formatters](https://github.com/neuecc/MessagePack-CSharp/tree/master/src/MessagePack/Formatters).
 
@@ -1300,7 +1330,7 @@ Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime 
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
 
-In the first, mpc requires [.NET Core 3 Runtime](https://dotnet.microsoft.com/download), the easiest way to acquire and run mpc is as a dotnet tool. 
+In the first, mpc requires [.NET Core 3 Runtime](https://dotnet.microsoft.com/download), the easiest way to acquire and run mpc is as a dotnet tool.
 
 ```
 dotnet tool install --global MessagePack.Generator

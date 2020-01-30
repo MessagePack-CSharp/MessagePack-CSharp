@@ -378,6 +378,7 @@ namespace MessagePack.Formatters
                 throw new InvalidOperationException("Invalid Union data was detected. Type:global::IMessageBody");
             }
 
+            options.Security.DepthStep(ref reader);
             var key = reader.ReadInt32();
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
@@ -402,6 +403,7 @@ namespace MessagePack.Formatters
                     break;
             }
 
+            reader.Depth--;
             return result;
         }
     }
@@ -489,6 +491,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IIVersioningUnion");
             }
 
+            options.Security.DepthStep(ref reader);
             var key = reader.ReadInt32();
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
@@ -507,6 +510,7 @@ namespace MessagePack.Formatters.SharedData
                     break;
             }
 
+            reader.Depth--;
             return result;
         }
     }
@@ -577,6 +581,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker");
             }
 
+            options.Security.DepthStep(ref reader);
             var key = reader.ReadInt32();
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
@@ -604,6 +609,7 @@ namespace MessagePack.Formatters.SharedData
                     break;
             }
 
+            reader.Depth--;
             return result;
         }
     }
@@ -674,6 +680,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker2");
             }
 
+            options.Security.DepthStep(ref reader);
             var key = reader.ReadInt32();
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
@@ -701,6 +708,7 @@ namespace MessagePack.Formatters.SharedData
                     break;
             }
 
+            reader.Depth--;
             return result;
         }
     }
@@ -761,6 +769,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionSample");
             }
 
+            options.Security.DepthStep(ref reader);
             var key = reader.ReadInt32();
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
@@ -782,6 +791,7 @@ namespace MessagePack.Formatters.SharedData
                     break;
             }
 
+            reader.Depth--;
             return result;
         }
     }
@@ -842,6 +852,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.RootUnionType");
             }
 
+            options.Security.DepthStep(ref reader);
             var key = reader.ReadInt32();
 
             if (!this.keyToJumpMap.TryGetValue(key, out key))
@@ -863,6 +874,7 @@ namespace MessagePack.Formatters.SharedData
                     break;
             }
 
+            reader.Depth--;
             return result;
         }
     }
@@ -926,6 +938,7 @@ namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
@@ -947,6 +960,7 @@ namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
 
             var ____result = new global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga();
             ____result.MyProperty = __MyProperty__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1016,6 +1030,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty0__ = default(int[]);
@@ -1067,6 +1082,7 @@ namespace MessagePack.Formatters
             ____result.MyProperty4 = __MyProperty4__;
             ____result.MyProperty5 = __MyProperty5__;
             ____result.MyProperty6 = __MyProperty6__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1132,6 +1148,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __AdditionalProperty__ = default(global::System.Collections.Generic.IDictionary<string, string>);
@@ -1182,6 +1199,7 @@ namespace MessagePack.Formatters
             ____result.Id = __Id__;
             ____result.Name = __Name__;
             ____result.UpdatedOn = __UpdatedOn__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1210,6 +1228,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
@@ -1231,6 +1250,7 @@ namespace MessagePack.Formatters
 
             var ____result = new global::GlobalMan();
             ____result.MyProperty = __MyProperty__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1262,6 +1282,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __UserId__ = default(int);
@@ -1298,6 +1319,7 @@ namespace MessagePack.Formatters
             ____result.RoomId = __RoomId__;
             ____result.PostTime = __PostTime__;
             ____result.Body = __Body__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1327,6 +1349,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __QuestId__ = default(int);
@@ -1353,6 +1376,7 @@ namespace MessagePack.Formatters
             var ____result = new global::QuestMessageBody();
             ____result.QuestId = __QuestId__;
             ____result.Text = __Text__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1418,6 +1442,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __Id__ = default(int);
@@ -1469,6 +1494,7 @@ namespace MessagePack.Formatters
             ____result.CreatedOn = __CreatedOn__;
             ____result.Precision = __Precision__;
             ____result.Money = __Money__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1497,6 +1523,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __StampId__ = default(int);
@@ -1518,6 +1545,7 @@ namespace MessagePack.Formatters
 
             var ____result = new global::StampMessageBody();
             ____result.StampId = __StampId__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1546,6 +1574,7 @@ namespace MessagePack.Formatters
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Text__ = default(string);
@@ -1567,6 +1596,7 @@ namespace MessagePack.Formatters
 
             var ____result = new global::TextMessageBody();
             ____result.Text = __Text__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1679,6 +1709,7 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __MyProperty1__ = default(int);
@@ -1746,6 +1777,7 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
             ____result.MyProperty7 = __MyProperty7__;
             ____result.MyProperty8 = __MyProperty8__;
             ____result.MyProperty9 = __MyProperty9__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1824,6 +1856,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty0__ = default(int);
@@ -1920,6 +1953,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.MyPropevrty13 = __MyPropevrty13__;
             ____result.MyProperty14 = __MyProperty14__;
             ____result.MyProperty15 = __MyProperty15__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1948,6 +1982,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __OPQ__ = default(string);
@@ -1969,6 +2004,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.BarClass();
             ____result.OPQ = __OPQ__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -1998,6 +2034,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __X__ = default(int);
@@ -2020,6 +2057,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.Callback1(__X__);
             ____result.X = __X__;
             ____result.OnAfterDeserialize();
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2049,6 +2087,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __X__ = default(int);
@@ -2071,6 +2110,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.Callback1_2(__X__);
             ____result.X = __X__;
             ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2111,6 +2151,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __X__ = default(int);
@@ -2139,6 +2180,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.Callback2(__X__);
             ____result.X = __X__;
             ____result.OnAfterDeserialize();
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2179,6 +2221,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __X__ = default(int);
@@ -2207,6 +2250,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.Callback2_2(__X__);
             ____result.X = __X__;
             ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2234,6 +2278,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
 
@@ -2250,6 +2295,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.Empty1();
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2291,6 +2337,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
 
@@ -2313,6 +2360,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.Empty2();
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2340,6 +2388,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
 
@@ -2356,6 +2405,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.EmptyClass();
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2377,6 +2427,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
 
@@ -2393,6 +2444,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.EmptyStruct();
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2423,6 +2475,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Prop1__ = default(int);
@@ -2454,6 +2507,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.Prop1 = __Prop1__;
             ____result.Prop2 = __Prop2__;
             ____result.Prop3 = __Prop3__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2482,6 +2536,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __XYZ__ = default(int);
@@ -2503,6 +2558,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.FooClass();
             ____result.XYZ = __XYZ__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2532,6 +2588,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version0);
@@ -2558,6 +2615,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.HolderV0();
             ____result.MyProperty1 = __MyProperty1__;
             ____result.After = __After__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2587,6 +2645,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version1);
@@ -2613,6 +2672,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.HolderV1();
             ____result.MyProperty1 = __MyProperty1__;
             ____result.After = __After__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2642,6 +2702,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version2);
@@ -2668,6 +2729,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.HolderV2();
             ____result.MyProperty1 = __MyProperty1__;
             ____result.After = __After__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2698,6 +2760,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(int);
@@ -2729,6 +2792,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.MyProperty1 = __MyProperty1__;
             ____result.MyProperty2 = __MyProperty2__;
             ____result.MyProperty3 = __MyProperty3__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2760,6 +2824,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __One__ = default(int);
@@ -2781,6 +2846,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.MySubUnion1();
             ____result.One = __One__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2808,6 +2874,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Two__ = default(int);
@@ -2829,6 +2896,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.MySubUnion2();
             ____result.Two = __Two__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2859,6 +2927,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Three__ = default(int);
@@ -2880,6 +2949,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.MySubUnion3();
             ____result.Three = __Three__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2909,6 +2979,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Four__ = default(int);
@@ -2930,6 +3001,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.MySubUnion4();
             ____result.Four = __Four__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -2958,6 +3030,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
@@ -2979,6 +3052,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.NestParent.NestContract();
             ____result.MyProperty = __MyProperty__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3007,6 +3081,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
@@ -3028,6 +3103,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.NonEmpty1();
             ____result.MyProperty = __MyProperty__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3073,6 +3149,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __MyProperty__ = default(int);
@@ -3100,6 +3177,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.NonEmpty2();
             ____result.MyProperty = __MyProperty__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3134,6 +3212,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Prop1__ = default(int);
@@ -3185,6 +3264,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.Prop5 = __Prop5__;
             ____result.Prop6 = __Prop6__;
             ____result.BytesSpecial = __BytesSpecial__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3238,6 +3318,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __Prop1__ = default(int);
@@ -3275,6 +3356,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.Prop1 = __Prop1__;
             ____result.Prop2 = __Prop2__;
             ____result.Prop3 = __Prop3__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3299,6 +3381,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __X__ = default(int);
@@ -3330,6 +3413,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.X = __X__;
             ____result.Y = __Y__;
             ____result.BytesSpecial = __BytesSpecial__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3373,6 +3457,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __X__ = default(int);
@@ -3405,6 +3490,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.SimpleStructStringKeyData();
             ____result.X = __X__;
             ____result.Y = __Y__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3434,6 +3520,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(int);
@@ -3460,6 +3547,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.SubUnionType1();
             ____result.MyProperty1 = __MyProperty1__;
             ____result.MyProperty = __MyProperty__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3489,6 +3577,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty2__ = default(int);
@@ -3515,6 +3604,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.SubUnionType2();
             ____result.MyProperty2 = __MyProperty2__;
             ____result.MyProperty = __MyProperty__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3545,6 +3635,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
@@ -3571,6 +3662,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.UnVersionBlockTest();
             ____result.MyProperty = __MyProperty__;
             ____result.MyProperty2 = __MyProperty2__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3594,6 +3686,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __X__ = default(float);
@@ -3618,6 +3711,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.Vector2(__X__, __Y__);
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3642,6 +3736,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __x__ = default(float);
@@ -3673,6 +3768,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.x = __x__;
             ____result.y = __y__;
             ____result.z = __z__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3696,6 +3792,7 @@ namespace MessagePack.Formatters.SharedData
                 throw new InvalidOperationException("typecode is null, struct not supported");
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __x__ = default(float);
@@ -3722,6 +3819,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.VectorLike2(__x__, __y__);
             ____result.x = __x__;
             ____result.y = __y__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3753,6 +3851,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(int);
@@ -3774,6 +3873,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.Version0();
             ____result.MyProperty1 = __MyProperty1__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3807,6 +3907,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(int);
@@ -3838,6 +3939,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.MyProperty1 = __MyProperty1__;
             ____result.MyProperty2 = __MyProperty2__;
             ____result.MyProperty3 = __MyProperty3__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3873,6 +3975,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(int);
@@ -3909,6 +4012,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.MyProperty2 = __MyProperty2__;
             ____result.MyProperty3 = __MyProperty3__;
             ____result.MyProperty5 = __MyProperty5__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -3939,6 +4043,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
@@ -3970,6 +4075,7 @@ namespace MessagePack.Formatters.SharedData
             ____result.MyProperty = __MyProperty__;
             ____result.UnknownBlock = __UnknownBlock__;
             ____result.MyProperty2 = __MyProperty2__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -4005,6 +4111,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __FV__ = default(int);
@@ -4026,6 +4133,7 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.VersioningUnion();
             ____result.FV = __FV__;
+            reader.Depth--;
             return ____result;
         }
     }
@@ -4055,6 +4163,7 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
+            options.Security.DepthStep(ref reader);
             IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Data1__ = default(int);
@@ -4081,6 +4190,7 @@ namespace MessagePack.Formatters.SharedData
             var ____result = new global::SharedData.WithIndexer();
             ____result.Data1 = __Data1__;
             ____result.Data2 = __Data2__;
+            reader.Depth--;
             return ____result;
         }
     }
