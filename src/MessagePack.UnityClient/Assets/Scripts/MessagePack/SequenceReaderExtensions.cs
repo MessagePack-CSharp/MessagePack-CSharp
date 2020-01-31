@@ -42,7 +42,7 @@ namespace System.Buffers
         }
 
 #if UNITY_ANDROID
-        
+
         /// <summary>
         /// In Android 32bit device(armv7) + IL2CPP does not work correctly on Unsafe.ReadUnaligned.
         /// Perhaps it is about memory alignment bug of Unity's IL2CPP VM.
@@ -58,34 +58,24 @@ namespace System.Buffers
                 return TryReadMultisegment(ref reader, out value);
             }
 
-            value = BitConverterToInt64(span, 0);
+            value = BitConverterToInt64(span);
             reader.Advance(sizeof(long));
             return true;
         }
 
-        private static unsafe long BitConverterToInt64(ReadOnlySpan<byte> value, int startIndex)
+        private static unsafe long BitConverterToInt64(ReadOnlySpan<byte> value)
         {
-            fixed (byte* pbyte = &value[startIndex])
+            if (BitConverter.IsLittleEndian)
             {
-                if (startIndex % 8 == 0)
-                {
-                    return *((long*)pbyte);
-                }
-                else
-                {
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        int i1 = (*pbyte) | (*(pbyte + 1) << 8) | (*(pbyte + 2) << 16) | (*(pbyte + 3) << 24);
-                        int i2 = (*(pbyte + 4)) | (*(pbyte + 5) << 8) | (*(pbyte + 6) << 16) | (*(pbyte + 7) << 24);
-                        return (uint)i1 | ((long)i2 << 32);
-                    }
-                    else
-                    {
-                        int i1 = (*pbyte << 24) | (*(pbyte + 1) << 16) | (*(pbyte + 2) << 8) | (*(pbyte + 3));
-                        int i2 = (*(pbyte + 4) << 24) | (*(pbyte + 5) << 16) | (*(pbyte + 6) << 8) | (*(pbyte + 7));
-                        return (uint)i2 | ((long)i1 << 32);
-                    }
-                }
+                int i1 = value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24);
+                int i2 = value[4] | (value[5] << 8) | (value[6] << 16) | (value[7] << 24);
+                return (uint)i1 | ((long)i2 << 32);
+            }
+            else
+            {
+                int i1 = (value[0] << 24) | (value[1] << 16) | (value[2] << 8) | value[3];
+                int i2 = (value[4] << 24) | (value[5] << 16) | (value[6] << 8) | value[7];
+                return (uint)i2 | ((long)i1 << 32);
             }
         }
 
@@ -115,7 +105,7 @@ namespace System.Buffers
 
         private static unsafe bool TryReadMultisegment(ref SequenceReader<byte> reader, out long value)
         {
-            Debug.Assert(reader.UnreadSpan.Length < sizeof(T), "reader.UnreadSpan.Length < sizeof(T)");
+            Debug.Assert(reader.UnreadSpan.Length < sizeof(long), "reader.UnreadSpan.Length < sizeof(long)");
 
             // Not enough data in the current segment, try to peek for the data we need.
             long buffer = default;
@@ -127,7 +117,7 @@ namespace System.Buffers
                 return false;
             }
 
-            value = BitConverterToInt64(tempSpan, 0);
+            value = BitConverterToInt64(tempSpan);
             reader.Advance(sizeof(long));
             return true;
         }
