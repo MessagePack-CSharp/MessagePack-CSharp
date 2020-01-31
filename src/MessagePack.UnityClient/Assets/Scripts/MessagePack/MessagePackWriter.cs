@@ -36,6 +36,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="writer">The writer to use.</param>
         public MessagePackWriter(IBufferWriter<byte> writer)
+            : this()
         {
             this.writer = new BufferWriter(writer);
             this.OldSpec = false;
@@ -47,6 +48,7 @@ namespace MessagePack
         /// <param name="sequencePool">The pool from which to draw an <see cref="IBufferWriter{T}"/> if required..</param>
         /// <param name="array">An array to start with so we can avoid accessing the <paramref name="sequencePool"/> if possible.</param>
         internal MessagePackWriter(SequencePool sequencePool, byte[] array)
+            : this()
         {
             this.writer = new BufferWriter(sequencePool, array);
             this.OldSpec = false;
