@@ -156,37 +156,54 @@ namespace MessagePack
         /// <returns>A hash collision resistant equality comparer.</returns>
         protected virtual IEqualityComparer<T> GetHashCollisionResistantEqualityComparer<T>()
         {
-            // For anything 32-bits and under, our fallback base secure hasher is usually adequate since it makes the hash unpredictable.
-            // We should have special implementations for any value that is larger than 32-bits in order to make sure
-            // that all the data gets hashed securely rather than trivially and predictably compressed into 32-bits before being hashed.
-            // We also have to specially handle some 32-bit types (e.g. float) where multiple in-memory representations should hash to the same value.
-            // Any type supported by the PrimitiveObjectFormatter should be added here if supporting it as a key in a collection makes sense.
-            return
-                // 32-bits or smaller:
-                typeof(T) == typeof(bool) ? CollisionResistantHasher<T>.Instance :
-                typeof(T) == typeof(char) ? CollisionResistantHasher<T>.Instance :
-                typeof(T) == typeof(sbyte) ? CollisionResistantHasher<T>.Instance :
-                typeof(T) == typeof(byte) ? CollisionResistantHasher<T>.Instance :
-                typeof(T) == typeof(short) ? CollisionResistantHasher<T>.Instance :
-                typeof(T) == typeof(ushort) ? CollisionResistantHasher<T>.Instance :
-                typeof(T) == typeof(int) ? CollisionResistantHasher<T>.Instance :
-                typeof(T) == typeof(uint) ? CollisionResistantHasher<T>.Instance :
+            IEqualityComparer<T> result = null;
+            if (typeof(T).IsEnum)
+            {
+                Type underlyingType = typeof(T).GetEnumUnderlyingType();
+                result =
+                    underlyingType == typeof(sbyte) ? CollisionResistantHasher<T>.Instance :
+                    underlyingType == typeof(byte) ? CollisionResistantHasher<T>.Instance :
+                    underlyingType == typeof(short) ? CollisionResistantHasher<T>.Instance :
+                    underlyingType == typeof(ushort) ? CollisionResistantHasher<T>.Instance :
+                    underlyingType == typeof(int) ? CollisionResistantHasher<T>.Instance :
+                    underlyingType == typeof(uint) ? CollisionResistantHasher<T>.Instance :
+                    null;
+            }
+            else
+            {
+                // For anything 32-bits and under, our fallback base secure hasher is usually adequate since it makes the hash unpredictable.
+                // We should have special implementations for any value that is larger than 32-bits in order to make sure
+                // that all the data gets hashed securely rather than trivially and predictably compressed into 32-bits before being hashed.
+                // We also have to specially handle some 32-bit types (e.g. float) where multiple in-memory representations should hash to the same value.
+                // Any type supported by the PrimitiveObjectFormatter should be added here if supporting it as a key in a collection makes sense.
+                result =
+                    // 32-bits or smaller:
+                    typeof(T) == typeof(bool) ? CollisionResistantHasher<T>.Instance :
+                    typeof(T) == typeof(char) ? CollisionResistantHasher<T>.Instance :
+                    typeof(T) == typeof(sbyte) ? CollisionResistantHasher<T>.Instance :
+                    typeof(T) == typeof(byte) ? CollisionResistantHasher<T>.Instance :
+                    typeof(T) == typeof(short) ? CollisionResistantHasher<T>.Instance :
+                    typeof(T) == typeof(ushort) ? CollisionResistantHasher<T>.Instance :
+                    typeof(T) == typeof(int) ? CollisionResistantHasher<T>.Instance :
+                    typeof(T) == typeof(uint) ? CollisionResistantHasher<T>.Instance :
 
-                // Larger than 32-bits (or otherwise require special handling):
-                typeof(T) == typeof(long) ? (IEqualityComparer<T>)Int64EqualityComparer.Instance :
-                typeof(T) == typeof(ulong) ? (IEqualityComparer<T>)UInt64EqualityComparer.Instance :
-                typeof(T) == typeof(float) ? (IEqualityComparer<T>)SingleEqualityComparer.Instance :
-                typeof(T) == typeof(double) ? (IEqualityComparer<T>)DoubleEqualityComparer.Instance :
-                typeof(T) == typeof(string) ? (IEqualityComparer<T>)StringEqualityComparer.Instance :
-                typeof(T) == typeof(Guid) ? (IEqualityComparer<T>)GuidEqualityComparer.Instance :
-                typeof(T) == typeof(DateTime) ? (IEqualityComparer<T>)DateTimeEqualityComparer.Instance :
-                typeof(T) == typeof(DateTimeOffset) ? (IEqualityComparer<T>)DateTimeOffsetEqualityComparer.Instance :
-                typeof(T) == typeof(object) ? (IEqualityComparer<T>)this.objectFallbackEqualityComparer :
+                    // Larger than 32-bits (or otherwise require special handling):
+                    typeof(T) == typeof(long) ? (IEqualityComparer<T>)Int64EqualityComparer.Instance :
+                    typeof(T) == typeof(ulong) ? (IEqualityComparer<T>)UInt64EqualityComparer.Instance :
+                    typeof(T) == typeof(float) ? (IEqualityComparer<T>)SingleEqualityComparer.Instance :
+                    typeof(T) == typeof(double) ? (IEqualityComparer<T>)DoubleEqualityComparer.Instance :
+                    typeof(T) == typeof(string) ? (IEqualityComparer<T>)StringEqualityComparer.Instance :
+                    typeof(T) == typeof(Guid) ? (IEqualityComparer<T>)GuidEqualityComparer.Instance :
+                    typeof(T) == typeof(DateTime) ? (IEqualityComparer<T>)DateTimeEqualityComparer.Instance :
+                    typeof(T) == typeof(DateTimeOffset) ? (IEqualityComparer<T>)DateTimeOffsetEqualityComparer.Instance :
+                    typeof(T) == typeof(object) ? (IEqualityComparer<T>)this.objectFallbackEqualityComparer :
+                    null;
+            }
 
-                // Any type we don't explicitly whitelist here shouldn't be allowed to use as the key in a hash-based collection since it isn't known to be hash resistant.
-                // This method can of course be overridden to add more hash collision resistant type support, or the deserializing party can indicate that the data is Trusted
-                // so that this method doesn't even get called.
-                throw new TypeAccessException($"No hash-resistant equality comparer available for type: {typeof(T)}");
+            // Any type we don't explicitly whitelist here shouldn't be allowed to use as the key in a hash-based collection since it isn't known to be hash resistant.
+            // This method can of course be overridden to add more hash collision resistant type support, or the deserializing party can indicate that the data is Trusted
+            // so that this method doesn't even get called.
+            return result ?? throw new TypeAccessException($"No hash-resistant equality comparer available for type: {typeof(T)}");
         }
 
         /// <summary>
