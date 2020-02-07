@@ -56,6 +56,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="copyFrom">The template to copy from.</param>
         protected MessagePackSecurity(MessagePackSecurity copyFrom)
+            : this()
         {
             if (copyFrom is null)
             {
