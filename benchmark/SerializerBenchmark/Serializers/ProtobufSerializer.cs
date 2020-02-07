@@ -1,8 +1,14 @@
-﻿using Benchmark.Serializers;
-using ProtoBuf;
-using System.IO;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-public class ProtobufNet : SerializerBase
+using System.IO;
+using Benchmark.Serializers;
+using ProtoBuf;
+
+public class
+#pragma warning disable SA1649 // File name should match first type name
+
+ProtobufNet : SerializerBase
 {
     public override T Deserialize<T>(object input)
     {

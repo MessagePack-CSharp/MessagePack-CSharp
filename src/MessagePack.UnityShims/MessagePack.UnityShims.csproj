@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>MessagePack.Unity</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK</DefineConstants>
@@ -11,6 +11,15 @@
     <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for Unity.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**\*.cs"
+             Exclude="**\MessagePackWindow.cs"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\ThisLibraryExtensionTypeCodes.cs" Link="ThisLibraryExtensionTypeCodes.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />

@@ -1,11 +1,16 @@
-﻿using Benchmark.Serializers;
-using Newtonsoft.Json;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.IO;
 using System.Text;
+using Benchmark.Serializers;
+using Newtonsoft.Json;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 public class JsonNet : SerializerBase
 {
-    static readonly JsonSerializer serializer = new JsonSerializer();
+    private static readonly JsonSerializer Serializer = new JsonSerializer();
 
     public override T Deserialize<T>(object input)
     {
@@ -13,7 +18,7 @@ public class JsonNet : SerializerBase
         using (var sr = new StreamReader(ms, Encoding.UTF8))
         using (var jr = new JsonTextReader(sr))
         {
-            return serializer.Deserialize<T>(jr);
+            return Serializer.Deserialize<T>(jr);
         }
     }
 
@@ -24,8 +29,9 @@ public class JsonNet : SerializerBase
             using (var sw = new StreamWriter(ms, Encoding.UTF8))
             using (var jw = new JsonTextWriter(sw))
             {
-                serializer.Serialize(jw, input);
+                Serializer.Serialize(jw, input);
             }
+
             ms.Flush();
             return ms.ToArray();
         }

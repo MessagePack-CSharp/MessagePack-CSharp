@@ -1,0 +1,143 @@
+﻿<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Numerics" #>
+<#@ Import Namespace="System.Linq" #>
+<#@ Import Namespace="System.Numerics" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
+
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Numerics;
+using Xunit;
+
+namespace MessagePack.Tests
+{
+    public partial class MessagePackReaderTests
+    {
+<#
+var unsignedTypes = new Type[]
+{
+    typeof(byte),
+    typeof(ushort),
+    typeof(uint),
+    typeof(ulong),
+};
+var signedTypes = new Type[]
+{
+    typeof(sbyte),
+    typeof(short),
+    typeof(int),
+    typeof(long),
+};
+var allTypes = unsignedTypes.Concat(signedTypes);
+BigInteger GetMaxValueAsInt(Type intType) => BigInteger.Parse("0" + GetMaxValue(intType).Substring(2), System.Globalization.NumberStyles.HexNumber);
+BigInteger GetMinValueAsInt(Type intType) => BigInteger.Parse(GetMinValue(intType).Substring(2), System.Globalization.NumberStyles.HexNumber);
+string GetMaxValue(Type intType) => $"0x{intType.GetField(nameof(int.MaxValue)).GetValue(null):x}";
+string GetMinValue(Type intType) => $"0x{intType.GetField(nameof(int.MinValue)).GetValue(null):x}";
+#>
+        private const sbyte MinNegativeFixInt = unchecked((sbyte)MessagePackCode.MinNegativeFixInt);
+        private const sbyte MaxNegativeFixInt = unchecked((sbyte)MessagePackCode.MaxNegativeFixInt);
+
+        private readonly IReadOnlyList<(BigInteger Value, ReadOnlySequence<byte> Encoded)> integersOfInterest = new List<(BigInteger Value, ReadOnlySequence<byte> Encoded)>
+        {
+            // * FixInt
+            // ** non-boundary
+            (3, Encode((ref MessagePackWriter w) => w.WriteByte(3))),
+<# foreach (Type type in allTypes) { #>
+            (3, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(3))),
+<# } #>
+
+            (-3, Encode((ref MessagePackWriter w) => w.WriteSByte(-3))),
+<# foreach (Type type in signedTypes) { #>
+            (-3, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(-3))),
+<# } #>
+
+            // ** Boundary conditions
+            /* MaxFixInt */
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MaxFixInt))),
+<# foreach (Type type in allTypes) { #>
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(checked((<#=type.Name#>)MessagePackCode.MaxFixInt)))),
+<# } #>
+            /* MinFixInt */
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteByte(MessagePackCode.MinFixInt))),
+<# foreach (Type type in allTypes) { #>
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(checked((<#=type.Name#>)MessagePackCode.MinFixInt)))),
+<# } #>
+            /* MinNegativeFixInt */
+<# foreach (Type type in signedTypes) { #>
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(MinNegativeFixInt))),
+<# } #>
+            /* MaxNegativeFixInt */
+<# foreach (Type type in signedTypes) { #>
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.Write<#=type.Name#>(MaxNegativeFixInt))),
+<# } #>
+
+            (MessagePackCode.MaxFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MessagePackCode.MaxFixInt))),
+            (MessagePackCode.MinFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MessagePackCode.MinFixInt))),
+            (MaxNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MaxNegativeFixInt))),
+            (MinNegativeFixInt, Encode((ref MessagePackWriter w) => w.WriteInt32(MinNegativeFixInt))),
+
+            // * Encoded as each type of at least 8 bits
+            // ** Small positive value
+<# foreach (Type t1 in allTypes) { #>
+            (3, Encode((ref MessagePackWriter w) => w.Write<#=t1.Name#>(3))),
+<# } #>
+
+            // ** Small negative value
+<# foreach (Type t1 in signedTypes) { #>
+            (-3, Encode((ref MessagePackWriter w) => w.Write<#=t1.Name#>(-3))),
+<# } #>
+
+            // ** Max values
+            /* Positive */
+<# foreach (var typeForMaxValue in allTypes) {
+    var maxValue = GetMaxValueAsInt(typeForMaxValue);
+    foreach (var encodedType in allTypes) {
+        if (GetMaxValueAsInt(encodedType) >= maxValue) { #>
+            (0x<#=maxValue.ToString("x")#>, Encode((ref MessagePackWriter w) => w.Write<#=encodedType.Name#>(<#=maxValue#>))),
+<#      }
+    }
+} #>
+            /* Negative */
+<# foreach (var typeForMinValue in signedTypes) {
+    var minValue = GetMinValueAsInt(typeForMinValue);
+    foreach (var encodedType in signedTypes) {
+        if (GetMinValueAsInt(encodedType) <= minValue) { #>
+            (unchecked((<#=typeForMinValue.Name#>)0x<#=minValue.ToString("x")#>), Encode((ref MessagePackWriter w) => w.Write<#=encodedType.Name#>(<#=minValue#>))),
+<#      }
+    }
+} #>
+        };
+<# foreach (Type t1 in allTypes) { #>
+
+        [Fact]
+        public void Read<#=t1.Name#>_ReadVariousLengthsAndMagnitudes()
+        {
+            foreach ((BigInteger value, ReadOnlySequence<byte> encoded) in this.integersOfInterest)
+            {
+                this.logger.WriteLine("Decoding 0x{0:x} from {1}", value, MessagePackCode.ToFormatName(encoded.First.Span[0]));
+                if (value <= <#=t1.Name#>.MaxValue && value >= <#=t1.Name#>.MinValue)
+                {
+                    Assert.Equal(value, new MessagePackReader(encoded).Read<#=t1.Name#>());
+                }
+                else
+                {
+#if !ENABLE_IL2CPP
+                    Assert.Throws<OverflowException>(() => new MessagePackReader(encoded).Read<#=t1.Name#>());
+#endif
+                }
+            }
+        }
+
+        [Fact]
+        public void Read<#=t1.Name#>_ThrowsOnUnexpectedCode()
+        {
+            Assert.Throws<MessagePackSerializationException>(() => new MessagePackReader(StringEncodedAsFixStr).Read<#=t1.Name#>());
+        }
+<# } #>
+    }
+}

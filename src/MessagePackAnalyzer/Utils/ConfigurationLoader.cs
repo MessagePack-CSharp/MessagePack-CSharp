@@ -1,20 +1,23 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System.IO;
 
 namespace MessagePackAnalyzer
 {
     public static class ConfigurationLoader
     {
-        static readonly string[] Empty = new string[0];
+        private static readonly string[] Empty = new string[0];
 
         public static System.Collections.Generic.IReadOnlyList<string> GetAdditionalAllowTypes(this AnalyzerOptions option)
         {
-            var config = option.AdditionalFiles.FirstOrDefault(x => System.IO.Path.GetFileName(x.Path).Equals("MessagePackAnalyzer.json", StringComparison.OrdinalIgnoreCase));
+            Microsoft.CodeAnalysis.AdditionalText config = option.AdditionalFiles.FirstOrDefault(x => System.IO.Path.GetFileName(x.Path).Equals("MessagePackAnalyzer.json", StringComparison.OrdinalIgnoreCase));
             if (config != null)
             {
                 try
@@ -28,7 +31,7 @@ namespace MessagePackAnalyzer
                         {
                             if (tr.TokenType == TinyJsonToken.String)
                             {
-                                l.Add(tr.Value as string);
+                                l.Add((string)tr.Value!);
                             }
                         }
                     }

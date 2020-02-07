@@ -1,68 +1,70 @@
-﻿using MessagePack.Formatters;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
+using MessagePack.Formatters;
 
 namespace MessagePack.ImmutableCollection
 {
     public class ImmutableCollectionResolver : IFormatterResolver
     {
-        public static IFormatterResolver Instance = new ImmutableCollectionResolver();
+        public static readonly ImmutableCollectionResolver Instance = new ImmutableCollectionResolver();
 
-        ImmutableCollectionResolver()
+        private ImmutableCollectionResolver()
         {
-
         }
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            return FormatterCache<T>.formatter;
+            return FormatterCache<T>.Formatter;
         }
 
-        static class FormatterCache<T>
+        private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> formatter;
+            internal static readonly IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
-                formatter = (IMessagePackFormatter<T>)ImmutableCollectionGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>)ImmutableCollectionGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
 
     internal static class ImmutableCollectionGetFormatterHelper
     {
-        static readonly Dictionary<Type, Type> formatterMap = new Dictionary<Type, Type>()
+        private static readonly Dictionary<Type, Type> FormatterMap = new Dictionary<Type, Type>()
         {
-              {typeof(ImmutableArray<>), typeof(ImmutableArrayFormatter<>)},
-              {typeof(ImmutableList<>), typeof(ImmutableListFormatter<>)},
-              {typeof(ImmutableDictionary<,>), typeof(ImmutableDictionaryFormatter<,>)},
-              {typeof(ImmutableHashSet<>), typeof(ImmutableHashSetFormatter<>)},
-              {typeof(ImmutableSortedDictionary<,>), typeof(ImmutableSortedDictionaryFormatter<,>)},
-              {typeof(ImmutableSortedSet<>), typeof(ImmutableSortedSetFormatter<>)},
-              {typeof(ImmutableQueue<>), typeof(ImmutableQueueFormatter<>)},
-              {typeof(ImmutableStack<>), typeof(ImmutableStackFormatter<>)},
-              {typeof(IImmutableList<>), typeof(InterfaceImmutableListFormatter<>)},
-              {typeof(IImmutableDictionary<,>), typeof(InterfaceImmutableDictionaryFormatter<,>)},
-              {typeof(IImmutableQueue<>), typeof(InterfaceImmutableQueueFormatter<>)},
-              {typeof(IImmutableSet<>), typeof(InterfaceImmutableSetFormatter<>)},
-              {typeof(IImmutableStack<>), typeof(InterfaceImmutableStackFormatter<>)},
+            { typeof(ImmutableArray<>), typeof(ImmutableArrayFormatter<>) },
+            { typeof(ImmutableList<>), typeof(ImmutableListFormatter<>) },
+            { typeof(ImmutableDictionary<,>), typeof(ImmutableDictionaryFormatter<,>) },
+            { typeof(ImmutableHashSet<>), typeof(ImmutableHashSetFormatter<>) },
+            { typeof(ImmutableSortedDictionary<,>), typeof(ImmutableSortedDictionaryFormatter<,>) },
+            { typeof(ImmutableSortedSet<>), typeof(ImmutableSortedSetFormatter<>) },
+            { typeof(ImmutableQueue<>), typeof(ImmutableQueueFormatter<>) },
+            { typeof(ImmutableStack<>), typeof(ImmutableStackFormatter<>) },
+            { typeof(IImmutableList<>), typeof(InterfaceImmutableListFormatter<>) },
+            { typeof(IImmutableDictionary<,>), typeof(InterfaceImmutableDictionaryFormatter<,>) },
+            { typeof(IImmutableQueue<>), typeof(InterfaceImmutableQueueFormatter<>) },
+            { typeof(IImmutableSet<>), typeof(InterfaceImmutableSetFormatter<>) },
+            { typeof(IImmutableStack<>), typeof(InterfaceImmutableStackFormatter<>) },
         };
 
         internal static object GetFormatter(Type t)
         {
-            var ti = t.GetTypeInfo();
+            TypeInfo ti = t.GetTypeInfo();
 
             if (ti.IsGenericType)
             {
-                var genericType = ti.GetGenericTypeDefinition();
-                var genericTypeInfo = genericType.GetTypeInfo();
+                Type genericType = ti.GetGenericTypeDefinition();
+                TypeInfo genericTypeInfo = genericType.GetTypeInfo();
                 var isNullable = genericTypeInfo.IsNullable();
-                var nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
+                Type nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
 
                 Type formatterType;
-                if (formatterMap.TryGetValue(genericType, out formatterType))
+                if (FormatterMap.TryGetValue(genericType, out formatterType))
                 {
                     return CreateInstance(formatterType, ti.GenericTypeArguments);
                 }
@@ -75,7 +77,7 @@ namespace MessagePack.ImmutableCollection
             return null;
         }
 
-        static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
+        private static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);
         }

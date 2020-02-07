@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netcoreapp2.1</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);ENABLE_UNSAFE_MSGPACK</DefineConstants>
+    <DefineConstants Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <LangVersion>8.0</LangVersion>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C#</Title>
@@ -15,36 +17,40 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="bin\**" />
-    <Compile Remove="obj\**" />
-    <EmbeddedResource Remove="bin\**" />
-    <EmbeddedResource Remove="obj\**" />
-    <None Remove="*.meta" />
-    <None Remove="bin\**" />
-    <None Remove="obj\**" />
-    <None Remove="Resolvers\*.meta" />
-    <None Remove="Internal\*.meta" />
-    <None Remove="Formatters\*.meta" />
-    <None Remove="LZ4\Codec\*.meta" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs"
+             Exclude="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Annotations\**;
+                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**;
+                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\**;
+                      ..\MessagePack.UnityClient\Assets\Scripts\MessagePack\_InternalVisibleTo.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="LZ4\Codec\LZ4Codec.Safe.cs" />
-    <None Include="MessagePackSerializer.Typeless.cs" />
+    <Compile Remove="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\FloatBits.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Roslyn.Diagnostics.Analyzers" Version="2.9.7" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.0.0" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.6.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.6.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.2" />
+    <PackageReference Include="System.Memory" Version="4.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack.Annotations\MessagePack.Annotations.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Formatters\ForceSizePrimitiveFormatter.tt">
-      <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
     </None>
     <None Update="Formatters\PrimitiveFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
@@ -61,6 +67,10 @@
     <None Update="Internal\UnsafeMemory.tt">
       <LastGenOutput>UnsafeMemory.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="MessagePackReader.Integers.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MessagePackReader.Integers.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
@@ -86,13 +96,28 @@
       <DependentUpon>ValueTupleFormatter.tt</DependentUpon>
     </Compile>
     <Compile Update="Internal\UnsafeMemory.cs">
-      <DependentUpon>UnsafeMemory.tt</DependentUpon>
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
+      <DependentUpon>UnsafeMemory.tt</DependentUpon>
+    </Compile>
+    <Compile Update="MessagePackReader.Integers.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MessagePackReader.Integers.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
+
+  <Target Name="CopyT4OutputToUnity" BeforeTargets="Compile">
+    <ItemGroup>
+      <!-- Remove the T4 .cs output files that we copy to UnityClient -->
+      <UnityT4Source Include="@(None->'%(RootDir)%(Directory)%(FileName).cs')" Condition=" '%(None.Generator)' == 'TextTemplatingFileGenerator' " />
+      <UnityT4Target Include="@(UnityT4Source->'..\MessagePack.UnityClient\Assets\Scripts\MessagePack\T4\%(FileName)%(Extension)')" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(UnityT4Source)" DestinationFiles="@(UnityT4Target)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+  </Target>
 </Project>

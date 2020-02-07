@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -26,6 +29,8 @@ namespace MessagePack.Tests.ExtensionTests
     {
         private const string MsgPackContentType = "application/x-msgpack";
 
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+
         [Fact]
         public async Task MessagePackFormatter()
         {
@@ -34,27 +39,27 @@ namespace MessagePack.Tests.ExtensionTests
                 UserId = 1,
                 FullName = "John Denver",
                 Age = 35,
-                Description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+                Description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
             };
 
             var messagePackBinary = MessagePackSerializer.Serialize(person);
 
             // OutputFormatter
-            var outputFormatterContext = GetOutputFormatterContext(person, typeof(User), MsgPackContentType);
-            var outputFormatter = new MessagePackOutputFormatter(StandardResolver.Instance);
+            OutputFormatterWriteContext outputFormatterContext = GetOutputFormatterContext(person, typeof(User), MsgPackContentType);
+            var outputFormatter = new MessagePackOutputFormatter();
 
             outputFormatter.CanWriteResult(outputFormatterContext).IsTrue();
 
             await outputFormatter.WriteAsync(outputFormatterContext);
 
-            var body = outputFormatterContext.HttpContext.Response.Body;
+            Stream body = outputFormatterContext.HttpContext.Response.Body;
 
             Assert.NotNull(body);
             body.Position = 0;
 
             using (var ms = new MemoryStream())
             {
-                body.CopyTo(ms);
+                await body.CopyToAsync(ms);
                 Assert.Equal(messagePackBinary, ms.ToArray());
             }
 
@@ -64,17 +69,17 @@ namespace MessagePack.Tests.ExtensionTests
             httpContext.Request.Body = new NonSeekableReadStream(messagePackBinary);
             httpContext.Request.ContentType = MsgPackContentType;
 
-            var inputFormatterContext = CreateInputFormatterContext(typeof(User), httpContext);
+            InputFormatterContext inputFormatterContext = this.CreateInputFormatterContext(typeof(User), httpContext);
 
             var inputFormatter = new MessagePackInputFormatter();
 
             inputFormatter.CanRead(inputFormatterContext).IsTrue();
 
-            var result = await inputFormatter.ReadAsync(inputFormatterContext);
+            InputFormatterResult result = await inputFormatter.ReadAsync(inputFormatterContext);
 
             Assert.False(result.HasError);
 
-            var userModel = Assert.IsType<User>(result.Model);
+            User userModel = Assert.IsType<User>(result.Model);
             userModel.IsStructuralEqual(person);
         }
 
@@ -84,8 +89,8 @@ namespace MessagePack.Tests.ExtensionTests
             var person = new User();
 
             // OutputFormatter
-            var outputFormatterContext = GetOutputFormatterContext(person, typeof(User), "application/json");
-            var outputFormatter = new MessagePackOutputFormatter(StandardResolver.Instance);
+            OutputFormatterWriteContext outputFormatterContext = GetOutputFormatterContext(person, typeof(User), "application/json");
+            var outputFormatter = new MessagePackOutputFormatter();
 
             outputFormatter.CanWriteResult(outputFormatterContext).IsFalse();
 
@@ -95,7 +100,7 @@ namespace MessagePack.Tests.ExtensionTests
             httpContext.Request.Body = new NonSeekableReadStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(person)));
             httpContext.Request.ContentType = "application/json";
 
-            var inputFormatterContext = CreateInputFormatterContext(typeof(User), httpContext);
+            InputFormatterContext inputFormatterContext = this.CreateInputFormatterContext(typeof(User), httpContext);
 
             var inputFormatter = new MessagePackInputFormatter();
 
@@ -110,24 +115,24 @@ namespace MessagePack.Tests.ExtensionTests
                 UserId = 1,
                 FullName = "John Denver",
                 Age = 35,
-                Description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+                Description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
             };
 
             var messagePackBinary = MessagePackSerializer.Serialize(person);
-            var lz4MessagePackBinary = LZ4MessagePackSerializer.Serialize(person);
+            var lz4MessagePackBinary = MessagePackSerializer.Serialize(person, LZ4Standard);
 
             // OutputFormatter
-            var outputFormatterContext = GetOutputFormatterContext(person, typeof(User), MsgPackContentType);
-            var outputFormatter = new LZ4MessagePackOutputFormatter(StandardResolver.Instance);
+            OutputFormatterWriteContext outputFormatterContext = GetOutputFormatterContext(person, typeof(User), MsgPackContentType);
+            var outputFormatter = new MessagePackOutputFormatter(LZ4Standard);
             await outputFormatter.WriteAsync(outputFormatterContext);
-            var body = outputFormatterContext.HttpContext.Response.Body;
+            Stream body = outputFormatterContext.HttpContext.Response.Body;
 
             Assert.NotNull(body);
             body.Position = 0;
 
             using (var ms = new MemoryStream())
             {
-                body.CopyTo(ms);
+                await body.CopyToAsync(ms);
                 var binary = ms.ToArray();
 
                 binary.IsNot(messagePackBinary);
@@ -140,15 +145,15 @@ namespace MessagePack.Tests.ExtensionTests
             httpContext.Request.Body = new NonSeekableReadStream(messagePackBinary);
             httpContext.Request.ContentType = MsgPackContentType;
 
-            var inputFormatterContext = CreateInputFormatterContext(typeof(User), httpContext);
+            InputFormatterContext inputFormatterContext = this.CreateInputFormatterContext(typeof(User), httpContext);
 
-            var inputFormatter = new LZ4MessagePackInputFormatter();
+            var inputFormatter = new MessagePackInputFormatter(LZ4Standard);
 
-            var result = await inputFormatter.ReadAsync(inputFormatterContext);
+            InputFormatterResult result = await inputFormatter.ReadAsync(inputFormatterContext);
 
             Assert.False(result.HasError);
 
-            var userModel = Assert.IsType<User>(result.Model);
+            User userModel = Assert.IsType<User>(result.Model);
             userModel.IsStructuralEqual(person);
         }
 
@@ -158,8 +163,8 @@ namespace MessagePack.Tests.ExtensionTests
             var person = new User();
 
             // OutputFormatter
-            var outputFormatterContext = GetOutputFormatterContext(person, typeof(User), "application/json");
-            var outputFormatter = new LZ4MessagePackOutputFormatter(StandardResolver.Instance);
+            OutputFormatterWriteContext outputFormatterContext = GetOutputFormatterContext(person, typeof(User), "application/json");
+            var outputFormatter = new MessagePackOutputFormatter(LZ4Standard);
 
             outputFormatter.CanWriteResult(outputFormatterContext).IsFalse();
 
@@ -169,15 +174,15 @@ namespace MessagePack.Tests.ExtensionTests
             httpContext.Request.Body = new NonSeekableReadStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(person)));
             httpContext.Request.ContentType = "application/json";
 
-            var inputFormatterContext = CreateInputFormatterContext(typeof(User), httpContext);
+            InputFormatterContext inputFormatterContext = this.CreateInputFormatterContext(typeof(User), httpContext);
 
-            var inputFormatter = new LZ4MessagePackInputFormatter();
+            var inputFormatter = new MessagePackInputFormatter(LZ4Standard);
 
             inputFormatter.CanRead(inputFormatterContext).IsFalse();
         }
 
         /// <summary>
-        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonOutputFormatterTests.cs#L453">JsonOutputFormatterTests.cs#L453</see>
+        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonOutputFormatterTests.cs#L453">JsonOutputFormatterTests.cs#L453</see>.
         /// </summary>
         private static OutputFormatterWriteContext GetOutputFormatterContext(
             object outputValue,
@@ -187,7 +192,7 @@ namespace MessagePack.Tests.ExtensionTests
         {
             var mediaTypeHeaderValue = MediaTypeHeaderValue.Parse(contentType);
 
-            var actionContext = GetActionContext(mediaTypeHeaderValue, responseStream);
+            ActionContext actionContext = GetActionContext(mediaTypeHeaderValue, responseStream);
             return new OutputFormatterWriteContext(
                 actionContext.HttpContext,
                 new TestHttpResponseStreamWriterFactory().CreateWriter,
@@ -199,7 +204,7 @@ namespace MessagePack.Tests.ExtensionTests
         }
 
         /// <summary>
-        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonOutputFormatterTests.cs#L472">JsonOutputFormatterTests.cs#L472</see>
+        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonOutputFormatterTests.cs#L472">JsonOutputFormatterTests.cs#L472</see>.
         /// </summary>
         private static ActionContext GetActionContext(
             MediaTypeHeaderValue contentType,
@@ -219,7 +224,7 @@ namespace MessagePack.Tests.ExtensionTests
         }
 
         /// <summary>
-        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonInputFormatterTest.cs#L717">JsonInputFormatterTest.cs#L717</see>
+        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonInputFormatterTest.cs#L717">JsonInputFormatterTest.cs#L717</see>.
         /// </summary>
         private InputFormatterContext CreateInputFormatterContext(
             Type modelType,
@@ -228,7 +233,7 @@ namespace MessagePack.Tests.ExtensionTests
             bool treatEmptyInputAsDefaultValue = false)
         {
             var provider = new EmptyModelMetadataProvider();
-            var metadata = provider.GetMetadataForType(modelType);
+            ModelMetadata metadata = provider.GetMetadataForType(modelType);
 
             return new InputFormatterContext(
                 httpContext,
@@ -240,7 +245,7 @@ namespace MessagePack.Tests.ExtensionTests
         }
 
         /// <summary>
-        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonInputFormatterTest.cs#L791">JsonInputFormatterTest.cs#L791</see>
+        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonInputFormatterTest.cs#L791">JsonInputFormatterTest.cs#L791</see>.
         /// </summary>
         private class TestResponseFeature : HttpResponseFeature
         {
@@ -251,7 +256,7 @@ namespace MessagePack.Tests.ExtensionTests
         }
 
         /// <summary>
-        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Core.TestCommon/TestHttpResponseStreamWriterFactory.cs">TestHttpResponseStreamWriterFactory.cs</see>
+        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Core.TestCommon/TestHttpResponseStreamWriterFactory.cs">TestHttpResponseStreamWriterFactory.cs</see>.
         /// </summary>
         private class TestHttpResponseStreamWriterFactory : IHttpResponseStreamWriterFactory
         {
@@ -264,7 +269,7 @@ namespace MessagePack.Tests.ExtensionTests
         }
 
         /// <summary>
-        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Core.TestCommon/TestHttpRequestStreamReaderFactory.cs">TestHttpRequestStreamReaderFactory.cs</see>
+        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Core.TestCommon/TestHttpRequestStreamReaderFactory.cs">TestHttpRequestStreamReaderFactory.cs</see>.
         /// </summary>
         private class TestHttpRequestStreamReaderFactory : IHttpRequestStreamReaderFactory
         {
@@ -275,11 +280,11 @@ namespace MessagePack.Tests.ExtensionTests
         }
 
         /// <summary>
-        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Core.TestCommon/NonSeekableReadableStream.cs">NonSeekableReadableStream.cs</see>
+        /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Core.TestCommon/NonSeekableReadableStream.cs">NonSeekableReadableStream.cs</see>.
         /// </summary>
         private class NonSeekableReadStream : Stream
         {
-            private Stream _inner;
+            private Stream inner;
 
             public NonSeekableReadStream(byte[] data)
                 : this(new MemoryStream(data))
@@ -288,10 +293,10 @@ namespace MessagePack.Tests.ExtensionTests
 
             public NonSeekableReadStream(Stream inner)
             {
-                _inner = inner;
+                this.inner = inner;
             }
 
-            public override bool CanRead => _inner.CanRead;
+            public override bool CanRead => this.inner.CanRead;
 
             public override bool CanSeek => false;
 
@@ -331,13 +336,13 @@ namespace MessagePack.Tests.ExtensionTests
             public override int Read(byte[] buffer, int offset, int count)
             {
                 count = Math.Max(count, 1);
-                return _inner.Read(buffer, offset, count);
+                return this.inner.Read(buffer, offset, count);
             }
 
             public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
                 count = Math.Max(count, 1);
-                return _inner.ReadAsync(buffer, offset, count, cancellationToken);
+                return this.inner.ReadAsync(buffer, offset, count, cancellationToken);
             }
         }
     }

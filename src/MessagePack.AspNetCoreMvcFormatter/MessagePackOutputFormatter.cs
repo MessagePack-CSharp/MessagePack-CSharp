@@ -1,24 +1,37 @@
-﻿using System.Threading.Tasks;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Primitives;
 
 namespace MessagePack.AspNetCoreMvcFormatter
 {
     public class MessagePackOutputFormatter : IOutputFormatter
     {
         private const string ContentType = "application/x-msgpack";
-        private readonly IFormatterResolver resolver;
+        private readonly MessagePackSerializerOptions options;
 
-        public MessagePackOutputFormatter() : this(null)
+        public MessagePackOutputFormatter()
+            : this(null)
         {
         }
 
-        public MessagePackOutputFormatter(IFormatterResolver resolver)
+        public MessagePackOutputFormatter(MessagePackSerializerOptions options)
         {
-            this.resolver = resolver ?? MessagePackSerializer.DefaultResolver;
+            this.options = options;
         }
 
-        public bool CanWriteResult(OutputFormatterCanWriteContext context) =>
-            context.HttpContext.Request.ContentType == ContentType;
+        public bool CanWriteResult(OutputFormatterCanWriteContext context)
+        {
+            if (!context.ContentType.HasValue)
+            {
+                context.ContentType = new StringSegment(ContentType);
+                return true;
+            }
+
+            return context.ContentType.Value == ContentType;
+        }
 
         public Task WriteAsync(OutputFormatterWriteContext context)
         {
@@ -28,19 +41,37 @@ namespace MessagePack.AspNetCoreMvcFormatter
             {
                 if (context.Object == null)
                 {
+#if NETSTANDARD2_0
                     context.HttpContext.Response.Body.WriteByte(MessagePackCode.Nil);
                     return Task.CompletedTask;
+#else
+                    var writer = context.HttpContext.Response.BodyWriter;
+                    var span = writer.GetSpan(1);
+                    span[0] = MessagePackCode.Nil;
+                    writer.Advance(1);
+                    return writer.FlushAsync().AsTask();
+#endif
                 }
                 else
                 {
-                    MessagePackSerializer.NonGeneric.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, resolver);
-                    return Task.CompletedTask;
+#if NETSTANDARD2_0
+                    return MessagePackSerializer.SerializeAsync(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
+#else
+                    var writer = context.HttpContext.Response.BodyWriter;
+                    MessagePackSerializer.Serialize(context.Object.GetType(), writer, context.Object, this.options, context.HttpContext.RequestAborted);
+                    return writer.FlushAsync().AsTask();
+#endif
                 }
             }
             else
             {
-                MessagePackSerializer.NonGeneric.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, resolver);
-                return Task.CompletedTask;
+#if NETSTANDARD2_0
+                return MessagePackSerializer.SerializeAsync(context.ObjectType, context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
+#else
+                var writer = context.HttpContext.Response.BodyWriter;
+                MessagePackSerializer.Serialize(context.ObjectType, writer, context.Object, this.options, context.HttpContext.RequestAborted);
+                return writer.FlushAsync().AsTask();
+#endif
             }
         }
     }

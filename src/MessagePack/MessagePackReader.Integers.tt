@@ -1,0 +1,91 @@
+﻿<#@ assembly name="System.Core" #>
+<#@ Import Namespace="System.Linq" #>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
+
+using System;
+using System.Buffers;
+
+namespace MessagePack
+{
+#pragma warning disable SA1205 // Partial elements should declare access
+    ref partial struct MessagePackReader
+#pragma warning restore SA1205 // Partial elements should declare access
+    {<#
+var unsignedTypes = new Type[]
+{
+    typeof(byte),
+    typeof(ushort),
+    typeof(uint),
+    typeof(ulong),
+};
+var signedTypes = new Type[]
+{
+    typeof(sbyte),
+    typeof(short),
+    typeof(int),
+    typeof(long),
+};
+
+var allTypes = unsignedTypes.Concat(signedTypes);
+foreach (var intType in allTypes) {
+#>
+
+        /// <summary>
+        /// Reads an <see cref="<#=intType.Name#>"/> value from:
+        /// Some value between <see cref="MessagePackCode.MinNegativeFixInt"/> and <see cref="MessagePackCode.MaxNegativeFixInt"/>,
+        /// Some value between <see cref="MessagePackCode.MinFixInt"/> and <see cref="MessagePackCode.MaxFixInt"/>,
+        /// or any of the other MsgPack integer types.
+        /// </summary>
+        /// <returns>The value.</returns>
+        /// <exception cref="OverflowException">Thrown when the value exceeds what can be stored in the returned type.</exception>
+        public <#=intType.Name#> Read<#=intType.Name#>()
+        {
+            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
+
+            switch (code)
+            {
+                case MessagePackCode.UInt8:
+                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteResult));
+                    return checked((<#=intType.Name#>)byteResult);
+                case MessagePackCode.Int8:
+                    ThrowInsufficientBufferUnless(this.reader.TryRead(out sbyte sbyteResult));
+                    return checked((<#=intType.Name#>)sbyteResult);
+                case MessagePackCode.UInt16:
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out ushort ushortResult));
+                    return checked((<#=intType.Name#>)ushortResult);
+                case MessagePackCode.Int16:
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortResult));
+                    return checked((<#=intType.Name#>)shortResult);
+                case MessagePackCode.UInt32:
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out uint uintResult));
+                    return checked((<#=intType.Name#>)uintResult);
+                case MessagePackCode.Int32:
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intResult));
+                    return checked((<#=intType.Name#>)intResult);
+                case MessagePackCode.UInt64:
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out ulong ulongResult));
+                    return checked((<#=intType.Name#>)ulongResult);
+                case MessagePackCode.Int64:
+                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longResult));
+                    return checked((<#=intType.Name#>)longResult);
+                default:
+                    if (code >= MessagePackCode.MinNegativeFixInt && code <= MessagePackCode.MaxNegativeFixInt)
+                    {
+                        return checked((<#=intType.Name#>)unchecked((sbyte)code));
+                    }
+
+                    if (code >= MessagePackCode.MinFixInt && code <= MessagePackCode.MaxFixInt)
+                    {
+                        return (<#=intType.Name#>)code;
+                    }
+
+                    throw ThrowInvalidCode(code);
+            }
+        }
+<# } #>
+    }
+}

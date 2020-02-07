@@ -2,34 +2,31 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>SerializerBenchmark</AssemblyName>
     <RootNamespace>Benchmark</RootNamespace>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CodeAnalysisRuleSet>SerializerBenchmark.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.11.3" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.11.3" />
-    <PackageReference Include="Ceras" Version="4.0.27" />
-    <PackageReference Include="FsPickler" Version="5.2.0" />
-    <PackageReference Include="Hyperion" Version="0.9.8" />
-    <PackageReference Include="Jil" Version="2.16.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.0" />
+    <PackageReference Include="Ceras" Version="4.1.7" />
+    <PackageReference Include="FsPickler" Version="5.2.2" />
+    <PackageReference Include="Hyperion" Version="0.9.11" />
+    <PackageReference Include="Jil" Version="2.17.0" />
     <PackageReference Include="MsgPack.Cli" Version="1.0.1" />
-    <PackageReference Include="protobuf-net" Version="2.4.0" />
-    <PackageReference Include="SpanJson" Version="2.0.7" />
+    <PackageReference Include="protobuf-net" Version="2.4.4" />
+    <PackageReference Include="SpanJson" Version="3.0.1" />
+    <PackageReference Include="System.Text.Json" Version="4.6.0" />
     <PackageReference Include="Utf8Json" Version="1.3.7" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj">
+      <Aliases>newmsgpack</Aliases>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">
       <Aliases>newmsgpack</Aliases>
     </ProjectReference>
