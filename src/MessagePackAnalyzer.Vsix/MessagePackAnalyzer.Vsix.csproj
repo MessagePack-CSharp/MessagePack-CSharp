@@ -32,7 +32,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MessagePackAnalyzer.Vsix</RootNamespace>
     <AssemblyName>MessagePackAnalyzer.Vsix</AssemblyName>
-    <TargetVsixContainerName>MessagePackAnalyzer.Vsix</TargetVsixContainerName>
+    <TargetVsixContainerName>MessagePackAnalyzer.vsix</TargetVsixContainerName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <GeneratePkgDefFile>false</GeneratePkgDefFile>
     <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>

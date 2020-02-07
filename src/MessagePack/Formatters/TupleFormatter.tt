@@ -4,68 +4,74 @@
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
-#if NETSTANDARD || NETFRAMEWORK
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
 
 using System;
+using System.Buffers;
+
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
-{
-<# for(var i = 1; i <= 8; i++) { 
+{<# for(var i = 1; i <= 8; i++) {
     Func<int, string> toT = x => "T" + ((x == 8) ? "Rest" : x.ToString());
     Func<int, string> toItem = x => ((x == 8) ? "Rest" : "Item" + x);
-    var ts = string.Join(", ", Enumerable.Range(1, i).Select(x => toT(x))); 
-    var t = "Tuple<" + ts + ">"; 
+    var ts = string.Join(", ", Enumerable.Range(1, i).Select(x => toT(x)));
+    var t = "Tuple<" + ts + ">";
 #>
 
     public sealed class TupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>>
     {
-        public int Serialize(ref byte[] bytes, int offset, <#= t #> value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, <#= t #> value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
-                return MessagePackBinary.WriteNil(ref bytes, offset);
+                writer.WriteNil();
             }
             else
             {
-                var startOffset = offset;
-                offset += MessagePackBinary.WriteArrayHeader(ref bytes, offset, <#= i #>);
+                writer.WriteArrayHeader(<#= i #>);
 
+                IFormatterResolver resolver = options.Resolver;
 <# for(var j = 1; j <= i; j++) { #>
-                offset += formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref bytes, offset, value.<#= toItem(j) #>, formatterResolver);
+                resolver.GetFormatterWithVerify<<#= toT(j) #>>().Serialize(ref writer, value.<#= toItem(j) #>, options);
 <# } #>
-
-                return offset - startOffset;
             }
         }
 
-        public <#= t #> Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public <#= t #> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            if (MessagePackBinary.IsNil(bytes, offset))
+            if (reader.TryReadNil())
             {
-                readSize = 1;
-                return null;
+                return default;
             }
             else
             {
-                var startOffset = offset;
-                var count = MessagePackBinary.ReadArrayHeader(bytes, offset, out readSize);
-                if (count != <#= i #>) throw new InvalidOperationException("Invalid Tuple count");
-                offset += readSize;
-                using (MessagePackSecurity.DepthStep())
+                var count = reader.ReadArrayHeader();
+                if (count != <#= i #>)
+                {
+                    throw new MessagePackSerializationException("Invalid Tuple count");
+                }
+
+                IFormatterResolver resolver = options.Resolver;
+                options.Security.DepthStep(ref reader);
+                try
                 {
 <# for(var j = 1; j <= i; j++) { #>
-                    var item<#= j #> = formatterResolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(bytes, offset, formatterResolver, out readSize);
-                    offset += readSize;
+                    <#= toT(j) #> item<#= j #> = resolver.GetFormatterWithVerify<<#= toT(j) #>>().Deserialize(ref reader, options);
 <# } #>
 
-                    readSize = offset - startOffset;
                     return new Tuple<<#= ts #>>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "item" + x)) #>);
+                }
+                finally
+                {
+                    reader.Depth--;
                 }
             }
         }
     }
-
 <# } #>
 }
-
-#endif

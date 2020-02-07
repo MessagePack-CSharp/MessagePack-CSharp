@@ -1,0 +1,1 @@
+﻿M:Nerdbank.Streams.Sequence`1.#ctor; Use SequencePool.Shared.Rent() instead

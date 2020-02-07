@@ -7,22 +7,31 @@
 <#
     var Max = 31;
 #>
-#if NETSTANDARD || NETFRAMEWORK
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
+
+#if !UNITY_2018_3_OR_NEWER
+
+using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
+using MessagePack.Formatters;
 
 namespace MessagePack.Internal
 {
     public static partial class UnsafeMemory32
-    {
-<# for(var i = 4; i <= Max; i++) { #>
+    {<# for(var i = 4; i <= Max; i++) { #>
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe int WriteRaw<#= i #>(ref byte[] dst, int dstOffset, byte[] src)
+        public static unsafe void WriteRaw<#= i #>(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            MessagePackBinary.EnsureCapacity(ref dst, dstOffset, src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[dstOffset])
+            fixed (byte* pDst = &dst[0])
             {
 <# for(var j = 0; j < (i / 4); j++) { #>
                 *(int*)(pDst + <#= (4 * j) #>) = *(int*)(pSrc + <#= (4 * j) #>);
@@ -32,22 +41,21 @@ namespace MessagePack.Internal
 <# } #>
             }
 
-            return src.Length;
+            writer.Advance(src.Length);
         }
-
 <# } #>
     }
 
     public static partial class UnsafeMemory64
-    {
-<# for(var i = 8; i <= Max; i++) { #>
+    {<# for(var i = 8; i <= Max; i++) { #>
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe int WriteRaw<#= i #>(ref byte[] dst, int dstOffset, byte[] src)
+        public static unsafe void WriteRaw<#= i #>(ref MessagePackWriter writer, ReadOnlySpan<byte> src)
         {
-            MessagePackBinary.EnsureCapacity(ref dst, dstOffset, src.Length);
+            Span<byte> dst = writer.GetSpan(src.Length);
 
             fixed (byte* pSrc = &src[0])
-            fixed (byte* pDst = &dst[dstOffset])
+            fixed (byte* pDst = &dst[0])
             {
 <# for(var j = 0; j < (i / 8); j++) { #>
                 *(long*)(pDst + <#= (8 * j) #>) = *(long*)(pSrc + <#= (8 * j) #>);
@@ -57,9 +65,8 @@ namespace MessagePack.Internal
 <# } #>
             }
 
-            return src.Length;
+            writer.Advance(src.Length);
         }
-
 <# } #>
     }
 }

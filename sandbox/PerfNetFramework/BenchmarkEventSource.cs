@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
@@ -19,7 +22,9 @@ namespace PerfNetFramework
 
         internal static readonly BenchmarkEventSource Instance = new BenchmarkEventSource();
 
-        private BenchmarkEventSource() { }
+        private BenchmarkEventSource()
+        {
+        }
 
         /// <summary>
         /// Marks the start of a serialization benchmark.

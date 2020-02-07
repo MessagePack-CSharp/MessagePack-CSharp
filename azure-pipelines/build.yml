@@ -1,55 +1,4 @@
 steps:
-- task: UseDotNet@2
-  displayName: Install .NET Core SDK 2.2.300
-  inputs:
-    packageType: sdk
-    version: 2.2.300
-- task: UseDotNet@2
-  displayName: Install .NET Core runtime 2.1.x
-  inputs:
-    packageType: runtime
-    version: 2.1.x
-- script: dotnet --info
-  displayName: Show dotnet SDK info
-
-- script: |
-    dotnet tool install --tool-path . nbgv
-    .\nbgv cloud -p src
-  displayName: Set build number
-
-- task: PowerShell@2
-  displayName: Set VSTS variables
-  inputs:
-    targetType: inline
-    script: |
-      if ($env:SignType -eq 'Real') {
-        $feedGuid = '09d8d03c-1ac8-456e-9274-4d2364527d99'
-      } else {
-        $feedGuid = 'da484c78-f942-44ef-b197-99e2a1bef53c'
-      }
-
-      Write-Host "##vso[task.setvariable variable=feedGuid]$feedGuid"
-
-      if ($env:ComputerName.StartsWith('factoryvm', [StringComparison]::OrdinalIgnoreCase)) {
-        Write-Host "Running on hosted queue"
-        Write-Host "##vso[task.setvariable variable=Hosted]true"
-      }
-
-      if ($env:SYSTEM_COLLECTIONID -eq '011b8bdf-6d56-4f87-be0d-0092136884d9') {
-        Write-Host "Running on official devdiv account: $env:System_TeamFoundationCollectionUri"
-      } else {
-        Write-Host "Running under OSS account: $env:System_TeamFoundationCollectionUri"
-      }
-
-- task: DotNetCoreCLI@2
-  displayName: Restore
-  inputs:
-    command: restore
-    verbosityRestore: normal # detailed, normal, minimal
-    projects: '**\*.sln'
-    feedsToUse: config
-    nugetConfigPath: nuget.config
-
 # Use VSBuild to pack because `dotnet pack` can't build VSIX projects.
 - task: VSBuild@1
   inputs:
@@ -66,72 +15,26 @@ steps:
     command: test
     projects: tests/**/*.Tests.csproj
     arguments: --configuration $(BuildConfiguration) --no-build -v n
+    testRunTitle: $(Agent.JobName)
 
-- task: VSBuild@1
-  inputs:
-    vsVersion: 16.0
-    solution: src\MessagePack.UnityClient\MessagePack.UnityClient.sln
-    msbuildArgs: /t:build /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.unity.binlog"
-    platform: $(BuildPlatform)
-    configuration: $(BuildConfiguration)
-  displayName: Build MessagePack.UnityClient.sln
-  enabled: false # The build fails till the solution is opened in Unity, after which HintPaths are machine-specific
-
-- task: CopyFiles@1
-  inputs:
-    Contents: |
-      obj/**/project.assets.json
-    TargetFolder: $(Build.ArtifactStagingDirectory)/projectAssetsJson
-  displayName: Collecting project.assets.json artifacts
-  condition: succeededOrFailed()
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: $(Build.ArtifactStagingDirectory)/projectAssetsJson
-    ArtifactName: projectAssetsJson
-    ArtifactType: Container
-  displayName: Publish projectAssetsJson artifacts
-  condition: succeededOrFailed()
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: $(Build.ArtifactStagingDirectory)/build_logs
-    ArtifactName: build_logs
-    ArtifactType: Container
-  displayName: Publish build_logs artifacts
-  condition: succeededOrFailed()
+- script: |
+    dotnet publish src/MessagePack.Generator -r win-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+    dotnet publish src/MessagePack.Generator -r osx-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+    dotnet publish src/MessagePack.Generator -r linux-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+  displayName: Building standalone mpc tool for all OSs
 
 ## The rest of these steps are for deployment and skipped for PR builds
 
-- task: CopyFiles@1
+- task: PowerShell@2
   inputs:
-    Contents: |
-      bin/**/$(BuildConfiguration)/**/*.nupkg
-      bin/**/$(BuildConfiguration)/**/*.snupkg
-    TargetFolder: $(Build.ArtifactStagingDirectory)/nuget
-    flattenFolders: true
-  displayName: Collecting nuget
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: $(Build.ArtifactStagingDirectory)/nuget
-    ArtifactName: nuget
-    ArtifactType: Container
-  displayName: Publish nuget artifacts
+    filePath: azure-pipelines/variables/_pipelines.ps1
+    failOnStderr: true
+  displayName: Update pipeline variables based on build outputs
   condition: succeededOrFailed()
 
-- task: CopyFiles@1
+- task: PowerShell@2
   inputs:
-    Contents: |
-      bin/**/$(BuildConfiguration)/**/*.vsix
-    TargetFolder: $(Build.ArtifactStagingDirectory)/vsix
-    flattenFolders: true
-  displayName: Collecting vsix
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: $(Build.ArtifactStagingDirectory)/vsix
-    ArtifactName: vsix
-    ArtifactType: Container
-  displayName: Publish vsix artifacts
+    filePath: azure-pipelines/artifacts/_pipelines.ps1
+    # arguments: -ArtifactNameSuffix "-$(Agent.JobName)"
+  displayName: Publish artifacts
   condition: succeededOrFailed()

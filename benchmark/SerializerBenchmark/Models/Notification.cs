@@ -1,5 +1,9 @@
-﻿extern alias oldmsgpack;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+extern alias oldmsgpack;
 extern alias newmsgpack;
+
 using System;
 using ProtoBuf;
 
@@ -21,48 +25,48 @@ namespace Benchmark.Models
         registration_reminder = 12,
         substantive_edit = 23,
         reputation_bonus = 7,
-        bounty_grace_period_started = 24
+        bounty_grace_period_started = 24,
     }
 
     [ProtoContract, System.Serializable, System.Runtime.Serialization.DataContract, oldmsgpack::MessagePack.MessagePackObject, newmsgpack::MessagePack.MessagePackObject]
     public class Notification : IGenericEquality<Notification>
     {
-        [System.Runtime.Serialization.DataMember(), ProtoMember(1), oldmsgpack::MessagePack.Key(1 - 1), newmsgpack::MessagePack.Key(1 - 1)]
+        [System.Runtime.Serialization.DataMember, ProtoMember(1), oldmsgpack::MessagePack.Key(1 - 1), newmsgpack::MessagePack.Key(1 - 1)]
         public NotificationType? notification_type { get; set; }
 
-        [System.Runtime.Serialization.DataMember(), ProtoMember(2), oldmsgpack::MessagePack.Key(2 - 1), newmsgpack::MessagePack.Key(2 - 1)]
+        [System.Runtime.Serialization.DataMember, ProtoMember(2), oldmsgpack::MessagePack.Key(2 - 1), newmsgpack::MessagePack.Key(2 - 1)]
         public Info.Site site { get; set; }
 
-        [System.Runtime.Serialization.DataMember(), ProtoMember(3), oldmsgpack::MessagePack.Key(3 - 1), newmsgpack::MessagePack.Key(3 - 1)]
+        [System.Runtime.Serialization.DataMember, ProtoMember(3), oldmsgpack::MessagePack.Key(3 - 1), newmsgpack::MessagePack.Key(3 - 1)]
         public DateTime? creation_date { get; set; }
 
-        [System.Runtime.Serialization.DataMember(), ProtoMember(4), oldmsgpack::MessagePack.Key(4 - 1), newmsgpack::MessagePack.Key(4 - 1)]
+        [System.Runtime.Serialization.DataMember, ProtoMember(4), oldmsgpack::MessagePack.Key(4 - 1), newmsgpack::MessagePack.Key(4 - 1)]
         public string body { get; set; }
 
-        [System.Runtime.Serialization.DataMember(), ProtoMember(5), oldmsgpack::MessagePack.Key(5 - 1), newmsgpack::MessagePack.Key(5 - 1)]
+        [System.Runtime.Serialization.DataMember, ProtoMember(5), oldmsgpack::MessagePack.Key(5 - 1), newmsgpack::MessagePack.Key(5 - 1)]
         public int? post_id { get; set; }
 
-        [System.Runtime.Serialization.DataMember(), ProtoMember(6), oldmsgpack::MessagePack.Key(6 - 1), newmsgpack::MessagePack.Key(6 - 1)]
+        [System.Runtime.Serialization.DataMember, ProtoMember(6), oldmsgpack::MessagePack.Key(6 - 1), newmsgpack::MessagePack.Key(6 - 1)]
         public bool? is_unread { get; set; }
 
         public bool Equals(Notification obj)
         {
             return
-                body.TrueEqualsString(obj.body) &&
-                site.TrueEquals(obj.site) &&
-                creation_date.TrueEquals(obj.creation_date) &&
-                post_id.TrueEquals(obj.post_id) &&
-                is_unread.TrueEquals(obj.is_unread);
+                this.body.TrueEqualsString(obj.body) &&
+                this.site.TrueEquals(obj.site) &&
+                this.creation_date.TrueEquals(obj.creation_date) &&
+                this.post_id.TrueEquals(obj.post_id) &&
+                this.is_unread.TrueEquals(obj.is_unread);
         }
 
         public bool EqualsDynamic(dynamic obj)
         {
             return
-                body.TrueEqualsString((string) obj.body) &&
-                (site == null && obj.site == null || site.EqualsDynamic(obj.site)) &&
-                creation_date.TrueEquals((DateTime?) obj.creation_date) &&
-                post_id.TrueEquals((int?) obj.post_id) &&
-                is_unread.TrueEquals((bool?) obj.is_unread);
+                this.body.TrueEqualsString((string)obj.body) &&
+                ((this.site == null && obj.site == null) || this.site.EqualsDynamic(obj.site)) &&
+                this.creation_date.TrueEquals((DateTime?)obj.creation_date) &&
+                this.post_id.TrueEquals((int?)obj.post_id) &&
+                this.is_unread.TrueEquals((bool?)obj.is_unread);
         }
     }
 }

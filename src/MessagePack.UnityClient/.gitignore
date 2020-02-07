@@ -1,0 +1,7 @@
+# VS project and solution files are built and rebuilt by Unity
+*.csproj
+*.sln
+
+# Unity wants to see binaries inside its Assets directory.
+# We link them in with make_unity_symlink.bat, but we don't want to actually commit them into git.
+Assets/*.dll
