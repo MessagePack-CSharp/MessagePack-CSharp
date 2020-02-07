@@ -214,7 +214,7 @@ var bin = MessagePackSerializer.Serialize(data, MessagePack.Resolvers.Contractle
 Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 
 // You can set ContractlessStandardResolver as default.
-MessagePackSerializer.SetDefaultResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+MessagePackSerializer.DefaultOptions = MessagePack.Resolvers.ContractlessStandardResolver.Options;
 
 // serializable.
 var bin2 = MessagePackSerializer.Serialize(data);
