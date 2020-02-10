@@ -125,6 +125,13 @@ public class MessagePackSecurityTests
         Assert.NotEqual(eq.GetHashCode(o), eq.GetHashCode(new object()));
     }
 
+    [Fact]
+    public void EqualityComparer_ObjectFallback_AfterCopyCtor()
+    {
+        var security = MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(15);
+        Assert.NotNull(security.GetEqualityComparer<object>());
+    }
+
     /// <summary>
     /// Verifies that arbitrary other types not known to be hash safe will be rejected.
     /// </summary>
