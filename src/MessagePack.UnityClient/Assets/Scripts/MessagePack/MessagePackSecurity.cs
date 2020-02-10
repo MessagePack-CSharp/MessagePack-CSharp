@@ -146,9 +146,9 @@ namespace MessagePack
         protected virtual IEqualityComparer<T> GetHashCollisionResistantEqualityComparer<T>()
         {
             IEqualityComparer<T> result = null;
-            if (typeof(T).IsEnum)
+            if (typeof(T).GetTypeInfo().IsEnum)
             {
-                Type underlyingType = typeof(T).GetEnumUnderlyingType();
+                Type underlyingType = typeof(T).GetTypeInfo().GetEnumUnderlyingType();
                 result =
                     underlyingType == typeof(sbyte) ? CollisionResistantHasher<T>.Instance :
                     underlyingType == typeof(byte) ? CollisionResistantHasher<T>.Instance :
