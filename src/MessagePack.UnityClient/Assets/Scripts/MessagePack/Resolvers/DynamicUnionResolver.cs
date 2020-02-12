@@ -480,30 +480,6 @@ namespace MessagePack.Resolvers
             internal static readonly MethodInfo WriteNil = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteNil), Type.EmptyTypes);
         }
     }
-}
-
-namespace MessagePack.Internal
-{
-    // RuntimeTypeHandle can embed directly by OpCodes.Ldtoken
-    // It does not implements IEquatable<T>(but GetHashCode and Equals is implemented) so needs this to avoid boxing.
-    public class RuntimeTypeHandleEqualityComparer : IEqualityComparer<RuntimeTypeHandle>
-    {
-        public static readonly IEqualityComparer<RuntimeTypeHandle> Default = new RuntimeTypeHandleEqualityComparer();
-
-        private RuntimeTypeHandleEqualityComparer()
-        {
-        }
-
-        public bool Equals(RuntimeTypeHandle x, RuntimeTypeHandle y)
-        {
-            return x.Equals(y);
-        }
-
-        public int GetHashCode(RuntimeTypeHandle obj)
-        {
-            return obj.GetHashCode();
-        }
-    }
 
     internal class MessagePackDynamicUnionResolverException : MessagePackSerializationException
     {

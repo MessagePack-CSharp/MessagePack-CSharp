@@ -401,8 +401,13 @@ namespace MessagePack.GeneratorCore.Utils
 
         private static IEnumerable<string> GetCompileFullPaths(XElement compile, string includeOrRemovePattern, string csProjRoot)
         {
+            if (string.IsNullOrEmpty(csProjRoot))
+            {
+                csProjRoot = "./";
+            }
+
             // solve macro
-            includeOrRemovePattern = includeOrRemovePattern.Replace("$(ProjectDir)", csProjRoot);
+            includeOrRemovePattern = includeOrRemovePattern.Replace("$(ProjectDir)", csProjRoot).Replace("$(MSBuildProjectDirectory)", csProjRoot);
 
             var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
             matcher.AddIncludePatterns(includeOrRemovePattern.Split(';'));
