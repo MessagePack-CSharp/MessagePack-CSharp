@@ -39,6 +39,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\CodeGenHelpers.cs">
       <Link>Code\CodeGenHelpers.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\RuntimeTypeHandleEqualityComparer.cs">
+      <Link>Code\RuntimeTypeHandleEqualityComparer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\DynamicAssembly.cs">
       <Link>Code\DynamicAssembly.cs</Link>
     </Compile>
