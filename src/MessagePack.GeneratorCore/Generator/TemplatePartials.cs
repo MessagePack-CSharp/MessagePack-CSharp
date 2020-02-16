@@ -26,6 +26,8 @@ namespace MessagePackCompiler.Generator
         public string ResolverName { get; set; } = "GeneratedResolver";
 
         public IResolverRegisterInfo[] RegisterInfos { get; set; }
+
+        public ObjectSerializationInfo[] UnboundGenericInfo { get; set; }
     }
 
     public partial class EnumTemplate

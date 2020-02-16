@@ -269,6 +269,7 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<EnumSerializationInfo> collectedEnumInfo;
         private List<GenericSerializationInfo> collectedGenericInfo;
         private List<UnionSerializationInfo> collectedUnionInfo;
+        private List<ObjectSerializationInfo> collectedUnboundGenericInfo;
 
         public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
         {
@@ -307,10 +308,11 @@ namespace MessagePackCompiler.CodeAnalysis
             this.collectedEnumInfo = new List<EnumSerializationInfo>();
             this.collectedGenericInfo = new List<GenericSerializationInfo>();
             this.collectedUnionInfo = new List<UnionSerializationInfo>();
+            this.collectedUnboundGenericInfo = new List<ObjectSerializationInfo>();
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo) Collect()
+        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo, ObjectSerializationInfo[] unboundGenericInfo) Collect()
         {
             this.ResetWorkspace();
 
@@ -323,7 +325,8 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.collectedObjectInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
-                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray());
+                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray(),
+                this.collectedUnboundGenericInfo.OrderBy(x => x.FullName).ToArray());
         }
 
         // Gate of recursive collect
@@ -533,10 +536,24 @@ namespace MessagePackCompiler.CodeAnalysis
 
                     this.collectedGenericInfo.Add(enumerableInfo);
                 }
+
+                return;
+            }
+
+            if (type.IsDefinition)
+            {
+                ObjectSerializationInfo unboundGenericInfo = GetObjectInfo(type);
+                collectedUnboundGenericInfo.Add(unboundGenericInfo);
             }
         }
 
         private void CollectObject(INamedTypeSymbol type)
+        {
+            ObjectSerializationInfo info = GetObjectInfo(type);
+            collectedObjectInfo.Add(info);
+        }
+
+        private ObjectSerializationInfo GetObjectInfo(INamedTypeSymbol type)
         {
             var isClass = !type.IsValueType;
 
@@ -929,6 +946,36 @@ namespace MessagePackCompiler.CodeAnalysis
                 needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
             }
 
+            string templateParametersString, templateParametersEmpty;
+            if (type.TypeParameters.Count() > 0)
+            {
+                templateParametersString = "<";
+                templateParametersEmpty = "<";
+                bool first = true;
+                foreach (ITypeParameterSymbol tp in type.TypeParameters)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        templateParametersString += ", ";
+                        templateParametersEmpty += ", ";
+                    }
+
+                    templateParametersString += tp.ToDisplayString();
+                }
+
+                templateParametersString += ">";
+                templateParametersEmpty += ">";
+            }
+            else
+            {
+                templateParametersString = null;
+                templateParametersEmpty = null;
+            }
+
             var info = new ObjectSerializationInfo
             {
                 IsClass = isClass,
@@ -936,13 +983,18 @@ namespace MessagePackCompiler.CodeAnalysis
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
                 Name = type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
+                TemplateParametersString = templateParametersString,
+                TemplateParametersEmpty = templateParametersEmpty,
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
                 NeedsCastOnAfter = needsCastOnAfter,
                 NeedsCastOnBefore = needsCastOnBefore,
             };
-            this.collectedObjectInfo.Add(info);
+
+            info.FullNameNoGenericParams = (info.Namespace != null ?
+                $"{info.Namespace}." : string.Empty) + info.Name;
+            return info;
         }
 
         private static bool TryGetNextConstructor(IEnumerator<IMethodSymbol> ctorEnumerator, ref IMethodSymbol ctor)

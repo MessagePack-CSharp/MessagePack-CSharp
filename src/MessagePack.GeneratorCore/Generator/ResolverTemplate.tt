@@ -21,18 +21,97 @@ namespace <#= Namespace #>
     using System;
     using System.Buffers;
     using MessagePack;
+<# if( UnboundGenericInfo.Length > 0 ) {#>
+    using System.Reflection;
+    using static System.Diagnostics.Debug;
+    using System.Collections.Generic;
+
+    public static class DictionaryExtensions
+    {
+        //this still does a double look up (one for get, one for Add()), there's no way out of it with the current C# Dictionary
+        //https://stackoverflow.com/questions/3705950/combined-check-add-or-fetch-from-dictionary
+        public static TValue GetOrAdd<TKey, TValue>( this IDictionary<TKey, TValue> dictionary,
+                                            TKey key, Func<TValue> valueCreator )
+        {
+            TValue value;
+            if ( !dictionary.TryGetValue( key, out value ) )
+            {
+                value = valueCreator();
+                dictionary.Add( key, value );
+            }
+            return value;
+        }
+
+        public static TValue GetOrAdd<TKey, TValue>( this IDictionary<TKey, TValue> dictionary,
+            TKey key ) where TValue : new()
+        {
+            return dictionary.GetOrAdd( key, () => new TValue() );
+        }
+    }
+<# } #>
 
     public class <#= ResolverName #> : global::MessagePack.IFormatterResolver
     {
         public static readonly global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();
 
+<# if( UnboundGenericInfo.Length > 0 ){ #>
+        static readonly Dictionary<Type, Type> genericTypeDefToFormatterTypeDef = new Dictionary<Type, Type>( <#= UnboundGenericInfo.Length #> )
+        {
+<# for(var i = 0; i < UnboundGenericInfo.Length; i++) { 
+    string emptyAngularBrackets = UnboundGenericInfo[ i ].TemplateParametersEmpty;
+#>
+            { typeof( <#= UnboundGenericInfo[ i ].FullNameNoGenericParams#> <#=emptyAngularBrackets #>), 
+                typeof( <#= UnboundGenericInfo[ i ].FormatterName.StartsWith("global::") ? UnboundGenericInfo[ i ].FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + 
+                    UnboundGenericInfo[ i ].FormatterName#> <#=emptyAngularBrackets #> ) },
+
+<# } #>
+            };
+
+            static Dictionary<Type, object> closedGenericFormatterCache = new Dictionary<Type, object>();
+
+<# } #>
         private <#= ResolverName #>()
         {
         }
 
         public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
         {
+<# if( UnboundGenericInfo.Length == 0 ){ #>
             return FormatterCache<T>.Formatter;
+<# } else{ #>
+            global::MessagePack.Formatters.IMessagePackFormatter<T> formatter =
+                FormatterCache<T>.Formatter;
+
+            if ( formatter == null )
+            {
+                Type type = typeof( T );
+                TypeInfo typeInfo = type.GetTypeInfo();
+                if ( typeInfo.IsGenericType )
+                {
+                    Assert( type.IsConstructedGenericType );
+                    Assert( !typeInfo.IsGenericTypeDefinition );
+                    Assert( !typeInfo.ContainsGenericParameters );
+                    Type genericTypeDef = type.GetGenericTypeDefinition();
+                    Type genericFormatterTypeDef;
+                    if ( !genericTypeDefToFormatterTypeDef.TryGetValue( genericTypeDef, out genericFormatterTypeDef ) )
+                    {
+                        formatter = null;
+                    }
+                    else
+                    {
+                        Type closedFormatterType = genericFormatterTypeDef.MakeGenericType( type.GenericTypeArguments );
+
+                        formatter = ( global::MessagePack.Formatters.IMessagePackFormatter<T> )
+                            closedGenericFormatterCache.GetOrAdd( closedFormatterType,
+                                () => Activator.CreateInstance( closedFormatterType ) );
+                    }
+
+                }
+            }
+
+            return formatter;
+
+<# } #>
         }
 
         private static class FormatterCache<T>

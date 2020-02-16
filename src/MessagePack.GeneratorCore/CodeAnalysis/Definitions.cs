@@ -24,6 +24,12 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string FullName { get; set; }
 
+        public string FullNameNoGenericParams { get; set; }
+
+        public string TemplateParametersString { get; set; }
+
+        public string TemplateParametersEmpty { get; set; }
+
         public string Namespace { get; set; }
 
         public bool IsIntKey { get; set; }
