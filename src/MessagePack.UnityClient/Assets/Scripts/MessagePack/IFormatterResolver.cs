@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -66,7 +66,8 @@ namespace MessagePack
             throw new FormatterNotRegisteredException(t.FullName + " is not registered in resolver: " + resolver.GetType());
         }
 
-        private static readonly ConcurrentDictionary<IFormatterResolver, ThreadsafeTypeKeyHashTable<object>> FormatterCache = new ConcurrentDictionary<IFormatterResolver, ThreadsafeTypeKeyHashTable<object>>();
+        private static readonly ThreadsafeTypeKeyHashTable<Func<IFormatterResolver, IMessagePackFormatter>> FormatterGetters =
+            new ThreadsafeTypeKeyHashTable<Func<IFormatterResolver, IMessagePackFormatter>>();
 
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
@@ -80,15 +81,17 @@ namespace MessagePack
                 throw new ArgumentNullException(nameof(type));
             }
 
-            var formatters = FormatterCache.GetOrAdd(resolver, _ => new ThreadsafeTypeKeyHashTable<object>());
-            if (!formatters.TryGetValue(type, out object formatter))
+            var formatterGetter = FormatterGetters.GetOrAdd(type, t =>
             {
-                //do not use formatters.GetOrAdd - eliminating closure creation
                 MethodInfo methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
-                formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
-                formatters.TryAdd(type, formatter);
-            }
+                var genericMethod = methodInfo.MakeGenericMethod(t);
+                var input = Expression.Parameter(typeof(IFormatterResolver), "input");
+                var result = Expression.Lambda<Func<IFormatterResolver, IMessagePackFormatter>>(
+                  Expression.Call(input, genericMethod), input).Compile();
+                return result;
+            });
 
+            var formatter = formatterGetter(resolver);
             return formatter;
         }
 
