@@ -2,10 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using MessagePack.Formatters;
+using MessagePack.Internal;
 
 namespace MessagePack
 {
@@ -64,6 +66,8 @@ namespace MessagePack
             throw new FormatterNotRegisteredException(t.FullName + " is not registered in resolver: " + resolver.GetType());
         }
 
+        private static readonly ConcurrentDictionary<IFormatterResolver, ThreadsafeTypeKeyHashTable<object>> FormatterCache = new ConcurrentDictionary<IFormatterResolver, ThreadsafeTypeKeyHashTable<object>>();
+
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
             if (resolver is null)
@@ -76,9 +80,15 @@ namespace MessagePack
                 throw new ArgumentNullException(nameof(type));
             }
 
-            MethodInfo methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
+            var formatters = FormatterCache.GetOrAdd(resolver, _ => new ThreadsafeTypeKeyHashTable<object>());
+            if (!formatters.TryGetValue(type, out object formatter))
+            {
+                //do not use formatters.GetOrAdd - eliminating closure creation
+                MethodInfo methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
+                formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
+                formatters.TryAdd(type, formatter);
+            }
 
-            var formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
             return formatter;
         }
 
