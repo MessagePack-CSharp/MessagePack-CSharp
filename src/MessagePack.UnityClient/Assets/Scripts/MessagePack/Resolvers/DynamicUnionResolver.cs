@@ -326,8 +326,8 @@ namespace MessagePack.Resolvers
 
             // read-array header and validate, reader.ReadArrayHeader() != 2) throw;
             Label rightLabel = il.DefineLabel();
-            var writer = new ArgumentField(il, 1);
-            writer.EmitLdarg();
+            var reader = new ArgumentField(il, 1);
+            reader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.ReadArrayHeader);
             il.EmitLdc_I4(2);
             il.Emit(OpCodes.Beq_S, rightLabel);
@@ -339,7 +339,7 @@ namespace MessagePack.Resolvers
 
             // read key
             LocalBuilder key = il.DeclareLocal(typeof(int));
-            writer.EmitLdarg();
+            reader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.ReadInt32);
             il.EmitStloc(key);
 
@@ -370,7 +370,7 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Switch, switchLabels.Select(x => x.Label).ToArray());
 
             // default
-            writer.EmitLdarg();
+            reader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.Skip);
             il.Emit(OpCodes.Br, loopEnd);
 
