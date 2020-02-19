@@ -2,10 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using MessagePack.Formatters;
+using MessagePack.Internal;
 
 namespace MessagePack
 {
@@ -64,6 +66,11 @@ namespace MessagePack
             throw new FormatterNotRegisteredException(t.FullName + " is not registered in resolver: " + resolver.GetType());
         }
 
+        private static readonly ThreadsafeTypeKeyHashTable<Func<IFormatterResolver, IMessagePackFormatter>> FormatterGetters =
+            new ThreadsafeTypeKeyHashTable<Func<IFormatterResolver, IMessagePackFormatter>>();
+
+        private static readonly MethodInfo GetFormatterRuntimeMethod = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
+
         public static object GetFormatterDynamic(this IFormatterResolver resolver, Type type)
         {
             if (resolver is null)
@@ -76,15 +83,21 @@ namespace MessagePack
                 throw new ArgumentNullException(nameof(type));
             }
 
-            MethodInfo methodInfo = typeof(IFormatterResolver).GetRuntimeMethod(nameof(IFormatterResolver.GetFormatter), Type.EmptyTypes);
+            if (!FormatterGetters.TryGetValue(type, out var formatterGetter))
+            {
+                var genericMethod = GetFormatterRuntimeMethod.MakeGenericMethod(type);
+                var inputResolver = Expression.Parameter(typeof(IFormatterResolver), "inputResolver");
+                formatterGetter = Expression.Lambda<Func<IFormatterResolver, IMessagePackFormatter>>(
+                    Expression.Call(inputResolver, genericMethod), inputResolver).Compile();
+                FormatterGetters.TryAdd(type, formatterGetter);
+            }
 
-            var formatter = methodInfo.MakeGenericMethod(type).Invoke(resolver, null);
-            return formatter;
+            return formatterGetter(resolver);
         }
 
         internal static object GetFormatterDynamicWithVerify(this IFormatterResolver resolver, Type type)
         {
-            object result = GetFormatterDynamic(resolver, type);
+            var result = GetFormatterDynamic(resolver, type);
             if (result == null)
             {
                 Throw(type, resolver);
