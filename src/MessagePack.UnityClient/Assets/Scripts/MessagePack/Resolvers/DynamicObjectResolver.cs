@@ -1621,7 +1621,7 @@ namespace MessagePack.Internal
                     }
                 }
 
-                foreach (FieldInfo item in type.GetRuntimeFields())
+                foreach (FieldInfo item in GetAllFields(type))
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
                     {
@@ -1895,6 +1895,23 @@ namespace MessagePack.Internal
                 IsIntKey = isIntKey,
                 Members = members.Where(m => m.IsExplicitContract || constructorParameters.Contains(m) || m.IsWritable).ToArray(),
             };
+        }
+
+        private static IEnumerable<FieldInfo> GetAllFields(Type type)
+        {
+            if (type.BaseType is object)
+            {
+                foreach (var item in GetAllFields(type.BaseType))
+                {
+                    yield return item;
+                }
+            }
+
+            // with declared only
+            foreach (var item in type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                yield return item;
+            }
         }
 
         private static bool TryGetNextConstructor(IEnumerator<ConstructorInfo> ctorEnumerator, ref ConstructorInfo ctor)
