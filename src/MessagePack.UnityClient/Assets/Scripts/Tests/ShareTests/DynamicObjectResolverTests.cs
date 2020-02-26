@@ -116,13 +116,15 @@ namespace MessagePack.Tests
                 set => this.baseClassField = value;
             }
 
-            private int baseClassPropertyBackingField;
-
             [DataMember]
+#pragma warning disable SA1300 // Element should begin with upper-case letter
+            private int baseClassProperty { get; set; }
+#pragma warning restore SA1300 // Element should begin with upper-case letter
+
             public int BaseClassProperty
             {
-                get => this.baseClassPropertyBackingField;
-                set => this.baseClassPropertyBackingField = value;
+                get => this.baseClassProperty;
+                set => this.baseClassProperty = value;
             }
         }
 
