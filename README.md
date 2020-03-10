@@ -1,4 +1,3 @@
-
 # MessagePack for C# (.NET, .NET Core, Unity, Xamarin)
 
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
@@ -13,17 +12,19 @@ It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and 
 
 ![Perf comparison graph](https://cloud.githubusercontent.com/assets/46207/23835716/89c8ab08-07af-11e7-9183-9e9415bdc87f.png)
 
-MessagePack has a compact binary size and a full set of general purpose expressive data types. Please have a look at the [comparison with JSON, protobuf, ZeroFormatter section](#comparison) and learn [why MessagePack C# is faster](#performance).
+MessagePack has a compact binary size and a full set of general purpose expressive data types. Please have a look at the [comparison with JSON, protobuf, ZeroFormatter section](#comparison) and learn [why MessagePack C# is the fastest](#performance).
 
 ## Installation
 
 This library is distributed via NuGet. Special [Unity support](#unity) is available, too.
 
 We target .NET Standard 2.0 with special optimizations for .NET Core 2.1+, making it compatible with most reasonably recent .NET runtimes such as Core 2.0 and later, Framework 4.6.1 and later, Mono 5.4 and later and Unity 2018.3 and later.
-The library code is pure C# (with Just-In-Time IL code generation on some platforms). 
+The library code is pure C# (with Just-In-Time IL code generation on some platforms).
 
 ### NuGet packages
+
 To install with NuGet, just install the `MessagePack` package:
+
 ```ps1
 Install-Package MessagePack
 ```
@@ -54,7 +55,7 @@ If you were using MessagePack for C# v1.x, check out the ["How to update to our 
 ## Quick Start
 
 Define the struct or class to be serialized and annotate it with a `[MessagePackObject]` attribute.
-Annotate public members (fields as well as properties) with `[Key]` attributes.
+Annotate members whose values should be serialized (fields as well as properties) with `[Key]` attributes.
 
 ```csharp
 [MessagePackObject]
@@ -72,7 +73,7 @@ public class MyClass
     [Key(2)]
     public string LastName { get; set; }
 
-    // Public members that must not be serialized must be annoted [IgnoreMember].
+    // All fields or properties that should not be serialized must be annotated with [IgnoreMember].
     [IgnoreMember]
     public string FullName { get { return FirstName + LastName; } }
 }
@@ -111,7 +112,7 @@ By default, a `MessagePackObject` annotation is required. This can be made optio
 
 ## Analyzer
 
-The MessagePackAnalyzer package aides with:
+The MessagePackAnalyzer package aids with:
 
 1. Automating definitions for your serializable objects.
 1. Produces compiler warnings upon incorrect attribute use, member accessibility, and more.
@@ -134,7 +135,7 @@ These types can serialize by default:
 
 * Primitives (`int`, `string`, etc...), `Enum`s, `Nullable<>`, `Lazy<>`
 * `TimeSpan`,  `DateTime`, `DateTimeOffset`
-* `Nil`, `Guid`, `Uri`, `Version`, `StringBuilder`
+* `Guid`, `Uri`, `Version`, `StringBuilder`
 * `BigInteger`, `Complex`
 * `Array[]`, `Array[,]`, `Array[,,]`, `Array[,,,]`, `ArraySegment<>`, `BitArray`
 * `KeyValuePair<,>`, `Tuple<,...>`, `ValueTuple<,...>`
@@ -149,6 +150,7 @@ These types can serialize by default:
 * Custom implementations of `ICollection` or `IDictionary` with a  parameterless constructor
 
 You can add support for custom types, and there are some official/third-party extension packages for:
+
 * ImmutableCollections (`ImmutableList<>`, etc)
 * ReactiveProperty
 * for Unity (`Vector3`, `Quaternion`, etc...)
@@ -572,7 +574,7 @@ MessagePack.Formatters.TypelessFormatter.BindToType = typeName =>
 
 Deserializing data from an untrusted source can introduce security vulnerabilities in your application.
 Depending on the settings used during deserialization, **untrusted data may be able to execute arbitrary code** or cause a denial of service attack.
-Untrusted data might come from over the network from an untrusted source (i.e. any and every networked client) or can be tampered with by an intermediary when transmitted over an unauthenticated connection, or from a local storage that might have been tampered with, or many other sources. MessagePack for C# does not provide any means to authenticate data or make it tamper-resistant. Please use an appropriate method of authenticating data before deserialzation - such as a [`MAC`](https://en.wikipedia.org/wiki/Message_authentication_code) .
+Untrusted data might come from over the network from an untrusted source (e.g. any and every networked client) or can be tampered with by an intermediary when transmitted over an unauthenticated connection, or from a local storage that might have been tampered with, or many other sources. MessagePack for C# does not provide any means to authenticate data or make it tamper-resistant. Please use an appropriate method of authenticating data before deserialzation - such as a [`MAC`](https://en.wikipedia.org/wiki/Message_authentication_code) .
 
 Please be very mindful of these attack scenarios; many projects and companies, and serialization library users in general, have been bitten by untrusted user data deserialization in the past.
 
@@ -595,7 +597,7 @@ The `UntrustedData` mode merely hardens against some common attacks, but is no f
 
 ## Performance
 
-Benchmarks comparing MessagePack For C# to other serializers were run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [avaibale here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and their [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config).
+Benchmarks comparing MessagePack For C# to other serializers were run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [available here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and their [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config).
 ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) have infinitely fast deserializers, so ignore their deserialization performance.
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23835765/55fe494e-07b0-11e7-98be-5e7a9411da40.png)
@@ -880,7 +882,7 @@ Install-Package MessagePack.UnityShims
 Install-Package MessagePack.AspNetCoreMvcFormatter
 ```
 
-The `MessagePack.ImmutableCollection` package add support for type of the [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/) library. It adds `ImmutableArray<>`, `ImmutableList<>`, `ImmutableDictionary<,>`, `ImmutableHashSet<>`, `ImmutableSortedDictionary<,>`, `ImmutableSortedSet<>`, `ImmutableQueue<>`, `ImmutableStack<>`, `IImmutableList<>`, `IImmutableDictionary<,>`, `IImmutableQueue<>`, `IImmutableSet<>`, `IImmutableStack<>` serialization support.
+The `MessagePack.ImmutableCollection` package adds support for type of the [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/) library. It adds `ImmutableArray<>`, `ImmutableList<>`, `ImmutableDictionary<,>`, `ImmutableHashSet<>`, `ImmutableSortedDictionary<,>`, `ImmutableSortedSet<>`, `ImmutableQueue<>`, `ImmutableStack<>`, `IImmutableList<>`, `IImmutableDictionary<,>`, `IImmutableQueue<>`, `IImmutableSet<>`, `IImmutableStack<>` serialization support.
 
 The `MessagePack.ReactiveProperty` package adds support for types of the [ReactiveProperty](https://github.com/runceel/ReactiveProperty) library. It adds `ReactiveProperty<>`, `IReactiveProperty<>`, `IReadOnlyReactiveProperty<>`, `ReactiveCollection<>`, `Unit` serialization support. It is useful for save viewmodel state.
 
@@ -1004,7 +1006,8 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
     public void Serialize(
       ref MessagePackWriter writer, FileInfo value, MessagePackSerializerOptions options)
     {
-        if (value == null) {
+        if (value == null)
+        {
             writer.WriteNil();
             return;
         }
@@ -1015,7 +1018,8 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
     public FileInfo Deserialize(
       ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
-        if (reader.TryReadNil()) {
+        if (reader.TryReadNil())
+        {
             return null;
         }
 
