@@ -54,7 +54,7 @@ namespace MessagePack.GeneratorCore.Utils
             var compilation = CSharpCompilation.Create(
                 "CodeGenTemp",
                 syntaxTrees,
-                metadata,
+                DistinctReference(metadata),
                 new CSharpCompilationOptions(
                     OutputKind.DynamicallyLinkedLibrary,
                     allowUnsafe: true,
@@ -86,10 +86,22 @@ namespace MessagePack.GeneratorCore.Utils
             var compilation = CSharpCompilation.Create(
                 "CodeGenTemp",
                 syntaxTrees,
-                metadata,
+                DistinctReference(metadata),
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, allowUnsafe: true));
 
             return compilation;
+        }
+
+        private static IEnumerable<MetadataReference> DistinctReference(IEnumerable<MetadataReference> metadataReferences)
+        {
+            var set = new HashSet<string>();
+            foreach (var item in metadataReferences)
+            {
+                if (set.Add(Path.GetFileName(item.Display)))
+                {
+                    yield return item;
+                }
+            }
         }
 
         private static List<string> GetStandardReferences()
