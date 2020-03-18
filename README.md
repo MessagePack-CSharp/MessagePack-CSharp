@@ -1505,6 +1505,122 @@ MSBuild Task's configuration options:
 />
 ```
 
+### Post-compile-time Dll Manipulation (support for Unity)
+
+`mpc` ahead of time code generation has many limitations.
+
+- Cannot serialize/deserialize generics types.
+- Cannot serialize/deserialize fixed size buffers.
+- Cannot serialize/deserialize private/internal members.
+- Does not generate automata code when deserializing string-key types.
+- Allocate byte array for each string-key When serializing string-key types.
+
+Those problems could be avoided by `mspc` (MSPack.Processor.CommandLineInterface). mspc is the dll modifier for the dlls that conatains IFormatterResolver and uses MessagePack for C#. mspc uses [Mono.Cecil](https://www.mono-project.com/docs/tools+libraries/libraries/Mono.Cecil/) to analyze and modifies dll.
+
+First of all mspc requires [.NET Core 2.1(or later) runtime](https://dotnet.microsoft.com/download). The easiest way to acquire and run mpc is as a dotnet tool.
+
+```
+dotnet tool install --global MSPack.Processor.CLI
+```
+
+Installing it as a local tool allows you to include the tools and versions that you use in your source control system. Run these commands in the root of your repo:
+
+```
+dotnet new tool-manifest
+dotnet tool install MSPack.Processor.CLI
+```
+
+Check in your `.config\dotnet-tools.json` file. On another machine you can "restore" your tool using the `dotnet tool restore` command.
+
+Once you have the tool installed, simply invoke using `dotnet mspc` within your repo:
+
+```
+dotnet mspc -h
+```
+
+```
+Usage: MSPack.Processor.CLI [options...]
+
+Options:
+  -i, -input <String>                   Path of input dll. (Required)
+  -n, -resolverName <String>            Set resolver name with namespace. (Default: )
+  -l, -libraryFiles <String>            Library dll file paths that target file depends on. Split with ','. (Default: )
+  -d, -definitionFiles <String>         Definition dll file paths. Split with ','. (Default: )
+  -m, -useMapMode <Boolean>             Force use map mode serialization. (Default: False)
+  -load-factor, -loadFactor <Double>    Specific setting of dictionary load factor (Default: 0.75)
+```
+
+mspc targets managed dll/exe with (`[MessagePackObject]` or `[Union]` annotations) and class implementing `MessagePack.IFormatterResolver`.
+If target dlls have string-key `[MessagePackObject]` type, mspc requires target input dll of Span&lt;T&gt;, ReadOnlySpan&lt;T&gt;, Memory&lt;T&gt; or ReadOnlyMemory&lt;T&gt; usage.
+
+```cmd
+// Simple Sample:
+mspc -i "../bin/Release/netstandard2.0/Sandbox.Shared.dll"
+```
+
+By default, `mspc` modifies the already exising resolver and generates formatters as nested types located under target resolver type.
+
+This is the sample code that shows required resolver type.
+
+```csharp
+using MessagePack;
+
+public class FormatterResolver : IFormatterResolver
+{
+    public static readonly FormatterResolver Instance = new FormatterResolver();
+
+    public IMessagePackFormatter<T> GetFormatter<T>()
+    {
+        return default;
+    }
+}
+```
+
+Here is the full sample code to register a resolver in Unity.
+
+```csharp
+using MessagePack;
+using MessagePack.Resolvers;
+using UnityEngine;
+
+public class Startup
+{
+    static bool serializerRegistered = false;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Initialize()
+    {
+        if (!serializerRegistered)
+        {
+            StaticCompositeResolver.Instance.Register(
+                FormatterResolver.Instance,
+                MessagePack.Resolvers.StandardResolver.Instance
+            );
+
+            var option = MessagePackSerializerOptions.Standard.WithResolver(StaticCompositeResolver.Instance);
+
+            MessagePackSerializer.DefaultOptions = option;
+            serializerRegistered = true;
+        }
+    }
+
+#if UNITY_EDITOR
+
+
+    [UnityEditor.InitializeOnLoadMethod]
+    static void EditorInitialize()
+    {
+        Initialize();
+    }
+
+#endif
+}
+```
+
+In Unity, you can enable/disable the post-build-hook at `Windows -> MessagePack -> MSPackCodeModifier`.
+
+![](https://user-images.githubusercontent.com/31692496/76761929-ab6c8e00-67d3-11ea-8a36-167a12a35492.png)
+
 ## RPC
 
 MessagePack advocated [MessagePack RPC](https://github.com/msgpack-rpc/msgpack-rpc), but work on it has stopped and it is not widely used.
