@@ -13,7 +13,12 @@ using Microsoft;
 
 namespace MessagePack
 {
-    public static class MessagePackBinary
+#if MESSAGEPACK_INTERNAL
+    internal
+#else
+    public
+#endif
+    static class MessagePackBinary
     {
         public static int WriteNil(Span<byte> span)
         {
