@@ -389,7 +389,7 @@ namespace MessagePackCompiler.CodeAnalysis
         {
             var info = new EnumSerializationInfo
             {
-                Name = type.Name,
+                Name = type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 UnderlyingType = type.EnumUnderlyingType.ToDisplayString(BinaryWriteFormat),
