@@ -928,7 +928,7 @@ namespace MessagePack
                 }
                 else
                 {
-                    return ~5;
+                    return ~15;
                 }
             }
         }
