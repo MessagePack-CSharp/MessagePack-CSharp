@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePackCompiler.CodeAnalysis
@@ -269,6 +270,7 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<EnumSerializationInfo> collectedEnumInfo;
         private List<GenericSerializationInfo> collectedGenericInfo;
         private List<UnionSerializationInfo> collectedUnionInfo;
+        private List<ObjectSerializationInfo> collectedUnboundGenericInfo;
 
         public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
         {
@@ -307,10 +309,11 @@ namespace MessagePackCompiler.CodeAnalysis
             this.collectedEnumInfo = new List<EnumSerializationInfo>();
             this.collectedGenericInfo = new List<GenericSerializationInfo>();
             this.collectedUnionInfo = new List<UnionSerializationInfo>();
+            this.collectedUnboundGenericInfo = new List<ObjectSerializationInfo>();
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo) Collect()
+        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo, ObjectSerializationInfo[] unboundGenericInfo) Collect()
         {
             this.ResetWorkspace();
 
@@ -323,7 +326,8 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.collectedObjectInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
-                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray());
+                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray(),
+                this.collectedUnboundGenericInfo.OrderBy(x => x.FullName).ToArray());
         }
 
         // Gate of recursive collect
@@ -533,10 +537,49 @@ namespace MessagePackCompiler.CodeAnalysis
 
                     this.collectedGenericInfo.Add(enumerableInfo);
                 }
+
+                return;
+            }
+
+            if (type.IsDefinition)
+            {
+                ObjectSerializationInfo unboundGenericInfo = GetObjectInfo(type);
+                collectedUnboundGenericInfo.Add(unboundGenericInfo);
+            }
+            else
+            {
+                foreach (ITypeSymbol item in type.TypeArguments)
+                {
+                    this.CollectCore(item);
+                }
+
+                StringBuilder formatterBuilder = new StringBuilder();
+                if (!type.ContainingNamespace.IsGlobalNamespace)
+                {
+                    formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
+                }
+
+                formatterBuilder.Append(type.Name + "Formatter");
+                formatterBuilder.Append("<" + string.Join(", ", type.TypeArguments) + ">");
+
+                GenericSerializationInfo info = new GenericSerializationInfo
+                {
+                    FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+
+                    FormatterName = formatterBuilder.ToString(),
+                };
+
+                this.collectedGenericInfo.Add(info);
             }
         }
 
         private void CollectObject(INamedTypeSymbol type)
+        {
+            ObjectSerializationInfo info = GetObjectInfo(type);
+            collectedObjectInfo.Add(info);
+        }
+
+        private ObjectSerializationInfo GetObjectInfo(INamedTypeSymbol type)
         {
             var isClass = !type.IsValueType;
 
@@ -929,6 +972,16 @@ namespace MessagePackCompiler.CodeAnalysis
                 needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
             }
 
+            string templateParametersString;
+            if (type.TypeParameters.Count() > 0)
+            {
+                templateParametersString = "<" + string.Join(", ", type.TypeParameters) + ">";
+            }
+            else
+            {
+                templateParametersString = null;
+            }
+
             var info = new ObjectSerializationInfo
             {
                 IsClass = isClass,
@@ -936,13 +989,15 @@ namespace MessagePackCompiler.CodeAnalysis
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
                 Name = type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
+                TemplateParametersString = templateParametersString,
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
                 NeedsCastOnAfter = needsCastOnAfter,
                 NeedsCastOnBefore = needsCastOnBefore,
             };
-            this.collectedObjectInfo.Add(info);
+
+            return info;
         }
 
         private static bool TryGetNextConstructor(IEnumerator<IMethodSymbol> ctorEnumerator, ref IMethodSymbol ctor)

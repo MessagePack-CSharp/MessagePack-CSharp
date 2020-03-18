@@ -47,7 +47,9 @@ namespace ");
  foreach(var objInfo in ObjectSerializationInfos) { 
             this.Write("\r\n    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Name));
-            this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
+            this.Write("Formatter");
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.TemplateParametersString != null? objInfo.TemplateParametersString : ""));
+            this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(">\r\n    {\r\n");
  foreach(var item in objInfo.Members) { 
