@@ -1,6 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if CSHARP8
+#nullable disable
+#endif
+
 using System;
 using System.Buffers;
 

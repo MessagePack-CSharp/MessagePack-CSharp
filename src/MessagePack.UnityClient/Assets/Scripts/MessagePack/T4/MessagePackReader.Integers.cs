@@ -4,6 +4,10 @@
 /* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
  * CHANGE THE .tt FILE INSTEAD. */
 
+#if CSHARP8
+#nullable disable
+#endif
+
 using System;
 using System.Buffers;
 

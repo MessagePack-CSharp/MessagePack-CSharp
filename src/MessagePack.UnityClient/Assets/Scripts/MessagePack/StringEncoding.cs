@@ -7,6 +7,10 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
+#if CSHARP8
+#nullable disable
+#endif
+
 namespace MessagePack
 {
     internal static class StringEncoding

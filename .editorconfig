@@ -1,8 +1,5 @@
 # EditorConfig is awesome:http://EditorConfig.org
 
-# top-most EditorConfig file
-root = true
-
 # Don't use tabs for indentation.
 [*]
 indent_style = space
