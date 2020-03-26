@@ -31,7 +31,7 @@ namespace MessagePackCompiler.Generator
         {
             foreach (var memberSerializationInfo in infos)
             {
-                if (memberSerializationInfo.CustomFormatterTypeName == null && Array.IndexOf(PrimitiveTypes, memberSerializationInfo.Type) != -1)
+                if (memberSerializationInfo.CustomFormatterTypeName == null && Array.IndexOf(PrimitiveTypes, memberSerializationInfo.Type) == -1)
                 {
                     return true;
                 }
