@@ -68,10 +68,15 @@ namespace MessagePackCompiler
                     var objectFormatterTemplates = objectInfo
                         .Concat(unboundGenericInfo)
                         .GroupBy(x => x.Namespace)
-                        .Select(x => new FormatterTemplate()
+                        .Select(x =>
                         {
-                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
-                            ObjectSerializationInfos = x.ToArray(),
+                            var objectSerializationInfos = x.ToArray();
+                            var template = objectSerializationInfos[0].IsIntKey ? (IFormatterTemplate)new FormatterTemplate() : new StringKeyFormatterTemplate();
+
+                            template.Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key);
+                            template.ObjectSerializationInfos = objectSerializationInfos;
+
+                            return template;
                         })
                         .ToArray();
 
