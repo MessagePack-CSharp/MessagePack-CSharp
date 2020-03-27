@@ -40,6 +40,7 @@ foreach(var objInfo in ObjectSerializationInfos)
         private static byte[] ____stringByteKeys<#= i #>;
 <#
     }#>
+
         public <#= formatterName #>()
         {
 <#

@@ -63,7 +63,7 @@ foreach(var objInfo in ObjectSerializationInfos)
             this.Write(";\r\n");
 
     }
-            this.Write("        public ");
+            this.Write("\r\n        public ");
             this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
             this.Write("()\r\n        {\r\n");
 
