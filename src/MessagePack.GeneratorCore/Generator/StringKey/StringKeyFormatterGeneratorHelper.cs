@@ -152,7 +152,7 @@ namespace MessagePackCompiler.Generator
         {
             var readOnlySpan = memory.Span[0].Item1.AsSpan();
             var value = BinaryPrimitives.ReadUInt64LittleEndian(readOnlySpan.Slice(indexOfUlongs << 3));
-            builder.Append("\r\n").Append(nextIndent).Append("case 0x").Append(value.ToString("X")).Append("UL:\r\n");
+            builder.Append("\r\n").Append(nextIndent).EmbedCase(value);
 
             if (indexOfUlongs == lengthUlong - 1)
             {
@@ -168,8 +168,8 @@ namespace MessagePackCompiler.Generator
         private static void EmbedSwitchSingleGroup(this StringBuilder builder, ReadOnlyMemory<(byte[], MemberSerializationInfo)> range, int count, string indent, int indexOfUlongs, int lengthUlong, string typeName, string suffix)
         {
             var key = BinaryPrimitives.ReadUInt64LittleEndian(range.Span[0].Item1.AsSpan(indexOfUlongs << 3));
-            builder.Append(indent).Append("if (ulongs[").Append(indexOfUlongs).Append("] != 0x").Append(key.ToString("X"))
-                .Append("UL) goto FAIL;\r\n");
+            builder.Append(indent).Append("if (ulongs[").Append(indexOfUlongs).Append("] != ").EmbedNumberUlong(key)
+                .Append(") goto FAIL; ").EmbedComment(key).Append("\r\n");
 
             if (indexOfUlongs == lengthUlong - 1)
             {
@@ -190,17 +190,19 @@ namespace MessagePackCompiler.Generator
             {
                 var value = BinaryPrimitives.ReadUInt64LittleEndian(tempSpan);
                 tempSpan = tempSpan.Slice(8);
-                builder.Append("ulongs[").Append(index).Append("] != 0x").Append(value.ToString("X")).Append("UL");
+                builder.Append("\r\n    ").Append(indent).Append("ulongs[").Append(index).Append("] != ").EmbedNumberUlong(value);
 
                 if (index == lengthUlong - 1)
                 {
-                    continue;
+                    builder.Append(' ').EmbedComment(value);
+                    break;
                 }
 
-                builder.Append(" ||\r\n    ").Append(indent);
+                builder.Append(" || ").EmbedComment(value);
             }
 
             builder
+                .Append("\r\n").Append(indent)
                 .Append(") goto FAIL;\r\n").Append(indent)
                 .Append("{\r\n    ").Append(indent).Append(typeName).Append(" last = stringKey[").Append(span.Length - 1);
 
@@ -251,8 +253,7 @@ namespace MessagePackCompiler.Generator
             {
                 var (readOnlyMemory, _) = memory.Span[0];
                 var value = BinaryPrimitives.ReadUInt64LittleEndian(readOnlyMemory.AsSpan(index << 3));
-                builder.Append("\r\n").Append(nextIndent).Append("case 0x").Append(value.ToString("X"))
-                    .Append("UL:\r\n");
+                builder.Append("\r\n").Append(nextIndent).EmbedCase(value);
 
                 EmbedSwitch0(builder, memory, nextIndent, index + 1, lengthUlong);
             }
@@ -269,8 +270,8 @@ namespace MessagePackCompiler.Generator
 
                 var (readOnlyMemory, memberInfo) = memory.Span[0];
                 var last = BinaryPrimitives.ReadUInt64LittleEndian(readOnlyMemory.AsSpan(index << 3));
-                builder.Append("\r\n").Append(nextIndent).Append("case 0x").Append(last.ToString("X"))
-                    .Append("UL:\r\n    ").Append(nextIndent).Append("__").Append(memberInfo.Name).Append("__ = ").Append(memberInfo.GetDeserializeMethodString())
+                builder.Append("\r\n").Append(nextIndent).EmbedCase(last)
+                    .Append("    ").Append(nextIndent).Append("__").Append(memberInfo.Name).Append("__ = ").Append(memberInfo.GetDeserializeMethodString())
                     .Append(";\r\n    ").Append(nextIndent).Append("continue;");
             }
         }
@@ -283,22 +284,102 @@ namespace MessagePackCompiler.Generator
             {
                 var value = BinaryPrimitives.ReadUInt64LittleEndian(span);
                 span = span.Slice(8);
-                builder.Append("ulongs[").Append(index).Append("] != 0x").Append(value.ToString("X")).Append("UL");
+                builder.Append("\r\n    ").Append(indent).Append("ulongs[").Append(index).Append("] != ").EmbedNumberUlong(value);
 
                 if (index == lengthUlong - 1)
                 {
+                    builder.Append(' ').EmbedComment(value);
                     break;
                 }
 
-                builder.Append(" ||\r\n    ").Append(indent);
+                builder.Append(" || ").EmbedComment(value);
             }
 
             var memberInfo = valueTuple.Item2;
 
             builder
+                .Append("\r\n").Append(indent)
                 .Append(") goto FAIL;\r\n\r\n").Append(indent)
                 .Append("__").Append(memberInfo.Name).Append("__ = ").Append(memberInfo.GetDeserializeMethodString())
                 .Append(";\r\n").Append(indent).Append("continue;");
+        }
+
+        private static StringBuilder EmbedComment(this StringBuilder builder, ulong keyLittleEndian)
+        {
+            var character0 = keyLittleEndian & 0xffUL;
+            if (character0 > 0x7fUL)
+            {
+                return builder;
+            }
+
+            keyLittleEndian >>= 8;
+            var character1 = keyLittleEndian & 0xffUL;
+            if (character1 > 0x7fUL)
+            {
+                return builder;
+            }
+
+            keyLittleEndian >>= 8;
+            var character2 = keyLittleEndian & 0xffUL;
+            if (character2 > 0x7fUL)
+            {
+                return builder;
+            }
+
+            keyLittleEndian >>= 8;
+            var character3 = keyLittleEndian & 0xffUL;
+            if (character3 > 0x7fUL)
+            {
+                return builder;
+            }
+
+            keyLittleEndian >>= 8;
+            var character4 = keyLittleEndian & 0xffUL;
+            if (character4 > 0x7fUL)
+            {
+                return builder;
+            }
+
+            keyLittleEndian >>= 8;
+            var character5 = keyLittleEndian & 0xffUL;
+            if (character5 > 0x7fUL)
+            {
+                return builder;
+            }
+
+            keyLittleEndian >>= 8;
+            var character6 = keyLittleEndian & 0xffUL;
+            if (character6 > 0x7fUL)
+            {
+                return builder;
+            }
+
+            keyLittleEndian >>= 8;
+            var character7 = keyLittleEndian & 0xffUL;
+            if (character7 > 0x7fUL)
+            {
+                return builder;
+            }
+
+            return builder.Append("// ")
+                .Append((char)character0)
+                .Append((char)character1)
+                .Append((char)character2)
+                .Append((char)character3)
+                .Append((char)character4)
+                .Append((char)character5)
+                .Append((char)character6)
+                .Append((char)character7);
+        }
+
+        private static StringBuilder EmbedNumberUlong(this StringBuilder builder, ulong keyLittleEndian)
+        {
+            return builder.Append("0x").Append(keyLittleEndian.ToString("X")).Append("UL");
+        }
+
+        private static StringBuilder EmbedCase(this StringBuilder builder, ulong keyLittleEndian)
+        {
+            return builder.Append("case ").EmbedNumberUlong(keyLittleEndian).Append(": ").EmbedComment(keyLittleEndian).Append("\r\n");
         }
     }
 }
