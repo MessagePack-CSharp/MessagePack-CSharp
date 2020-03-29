@@ -36,8 +36,9 @@ foreach(var objInfo in ObjectSerializationInfos)
     {
 <#
     for(int i = 0; i < objInfo.Members.Length; i++)
-    {#>
-        private static byte[] ____stringByteKeys<#= i #>;
+    {
+        var member = objInfo.Members[i];#>
+        private static byte[] ____stringByteKeys_<#= member.Name #>;
 <#
     }#>
 
@@ -46,8 +47,9 @@ foreach(var objInfo in ObjectSerializationInfos)
 <#
     for(int i = 0; i < objInfo.Members.Length; i++)
     {
-        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(objInfo.Members[i].StringKey);#>
-            ____stringByteKeys<#= i #> = <#= StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes) #>;
+        var member = objInfo.Members[i];
+        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);#>
+            ____stringByteKeys_<#= member.Name #> = <#= StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes) #>;
 <#
     }#>
         }
@@ -85,7 +87,7 @@ foreach(var objInfo in ObjectSerializationInfos)
     for(int i = 0; i < objInfo.Members.Length; i++)
     {
         var member = objInfo.Members[i];#>
-            writer.WriteRaw(____stringByteKeys<#= i #>);
+            writer.WriteRaw(____stringByteKeys_<#= member.Name #>);
             <#= member.GetSerializeMethodString() #>;
 <#
     }#>
