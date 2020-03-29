@@ -55,7 +55,7 @@ namespace MessagePackCompiler
                 sw.Restart();
                 logger("Method Collect Start");
 
-                var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
+                var (objectInfo, enumInfo, genericInfo, unionInfo, unboundGenericInfo) = collector.Collect();
 
                 logger("Method Collect Complete:" + sw.Elapsed.ToString());
 
@@ -66,6 +66,7 @@ namespace MessagePackCompiler
                 {
                     // SingleFile Output
                     var objectFormatterTemplates = objectInfo
+                        .Concat(unboundGenericInfo)
                         .GroupBy(x => x.Namespace)
                         .Select(x => new FormatterTemplate()
                         {
@@ -137,7 +138,7 @@ namespace MessagePackCompiler
                 else
                 {
                     // Multiple File output
-                    foreach (var x in objectInfo)
+                    foreach (var x in objectInfo.Concat(unboundGenericInfo))
                     {
                         var template = new FormatterTemplate()
                         {
@@ -184,7 +185,7 @@ namespace MessagePackCompiler
                     await OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken).ConfigureAwait(false);
                 }
 
-                if (objectInfo.Length == 0 && enumInfo.Length == 0 && genericInfo.Length == 0 & unionInfo.Length == 0)
+                if (objectInfo.Length == 0 && enumInfo.Length == 0 && genericInfo.Length == 0 && unionInfo.Length == 0 && unboundGenericInfo.Length == 0)
                 {
                     logger("Generated result is empty, unexpected result?");
                 }

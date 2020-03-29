@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
 [![NuGet](https://img.shields.io/nuget/vpre/MessagePack.svg)](https://www.nuget.org/packages/messagepack)
-[![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)](https://github.com/neuecc/MessagePack-CSharp/releases)
+[![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)][Releases]
 
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2)
@@ -46,7 +46,7 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 ### Unity
 
-For Unity projects, the [releases](releases) page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
+For Unity projects, the [releases][Releases] page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
 
 ### Migration notes from v1.x
 
@@ -1331,7 +1331,7 @@ MessagePack for C# already used some msgpack extension type codes, be careful to
 
 Unity lowest supported version is `2018.3`, API Compatibility Level supports both `.NET 4.x` and `.NET Standard 2.0`.
 
-You can install the `unitypackage` from the [releases](releases/) page. If your build targets PC, you can use it as is, but if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
+You can install the `unitypackage` from the [releases][Releases] page. If your build targets PC, you can use it as is, but if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
 
 MessagePack for C# includes some additional `System.*.dll` libraries that originally provides in NuGet. They are located under `Plugins`. If other packages use these libraries (e.g. Unity Collections package using `System.Runtime.CompilerServices.Unsafe.dll`), to avoid conflicts, please delete the DLL under `Plugins`.
 
@@ -1402,7 +1402,7 @@ Once you have the tool installed, simply invoke using `dotnet mpc` within your r
 dotnet mpc -h
 ```
 
-Alternatively, you can download mpc from the [releases](releases/) page, that includes platform native binaries (that don't require a separate dotnet runtime).
+Alternatively, you can download mpc from the [releases][Releases] page, that includes platform native binaries (that don't require a separate dotnet runtime).
 
 ```
 Usage: mpc [options...]
@@ -1515,7 +1515,7 @@ MSBuild Task's configuration options:
 - Does not generate automata code when deserializing string-key types.
 - Allocate byte array for each string-key When serializing string-key types.
 
-Those problems could be avoided by `mspc` (MSPack.Processor.CommandLineInterface). mspc is the dll modifier for the dlls that conatains IFormatterResolver and uses MessagePack for C#. mspc uses [Mono.Cecil](https://www.mono-project.com/docs/tools+libraries/libraries/Mono.Cecil/) to analyze and modifies dll.
+Those problems could be avoided by `mspc` (MSPack.Processor.CommandLineInterface). mspc is the dll modifier for the dlls that contains IFormatterResolver and uses MessagePack for C#. mspc uses [Mono.Cecil](https://www.mono-project.com/docs/tools+libraries/libraries/Mono.Cecil/) to analyze and modifies dll.
 
 First of all mspc requires [.NET Core 2.1(or later) runtime](https://dotnet.microsoft.com/download). The easiest way to acquire and run mpc is as a dotnet tool.
 
@@ -1648,3 +1648,5 @@ He is known as the creator of [UniRx](http://github.com/neuecc/UniRx/) (Reactive
 * Blog: [https://medium.com/@neuecc](https://medium.com/@neuecc) (English)
 * Blog: [http://neue.cc/](http://neue.cc/) (Japanese)
 * Twitter: [https://twitter.com/neuecc](https://twitter.com/neuecc) (Japanese)
+
+[Releases]: https://github.com/neuecc/MessagePack-CSharp/releases
