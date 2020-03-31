@@ -32,7 +32,7 @@ namespace MessagePackCompiler.Generator
                 throw new ArgumentNullException();
             }
 
-            var builder = new StringBuilder((6 * bytes.Length) + 13).Append("new byte[]{ ");
+            var builder = new StringBuilder((6 * bytes.Length) + 13).Append("new byte[] { ");
             foreach (var b in bytes)
             {
                 builder.Append("0x").Append(b.ToString("X2")).Append(", ");
@@ -107,8 +107,8 @@ namespace MessagePackCompiler.Generator
                 var memberInfo = span[index].Item2;
 
                 builder.Append(nextIndent).Append("    case 0x").Append(last.ToString("X")).Append(suffix)
-                    .Append(":\r\n        ").Append(nextIndent).Append("__").Append(memberInfo.Name).Append("__ = ").Append(memberInfo.GetDeserializeMethodString())
-                    .Append(";\r\n        ").Append(nextIndent).Append("continue;\r\n");
+                    .Append(":\r\n        ").Append(nextIndent).EmbedMemberAssignment(memberInfo)
+                    .Append("\r\n        ").Append(nextIndent).Append("continue;\r\n");
             }
 
             builder.Append(nextIndent).Append("}\r\n").Append(indent).Append("}");
@@ -218,8 +218,8 @@ namespace MessagePackCompiler.Generator
 
             builder.Append("];\r\n    ").Append(indent).Append("if(last != 0x").Append(last.ToString("X"))
                 .Append(suffix).Append(") goto FAIL;\r\n    ")
-                .Append(indent).Append("__").Append(memberInfo.Name).Append("__ = ").Append(memberInfo.GetDeserializeMethodString())
-                .Append(";\r\n    ").Append(indent)
+                .Append(indent).EmbedMemberAssignment(memberInfo)
+                .Append("\r\n    ").Append(indent)
                 .Append("continue;\r\n").Append(indent).Append("}");
         }
 
@@ -271,8 +271,8 @@ namespace MessagePackCompiler.Generator
                 var (readOnlyMemory, memberInfo) = memory.Span[0];
                 var last = BinaryPrimitives.ReadUInt64LittleEndian(readOnlyMemory.AsSpan(index << 3));
                 builder.Append("\r\n").Append(nextIndent).EmbedCase(last)
-                    .Append("    ").Append(nextIndent).Append("__").Append(memberInfo.Name).Append("__ = ").Append(memberInfo.GetDeserializeMethodString())
-                    .Append(";\r\n    ").Append(nextIndent).Append("continue;");
+                    .Append("    ").Append(nextIndent).EmbedMemberAssignment(memberInfo)
+                    .Append("\r\n    ").Append(nextIndent).Append("continue;");
             }
         }
 
@@ -300,8 +300,8 @@ namespace MessagePackCompiler.Generator
             builder
                 .Append("\r\n").Append(indent)
                 .Append(") goto FAIL;\r\n\r\n").Append(indent)
-                .Append("__").Append(memberInfo.Name).Append("__ = ").Append(memberInfo.GetDeserializeMethodString())
-                .Append(";\r\n").Append(indent).Append("continue;");
+                .EmbedMemberAssignment(memberInfo)
+                .Append("\r\n").Append(indent).Append("continue;");
         }
 
         private static StringBuilder EmbedComment(this StringBuilder builder, ulong keyLittleEndian)
@@ -380,6 +380,11 @@ namespace MessagePackCompiler.Generator
         private static StringBuilder EmbedCase(this StringBuilder builder, ulong keyLittleEndian)
         {
             return builder.Append("case ").EmbedNumberUlong(keyLittleEndian).Append(": ").EmbedComment(keyLittleEndian).Append("\r\n");
+        }
+
+        private static StringBuilder EmbedMemberAssignment(this StringBuilder builder, MemberSerializationInfo member)
+        {
+            return builder.Append("__").Append(member.Name).Append("__ = ").Append(member.GetDeserializeMethodString()).Append(';');
         }
     }
 }
