@@ -1510,7 +1510,7 @@ namespace MessagePack.Internal
                 var searchFirst = true;
                 var hiddenIntKey = 0;
 
-                foreach (PropertyInfo item in type.GetRuntimeProperties())
+                foreach (PropertyInfo item in GetAllProperties(type))
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
                     {
@@ -1621,7 +1621,7 @@ namespace MessagePack.Internal
                     }
                 }
 
-                foreach (FieldInfo item in type.GetRuntimeFields())
+                foreach (FieldInfo item in GetAllFields(type))
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
                     {
@@ -1895,6 +1895,40 @@ namespace MessagePack.Internal
                 IsIntKey = isIntKey,
                 Members = members.Where(m => m.IsExplicitContract || constructorParameters.Contains(m) || m.IsWritable).ToArray(),
             };
+        }
+
+        private static IEnumerable<FieldInfo> GetAllFields(Type type)
+        {
+            if (type.BaseType is object)
+            {
+                foreach (var item in GetAllFields(type.BaseType))
+                {
+                    yield return item;
+                }
+            }
+
+            // with declared only
+            foreach (var item in type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                yield return item;
+            }
+        }
+
+        private static IEnumerable<PropertyInfo> GetAllProperties(Type type)
+        {
+            if (type.BaseType is object)
+            {
+                foreach (var item in GetAllProperties(type.BaseType))
+                {
+                    yield return item;
+                }
+            }
+
+            // with declared only
+            foreach (var item in type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                yield return item;
+            }
         }
 
         private static bool TryGetNextConstructor(IEnumerator<ConstructorInfo> ctorEnumerator, ref ConstructorInfo ctor)

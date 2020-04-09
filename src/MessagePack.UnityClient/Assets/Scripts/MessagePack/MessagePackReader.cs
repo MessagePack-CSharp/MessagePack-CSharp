@@ -36,6 +36,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="memory">The buffer to read from.</param>
         public MessagePackReader(ReadOnlyMemory<byte> memory)
+            : this()
         {
             this.reader = new SequenceReader<byte>(memory);
             this.Depth = 0;
@@ -46,6 +47,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="readOnlySequence">The sequence to read from.</param>
         public MessagePackReader(in ReadOnlySequence<byte> readOnlySequence)
+            : this()
         {
             this.reader = new SequenceReader<byte>(readOnlySequence);
             this.Depth = 0;

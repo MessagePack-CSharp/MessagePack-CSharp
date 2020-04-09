@@ -107,6 +107,22 @@ public class MessagePackSecurityTests
     }
 
     [Fact]
+    public void EqualityComparer_Enums()
+    {
+        Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeInt8Enum>());
+        Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeUInt8Enum>());
+        Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeInt16Enum>());
+        Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeUInt16Enum>());
+        Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeInt32Enum>());
+        Assert.NotNull(MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeUInt32Enum>());
+
+        // Supporting enums with backing integers that exceed 32-bits would likely require Ref.Emit of new types
+        // since C# doesn't let us cast T to the underlying int type.
+        Assert.Throws<TypeAccessException>(() => MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeInt64Enum>());
+        Assert.Throws<TypeAccessException>(() => MessagePackSecurity.UntrustedData.GetEqualityComparer<SomeUInt64Enum>());
+    }
+
+    [Fact]
     public void EqualityComparer_ObjectFallback()
     {
         var eq = MessagePackSecurity.UntrustedData.GetEqualityComparer<object>();
@@ -123,6 +139,13 @@ public class MessagePackSecurityTests
         var o = new object();
         Assert.Equal(eq.GetHashCode(o), eq.GetHashCode(o));
         Assert.NotEqual(eq.GetHashCode(o), eq.GetHashCode(new object()));
+    }
+
+    [Fact]
+    public void EqualityComparer_ObjectFallback_AfterCopyCtor()
+    {
+        var security = MessagePackSecurity.UntrustedData.WithMaximumObjectGraphDepth(15);
+        Assert.NotNull(security.GetEqualityComparer<object>());
     }
 
     /// <summary>
@@ -173,6 +196,38 @@ public class MessagePackSecurityTests
 
     [DataContract]
     public class ArbitraryType
+    {
+    }
+
+    public enum SomeInt8Enum : sbyte
+    {
+    }
+
+    public enum SomeUInt8Enum : byte
+    {
+    }
+
+    public enum SomeInt16Enum : short
+    {
+    }
+
+    public enum SomeUInt16Enum : ushort
+    {
+    }
+
+    public enum SomeInt32Enum : int
+    {
+    }
+
+    public enum SomeUInt32Enum : uint
+    {
+    }
+
+    public enum SomeInt64Enum : long
+    {
+    }
+
+    public enum SomeUInt64Enum : ulong
     {
     }
 }

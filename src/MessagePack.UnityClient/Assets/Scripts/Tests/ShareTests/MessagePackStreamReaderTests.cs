@@ -174,5 +174,14 @@ namespace MessagePack.Tests
             new MessagePackStreamReader(ms, leaveOpen: true).Dispose();
             Assert.True(ms.CanSeek);
         }
+
+        [Fact]
+        public void DoubleDisposal()
+        {
+            var ms = new MemoryStream();
+            var reader = new MessagePackStreamReader(ms);
+            reader.Dispose();
+            reader.Dispose();
+        }
     }
 }

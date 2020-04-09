@@ -3,6 +3,7 @@
   "version": "2.2-alpha",
   "publicReleaseRefSpec": [
     "^refs/heads/master$",
+    "^refs/heads/v1\\.x$",
     "^refs/heads/v\\d+(?:.\\d+)?$"
   ]
 }

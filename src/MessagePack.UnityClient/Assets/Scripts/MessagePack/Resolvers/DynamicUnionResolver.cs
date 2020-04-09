@@ -326,8 +326,8 @@ namespace MessagePack.Resolvers
 
             // read-array header and validate, reader.ReadArrayHeader() != 2) throw;
             Label rightLabel = il.DefineLabel();
-            var writer = new ArgumentField(il, 1);
-            writer.EmitLdarg();
+            var reader = new ArgumentField(il, 1);
+            reader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.ReadArrayHeader);
             il.EmitLdc_I4(2);
             il.Emit(OpCodes.Beq_S, rightLabel);
@@ -339,7 +339,7 @@ namespace MessagePack.Resolvers
 
             // read key
             LocalBuilder key = il.DeclareLocal(typeof(int));
-            writer.EmitLdarg();
+            reader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.ReadInt32);
             il.EmitStloc(key);
 
@@ -370,7 +370,7 @@ namespace MessagePack.Resolvers
             il.Emit(OpCodes.Switch, switchLabels.Select(x => x.Label).ToArray());
 
             // default
-            writer.EmitLdarg();
+            reader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.Skip);
             il.Emit(OpCodes.Br, loopEnd);
 
@@ -478,30 +478,6 @@ namespace MessagePack.Resolvers
             internal static readonly MethodInfo WriteArrayHeader = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteArrayHeader), new[] { typeof(int) });
             internal static readonly MethodInfo WriteInt32 = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.Write), new[] { typeof(int) });
             internal static readonly MethodInfo WriteNil = typeof(MessagePackWriter).GetRuntimeMethod(nameof(MessagePackWriter.WriteNil), Type.EmptyTypes);
-        }
-    }
-}
-
-namespace MessagePack.Internal
-{
-    // RuntimeTypeHandle can embed directly by OpCodes.Ldtoken
-    // It does not implements IEquatable<T>(but GetHashCode and Equals is implemented) so needs this to avoid boxing.
-    public class RuntimeTypeHandleEqualityComparer : IEqualityComparer<RuntimeTypeHandle>
-    {
-        public static readonly IEqualityComparer<RuntimeTypeHandle> Default = new RuntimeTypeHandleEqualityComparer();
-
-        private RuntimeTypeHandleEqualityComparer()
-        {
-        }
-
-        public bool Equals(RuntimeTypeHandle x, RuntimeTypeHandle y)
-        {
-            return x.Equals(y);
-        }
-
-        public int GetHashCode(RuntimeTypeHandle obj)
-        {
-            return obj.GetHashCode();
         }
     }
 

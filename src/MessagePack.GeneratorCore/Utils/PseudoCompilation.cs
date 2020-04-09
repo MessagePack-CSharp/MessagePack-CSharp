@@ -54,7 +54,7 @@ namespace MessagePack.GeneratorCore.Utils
             var compilation = CSharpCompilation.Create(
                 "CodeGenTemp",
                 syntaxTrees,
-                metadata,
+                DistinctReference(metadata),
                 new CSharpCompilationOptions(
                     OutputKind.DynamicallyLinkedLibrary,
                     allowUnsafe: true,
@@ -86,10 +86,22 @@ namespace MessagePack.GeneratorCore.Utils
             var compilation = CSharpCompilation.Create(
                 "CodeGenTemp",
                 syntaxTrees,
-                metadata,
+                DistinctReference(metadata),
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, allowUnsafe: true));
 
             return compilation;
+        }
+
+        private static IEnumerable<MetadataReference> DistinctReference(IEnumerable<MetadataReference> metadataReferences)
+        {
+            var set = new HashSet<string>();
+            foreach (var item in metadataReferences)
+            {
+                if (set.Add(Path.GetFileName(item.Display)))
+                {
+                    yield return item;
+                }
+            }
         }
 
         private static List<string> GetStandardReferences()
@@ -401,8 +413,13 @@ namespace MessagePack.GeneratorCore.Utils
 
         private static IEnumerable<string> GetCompileFullPaths(XElement compile, string includeOrRemovePattern, string csProjRoot)
         {
+            if (string.IsNullOrEmpty(csProjRoot))
+            {
+                csProjRoot = "./";
+            }
+
             // solve macro
-            includeOrRemovePattern = includeOrRemovePattern.Replace("$(ProjectDir)", csProjRoot);
+            includeOrRemovePattern = includeOrRemovePattern.Replace("$(ProjectDir)", csProjRoot).Replace("$(MSBuildProjectDirectory)", csProjRoot);
 
             var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
             matcher.AddIncludePatterns(includeOrRemovePattern.Split(';'));
