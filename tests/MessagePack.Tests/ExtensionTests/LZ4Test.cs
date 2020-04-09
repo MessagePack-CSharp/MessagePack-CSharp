@@ -1,31 +1,35 @@
-﻿using SharedData;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SharedData;
 using Xunit;
 
 namespace MessagePack.Tests.ExtensionTests
 {
-
     public class LZ4Test
     {
-        T Convert<T>(T value)
-        {
-            var resolver = new WithImmutableDefaultResolver();
-            return LZ4MessagePackSerializer.Deserialize<T>(LZ4MessagePackSerializer.Serialize(value, resolver), resolver);
-        }
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
 
+        private T Convert<T>(T value)
+        {
+            MessagePackSerializerOptions options = LZ4Standard.WithResolver(new WithImmutableDefaultResolver());
+            return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
+        }
 
         [Fact]
         public void TestSmall()
         {
             // small size binary don't use LZ4 Encode
-            MessagePackBinary.GetMessagePackType(LZ4MessagePackSerializer.Serialize(100), 0).Is(MessagePackType.Integer);
-            MessagePackBinary.GetMessagePackType(LZ4MessagePackSerializer.Serialize("test"), 0).Is(MessagePackType.String);
-            MessagePackBinary.GetMessagePackType(LZ4MessagePackSerializer.Serialize(false), 0).Is(MessagePackType.Boolean);
+            PeekMessagePackType(MessagePackSerializer.Serialize(100, LZ4Standard)).Is(MessagePackType.Integer);
+            PeekMessagePackType(MessagePackSerializer.Serialize("test", LZ4Standard)).Is(MessagePackType.String);
+            PeekMessagePackType(MessagePackSerializer.Serialize(false, LZ4Standard)).Is(MessagePackType.Boolean);
         }
 
         [Fact]
@@ -33,14 +37,14 @@ namespace MessagePack.Tests.ExtensionTests
         {
             var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();
 
-            var lz4Data = LZ4MessagePackSerializer.Serialize(originalData);
+            var lz4Data = MessagePackSerializer.Serialize(originalData, LZ4Standard);
 
-            MessagePackBinary.GetMessagePackType(lz4Data, 0).Is(MessagePackType.Extension);
-            int r;
-            var header = MessagePackBinary.ReadExtensionFormatHeader(lz4Data, 0, out r);
-            header.TypeCode.Is((sbyte)LZ4MessagePackSerializer.ExtensionTypeCode);
+            PeekMessagePackType(lz4Data).Is(MessagePackType.Extension);
+            var lz4DataReader = new MessagePackReader(lz4Data);
+            ExtensionHeader header = lz4DataReader.ReadExtensionFormatHeader();
+            header.TypeCode.Is(ThisLibraryExtensionTypeCodes.Lz4Block);
 
-            var decompress = LZ4MessagePackSerializer.Deserialize<int[]>(lz4Data);
+            var decompress = MessagePackSerializer.Deserialize<int[]>(lz4Data, LZ4Standard);
 
             decompress.Is(originalData);
         }
@@ -48,16 +52,16 @@ namespace MessagePack.Tests.ExtensionTests
         [Fact]
         public void NonGenericAPI()
         {
-            var originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
+            FirstSimpleData[] originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
 
-            var lz4Data = LZ4MessagePackSerializer.NonGeneric.Serialize(typeof(FirstSimpleData[]), originalData);
+            var lz4Data = MessagePackSerializer.Serialize(typeof(FirstSimpleData[]), originalData, LZ4Standard);
 
-            MessagePackBinary.GetMessagePackType(lz4Data, 0).Is(MessagePackType.Extension);
-            int r;
-            var header = MessagePackBinary.ReadExtensionFormatHeader(lz4Data, 0, out r);
-            header.TypeCode.Is((sbyte)LZ4MessagePackSerializer.ExtensionTypeCode);
+            PeekMessagePackType(lz4Data).Is(MessagePackType.Extension);
+            var lz4DataReader = new MessagePackReader(lz4Data);
+            ExtensionHeader header = lz4DataReader.ReadExtensionFormatHeader();
+            header.TypeCode.Is(ThisLibraryExtensionTypeCodes.Lz4Block);
 
-            var decompress = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), lz4Data);
+            var decompress = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), lz4Data, LZ4Standard);
 
             decompress.IsStructuralEqual(originalData);
         }
@@ -65,20 +69,20 @@ namespace MessagePack.Tests.ExtensionTests
         [Fact]
         public void StreamAPI()
         {
-            var originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
+            FirstSimpleData[] originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
 
             var ms = new MemoryStream();
-            LZ4MessagePackSerializer.NonGeneric.Serialize(typeof(FirstSimpleData[]), ms, originalData);
+            MessagePackSerializer.Serialize(typeof(FirstSimpleData[]), ms, originalData, LZ4Standard);
 
-            var lz4normal = LZ4MessagePackSerializer.NonGeneric.Serialize(typeof(FirstSimpleData[]), originalData);
+            var lz4normal = MessagePackSerializer.Serialize(typeof(FirstSimpleData[]), originalData, LZ4Standard);
 
             ms.Position = 0;
 
             lz4normal.SequenceEqual(ms.ToArray()).IsTrue();
 
-            var decompress1 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), ms.ToArray());
-            var decompress2 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), lz4normal);
-            var decompress3 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), ms);
+            var decompress1 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), ms.ToArray(), LZ4Standard);
+            var decompress2 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), lz4normal, LZ4Standard);
+            var decompress3 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), ms, LZ4Standard);
 
             decompress1.IsStructuralEqual(originalData);
             decompress2.IsStructuralEqual(originalData);
@@ -88,24 +92,24 @@ namespace MessagePack.Tests.ExtensionTests
         [Fact]
         public void ArraySegmentAPI()
         {
-            var originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
+            FirstSimpleData[] originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
 
             var ms = new MemoryStream();
-            LZ4MessagePackSerializer.NonGeneric.Serialize(typeof(FirstSimpleData[]), ms, originalData);
+            MessagePackSerializer.Serialize(typeof(FirstSimpleData[]), ms, originalData, LZ4Standard);
             ms.Position = 0;
 
-            var lz4normal = LZ4MessagePackSerializer.Serialize(originalData);
+            var lz4normal = MessagePackSerializer.Serialize(originalData, LZ4Standard);
 
             var paddingOffset = 10;
             var paddedLz4Normal = new byte[lz4normal.Length + paddingOffset + paddingOffset];
-            Array.Copy(lz4normal,0, paddedLz4Normal, paddingOffset, lz4normal.Length);
+            Array.Copy(lz4normal, 0, paddedLz4Normal, paddingOffset, lz4normal.Length);
 
-            var decompress1 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), ms.ToArray());
-            var decompress2 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), lz4normal);
-            var decompress3 = LZ4MessagePackSerializer.NonGeneric.Deserialize(typeof(FirstSimpleData[]), ms);
-            var decompress4 = LZ4MessagePackSerializer.Deserialize<FirstSimpleData[]>(lz4normal);
-            var decompress5 = LZ4MessagePackSerializer.Deserialize<FirstSimpleData[]>(new ArraySegment<byte>(lz4normal));
-            var decompress6 = LZ4MessagePackSerializer.Deserialize<FirstSimpleData[]>(new ArraySegment<byte>(paddedLz4Normal, paddingOffset, lz4normal.Length));
+            var decompress1 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), ms.ToArray(), LZ4Standard);
+            var decompress2 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), lz4normal, LZ4Standard);
+            var decompress3 = MessagePackSerializer.Deserialize(typeof(FirstSimpleData[]), ms, LZ4Standard);
+            FirstSimpleData[] decompress4 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(lz4normal, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block));
+            FirstSimpleData[] decompress5 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(new ArraySegment<byte>(lz4normal), LZ4Standard);
+            FirstSimpleData[] decompress6 = MessagePackSerializer.Deserialize<FirstSimpleData[]>(new ArraySegment<byte>(paddedLz4Normal, paddingOffset, lz4normal.Length), LZ4Standard);
 
             decompress1.IsStructuralEqual(originalData);
             decompress2.IsStructuralEqual(originalData);
@@ -115,36 +119,27 @@ namespace MessagePack.Tests.ExtensionTests
             decompress6.IsStructuralEqual(originalData);
         }
 
-        [Fact]
-        public void SerializeToBlock()
+        private static MessagePackType PeekMessagePackType(byte[] msgpackBuffer)
         {
-            var originalData = Enumerable.Range(1, 1000).Select(x => x).ToArray();
-
-            byte[] bytes = null;
-
-            var len = LZ4MessagePackSerializer.SerializeToBlock(ref bytes, 0, originalData, MessagePackSerializer.DefaultResolver);
-            var lz4Data = LZ4MessagePackSerializer.Serialize(originalData);
-
-            len.Is(lz4Data.Length);
-
-            for (int i = 0; i < len; i++)
-            {
-                if (bytes[i] != lz4Data[i]) throw new AssertException("not same");
-            }
+            var reader = new MessagePackReader(new ReadOnlySequence<byte>(msgpackBuffer));
+            return reader.NextMessagePackType;
         }
 
         [Fact]
-        public void Decode()
+        public void BigList()
         {
-            var originalData = Enumerable.Range(1, 100).Select(x => new FirstSimpleData { Prop1 = x * x, Prop2 = "hoge", Prop3 = x }).ToArray();
-            var simple = LZ4MessagePackSerializer.Serialize(100);
-            var complex = LZ4MessagePackSerializer.Serialize(originalData);
+            int capacity = 21974;
+            List<long> list = new List<long>(capacity);
+            for (long i = 0; i < capacity; i++)
+            {
+                list.Add(i);
+            }
 
-            var msgpack1 = LZ4MessagePackSerializer.Decode(simple);
-            var msgpack2 = LZ4MessagePackSerializer.Decode(complex);
+            var data = MessagePackSerializer.Serialize(list, LZ4Standard);
+            data.Length.IsNot(11);
 
-            MessagePackSerializer.Deserialize<int>(msgpack1).Is(100);
-            MessagePackSerializer.Deserialize<FirstSimpleData[]>(msgpack2).IsStructuralEqual(originalData);
+            List<long> testList = MessagePackSerializer.Deserialize<List<long>>(data, LZ4Standard);
+            testList.Count.Is(list.Count);
         }
     }
 }

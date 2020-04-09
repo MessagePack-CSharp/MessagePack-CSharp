@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="Microsoft Managed Recommended Rules" Description="These rules focus on the most critical problems in your code, including potential security holes, application crashes, and other important logic and design errors. It is recommended to include this rule set in any custom rule set you create for your projects." ToolsVersion="10.0">
+  <Include Path="..\..\MessagePack.ruleset" Action="Default" />
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.Analyzers" RuleNamespace="Microsoft.CodeAnalysis.Analyzers">
+    <Rule Id="RS1001" Action="None" />
+    <Rule Id="RS1004" Action="None" />
+    <Rule Id="RS1007" Action="None" />
+    <Rule Id="RS1009" Action="None" />
+    <Rule Id="RS1010" Action="None" />
+    <Rule Id="RS1011" Action="None" />
+    <Rule Id="RS1015" Action="None" />
+    <Rule Id="RS1016" Action="None" />
+    <Rule Id="RS1017" Action="None" />
+    <Rule Id="RS1018" Action="None" />
+    <Rule Id="RS1019" Action="None" />
+    <Rule Id="RS1020" Action="None" />
+    <Rule Id="RS1021" Action="None" />
+  </Rules>
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp.Analyzers" RuleNamespace="Microsoft.CodeAnalysis.CSharp.Analyzers">
+    <Rule Id="RS1002" Action="None" />
+    <Rule Id="RS1003" Action="None" />
+    <Rule Id="RS1005" Action="None" />
+    <Rule Id="RS1006" Action="None" />
+    <Rule Id="RS1008" Action="None" />
+    <Rule Id="RS1012" Action="None" />
+    <Rule Id="RS1013" Action="None" />
+    <Rule Id="RS1014" Action="None" />
+    <Rule Id="RS1022" Action="None" />
+    <Rule Id="RS1023" Action="None" />
+  </Rules>
+</RuleSet>

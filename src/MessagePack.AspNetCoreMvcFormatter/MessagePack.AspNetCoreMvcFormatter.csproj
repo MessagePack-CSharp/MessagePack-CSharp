@@ -1,22 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netcoreapp3.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <Title>ASP.NET Core MVC Input/Output MessagePack formatter</Title>
+    <Description>ASP.NET Core MVC Input/Output MessagePack formatter.</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;aspnetcore;aspnetcoremvc</PackageTags>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFrameworks>netstandard1.6;netstandard2.0;</TargetFrameworks>
-        <SignAssembly>True</SignAssembly>
-        <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.AspNetCoreMvcFormatter.xml</DocumentationFile>
-    </PropertyGroup>
-
-    <ItemGroup>
+  <Choose>
+    <When Condition="'$(TargetFramework)'=='netcoreapp3.0'">
+      <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="1.1.2" />
-    </ItemGroup>
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
 
-    <ItemGroup>
-      <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-    </ItemGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
 </Project>

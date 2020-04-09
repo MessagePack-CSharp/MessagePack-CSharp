@@ -1,27 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net47</TargetFrameworks>
-        <RootNamespace>MessagePack.Unity</RootNamespace>
-        <SignAssembly>True</SignAssembly>
-        <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>MessagePack.Unity</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DocumentationFile>bin\Release\netstandard2.0\MessagePack.UnityShims.xml</DocumentationFile>
-        <NoWarn>1701;1702;1705;1591</NoWarn>
-        <DefineConstants>TRACE;RELEASE;NETSTANDARD;ENABLE_UNSAFE_MSGPACK</DefineConstants>
-    </PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Title>MessagePack for C# Extension Support for Unity(add pseudo Vector type and fast Vectory[] extension formatter)</Title>
+    <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for Unity.</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity</PackageTags>
+  </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <DefineConstants>TRACE;DEBUG;NETSTANDARD;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
-    </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Unity\**\*.cs"
+             Exclude="**\MessagePackWindow.cs"/>
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\ThisLibraryExtensionTypeCodes.cs" Link="ThisLibraryExtensionTypeCodes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
 
 </Project>

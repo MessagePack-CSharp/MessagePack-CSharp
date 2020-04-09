@@ -1,0 +1,34 @@
+steps:
+- powershell: Write-Host "##vso[task.setvariable variable=unity_package_version;]$((& (./azure-pipelines/Get-nbgv.ps1) get-version -f json | ConvertFrom-Json).NuGetPackageVersion)"
+  displayName: Get unity package version
+
+- script: dotnet publish src/MessagePack -c $(BuildConfiguration) -f netstandard2.0
+  displayName: Build MessagePack
+
+- script: src/MessagePack.UnityClient/build.sh -l $(Build.ArtifactStagingDirectory)/build_logs/unitypackage.log
+  displayName: Build Unity package
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: $(Build.ArtifactStagingDirectory)/build_logs
+    ArtifactName: build_logs
+    ArtifactType: Container
+  displayName: Publish build_logs artifacts
+  condition: succeededOrFailed()
+
+- task: CopyFiles@1
+  inputs:
+    Contents: |
+      bin/*.unitypackage
+    TargetFolder: $(Build.ArtifactStagingDirectory)/unity
+    flattenFolders: true
+  displayName: Collecting deployables
+  condition: succeededOrFailed()
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: $(Build.ArtifactStagingDirectory)/unity
+    ArtifactName: unity
+    ArtifactType: Container
+  displayName: Publish deployables artifacts
+  condition: succeededOrFailed()

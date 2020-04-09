@@ -1,0 +1,56 @@
+trigger:
+  branches:
+    include:
+    - master
+    - 'v?.*'
+    - 'validate/*'
+  paths:
+    exclude: ["doc", "*.md"]
+
+variables:
+  TreatWarningsAsErrors: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  BuildConfiguration: Release
+  BuildPlatform: Any CPU
+
+jobs:
+- job: Windows
+  pool:
+    vmImage: windows-2019
+  steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/install-dependencies.yml
+
+  - powershell: '& (./azure-pipelines/Get-nbgv.ps1) cloud'
+    displayName: Set build number
+
+  - template: azure-pipelines/build.yml
+
+- job: Unity
+  pool:
+    name: CustomAgents
+    demands: UNITYHUB_EDITORS_FOLDER_LOCATION
+  steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/install-dependencies.yml
+  - template: azure-pipelines/build_unity.yml
+
+- job: Linux
+  pool:
+    vmImage: Ubuntu 16.04
+  steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/install-dependencies.yml
+  - template: azure-pipelines/build_nonWindows.yml
+
+- job: macOS
+  pool:
+    vmImage: macOS-10.15
+  steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/install-dependencies.yml
+  - template: azure-pipelines/build_nonWindows.yml

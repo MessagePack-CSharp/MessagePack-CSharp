@@ -6,6 +6,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+launchSettings.json
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -40,11 +41,6 @@ TestResult.xml
 [Rr]eleasePS/
 dlldata.c
 
-# DNX
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
 *_i.c
 *_p.c
 *_i.h
@@ -62,6 +58,7 @@ artifacts/
 *.tmp
 *.tmp_proj
 *.log
+*.binlog
 *.vspscc
 *.vssscc
 .builds
@@ -282,3 +279,6 @@ nuget/unity*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# BenchmarkDotNet results
+BenchmarkDotNet.Artifacts/

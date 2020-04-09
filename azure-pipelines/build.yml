@@ -1,0 +1,40 @@
+steps:
+# Use VSBuild to pack because `dotnet pack` can't build VSIX projects.
+- task: VSBuild@1
+  inputs:
+    vsVersion: 16.0
+    solution: MessagePack.sln
+    msbuildArgs: /t:build,pack /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.binlog"
+    platform: $(BuildPlatform)
+    configuration: $(BuildConfiguration)
+  displayName: Build MessagePack.sln
+
+- task: DotNetCoreCLI@2
+  displayName: Run tests
+  inputs:
+    command: test
+    projects: tests/**/*.Tests.csproj
+    arguments: --configuration $(BuildConfiguration) --no-build -v n
+    testRunTitle: $(Agent.JobName)
+
+- script: |
+    dotnet publish src/MessagePack.Generator -r win-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+    dotnet publish src/MessagePack.Generator -r osx-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+    dotnet publish src/MessagePack.Generator -r linux-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
+  displayName: Building standalone mpc tool for all OSs
+
+## The rest of these steps are for deployment and skipped for PR builds
+
+- task: PowerShell@2
+  inputs:
+    filePath: azure-pipelines/variables/_pipelines.ps1
+    failOnStderr: true
+  displayName: Update pipeline variables based on build outputs
+  condition: succeededOrFailed()
+
+- task: PowerShell@2
+  inputs:
+    filePath: azure-pipelines/artifacts/_pipelines.ps1
+    # arguments: -ArtifactNameSuffix "-$(Agent.JobName)"
+  displayName: Publish artifacts
+  condition: succeededOrFailed()

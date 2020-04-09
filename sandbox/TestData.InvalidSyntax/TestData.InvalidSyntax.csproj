@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MessagePack" version="1.6.1" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" version="4.5.1" />
+    <PackageReference Include="System.ValueTuple" version="4.5.0" />
+  </ItemGroup>
+</Project>

@@ -1,26 +1,33 @@
-﻿using MessagePack;
-using System.Linq;
-using MessagePack.Formatters;
-using MessagePack.Resolvers;
+﻿// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+using System.Buffers;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using ZeroFormatter;
-using System.Collections.Generic;
+using System.IO.Compression;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using MessagePack;
+using MessagePack.Formatters;
 using MessagePack.Internal;
+using MessagePack.Resolvers;
+using Newtonsoft.Json;
 using ProtoBuf;
 using SharedData;
-using System.Collections;
 using UnityEngine;
-using Newtonsoft.Json;
-using System.Text;
-using System.IO.Compression;
-using System.Collections.Concurrent;
-using System.Reflection;
+using ZeroFormatter;
+
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+#pragma warning disable SA1649 // File name should match first type name
 
 namespace Sandbox
 {
-
     [ZeroFormattable]
     [ProtoBuf.ProtoContract]
     [MessagePackObject]
@@ -31,16 +38,19 @@ namespace Sandbox
         [MsgPack.Serialization.MessagePackMember(0)]
         [ProtoMember(1)]
         public virtual int Age { get; set; }
+
         [Index(1)]
         [Key(1)]
         [MsgPack.Serialization.MessagePackMember(1)]
         [ProtoMember(2)]
         public virtual string FirstName { get; set; }
+
         [Index(2)]
         [Key(2)]
         [MsgPack.Serialization.MessagePackMember(2)]
         [ProtoMember(3)]
         public virtual string LastName { get; set; }
+
         [Index(3)]
         [MsgPack.Serialization.MessagePackMember(3)]
         [Key(3)]
@@ -49,26 +59,28 @@ namespace Sandbox
 
         public bool Equals(Person other)
         {
-            return Age == other.Age && FirstName == other.FirstName && LastName == other.LastName && Sex == other.Sex;
+            return this.Age == other.Age && this.FirstName == other.FirstName && this.LastName == other.LastName && this.Sex == other.Sex;
         }
     }
 
     public enum Sex : sbyte
     {
-        Unknown, Male, Female,
+        Unknown,
+        Male,
+        Female,
     }
 
     public class TestCollection<T> : ICollection<T>
     {
         public List<T> internalCollection = new List<T>();
 
-        public int Count => internalCollection.Count;
+        public int Count => this.internalCollection.Count;
 
         public bool IsReadOnly => throw new NotImplementedException();
 
         public void Add(T item)
         {
-            internalCollection.Add(item);
+            this.internalCollection.Add(item);
         }
 
         public void Clear()
@@ -88,7 +100,7 @@ namespace Sandbox
 
         public IEnumerator<T> GetEnumerator()
         {
-            return internalCollection.GetEnumerator();
+            return this.internalCollection.GetEnumerator();
         }
 
         public bool Remove(T item)
@@ -102,13 +114,16 @@ namespace Sandbox
         }
     }
 
-
     [MessagePackObject(true)]
     public class Takox
     {
+#pragma warning disable SA1300 // Element should begin with upper-case letter
         public int hoga { get; set; }
+
         public int huga { get; set; }
+
         public int tako { get; set; }
+#pragma warning restore SA1300 // Element should begin with upper-case letter
     }
 
     [MessagePackObject]
@@ -126,15 +141,15 @@ namespace Sandbox
 
         // public members and does not serialize target, mark IgnoreMemberttribute
         [IgnoreMember]
-        public string FullName { get { return FirstName + LastName; } }
+        public string FullName => this.FirstName + this.LastName;
     }
-
 
     [MessagePackObject(keyAsPropertyName: true)]
     public class Sample1
     {
         [Key(0)]
         public int Foo { get; set; }
+
         [Key(1)]
         public int Bar { get; set; }
     }
@@ -144,25 +159,25 @@ namespace Sandbox
     {
         [Key("foo")]
         public int Foo { get; set; }
+
         [Key("bar")]
         public int Bar { get; set; }
     }
-
 
     [MessagePackObject]
     public class IntKeySample
     {
         [Key(3)]
         public int A { get; set; }
+
         [Key(10)]
         public int B { get; set; }
     }
 
-
-
     public class ContractlessSample
     {
         public int MyProperty1 { get; set; }
+
         public int MyProperty2 { get; set; }
     }
 
@@ -183,8 +198,6 @@ namespace Sandbox
         }
     }
 
-
-
     [MessagePackObject]
     public struct Point
     {
@@ -196,8 +209,8 @@ namespace Sandbox
         // can't find matched constructor parameter, parameterType mismatch. type:Point parameterIndex:0 paramterType:ValueTuple`2
         public Point((int, int) p)
         {
-            X = p.Item1;
-            Y = p.Item2;
+            this.X = p.Item1;
+            this.Y = p.Item2;
         }
 
         [SerializationConstructor]
@@ -229,11 +242,10 @@ namespace Sandbox
         public string OPQ { get; set; }
     }
 
-
     [MessagePackFormatter(typeof(CustomObjectFormatter))]
     public class CustomObject
     {
-        string internalId;
+        private string internalId;
 
         public CustomObject()
         {
@@ -241,16 +253,16 @@ namespace Sandbox
         }
 
         // serialize/deserialize internal field.
-        class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
+        private class CustomObjectFormatter : IMessagePackFormatter<CustomObject>
         {
-            public int Serialize(ref byte[] bytes, int offset, CustomObject value, IFormatterResolver formatterResolver)
+            public void Serialize(ref MessagePackWriter writer, CustomObject value, MessagePackSerializerOptions options)
             {
-                return formatterResolver.GetFormatterWithVerify<string>().Serialize(ref bytes, offset, value.internalId, formatterResolver);
+                options.Resolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.internalId, options);
             }
 
-            public CustomObject Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+            public CustomObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
-                var id = formatterResolver.GetFormatterWithVerify<string>().Deserialize(bytes, offset, formatterResolver, out readSize);
+                var id = options.Resolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                 return new CustomObject { internalId = id };
             }
         }
@@ -265,7 +277,7 @@ namespace Sandbox
     {
         public Event(string name)
         {
-            Name = name;
+            this.Name = name;
         }
 
         public string Name { get; }
@@ -275,7 +287,7 @@ namespace Sandbox
     {
         public Holder(IEntity entity)
         {
-            Entity = entity;
+            this.Entity = entity;
         }
 
         public IEntity Entity { get; }
@@ -291,24 +303,25 @@ namespace Sandbox
     {
         [Key(0)]
         public int X { get; set; }
+
         [IgnoreMember]
         public bool CalledBefore { get; private set; }
+
         [IgnoreMember]
         public bool CalledAfter { get; private set; }
 
         public Callback1(int x)
         {
-
         }
 
         public void OnBeforeSerialize()
         {
-            CalledBefore = true;
+            this.CalledBefore = true;
         }
 
         public void OnAfterDeserialize()
         {
-            CalledAfter = true;
+            this.CalledAfter = true;
         }
     }
 
@@ -316,75 +329,80 @@ namespace Sandbox
     public class SimpleIntKeyData
     {
         [Key(0)]
-        //[MessagePackFormatter(typeof(OreOreFormatter))]
+        ////[MessagePackFormatter(typeof(OreOreFormatter))]
         public int Prop1 { get; set; }
+
         [Key(1)]
         public ByteEnum Prop2 { get; set; }
+
         [Key(2)]
         public string Prop3 { get; set; }
+
         [Key(3)]
-        public SimlpeStringKeyData Prop4 { get; set; }
+        public SimpleStringKeyData Prop4 { get; set; }
+
         [Key(4)]
         public SimpleStructIntKeyData Prop5 { get; set; }
+
         [Key(5)]
         public SimpleStructStringKeyData Prop6 { get; set; }
+
         [Key(6)]
         public byte[] BytesSpecial { get; set; }
-        //[Key(7)]
-        //[MessagePackFormatter(typeof(OreOreFormatter2), 100, "hogehoge")]
-        //[MessagePackFormatter(typeof(OreOreFormatter))]
-        //public int Prop7 { get; set; }
+
+        ////[Key(7)]
+        ////[MessagePackFormatter(typeof(OreOreFormatter2), 100, "hogehoge")]
+        ////[MessagePackFormatter(typeof(OreOreFormatter))]
+        ////public int Prop7 { get; set; }
     }
 
-
-
-    class Program
+    [MessagePack.MessagePackObject(true)]
+    public class StringKeySerializerTarget2
     {
-        static void Main(string[] args)
+        public int TotalQuestions { get; set; }
+
+        public int TotalUnanswered { get; set; }
+
+        public int QuestionsPerMinute { get; set; }
+
+        public int AnswersPerMinute { get; set; }
+
+        public int TotalVotes { get; set; }
+
+        public int BadgesPerMinute { get; set; }
+
+        public int NewActiveUsers { get; set; }
+
+        public int ApiRevision { get; set; }
+
+        public int Site { get; set; }
+    }
+
+    internal class Program
+    {
+        private static readonly MessagePackSerializerOptions LZ4Standard = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+
+        private static void Main(string[] args)
         {
-            var o = new SimpleIntKeyData()
-            {
-                Prop1 = 100,
-                Prop2 = ByteEnum.C,
-                Prop3 = "abcde",
-                Prop4 = new SimlpeStringKeyData
-                {
-                    Prop1 = 99999,
-                    Prop2 = ByteEnum.E,
-                    Prop3 = 3
-                },
-                Prop5 = new SimpleStructIntKeyData
-                {
-                    X = 100,
-                    Y = 300,
-                    BytesSpecial = new byte[] { 9, 99, 122 }
-                },
-                Prop6 = new SimpleStructStringKeyData
-                {
-                    X = 9999,
-                    Y = new[] { 1, 10, 100 }
-                },
-                BytesSpecial = new byte[] { 1, 4, 6 }
-            };
+            var option = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
+            var data = Enumerable.Range(0, 10000).Select(x => new StringKeySerializerTarget2()).ToArray();
 
-            MessagePackSerializer.Serialize(o);
-
-
+            var bin = MessagePackSerializer.Serialize(data, option);
+            Console.WriteLine(bin.Length);
         }
 
-        static void Benchmark<T>(T target)
+        private static void Benchmark<T>(T target)
         {
             const int Iteration = 10000; // 10000
 
             var jsonSerializer = new JsonSerializer();
-            var msgpack = MsgPack.Serialization.SerializationContext.Default;
+            MsgPack.Serialization.SerializationContext msgpack = MsgPack.Serialization.SerializationContext.Default;
             msgpack.GetSerializer<T>().PackSingleObject(target);
-            MessagePack.MessagePackSerializer.Serialize(target);
-            LZ4MessagePackSerializer.Serialize(target);
+            MessagePackSerializer.Serialize(target);
+            MessagePackSerializer.Serialize(target, LZ4Standard);
             ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
             ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
-
 
             Console.WriteLine(typeof(T).Name + " serialization test");
             Console.WriteLine();
@@ -409,7 +427,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data0 = MessagePack.MessagePackSerializer.Serialize(target);
+                    data0 = MessagePackSerializer.Serialize(target);
                 }
             }
 
@@ -417,7 +435,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data3 = LZ4MessagePackSerializer.Serialize(target);
+                    data3 = MessagePackSerializer.Serialize(target, LZ4Standard);
                 }
             }
 
@@ -480,8 +498,10 @@ namespace Sandbox
                 {
                     jsonSerializer.Serialize(jw, target);
                 }
+
                 dataJson = ms.ToArray();
             }
+
             using (var ms = new MemoryStream())
             {
                 using (var gzip = new GZipStream(ms, CompressionLevel.Fastest))
@@ -490,15 +510,15 @@ namespace Sandbox
                 {
                     jsonSerializer.Serialize(jw, target);
                 }
+
                 dataGzipJson = ms.ToArray();
             }
 
-
             msgpack.GetSerializer<T>().UnpackSingleObject(data);
-            MessagePack.MessagePackSerializer.Deserialize<T>(data0);
+            MessagePackSerializer.Deserialize<T>(data0);
             ZeroFormatterSerializer.Deserialize<T>(data1);
             ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
-            LZ4MessagePackSerializer.Deserialize<T>(data3);
+            MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
@@ -516,7 +536,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    MessagePack.MessagePackSerializer.Deserialize<T>(data0);
+                    MessagePackSerializer.Deserialize<T>(data0);
                 }
             }
 
@@ -524,7 +544,7 @@ namespace Sandbox
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    LZ4MessagePackSerializer.Deserialize<T>(data3);
+                    MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
                 }
             }
 
@@ -576,60 +596,90 @@ namespace Sandbox
 
             Console.WriteLine();
             Console.WriteLine("FileSize::");
-            var label = "";
-            label = "MsgPack-Cli"; Console.WriteLine($"{label,20}   {data.Length} Byte");
-            label = "MessagePack-CSharp"; Console.WriteLine($"{label,20}   {data0.Length} Byte");
-            label = "MessagePack(LZ4)"; Console.WriteLine($"{label,20}   {data3.Length} Byte");
-            label = "ZeroFormatter"; Console.WriteLine($"{label,20}   {data1.Length} Byte");
-            label = "protobuf-net"; Console.WriteLine($"{label,20}   {data2.Length} Byte");
-            label = "JsonNet"; Console.WriteLine($"{label,20}   {dataJson.Length} Byte");
-            label = "JsonNet+GZip"; Console.WriteLine($"{label,20}   {dataGzipJson.Length} Byte");
+            var label = string.Empty;
+            label = "MsgPack-Cli";
+            Console.WriteLine($"{label,20}   {data.Length} Byte");
+            label = "MessagePack-CSharp";
+            Console.WriteLine($"{label,20}   {data0.Length} Byte");
+            label = "MessagePack(LZ4)";
+            Console.WriteLine($"{label,20}   {data3.Length} Byte");
+            label = "ZeroFormatter";
+            Console.WriteLine($"{label,20}   {data1.Length} Byte");
+            label = "protobuf-net";
+            Console.WriteLine($"{label,20}   {data2.Length} Byte");
+            label = "JsonNet";
+            Console.WriteLine($"{label,20}   {dataJson.Length} Byte");
+            label = "JsonNet+GZip";
+            Console.WriteLine($"{label,20}   {dataGzipJson.Length} Byte");
 
             Console.WriteLine();
             Console.WriteLine();
         }
 
-
-        static string ToHumanReadableSize(long size)
+        private static string ToHumanReadableSize(long size)
         {
-            return ToHumanReadableSize(new Nullable<long>(size));
+            return ToHumanReadableSize(new long?(size));
         }
 
-        static string ToHumanReadableSize(long? size)
+        private static string ToHumanReadableSize(long? size)
         {
-            if (size == null) return "NULL";
+            if (size == null)
+            {
+                return "NULL";
+            }
 
             double bytes = size.Value;
 
-            if (bytes <= 1024) return bytes.ToString("f2") + " B";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " B";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " KB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " KB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " MB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " MB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " GB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " GB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " TB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " TB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " PB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " PB";
+            }
 
             bytes = bytes / 1024;
-            if (bytes <= 1024) return bytes.ToString("f2") + " EB";
+            if (bytes <= 1024)
+            {
+                return bytes.ToString("f2") + " EB";
+            }
 
             bytes = bytes / 1024;
             return bytes + " ZB";
         }
     }
 
-    struct Measure : IDisposable
+    internal struct Measure : IDisposable
     {
-        string label;
-        Stopwatch sw;
+        private string label;
+        private Stopwatch sw;
 
         public Measure(string label)
         {
@@ -640,30 +690,35 @@ namespace Sandbox
 
         public void Dispose()
         {
-            sw.Stop();
-            Console.WriteLine($"{ label,20}   {sw.Elapsed.TotalMilliseconds} ms");
+            this.sw.Stop();
+            Console.WriteLine($"{this.label,20}   {this.sw.Elapsed.TotalMilliseconds} ms");
 
             System.GC.Collect(2, GCCollectionMode.Forced, blocking: true);
         }
     }
 
-
-
     public class SerializerTarget
     {
         public int MyProperty1 { get; set; }
+
         public int MyProperty2 { get; set; }
+
         public int MyProperty3 { get; set; }
+
         public int MyProperty4 { get; set; }
+
         public int MyProperty5 { get; set; }
+
         public int MyProperty6 { get; set; }
+
         public int MyProperty7 { get; set; }
+
         public int MyProperty8 { get; set; }
+
         public int MyProperty9 { get; set; }
     }
 
     // design concept sketch of Union.
-
     [MessagePack.Union(0, typeof(HogeMoge1))]
     [MessagePack.Union(1, typeof(HogeMoge2))]
     public interface IHogeMoge
@@ -678,14 +733,13 @@ namespace Sandbox
     {
     }
 
-
-
     [MessagePackObject]
     public class TestObject
     {
         [MessagePackObject]
         public class PrimitiveObject
         {
+#pragma warning disable SA1310 // Field names should not contain underscore
             [Key(0)]
             public int v_int;
 
@@ -697,9 +751,14 @@ namespace Sandbox
 
             [Key(3)]
             public bool v_bool;
+#pragma warning restore SA1310 // Field names should not contain underscore
+
             public PrimitiveObject(int vi, string vs, float vf, bool vb)
             {
-                v_int = vi; v_str = vs; v_float = vf; v_bool = vb;
+                this.v_int = vi;
+                this.v_str = vs;
+                this.v_float = vf;
+                this.v_bool = vb;
             }
         }
 
@@ -714,30 +773,31 @@ namespace Sandbox
 
         public void CreateArray(int num)
         {
-            objectArray = new PrimitiveObject[num];
+            this.objectArray = new PrimitiveObject[num];
             for (int i = 0; i < num; i++)
             {
-                objectArray[i] = new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false);
+                this.objectArray[i] = new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false);
             }
         }
 
         public void CreateList(int num)
         {
-            objectList = new List<PrimitiveObject>(num);
+            this.objectList = new List<PrimitiveObject>(num);
             for (int i = 0; i < num; i++)
             {
-                objectList.Add(new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false));
+                this.objectList.Add(new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false));
             }
         }
 
         public void CreateMap(int num)
         {
-            objectMap = new Dictionary<string, PrimitiveObject>(num);
+            this.objectMap = new Dictionary<string, PrimitiveObject>(num);
             for (int i = 0; i < num; i++)
             {
-                objectMap.Add(i.ToString(), new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false));
+                this.objectMap.Add(i.ToString(), new PrimitiveObject(i, i.ToString(), (float)i, i % 2 == 0 ? true : false));
             }
         }
+
         // I only tested with array
         public static TestObject TestBuild()
         {
@@ -751,79 +811,69 @@ namespace Sandbox
     public class HogeMogeFormatter : IMessagePackFormatter<IHogeMoge>
     {
         // Type to Key...
-        static readonly Dictionary<Type, KeyValuePair<int, int>> map = new Dictionary<Type, KeyValuePair<int, int>>
+        private static readonly Dictionary<Type, KeyValuePair<int, int>> Map = new Dictionary<Type, KeyValuePair<int, int>>
         {
-            {typeof(HogeMoge1), new KeyValuePair<int,int>(0,0) },
-            {typeof(HogeMoge2), new KeyValuePair<int,int>(1,1) },
+            { typeof(HogeMoge1), new KeyValuePair<int, int>(0, 0) },
+            { typeof(HogeMoge2), new KeyValuePair<int, int>(1, 1) },
         };
 
         // If 0~10 don't need it.
-        static readonly Dictionary<int, int> keyToJumpTable = new Dictionary<int, int>
+        private static readonly Dictionary<int, int> KeyToJumpTable = new Dictionary<int, int>
         {
-            {0, 0 },
-            {1, 1 },
+            { 0, 0 },
+            { 1, 1 },
         };
 
-        public int Serialize(ref byte[] bytes, int offset, IHogeMoge value, IFormatterResolver formatterResolver)
+        public void Serialize(ref MessagePackWriter writer, IHogeMoge value, MessagePackSerializerOptions options)
         {
-            var startOffset = offset;
-
             KeyValuePair<int, int> key;
-            if (map.TryGetValue(value.GetType(), out key))
+            if (Map.TryGetValue(value.GetType(), out key))
             {
-                var headerLen = MessagePackBinary.WriteFixedArrayHeaderUnsafe(ref bytes, offset, 2);
-                offset += headerLen;
-                var keyLength = MessagePackBinary.WriteInt32(ref bytes, offset, key.Key);
-                headerLen += keyLength;
+                writer.WriteArrayHeader(2);
+                writer.WriteInt32(key.Key);
 
                 switch (key.Value)
                 {
                     case 0:
-                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref bytes, offset, (HogeMoge1)value, formatterResolver);
+                        options.Resolver.GetFormatterWithVerify<HogeMoge1>().Serialize(ref writer, (HogeMoge1)value, options);
                         break;
                     case 1:
-                        offset += formatterResolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref bytes, offset, (HogeMoge2)value, formatterResolver);
+                        options.Resolver.GetFormatterWithVerify<HogeMoge2>().Serialize(ref writer, (HogeMoge2)value, options);
                         break;
                     default:
                         break;
                 }
 
-                return offset - startOffset;
+                return;
             }
 
-            return MessagePackBinary.WriteNil(ref bytes, offset);
+            writer.WriteNil();
         }
 
-        public IHogeMoge Deserialize(byte[] bytes, int offset, IFormatterResolver formatterResolver, out int readSize)
+        public IHogeMoge Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             // TODO:array header...
-
-            int keySize;
-            int valueSize;
-            var key = MessagePackBinary.ReadInt32(bytes, offset, out keySize);
+            var key = reader.ReadInt32();
 
             switch (key)
             {
                 case 0:
                     {
-                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge1>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize);
-                        readSize = keySize + valueSize;
+                        HogeMoge1 result = options.Resolver.GetFormatterWithVerify<HogeMoge1>().Deserialize(ref reader, options);
                         return (IHogeMoge)result;
                     }
+
                 case 1:
                     {
-                        var result = formatterResolver.GetFormatterWithVerify<HogeMoge2>().Deserialize(bytes, offset + keySize, formatterResolver, out valueSize);
-                        readSize = keySize + valueSize;
+                        HogeMoge2 result = options.Resolver.GetFormatterWithVerify<HogeMoge2>().Deserialize(ref reader, options);
                         return (IHogeMoge)result;
                     }
+
                 default:
                     {
-
                         throw new NotImplementedException();
                     }
             }
-
         }
     }
-
 }
