@@ -959,7 +959,7 @@ namespace MessagePack.Internal
                 }
 
                 LocalBuilder buffer = il.DeclareLocal(typeof(ReadOnlySpan<byte>));
-                LocalBuilder longKey = il.DeclareLocal(typeof(ulong));
+                LocalBuilder longKey = il.DeclareLocal(typeof(long));
 
                 // for (int i = 0; i < len; i++)
                 il.EmitIncrementFor(length, forILocal =>

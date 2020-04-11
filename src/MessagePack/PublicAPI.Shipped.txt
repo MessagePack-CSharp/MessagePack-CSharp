@@ -749,7 +749,7 @@ override sealed MessagePack.Formatters.CollectionFormatterBase<TElement, TCollec
 static MessagePack.FormatterResolverExtensions.GetFormatterDynamic(this MessagePack.IFormatterResolver resolver, System.Type type) -> object
 static MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T>(this MessagePack.IFormatterResolver resolver) -> MessagePack.Formatters.IMessagePackFormatter<T>
 static MessagePack.Formatters.PrimitiveObjectFormatter.IsSupportedType(System.Type type, System.Reflection.TypeInfo typeInfo, object value) -> bool
-static MessagePack.Internal.AutomataKeyGen.GetKey(ref System.ReadOnlySpan<byte> span) -> ulong
+static MessagePack.Internal.AutomataKeyGen.GetKey(ref System.ReadOnlySpan<byte> span) -> long
 static MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(in System.Buffers.ReadOnlySequence<byte>? sequence) -> byte[]
 static MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes(string value) -> byte[]
 static MessagePack.Internal.CodeGenHelpers.GetSpanFromSequence(in System.Buffers.ReadOnlySequence<byte> sequence) -> System.ReadOnlySpan<byte>

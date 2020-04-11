@@ -143,16 +143,16 @@ namespace MessagePack.Internal
         private class AutomataNode : IComparable<AutomataNode>
         {
             private static readonly AutomataNode[] EmptyNodes = new AutomataNode[0];
-            private static readonly ulong[] EmptyKeys = new ulong[0];
+            private static readonly long[] EmptyKeys = new long[0];
 
 #pragma warning disable SA1401 // Fields should be private
-            internal ulong Key;
+            internal long Key;
             internal int Value;
             internal string OriginalKey;
 #pragma warning restore SA1401 // Fields should be private
 
             private AutomataNode[] nexts;
-            private ulong[] nextKeys;
+            private long[] nextKeys;
             private int count;
 
             public bool HasChildren
@@ -160,7 +160,7 @@ namespace MessagePack.Internal
                 get { return this.count != 0; }
             }
 
-            public AutomataNode(ulong key)
+            public AutomataNode(long key)
             {
                 this.Key = key;
                 this.Value = -1;
@@ -170,7 +170,7 @@ namespace MessagePack.Internal
                 this.OriginalKey = null;
             }
 
-            public AutomataNode Add(ulong key)
+            public AutomataNode Add(long key)
             {
                 var index = Array.BinarySearch(this.nextKeys, 0, this.count, key);
                 if (index < 0)
@@ -178,7 +178,7 @@ namespace MessagePack.Internal
                     if (this.nexts.Length == this.count)
                     {
                         Array.Resize<AutomataNode>(ref this.nexts, (this.count == 0) ? 4 : (this.count * 2));
-                        Array.Resize<ulong>(ref this.nextKeys, (this.count == 0) ? 4 : (this.count * 2));
+                        Array.Resize<long>(ref this.nextKeys, (this.count == 0) ? 4 : (this.count * 2));
                     }
 
                     this.count++;
@@ -196,7 +196,7 @@ namespace MessagePack.Internal
                 }
             }
 
-            public AutomataNode Add(ulong key, int value, string originalKey)
+            public AutomataNode Add(long key, int value, string originalKey)
             {
                 AutomataNode v = this.Add(key);
                 v.Value = value;
@@ -231,7 +231,7 @@ namespace MessagePack.Internal
                 return null;
             }
 
-            internal static int BinarySearch(ulong[] array, int index, int length, ulong value)
+            internal static int BinarySearch(long[] array, int index, int length, long value)
             {
                 int lo = index;
                 int hi = index + length - 1;
@@ -419,15 +419,15 @@ namespace MessagePack.Internal
     {
         public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod(nameof(GetKey), new[] { typeof(ReadOnlySpan<byte>).MakeByRefType() });
 
-        public static ulong GetKey(ref ReadOnlySpan<byte> span)
+        public static long GetKey(ref ReadOnlySpan<byte> span)
         {
-            ulong key;
+            long key;
 
             unchecked
             {
                 if (span.Length >= 8)
                 {
-                    key = MemoryMarshal.Cast<byte, ulong>(span)[0];
+                    key = MemoryMarshal.Cast<byte, long>(span)[0];
                     span = span.Slice(8);
                 }
                 else
@@ -452,7 +452,7 @@ namespace MessagePack.Internal
                             {
                                 var a = span[0];
                                 var b = MemoryMarshal.Cast<byte, ushort>(span.Slice(1))[0];
-                                key = a | (ulong)b << 8;
+                                key = a | (long)b << 8;
                                 span = span.Slice(3);
                                 break;
                             }
@@ -468,15 +468,15 @@ namespace MessagePack.Internal
                             {
                                 var a = span[0];
                                 var b = MemoryMarshal.Cast<byte, uint>(span.Slice(1))[0];
-                                key = a | (ulong)b << 8;
+                                key = a | (long)b << 8;
                                 span = span.Slice(5);
                                 break;
                             }
 
                         case 6:
                             {
-                                ulong a = MemoryMarshal.Cast<byte, ushort>(span)[0];
-                                ulong b = MemoryMarshal.Cast<byte, uint>(span.Slice(2))[0];
+                                long a = MemoryMarshal.Cast<byte, ushort>(span)[0];
+                                long b = MemoryMarshal.Cast<byte, uint>(span.Slice(2))[0];
                                 key = a | (b << 16);
                                 span = span.Slice(6);
                                 break;
@@ -487,7 +487,7 @@ namespace MessagePack.Internal
                                 var a = span[0];
                                 var b = MemoryMarshal.Cast<byte, ushort>(span.Slice(1))[0];
                                 var c = MemoryMarshal.Cast<byte, uint>(span.Slice(3))[0];
-                                key = a | (ulong)b << 8 | (ulong)c << 24;
+                                key = a | (long)b << 8 | (long)c << 24;
                                 span = span.Slice(7);
                                 break;
                             }
