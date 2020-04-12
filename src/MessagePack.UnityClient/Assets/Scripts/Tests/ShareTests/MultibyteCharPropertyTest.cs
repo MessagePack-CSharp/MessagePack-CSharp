@@ -36,11 +36,12 @@ namespace MessagePack.Tests
             byte[] bytes = MessagePackSerializer.Serialize(data);
 
             MessagePackSerializer.ConvertToJson(bytes).Is(@"{""A"":1,""B"":2,""にほんご"":3,""简体字"":4,""훈민정음"":5}");
-            MessagePackSerializer.Deserialize<データ>(bytes).IsStructuralEqual(data);
-
-            bytes = MessagePackSerializer.Typeless.Serialize(data);
-
-            (MessagePackSerializer.Typeless.Deserialize(bytes) as データ).IsStructuralEqual(data);
+            var a = MessagePackSerializer.Deserialize<データ>(bytes);
+            a.A.Is(data.A);
+            a.B.Is(data.B);
+            a.にほんご.Is(data.にほんご);
+            a.简体字.Is(data.简体字);
+            a.훈민정음.Is(data.훈민정음);
         }
     }
 }
