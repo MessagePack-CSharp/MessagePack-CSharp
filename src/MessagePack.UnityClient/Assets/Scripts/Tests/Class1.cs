@@ -447,6 +447,89 @@ namespace SharedData
         public int FV { get; set; }
     }
 
+    [Union(0, "SharedData.MySubUnion1WithStringSubType, SharedData")]
+    [Union(1, "SharedData.MySubUnion2WithStringSubType, SharedData")]
+    [Union(2, "SharedData.MySubUnion3WithStringSubType, SharedData")]
+    [Union(3, "SharedData.MySubUnion4WithStringSubType, SharedData")]
+    public interface IUnionCheckerWithStringSubType
+    {
+    }
+
+    [Union(120, "SharedData.MySubUnion1WithStringSubType, SharedData")]
+    [Union(31, "SharedData.MySubUnion2WithStringSubType, SharedData")]
+    [Union(42, "SharedData.MySubUnion3WithStringSubType, SharedData")]
+    [Union(63, "SharedData.MySubUnion4WithStringSubType, SharedData")]
+    public interface IUnionChecker2WithStringSubType
+    {
+    }
+
+    [Union(0, "SharedData.MySubUnion1WithStringSubType, SharedData")]
+    //[Union(1, "SharedData.MySubUnion2WithStringSubType, SharedData")]
+    //[Union(2, "SharedData.MySubUnion3WithStringSubType, SharedData")]
+    //[Union(3, "SharedData.MySubUnion4WithStringSubType, SharedData")]
+    //[Union(4, "SharedData.VersioningUnionWithStringSubType, SharedData")]
+    public interface IIVersioningUnionWithStringSubType
+    {
+    }
+
+    [Union(0, "SharedData.SubUnionType1WithStringSubType, SharedData")]
+    [Union(1, "SharedData.SubUnionType2WithStringSubType, SharedData")]
+    [MessagePackObject]
+    public abstract class RootUnionTypeWithStringSubType
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType1WithStringSubType : RootUnionTypeWithStringSubType
+    {
+        [Key(1)]
+        public int MyProperty1 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType2WithStringSubType : RootUnionTypeWithStringSubType
+    {
+        [Key(1)]
+        public int MyProperty2 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MySubUnion1WithStringSubType : IUnionCheckerWithStringSubType, IUnionChecker2WithStringSubType
+    {
+        [Key(3)]
+        public int One { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct MySubUnion2WithStringSubType : IUnionCheckerWithStringSubType, IUnionChecker2WithStringSubType
+    {
+        [Key(5)]
+        public int Two { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MySubUnion3WithStringSubType : IUnionCheckerWithStringSubType, IUnionChecker2WithStringSubType
+    {
+        [Key(2)]
+        public int Three { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct MySubUnion4WithStringSubType : IUnionCheckerWithStringSubType, IUnionChecker2WithStringSubType
+    {
+        [Key(7)]
+        public int Four { get; set; }
+    }
+
+    [MessagePackObject]
+    public class VersioningUnionWithStringSubType : IUnionCheckerWithStringSubType, IIVersioningUnionWithStringSubType
+    {
+        [Key(7)]
+        public int FV { get; set; }
+    }
+
     [MessagePackObject]
     public class GenericClass<T1, T2>
     {
@@ -903,6 +986,35 @@ public class StampMessageBody : IMessageBody
 
 [MessagePackObject]
 public class QuestMessageBody : IMessageBody
+{
+    [Key(0)]
+    public int QuestId { get; set; }
+
+    [Key(1)]
+    public string Text { get; set; }
+}
+
+[Union(10, "TextMessageBodyWithStringSubType, SharedData")]
+[Union(14, "StampMessageBodyWithStringSubType, SharedData")]
+[Union(25, "QuestMessageBodyWithStringSubType, SharedData")]
+public interface IMessageBodyWithStringSubType { }
+
+[MessagePackObject]
+public class TextMessageBodyWithStringSubType : IMessageBodyWithStringSubType
+{
+    [Key(0)]
+    public string Text { get; set; }
+}
+
+[MessagePackObject]
+public class StampMessageBodyWithStringSubType : IMessageBodyWithStringSubType
+{
+    [Key(0)]
+    public int StampId { get; set; }
+}
+
+[MessagePackObject]
+public class QuestMessageBodyWithStringSubType : IMessageBodyWithStringSubType
 {
     [Key(0)]
     public int QuestId { get; set; }

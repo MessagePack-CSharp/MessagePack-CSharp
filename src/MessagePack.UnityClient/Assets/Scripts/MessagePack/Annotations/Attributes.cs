@@ -44,14 +44,36 @@ namespace MessagePack
     [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class UnionAttribute : Attribute
     {
+        /// <summary>
+        /// Gets the distinguishing value that identifies a particular subtype.
+        /// </summary>
         public int Key { get; private set; }
 
+        /// <summary>
+        /// Gets the derived or implementing type.
+        /// </summary>
         public Type SubType { get; private set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UnionAttribute"/> class.
+        /// </summary>
+        /// <param name="key">The distinguishing value that identifies a particular subtype.</param>
+        /// <param name="subType">The derived or implementing type.</param>
         public UnionAttribute(int key, Type subType)
         {
             this.Key = key;
             this.SubType = subType;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UnionAttribute"/> class.
+        /// </summary>
+        /// <param name="key">The distinguishing value that identifies a particular subtype.</param>
+        /// <param name="subType">The full name (should be assembly qualified) of the derived or implementing type.</param>
+        public UnionAttribute(int key, string subType)
+        {
+            this.Key = key;
+            this.SubType = Type.GetType(subType, throwOnError: true);
         }
     }
 
