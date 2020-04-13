@@ -1741,7 +1741,7 @@ namespace MessagePack.Internal
             if (ctor == null)
             {
                 ctorEnumerator =
-                    ti.DeclaredConstructors.Where(x => x.IsPublic).OrderByDescending(x => x.GetParameters().Length)
+                    ti.DeclaredConstructors.Where(x => allowPrivate ? true : x.IsPublic).OrderByDescending(x => x.GetParameters().Length)
                     .GetEnumerator();
 
                 if (ctorEnumerator.MoveNext())
