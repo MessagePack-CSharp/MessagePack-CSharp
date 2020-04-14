@@ -179,6 +179,33 @@ namespace MessagePack.Tests
             public bool CreatedUsingPrivateCtor { get; }
         }
 
+        [MessagePackObject]
+        public class CompletelyPrivateConstructor
+        {
+            [Key(0)]
+            private int x;
+
+            [Key(1)]
+            private int y;
+
+            private CompletelyPrivateConstructor(int x, int y)
+            {
+                this.x = x;
+                this.y = y;
+            }
+
+            public static CompletelyPrivateConstructor Create(int x, int y)
+            {
+                return new CompletelyPrivateConstructor(x, y);
+            }
+
+            [IgnoreMember]
+            public int X => this.x;
+
+            [IgnoreMember]
+            public int Y => this.y;
+        }
+
 #endif
 
         [Fact]
@@ -271,6 +298,16 @@ namespace MessagePack.Tests
             Assert.True(p2.CreatedUsingPrivateCtor);
         }
 
+        [Fact]
+        public void PrivateConstructor2()
+        {
+            var p1 = CompletelyPrivateConstructor.Create(10, 20);
+            var bin = MessagePackSerializer.Serialize(p1, StandardResolverAllowPrivate.Options);
+            var p2 = MessagePackSerializer.Deserialize<CompletelyPrivateConstructor>(bin, StandardResolverAllowPrivate.Options);
+
+            Assert.Equal(p1.X, p2.X);
+            Assert.Equal(p1.Y, p2.Y);
+        }
 #endif
     }
 }
