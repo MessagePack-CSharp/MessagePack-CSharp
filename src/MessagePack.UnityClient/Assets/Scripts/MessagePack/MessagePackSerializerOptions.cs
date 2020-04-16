@@ -31,13 +31,13 @@ namespace MessagePack
         /// <summary>
         /// Gets a good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
-        public static MessagePackSerializerOptions Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.Standard;
+        public static MessagePackSerializerOptions Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.Standard.Value;
 #endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class.
         /// </summary>
-        protected internal MessagePackSerializerOptions(IFormatterResolver resolver)
+        public MessagePackSerializerOptions(IFormatterResolver resolver)
         {
             this.Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
         }
@@ -277,7 +277,7 @@ namespace MessagePack
 #if !DYNAMICCODEDUMPER
         private static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
         {
-            public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance);
+            public static readonly Lazy<MessagePackSerializerOptions> Standard = new Lazy<MessagePackSerializerOptions>(() => new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance));
         }
 #endif
     }

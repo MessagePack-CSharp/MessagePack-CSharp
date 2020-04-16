@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Linq;
 using MessagePack.Formatters;
 using MessagePack.Internal;
@@ -18,25 +19,25 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The singleton instance that can be used.
         /// </summary>
-        public static readonly StandardResolver Instance;
+        public static StandardResolver Instance => LazyInstance.Value;
+
+        private static readonly Lazy<StandardResolver> LazyInstance = new Lazy<StandardResolver>(() => new StandardResolver());
 
         /// <summary>
         /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
-        public static readonly MessagePackSerializerOptions Options;
+        public static MessagePackSerializerOptions Options => LazyOptions.Value;
 
-        private static readonly IFormatterResolver[] Resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
+        private static Lazy<MessagePackSerializerOptions> LazyOptions = new Lazy<MessagePackSerializerOptions>(() => new MessagePackSerializerOptions(Instance));
+
+        private static IFormatterResolver[] Resolvers => ResolverLazy.Value;
+
+        private static readonly Lazy<IFormatterResolver[]> ResolverLazy = new Lazy<IFormatterResolver[]>(() => StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
 #if !ENABLE_IL2CPP && !NET_STANDARD_2_0
             DynamicObjectResolver.Instance, // Try Object
 #endif
-        }).ToArray();
-
-        static StandardResolver()
-        {
-            Instance = new StandardResolver();
-            Options = new MessagePackSerializerOptions(Instance);
-        }
+        }).ToArray());
 
         private StandardResolver()
         {
@@ -49,32 +50,34 @@ namespace MessagePack.Resolvers
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static IMessagePackFormatter<T> Formatter => FormatterLazy.Value;
 
-            static FormatterCache()
-            {
-                if (typeof(T) == typeof(object))
+            private static readonly Lazy<IMessagePackFormatter<T>> FormatterLazy = new Lazy<IMessagePackFormatter<T>>(
+                () =>
                 {
-                    // final fallback
+                    if (typeof(T) == typeof(object))
+                    {
+                        // final fallback
 #if !ENABLE_IL2CPP
-                    Formatter = (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
+                        return (IMessagePackFormatter<T>)DynamicObjectTypeFallbackFormatter.Instance;
 #else
                     Formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
 #endif
-                }
-                else
-                {
-                    foreach (IFormatterResolver item in Resolvers)
+                    }
+                    else
                     {
-                        IMessagePackFormatter<T> f = item.GetFormatter<T>();
-                        if (f != null)
+                        foreach (IFormatterResolver item in Resolvers)
                         {
-                            Formatter = f;
-                            return;
+                            IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                            if (f != null)
+                            {
+                                return f;
+                            }
                         }
                     }
-                }
-            }
+
+                    return null;
+                });
         }
     }
 
