@@ -979,8 +979,8 @@ static readonly MessagePack.Resolvers.NativeDecimalResolver.Instance -> MessageP
 static readonly MessagePack.Resolvers.NativeGuidResolver.Instance -> MessagePack.Resolvers.NativeGuidResolver
 static readonly MessagePack.Resolvers.PrimitiveObjectResolver.Instance -> MessagePack.Resolvers.PrimitiveObjectResolver
 static readonly MessagePack.Resolvers.PrimitiveObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
-static readonly MessagePack.Resolvers.StandardResolver.Instance -> MessagePack.Resolvers.StandardResolver
-static readonly MessagePack.Resolvers.StandardResolver.Options -> MessagePack.MessagePackSerializerOptions
+static MessagePack.Resolvers.StandardResolver.Instance.get -> MessagePack.Resolvers.StandardResolver
+static MessagePack.Resolvers.StandardResolver.Options.get -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Instance -> MessagePack.Resolvers.StandardResolverAllowPrivate
 static readonly MessagePack.Resolvers.StandardResolverAllowPrivate.Options -> MessagePack.MessagePackSerializerOptions
 static readonly MessagePack.Resolvers.StaticCompositeResolver.Instance -> MessagePack.Resolvers.StaticCompositeResolver

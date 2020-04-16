@@ -17,18 +17,18 @@ namespace MessagePack.Resolvers
     public sealed class StandardResolver : IFormatterResolver
     {
         /// <summary>
-        /// The singleton instance that can be used.
+        /// Gets a singleton instance that can be used.
         /// </summary>
         public static StandardResolver Instance => LazyInstance.Value;
 
         private static readonly Lazy<StandardResolver> LazyInstance = new Lazy<StandardResolver>(() => new StandardResolver());
 
         /// <summary>
-        /// A <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
+        /// Gets a <see cref="MessagePackSerializerOptions"/> instance with this formatter pre-configured.
         /// </summary>
         public static MessagePackSerializerOptions Options => LazyOptions.Value;
 
-        private static Lazy<MessagePackSerializerOptions> LazyOptions = new Lazy<MessagePackSerializerOptions>(() => new MessagePackSerializerOptions(Instance));
+        private static readonly Lazy<MessagePackSerializerOptions> LazyOptions = new Lazy<MessagePackSerializerOptions>(() => new MessagePackSerializerOptions(Instance));
 
         private static IFormatterResolver[] Resolvers => ResolverLazy.Value;
 
