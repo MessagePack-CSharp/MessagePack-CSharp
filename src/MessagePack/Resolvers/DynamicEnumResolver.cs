@@ -1,5 +1,5 @@
 ﻿#if !UNITY_WSA
-#if !NET_STANDARD_2_0
+#if !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
 
 using System;
 using MessagePack.Formatters;

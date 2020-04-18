@@ -243,7 +243,7 @@ namespace MessagePack.Formatters
                         {
                             while (e.MoveNext())
                             {
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
                                 offset += formatter.Serialize(ref bytes, offset, e.Current, formatterResolver);
 #else
                                 offset += formatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver);
@@ -274,7 +274,7 @@ namespace MessagePack.Formatters
                             while (e.MoveNext())
                             {
                                 count++;
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
                                 var writeSize = formatter.Serialize(ref bytes, offset, e.Current, formatterResolver);
 #else
                                 var writeSize = formatter.Serialize(ref bytes, (int)offset, (TElement)e.Current, (IFormatterResolver)formatterResolver);

@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD || NETFRAMEWORK
+﻿#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
 
 using MessagePack.Internal;
 using System;

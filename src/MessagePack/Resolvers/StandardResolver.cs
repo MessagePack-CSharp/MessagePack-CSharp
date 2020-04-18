@@ -12,7 +12,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly IFormatterResolver Instance = new StandardResolver();
 
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverCore.Instance);
 #endif
 
@@ -34,7 +34,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
                     formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
@@ -52,7 +52,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly IFormatterResolver Instance = new ContractlessStandardResolver();
 
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverCore.Instance);
 #endif
 
@@ -74,7 +74,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
                     formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
@@ -92,7 +92,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly IFormatterResolver Instance = new StandardResolverAllowPrivate();
 
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(StandardResolverAllowPrivateCore.Instance);
 #endif
 
@@ -114,7 +114,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
                     formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
@@ -132,7 +132,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly IFormatterResolver Instance = new ContractlessStandardResolverAllowPrivate();
 
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
         public static readonly IMessagePackFormatter<object> ObjectFallbackFormatter = new DynamicObjectTypeFallbackFormatter(ContractlessStandardResolverAllowPrivateCore.Instance);
 #endif
 
@@ -154,7 +154,7 @@ namespace MessagePack.Resolvers
                 if (typeof(T) == typeof(object))
                 {
                     // final fallback
-#if NETSTANDARD || NETFRAMEWORK
+#if (NETSTANDARD || NETFRAMEWORK) && GENERATE_DYNAMIC_CODE
                     formatter = (IMessagePackFormatter<T>)ObjectFallbackFormatter;
 #else
                     formatter = PrimitiveObjectResolver.Instance.GetFormatter<T>();
@@ -182,7 +182,7 @@ namespace MessagePack.Internal
             MessagePack.Unity.UnityResolver.Instance,
 #endif
 
-#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
+#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
 
             DynamicEnumResolver.Instance, // Try Enum
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
@@ -197,7 +197,7 @@ namespace MessagePack.Internal
 
         static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
+#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
             DynamicObjectResolver.Instance, // Try Object
 #endif
         }).ToArray();
@@ -236,7 +236,7 @@ namespace MessagePack.Internal
 
         static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
+#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
             DynamicObjectResolver.Instance, // Try Object
             DynamicContractlessObjectResolver.Instance, // Serializes keys as strings
 #endif
@@ -277,7 +277,7 @@ namespace MessagePack.Internal
 
         static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
+#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
             DynamicObjectResolverAllowPrivate.Instance, // Try Object
 #endif
         }).ToArray();
@@ -316,7 +316,7 @@ namespace MessagePack.Internal
 
         static readonly IFormatterResolver[] resolvers = StandardResolverHelper.DefaultResolvers.Concat(new IFormatterResolver[]
         {
-#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0
+#if !ENABLE_IL2CPP && !UNITY_WSA && !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
             DynamicObjectResolverAllowPrivate.Instance, // Try Object
             DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
 #endif

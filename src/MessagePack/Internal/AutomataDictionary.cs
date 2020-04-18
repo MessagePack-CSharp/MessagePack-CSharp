@@ -172,7 +172,7 @@ namespace MessagePack.Internal
 
         // IL Emit
 
-#if !NET_STANDARD_2_0
+#if !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
 
         public void EmitMatch(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
         {
@@ -338,7 +338,7 @@ namespace MessagePack.Internal
                 }
             }
 
-#if !NET_STANDARD_2_0
+#if !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
 
             // SearchNext(ref byte* p, ref int rest, ref ulong key)
             public void EmitSearchNext(ILGenerator il, LocalBuilder p, LocalBuilder rest, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
@@ -474,7 +474,7 @@ namespace MessagePack.Internal
 
 #if !NETSTANDARD
 
-#if !NET_STANDARD_2_0
+#if !NET_STANDARD_2_0 && GENERATE_DYNAMIC_CODE
 
         static MethodInfo dynamicGetKeyMethod;
         static readonly object gate = new object();

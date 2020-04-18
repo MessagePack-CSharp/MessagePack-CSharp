@@ -408,7 +408,7 @@ namespace MessagePack.Formatters
     }
 
 #if NETSTANDARD || NETFRAMEWORK
-
+#if !XAMARIN_IOS
     public sealed class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
     {
         public static readonly IMessagePackFormatter<System.Numerics.BigInteger> Instance = new BigIntegerFormatter();
@@ -465,7 +465,7 @@ namespace MessagePack.Formatters
             return new System.Numerics.Complex(real, imaginary);
         }
     }
-
+#endif
     public sealed class LazyFormatter<T> : IMessagePackFormatter<Lazy<T>>
     {
         public int Serialize(ref byte[] bytes, int offset, Lazy<T> value, IFormatterResolver formatterResolver)
