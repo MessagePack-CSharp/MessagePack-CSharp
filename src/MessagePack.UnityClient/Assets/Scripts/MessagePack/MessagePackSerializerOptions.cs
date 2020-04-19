@@ -31,7 +31,7 @@ namespace MessagePack
         /// <summary>
         /// Gets a good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
-        public static MessagePackSerializerOptions Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.Standard.Value;
+        public static MessagePackSerializerOptions Standard => MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper.Standard;
 #endif
 
         /// <summary>
@@ -277,7 +277,7 @@ namespace MessagePack
 #if !DYNAMICCODEDUMPER
         private static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
         {
-            public static readonly Lazy<MessagePackSerializerOptions> Standard = new Lazy<MessagePackSerializerOptions>(() => new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance));
+            public static MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance);
         }
 #endif
     }
