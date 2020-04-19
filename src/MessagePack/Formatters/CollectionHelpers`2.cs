@@ -28,7 +28,11 @@ namespace MessagePack.Formatters
         /// </remarks>
         static CollectionHelpers()
         {
+#if UAP
+            var ctor = typeof(TCollection).GetConstructor(new Type[] { typeof(int), typeof(TEqualityComparer) });
+#else
             var ctor = typeof(TCollection).GetTypeInfo().GetConstructor(new Type[] { typeof(int), typeof(TEqualityComparer) });
+#endif
             if (ctor != null)
             {
                 ParameterExpression param1 = Expression.Parameter(typeof(int), "count");

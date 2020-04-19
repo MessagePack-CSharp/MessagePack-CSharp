@@ -160,7 +160,11 @@ namespace MessagePack
             IEqualityComparer<T> result = null;
             if (typeof(T).GetTypeInfo().IsEnum)
             {
+#if UAP
+                Type underlyingType = Enum.GetUnderlyingType(typeof(T));
+#else
                 Type underlyingType = typeof(T).GetTypeInfo().GetEnumUnderlyingType();
+#endif
                 result =
                     underlyingType == typeof(sbyte) ? CollisionResistantHasher<T>.Instance :
                     underlyingType == typeof(byte) ? CollisionResistantHasher<T>.Instance :
@@ -169,6 +173,7 @@ namespace MessagePack
                     underlyingType == typeof(int) ? CollisionResistantHasher<T>.Instance :
                     underlyingType == typeof(uint) ? CollisionResistantHasher<T>.Instance :
                     null;
+
             }
             else
             {

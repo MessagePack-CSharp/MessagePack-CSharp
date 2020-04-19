@@ -60,7 +60,7 @@
   </ItemGroup>
   <!-- for iOS and UWP (.NET Native) remove the IL, omitting the GENERATE_DYNAMIC_CODE flag -->
   <PropertyGroup Condition=" $(TargetFramework) == 'uap10.0'">
-    <DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETSTANDARD;UAP</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" $(TargetFramework) == 'xamarin.ios10' ">
     <DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
