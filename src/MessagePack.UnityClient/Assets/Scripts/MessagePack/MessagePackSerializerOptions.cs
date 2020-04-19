@@ -277,7 +277,7 @@ namespace MessagePack
 #if !DYNAMICCODEDUMPER
         private static class MessagePackSerializerOptionsDefaultSettingsLazyInitializationHelper
         {
-            public static MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance);
+            public static readonly MessagePackSerializerOptions Standard = new MessagePackSerializerOptions(Resolvers.StandardResolver.Instance);
         }
 #endif
     }
