@@ -60,10 +60,9 @@ namespace MessagePack
 
             _sequencePool = default;
             _rental = default;
+            _segment = default;
 
-            var memory = _output.GetMemoryCheckResult();
-            MemoryMarshal.TryGetArray(memory, out _segment);
-            _span = memory.Span;
+            _span = _output.GetSpanCheckResult();
         }
 
         /// <summary>
@@ -83,6 +82,25 @@ namespace MessagePack
             _segment = new ArraySegment<byte>(array);
             _span = _segment.AsSpan();
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BufferWriter"/> struct.
+        /// </summary>
+        /// <param name="span">The Span to be wrapped.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public BufferWriter(Span<byte> span)
+        {
+            _buffered = 0;
+            _bytesCommitted = 0;
+            _output = null;
+
+            _sequencePool = default;
+            _rental = default;
+            _segment = default;
+
+            _span = span;
+        }
+
 
         /// <summary>
         /// Gets the result of the last call to <see cref="IBufferWriter{T}.GetSpan(int)"/>.
@@ -136,7 +154,7 @@ namespace MessagePack
 
                 _bytesCommitted += buffered;
                 _buffered = 0;
-                _output.Advance(buffered);
+                _output?.Advance(buffered);
                 _span = default;
             }
         }
@@ -216,9 +234,7 @@ namespace MessagePack
                 this.MigrateToSequence();
             }
 
-            var memory = _output.GetMemoryCheckResult(count);
-            MemoryMarshal.TryGetArray(memory, out _segment);
-            _span = memory.Span;
+            _span = _output.GetSpanCheckResult(count);
         }
 
         /// <summary>

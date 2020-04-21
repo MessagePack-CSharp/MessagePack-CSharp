@@ -33,15 +33,15 @@ namespace MessagePack
             }
         }
 
-        internal static Memory<T> GetMemoryCheckResult<T>(this IBufferWriter<T> bufferWriter, int size = 0)
+        internal static Span<T> GetSpanCheckResult<T>(this IBufferWriter<T> bufferWriter, int size = 0)
         {
-            var memory = bufferWriter.GetMemory(size);
-            if (memory.IsEmpty)
+            var span = bufferWriter.GetSpan(size);
+            if (span.IsEmpty)
             {
-                throw new InvalidOperationException("The underlying IBufferWriter<byte>.GetMemory(int) method returned an empty memory block, which is not allowed. This is a bug in " + bufferWriter.GetType().FullName);
+                throw new InvalidOperationException("The underlying IBufferWriter<byte>.GetSpan(int) method returned an empty memory block, which is not allowed. This is a bug in " + bufferWriter.GetType().FullName);
             }
 
-            return memory;
+            return span;
         }
     }
 }

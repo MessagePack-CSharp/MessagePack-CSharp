@@ -217,7 +217,7 @@ namespace MessagePack.Tests
         [Fact]
         public void CancellationToken()
         {
-            var reader = new MessagePackReader(default);
+            var reader = new MessagePackReader((ReadOnlyMemory<byte>)default);
             Assert.False(reader.CancellationToken.CanBeCanceled);
 
             var cts = new CancellationTokenSource();

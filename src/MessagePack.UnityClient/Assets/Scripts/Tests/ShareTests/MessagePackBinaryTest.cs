@@ -863,5 +863,21 @@ namespace MessagePack.Tests
                 target.AsReadOnlySequence.ToArray().SequenceEqual(small.AsReadOnlySequence.ToArray()).IsTrue();
             }
         }
+
+        [Fact]
+        public void StackAllocatedBuffers()
+        {
+            Span<byte> buffer = stackalloc byte[20];
+
+            var writer = new MessagePackWriter(buffer);
+            writer.WriteInt64(-1);
+            writer.Flush();
+
+            writer.BytesCommitted.Equals(9);
+
+            var resultBuffer = buffer.Slice(0, (int)writer.BytesCommitted);
+            var reader = new MessagePackReader(resultBuffer);
+            reader.ReadInt64().Equals(-1);
+        }
     }
 }

@@ -40,7 +40,7 @@ namespace MessagePack.Tests.ExtensionTests
             var lz4Data = MessagePackSerializer.Serialize(originalData, LZ4Standard);
 
             PeekMessagePackType(lz4Data).Is(MessagePackType.Extension);
-            var lz4DataReader = new MessagePackReader(lz4Data);
+            var lz4DataReader = new MessagePackReader(lz4Data.AsMemory());
             ExtensionHeader header = lz4DataReader.ReadExtensionFormatHeader();
             header.TypeCode.Is(ThisLibraryExtensionTypeCodes.Lz4Block);
 
@@ -57,7 +57,7 @@ namespace MessagePack.Tests.ExtensionTests
             var lz4Data = MessagePackSerializer.Serialize(typeof(FirstSimpleData[]), originalData, LZ4Standard);
 
             PeekMessagePackType(lz4Data).Is(MessagePackType.Extension);
-            var lz4DataReader = new MessagePackReader(lz4Data);
+            var lz4DataReader = new MessagePackReader(lz4Data.AsMemory());
             ExtensionHeader header = lz4DataReader.ReadExtensionFormatHeader();
             header.TypeCode.Is(ThisLibraryExtensionTypeCodes.Lz4Block);
 

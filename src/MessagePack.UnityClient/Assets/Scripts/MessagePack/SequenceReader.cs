@@ -96,6 +96,26 @@ namespace System.Buffers
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SequenceReader{T}"/> struct
+        /// over the given <see cref="ReadOnlySpan{T}"/>.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public SequenceReader(ReadOnlySpan<T> span)
+        {
+            this.usingSequence = false;
+            this.CurrentSpanIndex = 0;
+            this.Consumed = 0;
+            this.memory = default;
+            this.CurrentSpan = span;
+            this.length = span.Length;
+            this.moreData = span.Length > 0;
+
+            this.currentPosition = default;
+            this.nextPosition = default;
+            this.sequence = default;
+        }
+
+        /// <summary>
         /// Gets a value indicating whether there is no more data in the <see cref="Sequence"/>.
         /// </summary>
         public bool End => !this.moreData;
@@ -107,13 +127,20 @@ namespace System.Buffers
         {
             get
             {
-                if (this.sequence.IsEmpty && !this.memory.IsEmpty)
+                if (this.sequence.IsEmpty)
                 {
-                    // We're in memory mode (instead of sequence mode).
-                    // Lazily fill in the sequence data.
-                    this.sequence = new ReadOnlySequence<T>(this.memory);
-                    this.currentPosition = this.sequence.Start;
-                    this.nextPosition = this.sequence.End;
+                    if (!this.memory.IsEmpty)
+                    {
+                        // We're in memory mode (instead of sequence mode).
+                        // Lazily fill in the sequence data.
+                        this.sequence = new ReadOnlySequence<T>(this.memory);
+                        this.currentPosition = this.sequence.Start;
+                        this.nextPosition = this.sequence.End;
+                    }
+                    else if (!this.CurrentSpan.IsEmpty)
+                    {
+                        throw new InvalidOperationException("Sequence can't be accessed while SequenceReader is based on native span");
+                    }
                 }
 
                 return this.sequence;

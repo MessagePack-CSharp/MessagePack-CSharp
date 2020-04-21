@@ -31,7 +31,7 @@ namespace PerfBenchmarkDotNet
         [BenchmarkCategory("2.0")]
         public void ReadByte20()
         {
-            var reader = new newmsgpack::MessagePack.MessagePackReader(this.buffer);
+            var reader = new newmsgpack::MessagePack.MessagePackReader(this.buffer.AsMemory());
             for (int i = 0; i < this.buffer.Length; i++)
             {
                 reader.ReadInt32();

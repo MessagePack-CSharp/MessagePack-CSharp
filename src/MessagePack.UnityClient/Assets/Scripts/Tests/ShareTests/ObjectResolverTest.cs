@@ -56,7 +56,7 @@ namespace MessagePack.Tests
         {
             SimpleIntKeyData n = null;
             var bytes = MessagePackSerializer.Serialize(n);
-            var reader = new MessagePackReader(bytes);
+            var reader = new MessagePackReader(bytes.AsMemory());
             reader.IsNil.IsTrue();
             bytes.Length.Is(1);
 

@@ -54,6 +54,17 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackReader"/> struct.
+        /// </summary>
+        /// <param name="span">The buffer to read from.</param>
+        public MessagePackReader(ReadOnlySpan<byte> span)
+            : this()
+        {
+            this.reader = new SequenceReader<byte>(span);
+            this.Depth = 0;
+        }
+
+        /// <summary>
         /// Gets or sets the cancellation token for this deserialization operation.
         /// </summary>
         public CancellationToken CancellationToken { get; set; }

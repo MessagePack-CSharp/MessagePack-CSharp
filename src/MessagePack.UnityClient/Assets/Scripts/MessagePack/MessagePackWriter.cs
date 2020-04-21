@@ -55,6 +55,17 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct.
+        /// </summary>
+        /// <param name="span">The Span to use.</param>
+        public MessagePackWriter(Span<byte> span)
+            : this()
+        {
+            this.writer = new BufferWriter(span);
+            this.OldSpec = false;
+        }
+
+        /// <summary>
         /// Gets or sets the cancellation token for this serialization operation.
         /// </summary>
         public CancellationToken CancellationToken { get; set; }
@@ -63,6 +74,11 @@ namespace MessagePack
         /// Gets or sets a value indicating whether to write in <see href="https://github.com/msgpack/msgpack/blob/master/spec-old.md">old spec</see> compatibility mode.
         /// </summary>
         public bool OldSpec { get; set; }
+
+        /// <summary>
+        /// Gets number of bytes committed to underlying buffer.
+        /// </summary>
+        public long BytesCommitted => this.writer.BytesCommitted;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct,
