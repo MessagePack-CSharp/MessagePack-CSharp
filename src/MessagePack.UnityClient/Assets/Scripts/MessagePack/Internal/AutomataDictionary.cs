@@ -398,7 +398,7 @@ namespace MessagePack.Internal
                     // if(key < mid)
                     il.EmitLdloc(key);
                     il.EmitULong(mid);
-                    il.Emit(OpCodes.Bge, gotoRight);
+                    il.Emit(OpCodes.Bge_Un, gotoRight);
                     EmitSearchNextCore(il, bytesSpan, key, onFound, onNotFound, l, l.Length);
 
                     // else
