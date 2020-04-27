@@ -270,7 +270,7 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<EnumSerializationInfo> collectedEnumInfo;
         private List<GenericSerializationInfo> collectedGenericInfo;
         private List<UnionSerializationInfo> collectedUnionInfo;
-        private List<ObjectSerializationInfo> collectedUnboundGenericInfo;
+        private List<ObjectSerializationInfo> collectedClosedTypeGenericInfo;
 
         public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
         {
@@ -309,11 +309,11 @@ namespace MessagePackCompiler.CodeAnalysis
             this.collectedEnumInfo = new List<EnumSerializationInfo>();
             this.collectedGenericInfo = new List<GenericSerializationInfo>();
             this.collectedUnionInfo = new List<UnionSerializationInfo>();
-            this.collectedUnboundGenericInfo = new List<ObjectSerializationInfo>();
+            this.collectedClosedTypeGenericInfo = new List<ObjectSerializationInfo>();
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo, ObjectSerializationInfo[] unboundGenericInfo) Collect()
+        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo, ObjectSerializationInfo[] closedTypeGenericInfo) Collect()
         {
             this.ResetWorkspace();
 
@@ -327,7 +327,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
                 this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray(),
-                this.collectedUnboundGenericInfo.OrderBy(x => x.FullName).ToArray());
+                this.collectedClosedTypeGenericInfo.OrderBy(x => x.FullName).ToArray());
         }
 
         // Gate of recursive collect
@@ -354,7 +354,10 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
-            var type = typeSymbol as INamedTypeSymbol;
+            if (!(typeSymbol is INamedTypeSymbol type))
+            {
+                return;
+            }
 
             if (typeSymbol.TypeKind == TypeKind.Enum)
             {
@@ -541,36 +544,38 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
+            // Skip generic symbol declaration itself (open type, e.g. Foo<T>) because we can get nothing useful from it anyways.
             if (type.IsDefinition)
             {
-                ObjectSerializationInfo unboundGenericInfo = GetObjectInfo(type);
-                collectedUnboundGenericInfo.Add(unboundGenericInfo);
+                return;
             }
-            else
+
+            // Collect substituted types for the type parameters (e.g. Bar in Foo<Bar>)
+            foreach (var item in type.TypeArguments)
             {
-                foreach (ITypeSymbol item in type.TypeArguments)
-                {
-                    this.CollectCore(item);
-                }
-
-                StringBuilder formatterBuilder = new StringBuilder();
-                if (!type.ContainingNamespace.IsGlobalNamespace)
-                {
-                    formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
-                }
-
-                formatterBuilder.Append(type.Name + "Formatter");
-                formatterBuilder.Append("<" + string.Join(", ", type.TypeArguments) + ">");
-
-                GenericSerializationInfo info = new GenericSerializationInfo
-                {
-                    FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-
-                    FormatterName = formatterBuilder.ToString(),
-                };
-
-                this.collectedGenericInfo.Add(info);
+                this.CollectCore(item);
             }
+
+            var formatterBuilder = new StringBuilder();
+            if (!type.ContainingNamespace.IsGlobalNamespace)
+            {
+                formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
+            }
+
+            formatterBuilder.Append(type.Name + "Formatter");
+            formatterBuilder.Append("<" + string.Join(", ", type.TypeArguments) + ">");
+
+            var genericSerializationInfo = new GenericSerializationInfo
+            {
+                FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                FormatterName = formatterBuilder.ToString(),
+            };
+
+            this.collectedGenericInfo.Add(genericSerializationInfo);
+
+            // Collect only closed generic types (e.g. Foo<string>).
+            var unboundGenericInfo = GetObjectInfo(type);
+            collectedClosedTypeGenericInfo.Add(unboundGenericInfo);
         }
 
         private void CollectObject(INamedTypeSymbol type)
