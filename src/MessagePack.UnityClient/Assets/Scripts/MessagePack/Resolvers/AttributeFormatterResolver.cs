@@ -43,13 +43,19 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
+                var formatterType = attr.FormatterType;
+                if (formatterType.IsGenericType && !formatterType.IsConstructedGenericType)
+                {
+                    formatterType = formatterType.MakeGenericType(typeof(T).GetGenericArguments());
+                }
+
                 if (attr.Arguments == null)
                 {
-                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType);
+                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterType);
                 }
                 else
                 {
-                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(attr.FormatterType, attr.Arguments);
+                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterType, attr.Arguments);
                 }
             }
         }
