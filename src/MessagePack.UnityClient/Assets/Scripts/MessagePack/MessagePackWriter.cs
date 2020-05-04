@@ -100,13 +100,7 @@ namespace MessagePack
         /// Copies bytes directly into the message pack writer.
         /// </summary>
         /// <param name="rawMessagePackBlock">The span of bytes to copy from.</param>
-        public void WriteRaw(in ReadOnlySequence<byte> rawMessagePackBlock)
-        {
-            foreach (ReadOnlyMemory<byte> segment in rawMessagePackBlock)
-            {
-                this.writer.Write(segment.Span);
-            }
-        }
+        public void WriteRaw(in ReadOnlySequence<byte> rawMessagePackBlock) => this.writer.Write(rawMessagePackBlock);
 
         /// <summary>
         /// Write the length of the next array to be written in the most compact form of
@@ -543,31 +537,8 @@ namespace MessagePack
         /// </remarks>
         public void Write(ReadOnlySpan<byte> src)
         {
-            if (this.OldSpec)
-            {
-                this.WriteStringHeader(src.Length);
-                src.CopyTo(this.writer.GetSpan(src.Length));
-                this.Advance(src.Length);
-            }
-            else
-            {
-                int result = MessagePackBinary.WriteBinHeader(this.writer.Span, src.Length);
-                if (result < 0)
-                {
-                    // Did not write anything, so we need to allocate. It's better to allocate enough
-                    // for data as well.
-                    int size = src.Length + ~result;
-                    var buffer = this.writer.GetSpan(size);
-                    src.CopyTo(buffer.Slice(MessagePackBinary.WriteBinHeader(buffer, src.Length)));
-                    this.writer.Advance(size);
-                }
-                else
-                {
-                    this.writer.Advance(result);
-                    src.CopyTo(this.writer.GetSpan(src.Length));
-                    this.writer.Advance(src.Length);
-                }
-            }
+            this.WriteBinHeader(src.Length);
+            this.writer.Write(src);
         }
 
         /// <summary>
@@ -582,31 +553,8 @@ namespace MessagePack
         /// </remarks>
         public void Write(in ReadOnlySequence<byte> src)
         {
-            if (this.OldSpec)
-            {
-                this.WriteStringHeader((int)src.Length);
-                src.CopyTo(this.writer.GetSpan((int)src.Length));
-                this.Advance((int)src.Length);
-            }
-            else
-            {
-                int result = MessagePackBinary.WriteBinHeader(this.writer.Span, (int)src.Length);
-                if (result < 0)
-                {
-                    // Did not write anything, so we need to allocate. It's better to allocate enough
-                    // for data as well.
-                    int size = (int)src.Length + ~result;
-                    var buffer = this.writer.GetSpan(size);
-                    src.CopyTo(buffer.Slice(MessagePackBinary.WriteBinHeader(buffer, (int)src.Length)));
-                    this.writer.Advance(size);
-                }
-                else
-                {
-                    this.writer.Advance(result);
-                    src.CopyTo(this.writer.GetSpan((int)src.Length));
-                    this.writer.Advance((int)src.Length);
-                }
-            }
+            this.WriteBinHeader(checked((int)src.Length));
+            this.writer.Write(src);
         }
 
         /// <summary>
@@ -658,19 +606,11 @@ namespace MessagePack
             int result = MessagePackBinary.WriteStringHeader(this.writer.Span, length, this.OldSpec);
             if (result < 0)
             {
-                // Did not write anything, so we need to allocate. It's better to allocate enough
-                // for data as well.
-                int size = length + ~result;
-                var buffer = this.writer.GetSpan(size);
-                utf8stringBytes.CopyTo(buffer.Slice(MessagePackBinary.WriteStringHeader(buffer, length, this.OldSpec)));
-                this.writer.Advance(size);
+                result = MessagePackBinary.WriteStringHeader(this.writer.GetSpan(~result), length, this.OldSpec);
             }
-            else
-            {
-                this.writer.Advance(result);
-                utf8stringBytes.CopyTo(this.writer.GetSpan(length));
-                this.writer.Advance(length);
-            }
+
+            this.writer.Advance(result);
+            this.writer.Write(utf8stringBytes);
         }
 
         /// <summary>
@@ -687,19 +627,11 @@ namespace MessagePack
             int result = MessagePackBinary.WriteStringHeader(this.writer.Span, length, this.OldSpec);
             if (result < 0)
             {
-                // Did not write anything, so we need to allocate. It's better to allocate enough
-                // for data as well.
-                int size = length + ~result;
-                var buffer = this.writer.GetSpan(size);
-                utf8stringBytes.CopyTo(buffer.Slice(MessagePackBinary.WriteStringHeader(buffer, length, this.OldSpec)));
-                this.writer.Advance(size);
+                result = MessagePackBinary.WriteStringHeader(this.writer.GetSpan(~result), length, this.OldSpec);
             }
-            else
-            {
-                this.writer.Advance(result);
-                utf8stringBytes.CopyTo(this.writer.GetSpan(length));
-                this.writer.Advance(length);
-            }
+
+            this.writer.Advance(result);
+            this.writer.Write(utf8stringBytes);
         }
 
         /// <summary>
@@ -813,19 +745,11 @@ namespace MessagePack
             int result = MessagePackBinary.WriteExtensionFormatHeader(this.writer.Span, extensionData.Header);
             if (result < 0)
             {
-                // Did not write anything, so we need to allocate. It's better to allocate enough
-                // for data as well.
-                int size = length + ~result;
-                var buffer = this.writer.GetSpan(size);
-                extensionData.Data.CopyTo(buffer.Slice(MessagePackBinary.WriteExtensionFormatHeader(buffer, extensionData.Header)));
-                this.writer.Advance(size);
+                result = MessagePackBinary.WriteExtensionFormatHeader(this.writer.GetSpan(~result), extensionData.Header);
             }
-            else
-            {
-                this.writer.Advance(result);
-                extensionData.Data.CopyTo(this.writer.GetSpan(length));
-                this.writer.Advance(length);
-            }
+
+            this.writer.Advance(result);
+            this.writer.Write(extensionData.Data);
         }
 
         /// <summary>

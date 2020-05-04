@@ -171,6 +171,18 @@ namespace MessagePack
         }
 
         /// <summary>
+        /// Copies the caller's buffer into this writer and calls <see cref="Advance(int)"/> with the length of the source buffer.
+        /// </summary>
+        /// <param name="source">The buffer to copy in.</param>
+        public void Write(in ReadOnlySequence<byte> source)
+        {
+            foreach (ReadOnlyMemory<byte> segment in source)
+            {
+                this.Write(segment.Span);
+            }
+        }
+
+        /// <summary>
         /// Acquires a new buffer if necessary to ensure that some given number of bytes can be written to a single buffer.
         /// </summary>
         /// <param name="count">The number of bytes that must be allocated in a single buffer.</param>
