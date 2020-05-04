@@ -62,7 +62,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="count">The number of elements that will be written in the array.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteArrayHeader(Span<byte> destination, uint count)
         {
             if (count <= MessagePackRange.MaxFixArrayCount)
@@ -125,7 +124,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="count">The number of key=value pairs that will be written in the map.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteMapHeader(Span<byte> destination, uint count)
         {
             if (count <= MessagePackRange.MaxFixMapCount)
@@ -174,7 +172,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, byte value)
         {
             if (value <= MessagePackCode.MaxFixInt)
@@ -201,7 +198,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteUInt8(Span<byte> destination, byte value)
         {
             if (destination.Length >= 2)
@@ -222,7 +218,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, sbyte value)
         {
             if (value < MessagePackRange.MinFixNegativeInt)
@@ -249,7 +244,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteInt8(Span<byte> destination, sbyte value)
         {
             if (destination.Length >= 2)
@@ -270,7 +264,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, ushort value)
         {
             if (value <= MessagePackRange.MaxFixPositiveInt)
@@ -310,7 +303,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteUInt16(Span<byte> destination, ushort value)
         {
             if (destination.Length >= 3)
@@ -336,7 +328,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, short value)
         {
             if (value >= 0)
@@ -384,7 +375,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteInt16(Span<byte> destination, short value)
         {
             if (destination.Length >= 3)
@@ -409,7 +399,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, uint value)
         {
             if (value <= MessagePackRange.MaxFixPositiveInt)
@@ -462,7 +451,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteUInt32(Span<byte> destination, uint value)
         {
             if (destination.Length >= 5)
@@ -490,7 +478,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, int value)
         {
             if (value >= 0)
@@ -551,7 +538,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteInt32(Span<byte> destination, int value)
         {
             if (destination.Length >= 5)
@@ -579,7 +565,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, ulong value)
         {
             if (value <= MessagePackRange.MaxFixPositiveInt)
@@ -645,7 +630,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteUInt64(Span<byte> destination, ulong value)
         {
             if (destination.Length >= 9)
@@ -675,7 +659,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, long value)
         {
             if (value >= 0)
@@ -749,7 +732,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteInt64(Span<byte> destination, long value)
         {
             if (destination.Length >= 9)
@@ -770,7 +752,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, bool value)
         {
             if (destination.Length >= 1)
@@ -798,7 +779,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, float value)
         {
             if (destination.Length >= 5)
@@ -819,7 +799,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="value">The value.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, double value)
         {
             if (destination.Length >= 9)
@@ -840,7 +819,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="dateTime">The value to write.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Write(Span<byte> destination, DateTime dateTime)
         {
             // Timestamp spec
@@ -952,7 +930,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="length">The length of bytes that will be written next.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteBinHeader(Span<byte> destination, int length)
         {
             if (length <= byte.MaxValue)
@@ -1009,7 +986,6 @@ namespace MessagePack
         /// <param name="byteCount">The number of bytes in the string that will follow this header.</param>
         /// <param name="oldSpec">If true, the old spec will be used instead.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteStringHeader(Span<byte> destination, int byteCount, bool oldSpec = false)
         {
             // When we write the header, we'll ask for all the space we need for the payload as well
@@ -1081,7 +1057,6 @@ namespace MessagePack
         /// <param name="destination">The memory region to write to.</param>
         /// <param name="extensionHeader">The extension header.</param>
         /// <returns>The non-negative number of bytes written when the <paramref name="destination"/> is sufficiently sized, or a negative number that is the bitwise complement of the total number of bytes required to write the value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteExtensionFormatHeader(Span<byte> destination, in ExtensionHeader extensionHeader)
         {
             int dataLength = (int)extensionHeader.Length;
@@ -1197,16 +1172,12 @@ namespace MessagePack
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteBigEndian(Span<byte> destination, short value) => WriteBigEndian(destination, unchecked((ushort)value));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteBigEndian(Span<byte> destination, int value) => WriteBigEndian(destination, unchecked((uint)value));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteBigEndian(Span<byte> destination, long value) => WriteBigEndian(destination, unchecked((ulong)value));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteBigEndian(Span<byte> destination, ushort value)
         {
             unchecked
@@ -1216,7 +1187,6 @@ namespace MessagePack
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteBigEndian(Span<byte> destination, uint value)
         {
             unchecked
@@ -1228,7 +1198,6 @@ namespace MessagePack
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteBigEndian(Span<byte> destination, ulong value)
         {
             unchecked
@@ -1244,10 +1213,8 @@ namespace MessagePack
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void WriteBigEndian(Span<byte> destination, float value) => WriteBigEndian(destination, *(int*)&value);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void WriteBigEndian(Span<byte> destination, double value) => WriteBigEndian(destination, *(long*)&value);
     }
 }
