@@ -1,1 +1,29 @@
-﻿
+﻿static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, System.DateTime dateTime) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, bool value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, byte value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, char value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, double value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, float value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, int value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, long value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, sbyte value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, short value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, uint value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, ulong value) -> int
+static MessagePack.MessagePackBinary.Write(System.Span<byte> destination, ushort value) -> int
+static MessagePack.MessagePackBinary.WriteArrayHeader(System.Span<byte> destination, int count) -> int
+static MessagePack.MessagePackBinary.WriteArrayHeader(System.Span<byte> destination, uint count) -> int
+static MessagePack.MessagePackBinary.WriteBinHeader(System.Span<byte> destination, int length) -> int
+static MessagePack.MessagePackBinary.WriteExtensionFormatHeader(System.Span<byte> destination, in MessagePack.ExtensionHeader extensionHeader) -> int
+static MessagePack.MessagePackBinary.WriteInt16(System.Span<byte> destination, short value) -> int
+static MessagePack.MessagePackBinary.WriteInt32(System.Span<byte> destination, int value) -> int
+static MessagePack.MessagePackBinary.WriteInt64(System.Span<byte> destination, long value) -> int
+static MessagePack.MessagePackBinary.WriteInt8(System.Span<byte> destination, sbyte value) -> int
+static MessagePack.MessagePackBinary.WriteMapHeader(System.Span<byte> destination, int count) -> int
+static MessagePack.MessagePackBinary.WriteMapHeader(System.Span<byte> destination, uint count) -> int
+static MessagePack.MessagePackBinary.WriteNil(System.Span<byte> destination) -> int
+static MessagePack.MessagePackBinary.WriteStringHeader(System.Span<byte> destination, int byteCount, bool oldSpec = false) -> int
+static MessagePack.MessagePackBinary.WriteUInt16(System.Span<byte> destination, ushort value) -> int
+static MessagePack.MessagePackBinary.WriteUInt32(System.Span<byte> destination, uint value) -> int
+static MessagePack.MessagePackBinary.WriteUInt64(System.Span<byte> destination, ulong value) -> int
+static MessagePack.MessagePackBinary.WriteUInt8(System.Span<byte> destination, byte value) -> int

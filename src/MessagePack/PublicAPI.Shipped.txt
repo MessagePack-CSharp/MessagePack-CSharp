@@ -1023,33 +1023,3 @@ static readonly MessagePack.MessagePackSecurity.UntrustedData -> MessagePack.Mes
 virtual MessagePack.MessagePackSecurity.Clone() -> MessagePack.MessagePackSecurity
 virtual MessagePack.MessagePackSecurity.GetHashCollisionResistantEqualityComparer() -> System.Collections.IEqualityComparer
 virtual MessagePack.MessagePackSecurity.GetHashCollisionResistantEqualityComparer<T>() -> System.Collections.Generic.IEqualityComparer<T>
-MessagePack.MessagePackBinary
-static MessagePack.MessagePackBinary.WriteNil(System.Span<byte> span) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, System.DateTime dateTime) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, bool value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, byte value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, char value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, double value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, float value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, int value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, long value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, sbyte value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, short value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, uint value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, ulong value) -> int
-static MessagePack.MessagePackBinary.Write(System.Span<byte> span, ushort value) -> int
-static MessagePack.MessagePackBinary.WriteArrayHeader(System.Span<byte> span, int count) -> int
-static MessagePack.MessagePackBinary.WriteArrayHeader(System.Span<byte> span, uint count) -> int
-static MessagePack.MessagePackBinary.WriteBinHeader(System.Span<byte> span, int length) -> int
-static MessagePack.MessagePackBinary.WriteExtensionFormatHeader(System.Span<byte> span, in MessagePack.ExtensionHeader extensionHeader) -> int
-static MessagePack.MessagePackBinary.WriteInt16(System.Span<byte> span, short value) -> int
-static MessagePack.MessagePackBinary.WriteInt32(System.Span<byte> span, int value) -> int
-static MessagePack.MessagePackBinary.WriteInt64(System.Span<byte> span, long value) -> int
-static MessagePack.MessagePackBinary.WriteInt8(System.Span<byte> span, sbyte value) -> int
-static MessagePack.MessagePackBinary.WriteMapHeader(System.Span<byte> span, int count) -> int
-static MessagePack.MessagePackBinary.WriteMapHeader(System.Span<byte> span, uint count) -> int
-static MessagePack.MessagePackBinary.WriteStringHeader(System.Span<byte> span, int byteCount, bool oldSpec = false) -> int
-static MessagePack.MessagePackBinary.WriteUInt16(System.Span<byte> span, ushort value) -> int
-static MessagePack.MessagePackBinary.WriteUInt32(System.Span<byte> span, uint value) -> int
-static MessagePack.MessagePackBinary.WriteUInt64(System.Span<byte> span, ulong value) -> int
-static MessagePack.MessagePackBinary.WriteUInt8(System.Span<byte> span, byte value) -> int
