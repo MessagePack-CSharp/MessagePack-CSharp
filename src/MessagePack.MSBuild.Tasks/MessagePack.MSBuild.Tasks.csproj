@@ -9,6 +9,7 @@
     <!-- SKD depenencies local copy. -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <!-- NuGet Info -->
+    <DevelopmentDependency>true</DevelopmentDependency>
     <IsPackable>true</IsPackable>
     <Title>MessagePack CodeGenerator Tasks</Title>
     <Description>MSBuild Tasks of MessagePack for C#.</Description>
