@@ -17,12 +17,6 @@ steps:
     arguments: --configuration $(BuildConfiguration) --no-build -v n
     testRunTitle: $(Agent.JobName)
 
-- script: |
-    dotnet publish src/MessagePack.Generator -r win-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
-    dotnet publish src/MessagePack.Generator -r osx-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
-    dotnet publish src/MessagePack.Generator -r linux-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
-  displayName: Building standalone mpc tool for all OSs
-
 ## The rest of these steps are for deployment and skipped for PR builds
 
 - task: PowerShell@2

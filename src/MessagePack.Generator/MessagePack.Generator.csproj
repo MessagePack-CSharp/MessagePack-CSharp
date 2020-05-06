@@ -7,7 +7,7 @@
     <LangVersion>latest</LangVersion>
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>dotnet-mpc</ToolCommandName>
+    <ToolCommandName>mpc</ToolCommandName>
 
     <!-- NuGet Info -->
     <PackageId>MessagePack.Generator</PackageId>
