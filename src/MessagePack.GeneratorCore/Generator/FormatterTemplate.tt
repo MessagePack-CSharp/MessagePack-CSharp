@@ -47,7 +47,7 @@ namespace <#= Namespace #>
 <# }
 
   if (isFormatterResolverNecessary) { #>
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
 <#}
 
   if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
@@ -77,7 +77,7 @@ namespace <#= Namespace #>
 
             options.Security.DepthStep(ref reader);
 <# if (isFormatterResolverNecessary) { #>
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
 <# } #>
             var length = reader.ReadArrayHeader();
 <# foreach(var x in objInfo.Members) { #>

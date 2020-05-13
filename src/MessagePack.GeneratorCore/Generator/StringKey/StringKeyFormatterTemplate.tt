@@ -42,10 +42,10 @@ foreach(var objInfo in ObjectSerializationInfos)
 <#
     }#>
 
-        public <#= formatterName #>()
+        static <#= formatterName #>()
         {
 <#
-    for(int i = 0; i < objInfo.Members.Length; i++)
+    for (int i = 0; i < objInfo.Members.Length; i++)
     {
         var member = objInfo.Members[i];
         var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);#>
@@ -70,7 +70,7 @@ foreach(var objInfo in ObjectSerializationInfos)
 
     if (isFormatterResolverNecessary)
     {#>
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
 <#
     }
 
@@ -84,7 +84,7 @@ foreach(var objInfo in ObjectSerializationInfos)
 <#  }#>
             writer.WriteMapHeader(<#= objInfo.WriteCount #>);
 <#
-    for(int i = 0; i < objInfo.Members.Length; i++)
+    for (int i = 0; i < objInfo.Members.Length; i++)
     {
         var member = objInfo.Members[i];#>
             writer.WriteRaw(____stringByteKeys_<#= member.Name #>);
@@ -113,7 +113,7 @@ foreach(var objInfo in ObjectSerializationInfos)
     if (isFormatterResolverNecessary)
     {
 #>
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
 <#
     }
 
@@ -138,7 +138,7 @@ foreach(var objInfo in ObjectSerializationInfos)
 <#
     if(lessThan8.Length == 0)
     {
-        if(greaterThan7.Length == 0)
+        if (greaterThan7.Length == 0)
         {#>
                 reader.Skip();
                 reader.Skip();
@@ -148,9 +148,9 @@ foreach(var objInfo in ObjectSerializationInfos)
         {#>
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 ReadOnlySpan<ulong> ulongs = isBigEndian ? stackalloc ulong[stringKey.Length >> 3] : MemoryMarshal.Cast<byte, ulong>(stringKey);
-                if(isBigEndian)
+                if (isBigEndian)
                 {
-                    for(var index = 0; index < ulongs.Length; index++)
+                    for (var index = 0; index < ulongs.Length; index++)
                     {
                         var index8times = index << 3;
                         ref var number = ref global::System.Runtime.CompilerServices.Unsafe.AsRef(ulongs[index]);
@@ -163,14 +163,14 @@ foreach(var objInfo in ObjectSerializationInfos)
                     }
                 }
 
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default:
                     FAIL:
                         reader.Skip();
                         continue;
 <#
-            foreach(var tuple in greaterThan7)
+            foreach (var tuple in greaterThan7)
             {
                 var (readOnlyMemory, member) = tuple.Span[0];
 #>
@@ -184,17 +184,17 @@ foreach(var objInfo in ObjectSerializationInfos)
     }
     else
     {
-        if(greaterThan7.Length == 0)
+        if (greaterThan7.Length == 0)
         {#>
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default:
                     FAIL:
                         reader.Skip();
                         continue;
 <#
-            foreach(var tuple in lessThan8)
+            foreach (var tuple in lessThan8)
             {
                 var (readOnlyMemory, member) = tuple.Span[0];
 #>
@@ -208,10 +208,10 @@ foreach(var objInfo in ObjectSerializationInfos)
         else
         {#>
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
 <#
-            foreach(var tuple in lessThan8)
+            foreach (var tuple in lessThan8)
             {
                 var (readOnlyMemory, member) = tuple.Span[0];
 #>
@@ -222,9 +222,9 @@ foreach(var objInfo in ObjectSerializationInfos)
                 }
 
                 ReadOnlySpan<ulong> ulongs = isBigEndian ? stackalloc ulong[stringKey.Length >> 3] : MemoryMarshal.Cast<byte, ulong>(stringKey);
-                if(isBigEndian)
+                if (isBigEndian)
                 {
-                    for(var index = 0; index < ulongs.Length; index++)
+                    for (var index = 0; index < ulongs.Length; index++)
                     {
                         var index8times = index << 3;
                         ref var number = ref global::System.Runtime.CompilerServices.Unsafe.AsRef(ulongs[index]);
@@ -237,11 +237,11 @@ foreach(var objInfo in ObjectSerializationInfos)
                     }
                 }
 
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default: goto FAIL;
 <#
-            foreach(var tuple in greaterThan7)
+            foreach (var tuple in greaterThan7)
             {
                 var (readOnlyMemory, member) = tuple.Span[0];
 #>
