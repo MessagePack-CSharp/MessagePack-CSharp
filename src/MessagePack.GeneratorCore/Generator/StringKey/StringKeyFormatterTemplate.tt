@@ -86,8 +86,9 @@ foreach(var objInfo in ObjectSerializationInfos)
 <#
     for (int i = 0; i < objInfo.Members.Length; i++)
     {
-        var member = objInfo.Members[i];#>
-            writer.WriteRaw(____stringByteKeys_<#= member.Name #>);
+        var member = objInfo.Members[i];
+        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);#>
+            writer.WriteRaw(<#= StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes) #>);
             <#= member.GetSerializeMethodString() #>;
 <#
     }#>

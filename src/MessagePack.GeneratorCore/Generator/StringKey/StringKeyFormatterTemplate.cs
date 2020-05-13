@@ -112,8 +112,9 @@ foreach(var objInfo in ObjectSerializationInfos)
     for (int i = 0; i < objInfo.Members.Length; i++)
     {
         var member = objInfo.Members[i];
-            this.Write("            writer.WriteRaw(____stringByteKeys_");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);
+            this.Write("            writer.WriteRaw(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes)));
             this.Write(");\r\n            ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             this.Write(";\r\n");
