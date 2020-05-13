@@ -54,32 +54,7 @@ foreach(var objInfo in ObjectSerializationInfos)
             this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
-            this.Write(">\r\n    {\r\n");
-
-    for(int i = 0; i < objInfo.Members.Length; i++)
-    {
-        var member = objInfo.Members[i];
-            this.Write("        private static byte[] ____stringByteKeys_");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write(";\r\n");
-
-    }
-            this.Write("\r\n        public ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
-            this.Write("()\r\n        {\r\n");
-
-    for(int i = 0; i < objInfo.Members.Length; i++)
-    {
-        var member = objInfo.Members[i];
-        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);
-            this.Write("            ____stringByteKeys_");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write(" = ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes)));
-            this.Write(";\r\n");
-
-    }
-            this.Write("        }\r\n\r\n        public void Serialize(ref MessagePackWriter writer, ");
+            this.Write(">\r\n    {\r\n        public void Serialize(ref MessagePackWriter writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n");
 
@@ -92,7 +67,7 @@ foreach(var objInfo in ObjectSerializationInfos)
 
     if (isFormatterResolverNecessary)
     {
-            this.Write("            IFormatterResolver formatterResolver = options.Resolver;\r\n");
+            this.Write("            var formatterResolver = options.Resolver;\r\n");
 
     }
 
@@ -112,8 +87,9 @@ foreach(var objInfo in ObjectSerializationInfos)
     for(int i = 0; i < objInfo.Members.Length; i++)
     {
         var member = objInfo.Members[i];
-            this.Write("            writer.WriteRaw(____stringByteKeys_");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);
+            this.Write("            writer.WriteRaw(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes)));
             this.Write(");\r\n            ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             this.Write(";\r\n");
@@ -139,7 +115,7 @@ foreach(var objInfo in ObjectSerializationInfos)
     if (isFormatterResolverNecessary)
     {
 
-            this.Write("            IFormatterResolver formatterResolver = options.Resolver;\r\n");
+            this.Write("            var formatterResolver = options.Resolver;\r\n");
 
     }
 
@@ -191,7 +167,7 @@ foreach(var objInfo in ObjectSerializationInfos)
                     }
                 }
 
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default:
                     FAIL:
@@ -219,7 +195,7 @@ foreach(var objInfo in ObjectSerializationInfos)
         if(greaterThan7.Length == 0)
         {
             this.Write(@"                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default:
                     FAIL:
@@ -244,8 +220,8 @@ foreach(var objInfo in ObjectSerializationInfos)
         else
         {
             this.Write("                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadS" +
-                    "tringSpan(ref reader);\r\n                switch(stringKey.Length)\r\n              " +
-                    "  {\r\n");
+                    "tringSpan(ref reader);\r\n                switch (stringKey.Length)\r\n             " +
+                    "   {\r\n");
 
             foreach(var tuple in lessThan8)
             {
@@ -261,7 +237,7 @@ foreach(var objInfo in ObjectSerializationInfos)
             this.Write(@"                }
 
                 ReadOnlySpan<ulong> ulongs = isBigEndian ? stackalloc ulong[stringKey.Length >> 3] : MemoryMarshal.Cast<byte, ulong>(stringKey);
-                if(isBigEndian)
+                if (isBigEndian)
                 {
                     for(var index = 0; index < ulongs.Length; index++)
                     {
@@ -276,7 +252,7 @@ foreach(var objInfo in ObjectSerializationInfos)
                     }
                 }
 
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default: goto FAIL;
 ");

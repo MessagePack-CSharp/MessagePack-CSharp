@@ -73,7 +73,7 @@ namespace ");
  }
 
   if (isFormatterResolverNecessary) { 
-            this.Write("            IFormatterResolver formatterResolver = options.Resolver;\r\n");
+            this.Write("            var formatterResolver = options.Resolver;\r\n");
 }
 
   if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { 
@@ -106,7 +106,7 @@ namespace ");
  } 
             this.Write("            }\r\n\r\n            options.Security.DepthStep(ref reader);\r\n");
  if (isFormatterResolverNecessary) { 
-            this.Write("            IFormatterResolver formatterResolver = options.Resolver;\r\n");
+            this.Write("            var formatterResolver = options.Resolver;\r\n");
  } 
             this.Write("            var length = reader.ReadArrayHeader();\r\n");
  foreach(var x in objInfo.Members) { 

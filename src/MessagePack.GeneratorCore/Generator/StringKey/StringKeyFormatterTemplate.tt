@@ -34,26 +34,6 @@ foreach(var objInfo in ObjectSerializationInfos)
 #>
     public sealed class <#= formatterName #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
     {
-<#
-    for(int i = 0; i < objInfo.Members.Length; i++)
-    {
-        var member = objInfo.Members[i];#>
-        private static byte[] ____stringByteKeys_<#= member.Name #>;
-<#
-    }#>
-
-        public <#= formatterName #>()
-        {
-<#
-    for(int i = 0; i < objInfo.Members.Length; i++)
-    {
-        var member = objInfo.Members[i];
-        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);#>
-            ____stringByteKeys_<#= member.Name #> = <#= StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes) #>;
-<#
-    }#>
-        }
-
         public void Serialize(ref MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
 <#
@@ -70,7 +50,7 @@ foreach(var objInfo in ObjectSerializationInfos)
 
     if (isFormatterResolverNecessary)
     {#>
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
 <#
     }
 
@@ -86,8 +66,9 @@ foreach(var objInfo in ObjectSerializationInfos)
 <#
     for(int i = 0; i < objInfo.Members.Length; i++)
     {
-        var member = objInfo.Members[i];#>
-            writer.WriteRaw(____stringByteKeys_<#= member.Name #>);
+        var member = objInfo.Members[i];
+        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);#>
+            writer.WriteRaw(<#= StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes) #>);
             <#= member.GetSerializeMethodString() #>;
 <#
     }#>
@@ -113,7 +94,7 @@ foreach(var objInfo in ObjectSerializationInfos)
     if (isFormatterResolverNecessary)
     {
 #>
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
 <#
     }
 
@@ -163,7 +144,7 @@ foreach(var objInfo in ObjectSerializationInfos)
                     }
                 }
 
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default:
                     FAIL:
@@ -187,7 +168,7 @@ foreach(var objInfo in ObjectSerializationInfos)
         if(greaterThan7.Length == 0)
         {#>
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default:
                     FAIL:
@@ -208,7 +189,7 @@ foreach(var objInfo in ObjectSerializationInfos)
         else
         {#>
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
 <#
             foreach(var tuple in lessThan8)
@@ -222,7 +203,7 @@ foreach(var objInfo in ObjectSerializationInfos)
                 }
 
                 ReadOnlySpan<ulong> ulongs = isBigEndian ? stackalloc ulong[stringKey.Length >> 3] : MemoryMarshal.Cast<byte, ulong>(stringKey);
-                if(isBigEndian)
+                if (isBigEndian)
                 {
                     for(var index = 0; index < ulongs.Length; index++)
                     {
@@ -237,7 +218,7 @@ foreach(var objInfo in ObjectSerializationInfos)
                     }
                 }
 
-                switch(stringKey.Length)
+                switch (stringKey.Length)
                 {
                     default: goto FAIL;
 <#
