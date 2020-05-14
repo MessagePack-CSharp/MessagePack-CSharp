@@ -301,9 +301,9 @@ namespace Nerdbank.Streams
         private class SequenceSegment : ReadOnlySequenceSegment<T>
         {
             /// <summary>
-            /// A value indicating whether the element is a value type.
+            /// A value indicating whether the element may contain references (and thus must be cleared).
             /// </summary>
-            private static readonly bool IsValueTypeElement = typeof(T).GetTypeInfo().IsValueType;
+            private static readonly bool MayContainReferences = !typeof(T).GetTypeInfo().IsPrimitive;
 
             /// <summary>
             /// Gets the backing array, when using an <see cref="ArrayPool{T}"/> instead of a <see cref="MemoryPool{T}"/>.
@@ -444,8 +444,9 @@ namespace Nerdbank.Streams
 
             private void ClearReferences(int startIndex, int length)
             {
-                // If we store references, clear them to allow the objects to be GC'd.
-                if (!IsValueTypeElement)
+                // Clear the array to allow the objects to be GC'd.
+                // Reference types need to be cleared. Value types can be structs with reference type members too, so clear everything.
+                if (MayContainReferences)
                 {
                     this.AvailableMemory.Span.Slice(startIndex, length).Clear();
                 }

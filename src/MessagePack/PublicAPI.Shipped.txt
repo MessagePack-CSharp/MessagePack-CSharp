@@ -466,8 +466,8 @@ MessagePack.Formatters.ValueTupleFormatter<T1, T2>.Deserialize(ref MessagePack.M
 MessagePack.Formatters.ValueTupleFormatter<T1, T2>.Serialize(ref MessagePack.MessagePackWriter writer, (T1, T2) value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.ValueTupleFormatter<T1, T2>.ValueTupleFormatter() -> void
 MessagePack.Formatters.ValueTupleFormatter<T1>
-MessagePack.Formatters.ValueTupleFormatter<T1>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> ValueTuple<T1>
-MessagePack.Formatters.ValueTupleFormatter<T1>.Serialize(ref MessagePack.MessagePackWriter writer, ValueTuple<T1> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.ValueTupleFormatter<T1>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.ValueTuple<T1>
+MessagePack.Formatters.ValueTupleFormatter<T1>.Serialize(ref MessagePack.MessagePackWriter writer, System.ValueTuple<T1> value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.ValueTupleFormatter<T1>.ValueTupleFormatter() -> void
 MessagePack.Formatters.VersionFormatter
 MessagePack.Formatters.VersionFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Version

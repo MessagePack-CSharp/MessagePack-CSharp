@@ -13,6 +13,7 @@ using System.Xml;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace MessagePack.GeneratorCore.Utils
@@ -68,6 +69,7 @@ namespace MessagePack.GeneratorCore.Utils
             var parseOption = new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.Parse, SourceCodeKind.Regular, CleanPreprocessorSymbols(preprocessorSymbols));
 
             var syntaxTrees = new List<SyntaxTree>();
+            var hasAnnotations = false;
             foreach (var file in IterateCsFileWithoutBinObj(directoryRoot))
             {
                 var text = File.ReadAllText(NormalizeDirectorySeparators(file), Encoding.UTF8);
@@ -76,10 +78,17 @@ namespace MessagePack.GeneratorCore.Utils
                 if (Path.GetFileNameWithoutExtension(file) == "Attributes")
                 {
                     var root = await syntax.GetRootAsync(cancellationToken).ConfigureAwait(false);
+                    if (root.DescendantNodes().OfType<ClassDeclarationSyntax>().Any(x => x.Identifier.Text == "MessagePackObjectAttribute"))
+                    {
+                        hasAnnotations = true;
+                    }
                 }
             }
 
-            syntaxTrees.Add(CSharpSyntaxTree.ParseText(dummyAnnotation, parseOption));
+            if (!hasAnnotations)
+            {
+                syntaxTrees.Add(CSharpSyntaxTree.ParseText(dummyAnnotation, parseOption));
+            }
 
             var metadata = GetStandardReferences().Select(x => MetadataReference.CreateFromFile(x)).ToArray();
 
@@ -313,10 +322,13 @@ namespace MessagePack.GeneratorCore.Utils
                 foreach (var item in document.Descendants("PackageReference"))
                 {
                     var originalTargetFramework = document.Descendants("TargetFramework").FirstOrDefault()?.Value ?? document.Descendants("TargetFrameworks").First().Value.Split(';').First();
-                    var includePath = item.Attribute("Include").Value.Trim().ToLower(); // maybe lower
-                    var packageVersion = item.Attribute("Version").Value.Trim();
-
-                    CollectNugetPackages(includePath, packageVersion, originalTargetFramework);
+                    var includeXAttribute = item.Attribute("Include");
+                    if (includeXAttribute != null)
+                    {
+                        var includePath = includeXAttribute.Value.Trim().ToLower(); // maybe lower
+                        var packageVersion = item.Attribute("Version").Value.Trim();
+                        CollectNugetPackages(includePath, packageVersion, originalTargetFramework);
+                    }
                 }
 
                 foreach (var item in resolvedDllPaths)
