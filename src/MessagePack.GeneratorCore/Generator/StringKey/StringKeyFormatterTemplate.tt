@@ -34,26 +34,6 @@ foreach(var objInfo in ObjectSerializationInfos)
 #>
     public sealed class <#= formatterName #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
     {
-<#
-    for(int i = 0; i < objInfo.Members.Length; i++)
-    {
-        var member = objInfo.Members[i];#>
-        private static byte[] ____stringByteKeys_<#= member.Name #>;
-<#
-    }#>
-
-        static <#= formatterName #>()
-        {
-<#
-    for (int i = 0; i < objInfo.Members.Length; i++)
-    {
-        var member = objInfo.Members[i];
-        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);#>
-            ____stringByteKeys_<#= member.Name #> = <#= StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes) #>;
-<#
-    }#>
-        }
-
         public void Serialize(ref MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
 <#
@@ -88,6 +68,7 @@ foreach(var objInfo in ObjectSerializationInfos)
     {
         var member = objInfo.Members[i];
         var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);#>
+            // <#= member.StringKey #>
             writer.WriteRaw(<#= StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes) #>);
             <#= member.GetSerializeMethodString() #>;
 <#

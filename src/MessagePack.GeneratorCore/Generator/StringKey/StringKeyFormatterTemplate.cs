@@ -54,32 +54,7 @@ foreach(var objInfo in ObjectSerializationInfos)
             this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
-            this.Write(">\r\n    {\r\n");
-
-    for(int i = 0; i < objInfo.Members.Length; i++)
-    {
-        var member = objInfo.Members[i];
-            this.Write("        private static byte[] ____stringByteKeys_");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write(";\r\n");
-
-    }
-            this.Write("\r\n        static ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
-            this.Write("()\r\n        {\r\n");
-
-    for (int i = 0; i < objInfo.Members.Length; i++)
-    {
-        var member = objInfo.Members[i];
-        var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);
-            this.Write("            ____stringByteKeys_");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write(" = ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes)));
-            this.Write(";\r\n");
-
-    }
-            this.Write("        }\r\n\r\n        public void Serialize(ref MessagePackWriter writer, ");
+            this.Write(">\r\n    {\r\n        public void Serialize(ref MessagePackWriter writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n");
 
@@ -113,7 +88,9 @@ foreach(var objInfo in ObjectSerializationInfos)
     {
         var member = objInfo.Members[i];
         var rawBytes = EmbedStringHelper.GetEncodedStringBytes(member.StringKey);
-            this.Write("            writer.WriteRaw(");
+            this.Write("            // ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.StringKey));
+            this.Write("\r\n            writer.WriteRaw(");
             this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterGeneratorHelper.ToStringNewByteArray(rawBytes)));
             this.Write(");\r\n            ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
