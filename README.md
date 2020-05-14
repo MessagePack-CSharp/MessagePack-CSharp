@@ -426,6 +426,7 @@ public class SampleCallback : IMessagePackSerializationCallbackReceiver
     }
 }
 ```
+Since interfaces are treated as reference types, there is no way to call a method on a `struct` referred to by an interface without having to box the underlying struct first. Thus using `IMessagePackSerializationCallbackReceiver` with `struct` will cause boxing on serialization and deserialization.
 
 ## Union
 
@@ -517,6 +518,7 @@ public class SubUnionType2 : ParentUnionType
 ```
 
 Please be mindful that you cannot reuse the same keys in derived types that are already present in the parent type, as internally a single flat array or map will be used and thus cannot have duplicate indexes/keys.
+Using `Union` with `struct` will cause hidden boxing on (de)serialization.
 
 ## Dynamic (Untyped) Deserialization
 
