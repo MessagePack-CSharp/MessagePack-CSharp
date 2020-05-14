@@ -67,13 +67,14 @@ namespace MessagePackCompiler
                     // SingleFile Output
                     var objectFormatterTemplates = objectInfo
                         .Concat(unboundGenericInfo)
-                        .GroupBy(x => x.Namespace)
+                        .GroupBy(x => (x.Namespace, x.IsStringKey))
                         .Select(x =>
                         {
+                            var (nameSpace, isStringKey) = x.Key;
                             var objectSerializationInfos = x.ToArray();
-                            var template = objectSerializationInfos[0].IsIntKey ? (IFormatterTemplate)new FormatterTemplate() : new StringKeyFormatterTemplate();
+                            var template = isStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
 
-                            template.Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key);
+                            template.Namespace = namespaceDot + "Formatters" + (nameSpace is null ? string.Empty : "." + nameSpace);
                             template.ObjectSerializationInfos = objectSerializationInfos;
 
                             return template;
@@ -145,11 +146,9 @@ namespace MessagePackCompiler
                     // Multiple File output
                     foreach (var x in objectInfo.Concat(unboundGenericInfo))
                     {
-                        var template = new FormatterTemplate()
-                        {
-                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
-                            ObjectSerializationInfos = new[] { x },
-                        };
+                        var template = x.IsStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
+                        template.Namespace = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
+                        template.ObjectSerializationInfos = new[] { x };
 
                         var text = template.TransformText();
                         await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken).ConfigureAwait(false);
