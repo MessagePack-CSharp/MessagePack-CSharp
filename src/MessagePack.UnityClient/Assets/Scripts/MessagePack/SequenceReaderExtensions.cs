@@ -58,25 +58,9 @@ namespace System.Buffers
                 return TryReadMultisegment(ref reader, out value);
             }
 
-            value = BitConverterToInt64(span);
+            value = SafeBitConverter.ToInt64(span);
             reader.Advance(sizeof(long));
             return true;
-        }
-
-        private static unsafe long BitConverterToInt64(ReadOnlySpan<byte> value)
-        {
-            if (BitConverter.IsLittleEndian)
-            {
-                int i1 = value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24);
-                int i2 = value[4] | (value[5] << 8) | (value[6] << 16) | (value[7] << 24);
-                return (uint)i1 | ((long)i2 << 32);
-            }
-            else
-            {
-                int i1 = (value[0] << 24) | (value[1] << 16) | (value[2] << 8) | value[3];
-                int i2 = (value[4] << 24) | (value[5] << 16) | (value[6] << 8) | value[7];
-                return (uint)i2 | ((long)i1 << 32);
-            }
         }
 
 #endif
@@ -117,7 +101,7 @@ namespace System.Buffers
                 return false;
             }
 
-            value = BitConverterToInt64(tempSpan);
+            value = SafeBitConverter.ToInt64(tempSpan);
             reader.Advance(sizeof(long));
             return true;
         }

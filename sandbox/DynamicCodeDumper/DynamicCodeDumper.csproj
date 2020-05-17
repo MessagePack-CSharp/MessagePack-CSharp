@@ -102,6 +102,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions.cs">
       <Link>Code\SequenceReaderExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs">
+      <Link>Code\SafeBitConverter.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs">
       <Link>Code\MessagePackCode.cs</Link>
     </Compile>
