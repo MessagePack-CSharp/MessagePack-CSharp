@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -20,10 +21,12 @@ namespace MessagePack.Internal
 
         public static bool IsAnonymous(this System.Reflection.TypeInfo type)
         {
-            return type.GetCustomAttribute<CompilerGeneratedAttribute>() != null
-                && type.IsGenericType && type.Name.Contains("AnonymousType")
-                && (type.Name.StartsWith("<>") || type.Name.StartsWith("VB$"))
-                && (type.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic;
+            return type.Namespace == null
+                   && type.IsSealed
+                   && (type.Name.StartsWith("<>f__AnonymousType", StringComparison.Ordinal)
+                       || type.Name.StartsWith("<>__AnonType", StringComparison.Ordinal)
+                       || type.Name.StartsWith("VB$AnonymousType_", StringComparison.Ordinal))
+                   && type.IsDefined(typeof(CompilerGeneratedAttribute), false);
         }
 
         public static bool IsIndexer(this System.Reflection.PropertyInfo propertyInfo)
