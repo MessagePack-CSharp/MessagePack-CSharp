@@ -322,10 +322,13 @@ namespace MessagePack.GeneratorCore.Utils
                 foreach (var item in document.Descendants("PackageReference"))
                 {
                     var originalTargetFramework = document.Descendants("TargetFramework").FirstOrDefault()?.Value ?? document.Descendants("TargetFrameworks").First().Value.Split(';').First();
-                    var includePath = item.Attribute("Include").Value.Trim().ToLower(); // maybe lower
-                    var packageVersion = item.Attribute("Version").Value.Trim();
-
-                    CollectNugetPackages(includePath, packageVersion, originalTargetFramework);
+                    var includeXAttribute = item.Attribute("Include");
+                    if (includeXAttribute != null)
+                    {
+                        var includePath = includeXAttribute.Value.Trim().ToLower(); // maybe lower
+                        var packageVersion = item.Attribute("Version").Value.Trim();
+                        CollectNugetPackages(includePath, packageVersion, originalTargetFramework);
+                    }
                 }
 
                 foreach (var item in resolvedDllPaths)
