@@ -328,7 +328,7 @@ namespace MessagePack
                     do
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        Span<byte> span = sequence.GetSpan(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
+                        Span<byte> span = sequence.GetSpan(stream.CanSeek && (stream.Length - stream.Position) <= int.MaxValue ? (int)(stream.Length - stream.Position) : 0);
                         bytesRead = stream.Read(span);
                         sequence.Advance(bytesRead);
                     }
