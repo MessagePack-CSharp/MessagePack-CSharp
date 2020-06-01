@@ -27,6 +27,8 @@ namespace Nerdbank.Streams
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     internal class Sequence<T> : IBufferWriter<T>, IDisposable
     {
+        private const int MaxHintSize = 1024 * 1024;
+
         private static readonly int DefaultLengthFromArrayPool = 1 + (4095 / Marshal.SizeOf<T>());
 
         private readonly Stack<SequenceSegment> segmentPool = new Stack<SequenceSegment>();
@@ -228,6 +230,7 @@ namespace Nerdbank.Streams
             else
             {
                 sizeHint = Math.Max(this.MinimumSpanLength, sizeHint);
+                sizeHint = Math.Min(MaxHintSize, sizeHint);
                 if (this.last == null || this.last.WritableBytes < sizeHint)
                 {
                     minBufferSize = sizeHint;

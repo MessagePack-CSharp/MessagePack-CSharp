@@ -374,7 +374,7 @@ namespace MessagePack
                     int bytesRead;
                     do
                     {
-                        Memory<byte> memory = sequence.GetMemory(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
+                        Memory<byte> memory = sequence.GetMemory(stream.CanSeek && (stream.Length - stream.Position) <= int.MaxValue ? (int)(stream.Length - stream.Position) : 0);
                         bytesRead = await stream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
                         sequence.Advance(bytesRead);
                     }
