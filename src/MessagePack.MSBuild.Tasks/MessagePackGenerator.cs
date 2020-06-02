@@ -44,6 +44,8 @@ namespace MessagePack.MSBuild.Tasks
 
         public string[]? ExternalIgnoreTypeNames { get; set; }
 
+        public bool CheckInputName { get; set; }
+
         [Output]
         public string? GeneratedOutputPath { get; set; }
 
@@ -73,7 +75,8 @@ namespace MessagePack.MSBuild.Tasks
                     Namespace,
                     UseMapMode,
                     null,
-                    ExternalIgnoreTypeNames).GetAwaiter().GetResult();
+                    ExternalIgnoreTypeNames,
+                    CheckInputName).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

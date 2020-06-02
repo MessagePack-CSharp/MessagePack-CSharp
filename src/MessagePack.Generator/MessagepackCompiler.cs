@@ -46,7 +46,8 @@ namespace MessagePack.Generator
             [Option("n", "Set namespace root name.")] string @namespace = "MessagePack",
             [Option("m", "Force use map mode serialization.")] bool useMapMode = false,
             [Option("ms", "Generate #if-- files by symbols, split with ','.")] string? multipleIfDirectiveOutputSymbols = null,
-            [Option("ei", "Ignore type names.")] string[]? externalIgnoreTypeNames = null)
+            [Option("ei", "Ignore type names.")] string[]? externalIgnoreTypeNames = null,
+            [Option("checkInputName", "Check namespace name[ghpark]")] bool checkInputName = false)
         {
             Workspace? workspace = null;
             try
@@ -59,7 +60,10 @@ namespace MessagePack.Generator
                 }
                 else
                 {
-                    (workspace, compilation) = await this.OpenMSBuildProjectAsync(input, this.Context.CancellationToken);
+                    //(workspace, compilation) = await this.OpenMSBuildProjectAsync(input, this.Context.CancellationToken);
+                    // Dash Custom
+                    // csproj 로 부터 copilation 을 제대로 가져오지 못하여 이전 버전 코드를 사용한다.
+                    compilation = await PseudoCompilation.CreateFromProjectAsync(input.Split(','), Array.Empty<string>(), this.Context.CancellationToken);
                 }
 
                 await new MessagePackCompiler.CodeGenerator(x => Console.WriteLine(x), this.Context.CancellationToken)
@@ -70,7 +74,8 @@ namespace MessagePack.Generator
                         @namespace,
                         useMapMode,
                         multipleIfDirectiveOutputSymbols,
-                        externalIgnoreTypeNames).ConfigureAwait(false);
+                        externalIgnoreTypeNames,
+                        checkInputName).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
