@@ -25,7 +25,7 @@ namespace Nerdbank.Streams
     /// Instance members are not thread-safe.
     /// </remarks>
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-    internal class Sequence<T> : IBufferWriter<T>, IDisposable
+    public class Sequence<T> : IBufferWriter<T>, IDisposable
     {
         private static readonly int DefaultLengthFromArrayPool = 1 + (4095 / Marshal.SizeOf<T>());
 

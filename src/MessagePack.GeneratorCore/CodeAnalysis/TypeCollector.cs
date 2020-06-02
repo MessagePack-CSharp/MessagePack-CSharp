@@ -272,7 +272,7 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<UnionSerializationInfo> collectedUnionInfo;
         private List<ObjectSerializationInfo> collectedUnboundGenericInfo;
 
-        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
+        public TypeCollector(string inputName, bool checkInputName, Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
         {
             this.logger = logger;
             this.typeReferences = new ReferenceSymbols(compilation, logger);
@@ -282,6 +282,11 @@ namespace MessagePackCompiler.CodeAnalysis
             targetTypes = compilation.GetNamedTypeSymbols()
                 .Where(x =>
                 {
+                    if (checkInputName == true && x.ContainingNamespace.ToString().Contains(inputName) == false)
+                    {
+                        return false;
+                    }
+
                     if (x.DeclaredAccessibility == Accessibility.Public)
                     {
                         return true;

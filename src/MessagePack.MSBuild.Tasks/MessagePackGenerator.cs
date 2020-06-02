@@ -29,6 +29,8 @@ namespace MessagePack.MSBuild.Tasks
 
         public string MultipleIfDirectiveOutputSymbols { get; set; }
 
+        public bool CheckInputName { get; set; }
+
         public override bool Execute()
         {
             try
@@ -41,7 +43,8 @@ namespace MessagePack.MSBuild.Tasks
                         ResolverName ?? "GeneratedResolver",
                         Namespace ?? "MessagePack",
                         UseMapMode,
-                        MultipleIfDirectiveOutputSymbols)
+                        MultipleIfDirectiveOutputSymbols,
+                        CheckInputName)
                     .GetAwaiter().GetResult();
             }
             catch (Exception ex)

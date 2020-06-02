@@ -25,7 +25,8 @@ namespace MessagePack.Generator
             [Option("r", "Set resolver name.")]string resolverName = "GeneratedResolver",
             [Option("n", "Set namespace root name.")]string @namespace = "MessagePack",
             [Option("m", "Force use map mode serialization.")]bool useMapMode = false,
-            [Option("ms", "Generate #if-- files by symbols, split with ','.")]string multipleIfDirectiveOutputSymbols = null)
+            [Option("ms", "Generate #if-- files by symbols, split with ','.")]string multipleIfDirectiveOutputSymbols = null,
+            [Option("checkInputName", "Check namespace name[ghpark]")] bool checkInputName = false)
         {
             await new MessagePackCompiler.CodeGenerator(x => Console.WriteLine(x), this.Context.CancellationToken)
                 .GenerateFileAsync(
@@ -35,7 +36,8 @@ namespace MessagePack.Generator
                     resolverName,
                     @namespace,
                     useMapMode,
-                    multipleIfDirectiveOutputSymbols).ConfigureAwait(false);
+                    multipleIfDirectiveOutputSymbols,
+                    checkInputName).ConfigureAwait(false);
         }
     }
 }
