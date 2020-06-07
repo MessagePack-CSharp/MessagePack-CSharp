@@ -4,13 +4,16 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Reflection;
 
 namespace MessagePack.Formatters
 {
     public sealed class PrimitiveObjectFormatter : IMessagePackFormatter<object>
     {
-        public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter();
+        public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter(useExpandoObject: false);
+
+        public static readonly IMessagePackFormatter<object> InstanceWithExpandoObject = new PrimitiveObjectFormatter(useExpandoObject: true);
 
         private static readonly Dictionary<Type, int> TypeToJumpCode = new Dictionary<Type, int>()
         {
@@ -32,8 +35,11 @@ namespace MessagePack.Formatters
             { typeof(byte[]), 14 },
         };
 
-        private PrimitiveObjectFormatter()
+        private readonly bool useExpandoObject;
+
+        private PrimitiveObjectFormatter(bool useExpandoObject)
         {
+            this.useExpandoObject = useExpandoObject;
         }
 
 #if !UNITY_2018_3_OR_NEWER
@@ -305,25 +311,39 @@ namespace MessagePack.Formatters
                         var length = reader.ReadMapHeader();
 
                         IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
-                        var hash = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
                         options.Security.DepthStep(ref reader);
                         try
                         {
-                            for (int i = 0; i < length; i++)
+                            if (this.useExpandoObject)
                             {
-                                var key = objectFormatter.Deserialize(ref reader, options);
+                                IMessagePackFormatter<string> keyFormatter = resolver.GetFormatterWithVerify<string>();
+                                IDictionary<string, object> dictionary = new ExpandoObject();
+                                for (int i = 0; i < length; i++)
+                                {
+                                    var key = keyFormatter.Deserialize(ref reader, options);
+                                    var value = objectFormatter.Deserialize(ref reader, options);
+                                    dictionary.Add(key, value);
+                                }
 
-                                var value = objectFormatter.Deserialize(ref reader, options);
+                                return dictionary;
+                            }
+                            else
+                            {
+                                var dictionary = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
+                                for (int i = 0; i < length; i++)
+                                {
+                                    var key = objectFormatter.Deserialize(ref reader, options);
+                                    var value = objectFormatter.Deserialize(ref reader, options);
+                                    dictionary.Add(key, value);
+                                }
 
-                                hash.Add(key, value);
+                                return dictionary;
                             }
                         }
                         finally
                         {
                             reader.Depth--;
                         }
-
-                        return hash;
                     }
 
                 case MessagePackType.Nil:
