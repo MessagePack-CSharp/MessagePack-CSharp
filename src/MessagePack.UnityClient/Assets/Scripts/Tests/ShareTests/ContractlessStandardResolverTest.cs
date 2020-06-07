@@ -156,11 +156,11 @@ namespace MessagePack.Tests
 
             Person p2 = MessagePackSerializer.Deserialize<Person>(result, Resolvers.ContractlessStandardResolver.Options);
             p2.Name.Is("John");
-            var addresses = p2.Addresses as IList;
-            var d1 = addresses[0] as IDictionary;
-            var d2 = addresses[1] as IDictionary;
-            (d1["Street"] as string).Is("St.");
-            (d2["Street"] as string).Is("Ave.");
+            var addresses = (IList)p2.Addresses;
+            var d1 = (IDictionary)addresses[0];
+            var d2 = (IDictionary)addresses[1];
+            ((string)d1["Street"]).Is("St.");
+            ((string)d2["Street"]).Is("Ave.");
         }
 
         [Fact]
