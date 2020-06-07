@@ -1086,6 +1086,67 @@ that might otherwise be able to execute a denial of service attack by sending Me
 deserialize into a very deep object graph leading to a `StackOverflowException` that would crash the process.
 This pair of statements should surround the bulk of any `IMessagePackFormatter<T>.Deserialize` method.
 
+**Important**: A message pack formatter must *read or write exactly one data structure*.
+In the above example we just read/write a string. If you have more than one element to write out,
+you must precede it with a map or array header. You must read the entire map/array when deserializing.
+For example:
+
+```csharp
+public class MySpecialObjectFormatter<T> : IMessagePackFormatter<MySpecialObject>
+{
+    public void Serialize(
+      ref MessagePackWriter writer, MySpecialObject value, MessagePackSerializerOptions options)
+    {
+        if (value == null)
+        {
+            writer.WriteNil();
+            return;
+        }
+
+        writer.WriteArrayHeader(2);
+        writer.WriteString(value.FullName);
+        writer.WriteString(value.Age);
+    }
+
+    public MySpecialObject Deserialize(
+      ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        if (reader.TryReadNil())
+        {
+            return null;
+        }
+
+        options.Security.DepthStep(ref reader);
+
+        string fullName = null;
+        int age = 0;
+
+        // Loop over *all* array elements independently of how many we expect,
+        // since if we're serializing an older/newer version of this object it might
+        // vary in number of elements that were serialized, but the contract of the formatter
+        // is that exactly one data structure must be read, regardless.
+        // Alternatively, we could check that the size of the array/map is what we expect
+        // and throw if it is not.
+        int count = reader.ReadArrayHeader();
+        for (int i = 0; i < count; i++)
+        {
+            case 0:
+                fullName = reader.ReadString();
+                break;
+            case 1:
+                age = reader.ReadInt32();
+                break;
+            default:
+                reader.Skip();
+                break;
+        }
+
+        reader.Depth--;
+        return new MySpecialObject(fullName, age);
+    }
+}
+```
+
 Your custom formatters must be discoverable via some `IFormatterResolver`. Learn more in our [resolvers](#resolvers) section.
 
 You can see many other samples from [builtin formatters](https://github.com/neuecc/MessagePack-CSharp/tree/master/src/MessagePack/Formatters).

@@ -24,6 +24,14 @@ namespace MessagePack.Tests
 
             MessagePackSerializer.ConvertToJson(data).Is(@"{""Hoge"":100,""Huga"":true,""Yaki"":{""Rec"":1,""T"":10},""Nano"":""nanoanno""}");
         }
+
+        [Fact]
+        public void EmptyAnonymousType()
+        {
+            var testData = new { };
+            var data = MessagePackSerializer.Serialize(testData, ContractlessStandardResolver.Options);
+            MessagePackSerializer.ConvertToJson(data).Is(@"{}");
+        }
     }
 }
 
