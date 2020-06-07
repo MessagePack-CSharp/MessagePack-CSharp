@@ -199,7 +199,7 @@ namespace MessagePack.Internal
                     return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
                 }
 
-                // ArraySegement
+                // ArraySegment
                 else if (genericType == typeof(ArraySegment<>))
                 {
                     if (ti.GenericTypeArguments[0] == typeof(byte))
@@ -209,6 +209,19 @@ namespace MessagePack.Internal
                     else
                     {
                         return CreateInstance(typeof(ArraySegmentFormatter<>), ti.GenericTypeArguments);
+                    }
+                }
+
+                // Memory
+                else if (genericType == typeof(Memory<>))
+                {
+                    if (ti.GenericTypeArguments[0] == typeof(byte))
+                    {
+                        return ByteMemoryFormatter.Instance;
+                    }
+                    else
+                    {
+                        return CreateInstance(typeof(MemoryFormatter<>), ti.GenericTypeArguments);
                     }
                 }
 

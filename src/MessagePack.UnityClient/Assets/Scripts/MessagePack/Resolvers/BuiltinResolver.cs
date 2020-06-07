@@ -136,6 +136,8 @@ namespace MessagePack.Internal
             { typeof(object[]), new ArrayFormatter<object>() },
             { typeof(List<object>), new ListFormatter<object>() },
 
+            { typeof(Memory<byte>), ByteMemoryFormatter.Instance },
+            { typeof(Memory<byte>?), new StaticNullableFormatter<Memory<byte>>(ByteMemoryFormatter.Instance) },
             { typeof(ArraySegment<byte>), ByteArraySegmentFormatter.Instance },
             { typeof(ArraySegment<byte>?), new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance) },
 

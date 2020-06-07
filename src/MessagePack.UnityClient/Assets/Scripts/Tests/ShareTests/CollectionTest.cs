@@ -136,5 +136,27 @@ namespace MessagePack.Tests
             nullableTest = null;
             this.Convert(nullableTest).IsNull();
         }
+
+        [Fact]
+        public void MemoryTest()
+        {
+            var test = new Memory<int>(new[] { 1, 10, 100 });
+            this.Convert(test).ToArray().Is(1, 10, 100);
+            Memory<int>? nullableTest = new Memory<int>(new[] { 1, 10, 100 });
+            this.Convert(nullableTest).Value.ToArray().Is(1, 10, 100);
+            nullableTest = null;
+            this.Convert(nullableTest).IsNull();
+        }
+
+        [Fact]
+        public void MemoryOfByteTest()
+        {
+            var test = new Memory<byte>(new[] { (byte)1, (byte)10, (byte)100 });
+            this.Convert(test).ToArray().Is((byte)1, (byte)10, (byte)100);
+            Memory<byte>? nullableTest = new Memory<byte>(new[] { (byte)1, (byte)10, (byte)100 });
+            this.Convert(nullableTest).Value.ToArray().Is((byte)1, (byte)10, (byte)100);
+            nullableTest = null;
+            this.Convert(nullableTest).IsNull();
+        }
     }
 }
