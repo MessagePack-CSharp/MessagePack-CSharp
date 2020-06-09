@@ -5,6 +5,7 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -68,6 +69,60 @@ namespace MessagePack.Resolvers
             return FormatterCache<T>.Formatter;
         }
 
+        public void SearchAssemblyForUnionsOnTypes(IEnumerable<Tuple<Type, IEnumerable<Assembly>>> typesAndImplementationAssemblys)
+        {
+            foreach (var abstractOrInterfaceType in typesAndImplementationAssemblys)
+            {
+                TypeInfo ti = abstractOrInterfaceType.Item1.GetTypeInfo();
+
+                var allImplementations = abstractOrInterfaceType.Item2.SelectMany(s => {
+                    try
+                    {
+                        return s.GetTypes();
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+                }).Where(s => s != null && abstractOrInterfaceType.Item1.IsAssignableFrom(s)).ToList();
+
+                if(allImplementations.Count <= 0)
+                {
+                    continue;
+                }
+
+                var implementationUnions = new Dictionary<Type, UnionAttribute>();
+                var count = 0;
+                foreach (var implementation in allImplementations.Distinct())
+                {
+                    if (!implementationUnions.ContainsKey(implementation))
+                    {
+                        var newUnion = new UnionAttribute(count, implementation);
+                        implementationUnions.Add(implementation, newUnion);
+                        count++;
+                    }
+                }
+
+                ExtraUnions.AddOrUpdate(abstractOrInterfaceType.Item1, implementationUnions.Values.ToArray(), (type, origUnions) => {
+                    var implementationUnions = new Dictionary<Type, UnionAttribute>();
+                    var count = 0;
+                    foreach (var implementation in allImplementations.Union(origUnions.Select(s => s.SubType)).Distinct())
+                    {
+                        if (!implementationUnions.ContainsKey(implementation))
+                        {
+                            var newUnion = new UnionAttribute(count, implementation);
+                            implementationUnions.Add(implementation, newUnion);
+                            count++;
+                        }
+                    }
+
+                    return implementationUnions.Values.ToArray();
+                });
+            }
+        }
+
+        private static ConcurrentDictionary<Type, UnionAttribute[]> ExtraUnions = new ConcurrentDictionary<Type, UnionAttribute[]>();
+
         private static class FormatterCache<T>
         {
             public static readonly IMessagePackFormatter<T> Formatter;
@@ -104,7 +159,31 @@ namespace MessagePack.Resolvers
             TypeInfo ti = type.GetTypeInfo();
 
             // order by key(important for use jump-table of switch)
-            UnionAttribute[] unionAttrs = ti.GetCustomAttributes<UnionAttribute>().OrderBy(x => x.Key).ToArray();
+            UnionAttribute[] unionAttrsTemp = ti.GetCustomAttributes<UnionAttribute>().OrderBy(x => x.Key).ToArray();
+
+            ExtraUnions.TryGetValue(type, out var extraUnions);
+
+            var unionAttrs = unionAttrsTemp;
+
+            if(extraUnions?.Any() ?? false)
+            {
+                var allUnions = unionAttrsTemp.Union(extraUnions).ToList();
+
+                var implementationUnions = new Dictionary<Type, UnionAttribute>();
+                unionAttrs = new UnionAttribute[allUnions.Count];
+                var count = 0;
+                foreach (var union in allUnions)
+                {
+                    if (!implementationUnions.ContainsKey(union.SubType))
+                    {
+                        var newUnion = new UnionAttribute(count, union.SubType);
+                        implementationUnions.Add(union.SubType, newUnion);
+                        count++;
+                    }
+                }
+
+                unionAttrs = implementationUnions.Values.ToArray();
+            }
 
             if (unionAttrs.Length == 0)
             {
