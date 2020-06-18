@@ -1585,34 +1585,7 @@ In Unity, you can use MessagePack CodeGen windows at `Windows -> MessagePack -> 
 
 Install the .NET Core runtime, install mpc (as a .NET Core Tool as described above), and execute `dotnet mpc`. Currently this tool is experimental so please tell me your opinion.
 
-In Xamarin, you can use  `MessagePack.MSBuild.Tasks` that can be added to your `.csproj` files easily.
-
-```xml
-<ItemGroup>
-    <!-- Install MSBuild Task (with PrivateAssets="All", i.e. build time dependency only) -->
-    <PackageReference Include="MessagePack.MSBuild.Tasks" Version="*" PrivateAssets="All" />
-</ItemGroup>
-
-<!-- Call code generator before-build. -->
-<Target Name="MessagePackGen" BeforeTargets="BeforeBuild">
-    <!-- Configuration of Code-Generator -->
-    <MessagePackGenerator Input="$(ProjectPath)" Output="$(ProjectDir)MessagePack" />
-</Target>
-```
-
-MSBuild Task's configuration options:
-
-```xml
-<MessagePackGenerator
-    Input="string:required"
-    Output="string:required"
-    ConditionalSymbol="string:optional"
-    ResolverName="string:optional"
-    Namespace="string:optional"
-    UseMapMode="bool:optional"
-    MultipleIfDirectiveOutputSymbols="string:optional"
-/>
-```
+In Xamarin, you can install the [the `MessagePack.MSBuild.Tasks` NuGet package](doc/msbuildtask.md) into your projects to pre-compile fast serialization code and run in environments where JIT compilation is not allowed.
 
 ## RPC
 
