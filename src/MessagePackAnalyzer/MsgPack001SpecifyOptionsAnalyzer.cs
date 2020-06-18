@@ -10,6 +10,9 @@ using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePackAnalyzer
 {
+    /// <summary>
+    /// An analyzer that guards against calling APIs that rely on static, mutable fields defining "default" options.
+    /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public class MsgPack001SpecifyOptionsAnalyzer : DiagnosticAnalyzer
     {

@@ -10,6 +10,9 @@ using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePackAnalyzer
 {
+    /// <summary>
+    /// An analyzer to guide callers to avoid use of mutable static fields for MessagePackSerializerOptions.
+    /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public class MsgPack002UseConstantOptionsAnalyzer : DiagnosticAnalyzer
     {
