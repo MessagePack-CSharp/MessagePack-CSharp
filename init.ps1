@@ -1,9 +1,12 @@
+#!/usr/bin/env pwsh
+
 <#
 .SYNOPSIS
 Installs dependencies required to build and test the projects in this repository.
 .DESCRIPTION
-This MAY not require elevation, as the SDK and runtimes are installed locally to this repo location,
-unless `-InstallLocality machine` is specified.
+This MAY not require elevation, as the SDK and runtimes are installed to a per-user location,
+unless the `-InstallLocality` switch is specified directing to a per-repo or per-machine location.
+See detailed help on that switch for more information.
 .PARAMETER InstallLocality
 A value indicating whether dependencies should be installed locally to the repo or at a per-user location.
 Per-user allows sharing the installed dependencies across repositories and allows use of a shared expanded package cache.
@@ -14,6 +17,9 @@ Per-repo can lead to file locking issues when dotnet.exe is left running as a bu
 Per-machine requires elevation and will download and install all SDKs and runtimes to machine-wide locations so all applications can find it.
 .PARAMETER NoPrerequisites
 Skips the installation of prerequisite software (e.g. SDKs, tools).
+.PARAMETER UpgradePrerequisites
+Takes time to install prerequisites even if they are already present in case they need to be upgraded.
+No effect if -NoPrerequisites is specified.
 .PARAMETER NoRestore
 Skips the package restore step.
 .PARAMETER AccessToken
@@ -26,14 +32,27 @@ Param (
     [Parameter()]
     [switch]$NoPrerequisites,
     [Parameter()]
+    [switch]$UpgradePrerequisites,
+    [Parameter()]
     [switch]$NoRestore,
     [Parameter()]
     [string]$AccessToken
 )
 
+$EnvVars = @{}
+
 if (!$NoPrerequisites) {
-    & "$PSScriptRoot\tools\Install-NuGetCredProvider.ps1" -AccessToken $AccessToken
+    & "$PSScriptRoot\tools\Install-NuGetCredProvider.ps1" -AccessToken $AccessToken -Force:$UpgradePrerequisites
     & "$PSScriptRoot\tools\Install-DotNetSdk.ps1" -InstallLocality $InstallLocality
+    if ($LASTEXITCODE -eq 3010) {
+        Exit 3010
+    }
+
+    # The procdump tool and env var is required for dotnet test to collect hang/crash dumps of tests.
+    # But it only works on Windows.
+    if ($env:OS -eq 'Windows_NT') {
+        $EnvVars['PROCDUMP_PATH'] = & "$PSScriptRoot\azure-pipelines\Get-ProcDump.ps1"
+    }
 }
 
 # Workaround nuget credential provider bug that causes very unreliable package restores on Azure Pipelines
@@ -51,6 +70,8 @@ try {
             throw "Failure while restoring packages."
         }
     }
+
+    & "$PSScriptRoot\azure-pipelines\Set-EnvVars.ps1" -Variables $EnvVars | Out-Null
 }
 catch {
     Write-Error $error[0]
