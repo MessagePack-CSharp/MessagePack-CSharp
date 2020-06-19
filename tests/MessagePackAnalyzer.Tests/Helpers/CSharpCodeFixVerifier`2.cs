@@ -22,6 +22,12 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
     public static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor)
         => new DiagnosticResult(descriptor);
 
+    public static Task VerifyAnalyzerWithoutMessagePackReferenceAsync(string source)
+    {
+        var test = new Test { TestCode = source, ReferenceAssemblies = ReferenceAssemblies.NetFramework.Net472.Default };
+        return test.RunAsync();
+    }
+
     public static Task VerifyAnalyzerAsync(string source, params DiagnosticResult[] expected)
     {
         var test = new Test { TestCode = source };

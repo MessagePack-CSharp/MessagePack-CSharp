@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -14,10 +13,6 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
-using Microsoft.CodeAnalysis.Rename;
-using Microsoft.CodeAnalysis.Text;
-
-#nullable disable
 
 namespace MessagePackAnalyzer
 {
@@ -42,21 +37,26 @@ namespace MessagePackAnalyzer
         public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false) as CompilationUnitSyntax;
+            if (root is null)
+            {
+                return;
+            }
+
             SemanticModel model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
 
             var typeInfo = context.Diagnostics[0]?.Properties.GetValueOrDefault("type", null);
-            INamedTypeSymbol namedSymbol = (typeInfo != null)
+            INamedTypeSymbol? namedSymbol = (typeInfo != null)
                 ? model.Compilation.GetTypeByMetadataName(typeInfo.Replace("global::", string.Empty))
                 : null;
 
-            if (namedSymbol == null)
+            if (namedSymbol is null)
             {
                 SyntaxNode targetNode = root.FindNode(context.Span);
                 var property = targetNode as PropertyDeclarationSyntax;
                 var field = targetNode as FieldDeclarationSyntax;
                 var dec = targetNode as VariableDeclaratorSyntax;
 
-                ITypeSymbol targetType = null;
+                ITypeSymbol? targetType = null;
                 if (property == null && field == null)
                 {
                     var typeDeclare = targetNode as TypeDeclarationSyntax;
@@ -108,7 +108,7 @@ namespace MessagePackAnalyzer
 
                 if (targetType.TypeKind == TypeKind.Array)
                 {
-                    targetType = (targetType as IArrayTypeSymbol).ElementType;
+                    targetType = ((IArrayTypeSymbol)targetType).ElementType;
                 }
 
                 namedSymbol = targetType as INamedTypeSymbol;
@@ -130,7 +130,8 @@ namespace MessagePackAnalyzer
                 document = document.Project.GetDocument(type.DeclaringSyntaxReferences[0].SyntaxTree);
             }
 
-            DocumentEditor editor = await DocumentEditor.CreateAsync(document).ConfigureAwait(false);
+            DocumentEditor editor = await DocumentEditor.CreateAsync(document, cancellationToken).ConfigureAwait(false);
+            var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
 
             ISymbol[] targets = type.GetAllMembers()
                 .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
@@ -138,19 +139,12 @@ namespace MessagePackAnalyzer
                 .Where(x => !x.IsStatic)
                 .Where(x =>
                 {
-                    var p = x as IPropertySymbol;
-                    if (p == null)
+                    return x switch
                     {
-                        var f = x as IFieldSymbol;
-                        if (f.IsImplicitlyDeclared)
-                        {
-                            return false;
-                        }
-
-                        return true;
-                    }
-
-                    return p.ExplicitInterfaceImplementations.Length == 0;
+                        IPropertySymbol p => p.ExplicitInterfaceImplementations.Length == 0,
+                        IFieldSymbol f => !f.IsImplicitlyDeclared,
+                        _ => throw new NotSupportedException("Unsupported member type."),
+                    };
                 })
                 .ToArray();
 
@@ -159,38 +153,27 @@ namespace MessagePackAnalyzer
                 .Where(x => x != null)
                 .Select(x => x.ConstructorArguments[0])
                 .Where(x => !x.IsNull)
-                .Where(x => x.Value.GetType() == typeof(int))
+                .Where(x => x.Value is int)
                 .Select(x => (int)x.Value)
                 .DefaultIfEmpty(-1) // if empty, start from zero.
                 .Max() + 1;
 
-            foreach (ISymbol item in targets)
+            foreach (ISymbol member in targets)
             {
-                SyntaxNode node = await item.DeclaringSyntaxReferences[0].GetSyntaxAsync().ConfigureAwait(false);
-
-                AttributeData attr = item.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName);
-                if (attr != null)
+                if (member.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName) is null)
                 {
-                    continue; // already tagged Index.
+                    SyntaxNode node = await member.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
+                    editor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++)));
                 }
-
-                AttributeListSyntax attribute = RoslynCodeFixExtensions.ParseAttributeList($"[Key({startOrder++})]")
-                    .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);
-
-                editor.AddAttribute(node, attribute);
             }
 
             if (type.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.MessagePackObjectAttributeShortName) == null)
             {
-                SyntaxNode rootNode = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync().ConfigureAwait(false);
-                editor.AddAttribute(rootNode, RoslynCodeFixExtensions.ParseAttributeList("[MessagePackObject]"));
+                SyntaxNode node = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
+                editor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.MessagePackObject"));
             }
 
-            Document newDocument = editor.GetChangedDocument();
-            var newRoot = editor.GetChangedRoot() as CompilationUnitSyntax;
-            newDocument = newDocument.WithSyntaxRoot(newRoot.WithUsing("MessagePack"));
-
-            return newDocument;
+            return editor.GetChangedDocument();
         }
     }
 }
