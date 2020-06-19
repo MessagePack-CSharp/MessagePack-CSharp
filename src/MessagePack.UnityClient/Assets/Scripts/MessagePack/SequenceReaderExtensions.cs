@@ -58,7 +58,7 @@ namespace System.Buffers
                 return TryReadMultisegment(ref reader, out value);
             }
 
-            value = SafeBitConverter.ToInt64(span);
+            value = MessagePack.SafeBitConverter.ToInt64(span);
             reader.Advance(sizeof(long));
             return true;
         }
@@ -101,7 +101,7 @@ namespace System.Buffers
                 return false;
             }
 
-            value = SafeBitConverter.ToInt64(tempSpan);
+            value = MessagePack.SafeBitConverter.ToInt64(tempSpan);
             reader.Advance(sizeof(long));
             return true;
         }
