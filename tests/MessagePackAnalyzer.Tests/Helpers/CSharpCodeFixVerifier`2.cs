@@ -52,4 +52,23 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
         test.ExpectedDiagnostics.AddRange(expected);
         return test.RunAsync();
     }
+
+    public static Task VerifyCodeFixAsync(string[] source, string[] fixedSource)
+    {
+        var test = new Test
+        {
+        };
+
+        foreach (var src in source)
+        {
+            test.TestState.Sources.Add(src);
+        }
+
+        foreach (var src in fixedSource)
+        {
+            test.FixedState.Sources.Add(src);
+        }
+
+        return test.RunAsync();
+    }
 }

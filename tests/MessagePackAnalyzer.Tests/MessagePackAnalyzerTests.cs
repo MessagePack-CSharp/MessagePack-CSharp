@@ -1,10 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Threading.Tasks;
-using MessagePackAnalyzer;
-using Microsoft.CodeAnalysis;
 using Xunit;
 using VerifyCS = CSharpCodeFixVerifier<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider>;
 
@@ -102,5 +99,46 @@ public class Bar
 ";
 
         await VerifyCS.VerifyCodeFixAsync(input, output);
+    }
+
+    [Fact]
+    public async Task CodeFixAppliesAcrossFiles()
+    {
+        var inputs = new string[]
+        {
+                @"
+public class Foo
+{
+    public int {|MsgPack004:Member1|} { get; set; }
+}
+", @"using MessagePack;
+
+[MessagePackObject]
+public class Bar : Foo
+{
+    public int {|MsgPack004:Member2|} { get; set; }
+}
+",
+        };
+        var outputs = new string[]
+        {
+                @"
+public class Foo
+{
+    [MessagePack.Key(1)]
+    public int Member1 { get; set; }
+}
+", @"using MessagePack;
+
+[MessagePackObject]
+public class Bar : Foo
+{
+    [Key(0)]
+    public int Member2 { get; set; }
+}
+",
+        };
+
+        await VerifyCS.VerifyCodeFixAsync(inputs, outputs);
     }
 }

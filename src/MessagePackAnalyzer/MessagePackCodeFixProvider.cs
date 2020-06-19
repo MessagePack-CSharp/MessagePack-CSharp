@@ -123,15 +123,9 @@ namespace MessagePackAnalyzer
             context.RegisterCodeFix(action, context.Diagnostics.First()); // use single.
         }
 
-        private static async Task<Document> AddKeyAttributeAsync(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
+        private static async Task<Solution> AddKeyAttributeAsync(Document document, INamedTypeSymbol type, CancellationToken cancellationToken)
         {
-            if (type.DeclaringSyntaxReferences.Length != 0)
-            {
-                document = document.Project.GetDocument(type.DeclaringSyntaxReferences[0].SyntaxTree);
-            }
-
-            DocumentEditor editor = await DocumentEditor.CreateAsync(document, cancellationToken).ConfigureAwait(false);
-            var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
+            var solutionEditor = new SolutionEditor(document.Project.Solution);
 
             ISymbol[] targets = type.GetAllMembers()
                 .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
@@ -163,17 +157,21 @@ namespace MessagePackAnalyzer
                 if (member.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName) is null)
                 {
                     SyntaxNode node = await member.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
-                    editor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++)));
+                    var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);
+                    var syntaxGenerator = SyntaxGenerator.GetGenerator(documentEditor.OriginalDocument);
+                    documentEditor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.KeyAttribute", syntaxGenerator.LiteralExpression(startOrder++)));
                 }
             }
 
             if (type.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.MessagePackObjectAttributeShortName) == null)
             {
                 SyntaxNode node = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
-                editor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.MessagePackObject"));
+                var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);
+                var syntaxGenerator = SyntaxGenerator.GetGenerator(documentEditor.OriginalDocument);
+                documentEditor.AddAttribute(node, syntaxGenerator.Attribute("MessagePack.MessagePackObject"));
             }
 
-            return editor.GetChangedDocument();
+            return solutionEditor.GetChangedSolution();
         }
     }
 }
