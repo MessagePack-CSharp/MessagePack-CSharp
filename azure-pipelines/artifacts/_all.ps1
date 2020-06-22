@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 # This script returns all the artifacts that should be collected after a build.
 #
 # Each powershell artifact is expressed as an object with these properties:
@@ -28,7 +30,7 @@ Get-ChildItem "$PSScriptRoot\*.ps1" -Exclude "_*" -Recurse |% {
         Write-Warning "No files found for the `"$ArtifactName`" artifact."
     } else {
         $fileGroups.GetEnumerator() | % {
-            $BaseDirectory = New-Object Uri ((EnsureTrailingSlash $_.Key), [UriKind]::Absolute)
+            $BaseDirectory = New-Object Uri ((EnsureTrailingSlash $_.Key.ToString()), [UriKind]::Absolute)
             $_.Value | % {
                 if ($_.GetType() -eq [IO.FileInfo] -or $_.GetType() -eq [IO.DirectoryInfo]) {
                     $_ = $_.FullName
