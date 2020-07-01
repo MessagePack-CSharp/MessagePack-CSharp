@@ -17,7 +17,7 @@ namespace MessagePackAnalyzer
 
         public static System.Collections.Generic.IReadOnlyList<string> GetAdditionalAllowTypes(this AnalyzerOptions option)
         {
-            Microsoft.CodeAnalysis.AdditionalText config = option.AdditionalFiles.FirstOrDefault(x => System.IO.Path.GetFileName(x.Path).Equals("MessagePackAnalyzer.json", StringComparison.OrdinalIgnoreCase));
+            Microsoft.CodeAnalysis.AdditionalText? config = option.AdditionalFiles.FirstOrDefault(x => System.IO.Path.GetFileName(x.Path).Equals("MessagePackAnalyzer.json", StringComparison.OrdinalIgnoreCase));
             if (config != null)
             {
                 try

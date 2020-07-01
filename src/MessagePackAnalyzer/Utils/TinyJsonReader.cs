@@ -56,8 +56,7 @@ namespace MessagePackAnalyzer
 
         public bool TrySerialize(Type type, object obj, [NotNullWhen(true)] out string? result)
         {
-            Func<object, string> serializer;
-            if (type != null && this.serializers.TryGetValue(type, out serializer))
+            if (type != null && this.serializers.TryGetValue(type, out Func<object, string>? serializer))
             {
                 result = serializer(obj);
                 return true;
@@ -71,8 +70,7 @@ namespace MessagePackAnalyzer
 
         public bool TryDeserialize(Type type, string json, out object? result)
         {
-            Func<string, object> deserializer;
-            if (type != null && this.deserializers.TryGetValue(type, out deserializer))
+            if (type != null && this.deserializers.TryGetValue(type, out Func<string, object>? deserializer))
             {
                 result = deserializer(json);
                 return true;
@@ -585,7 +583,7 @@ END:
                     }
                     else
                     {
-                        this.WriteString(obj.ToString());
+                        this.WriteString(obj.ToString() ?? string.Empty);
                     }
                 }
             }

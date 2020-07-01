@@ -6,20 +6,10 @@ using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 
-#nullable disable
-
 namespace MessagePackAnalyzer
 {
     internal class TypeCollector
     {
-        private static readonly SymbolDisplayFormat BinaryWriteFormat = new SymbolDisplayFormat(
-                genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-                miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable,
-                typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly);
-
-        private static readonly SymbolDisplayFormat ShortTypeNameFormat = new SymbolDisplayFormat(
-                typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypes);
-
         private readonly ReferenceSymbols typeReferences;
         private static readonly HashSet<string> EmbeddedTypes = new HashSet<string>(new string[]
         {
@@ -120,18 +110,18 @@ namespace MessagePackAnalyzer
 
         public DiagnosticsReportContext ReportContext { get; set; }
 
-        public TypeCollector(DiagnosticsReportContext reportContext, Compilation compilation)
+        public TypeCollector(DiagnosticsReportContext reportContext, ReferenceSymbols typeReferences)
         {
-            this.typeReferences = new ReferenceSymbols(compilation);
+            this.typeReferences = typeReferences;
             this.ReportContext = reportContext;
         }
 
         // Gate of recursive collect
-        public void CollectCore(ITypeSymbol typeSymbol, ISymbol callerSymbol = null)
+        public void CollectCore(ITypeSymbol typeSymbol, ISymbol? callerSymbol = null)
         {
             if (typeSymbol.TypeKind == TypeKind.Array)
             {
-                var array = typeSymbol as IArrayTypeSymbol;
+                var array = (IArrayTypeSymbol)typeSymbol;
                 ITypeSymbol t = array.ElementType;
                 this.CollectCore(t, callerSymbol);
                 return;
@@ -189,7 +179,7 @@ namespace MessagePackAnalyzer
             return;
         }
 
-        private void CollectObject(INamedTypeSymbol type, ISymbol callerSymbol)
+        private void CollectObject(INamedTypeSymbol type, ISymbol? callerSymbol)
         {
             var isClass = !type.IsValueType;
 
@@ -205,7 +195,7 @@ namespace MessagePackAnalyzer
             }
 
             var isIntKey = true;
-            var intMemebers = new HashSet<int>();
+            var intMembers = new HashSet<int>();
             var stringMembers = new HashSet<string>();
 
             if ((bool)contractAttr.ConstructorArguments[0].Value)
@@ -285,7 +275,7 @@ namespace MessagePackAnalyzer
                     }
 
                     var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
-                    var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : (string)null;
+                    var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : null;
                     if (intKey == null && stringKey == null)
                     {
                         this.ReportInvalid(item, "both IntKey and StringKey are null." + " type: " + type.Name + " member:" + item.Name);
@@ -308,23 +298,23 @@ namespace MessagePackAnalyzer
 
                     if (isIntKey)
                     {
-                        if (intMemebers.Contains((int)intKey))
+                        if (intMembers.Contains(intKey!.Value))
                         {
                             this.ReportInvalid(item, "key is duplicated, all members key must be unique." + " type: " + type.Name + " member:" + item.Name);
                             return;
                         }
 
-                        intMemebers.Add((int)intKey);
+                        intMembers.Add((int)intKey);
                     }
                     else
                     {
-                        if (stringMembers.Contains((string)stringKey))
+                        if (stringMembers.Contains(stringKey!))
                         {
                             this.ReportInvalid(item, "key is duplicated, all members key must be unique." + " type: " + type.Name + " member:" + item.Name);
                             return;
                         }
 
-                        stringMembers.Add((string)stringKey);
+                        stringMembers.Add(stringKey!);
                     }
 
                     this.CollectCore(item.Type, item); // recursive collect
@@ -358,8 +348,8 @@ namespace MessagePackAnalyzer
                         continue;
                     }
 
-                    var intKey = (key.Value.Value is int) ? (int)key.Value.Value : (int?)null;
-                    var stringKey = (key.Value.Value is string) ? (string)key.Value.Value : (string)null;
+                    var intKey = key.Value.Value is int i ? (int?)i : null;
+                    var stringKey = key.Value.Value as string;
                     if (intKey == null && stringKey == null)
                     {
                         this.ReportInvalid(item, "both IntKey and StringKey are null." + " type: " + type.Name + " member:" + item.Name);
@@ -380,25 +370,25 @@ namespace MessagePackAnalyzer
                         }
                     }
 
-                    if (isIntKey)
+                    if (intKey.HasValue)
                     {
-                        if (intMemebers.Contains((int)intKey))
+                        if (intMembers.Contains(intKey.Value))
                         {
                             this.ReportInvalid(item, "key is duplicated, all members key must be unique." + " type: " + type.Name + " member:" + item.Name);
                             return;
                         }
 
-                        intMemebers.Add((int)intKey);
+                        intMembers.Add(intKey.Value);
                     }
-                    else
+                    else if (stringKey is object)
                     {
-                        if (stringMembers.Contains((string)stringKey))
+                        if (stringMembers.Contains(stringKey))
                         {
                             this.ReportInvalid(item, "key is duplicated, all members key must be unique." + " type: " + type.Name + " member:" + item.Name);
                             return;
                         }
 
-                        stringMembers.Add((string)stringKey);
+                        stringMembers.Add(stringKey);
                     }
 
                     this.CollectCore(item.Type, item); // recursive collect
