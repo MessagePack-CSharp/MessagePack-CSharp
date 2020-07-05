@@ -249,7 +249,7 @@ namespace MessagePack.GeneratorCore.Utils
                 {
                     if (item.Attribute("Label")?.Value == "Shared")
                     {
-                        var sharedRoot = Path.GetDirectoryName(Path.Combine(csProjRoot, item.Attribute("Project").Value));
+                        var sharedRoot = Path.GetFullPath(Path.Combine(csProjRoot, item.Attribute("Project").Value));
                         foreach (var file in IterateCsFileWithoutBinObj(Path.GetDirectoryName(sharedRoot)))
                         {
                             source.Add(file);
