@@ -249,7 +249,8 @@ namespace MessagePack.GeneratorCore.Utils
                 {
                     if (item.Attribute("Label")?.Value == "Shared")
                     {
-                        var sharedRoot = Path.GetFullPath(Path.Combine(csProjRoot, item.Attribute("Project").Value));
+                        var projectPath = NormalizeDirectorySeparators(item.Attribute("Project").Value);
+                        var sharedRoot = Path.GetFullPath(Path.Combine(csProjRoot, projectPath));
                         foreach (var file in IterateCsFileWithoutBinObj(Path.GetDirectoryName(sharedRoot)))
                         {
                             source.Add(file);
