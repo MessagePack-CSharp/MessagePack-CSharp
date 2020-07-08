@@ -5,4 +5,8 @@ MessagePack.Formatters.MemoryFormatter<T>
 MessagePack.Formatters.MemoryFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Memory<T>
 MessagePack.Formatters.MemoryFormatter<T>.MemoryFormatter() -> void
 MessagePack.Formatters.MemoryFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, System.Memory<T> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.TypeFormatter<T>
+MessagePack.Formatters.TypeFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> T
+MessagePack.Formatters.TypeFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, T value, MessagePack.MessagePackSerializerOptions options) -> void
 static readonly MessagePack.Formatters.ByteMemoryFormatter.Instance -> MessagePack.Formatters.ByteMemoryFormatter
+static readonly MessagePack.Formatters.TypeFormatter<T>.Instance -> MessagePack.Formatters.IMessagePackFormatter<T>

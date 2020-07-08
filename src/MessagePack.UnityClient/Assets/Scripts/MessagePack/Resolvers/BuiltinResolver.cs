@@ -94,6 +94,7 @@ namespace MessagePack.Internal
             { typeof(Version), VersionFormatter.Instance },
             { typeof(StringBuilder), StringBuilderFormatter.Instance },
             { typeof(BitArray), BitArrayFormatter.Instance },
+            { typeof(Type), TypeFormatter<Type>.Instance },
 
             // special primitive
             { typeof(byte[]), ByteArrayFormatter.Instance },
@@ -153,6 +154,11 @@ namespace MessagePack.Internal
             if (FormatterMap.TryGetValue(t, out formatter))
             {
                 return formatter;
+            }
+
+            if (typeof(Type).IsAssignableFrom(t))
+            {
+                return typeof(TypeFormatter<>).MakeGenericType(t).GetField(nameof(TypeFormatter<Type>.Instance)).GetValue(null);
             }
 
             return null;
