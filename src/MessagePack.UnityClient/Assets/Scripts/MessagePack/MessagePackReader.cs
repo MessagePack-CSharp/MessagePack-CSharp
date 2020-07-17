@@ -660,7 +660,7 @@ namespace MessagePack
         /// or to support OldSpec compatibility:
         /// <see cref="MessagePackCode.Str16"/>,
         /// <see cref="MessagePackCode.Str32"/>,
-        /// or something beteween <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
+        /// or something between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
         /// <returns>
         /// A sequence of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
