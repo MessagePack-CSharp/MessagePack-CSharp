@@ -429,6 +429,24 @@ namespace MessagePackCompiler.CodeAnalysis
             this.collectedUnionInfo.Add(info);
         }
 
+        private void CollectGenericUnion(INamedTypeSymbol type)
+        {
+            System.Collections.Immutable.ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
+            if (unionAttrs.Length == 0)
+            {
+                return;
+            }
+
+            var subTypes = unionAttrs.Select(x => x[1].Value).OfType<INamedTypeSymbol>().ToArray();
+            foreach (var sType in subTypes)
+            {
+                var info = GetObjectInfo(sType);
+                collectedObjectInfo.Add(info);
+            }
+        }
+
+
+
         private void CollectArray(IArrayTypeSymbol array)
         {
             ITypeSymbol elemType = array.ElementType;
@@ -547,6 +565,7 @@ namespace MessagePackCompiler.CodeAnalysis
             // Skip generic symbol declaration itself (open type, e.g. Foo<T>) because we can get nothing useful from it anyways.
             if (type.IsDefinition)
             {
+                this.CollectGenericUnion(type);
                 return;
             }
 
@@ -977,15 +996,18 @@ namespace MessagePackCompiler.CodeAnalysis
                 needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
             }
 
-            string templateParametersString;
-            if (type.TypeParameters.Count() > 0)
-            {
-                templateParametersString = "<" + string.Join(", ", type.TypeParameters) + ">";
-            }
-            else
-            {
-                templateParametersString = null;
-            }
+            //string templateParametersString;
+            //if (type.TypeParameters.Count() > 0)
+            //{
+            //    templateParametersString = "<" + string.Join(", ", type.TypeParameters) + ">";
+            //}
+            //else
+            //{
+            //    templateParametersString = null;
+            //}
+
+            var nameBuilder = new StringBuilder();
+            FormatName(type, nameBuilder);
 
             var info = new ObjectSerializationInfo
             {
@@ -993,14 +1015,31 @@ namespace MessagePackCompiler.CodeAnalysis
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
-                Name = type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
-                TemplateParametersString = templateParametersString,
+                Name = nameBuilder.ToString().Replace(".", "_"),
+                TemplateParametersString = null,
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
                 NeedsCastOnAfter = needsCastOnAfter,
                 NeedsCastOnBefore = needsCastOnBefore,
             };
+
+            void FormatName(INamedTypeSymbol symbol, StringBuilder builder)
+            {
+                builder.Append(symbol.ToDisplayString(ShortTypeNameFormat));
+
+                if (symbol.IsGenericType)
+                {
+                    foreach (var genericType in symbol.TypeArguments)
+                    {
+                        if (genericType is INamedTypeSymbol nameGenericType)
+                        {
+                            builder.Append("_");
+                            FormatName(nameGenericType, builder);
+                        }
+                    }
+                }
+            }
 
             return info;
         }
