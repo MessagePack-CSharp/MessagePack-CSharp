@@ -1,9 +1,12 @@
-﻿<Project TreatAsLocalProperty="_MessagePackGeneratorTaskFolder;_MessagePackGeneratorTaskAssembly">
-
+﻿<Project>
   <PropertyGroup>
-    <_MessagePackGeneratorTaskFolder>netstandard2.0</_MessagePackGeneratorTaskFolder>
-    <_MessagePackGeneratorTaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(_MessagePackGeneratorTaskFolder)\MessagePack.MSBuild.Tasks.dll</_MessagePackGeneratorTaskAssembly>
-  </PropertyGroup>
+    <!-- This namespace, plus ".Formatters" is used for the generated type. -->
+    <MessagePackGeneratedResolverNamespace>MessagePack</MessagePackGeneratedResolverNamespace>
 
-  <UsingTask TaskName="MessagePack.MSBuild.Tasks.MessagePackGenerator" AssemblyFile="$(_MessagePackGeneratorTaskAssembly)" />
+    <!-- This is the name of the generated type. -->
+    <MessagePackGeneratedResolverName>GeneratedResolver</MessagePackGeneratedResolverName>
+
+    <!-- A boolean value that indicates whether all formatters should use property maps instead of more compact arrays. -->
+    <MessagePackGeneratedUsesMapMode>false</MessagePackGeneratedUsesMapMode>
+  </PropertyGroup>
 </Project>
