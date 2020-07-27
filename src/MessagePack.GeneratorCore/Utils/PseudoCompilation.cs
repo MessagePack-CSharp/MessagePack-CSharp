@@ -249,7 +249,8 @@ namespace MessagePack.GeneratorCore.Utils
                 {
                     if (item.Attribute("Label")?.Value == "Shared")
                     {
-                        var sharedRoot = Path.GetDirectoryName(Path.Combine(csProjRoot, item.Attribute("Project").Value));
+                        var projectPath = NormalizeDirectorySeparators(item.Attribute("Project").Value);
+                        var sharedRoot = Path.GetFullPath(Path.Combine(csProjRoot, projectPath));
                         foreach (var file in IterateCsFileWithoutBinObj(Path.GetDirectoryName(sharedRoot)))
                         {
                             source.Add(file);
@@ -310,7 +311,7 @@ namespace MessagePack.GeneratorCore.Utils
                             {
                                 foreach (var dependency in ResolveNuGetDependency(nugetPackagesPath, id, packageVersion, targetFramework))
                                 {
-                                    CollectNugetPackages(dependency.id, dependency.version, originalTargetFramework);
+                                    CollectNugetPackages(dependency.Id, dependency.Version, originalTargetFramework);
                                 }
                             }
 
@@ -357,7 +358,7 @@ namespace MessagePack.GeneratorCore.Utils
             yield return "netstandard1.6";
         }
 
-        private static IEnumerable<(string id, string version)> ResolveNuGetDependency(string nugetPackagesPath, string includePath, string packageVersion, string targetFramework)
+        private static IEnumerable<(string Id, string Version)> ResolveNuGetDependency(string nugetPackagesPath, string includePath, string packageVersion, string targetFramework)
         {
             var dirPath = Path.Combine(nugetPackagesPath, includePath, packageVersion);
             if (!Directory.Exists(dirPath))

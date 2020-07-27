@@ -19,6 +19,7 @@ namespace MessagePack
     public static partial class MessagePackSerializer
     {
         private const int LZ4NotCompressionSizeInLz4BlockType = 64;
+        private const int MaxHintSize = 1024 * 1024;
 
         /// <summary>
         /// Gets or sets the default set of options to use when not explicitly specified for a method call.
@@ -328,7 +329,7 @@ namespace MessagePack
                     do
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        Span<byte> span = sequence.GetSpan(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
+                        Span<byte> span = sequence.GetSpan(stream.CanSeek ? (int)Math.Min(MaxHintSize, stream.Length - stream.Position) : 0);
                         bytesRead = stream.Read(span);
                         sequence.Advance(bytesRead);
                     }
@@ -374,7 +375,7 @@ namespace MessagePack
                     int bytesRead;
                     do
                     {
-                        Memory<byte> memory = sequence.GetMemory(stream.CanSeek ? (int)(stream.Length - stream.Position) : 0);
+                        Memory<byte> memory = sequence.GetMemory(stream.CanSeek ? (int)Math.Min(MaxHintSize, stream.Length - stream.Position) : 0);
                         bytesRead = await stream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
                         sequence.Advance(bytesRead);
                     }

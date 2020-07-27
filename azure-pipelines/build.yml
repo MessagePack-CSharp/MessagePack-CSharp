@@ -14,7 +14,7 @@ steps:
   inputs:
     command: test
     projects: tests/**/*.Tests.csproj
-    arguments: --configuration $(BuildConfiguration) --no-build -v n
+    arguments: --configuration $(BuildConfiguration) --no-build -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     testRunTitle: $(Agent.JobName)
 
 - script: |

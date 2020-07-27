@@ -137,6 +137,18 @@ namespace MessagePack.Tests
             public new string Y;
         }
 
+        public class ObjectWithStaticConstructor
+        {
+            public string StringValue { get; set; }
+
+            public static readonly string Empty;
+
+            static ObjectWithStaticConstructor()
+            {
+                Empty = string.Empty;
+            }
+        }
+
         [Fact]
         public void SimpleTest()
         {
@@ -156,11 +168,11 @@ namespace MessagePack.Tests
 
             Person p2 = MessagePackSerializer.Deserialize<Person>(result, Resolvers.ContractlessStandardResolver.Options);
             p2.Name.Is("John");
-            var addresses = p2.Addresses as IList;
-            var d1 = addresses[0] as IDictionary;
-            var d2 = addresses[1] as IDictionary;
-            (d1["Street"] as string).Is("St.");
-            (d2["Street"] as string).Is("Ave.");
+            var addresses = (IList)p2.Addresses;
+            var d1 = (IDictionary)addresses[0];
+            var d2 = (IDictionary)addresses[1];
+            ((string)d1["Street"]).Is("St.");
+            ((string)d2["Street"]).Is("Ave.");
         }
 
         [Fact]
@@ -302,6 +314,16 @@ namespace MessagePack.Tests
             byte[] sr1 = MessagePackSerializer.Serialize(obj, ContractlessStandardResolver.Options);
             var obj2 = (Dictionary<object, object>)MessagePackSerializer.Deserialize<object>(sr1, ContractlessStandardResolver.Options);
             MessagePackSerializer.Serialize(obj2["nestedProp"], ContractlessStandardResolver.Options);
+        }
+
+        [Fact]
+        public void DeserializeWithStaticConstructor()
+        {
+            var options = ContractlessStandardResolverAllowPrivate.Options;
+            var original = new ObjectWithStaticConstructor { StringValue = "test" };
+
+            byte[] copyBin = MessagePackSerializer.Serialize(original, options);
+            var clone = MessagePackSerializer.Deserialize<ObjectWithStaticConstructor>(copyBin, options);
         }
     }
 }
