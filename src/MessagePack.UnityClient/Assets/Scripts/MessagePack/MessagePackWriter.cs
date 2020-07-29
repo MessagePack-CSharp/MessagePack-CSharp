@@ -934,9 +934,136 @@ namespace MessagePack
 #if HARDWARE_INTRINSICS_X86
                 if (Avx2.IsSupported && Lzcnt.IsSupported && value.Length >= 32)
                 {
-                    WriteString_EncodeUtf8_Avx2(pValue, value.Length);
+                    const int Stride = 16;
+                    const int StrideDouble = Stride * 2;
+
+                    var pValueLength = value.Length;
+                    var valueLength = pValueLength;
+                    var inputIterator = (ushort*)pValue;
+
+                    {
+                        var offset = new UIntPtr(inputIterator).ToUInt64();
+                        offset -= (offset >> 5) << 5;
+
+                        if (offset != 0)
+                        {
+                            offset = (32 - offset) >> 1;
+                            valueLength -= (int)offset;
+                            for (; offset > 0; offset--)
+                            {
+                                if (*inputIterator++ > 0x7f)
+                                {
+                                    goto NOT_ACCELERATED;
+                                }
+                            }
+                        }
+                    }
+
+                    // Start Counting and Classifying.
+                    var is1 = Vector256<ushort>.Zero;
+                    while (valueLength >= Stride)
+                    {
+                        var currentVector = Avx.LoadAlignedVector256(inputIterator);
+
+                        is1 = Avx2.Or(is1, currentVector);
+
+                        inputIterator += Stride;
+                        valueLength -= Stride;
+                    }
+
+                    if (Avx2.MoveMask(Avx2.CompareEqual(Avx2.And(Vector256.Create((ushort)0b1111_1111_1000_0000), is1).AsByte(), Vector256<byte>.Zero)) != -1)
+                    {
+                        goto NOT_ACCELERATED;
+                    }
+
+                    for (; valueLength > 0; valueLength--)
+                    {
+                        if (*inputIterator++ > 0x7f)
+                        {
+                            goto NOT_ACCELERATED;
+                        }
+                    }
+
+                    Span<byte> destination;
+
+                    // Write String Header
+                    if (pValueLength <= byte.MaxValue && !this.OldSpec)
+                    {
+                        destination = this.writer.GetSpan(pValueLength + 2);
+                        destination[0] = MessagePackCode.Str8;
+                        destination[1] = (byte)pValueLength;
+                        this.writer.Advance(2);
+                        destination = destination.Slice(2);
+                    }
+                    else if (pValueLength <= ushort.MaxValue)
+                    {
+                        destination = this.writer.GetSpan(pValueLength + 3);
+                        destination[0] = MessagePackCode.Str16;
+                        WriteBigEndian((ushort)pValueLength, destination.Slice(1));
+                        this.writer.Advance(3);
+                        destination = destination.Slice(3);
+                    }
+                    else
+                    {
+                        destination = this.writer.GetSpan(5);
+                        destination[0] = MessagePackCode.Str32;
+                        WriteBigEndian((uint)pValueLength, destination.Slice(1));
+                        this.writer.Advance(5);
+                        destination = this.writer.GetSpan(pValueLength);
+                    }
+
+                    fixed (byte* pDest = destination)
+                    {
+                        valueLength = pValueLength;
+
+                        var outputIterator = pDest;
+                        inputIterator = (ushort*)pValue;
+
+                        {
+                            var offset = new UIntPtr(outputIterator).ToUInt64();
+                            offset -= (offset >> 5) << 5;
+
+                            if (offset != 0)
+                            {
+                                offset = 32 - offset;
+                                valueLength -= (int)offset;
+                                for (; offset > 0; offset--)
+                                {
+                                    *outputIterator++ = (byte)*inputIterator++;
+                                }
+                            }
+                        }
+
+                        var shuffleFirst = BitConverter.IsLittleEndian
+                            ? Vector256.Create(0, 2, 4, 6, 8, 10, 12, 14, 128, 128, 128, 128, 128, 128, 128, 128, 0, 2, 4, 6, 8, 10, 12, 14, 128, 128, 128, 128, 128, 128, 128, 128)
+                            : Vector256.Create(1, 3, 5, 7, 9, 11, 13, 15, 128, 128, 128, 128, 128, 128, 128, 128, 1, 3, 5, 7, 9, 11, 13, 15, 128, 128, 128, 128, 128, 128, 128, 128);
+
+                        var shuffleSecond = BitConverter.IsLittleEndian
+                            ? Vector256.Create(128, 128, 128, 128, 128, 128, 128, 128, 0, 2, 4, 6, 8, 10, 12, 14, 128, 128, 128, 128, 128, 128, 128, 128, 0, 2, 4, 6, 8, 10, 12, 14)
+                            : Vector256.Create(128, 128, 128, 128, 128, 128, 128, 128, 1, 3, 5, 7, 9, 11, 13, 15, 128, 128, 128, 128, 128, 128, 128, 128, 1, 3, 5, 7, 9, 11, 13, 15);
+
+                        for (; valueLength >= StrideDouble; inputIterator += StrideDouble, outputIterator += StrideDouble, valueLength -= StrideDouble)
+                        {
+                            var first = Avx.LoadVector256(inputIterator).AsByte();
+                            first = Avx2.Shuffle(first, shuffleFirst);
+                            var second = Avx.LoadVector256(inputIterator + 16).AsByte();
+                            second = Avx2.Shuffle(second, shuffleSecond);
+                            var answer = Avx2.Or(first, second).AsUInt64();
+                            Avx.StoreAligned(outputIterator, Avx2.Permute4x64(answer, 216).AsByte());
+                        }
+
+                        while (valueLength > 0)
+                        {
+                            *outputIterator++ = (byte)*inputIterator++;
+                            valueLength--;
+                        }
+                    }
+
+                    this.writer.Advance(pValueLength);
                     return;
                 }
+
+                NOT_ACCELERATED:
 #endif
 
                 ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
@@ -961,14 +1088,6 @@ namespace MessagePack
         {
             fixed (char* pValue = value)
             {
-#if HARDWARE_INTRINSICS_X86
-                if (Avx2.IsSupported && Lzcnt.IsSupported && value.Length >= 32)
-                {
-                    WriteString_EncodeUtf8_Avx2(pValue, value.Length);
-                    return;
-                }
-#endif
-
                 ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
 
                 fixed (byte* pBuffer = &buffer)
@@ -1221,160 +1340,6 @@ namespace MessagePack
 
         private static unsafe void WriteBigEndian(double value, Span<byte> span) => WriteBigEndian(*(long*)&value, span);
 
-#if HARDWARE_INTRINSICS_X86
-        /// <summary>
-        /// Finalizes an encoding of a string with the use of the AVX2 apis.
-        /// </summary>
-        /// <param name="pValue">The pointer of the string to be written.</param>
-        /// <param name="pValueLength">The length of the string to be written, in characters.</param>
-        private unsafe void WriteString_EncodeUtf8_Avx2(char* pValue, int pValueLength)
-        {
-            if (!Avx2.IsSupported || !Lzcnt.IsSupported)
-            {
-                return;
-            }
-
-            const int Stride = 16;
-            const int StrideDouble = Stride * 2;
-
-            int valueLength = pValueLength;
-            short* inputIterator = (short*)pValue;
-            long count1 = 0;
-            long count2 = 0;
-            long count3 = 0;
-            long countHighLowSurrogate = 0;
-
-            unchecked
-            {
-                // Start Counting and Classifying.
-                const short MaskConstantShortSurrogate = (short)0b11011_000_00000000;
-                Vector256<short> maskSurrogate = Vector256.Create(MaskConstantShortSurrogate);
-                const short MaskConstantShort1 = 0b00000000_01111111;
-                Vector256<short> mask1 = Vector256.Create(MaskConstantShort1);
-                const short MaskConstantShort2 = 0b00001000_00000000;
-                Vector256<short> mask2 = Vector256.Create(MaskConstantShort2);
-                do
-                {
-                    Vector256<short> currentVector = Avx.LoadVector256(inputIterator);
-                    uint tmpSurrogateCount = Popcnt.PopCount((uint)Avx2.MoveMask(Avx2.CompareEqual(Avx2.And(maskSurrogate, currentVector), maskSurrogate).AsByte())) >> 1;
-                    countHighLowSurrogate += tmpSurrogateCount;
-                    uint tmpCount3 = Stride - tmpSurrogateCount;
-
-                    uint tmpCount1 = Popcnt.PopCount((uint)Avx2.MoveMask(Avx2.CompareEqual(currentVector, Avx2.And(mask1, currentVector)).AsByte())) >> 1;
-                    count1 += tmpCount1;
-                    tmpCount3 -= tmpCount1;
-
-                    uint tmpCount2 = Popcnt.PopCount((uint)Avx2.MoveMask(Avx2.And(Avx2.CompareGreaterThan(mask2, currentVector).AsByte(), Avx2.CompareGreaterThan(currentVector, mask1).AsByte()))) >> 1;
-                    count2 += tmpCount2;
-                    count3 += tmpCount3 - tmpCount2;
-
-                    inputIterator += Stride;
-                    valueLength -= Stride;
-                }
-                while (valueLength >= Stride);
-
-                for (; valueLength > 0; valueLength--, inputIterator++)
-                {
-                    short currentChar = *inputIterator;
-                    if ((currentChar & MaskConstantShortSurrogate) == MaskConstantShortSurrogate)
-                    {
-                        countHighLowSurrogate++;
-                    }
-                    else if ((currentChar & MaskConstantShort1) == currentChar)
-                    {
-                        count1++;
-                    }
-                    else if (currentChar > MaskConstantShort1 && currentChar < MaskConstantShort2)
-                    {
-                        count2++;
-                    }
-                    else
-                    {
-                        count3++;
-                    }
-                }
-
-                int characterLength = (int)(count1 + (count2 << 1) + (count3 << 1) + count3 + (countHighLowSurrogate << 1));
-
-                Span<byte> destination;
-
-                int switchCase = characterLength <= byte.MaxValue && !this.OldSpec
-                    ? 0
-                    : characterLength <= ushort.MaxValue
-                        ? 1
-                        : 2;
-
-                // Write String Header
-                switch (switchCase)
-                {
-                    case 0:
-                        destination = this.writer.GetSpan(characterLength + 2);
-                        destination[0] = MessagePackCode.Str8;
-                        destination[1] = (byte)characterLength;
-                        this.writer.Advance(2);
-                        destination = destination.Slice(2);
-                        break;
-                    case 1:
-                        destination = this.writer.GetSpan(characterLength + 3);
-                        destination[0] = MessagePackCode.Str16;
-                        WriteBigEndian((ushort)characterLength, destination.Slice(1));
-                        this.writer.Advance(3);
-                        destination = destination.Slice(3);
-                        break;
-                    default:
-                        destination = this.writer.GetSpan(5);
-                        destination[0] = MessagePackCode.Str32;
-                        WriteBigEndian((uint)characterLength, destination.Slice(1));
-                        this.writer.Advance(5);
-                        destination = this.writer.GetSpan(characterLength);
-                        break;
-                }
-
-                fixed (byte* pDest = destination)
-                {
-                    valueLength = pValueLength;
-
-                    // Only ASCII Range
-                    if (countHighLowSurrogate == 0 && count3 == 0 && count2 == 0)
-                    {
-                        byte* outputIterator = pDest;
-                        inputIterator = (short*)pValue;
-
-                        Vector256<byte> shuffleFirst = BitConverter.IsLittleEndian
-                            ? Vector256.Create(0, 2, 4, 6, 8, 10, 12, 14, 128, 128, 128, 128, 128, 128, 128, 128, 0, 2, 4, 6, 8, 10, 12, 14, 128, 128, 128, 128, 128, 128, 128, 128)
-                            : Vector256.Create(1, 3, 5, 7, 9, 11, 13, 15, 128, 128, 128, 128, 128, 128, 128, 128, 1, 3, 5, 7, 9, 11, 13, 15, 128, 128, 128, 128, 128, 128, 128, 128);
-
-                        Vector256<byte> shuffleSecond = BitConverter.IsLittleEndian
-                            ? Vector256.Create(128, 128, 128, 128, 128, 128, 128, 128, 0, 2, 4, 6, 8, 10, 12, 14, 128, 128, 128, 128, 128, 128, 128, 128, 0, 2, 4, 6, 8, 10, 12, 14)
-                            : Vector256.Create(128, 128, 128, 128, 128, 128, 128, 128, 1, 3, 5, 7, 9, 11, 13, 15, 128, 128, 128, 128, 128, 128, 128, 128, 1, 3, 5, 7, 9, 11, 13, 15);
-
-                        for (; valueLength >= StrideDouble; inputIterator += StrideDouble, outputIterator += StrideDouble, valueLength -= StrideDouble)
-                        {
-                            Vector256<byte> first = Avx.LoadVector256(inputIterator).AsByte();
-                            first = Avx2.Shuffle(first, shuffleFirst);
-                            Vector256<byte> second = Avx.LoadVector256(inputIterator + 16).AsByte();
-                            second = Avx2.Shuffle(second, shuffleSecond);
-                            Vector256<ulong> answer = Avx2.Or(first, second).AsUInt64();
-                            Avx.Store(outputIterator, Avx2.Permute4x64(answer, 216).AsByte());
-                        }
-
-                        while (valueLength > 0)
-                        {
-                            *outputIterator++ = (byte)*inputIterator++;
-                            valueLength--;
-                        }
-                    }
-                    else
-                    {
-                        StringEncoding.UTF8.GetBytes(pValue, valueLength, pDest, characterLength);
-                    }
-                }
-
-                this.writer.Advance(characterLength);
-            }
-        }
-#endif
-
         /// <summary>
         /// Estimates the length of the header required for a given string.
         /// </summary>
@@ -1391,7 +1356,7 @@ namespace MessagePack
             // solves heuristic length check
 
             // ensure buffer by MaxByteCount(faster than GetByteCount)
-            bufferSize = StringEncoding.UTF8.GetMaxByteCount(characterLength) + 5;
+            bufferSize = (characterLength * 3) + 5;
             ref byte buffer = ref this.writer.GetPointer(bufferSize);
 
             int useOffset;
