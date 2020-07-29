@@ -1227,9 +1227,13 @@ namespace MessagePack
         /// </summary>
         /// <param name="pValue">The pointer of the string to be written.</param>
         /// <param name="pValueLength">The length of the string to be written, in characters.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void WriteString_EncodeUtf8_Avx2(char* pValue, int pValueLength)
         {
+            if (!Avx2.IsSupported || !Lzcnt.IsSupported)
+            {
+                return;
+            }
+
             const int Stride = 16;
             const int StrideDouble = Stride * 2;
 
