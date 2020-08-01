@@ -753,6 +753,10 @@ namespace MessagePack
             this.writer.Advance(length);
         }
 
+        /// <summary>
+        /// Writes a <see cref="sbyte"/>[].
+        /// </summary>
+        /// <param name="src">The array of sbytes to write. May be <c>null</c>.</param>
         public void Write(sbyte[] src)
         {
             if (src == null)
@@ -765,6 +769,10 @@ namespace MessagePack
             }
         }
 
+        /// <summary>
+        /// Writes a span of sbytes.
+        /// </summary>
+        /// <param name="src">The span of sbytes to write.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Write(ReadOnlySpan<sbyte> src)
         {
