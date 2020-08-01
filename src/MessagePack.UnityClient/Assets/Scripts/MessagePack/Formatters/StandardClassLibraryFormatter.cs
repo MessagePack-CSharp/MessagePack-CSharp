@@ -35,6 +35,39 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class SByteArrayFormatter : IMessagePackFormatter<sbyte[]>
+    {
+        public static readonly SByteArrayFormatter Instance = new SByteArrayFormatter();
+
+        private SByteArrayFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, sbyte[] value, MessagePackSerializerOptions options)
+        {
+            writer.Write(value);
+        }
+
+        public sbyte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+            else
+            {
+                var len = reader.ReadArrayHeader();
+                var array = new sbyte[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadSByte();
+                }
+
+                return array;
+            }
+        }
+    }
+
     public sealed class NullableStringFormatter : IMessagePackFormatter<String>
     {
         public static readonly NullableStringFormatter Instance = new NullableStringFormatter();

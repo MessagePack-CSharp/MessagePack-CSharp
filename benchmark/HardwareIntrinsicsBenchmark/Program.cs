@@ -10,7 +10,7 @@ namespace HardwareIntrinsicsBenchmark
     {
         private static void Main(string[] args)
         {
-            BenchmarkRunner.Run<StringBenchmark_MessagePackNoSimd_Vs_MessagePackSimd>();
+            BenchmarkRunner.Run<SByteArrayBenchmark_MessagePackNoSimd_Vs_MessagePackSimd>();
         }
     }
 }

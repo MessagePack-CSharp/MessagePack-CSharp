@@ -979,50 +979,6 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class SByteArrayFormatter : IMessagePackFormatter<SByte[]>
-    {
-        public static readonly SByteArrayFormatter Instance = new SByteArrayFormatter();
-
-        private SByteArrayFormatter()
-        {
-        }
-
-        public void Serialize(ref MessagePackWriter writer, SByte[] value, MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-            }
-            else
-            {
-                writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
-                {
-                    writer.Write(value[i]);
-                }
-            }
-        }
-
-        public SByte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return default;
-            }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new SByte[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadSByte();
-                }
-
-                return array;
-            }
-        }
-    }
-
     public sealed class CharFormatter : IMessagePackFormatter<Char>
     {
         public static readonly CharFormatter Instance = new CharFormatter();
