@@ -13,6 +13,7 @@ namespace Benchmark
     [ShortRunJob]
     public class StringBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
+        [Params("")]
         public string Text { get; set; }
 
         [Benchmark]
@@ -30,8 +31,8 @@ namespace Benchmark
 
     public class SByteArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
-        private static readonly sbyte[] input = new sbyte[16 * 1024 * 1024];
-        private static readonly sbyte[] zero = new sbyte[16 * 1024 * 1024];
+        private readonly sbyte[] input = new sbyte[16 * 1024 * 1024];
+        private readonly sbyte[] zero = new sbyte[16 * 1024 * 1024];
 
         [GlobalSetup]
         public void SetUp()
