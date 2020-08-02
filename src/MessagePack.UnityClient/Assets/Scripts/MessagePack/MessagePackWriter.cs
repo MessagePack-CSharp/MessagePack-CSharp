@@ -1066,7 +1066,6 @@ namespace MessagePack
                     };
                     fixed (byte* pShuffle = shuffle)
                     {
-                        var shuffleVector = (Vector128<sbyte>*)pShuffle;
                         var simdEnd = inputIterator + ((inputLength >> 4) << 4);
                         while (inputIterator != simdEnd)
                         {
@@ -1078,7 +1077,7 @@ namespace MessagePack
                             {
                                 var moveMaskLower = moveMask & 0xff;
                                 var countLower = unchecked((int)Popcnt.PopCount(moveMaskLower)) + (Stride >> 1);
-                                var shuffleCurrentLower = Sse2.LoadVector128((byte*)(shuffleVector + moveMaskLower));
+                                var shuffleCurrentLower = Sse2.LoadVector128(pShuffle + (moveMaskLower << 7));
                                 var maskMoveMaskLower = Sse2.ShiftRightLogical128BitLane(Vector128.Create(byte.MaxValue), (byte)(16 - countLower));
                                 var shuffledLower = Ssse3.Shuffle(current.AsByte(), shuffleCurrentLower);
                                 var blendedLower = Sse41.BlendVariable(shuffledLower, Vector128.Create((byte)0xd0), shuffleCurrentLower);
@@ -1086,7 +1085,7 @@ namespace MessagePack
 
                                 current = Sse2.ShiftRightLogical128BitLane(current, 8);
                                 var moveMaskHigher = moveMask >> 8;
-                                var shuffleCurrentHigher = Sse2.LoadVector128((byte*)(shuffleVector + moveMaskHigher));
+                                var shuffleCurrentHigher = Sse2.LoadVector128(pShuffle + (moveMaskHigher << 7));
                                 var maskMoveMaskHigher = Sse2.ShiftRightLogical128BitLane(Vector128.Create(byte.MaxValue), (byte)(16 + countLower - count));
                                 var shuffledHigher = Ssse3.Shuffle(current.AsByte(), shuffleCurrentHigher);
                                 var blendedHigher = Sse41.BlendVariable(shuffledHigher, Vector128.Create((byte)0xd0), shuffleCurrentHigher);
