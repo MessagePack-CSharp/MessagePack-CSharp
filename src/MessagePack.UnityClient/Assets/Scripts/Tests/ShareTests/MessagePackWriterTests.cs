@@ -81,34 +81,6 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void Write_SByteArray()
-        {
-            var sequence = new Sequence<byte>();
-            var writer = new MessagePackWriter(sequence);
-            var buffer = new sbyte[0x90] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, };
-            writer.Write(buffer);
-            writer.Flush();
-            var reader = new MessagePackReader(sequence.AsReadOnlySequence);
-
-            var br = new StringBuilder();
-            foreach (var b in sequence.AsReadOnlySequence.ToArray())
-            {
-                br.Append(b.ToString("X2")).Append(", ");
-            }
-
-            System.IO.File.WriteAllText(@"C:\Users\conve\Documents\p.txt", br.ToString());
-
-            var len = reader.ReadArrayHeader();
-            var array = new sbyte[len];
-            for (int i = 0; i < array.Length; i++)
-            {
-                array[i] = reader.ReadSByte();
-            }
-
-            Assert.Equal(buffer, array);
-        }
-
-        [Fact]
         public void Write_String_null()
         {
             var sequence = new Sequence<byte>();

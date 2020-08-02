@@ -182,6 +182,7 @@ namespace MessagePack.Tests
         public static object[][] StandardClassFormatterTestData = new object[][]
         {
             new object[] { new byte[] { 1, 10, 100 }, new byte[0] { }, null },
+            new object[] { new sbyte[0x90] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, }, new sbyte[0] { }, null },
             new object[] { "aaa", string.Empty, null },
             new object[] { new Uri("Http://hogehoge.com"), new Uri("Https://hugahuga.com"), null },
             new object[] { new Version(0, 0), new Version(1, 2, 3), new Version(255, 100, 30) },

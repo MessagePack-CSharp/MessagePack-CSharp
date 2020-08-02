@@ -1,2 +1,1 @@
-﻿MessagePack.MessagePackWriter.Write(System.ReadOnlySpan<sbyte> src) -> void
-MessagePack.MessagePackWriter.Write(sbyte[] src) -> void
+﻿
