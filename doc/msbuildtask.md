@@ -46,4 +46,4 @@ Property | Purpose | Default value
 --|--|--
 `MessagePackGeneratedResolverNamespace` | The prefix for the namespace under which code will be generated. `.Formatters` is always appended to this value. | `MessagePack`
 `MessagePackGeneratedResolverName` | The name of the generated type. | `GeneratedResolver`
-`MessagePackGeneratedUsesMapMode` | A boolean value that ____?? | `false`
+`MessagePackGeneratedUsesMapMode` | A boolean value that indicates whether all formatters should use property maps instead of more compact arrays. | `false`
