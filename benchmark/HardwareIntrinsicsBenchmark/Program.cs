@@ -8,9 +8,9 @@ namespace HardwareIntrinsicsBenchmark
 {
     internal class Program
     {
-        private static void Main(string[] args)
+        private static void Main()
         {
-            BenchmarkRunner.Run<SByteArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
+            BenchmarkRunner.Run<Int16ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
         }
     }
 }

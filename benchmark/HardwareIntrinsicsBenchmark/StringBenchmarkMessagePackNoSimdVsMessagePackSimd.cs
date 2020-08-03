@@ -65,4 +65,41 @@ namespace Benchmark
             return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(zero);
         }
     }
+
+    public class Int16ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
+    {
+        private readonly short[] input = new short[16 * 1024 * 1024];
+        private readonly short[] zero = new short[16 * 1024 * 1024];
+
+        [GlobalSetup]
+        public void SetUp()
+        {
+            var r = new Random();
+            r.NextBytes(MemoryMarshal.AsBytes(input.AsSpan()));
+        }
+
+        [Benchmark]
+        public byte[] SerializeSimd()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
+        }
+
+        [Benchmark]
+        public byte[] SerializeNoSimd()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSimdZero()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(zero);
+        }
+
+        [Benchmark]
+        public byte[] SerializeNoSimdZero()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(zero);
+        }
+    }
 }

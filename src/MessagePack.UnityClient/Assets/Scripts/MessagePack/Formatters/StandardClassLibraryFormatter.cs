@@ -74,10 +74,8 @@ namespace MessagePack.Formatters
                 {
                     {
                         // Make InputIterator Aligned
-                        var offset = new UIntPtr(inputIterator).ToUInt64();
-                        offset -= (offset >> 4) << 4;
-                        offset = (16 - offset) & 0xfUL;
-                        inputLength -= (int)offset;
+                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign16(inputIterator);
+                        inputLength -= offset;
                         var offsetEnd = inputIterator + offset;
                         while (inputIterator != offsetEnd)
                         {
@@ -346,8 +344,7 @@ namespace MessagePack.Formatters
                     };
                     fixed (byte* pShuffle = shuffle)
                     {
-                        var simdEnd = inputIterator + ((inputLength >> 4) << 4);
-                        while (inputIterator != simdEnd)
+                        for (var vectorizedEnd = inputIterator + ((inputLength >> 4) << 4); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
                             var current = Sse2.LoadAlignedVector128(inputIterator);
                             var moveMask = unchecked((uint)Sse2.MoveMask(Sse2.CompareGreaterThan(Vector128.Create((sbyte)-32), current)));
@@ -358,22 +355,21 @@ namespace MessagePack.Formatters
                                 var moveMaskLower = moveMask & 0xff;
                                 var countLower = unchecked((int)Popcnt.PopCount(moveMaskLower)) + (Stride >> 1);
                                 var shuffleCurrentLower = Sse2.LoadVector128(pShuffle + (moveMaskLower << 4));
-                                var maskMoveMaskLower = Sse2.ShiftRightLogical128BitLane(Vector128.Create(byte.MaxValue), (byte)(16 - countLower));
                                 var shuffledLower = Ssse3.Shuffle(current.AsByte(), shuffleCurrentLower);
-                                var blendedLower = Sse41.BlendVariable(shuffledLower, Vector128.Create((byte)0xd0), shuffleCurrentLower);
-                                Sse2.MaskMove(blendedLower, maskMoveMaskLower, pDestination);
+                                var maskMoveMaskLower = Sse2.ShiftRightLogical128BitLane(Vector128.Create(byte.MaxValue), (byte)(16 - countLower));
+                                var answerLower = Sse41.BlendVariable(shuffledLower, Vector128.Create((byte)0xd0), shuffleCurrentLower);
+                                Sse2.MaskMove(answerLower, maskMoveMaskLower, pDestination);
 
                                 current = Sse2.ShiftRightLogical128BitLane(current, 8);
                                 var moveMaskHigher = moveMask >> 8;
                                 var shuffleCurrentHigher = Sse2.LoadVector128(pShuffle + (moveMaskHigher << 4));
-                                var maskMoveMaskHigher = Sse2.ShiftRightLogical128BitLane(Vector128.Create(byte.MaxValue), (byte)(16 + countLower - count));
                                 var shuffledHigher = Ssse3.Shuffle(current.AsByte(), shuffleCurrentHigher);
-                                var blendedHigher = Sse41.BlendVariable(shuffledHigher, Vector128.Create((byte)0xd0), shuffleCurrentHigher);
-                                Sse2.MaskMove(blendedHigher, maskMoveMaskHigher, pDestination + countLower);
+                                var maskMoveMaskHigher = Sse2.ShiftRightLogical128BitLane(Vector128.Create(byte.MaxValue), (byte)(16 + countLower - count));
+                                var answerHigher = Sse41.BlendVariable(shuffledHigher, Vector128.Create((byte)0xd0), shuffleCurrentHigher);
+                                Sse2.MaskMove(answerHigher, maskMoveMaskHigher, pDestination + countLower);
                             }
 
                             writer.Advance(count);
-                            inputIterator += Stride;
                         }
                     }
                 }
@@ -395,10 +391,223 @@ namespace MessagePack.Formatters
             else
             {
                 var len = reader.ReadArrayHeader();
+
+                if (len == 0)
+                {
+                    return Array.Empty<sbyte>();
+                }
+
                 var array = new sbyte[len];
                 for (int i = 0; i < array.Length; i++)
                 {
                     array[i] = reader.ReadSByte();
+                }
+
+                return array;
+            }
+        }
+    }
+
+    public sealed class Int16ArrayFormatter : IMessagePackFormatter<Int16[]>
+    {
+        public static readonly Int16ArrayFormatter Instance = new Int16ArrayFormatter();
+
+        private Int16ArrayFormatter()
+        {
+        }
+
+        public unsafe void Serialize(ref MessagePackWriter writer, short[] value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var inputLength = value.Length;
+            writer.WriteArrayHeader(inputLength);
+            if (inputLength == 0)
+            {
+                return;
+            }
+
+            fixed (short* pSource = &value[0])
+            {
+                var inputEnd = pSource + inputLength;
+                var inputIterator = pSource;
+
+#if HARDWARE_INTRINSICS_X86
+                const int Stride = 8;
+                if (Popcnt.IsSupported && inputLength >= Stride)
+                {
+                    {
+                        // Make InputIterator Aligned
+                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign16(inputIterator);
+                        if ((offset & 1) == 0)
+                        {
+                            offset >>= 1;
+                            inputLength -= offset;
+                            var offsetEnd = inputIterator + offset;
+                            while (inputIterator != offsetEnd)
+                            {
+                                writer.Write(*inputIterator++);
+                            }
+                        }
+                    }
+
+                    // x86 x64 is always Little Endian
+                    const byte C1 = MessagePackCode.Int8;
+                    const byte C2 = MessagePackCode.Int16;
+                    ReadOnlySpan<byte> table = new byte[]
+{
+    0, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 128, 4, 6, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 128, 5, 4, 6, 128, 128, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 128, 4, 128, 6, 128, 128, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, C1, 0, C1, 0, 0, 0, 0, 0, 0, 0,
+    0, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 128, 5, 4, 128, 6, 128, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, C2, 0, 0, C1, 0, 0, 0, 0, 0, 0,
+    0, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 128, 4, 128, 7, 6, 128, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, C1, 0, C2, 0, 0, 0, 0, 0, 0, 0,
+    0, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 128, 0, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, C1, 0, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, C2, 0, 0, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 128, 0, C1, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, C1, 0, C1, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, 128, C2, 0, 0, C1, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0,
+    0, 128, 3, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, 128, 128, 0, C2, 0, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0, 0,
+    128, 0, 128, 3, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, 128, C1, 0, C2, 0, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0, 0,
+    128, 1, 0, 128, 3, 2, 128, 5, 4, 128, 7, 6, 128, 128, 128, 128, C2, 0, 0, C2, 0, 0, C2, 0, 0, C2, 0, 0, 0, 0, 0, 0,
+};
+                    fixed (byte* tablePointer = &table[0])
+                    {
+                        for (var vectorizedEnd = inputIterator + ((inputLength >> 3) << 3); inputIterator != vectorizedEnd; inputIterator += Stride)
+                        {
+                            var current = Sse2.LoadVector128(inputIterator);
+
+                            var countVector = Sse41.BlendVariable(Sse2.Add(Sse2.Add(Vector128.Create((short)2), Sse2.CompareGreaterThan(current, Vector128.Create((short)(sbyte.MinValue - 1)))), Sse2.CompareGreaterThan(current, Vector128.Create((short)-32))), Vector128.Create((short)2), Sse2.CompareGreaterThan(current, Vector128.Create((short)sbyte.MaxValue)));
+                            var countSumVector = Ssse3.HorizontalAdd(countVector, countVector);
+                            countSumVector = Ssse3.HorizontalAdd(countSumVector, countSumVector);
+                            var countLower = Sse2.Extract(countSumVector.AsUInt16(), 0) + 4;
+                            var countHigher = Sse2.Extract(countSumVector.AsUInt16(), 1) + 4;
+                            var countTotal = countLower + countHigher;
+                            var indexVector = Sse2.MultiplyAddAdjacent(countVector, Vector128.Create(1, 3, 9, 27, 1, 3, 9, 27));
+                            indexVector = Ssse3.HorizontalAdd(indexVector, indexVector);
+                            var indexLower = Sse41.Extract(indexVector, 0);
+                            var indexHigher = Sse41.Extract(indexVector, 1);
+                            var destination = writer.GetSpan(countTotal);
+                            fixed (byte* pDestination = &destination[0])
+                            {
+                                var shuffleCurrentLower = Sse2.LoadVector128(tablePointer + (indexLower << 5));
+                                var shuffledLower = Ssse3.Shuffle(current.AsByte(), shuffleCurrentLower);
+                                var constantCurrentLower = Sse2.LoadVector128(tablePointer + (indexLower << 5) + 16);
+                                var answerLower = Sse2.Or(shuffledLower, constantCurrentLower);
+                                var maskMoveMaskLower = Sse2.ShiftRightLogical128BitLane(Vector128.Create(byte.MaxValue), (byte)(16 - countLower));
+                                Sse2.MaskMove(answerLower, maskMoveMaskLower, pDestination);
+
+                                var shuffleCurrentHigher = Sse2.LoadVector128(tablePointer + (indexHigher << 5));
+                                var shuffledHigher = Ssse3.Shuffle(Sse2.ShiftRightLogical128BitLane(current, 8).AsByte(), shuffleCurrentHigher);
+                                var constantCurrentHigher = Sse2.LoadVector128(tablePointer + (indexHigher << 5) + 16);
+                                var answerHigher = Sse2.Or(shuffledHigher, constantCurrentHigher);
+                                var maskMoveMaskHigher = Sse2.ShiftRightLogical128BitLane(Vector128.Create(byte.MaxValue), (byte)(16 - countHigher));
+                                Sse2.MaskMove(answerHigher, maskMoveMaskHigher, pDestination + countLower);
+                            }
+
+                            writer.Advance(countTotal);
+                        }
+                    }
+                }
+#endif
+
+                while (inputIterator != inputEnd)
+                {
+                    writer.Write(*inputIterator++);
+                }
+            }
+        }
+
+        public short[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+            else
+            {
+                var len = reader.ReadArrayHeader();
+
+                if (len == 0)
+                {
+                    return Array.Empty<short>();
+                }
+
+                var array = new short[len];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadInt16();
                 }
 
                 return array;
