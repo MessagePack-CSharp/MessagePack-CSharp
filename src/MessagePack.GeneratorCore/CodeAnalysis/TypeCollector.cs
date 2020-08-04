@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePackCompiler.CodeAnalysis
@@ -438,14 +439,15 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             var subTypes = unionAttrs.Select(x => x[1].Value).OfType<INamedTypeSymbol>().ToArray();
-            foreach (var sType in subTypes)
+            foreach (var unionType in subTypes)
             {
-                var info = GetObjectInfo(sType);
-                collectedObjectInfo.Add(info);
+                if (alreadyCollected.Contains(unionType) == false)
+                {
+                    var info = GetObjectInfo(unionType);
+                    collectedObjectInfo.Add(info);
+                }
             }
         }
-
-
 
         private void CollectArray(IArrayTypeSymbol array)
         {
@@ -581,8 +583,8 @@ namespace MessagePackCompiler.CodeAnalysis
                 formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
             }
 
-            formatterBuilder.Append(type.Name + "Formatter");
-            formatterBuilder.Append("<" + string.Join(", ", type.TypeArguments) + ">");
+            formatterBuilder.Append(GetMiniallyQualifiedClassName(type));
+            formatterBuilder.Append("Formatter");
 
             var genericSerializationInfo = new GenericSerializationInfo
             {
@@ -996,27 +998,13 @@ namespace MessagePackCompiler.CodeAnalysis
                 needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
             }
 
-            //string templateParametersString;
-            //if (type.TypeParameters.Count() > 0)
-            //{
-            //    templateParametersString = "<" + string.Join(", ", type.TypeParameters) + ">";
-            //}
-            //else
-            //{
-            //    templateParametersString = null;
-            //}
-
-            var nameBuilder = new StringBuilder();
-            FormatName(type, nameBuilder);
-
             var info = new ObjectSerializationInfo
             {
                 IsClass = isClass,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
-                Name = nameBuilder.ToString().Replace(".", "_"),
-                TemplateParametersString = null,
+                Name = GetMiniallyQualifiedClassName(type),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
@@ -1024,24 +1012,17 @@ namespace MessagePackCompiler.CodeAnalysis
                 NeedsCastOnBefore = needsCastOnBefore,
             };
 
-            void FormatName(INamedTypeSymbol symbol, StringBuilder builder)
-            {
-                builder.Append(symbol.ToDisplayString(ShortTypeNameFormat));
-
-                if (symbol.IsGenericType)
-                {
-                    foreach (var genericType in symbol.TypeArguments)
-                    {
-                        if (genericType is INamedTypeSymbol nameGenericType)
-                        {
-                            builder.Append("_");
-                            FormatName(nameGenericType, builder);
-                        }
-                    }
-                }
-            }
-
             return info;
+        }
+
+        private static string GetMiniallyQualifiedClassName(INamedTypeSymbol type)
+        {
+            var name = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            name = name.Replace(".", "_");
+            name = name.Replace("<", "_");
+            name = name.Replace(">", "_");
+            name = Regex.Replace(name, @"\[([,])*\]", match => $"Array{match.Length - 1}");
+            return name;
         }
 
         private static bool TryGetNextConstructor(IEnumerator<IMethodSymbol> ctorEnumerator, ref IMethodSymbol ctor)
