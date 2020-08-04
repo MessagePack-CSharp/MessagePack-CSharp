@@ -741,7 +741,7 @@ namespace MessagePack
         /// </remarks>
         public void Write(ReadOnlySpan<byte> src)
         {
-            int length = src.Length;
+            int length = (int)src.Length;
             this.WriteBinHeader(length);
             var span = this.writer.GetSpan(length);
             src.CopyTo(span);
@@ -925,7 +925,6 @@ namespace MessagePack
             }
 
             ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
-
             fixed (char* pValue = value)
             fixed (byte* pBuffer = &buffer)
             {
@@ -944,15 +943,12 @@ namespace MessagePack
         /// <param name="value">The value to write.</param>
         public unsafe void Write(ReadOnlySpan<char> value)
         {
+            ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
             fixed (char* pValue = value)
+            fixed (byte* pBuffer = &buffer)
             {
-                ref byte buffer = ref this.WriteString_PrepareSpan(value.Length, out int bufferSize, out int useOffset);
-
-                fixed (byte* pBuffer = &buffer)
-                {
-                    int byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
-                    this.WriteString_PostEncoding(pBuffer, useOffset, byteCount);
-                }
+                int byteCount = StringEncoding.UTF8.GetBytes(pValue, value.Length, pBuffer + useOffset, bufferSize);
+                this.WriteString_PostEncoding(pBuffer, useOffset, byteCount);
             }
         }
 
@@ -1214,7 +1210,7 @@ namespace MessagePack
             // solves heuristic length check
 
             // ensure buffer by MaxByteCount(faster than GetByteCount)
-            bufferSize = (characterLength * 3) + 5;
+            bufferSize = StringEncoding.UTF8.GetMaxByteCount(characterLength) + 5;
             ref byte buffer = ref this.writer.GetPointer(bufferSize);
 
             int useOffset;
