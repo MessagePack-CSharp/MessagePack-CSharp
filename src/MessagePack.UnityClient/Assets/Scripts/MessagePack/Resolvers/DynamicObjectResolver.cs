@@ -52,7 +52,7 @@ namespace MessagePack.Resolvers
 #if NETFRAMEWORK
         public AssemblyBuilder Save()
         {
-            return DynamicAssembly.Save();
+            return DynamicAssembly.Value.Save();
         }
 #endif
 
@@ -183,7 +183,7 @@ namespace MessagePack.Resolvers
 #if NETFRAMEWORK
         public AssemblyBuilder Save()
         {
-            return DynamicAssembly.Save();
+            return DynamicAssembly.Value.Save();
         }
 #endif
 
