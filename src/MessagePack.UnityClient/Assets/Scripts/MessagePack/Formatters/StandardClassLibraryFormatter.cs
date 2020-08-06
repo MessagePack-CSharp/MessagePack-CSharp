@@ -251,31 +251,39 @@ namespace MessagePack.Formatters
                         var vectorMinFixNeg1 = Vector128.Create((short)(MessagePackRange.MinFixNegativeInt - 1));
                         var vectorSByteMax = Vector128.Create((short)sbyte.MaxValue);
                         var vectorByteMaxValue = Vector128.Create((short)byte.MaxValue);
-                        var vectorM1M5 = Vector128.Create(-1, -5, -1, -5, -1, -5, -1, -5);
+                        var vectorM1M5M25M125 = Vector128.Create(-1, -5, -25, -125, -1, -5, -25, -125);
                         var vector128ByteMaxValue = Vector128.Create(byte.MaxValue);
+                        var vector02468101214 = Vector128.Create(0, 2, 4, 6, 8, 10, 12, 14, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80);
                         for (var vectorizedEnd = inputIterator + ((inputLength >> 3) << 3); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
                             var current = Sse2.LoadVector128(inputIterator);
 
-                            var countVector = Sse2.CompareGreaterThan(current, vectorSByteMinNeg1);
                             var isGreaterThanMinFixNeg1 = Sse2.CompareGreaterThan(current, vectorMinFixNeg1);
-                            countVector = Sse2.Add(countVector, isGreaterThanMinFixNeg1);
                             var isGreaterThanSByteMax = Sse2.CompareGreaterThan(current, vectorSByteMax);
-                            countVector = Sse2.Add(countVector, isGreaterThanSByteMax);
+
+                            if (Sse2.MoveMask(Sse2.AndNot(isGreaterThanSByteMax, isGreaterThanMinFixNeg1).AsByte()) == 0xFFFF)
+                            {
+                                var span = writer.GetSpan(Stride);
+                                var answer = Ssse3.Shuffle(current.AsByte(), vector02468101214).AsUInt64();
+                                Unsafe.As<byte, ulong>(ref span[0]) = answer.GetElement(0);
+                                writer.Advance(Stride);
+                                continue;
+                            }
+
+                            var countVector = Sse2.Add(isGreaterThanSByteMax, isGreaterThanMinFixNeg1);
+                            var isGreaterThanSByteMinNeg1 = Sse2.CompareGreaterThan(current, vectorSByteMinNeg1);
+                            countVector = Sse2.Add(countVector, isGreaterThanSByteMinNeg1);
                             var isGreaterThanByteMax = Sse2.CompareGreaterThan(current, vectorByteMaxValue);
                             countVector = Sse2.Add(countVector, isGreaterThanByteMax);
 
-                            var indexVector = Sse2.MultiplyAddAdjacent(countVector, vectorM1M5);
+                            var indexVector = Sse2.MultiplyAddAdjacent(countVector, vectorM1M5M25M125);
+                            indexVector = Ssse3.HorizontalAdd(indexVector, indexVector);
 
                             var index0 = indexVector.GetElement(0);
                             var index1 = indexVector.GetElement(1);
-                            var index2 = indexVector.GetElement(2);
-                            var index3 = indexVector.GetElement(3);
                             var count0 = countPointer[index0];
                             var count1 = countPointer[index1];
-                            var count2 = countPointer[index2];
-                            var count3 = countPointer[index3];
-                            var countTotal = count0 + count1 + count2 + count3;
+                            var countTotal = count0 + count1;
                             var destination = writer.GetSpan(countTotal);
                             fixed (byte* pDestination = &destination[0])
                             {
@@ -292,32 +300,12 @@ namespace MessagePack.Formatters
 
                                 var item1 = tablePointer + (index1 << 5);
                                 var shuffle1 = Sse2.LoadVector128(item1);
-                                current = Sse2.ShiftRightLogical128BitLane(current, 4);
+                                current = Sse2.ShiftRightLogical128BitLane(current, 8);
                                 var shuffled1 = Ssse3.Shuffle(current.AsByte(), shuffle1);
                                 var constant1 = Sse2.LoadVector128(item1 + 16);
                                 var answer1 = Sse2.Or(shuffled1, constant1);
                                 var maskMove1 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count1));
                                 Sse2.MaskMove(answer1, maskMove1, tmpDestination);
-                                tmpDestination += count1;
-
-                                var item2 = tablePointer + (index2 << 5);
-                                var shuffle2 = Sse2.LoadVector128(item2);
-                                current = Sse2.ShiftRightLogical128BitLane(current, 4);
-                                var shuffled2 = Ssse3.Shuffle(current.AsByte(), shuffle2);
-                                var constant2 = Sse2.LoadVector128(item2 + 16);
-                                var answer2 = Sse2.Or(shuffled2, constant2);
-                                var maskMove2 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count2));
-                                Sse2.MaskMove(answer2, maskMove2, tmpDestination);
-                                tmpDestination += count2;
-
-                                var item3 = tablePointer + (index3 << 5);
-                                var shuffle3 = Sse2.LoadVector128(item3);
-                                current = Sse2.ShiftRightLogical128BitLane(current, 4);
-                                var shuffled3 = Ssse3.Shuffle(current.AsByte(), shuffle3);
-                                var constant3 = Sse2.LoadVector128(item3 + 16);
-                                var answer3 = Sse2.Or(shuffled3, constant3);
-                                var maskMove3 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count3));
-                                Sse2.MaskMove(answer3, maskMove3, tmpDestination);
                             }
 
                             writer.Advance(countTotal);

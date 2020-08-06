@@ -105,30 +105,38 @@ Action<int, int> EmbedInt16 = (int i, int baseIndex) =>
     }
 };
 #>
-        public const int Int16CountTableOffset = 25 * 32;
+        public const int Int16CountTableOffset = 625 * 32;
 
-        public static ReadOnlySpan<byte> Int16ShuffleTable => new byte[25 * 36] {<#
+        public static ReadOnlySpan<byte> Int16ShuffleTable => new byte[625 * 36] {<#
 lengthBuffer.Clear();
 range = 5;
-for (var i1 = 0; i1 < range; i1++)
+for (var i3 = 0; i3 < range; i3++)
 {
-    for (var i0 = 0; i0 < range; i0++)
+    for (var i2 = 0; i2 < range; i2++)
     {
-        constantBuffer.Clear();
-        accumulatedLength = 0;
-        EmbedInt16(i0, 0);
-        EmbedInt16(i1, 2);
-        lengthBuffer.Append(' ').Append(accumulatedLength).Append(", 0, 0, 0");
-        if (i1 != range - 1 || i0 != range - 1)
+        for (var i1 = 0; i1 < range; i1++)
         {
-            lengthBuffer.Append(',');
+            for (var i0 = 0; i0 < range; i0++)
+            {
+                constantBuffer.Clear();
+                accumulatedLength = 0;
+                EmbedInt16(i0, 0);
+                EmbedInt16(i1, 2);
+                EmbedInt16(i2, 4);
+                EmbedInt16(i3, 6);
+                lengthBuffer.Append(' ').Append(accumulatedLength).Append(", 0, 0, 0");
+                if (i1 != range - 1 || i0 != range - 1 || i2 != range - 1 || i3 != range - 1)
+                {
+                    lengthBuffer.Append(',');
+                }
+                for (; accumulatedLength < 16; accumulatedLength++)
+                {
+                    #> 0x80,<#
+                    constantBuffer.Append(Zero);
+                }
+                #><#=constantBuffer.ToString()#><#
+            }
         }
-        for (; accumulatedLength < 16; accumulatedLength++)
-        {
-            #> 0x80,<#
-            constantBuffer.Append(Zero);
-        }
-        #><#=constantBuffer.ToString()#><#
     }
 }
 #><#=lengthBuffer.ToString()#> };
