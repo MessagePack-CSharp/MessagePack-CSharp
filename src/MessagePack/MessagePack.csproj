@@ -63,6 +63,10 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ForceSizePrimitiveFormatter.cs</LastGenOutput>
     </None>
+    <None Update="Formatters\IntegerArrayFormatterHelper.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>IntegerArrayFormatterHelper.cs</LastGenOutput>
+    </None>
     <None Update="Formatters\PrimitiveFormatter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveFormatter.cs</LastGenOutput>
@@ -90,6 +94,11 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>ForceSizePrimitiveFormatter.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Formatters\IntegerArrayFormatterHelper.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>IntegerArrayFormatterHelper.tt</DependentUpon>
     </Compile>
     <Compile Update="Formatters\PrimitiveFormatter.cs">
       <DesignTime>True</DesignTime>

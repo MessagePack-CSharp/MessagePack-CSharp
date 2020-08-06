@@ -1,0 +1,346 @@
+﻿<#@ template  debug="true" hostSpecific="true" #>
+<#@ output extension=".cs" #>
+<#@ Assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Text" #>
+<#
+const string Zero = " 0,";
+const string I8 = " MessagePackCode.Int8,";
+const string I16 = " MessagePackCode.Int16,";
+const string I32 = " MessagePackCode.Int32,";
+const string U8 = " MessagePackCode.UInt8,";
+const string U16 = " MessagePackCode.UInt16,";
+const string U32 = " MessagePackCode.UInt32,";
+
+var constantBuffer = new StringBuilder(16 * 32);
+var lengthBuffer = new StringBuilder(256);
+var accumulatedLength = 0;
+int range;
+#>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
+
+#if HARDWARE_INTRINSICS_X86
+using System;
+
+namespace MessagePack.Formatters
+{
+    internal static class IntegerArrayFormatterHelper
+    {
+        /*
+            1(2) : -32 > i >= short.MinValue
+            0(1) : sbyte.MaxValue >= i >= -32
+
+            2 ^ 8 == 256
+        */
+
+        public static ReadOnlySpan<byte> SByteShuffleTable => new byte[256 * 16] {<#
+for (uint i = 0; i < 256; i++)
+{
+    accumulatedLength = 0;
+    for (var j = 0; j < 8; j++)
+    {
+        var currentBit = (i >> j) & 1;
+        if (currentBit == 0)
+        {
+            #> <#=j#>,<#
+            accumulatedLength++;
+        }
+        else
+        {
+            #> 0x80, <#=j#>,<#
+            accumulatedLength += 2;
+        }
+    }
+
+    for (; accumulatedLength < 16; accumulatedLength++)
+    {
+        #> 0x80,<#
+    }
+}
+#> };
+
+        /*
+            0(3) : sbyte.MinValue > i >= short.MinValue
+           -1(2) : MessagePackRange.MinFixNegativeInt > i > sbyte.MinValue - 1
+           -2(1) : sbyte.MaxValue + 1 > i > MessagePackRange.MinFixNegativeInt - 1
+           -3(2) : byte.MaxValue + 1 > i > sbyte.MaxValue
+           -4(3) : ushort.MaxValue >= i > byte.MaxValue
+
+            5 ^ 2 == 25
+        */
+<#
+Action<int, int> EmbedInt16 = (int i, int baseIndex) =>
+{
+    switch (i)
+    {
+        case 4:
+            accumulatedLength += 3;
+            constantBuffer.Append(U16).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex + 1#>, <#=baseIndex#>,<#
+            break;
+        case 3:
+            accumulatedLength += 2;
+            constantBuffer.Append(U8).Append(Zero);
+            #> 0x80, <#=baseIndex#>,<#
+            break;
+        case 2:
+            accumulatedLength++;
+            constantBuffer.Append(Zero);
+            #> <#=baseIndex#>,<#
+            break;
+        case 1:
+            accumulatedLength += 2;
+            constantBuffer.Append(I8).Append(Zero);
+            #> 0x80, <#=baseIndex#>,<#
+            break;
+        case 0:
+            accumulatedLength += 3;
+            constantBuffer.Append(I16).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex + 1#>, <#=baseIndex#>,<#
+            break;
+    }
+};
+#>
+        public const int Int16CountTableOffset = 25 * 32;
+
+        public static ReadOnlySpan<byte> Int16ShuffleTable => new byte[25 * 36] {<#
+lengthBuffer.Clear();
+range = 5;
+for (var i1 = 0; i1 < range; i1++)
+{
+    for (var i0 = 0; i0 < range; i0++)
+    {
+        constantBuffer.Clear();
+        accumulatedLength = 0;
+        EmbedInt16(i0, 0);
+        EmbedInt16(i1, 2);
+        lengthBuffer.Append(' ').Append(accumulatedLength).Append(", 0, 0, 0");
+        if (i1 != range - 1 || i0 != range - 1)
+        {
+            lengthBuffer.Append(',');
+        }
+        for (; accumulatedLength < 16; accumulatedLength++)
+        {
+            #> 0x80,<#
+            constantBuffer.Append(Zero);
+        }
+        #><#=constantBuffer.ToString()#><#
+    }
+}
+#><#=lengthBuffer.ToString()#> };
+
+        /*
+             0(5) : short.MinValue > i >= int.MinValue
+            -1(3) : sbyte.MinValue > i >= short.MinValue
+            -2(2) : -32 > i >= sbyte.MinValue
+            -3(1) : sbyte.MaxValue + 1 > i >= -32
+            -4(2) : byte.MaxValue + 1 > i > sbyte.MaxValue
+            -5(3) : ushort.MaxValue + 1 > i > byte.MaxValue
+            -6(5) : int.MaxValue >= i > ushort.MaxValue
+
+            7 ^ 2 == 49
+        */
+<#
+Action<int, int> EmbedInt32 = (int i, int baseIndex) =>
+{
+    switch (i)
+    {
+        case 6:
+            accumulatedLength += 5;
+            constantBuffer.Append(U32).Append(Zero).Append(Zero).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex+3#>, <#=baseIndex+2#>, <#=baseIndex+1#>, <#=baseIndex#>,<#
+            break;
+        case 5:
+            accumulatedLength += 3;
+            constantBuffer.Append(U16).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex+1#>, <#=baseIndex#>,<#
+            break;
+        case 4:
+            accumulatedLength += 2;
+            constantBuffer.Append(U8).Append(Zero);
+            #> 0x80, <#=baseIndex#>,<#
+            break;
+        case 3:
+            accumulatedLength++;
+            constantBuffer.Append(Zero);
+            #> <#=baseIndex#>,<#
+            break;
+        case 2:
+            accumulatedLength += 2;
+            constantBuffer.Append(I8).Append(Zero);
+            #> 0x80, <#=baseIndex#>,<#
+            break;
+        case 1:
+            accumulatedLength += 3;
+            constantBuffer.Append(I16).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex+1#>, <#=baseIndex#>,<#
+            break;
+        case 0:
+            accumulatedLength += 5;
+            constantBuffer.Append(I32).Append(Zero).Append(Zero).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex+3#>, <#=baseIndex+2#>, <#=baseIndex+1#>, <#=baseIndex#>,<#
+            break;
+    }
+};
+#>
+        public const int Int32CountTableOffset = 49 * 32;
+
+        public static ReadOnlySpan<byte> Int32ShuffleTable => new byte[49 * 36] {<#
+lengthBuffer.Clear();
+range = 7;
+for (var i1 = 0; i1 < range; i1++)
+{
+    for (var i0 = 0; i0 < range; i0++)
+    {
+        constantBuffer.Clear();
+        accumulatedLength = 0;
+        EmbedInt32(i0, 0);
+        EmbedInt32(i1, 4);
+
+        lengthBuffer.Append(' ').Append(accumulatedLength).Append(", 0, 0, 0");
+        if (i1 != range - 1 || i0 != range - 1)
+        {
+            lengthBuffer.Append(',');
+        }
+        for (; accumulatedLength < 16; accumulatedLength++)
+        {
+            #> 0x80,<#
+            constantBuffer.Append(Zero);
+        }
+        #><#=constantBuffer.ToString()#><#
+    }
+}
+#><#=lengthBuffer.ToString()#> };
+
+        /*
+            -2(3) : -1 == 0xFFFF >= u >= 0x8000
+            -0(1) : 128 > u > -1
+            -1(2) : byte.MaxValue + 1 > u >= 128
+            -2(3) : 0x7FFF >= u >= byte.MaxValue + 1
+
+            3 ^ 2 == 9
+        */
+<#
+Action<int, int> EmbedUInt16 = (int i, int baseIndex) =>
+{
+    switch (i)
+    {
+        case 2:
+            accumulatedLength += 3;
+            constantBuffer.Append(U16).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex+1#>, <#=baseIndex#>,<#
+            break;
+        case 1:
+            accumulatedLength += 2;
+            constantBuffer.Append(U8).Append(Zero);
+            #> 0x80, <#=baseIndex#>,<#
+            break;
+        case 0:
+            accumulatedLength++;
+            constantBuffer.Append(Zero);
+            #> <#=baseIndex#>,<#
+            break;
+    }
+};
+#>
+        public const int UInt16CountTableOffset = 9 * 32;
+
+        public static ReadOnlySpan<byte> UInt16ShuffleTable => new byte[9 * 36] {<#
+lengthBuffer.Clear();
+range = 3;
+for (var i1 = 0; i1 < range; i1++)
+{
+    for (var i0 = 0; i0 < range; i0++)
+    {
+        constantBuffer.Clear();
+        accumulatedLength = 0;
+        EmbedUInt16(i0, 0);
+        EmbedUInt16(i1, 2);
+        
+        lengthBuffer.Append(' ').Append(accumulatedLength).Append(", 0, 0, 0");
+        if (i1 != range - 1 || i0 != range - 1)
+        {
+            lengthBuffer.Append(',');
+        }
+        for (; accumulatedLength < 16; accumulatedLength++)
+        {
+            #> 0x80,<#
+            constantBuffer.Append(Zero);
+        }
+        #><#=constantBuffer.ToString()#><#
+    }
+}
+#><#=lengthBuffer.ToString()#> };
+
+        /*
+            -3(5) : -1 == 0xFFFF_FFFF >= u >= 0x8000_0000
+            -0(1) : 128 > u > -1
+            -1(2) : byte.MaxValue + 1 > u >= 128
+            -2(3) : ushort.MaxValue + 1 > u > byte.MaxValue
+            -3(5) : 0x7FFF_FFFF >= u > ushort.MaxValue
+
+            4 ^ 2 == 16
+        */
+<#
+Action<int, int> EmbedUInt32 = (int i, int baseIndex) =>
+{
+    switch (i)
+    {
+        case 3:
+            accumulatedLength += 5;
+            constantBuffer.Append(U32).Append(Zero).Append(Zero).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex+3#>, <#=baseIndex+2#>, <#=baseIndex+1#>, <#=baseIndex#>,<#
+            break;
+        case 2:
+            accumulatedLength += 3;
+            constantBuffer.Append(U16).Append(Zero).Append(Zero);
+            #> 0x80, <#=baseIndex+1#>, <#=baseIndex#>,<#
+            break;
+        case 1:
+            accumulatedLength += 2;
+            constantBuffer.Append(U8).Append(Zero);
+            #> 0x80, <#=baseIndex#>,<#
+            break;
+        case 0:
+            accumulatedLength++;
+            constantBuffer.Append(Zero);
+            #> <#=baseIndex#>,<#
+            break;
+    }
+};
+#>
+        public const int UInt32CountTableOffset = 16 * 32;
+
+        public static ReadOnlySpan<byte> UInt32ShuffleTable => new byte[16 * 36] {<#
+lengthBuffer.Clear();
+range = 4;
+for (var i1 = 0; i1 < range; i1++)
+{
+    for (var i0 = 0; i0 < range; i0++)
+    {
+        constantBuffer.Clear();
+        accumulatedLength = 0;
+        EmbedUInt32(i0, 0);
+        EmbedUInt32(i1, 4);
+
+        lengthBuffer.Append(' ').Append(accumulatedLength).Append(", 0, 0, 0");
+        if (i1 != range - 1 || i0 != range - 1)
+        {
+            lengthBuffer.Append(',');
+        }
+        for (; accumulatedLength < 16; accumulatedLength++)
+        {
+            #> 0x80,<#
+            constantBuffer.Append(Zero);
+        }
+        #><#=constantBuffer.ToString()#><#
+    }
+}
+#><#=lengthBuffer.ToString()#> };
+    }
+}
+#endif

@@ -1,5 +1,4 @@
-﻿
-// Copyright (c) All contributors. All rights reserved.
+﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
@@ -112,50 +111,6 @@ namespace MessagePack.Formatters
             else
             {
                 return reader.ReadInt32();
-            }
-        }
-    }
-
-    public sealed class Int32ArrayFormatter : IMessagePackFormatter<Int32[]>
-    {
-        public static readonly Int32ArrayFormatter Instance = new Int32ArrayFormatter();
-
-        private Int32ArrayFormatter()
-        {
-        }
-
-        public void Serialize(ref MessagePackWriter writer, Int32[] value, MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-            }
-            else
-            {
-                writer.WriteArrayHeader(value.Length);
-                for (int i = 0; i < value.Length; i++)
-                {
-                    writer.Write(value[i]);
-                }
-            }
-        }
-
-        public Int32[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return default;
-            }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Int32[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadInt32();
-                }
-
-                return array;
             }
         }
     }

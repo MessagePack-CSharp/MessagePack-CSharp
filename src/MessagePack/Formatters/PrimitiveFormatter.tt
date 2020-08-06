@@ -87,7 +87,7 @@ namespace MessagePack.Formatters
             }
         }
     }
-<# if(t.Name != "Byte" && t.Name != "SByte" && t.Name != "Int16") { #>
+<# if(t.Name != "Byte" && t.Name != "SByte" && t.Name != "Int16" && t.Name != "Int32") { #>
 
     public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
     {
