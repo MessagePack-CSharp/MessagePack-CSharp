@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePackCompiler.CodeAnalysis
@@ -429,6 +430,25 @@ namespace MessagePackCompiler.CodeAnalysis
             this.collectedUnionInfo.Add(info);
         }
 
+        private void CollectGenericUnion(INamedTypeSymbol type)
+        {
+            System.Collections.Immutable.ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
+            if (unionAttrs.Length == 0)
+            {
+                return;
+            }
+
+            var subTypes = unionAttrs.Select(x => x[1].Value).OfType<INamedTypeSymbol>().ToArray();
+            foreach (var unionType in subTypes)
+            {
+                if (alreadyCollected.Contains(unionType) == false)
+                {
+                    var info = GetObjectInfo(unionType);
+                    collectedObjectInfo.Add(info);
+                }
+            }
+        }
+
         private void CollectArray(IArrayTypeSymbol array)
         {
             ITypeSymbol elemType = array.ElementType;
@@ -547,6 +567,7 @@ namespace MessagePackCompiler.CodeAnalysis
             // Skip generic symbol declaration itself (open type, e.g. Foo<T>) because we can get nothing useful from it anyways.
             if (type.IsDefinition)
             {
+                this.CollectGenericUnion(type);
                 return;
             }
 
@@ -562,8 +583,8 @@ namespace MessagePackCompiler.CodeAnalysis
                 formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
             }
 
-            formatterBuilder.Append(type.Name + "Formatter");
-            formatterBuilder.Append("<" + string.Join(", ", type.TypeArguments) + ">");
+            formatterBuilder.Append(GetMinimallyQualifiedClassName(type));
+            formatterBuilder.Append("Formatter");
 
             var genericSerializationInfo = new GenericSerializationInfo
             {
@@ -977,24 +998,13 @@ namespace MessagePackCompiler.CodeAnalysis
                 needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
             }
 
-            string templateParametersString;
-            if (type.TypeParameters.Count() > 0)
-            {
-                templateParametersString = "<" + string.Join(", ", type.TypeParameters) + ">";
-            }
-            else
-            {
-                templateParametersString = null;
-            }
-
             var info = new ObjectSerializationInfo
             {
                 IsClass = isClass,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
-                Name = type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
-                TemplateParametersString = templateParametersString,
+                Name = GetMinimallyQualifiedClassName(type),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
@@ -1003,6 +1013,16 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             return info;
+        }
+
+        private static string GetMinimallyQualifiedClassName(INamedTypeSymbol type)
+        {
+            var name = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            name = name.Replace(".", "_");
+            name = name.Replace("<", "_");
+            name = name.Replace(">", "_");
+            name = Regex.Replace(name, @"\[([,])*\]", match => $"Array{match.Length - 1}");
+            return name;
         }
 
         private static bool TryGetNextConstructor(IEnumerator<IMethodSymbol> ctorEnumerator, ref IMethodSymbol ctor)
