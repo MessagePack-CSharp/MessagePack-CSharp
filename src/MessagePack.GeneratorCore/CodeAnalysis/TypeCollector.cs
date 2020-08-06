@@ -583,7 +583,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
             }
 
-            formatterBuilder.Append(GetMiniallyQualifiedClassName(type));
+            formatterBuilder.Append(GetMinimallyQualifiedClassName(type));
             formatterBuilder.Append("Formatter");
 
             var genericSerializationInfo = new GenericSerializationInfo
@@ -1004,7 +1004,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
-                Name = GetMiniallyQualifiedClassName(type),
+                Name = GetMinimallyQualifiedClassName(type),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
@@ -1015,7 +1015,7 @@ namespace MessagePackCompiler.CodeAnalysis
             return info;
         }
 
-        private static string GetMiniallyQualifiedClassName(INamedTypeSymbol type)
+        private static string GetMinimallyQualifiedClassName(INamedTypeSymbol type)
         {
             var name = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             name = name.Replace(".", "_");
