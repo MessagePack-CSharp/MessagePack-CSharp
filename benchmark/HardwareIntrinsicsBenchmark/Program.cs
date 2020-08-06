@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+using System.Linq;
 using Benchmark;
 using BenchmarkDotNet.Running;
 
@@ -10,7 +12,14 @@ namespace HardwareIntrinsicsBenchmark
     {
         private static void Main()
         {
+            /*var serializer = new Int32ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd();
+            serializer.SetUp();
+            var arraySimd = serializer.SerializeSimd();
+            var arrayNoSimd = serializer.SerializeNoSimd();
+            Console.WriteLine(arraySimd.SequenceEqual(arrayNoSimd));*/
+            BenchmarkRunner.Run<Int8ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
             BenchmarkRunner.Run<Int16ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
+            BenchmarkRunner.Run<Int32ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
         }
     }
 }
