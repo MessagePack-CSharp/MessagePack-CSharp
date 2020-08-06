@@ -1870,6 +1870,12 @@ namespace MessagePack.Internal
             {
                 members = intMembers.Values.OrderBy(x => x.IntKey).ToArray();
             }
+            else if (contractAttr.SortKeys)
+            {
+                members = stringMembers.Values
+                    .OrderBy(x => x.StringKey, StringComparer.CurrentCulture)
+                    .ToArray();
+            }
             else
             {
                 members = stringMembers.Values
