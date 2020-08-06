@@ -225,12 +225,12 @@ namespace MessagePack.Formatters
                 var inputIterator = pSource;
 
                 #if HARDWARE_INTRINSICS_X86
-                const int Stride = 16;
-                if (Avx2.IsSupported && inputLength >= Stride)
+                const int Stride = 8;
+                if (Sse41.IsSupported && inputLength >= Stride)
                 {
                     {
                         // Make InputIterator Aligned
-                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign32(inputIterator);
+                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign16(inputIterator);
                         if ((offset & 1) == 0)
                         {
                             offset >>= 1;
@@ -247,128 +247,77 @@ namespace MessagePack.Formatters
                     fixed (byte* tablePointer = &table[0])
                     {
                         var countPointer = (int*)(tablePointer + IntegerArrayFormatterHelper.Int16CountTableOffset);
-                        var vector256SByteMinNeg1 = Vector256.Create((short)(sbyte.MinValue - 1));
-                        var vector256MinFixNeg1 = Vector256.Create((short)(MessagePackRange.MinFixNegativeInt - 1));
-                        var vector256SByteMax = Vector256.Create((short)sbyte.MaxValue);
-                        var vector256ByteMaxValue = Vector256.Create((short)byte.MaxValue);
-                        var vector256M1M5 = Vector256.Create(-1, -5, -1, -5, -1, -5, -1, -5, -1, -5, -1, -5, -1, -5, -1, -5);
+                        var vectorSByteMinNeg1 = Vector128.Create((short)(sbyte.MinValue - 1));
+                        var vectorMinFixNeg1 = Vector128.Create((short)(MessagePackRange.MinFixNegativeInt - 1));
+                        var vectorSByteMax = Vector128.Create((short)sbyte.MaxValue);
+                        var vectorByteMaxValue = Vector128.Create((short)byte.MaxValue);
+                        var vectorM1M5 = Vector128.Create(-1, -5, -1, -5, -1, -5, -1, -5);
                         var vector128ByteMaxValue = Vector128.Create(byte.MaxValue);
-                        for (var vectorizedEnd = inputIterator + ((inputLength >> 4) << 4); inputIterator != vectorizedEnd; inputIterator += Stride)
+                        for (var vectorizedEnd = inputIterator + ((inputLength >> 3) << 3); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
-                            var current = Avx.LoadVector256(inputIterator);
+                            var current = Sse2.LoadVector128(inputIterator);
 
-                            var countVector = Avx2.CompareGreaterThan(current, vector256SByteMinNeg1);
-                            var isGreaterThanMinFixNeg1 = Avx2.CompareGreaterThan(current, vector256MinFixNeg1);
-                            countVector = Avx2.Add(countVector, isGreaterThanMinFixNeg1);
-                            var isGreaterThanSByteMax = Avx2.CompareGreaterThan(current, vector256SByteMax);
-                            countVector = Avx2.Add(countVector, isGreaterThanSByteMax);
-                            var isGreaterThanByteMax = Avx2.CompareGreaterThan(current, vector256ByteMaxValue);
-                            countVector = Avx2.Add(countVector, isGreaterThanByteMax);
+                            var countVector = Sse2.CompareGreaterThan(current, vectorSByteMinNeg1);
+                            var isGreaterThanMinFixNeg1 = Sse2.CompareGreaterThan(current, vectorMinFixNeg1);
+                            countVector = Sse2.Add(countVector, isGreaterThanMinFixNeg1);
+                            var isGreaterThanSByteMax = Sse2.CompareGreaterThan(current, vectorSByteMax);
+                            countVector = Sse2.Add(countVector, isGreaterThanSByteMax);
+                            var isGreaterThanByteMax = Sse2.CompareGreaterThan(current, vectorByteMaxValue);
+                            countVector = Sse2.Add(countVector, isGreaterThanByteMax);
 
-                            var indexVector = Avx2.MultiplyAddAdjacent(countVector, vector256M1M5);
+                            var indexVector = Sse2.MultiplyAddAdjacent(countVector, vectorM1M5);
 
                             var index0 = indexVector.GetElement(0);
                             var index1 = indexVector.GetElement(1);
                             var index2 = indexVector.GetElement(2);
                             var index3 = indexVector.GetElement(3);
-                            var index4 = indexVector.GetElement(4);
-                            var index5 = indexVector.GetElement(5);
-                            var index6 = indexVector.GetElement(6);
-                            var index7 = indexVector.GetElement(7);
                             var count0 = countPointer[index0];
                             var count1 = countPointer[index1];
                             var count2 = countPointer[index2];
                             var count3 = countPointer[index3];
-                            var count4 = countPointer[index4];
-                            var count5 = countPointer[index5];
-                            var count6 = countPointer[index6];
-                            var count7 = countPointer[index7];
-                            var countTotal = count0 + count1 + count2 + count3 + count4 + count5 + count6 + count7;
+                            var countTotal = count0 + count1 + count2 + count3;
                             var destination = writer.GetSpan(countTotal);
                             fixed (byte* pDestination = &destination[0])
                             {
                                 var tmpDestination = pDestination;
 
-                                var current03 = Avx2.ExtractVector128(current, 0).AsByte();
-
-                                var item0 = Avx.LoadVector256(tablePointer + (index0 << 5));
-                                var shuffle0 = Avx2.ExtractVector128(item0, 0);
-                                var shuffled0 = Ssse3.Shuffle(current03, shuffle0);
-                                var constant0 = Avx2.ExtractVector128(item0, 1);
+                                var item0 = tablePointer + (index0 << 5);
+                                var shuffle0 = Sse2.LoadVector128(item0);
+                                var shuffled0 = Ssse3.Shuffle(current.AsByte(), shuffle0);
+                                var constant0 = Sse2.LoadVector128(item0 + 16);
                                 var answer0 = Sse2.Or(shuffled0, constant0);
                                 var maskMove0 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count0));
                                 Sse2.MaskMove(answer0, maskMove0, tmpDestination);
                                 tmpDestination += count0;
 
-                                var item1 = Avx.LoadVector256(tablePointer + (index1 << 5));
-                                var shuffle1 = Avx2.ExtractVector128(item1, 0);
-                                current03 = Sse2.ShiftRightLogical128BitLane(current03, 4);
-                                var shuffled1 = Ssse3.Shuffle(current03, shuffle1);
-                                var constant1 = Avx2.ExtractVector128(item1, 1);
+                                var item1 = tablePointer + (index1 << 5);
+                                var shuffle1 = Sse2.LoadVector128(item1);
+                                current = Sse2.ShiftRightLogical128BitLane(current, 4);
+                                var shuffled1 = Ssse3.Shuffle(current.AsByte(), shuffle1);
+                                var constant1 = Sse2.LoadVector128(item1 + 16);
                                 var answer1 = Sse2.Or(shuffled1, constant1);
                                 var maskMove1 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count1));
                                 Sse2.MaskMove(answer1, maskMove1, tmpDestination);
                                 tmpDestination += count1;
 
-                                var item2 = Avx.LoadVector256(tablePointer + (index2 << 5));
-                                var shuffle2 = Avx2.ExtractVector128(item2, 0);
-                                current03 = Sse2.ShiftRightLogical128BitLane(current03, 4);
-                                var shuffled2 = Ssse3.Shuffle(current03, shuffle2);
-                                var constant2 = Avx2.ExtractVector128(item2, 1);
+                                var item2 = tablePointer + (index2 << 5);
+                                var shuffle2 = Sse2.LoadVector128(item2);
+                                current = Sse2.ShiftRightLogical128BitLane(current, 4);
+                                var shuffled2 = Ssse3.Shuffle(current.AsByte(), shuffle2);
+                                var constant2 = Sse2.LoadVector128(item2 + 16);
                                 var answer2 = Sse2.Or(shuffled2, constant2);
                                 var maskMove2 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count2));
                                 Sse2.MaskMove(answer2, maskMove2, tmpDestination);
                                 tmpDestination += count2;
 
-                                var item3 = Avx.LoadVector256(tablePointer + (index3 << 5));
-                                var shuffle3 = Avx2.ExtractVector128(item3, 0);
-                                current03 = Sse2.ShiftRightLogical128BitLane(current03, 4);
-                                var shuffled3 = Ssse3.Shuffle(current03, shuffle3);
-                                var constant3 = Avx2.ExtractVector128(item3, 1);
+                                var item3 = tablePointer + (index3 << 5);
+                                var shuffle3 = Sse2.LoadVector128(item3);
+                                current = Sse2.ShiftRightLogical128BitLane(current, 4);
+                                var shuffled3 = Ssse3.Shuffle(current.AsByte(), shuffle3);
+                                var constant3 = Sse2.LoadVector128(item3 + 16);
                                 var answer3 = Sse2.Or(shuffled3, constant3);
                                 var maskMove3 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count3));
                                 Sse2.MaskMove(answer3, maskMove3, tmpDestination);
-                                tmpDestination += count3;
-
-                                var current47 = Avx2.ExtractVector128(current, 1).AsByte();
-
-                                var item4 = Avx.LoadVector256(tablePointer + (index4 << 5));
-                                var shuffle4 = Avx2.ExtractVector128(item4, 0);
-                                var shuffled4 = Ssse3.Shuffle(current47, shuffle4);
-                                var constant4 = Avx2.ExtractVector128(item4, 1);
-                                var answer4 = Sse2.Or(shuffled4, constant4);
-                                var maskMove4 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count4));
-                                Sse2.MaskMove(answer4, maskMove4, tmpDestination);
-                                tmpDestination += count4;
-
-                                var item5 = Avx.LoadVector256(tablePointer + (index5 << 5));
-                                var shuffle5 = Avx2.ExtractVector128(item5, 0);
-                                current47 = Sse2.ShiftRightLogical128BitLane(current47, 4);
-                                var shuffled5 = Ssse3.Shuffle(current47, shuffle5);
-                                var constant5 = Avx2.ExtractVector128(item5, 1);
-                                var answer5 = Sse2.Or(shuffled5, constant5);
-                                var maskMove5 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count5));
-                                Sse2.MaskMove(answer5, maskMove5, tmpDestination);
-                                tmpDestination += count5;
-
-                                var item6 = Avx.LoadVector256(tablePointer + (index6 << 5));
-                                var shuffle6 = Avx2.ExtractVector128(item6, 0);
-                                current47 = Sse2.ShiftRightLogical128BitLane(current47, 4);
-                                var shuffled6 = Ssse3.Shuffle(current47, shuffle6);
-                                var constant6 = Avx2.ExtractVector128(item6, 1);
-                                var answer6 = Sse2.Or(shuffled6, constant6);
-                                var maskMove6 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count6));
-                                Sse2.MaskMove(answer6, maskMove6, tmpDestination);
-                                tmpDestination += count6;
-
-                                var item7 = Avx.LoadVector256(tablePointer + (index7 << 5));
-                                var shuffle7 = Avx2.ExtractVector128(item7, 0);
-                                current47 = Sse2.ShiftRightLogical128BitLane(current47, 4);
-                                var shuffled7 = Ssse3.Shuffle(current47, shuffle7);
-                                var constant7 = Avx2.ExtractVector128(item7, 1);
-                                var answer7 = Sse2.Or(shuffled7, constant7);
-                                var maskMove7 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count7));
-                                Sse2.MaskMove(answer7, maskMove7, tmpDestination);
                             }
 
                             writer.Advance(countTotal);
