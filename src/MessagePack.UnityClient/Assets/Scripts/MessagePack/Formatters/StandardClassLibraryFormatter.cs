@@ -69,14 +69,15 @@ namespace MessagePack.Formatters
                 var inputEnd = pSource + inputLength;
                 var inputIterator = pSource;
 
-                #if HARDWARE_INTRINSICS_X86
-                const int Stride = 32;
+#if HARDWARE_INTRINSICS_X86
+                const int ShiftCount = 4;
+                const int Stride = 1 << ShiftCount;
                 // We enter the SIMD mode when there are more than the Stride after alignment adjustment.
-                if (Avx2.IsSupported && inputLength >= Stride * 2)
+                if (Popcnt.IsSupported && inputLength >= Stride * 2)
                 {
                     {
                         // Make InputIterator Aligned
-                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign32(inputIterator);
+                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign16(inputIterator);
                         inputLength -= offset;
                         var offsetEnd = inputIterator + offset;
                         while (inputIterator != offsetEnd)
@@ -88,24 +89,21 @@ namespace MessagePack.Formatters
                     ReadOnlySpan<byte> table = IntegerArrayFormatterHelper.SByteShuffleTable;
                     fixed (byte* tablePointer = table)
                     {
-                        var vector256MinFixNegInt = Vector256.Create((sbyte)MessagePackRange.MinFixNegativeInt);
-                        var vector128MessagePackCodeInt8 = Vector128.Create(MessagePackCode.Int8);
-                        var vector128ByteMaxValue = Vector128.Create(byte.MaxValue);
-                        for (var vectorizedEnd = inputIterator + ((inputLength >> 5) << 5); inputIterator != vectorizedEnd; inputIterator += Stride)
+                        var vectorMinFixNegInt = Vector128.Create((sbyte)MessagePackRange.MinFixNegativeInt);
+                        var vectorMessagePackCodeInt8 = Vector128.Create(MessagePackCode.Int8);
+                        var vectorByteMaxValue = Vector128.Create(byte.MaxValue);
+                        for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
-                            var current = Avx.LoadVector256(inputIterator);
-                            var index = unchecked((uint)Avx2.MoveMask(Avx2.CompareGreaterThan(vector256MinFixNegInt, current)));
+                            var current = Sse2.LoadVector128(inputIterator);
+                            var index = unchecked((uint)Sse2.MoveMask(Sse2.CompareGreaterThan(vectorMinFixNegInt, current)));
 
                             if (index == 0)
                             {
                                 // When all 32 input values are in the single byte range.
-                                var destination = writer.GetSpan(32);
-                                fixed (byte* pDestination = &destination[0])
-                                {
-                                    Avx.Store(pDestination, current.AsByte());
-                                }
+                                var span = writer.GetSpan(Stride);
+                                Sse2.Store((sbyte*)Unsafe.AsPointer(ref span[0]), current);
 
-                                writer.Advance(32);
+                                writer.Advance(Stride);
                                 continue;
                             }
 
@@ -113,47 +111,26 @@ namespace MessagePack.Formatters
                             {
                                 var index0 = (byte)index;
                                 var index1 = (byte)(index >> 8);
-                                var index2 = (byte)(index >> 16);
-                                var index3 = (byte)(index >> 24);
                                 var count0 = (int)(Popcnt.PopCount(index0) + 8);
                                 var count1 = (int)(Popcnt.PopCount(index1) + 8);
-                                var count2 = (int)(Popcnt.PopCount(index2) + 8);
-                                var count3 = (int)(Popcnt.PopCount(index3) + 8);
-                                var countTotal = count0 + count1 + count2 + count3;
+                                var countTotal = count0 + count1;
                                 var destination = writer.GetSpan(countTotal);
                                 fixed (byte* pDestination = &destination[0])
                                 {
                                     var tempDestination = pDestination;
-                                    var current01 = Avx2.ExtractVector128(current, 0);
                                     var shuffle0 = Sse2.LoadVector128(tablePointer + (index0 << 4));
-                                    var shuffled0 = Ssse3.Shuffle(current01.AsByte(), shuffle0);
-                                    var answer0 = Sse41.BlendVariable(shuffled0, vector128MessagePackCodeInt8, shuffle0);
-                                    var mask0 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count0));
+                                    var shuffled0 = Ssse3.Shuffle(current.AsByte(), shuffle0);
+                                    var answer0 = Sse41.BlendVariable(shuffled0, vectorMessagePackCodeInt8, shuffle0);
+                                    var mask0 = Sse2.ShiftRightLogical128BitLane(vectorByteMaxValue, (byte)(16 - count0));
                                     Sse2.MaskMove(answer0, mask0, tempDestination);
                                     tempDestination += count0;
 
                                     var shuffle1 = Sse2.LoadVector128(tablePointer + (index1 << 4));
-                                    var shift1 = Sse2.ShiftRightLogical128BitLane(current01.AsByte(), 8);
+                                    var shift1 = Sse2.ShiftRightLogical128BitLane(current.AsByte(), 8);
                                     var shuffled1 = Ssse3.Shuffle(shift1, shuffle1);
-                                    var answer1 = Sse41.BlendVariable(shuffled1, vector128MessagePackCodeInt8, shuffle1);
-                                    var mask1 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count1));
+                                    var answer1 = Sse41.BlendVariable(shuffled1, vectorMessagePackCodeInt8, shuffle1);
+                                    var mask1 = Sse2.ShiftRightLogical128BitLane(vectorByteMaxValue, (byte)(16 - count1));
                                     Sse2.MaskMove(answer1, mask1, tempDestination);
-                                    tempDestination += count1;
-
-                                    var current23 = Avx2.ExtractVector128(current, 1);
-                                    var shuffle2 = Sse2.LoadVector128(tablePointer + (index2 << 4));
-                                    var shuffled2 = Ssse3.Shuffle(current23.AsByte(), shuffle2);
-                                    var answer2 = Sse41.BlendVariable(shuffled2, vector128MessagePackCodeInt8, shuffle2);
-                                    var mask2 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count2));
-                                    Sse2.MaskMove(answer2, mask2, tempDestination);
-                                    tempDestination += count2;
-
-                                    var shuffle3 = Sse2.LoadVector128(tablePointer + (index3 << 4));
-                                    var shift3 = Sse2.ShiftRightLogical128BitLane(current23.AsByte(), 8);
-                                    var shuffled3 = Ssse3.Shuffle(shift3, shuffle3);
-                                    var answer3 = Sse41.BlendVariable(shuffled3, vector128MessagePackCodeInt8, shuffle3);
-                                    var mask3 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count3));
-                                    Sse2.MaskMove(answer3, mask3, tempDestination);
                                 }
 
                                 writer.Advance(countTotal);
@@ -161,7 +138,7 @@ namespace MessagePack.Formatters
                         }
                     }
                 }
-            #endif
+#endif
 
                 while (inputIterator != inputEnd)
                 {
@@ -224,9 +201,10 @@ namespace MessagePack.Formatters
                 var inputEnd = pSource + inputLength;
                 var inputIterator = pSource;
 
-                #if HARDWARE_INTRINSICS_X86
-                const int Stride = 8;
-                if (Sse41.IsSupported && inputLength >= Stride)
+#if HARDWARE_INTRINSICS_X86
+                const int ShiftCount = 3;
+                const int Stride = 1 << ShiftCount;
+                if (Sse41.IsSupported && inputLength >= Stride * 2)
                 {
                     {
                         // Make InputIterator Aligned
@@ -254,7 +232,7 @@ namespace MessagePack.Formatters
                         var vectorM1M5M25M125 = Vector128.Create(-1, -5, -25, -125, -1, -5, -25, -125);
                         var vector128ByteMaxValue = Vector128.Create(byte.MaxValue);
                         var vector02468101214 = Vector128.Create(0, 2, 4, 6, 8, 10, 12, 14, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80);
-                        for (var vectorizedEnd = inputIterator + ((inputLength >> 3) << 3); inputIterator != vectorizedEnd; inputIterator += Stride)
+                        for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
                             var current = Sse2.LoadVector128(inputIterator);
 
@@ -312,7 +290,7 @@ namespace MessagePack.Formatters
                         }
                     }
                 }
-                #endif
+#endif
 
                 while (inputIterator != inputEnd)
                 {
@@ -375,9 +353,11 @@ namespace MessagePack.Formatters
                 var inputEnd = pSource + inputLength;
                 var inputIterator = pSource;
 
-                #if HARDWARE_INTRINSICS_X86
+#if HARDWARE_INTRINSICS_X86
                 // Inline everything for the sake of the optimization.
-                if (Avx2.IsSupported && inputLength >= 16)
+                const int ShiftCount = 2;
+                const int Stride = 1 << ShiftCount;
+                if (Sse41.IsSupported && inputLength >= Stride * 2)
                 {
                     {
                         // Make InputIterator Aligned
@@ -398,100 +378,74 @@ namespace MessagePack.Formatters
                     fixed (byte* tableInt32Pointer = &tableInt32[0])
                     {
                         var countInt32Pointer = (int*)(tableInt32Pointer + IntegerArrayFormatterHelper.Int32CountTableOffset);
-                        var vector256ShortMinValueM1 = Vector256.Create(short.MinValue - 1);
-                        var vector256SByteMinValueM1 = Vector256.Create(sbyte.MinValue - 1);
-                        var vector256MinFixNegIntM1 = Vector256.Create(MessagePackRange.MinFixNegativeInt - 1);
-                        var vector256SByteMaxValue = Vector256.Create((int)sbyte.MaxValue);
-                        var vector256ByteMaxValue = Vector256.Create((int)byte.MaxValue);
-                        var vector256UShortMaxValue = Vector256.Create((int)ushort.MaxValue);
-                        var vector256M1M7 = Vector256.Create(-1, -7, -1, -7, -1, -7, -1, -7);
+                        var vectorShortMinValueM1 = Vector128.Create(short.MinValue - 1);
+                        var vectorSByteMinValueM1 = Vector128.Create(sbyte.MinValue - 1);
+                        var vectorMinFixNegIntM1 = Vector128.Create(MessagePackRange.MinFixNegativeInt - 1);
+                        var vectorSByteMaxValue = Vector128.Create((int)sbyte.MaxValue);
+                        var vectorByteMaxValue = Vector128.Create((int)byte.MaxValue);
+                        var vectorUShortMaxValue = Vector128.Create((int)ushort.MaxValue);
+                        var vectorM1M7 = Vector128.Create(-1, -7, -1, -7);
                         var vector128ByteMaxValue = Vector128.Create(byte.MaxValue);
-                        var vector256In1Range = Vector256.Create(0, 4, 8, 12, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0, 4, 8, 12, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80);
-                        for (var vectorizedEnd = inputIterator + ((inputLength >> 3) << 3); inputIterator != vectorizedEnd; inputIterator += 8)
+                        var vectorIn1Range = Vector128.Create(0, 4, 8, 12, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80);
+                        for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
-                            var current = Avx.LoadVector256(inputIterator);
-                            var isGreaterThanMinFixNegIntM1 = Avx2.CompareGreaterThan(current, vector256MinFixNegIntM1);
-                            var isGreaterThanSByteMaxValue = Avx2.CompareGreaterThan(current, vector256SByteMaxValue);
+                            var current = Sse2.LoadVector128(inputIterator);
+                            var isGreaterThanMinFixNegIntM1 = Sse2.CompareGreaterThan(current, vectorMinFixNegIntM1);
+                            var isGreaterThanSByteMaxValue = Sse2.CompareGreaterThan(current, vectorSByteMaxValue);
 
-                            if (unchecked((uint)Avx2.MoveMask(Avx2.AndNot(isGreaterThanSByteMaxValue, isGreaterThanMinFixNegIntM1).AsByte())) == uint.MaxValue)
+                            if (Sse2.MoveMask(Sse2.AndNot(isGreaterThanSByteMaxValue, isGreaterThanMinFixNegIntM1).AsByte()) == 0xFFFF)
                             {
-                                var answer = Avx2.Shuffle(current.AsByte(), vector256In1Range).AsUInt32();
-                                var number = answer.GetElement(0) | ((ulong)answer.GetElement(4) << 32);
-                                var span = writer.GetSpan(8);
-                                Unsafe.As<byte, ulong>(ref span[0]) = number;
-                                writer.Advance(8);
+                                var answer = Ssse3.Shuffle(current.AsByte(), vectorIn1Range).AsUInt32();
+                                var span = writer.GetSpan(Stride);
+                                Unsafe.As<byte, uint>(ref span[0]) = answer.GetElement(0);
+                                writer.Advance(Stride);
                                 continue;
                             }
 
-                            var indexVector = Avx2.Add(isGreaterThanSByteMaxValue, isGreaterThanMinFixNegIntM1);
-                            indexVector = Avx2.Add(indexVector, Avx2.CompareGreaterThan(current, vector256UShortMaxValue));
-                            indexVector = Avx2.Add(indexVector, Avx2.CompareGreaterThan(current, vector256ByteMaxValue));
-                            indexVector = Avx2.Add(indexVector, Avx2.CompareGreaterThan(current, vector256ShortMinValueM1));
-                            indexVector = Avx2.Add(indexVector, Avx2.CompareGreaterThan(current, vector256SByteMinValueM1));
-                            indexVector = Avx2.MultiplyLow(indexVector, vector256M1M7);
-                            indexVector = Avx2.HorizontalAdd(indexVector, indexVector);
+                            var indexVector = Sse2.Add(isGreaterThanSByteMaxValue, isGreaterThanMinFixNegIntM1);
+                            indexVector = Sse2.Add(indexVector, Sse2.CompareGreaterThan(current, vectorUShortMaxValue));
+                            indexVector = Sse2.Add(indexVector, Sse2.CompareGreaterThan(current, vectorByteMaxValue));
+                            indexVector = Sse2.Add(indexVector, Sse2.CompareGreaterThan(current, vectorShortMinValueM1));
+                            indexVector = Sse2.Add(indexVector, Sse2.CompareGreaterThan(current, vectorSByteMinValueM1));
+                            indexVector = Sse41.MultiplyLow(indexVector, vectorM1M7);
+                            indexVector = Ssse3.HorizontalAdd(indexVector, indexVector);
 
                             var index0 = indexVector.GetElement(0);
                             var index1 = indexVector.GetElement(1);
-                            var index2 = indexVector.GetElement(4);
-                            var index3 = indexVector.GetElement(5);
 
                             var count0 = countInt32Pointer[index0];
                             var count1 = countInt32Pointer[index1];
-                            var count2 = countInt32Pointer[index2];
-                            var count3 = countInt32Pointer[index3];
-                            var countTotal = count0 + count1 + count2 + count3;
+                            var countTotal = count0 + count1;
 
                             var destination = writer.GetSpan(countTotal);
                             fixed (byte* pDestination = &destination[0])
                             {
                                 var tmpDestination = pDestination;
 
-                                var item0 = Avx.LoadVector256(tableInt32Pointer + (index0 << 5));
-                                var current01 = Avx2.ExtractVector128(current, 0).AsByte();
-                                var shuffleCurrent0 = Avx2.ExtractVector128(item0, 0);
-                                var constantCurrent0 = Avx2.ExtractVector128(item0, 1);
-                                var shuffled0 = Ssse3.Shuffle(current01, shuffleCurrent0);
-                                var answer0 = Sse2.Or(shuffled0, constantCurrent0);
+                                var item0 = tableInt32Pointer + (index0 << 5);
+                                var shuffle0 = Sse2.LoadVector128(item0);
+                                var shuffled0 = Ssse3.Shuffle(current.AsByte(), shuffle0);
+                                var constant0 = Sse2.LoadVector128(item0 + 16);
+                                var answer0 = Sse2.Or(shuffled0, constant0);
                                 var maskMove0 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count0));
                                 Sse2.MaskMove(answer0, maskMove0, pDestination);
                                 tmpDestination += count0;
 
-                                var shift1 = Sse2.ShiftRightLogical128BitLane(current01, 8);
-                                var item1 = Avx.LoadVector256(tableInt32Pointer + (index1 << 5));
-                                var shuffleCurrent1 = Avx2.ExtractVector128(item1, 0);
-                                var constantCurrent1 = Avx2.ExtractVector128(item1, 1);
-                                var shuffled1 = Ssse3.Shuffle(shift1, shuffleCurrent1);
-                                var answer1 = Sse2.Or(shuffled1, constantCurrent1);
+                                var shift1 = Sse2.ShiftRightLogical128BitLane(current, 8).AsByte();
+                                var item1 = tableInt32Pointer + (index1 << 5);
+                                var shuffle1 = Sse2.LoadVector128(item1);
+                                var shuffled1 = Ssse3.Shuffle(shift1, shuffle1);
+                                var constant1 = Sse2.LoadVector128(item1 + 16);
+                                var answer1 = Sse2.Or(shuffled1, constant1);
                                 var maskMove1 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count1));
                                 Sse2.MaskMove(answer1, maskMove1, tmpDestination);
-                                tmpDestination += count1;
-
-                                var current23 = Avx2.ExtractVector128(current, 1).AsByte();
-                                var item2 = Avx.LoadVector256(tableInt32Pointer + (index2 << 5));
-                                var shuffleCurrent2 = Avx2.ExtractVector128(item2, 0);
-                                var constantCurrent2 = Avx2.ExtractVector128(item2, 1);
-                                var shuffled2 = Ssse3.Shuffle(current23, shuffleCurrent2);
-                                var answer2 = Sse2.Or(shuffled2, constantCurrent2);
-                                var maskMove2 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count2));
-                                Sse2.MaskMove(answer2, maskMove2, tmpDestination);
-                                tmpDestination += count2;
-
-                                var shift3 = Sse2.ShiftRightLogical128BitLane(current23, 8);
-                                var item3 = Avx.LoadVector256(tableInt32Pointer + (index3 << 5));
-                                var shuffleCurrent3 = Avx2.ExtractVector128(item3, 0);
-                                var constantCurrent3 = Avx2.ExtractVector128(item3, 1);
-                                var shuffled3 = Ssse3.Shuffle(shift3, shuffleCurrent3);
-                                var answer3 = Sse2.Or(shuffled3, constantCurrent3);
-                                var maskMove3 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count3));
-                                Sse2.MaskMove(answer3, maskMove3, tmpDestination);
                             }
 
                             writer.Advance(countTotal);
                         }
                     }
                 }
-                #endif
+#endif
 
                 while (inputIterator != inputEnd)
                 {
