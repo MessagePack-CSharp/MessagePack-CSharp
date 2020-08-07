@@ -86,12 +86,13 @@ namespace MessagePack.Formatters
                         }
                     }
 
-                    ReadOnlySpan<byte> table = IntegerArrayFormatterHelper.SByteShuffleTable;
-                    fixed (byte* tablePointer = table)
+                    var table = IntegerArrayFormatterHelper.SByteShuffleTable;
+                    var maskTable = IntegerArrayFormatterHelper.StoreMaskTable;
+                    fixed (byte* tablePointer = &table[0])
+                    fixed (byte* maskTablePointer = &maskTable[0])
                     {
                         var vectorMinFixNegInt = Vector128.Create((sbyte)MessagePackRange.MinFixNegativeInt);
                         var vectorMessagePackCodeInt8 = Vector128.Create(MessagePackCode.Int8);
-                        var vectorByteMaxValue = Vector128.Create(byte.MaxValue);
                         for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
                             var current = Sse2.LoadVector128(inputIterator);
@@ -99,7 +100,7 @@ namespace MessagePack.Formatters
 
                             if (index == 0)
                             {
-                                // When all 32 input values are in the single byte range.
+                                // When all 32 input values are in the FixNum range.
                                 var span = writer.GetSpan(Stride);
                                 Sse2.Store((sbyte*)Unsafe.AsPointer(ref span[0]), current);
 
@@ -121,16 +122,14 @@ namespace MessagePack.Formatters
                                     var shuffle0 = Sse2.LoadVector128(tablePointer + (index0 << 4));
                                     var shuffled0 = Ssse3.Shuffle(current.AsByte(), shuffle0);
                                     var answer0 = Sse41.BlendVariable(shuffled0, vectorMessagePackCodeInt8, shuffle0);
-                                    var mask0 = Sse2.ShiftRightLogical128BitLane(vectorByteMaxValue, (byte)(16 - count0));
-                                    Sse2.MaskMove(answer0, mask0, tempDestination);
+                                    Sse2.MaskMove(answer0, Sse2.LoadVector128(maskTablePointer + (count0 << 4)), tempDestination);
                                     tempDestination += count0;
 
                                     var shuffle1 = Sse2.LoadVector128(tablePointer + (index1 << 4));
                                     var shift1 = Sse2.ShiftRightLogical128BitLane(current.AsByte(), 8);
                                     var shuffled1 = Ssse3.Shuffle(shift1, shuffle1);
                                     var answer1 = Sse41.BlendVariable(shuffled1, vectorMessagePackCodeInt8, shuffle1);
-                                    var mask1 = Sse2.ShiftRightLogical128BitLane(vectorByteMaxValue, (byte)(16 - count1));
-                                    Sse2.MaskMove(answer1, mask1, tempDestination);
+                                    Sse2.MaskMove(answer1, Sse2.LoadVector128(maskTablePointer + (count1 << 4)), tempDestination);
                                 }
 
                                 writer.Advance(countTotal);
@@ -163,7 +162,7 @@ namespace MessagePack.Formatters
                 }
 
                 var array = new sbyte[len];
-                for (int i = 0; i < array.Length; i++)
+                for (var i = 0; i < array.Length; i++)
                 {
                     array[i] = reader.ReadSByte();
                 }
@@ -221,7 +220,9 @@ namespace MessagePack.Formatters
                         }
                     }
 
+                    var maskTable = IntegerArrayFormatterHelper.StoreMaskTable;
                     var table = IntegerArrayFormatterHelper.Int16ShuffleTable;
+                    fixed (byte* maskTablePointer = &maskTable[0])
                     fixed (byte* tablePointer = &table[0])
                     {
                         var countPointer = (int*)(tablePointer + IntegerArrayFormatterHelper.Int16CountTableOffset);
@@ -230,7 +231,6 @@ namespace MessagePack.Formatters
                         var vectorSByteMax = Vector128.Create((short)sbyte.MaxValue);
                         var vectorByteMaxValue = Vector128.Create((short)byte.MaxValue);
                         var vectorM1M5M25M125 = Vector128.Create(-1, -5, -25, -125, -1, -5, -25, -125);
-                        var vector128ByteMaxValue = Vector128.Create(byte.MaxValue);
                         var vector02468101214 = Vector128.Create(0, 2, 4, 6, 8, 10, 12, 14, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80);
                         for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
@@ -272,8 +272,7 @@ namespace MessagePack.Formatters
                                 var shuffled0 = Ssse3.Shuffle(current.AsByte(), shuffle0);
                                 var constant0 = Sse2.LoadVector128(item0 + 16);
                                 var answer0 = Sse2.Or(shuffled0, constant0);
-                                var maskMove0 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count0));
-                                Sse2.MaskMove(answer0, maskMove0, tmpDestination);
+                                Sse2.MaskMove(answer0, Sse2.LoadVector128(maskTablePointer + (count0 << 4)), tmpDestination);
                                 tmpDestination += count0;
 
                                 var item1 = tablePointer + (index1 << 5);
@@ -282,8 +281,7 @@ namespace MessagePack.Formatters
                                 var shuffled1 = Ssse3.Shuffle(current.AsByte(), shuffle1);
                                 var constant1 = Sse2.LoadVector128(item1 + 16);
                                 var answer1 = Sse2.Or(shuffled1, constant1);
-                                var maskMove1 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count1));
-                                Sse2.MaskMove(answer1, maskMove1, tmpDestination);
+                                Sse2.MaskMove(answer1, Sse2.LoadVector128(maskTablePointer + (count1 << 4)), tmpDestination);
                             }
 
                             writer.Advance(countTotal);
@@ -315,7 +313,7 @@ namespace MessagePack.Formatters
                 }
 
                 var array = new short[len];
-                for (int i = 0; i < array.Length; i++)
+                for (var i = 0; i < array.Length; i++)
                 {
                     array[i] = reader.ReadInt16();
                 }
@@ -374,10 +372,12 @@ namespace MessagePack.Formatters
                         }
                     }
 
+                    var maskTable = IntegerArrayFormatterHelper.StoreMaskTable;
                     var tableInt32 = IntegerArrayFormatterHelper.Int32ShuffleTable;
-                    fixed (byte* tableInt32Pointer = &tableInt32[0])
+                    fixed (byte* tablePointer = &tableInt32[0])
+                    fixed (byte* maskTablePointer = &maskTable[0])
                     {
-                        var countInt32Pointer = (int*)(tableInt32Pointer + IntegerArrayFormatterHelper.Int32CountTableOffset);
+                        var countPointer = (int*)(tablePointer + IntegerArrayFormatterHelper.Int32CountTableOffset);
                         var vectorShortMinValueM1 = Vector128.Create(short.MinValue - 1);
                         var vectorSByteMinValueM1 = Vector128.Create(sbyte.MinValue - 1);
                         var vectorMinFixNegIntM1 = Vector128.Create(MessagePackRange.MinFixNegativeInt - 1);
@@ -385,7 +385,6 @@ namespace MessagePack.Formatters
                         var vectorByteMaxValue = Vector128.Create((int)byte.MaxValue);
                         var vectorUShortMaxValue = Vector128.Create((int)ushort.MaxValue);
                         var vectorM1M7 = Vector128.Create(-1, -7, -1, -7);
-                        var vector128ByteMaxValue = Vector128.Create(byte.MaxValue);
                         var vectorIn1Range = Vector128.Create(0, 4, 8, 12, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80);
                         for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
@@ -413,8 +412,8 @@ namespace MessagePack.Formatters
                             var index0 = indexVector.GetElement(0);
                             var index1 = indexVector.GetElement(1);
 
-                            var count0 = countInt32Pointer[index0];
-                            var count1 = countInt32Pointer[index1];
+                            var count0 = countPointer[index0];
+                            var count1 = countPointer[index1];
                             var countTotal = count0 + count1;
 
                             var destination = writer.GetSpan(countTotal);
@@ -422,23 +421,21 @@ namespace MessagePack.Formatters
                             {
                                 var tmpDestination = pDestination;
 
-                                var item0 = tableInt32Pointer + (index0 << 5);
+                                var item0 = tablePointer + (index0 << 5);
                                 var shuffle0 = Sse2.LoadVector128(item0);
                                 var shuffled0 = Ssse3.Shuffle(current.AsByte(), shuffle0);
                                 var constant0 = Sse2.LoadVector128(item0 + 16);
                                 var answer0 = Sse2.Or(shuffled0, constant0);
-                                var maskMove0 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count0));
-                                Sse2.MaskMove(answer0, maskMove0, pDestination);
+                                Sse2.MaskMove(answer0, Sse2.LoadVector128(maskTablePointer + (count0 << 4)), pDestination);
                                 tmpDestination += count0;
 
                                 var shift1 = Sse2.ShiftRightLogical128BitLane(current, 8).AsByte();
-                                var item1 = tableInt32Pointer + (index1 << 5);
+                                var item1 = tablePointer + (index1 << 5);
                                 var shuffle1 = Sse2.LoadVector128(item1);
                                 var shuffled1 = Ssse3.Shuffle(shift1, shuffle1);
                                 var constant1 = Sse2.LoadVector128(item1 + 16);
                                 var answer1 = Sse2.Or(shuffled1, constant1);
-                                var maskMove1 = Sse2.ShiftRightLogical128BitLane(vector128ByteMaxValue, (byte)(16 - count1));
-                                Sse2.MaskMove(answer1, maskMove1, tmpDestination);
+                                Sse2.MaskMove(answer1, Sse2.LoadVector128(maskTablePointer + (count1 << 4)), tmpDestination);
                             }
 
                             writer.Advance(countTotal);
