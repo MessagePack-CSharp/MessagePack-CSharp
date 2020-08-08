@@ -36,13 +36,13 @@ namespace MessagePack.Resolvers
         /// </summary>
         public static readonly MessagePackSerializerOptions Options;
 
-        internal static readonly DynamicAssembly DynamicAssembly;
+        internal static readonly Lazy<DynamicAssembly> DynamicAssembly;
 
         static DynamicObjectResolver()
         {
             Instance = new DynamicObjectResolver();
             Options = new MessagePackSerializerOptions(Instance);
-            DynamicAssembly = new DynamicAssembly(ModuleName);
+            DynamicAssembly = new Lazy<DynamicAssembly>(() => new DynamicAssembly(ModuleName));
         }
 
         private DynamicObjectResolver()
@@ -52,7 +52,7 @@ namespace MessagePack.Resolvers
 #if NETFRAMEWORK
         public AssemblyBuilder Save()
         {
-            return DynamicAssembly.Save();
+            return DynamicAssembly.Value.Save();
         }
 #endif
 
@@ -94,7 +94,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly, typeof(T), false, false);
+                TypeInfo formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), false, false);
                 if (formatterTypeInfo == null)
                 {
                     return;
@@ -169,7 +169,7 @@ namespace MessagePack.Resolvers
 
         private const string ModuleName = "MessagePack.Resolvers.DynamicContractlessObjectResolver";
 
-        private static readonly DynamicAssembly DynamicAssembly;
+        private static readonly Lazy<DynamicAssembly> DynamicAssembly;
 
         private DynamicContractlessObjectResolver()
         {
@@ -177,13 +177,13 @@ namespace MessagePack.Resolvers
 
         static DynamicContractlessObjectResolver()
         {
-            DynamicAssembly = new DynamicAssembly(ModuleName);
+            DynamicAssembly = new Lazy<DynamicAssembly>(() => new DynamicAssembly(ModuleName));
         }
 
 #if NETFRAMEWORK
         public AssemblyBuilder Save()
         {
-            return DynamicAssembly.Save();
+            return DynamicAssembly.Value.Save();
         }
 #endif
 
@@ -230,7 +230,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly, typeof(T), true, true);
+                TypeInfo formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), true, true);
                 if (formatterTypeInfo == null)
                 {
                     return;
