@@ -5,10 +5,8 @@ extern alias oldmsgpack;
 extern alias newmsgpack;
 
 using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Diagnosers;
 
 namespace Benchmark
 {
@@ -31,17 +29,100 @@ namespace Benchmark
         }
     }
 
-    [HardwareCounters(HardwareCounter.BranchMispredictions, HardwareCounter.CacheMisses)]
-    public class Int8ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
+    [ShortRunJob]
+    public class BooleanArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
-        private readonly sbyte[] input = new sbyte[16 * 1024 * 1024];
-        private readonly sbyte[] inputM32 = new sbyte[16 * 1024 * 1024];
-        private readonly sbyte[] inputM33 = new sbyte[16 * 1024 * 1024];
-        private readonly sbyte[] zero = new sbyte[16 * 1024 * 1024];
+        [Params(64, 1024, 16 * 1024 * 1024)]
+        public int Size;
+        private bool[] input;
+        private byte[] inputSerialized;
+        private bool[] inputTrue;
+        private bool[] inputFalse;
 
         [GlobalSetup]
         public void SetUp()
         {
+            inputFalse = new bool[Size];
+            inputTrue = new bool[Size];
+            input = new bool[Size];
+
+            var r = new Random();
+            for (var i = 0; i < inputTrue.Length; i++)
+            {
+                inputTrue[i] = true;
+                input[i] = r.Next(0, 2) == 0;
+            }
+
+            inputSerialized = newmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSimd()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
+        }
+
+        [Benchmark]
+        public byte[] SerializeNoSimd()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
+        }
+
+        [Benchmark]
+        public bool[] DeSerializeSimd()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Deserialize<bool[]>(inputSerialized);
+        }
+
+        [Benchmark]
+        public bool[] DeserializeNoSimd()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Deserialize<bool[]>(inputSerialized);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSimdFalse()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(inputFalse);
+        }
+
+        [Benchmark]
+        public byte[] SerializeNoSimdFalse()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(inputFalse);
+        }
+
+        [Benchmark]
+        public byte[] SerializeSimdTrue()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(inputTrue);
+        }
+
+        [Benchmark]
+        public byte[] SerializeNoSimdTrue()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(inputTrue);
+        }
+    }
+
+    [ShortRunJob]
+    public class Int8ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
+    {
+        [Params(64, 1024, 16 * 1024 * 1024)]
+        public int Size;
+        private sbyte[] input;
+        private sbyte[] inputM32;
+        private sbyte[] inputM33;
+        private sbyte[] zero;
+
+        [GlobalSetup]
+        public void SetUp()
+        {
+            zero = new sbyte[Size];
+            inputM33 = new sbyte[Size];
+            inputM32 = new sbyte[Size];
+            input = new sbyte[Size];
+
             var r = new Random();
             r.NextBytes(MemoryMarshal.AsBytes(input.AsSpan()));
             for (var i = 0; i < inputM32.Length; i++)
@@ -100,15 +181,19 @@ namespace Benchmark
         }
     }
 
-    [HardwareCounters(HardwareCounter.BranchMispredictions, HardwareCounter.CacheMisses)]
+    [ShortRunJob]
     public class Int16ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
-        private readonly short[] input = new short[16 * 1024 * 1024];
-        private readonly short[] zero = new short[16 * 1024 * 1024];
+        [Params(16, 1024, 16 * 1024 * 1024)]
+        public int Size;
+        private short[] input;
+        private short[] zero;
 
         [GlobalSetup]
         public void SetUp()
         {
+            input = new short[Size];
+            zero = new short[Size];
             var r = new Random();
             r.NextBytes(MemoryMarshal.AsBytes(input.AsSpan()));
 
@@ -141,16 +226,21 @@ namespace Benchmark
         }
     }
 
-    [HardwareCounters(HardwareCounter.BranchMispredictions, HardwareCounter.CacheMisses)]
+    [ShortRunJob]
     public class Int32ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
-        private readonly int[] input = new int[16 * 1024 * 1024];
-        private readonly int[] zero = new int[16 * 1024 * 1024];
-        private readonly int[] inputShortMin = new int[16 * 1024 * 1024];
+        [Params(8, 1024, 16 * 1024 * 1024)]
+        public int Size;
+        private int[] input;
+        private int[] zero;
+        private int[] inputShortMin;
 
         [GlobalSetup]
         public void SetUp()
         {
+            input = new int[Size];
+            zero = new int[Size];
+            inputShortMin = new int[Size];
             var r = new Random();
             r.NextBytes(MemoryMarshal.AsBytes(input.AsSpan()));
             for (var i = 0; i < inputShortMin.Length; i++)
@@ -193,6 +283,38 @@ namespace Benchmark
         public byte[] SerializeNoSimdShortMin()
         {
             return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(inputShortMin);
+        }
+    }
+
+    [ShortRunJob]
+    public class SingleArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
+    {
+        [Params(64, 1024, 16 * 1024 * 1024)]
+        public int Size;
+        private float[] input;
+
+        [GlobalSetup]
+        public void SetUp()
+        {
+            input = new float[Size];
+
+            var r = new Random();
+            for (var i = 0; i < input.Length; i++)
+            {
+                input[i] = (float)r.NextDouble();
+            }
+        }
+
+        [Benchmark]
+        public byte[] SerializeSimd()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
+        }
+
+        [Benchmark]
+        public byte[] SerializeNoSimd()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
         }
     }
 }

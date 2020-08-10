@@ -21,6 +21,15 @@
         typeof(char),
         typeof(DateTime)
     };
+
+    var arrayTypes = new[]
+    {
+        typeof(Int64),
+        typeof(UInt64),
+        typeof(Double),
+        typeof(char),
+        typeof(DateTime)
+    };
 #>
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -87,7 +96,8 @@ namespace MessagePack.Formatters
             }
         }
     }
-<# if(t.Name != "Byte" && t.Name != "SByte" && t.Name != "Int16" && t.Name != "Int32") { #>
+<# } #>
+<# foreach(var t in arrayTypes) {  #>
 
     public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
     {
@@ -119,19 +129,21 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new <#= t.Name #>[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.Read<#= t.Name #>();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<<#= t.Name #>>();
             }
+
+            var array = new <#= t.Name #>[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.Read<#= t.Name #>();
+            }
+
+            return array;
         }
     }
-<# } #>
 <# } #>
 }

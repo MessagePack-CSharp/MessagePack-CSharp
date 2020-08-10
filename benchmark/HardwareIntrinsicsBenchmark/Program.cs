@@ -12,14 +12,11 @@ namespace HardwareIntrinsicsBenchmark
     {
         private static void Main()
         {
-            /*var serializer = new Int32ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd();
-            serializer.SetUp();
-            var arraySimd = serializer.SerializeSimd();
-            var arrayNoSimd = serializer.SerializeNoSimd();
-            Console.WriteLine(arraySimd.SequenceEqual(arrayNoSimd));*/
+            BenchmarkRunner.Run<BooleanArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
             BenchmarkRunner.Run<Int8ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
             BenchmarkRunner.Run<Int16ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
             BenchmarkRunner.Run<Int32ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
+            BenchmarkRunner.Run<SingleArrayBenchmarkMessagePackNoSimdVsMessagePackSimd>();
         }
     }
 }

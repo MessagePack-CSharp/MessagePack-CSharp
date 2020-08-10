@@ -152,23 +152,21 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
+
+            var len = reader.ReadArrayHeader();
+
+            if (len == 0)
             {
-                var len = reader.ReadArrayHeader();
-
-                if (len == 0)
-                {
-                    return Array.Empty<sbyte>();
-                }
-
-                var array = new sbyte[len];
-                for (var i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadSByte();
-                }
-
-                return array;
+                return Array.Empty<sbyte>();
             }
+
+            var array = new sbyte[len];
+            for (var i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadSByte();
+            }
+
+            return array;
         }
     }
 
@@ -232,7 +230,8 @@ namespace MessagePack.Formatters
                         var vectorByteMaxValue = Vector128.Create((short)byte.MaxValue);
                         var vectorM1M5M25M125 = Vector128.Create(-1, -5, -25, -125, -1, -5, -25, -125);
                         var vector02468101214 = Vector128.Create(0, 2, 4, 6, 8, 10, 12, 14, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80);
-                        for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
+                        var vectorLoopLength = (inputLength >> ShiftCount) << ShiftCount;
+                        for (var vectorizedEnd = inputIterator + vectorLoopLength; inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
                             var current = Sse2.LoadVector128(inputIterator);
 
@@ -303,23 +302,21 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
+
+            var len = reader.ReadArrayHeader();
+
+            if (len == 0)
             {
-                var len = reader.ReadArrayHeader();
-
-                if (len == 0)
-                {
-                    return Array.Empty<short>();
-                }
-
-                var array = new short[len];
-                for (var i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadInt16();
-                }
-
-                return array;
+                return Array.Empty<short>();
             }
+
+            var array = new short[len];
+            for (var i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadInt16();
+            }
+
+            return array;
         }
     }
 
@@ -359,7 +356,7 @@ namespace MessagePack.Formatters
                 {
                     {
                         // Make InputIterator Aligned
-                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign32(inputIterator);
+                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign16(inputIterator);
                         if ((offset & 3) == 0)
                         {
                             offset >>= 2;
@@ -373,8 +370,8 @@ namespace MessagePack.Formatters
                     }
 
                     var maskTable = IntegerArrayFormatterHelper.StoreMaskTable;
-                    var tableInt32 = IntegerArrayFormatterHelper.Int32ShuffleTable;
-                    fixed (byte* tablePointer = &tableInt32[0])
+                    var table = IntegerArrayFormatterHelper.Int32ShuffleTable;
+                    fixed (byte* tablePointer = &table[0])
                     fixed (byte* maskTablePointer = &maskTable[0])
                     {
                         var countPointer = (int*)(tablePointer + IntegerArrayFormatterHelper.Int32CountTableOffset);
@@ -457,23 +454,366 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
+
+            var len = reader.ReadArrayHeader();
+
+            if (len == 0)
             {
-                var len = reader.ReadArrayHeader();
-
-                if (len == 0)
-                {
-                    return Array.Empty<int>();
-                }
-
-                var array = new int[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadInt32();
-                }
-
-                return array;
+                return Array.Empty<int>();
             }
+
+            var array = new int[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadInt32();
+            }
+
+            return array;
+        }
+    }
+
+    public sealed class UInt16ArrayFormatter : IMessagePackFormatter<ushort[]>
+    {
+        public static readonly UInt16ArrayFormatter Instance = new UInt16ArrayFormatter();
+
+        private UInt16ArrayFormatter()
+        {
+        }
+
+        public unsafe void Serialize(ref MessagePackWriter writer, ushort[] value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var inputLength = value.Length;
+            writer.WriteArrayHeader(inputLength);
+            if (inputLength == 0)
+            {
+                return;
+            }
+
+            fixed (ushort* pSource = &value[0])
+            {
+                var inputIterator = pSource;
+                var inputEnd = inputIterator + inputLength;
+                while (inputIterator != inputEnd)
+                {
+                    writer.Write(*inputIterator++);
+                }
+            }
+        }
+
+        public ushort[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<ushort>();
+            }
+
+            var array = new ushort[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadUInt16();
+            }
+
+            return array;
+        }
+    }
+
+    public sealed class UInt32ArrayFormatter : IMessagePackFormatter<uint[]>
+    {
+        public static readonly UInt32ArrayFormatter Instance = new UInt32ArrayFormatter();
+
+        private UInt32ArrayFormatter()
+        {
+        }
+
+        public unsafe void Serialize(ref MessagePackWriter writer, uint[] value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var inputLength = value.Length;
+            writer.WriteArrayHeader(inputLength);
+            if (inputLength == 0)
+            {
+                return;
+            }
+
+            fixed (uint* pSource = &value[0])
+            {
+                var inputIterator = pSource;
+                var inputEnd = inputIterator + inputLength;
+                while (inputIterator != inputEnd)
+                {
+                    writer.Write(*inputIterator++);
+                }
+            }
+        }
+
+        public uint[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<uint>();
+            }
+
+            var array = new uint[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadUInt32();
+            }
+
+            return array;
+        }
+    }
+
+    public sealed class SingleArrayFormatter : IMessagePackFormatter<float[]>
+    {
+        public static readonly SingleArrayFormatter Instance = new SingleArrayFormatter();
+
+        private SingleArrayFormatter()
+        {
+        }
+
+        public unsafe void Serialize(ref MessagePackWriter writer, float[] value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var inputLength = value.Length;
+            writer.WriteArrayHeader(inputLength);
+            if (inputLength == 0)
+            {
+                return;
+            }
+
+            var outputLength = inputLength * 5;
+            var destination = writer.GetSpan(outputLength);
+            fixed (byte* pDestination = &destination[0])
+            fixed (float* pSource = &value[0])
+            {
+                var outputIterator = pDestination;
+                var inputIterator = (uint*)pSource;
+                var inputEnd = pSource + inputLength;
+
+#if HARDWARE_INTRINSICS_X86
+                const int ShiftCount = 2;
+                const int Stride = 1 << ShiftCount;
+                if (Sse42.IsSupported && inputLength >= Stride)
+                {
+                    var vectorConstant = Vector128.Create(MessagePackCode.Float32, 0, 0, 0, 0, MessagePackCode.Float32, 0, 0, 0, 0, MessagePackCode.Float32, 0, 0, 0, 0, MessagePackCode.Float32);
+                    var vectorShuffle = Vector128.Create(0x80, 3, 2, 1, 0, 0x80, 7, 6, 5, 4, 0x80, 11, 10, 9, 8, 0x80);
+                    var vectorLoopLength = (inputLength >> ShiftCount) << ShiftCount;
+                    for (var vectorizedEnd = inputIterator + vectorLoopLength; inputIterator != vectorizedEnd;)
+                    {
+                        var current = Sse2.LoadVector128((byte*)inputIterator);
+                        Sse2.Store(outputIterator, Sse2.Or(Ssse3.Shuffle(current, vectorShuffle), vectorConstant));
+                        inputIterator += 3;
+                        var lastSinglePointer = (byte*)inputIterator++;
+                        outputIterator += 16;
+                        *outputIterator++ = lastSinglePointer[3];
+                        *outputIterator++ = lastSinglePointer[2];
+                        *outputIterator++ = lastSinglePointer[1];
+                        *outputIterator++ = lastSinglePointer[0];
+                    }
+                }
+#endif
+
+                while (inputIterator != inputEnd)
+                {
+                    *outputIterator++ = MessagePackCode.Float32;
+                    var current = *inputIterator++;
+                    *outputIterator++ = (byte)(current >> 24);
+                    *outputIterator++ = (byte)(current >> 16);
+                    *outputIterator++ = (byte)(current >> 8);
+                    *outputIterator++ = (byte)current;
+                }
+            }
+
+            writer.Advance(outputLength);
+        }
+
+        public float[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<float>();
+            }
+
+            var array = new float[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadSingle();
+            }
+
+            return array;
+        }
+    }
+
+    public sealed class BooleanArrayFormatter : IMessagePackFormatter<bool[]>
+    {
+        public static readonly BooleanArrayFormatter Instance = new BooleanArrayFormatter();
+
+        private BooleanArrayFormatter()
+        {
+        }
+
+        public unsafe void Serialize(ref MessagePackWriter writer, bool[] value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var inputLength = value.Length;
+            writer.WriteArrayHeader(inputLength);
+            if (inputLength == 0)
+            {
+                return;
+            }
+
+            var destination = writer.GetSpan(inputLength);
+            fixed (byte* pDestination = &destination[0])
+            fixed (bool* pSource = &value[0])
+            {
+                var outputIterator = pDestination;
+                var inputEnd = pSource + inputLength;
+                var inputIterator = pSource;
+
+#if HARDWARE_INTRINSICS_X86
+                const int ShiftCount = 5;
+                const int Stride = 1 << ShiftCount;
+                if (Avx2.IsSupported && inputLength >= Stride * 2)
+                {
+                    {
+                        // make output span align 32
+                        var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign32(outputIterator);
+                        inputLength -= offset;
+                        var offsetEnd = inputIterator + offset;
+                        while (inputIterator != offsetEnd)
+                        {
+                            *outputIterator++ = *inputIterator++ ? MessagePackCode.True : MessagePackCode.False;
+                        }
+                    }
+
+                    var vectorTrue = Vector256.Create(MessagePackCode.True).AsSByte();
+                    var vectorLoopLength = (inputLength >> ShiftCount) << ShiftCount;
+                    for (var vectorizedEnd = inputIterator + vectorLoopLength; inputIterator != vectorizedEnd; inputIterator += Stride, outputIterator += Stride)
+                    {
+                        var current = Avx.LoadVector256((sbyte*)inputIterator);
+                        Avx.Store((sbyte*)outputIterator, Avx2.Add(vectorTrue, Avx2.CompareEqual(current, Vector256<sbyte>.Zero)));
+                    }
+                }
+#endif
+
+                while (inputIterator != inputEnd)
+                {
+                    *outputIterator++ = *inputIterator++ ? MessagePackCode.True : MessagePackCode.False;
+                }
+            }
+
+            writer.Advance(value.Length);
+        }
+
+        public unsafe bool[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<bool>();
+            }
+
+            var rawSequence = reader.ReadRaw(len);
+            var array = new bool[len];
+            fixed (bool* destination = &array[0])
+            {
+                var outputIterator = destination;
+                foreach (var memory in rawSequence)
+                {
+                    if (memory.IsEmpty)
+                    {
+                        continue;
+                    }
+
+                    fixed (byte* source = &memory.Span[0])
+                    {
+                        var inputIterator = source;
+                        var inputLength = memory.Length;
+                        var inputEnd = inputIterator + inputLength;
+
+#if HARDWARE_INTRINSICS_X86
+                        const int ShiftCount = 5;
+                        const int Stride = 1 << ShiftCount;
+                        if (Avx2.IsSupported && inputLength >= Stride * 2)
+                        {
+                            var vectorLoopLength = (inputLength >> ShiftCount) << ShiftCount;
+                            var vectorFalse = Vector256.Create(MessagePackCode.False).AsSByte();
+                            var vectorTrue = Vector256.Create(MessagePackCode.True).AsSByte();
+                            var vectorOne = Vector256.Create((sbyte)1);
+                            for (var vectorizedEnd = inputIterator + vectorLoopLength; inputIterator != vectorizedEnd; inputIterator += Stride, outputIterator += Stride)
+                            {
+                                var current = Avx.LoadVector256((sbyte*)inputIterator);
+                                var isFalse = Avx2.CompareEqual(current, vectorFalse);
+                                var isTrue = Avx2.CompareEqual(current, vectorTrue);
+                                if (Avx2.MoveMask(Avx2.Xor(isFalse, isTrue)) != -1)
+                                {
+                                    throw new MessagePackSerializationException("Unexpected msgpack code encountered.");
+                                }
+
+                                var answer = Avx2.And(isTrue, vectorOne);
+                                Avx.Store((byte*)outputIterator, answer.AsByte());
+                            }
+                        }
+#endif
+
+                        while (inputIterator != inputEnd)
+                        {
+                            *outputIterator++ = *inputIterator++ switch
+                            {
+                                MessagePackCode.False => false,
+                                MessagePackCode.True => true,
+                                _ => throw new MessagePackSerializationException("Unexpected msgpack code encountered."),
+                            };
+                        }
+                    }
+                }
+            }
+
+            return array;
         }
     }
 
@@ -496,7 +836,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableStringArrayFormatter : IMessagePackFormatter<String[]>
+    public sealed class NullableStringArrayFormatter : IMessagePackFormatter<string[]>
     {
         public static readonly NullableStringArrayFormatter Instance = new NullableStringArrayFormatter();
 
@@ -504,7 +844,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, String[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, string[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -520,7 +860,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public String[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public string[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -529,7 +869,7 @@ namespace MessagePack.Formatters
             else
             {
                 var len = reader.ReadArrayHeader();
-                var array = new String[len];
+                var array = new string[len];
                 for (int i = 0; i < array.Length; i++)
                 {
                     array[i] = reader.ReadString();
