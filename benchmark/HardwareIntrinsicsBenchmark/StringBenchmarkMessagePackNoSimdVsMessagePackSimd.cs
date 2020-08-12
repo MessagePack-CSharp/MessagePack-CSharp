@@ -33,7 +33,7 @@ namespace Benchmark
     public class BooleanArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
         [Params(64, 1024, 16 * 1024 * 1024)]
-        public int Size;
+        public int Size { get; set; }
         private bool[] input;
         private byte[] inputSerialized;
         private bool[] inputTrue;
@@ -109,7 +109,7 @@ namespace Benchmark
     public class Int8ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
         [Params(64, 1024, 16 * 1024 * 1024)]
-        public int Size;
+        public int Size { get; set; }
         private sbyte[] input;
         private sbyte[] inputM32;
         private sbyte[] inputM33;
@@ -185,7 +185,7 @@ namespace Benchmark
     public class Int16ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
         [Params(16, 1024, 16 * 1024 * 1024)]
-        public int Size;
+        public int Size { get; set; }
         private short[] input;
         private short[] zero;
 
@@ -230,7 +230,7 @@ namespace Benchmark
     public class Int32ArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
         [Params(8, 1024, 16 * 1024 * 1024)]
-        public int Size;
+        public int Size { get; set; }
         private int[] input;
         private int[] zero;
         private int[] inputShortMin;
@@ -290,7 +290,7 @@ namespace Benchmark
     public class SingleArrayBenchmarkMessagePackNoSimdVsMessagePackSimd
     {
         [Params(64, 1024, 16 * 1024 * 1024)]
-        public int Size;
+        public int Size { get; set; }
         private float[] input;
 
         [GlobalSetup]
