@@ -295,7 +295,7 @@ namespace Benchmark
     {
         [Params(64, 1024, 16 * 1024 * 1024)]
         public int Size { get; set; }
-        
+
         private float[] input;
 
         [GlobalSetup]
