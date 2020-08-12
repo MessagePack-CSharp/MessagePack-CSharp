@@ -820,8 +820,8 @@ namespace MessagePack.Formatters
                                     *outputIterator++ = true;
                                     break;
                                 default:
-                                    throw new MessagePackSerializationException("Unexpected msgpack code encountered."),
-                            };
+                                    throw new MessagePackSerializationException("Unexpected msgpack code encountered.");
+                            }
                         }
                     }
                 }
