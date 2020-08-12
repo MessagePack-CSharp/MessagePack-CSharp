@@ -34,6 +34,7 @@ namespace Benchmark
     {
         [Params(64, 1024, 16 * 1024 * 1024)]
         public int Size { get; set; }
+
         private bool[] input;
         private byte[] inputSerialized;
         private bool[] inputTrue;
@@ -110,6 +111,7 @@ namespace Benchmark
     {
         [Params(64, 1024, 16 * 1024 * 1024)]
         public int Size { get; set; }
+
         private sbyte[] input;
         private sbyte[] inputM32;
         private sbyte[] inputM33;
@@ -186,6 +188,7 @@ namespace Benchmark
     {
         [Params(16, 1024, 16 * 1024 * 1024)]
         public int Size { get; set; }
+
         private short[] input;
         private short[] zero;
 
@@ -231,6 +234,7 @@ namespace Benchmark
     {
         [Params(8, 1024, 16 * 1024 * 1024)]
         public int Size { get; set; }
+
         private int[] input;
         private int[] zero;
         private int[] inputShortMin;
@@ -291,6 +295,7 @@ namespace Benchmark
     {
         [Params(64, 1024, 16 * 1024 * 1024)]
         public int Size { get; set; }
+        
         private float[] input;
 
         [GlobalSetup]
