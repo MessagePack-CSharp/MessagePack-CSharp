@@ -811,11 +811,16 @@ namespace MessagePack.Formatters
 
                         while (inputIterator != inputEnd)
                         {
-                            *outputIterator++ = *inputIterator++ switch
+                            switch (*inputIterator++)
                             {
-                                MessagePackCode.False => false,
-                                MessagePackCode.True => true,
-                                _ => throw new MessagePackSerializationException("Unexpected msgpack code encountered."),
+                                case MessagePackCode.False:
+                                    *outputIterator++ = false;
+                                    break;
+                                case MessagePackCode.True:
+                                    *outputIterator++ = true;
+                                    break;
+                                default:
+                                    throw new MessagePackSerializationException("Unexpected msgpack code encountered."),
                             };
                         }
                     }
