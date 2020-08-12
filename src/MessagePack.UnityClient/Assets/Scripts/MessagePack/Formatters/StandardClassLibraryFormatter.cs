@@ -729,8 +729,17 @@ namespace MessagePack.Formatters
                     var vectorLoopLength = (inputLength >> ShiftCount) << ShiftCount;
                     for (var vectorizedEnd = inputIterator + vectorLoopLength; inputIterator != vectorizedEnd; inputIterator += Stride, outputIterator += Stride)
                     {
+                        // Load 32 bool values.
                         var current = Avx.LoadVector256((sbyte*)inputIterator);
-                        Avx.Store((sbyte*)outputIterator, Avx2.Add(vectorTrue, Avx2.CompareEqual(current, Vector256<sbyte>.Zero)));
+
+                        // A value of false for the type bool is 0 for the sbyte representation.
+                        var isTrue = Avx2.CompareEqual(current, Vector256<sbyte>.Zero);
+                        // A value of true in the SIMD context is -1 for the sbyte representation.
+                        // True is 0xc3 as MessagePackCode and false is 0xc2.
+                        // Reinterpreted as sbyte values, they are -61 and -62, respectively.
+                        // For each of the 32 true Vectors, we can add -1 to the false ones to get the answer.
+                        var answer = Avx2.Add(vectorTrue, isTrue);
+                        Avx.Store((sbyte*)outputIterator, answer);
                     }
                 }
 #endif
