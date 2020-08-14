@@ -70,14 +70,24 @@ namespace MessagePack.Generator.Tests
 
         public CompilationContainer GetOutputCompilation()
         {
+            var refAsmDir = Path.GetDirectoryName(typeof(object).Assembly.Location);
+
             var compilation = CSharpCompilation.Create(Guid.NewGuid().ToString())
                 .AddSyntaxTrees(
                     Directory.EnumerateFiles(ProjectDirectory, "*.cs", SearchOption.AllDirectories)
                         .Concat(Directory.EnumerateFiles(OutputDirectory, "*.cs", SearchOption.AllDirectories))
                         .Select(x => CSharpSyntaxTree.ParseText(File.ReadAllText(x), CSharpParseOptions.Default, x)))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Private.CoreLib.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Runtime.Extensions.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Collections.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Linq.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Console.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Runtime.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "netstandard.dll")))
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
                 .AddReferences(MetadataReference.CreateFromFile(typeof(MessagePack.MessagePackObjectAttribute).Assembly.Location))
-                .AddReferences(MetadataReference.CreateFromFile(typeof(IMessagePackFormatter<>).Assembly.Location));
+                .AddReferences(MetadataReference.CreateFromFile(typeof(IMessagePackFormatter<>).Assembly.Location))
+                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
             return new CompilationContainer(compilation);
         }

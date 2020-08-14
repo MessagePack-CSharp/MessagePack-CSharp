@@ -25,6 +25,7 @@ namespace MessagePack.Generator.Tests
             using var tempWorkarea = TemporaryProjectWorkarea.Create();
             var contents = @"
 using System;
+using System.Collections.Generic;
 using MessagePack;
 
 namespace TempProject

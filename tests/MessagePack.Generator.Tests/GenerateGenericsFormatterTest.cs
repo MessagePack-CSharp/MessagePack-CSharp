@@ -26,6 +26,7 @@ namespace MessagePack.Generator.Tests
             using var tempWorkarea = TemporaryProjectWorkarea.Create(false);
             var contents = @"
 using System;
+using System.Collections.Generic;
 using MessagePack;
 
 namespace TempProject
@@ -54,11 +55,11 @@ namespace TempProject
                 string.Empty);
 
             var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
             var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
             var formatters = symbols.SelectMany(x => x.Interfaces).Select(x => x.ToDisplayString()).ToArray();
-            formatters.Should().Contain(x => x == "MessagePack.Formatters.IMessagePackFormatter<TempProject.Wrapper<IEnumerable<System.Guid>>>");
-            formatters.Should().Contain(x => x == "MessagePack.Formatters.IMessagePackFormatter<TempProject.Wrapper<int[]>>");
-            formatters.Should().Contain(x => x == "MessagePack.Formatters.IMessagePackFormatter<TempProject.Wrapper<string>>");
+            formatters.Should().Contain(x => x == "MessagePack.Formatters.IMessagePackFormatter<TempProject.Wrapper<T>>");
         }
 
         [Fact]
@@ -67,6 +68,7 @@ namespace TempProject
             using var tempWorkarea = TemporaryProjectWorkarea.Create();
             var contents = @"
 using System;
+using System.Collections.Generic;
 using MessagePack;
 
 namespace TempProject
@@ -92,6 +94,8 @@ namespace TempProject
                 string.Empty);
 
             var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
             var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
 
             var types = symbols.Select(x => x.ToDisplayString()).ToArray();
@@ -107,6 +111,7 @@ namespace TempProject
             using var tempWorkarea = TemporaryProjectWorkarea.Create();
             var contents = @"
 using System;
+using System.Collections.Generic;
 using MessagePack;
 
 namespace TempProject
@@ -134,6 +139,8 @@ namespace TempProject
                 string.Empty);
 
             var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
             var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
 
             var types = symbols.Select(x => x.ToDisplayString()).ToArray();
