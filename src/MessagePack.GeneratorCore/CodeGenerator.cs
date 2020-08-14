@@ -55,7 +55,7 @@ namespace MessagePackCompiler
                 sw.Restart();
                 logger("Method Collect Start");
 
-                var (objectInfo, enumInfo, genericInfo, unionInfo, closedTypeGenericInfo, openedTypeGenericInfo) = collector.Collect();
+                var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
 
                 logger("Method Collect Complete:" + sw.Elapsed.ToString());
 
@@ -66,7 +66,6 @@ namespace MessagePackCompiler
                 {
                     // SingleFile Output
                     var objectFormatterTemplates = objectInfo
-                        .Concat(closedTypeGenericInfo)
                         .GroupBy(x => x.Namespace)
                         .Select(x => new FormatterTemplate()
                         {
@@ -138,7 +137,7 @@ namespace MessagePackCompiler
                 else
                 {
                     // Multiple File output
-                    foreach (var x in objectInfo.Concat(closedTypeGenericInfo))
+                    foreach (var x in objectInfo)
                     {
                         var template = new FormatterTemplate()
                         {
@@ -179,13 +178,13 @@ namespace MessagePackCompiler
                         Namespace = namespaceDot + "Resolvers",
                         FormatterNamespace = namespaceDot + "Formatters",
                         ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo).ToArray(),
+                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
                     };
 
                     await OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken).ConfigureAwait(false);
                 }
 
-                if (objectInfo.Length == 0 && enumInfo.Length == 0 && genericInfo.Length == 0 && unionInfo.Length == 0 && closedTypeGenericInfo.Length == 0)
+                if (objectInfo.Length == 0 && enumInfo.Length == 0 && genericInfo.Length == 0 && unionInfo.Length == 0)
                 {
                     logger("Generated result is empty, unexpected result?");
                 }

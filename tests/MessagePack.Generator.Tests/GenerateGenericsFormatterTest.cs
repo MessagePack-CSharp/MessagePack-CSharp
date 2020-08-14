@@ -23,7 +23,7 @@ namespace MessagePack.Generator.Tests
         [Fact]
         public async Task GenericsUnionFormatter()
         {
-            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            using var tempWorkarea = TemporaryProjectWorkarea.Create(false);
             var contents = @"
 using System;
 using MessagePack;
@@ -64,7 +64,7 @@ namespace TempProject
         [Fact]
         public async Task GenericsOfTFormatter()
         {
-            using var tempWorkarea = TemporaryProjectWorkarea.Create(false);
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
             var contents = @"
 using System;
 using MessagePack;
