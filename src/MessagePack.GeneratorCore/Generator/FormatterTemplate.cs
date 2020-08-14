@@ -48,7 +48,7 @@ namespace ");
             this.Write("\r\n    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Name));
             this.Write("Formatter");
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.TemplateParametersString != null? objInfo.TemplateParametersString : ""));
+            this.Write(this.ToStringHelper.ToStringWithCulture((objInfo.IsOpenGenericType ? $"<{string.Join(",", objInfo.GenericTypeParameters)}>" : "")));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(">\r\n    {\r\n");

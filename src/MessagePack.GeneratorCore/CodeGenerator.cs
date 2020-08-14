@@ -55,7 +55,7 @@ namespace MessagePackCompiler
                 sw.Restart();
                 logger("Method Collect Start");
 
-                var (objectInfo, enumInfo, genericInfo, unionInfo, closedTypeGenericInfo) = collector.Collect();
+                var (objectInfo, enumInfo, genericInfo, unionInfo, closedTypeGenericInfo, openedTypeGenericInfo) = collector.Collect();
 
                 logger("Method Collect Complete:" + sw.Elapsed.ToString());
 
