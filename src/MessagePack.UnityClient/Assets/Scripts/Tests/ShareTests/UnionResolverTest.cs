@@ -33,10 +33,10 @@ namespace MessagePack.Tests
 
         public static object[][] UnionDataWithStringSubType = new object[][]
         {
-            new object[] { new MySubUnion1WithStringSubType { One = 23 },     new MySubUnion1WithStringSubType { One = 23 } },
-            new object[] { new MySubUnion2WithStringSubType { Two = 233 },    new MySubUnion2WithStringSubType { Two = 233 } },
-            new object[] { new MySubUnion3WithStringSubType { Three = 253 },  new MySubUnion3WithStringSubType { Three = 253 } },
-            new object[] { new MySubUnion4WithStringSubType { Four = 24353 }, new MySubUnion4WithStringSubType { Four = 24353 } },
+            new object[] { new UnionWithStrings.MySubUnion1WithStringSubType { One = 23 },     new UnionWithStrings.MySubUnion1WithStringSubType { One = 23 } },
+            new object[] { new UnionWithStrings.MySubUnion2WithStringSubType { Two = 233 },    new UnionWithStrings.MySubUnion2WithStringSubType { Two = 233 } },
+            new object[] { new UnionWithStrings.MySubUnion3WithStringSubType { Three = 253 },  new UnionWithStrings.MySubUnion3WithStringSubType { Three = 253 } },
+            new object[] { new UnionWithStrings.MySubUnion4WithStringSubType { Four = 24353 }, new UnionWithStrings.MySubUnion4WithStringSubType { Four = 24353 } },
         };
 
         [Theory]
@@ -131,26 +131,26 @@ namespace MessagePack.Tests
         [Theory]
         [MemberData(nameof(UnionDataWithStringSubType))]
         public void HogeWithStringSubType<T1, T2>(T1 data, T2 data2)
-            where T1 : IUnionCheckerWithStringSubType
-            where T2 : IUnionChecker2WithStringSubType
+            where T1 : UnionWithStrings.IUnionCheckerWithStringSubType
+            where T2 : UnionWithStrings.IUnionChecker2WithStringSubType
         {
-            var unionData1 = MessagePackSerializer.Serialize<IUnionCheckerWithStringSubType>(data);
-            var unionData2 = MessagePackSerializer.Serialize<IUnionChecker2WithStringSubType>(data2);
+            var unionData1 = MessagePackSerializer.Serialize<UnionWithStrings.IUnionCheckerWithStringSubType>(data);
+            var unionData2 = MessagePackSerializer.Serialize<UnionWithStrings.IUnionChecker2WithStringSubType>(data2);
 
-            var reData1 = MessagePackSerializer.Deserialize<IUnionCheckerWithStringSubType>(unionData1);
-            var reData2 = MessagePackSerializer.Deserialize<IUnionCheckerWithStringSubType>(unionData1);
+            var reData1 = MessagePackSerializer.Deserialize<UnionWithStrings.IUnionCheckerWithStringSubType>(unionData1);
+            var reData2 = MessagePackSerializer.Deserialize<UnionWithStrings.IUnionCheckerWithStringSubType>(unionData1);
 
             reData1.IsInstanceOf<T1>();
             reData2.IsInstanceOf<T2>();
 
-            var null1 = MessagePackSerializer.Serialize<IUnionCheckerWithStringSubType>(null);
-            var null2 = MessagePackSerializer.Serialize<IUnionChecker2WithStringSubType>(null);
+            var null1 = MessagePackSerializer.Serialize<UnionWithStrings.IUnionCheckerWithStringSubType>(null);
+            var null2 = MessagePackSerializer.Serialize<UnionWithStrings.IUnionChecker2WithStringSubType>(null);
 
-            MessagePackSerializer.Deserialize<IUnionCheckerWithStringSubType>(null1).IsNull();
-            MessagePackSerializer.Deserialize<IUnionChecker2WithStringSubType>(null1).IsNull();
+            MessagePackSerializer.Deserialize<UnionWithStrings.IUnionCheckerWithStringSubType>(null1).IsNull();
+            MessagePackSerializer.Deserialize<UnionWithStrings.IUnionChecker2WithStringSubType>(null1).IsNull();
 
-            var hoge = MessagePackSerializer.Serialize<IIVersioningUnionWithStringSubType>(new VersioningUnionWithStringSubType { FV = 0 });
-            MessagePackSerializer.Deserialize<IUnionCheckerWithStringSubType>(hoge).IsNull();
+            var hoge = MessagePackSerializer.Serialize<UnionWithStrings.IIVersioningUnionWithStringSubType>(new UnionWithStrings.VersioningUnionWithStringSubType { FV = 0 });
+            MessagePackSerializer.Deserialize<UnionWithStrings.IUnionCheckerWithStringSubType>(hoge).IsNull();
         }
 
         [Fact]
@@ -172,32 +172,32 @@ namespace MessagePack.Tests
         [Fact]
         public void Union2WithStringSubType()
         {
-            var a = MessagePackSerializer.Serialize<IMessageBodyWithStringSubType>(new TextMessageBodyWithStringSubType() { Text = "hoge" });
-            var b = MessagePackSerializer.Serialize<IMessageBodyWithStringSubType>(new StampMessageBodyWithStringSubType() { StampId = 10 });
-            var c = MessagePackSerializer.Serialize<IMessageBodyWithStringSubType>(new QuestMessageBodyWithStringSubType() { Text = "hugahuga", QuestId = 99 });
+            var a = MessagePackSerializer.Serialize<UnionWithStrings.IMessageBodyWithStringSubType>(new UnionWithStrings.TextMessageBodyWithStringSubType() { Text = "hoge" });
+            var b = MessagePackSerializer.Serialize<UnionWithStrings.IMessageBodyWithStringSubType>(new UnionWithStrings.StampMessageBodyWithStringSubType() { StampId = 10 });
+            var c = MessagePackSerializer.Serialize<UnionWithStrings.IMessageBodyWithStringSubType>(new UnionWithStrings.QuestMessageBodyWithStringSubType() { Text = "hugahuga", QuestId = 99 });
 
-            var a2 = MessagePackSerializer.Deserialize<IMessageBodyWithStringSubType>(a);
-            var b2 = MessagePackSerializer.Deserialize<IMessageBodyWithStringSubType>(b);
-            var c2 = MessagePackSerializer.Deserialize<IMessageBodyWithStringSubType>(c);
+            var a2 = MessagePackSerializer.Deserialize<UnionWithStrings.IMessageBodyWithStringSubType>(a);
+            var b2 = MessagePackSerializer.Deserialize<UnionWithStrings.IMessageBodyWithStringSubType>(b);
+            var c2 = MessagePackSerializer.Deserialize<UnionWithStrings.IMessageBodyWithStringSubType>(c);
 
-            (a2 as TextMessageBodyWithStringSubType).Text.Is("hoge");
-            (b2 as StampMessageBodyWithStringSubType).StampId.Is(10);
-            (c2 as QuestMessageBodyWithStringSubType).Is(x => x.Text == "hugahuga" && x.QuestId == 99);
+            (a2 as UnionWithStrings.TextMessageBodyWithStringSubType).Text.Is("hoge");
+            (b2 as UnionWithStrings.StampMessageBodyWithStringSubType).StampId.Is(10);
+            (c2 as UnionWithStrings.QuestMessageBodyWithStringSubType).Is(x => x.Text == "hugahuga" && x.QuestId == 99);
         }
 
         [Fact]
         public void ClassUnionWithStringSubType()
         {
             //var a = new RootUnionTypeWithStringSubType() { MyProperty = 10 };
-            var b = new SubUnionType1WithStringSubType() { MyProperty = 11, MyProperty1 = 100 };
-            var c = new SubUnionType2WithStringSubType() { MyProperty = 12, MyProperty2 = 200 };
+            var b = new UnionWithStrings.SubUnionType1WithStringSubType() { MyProperty = 11, MyProperty1 = 100 };
+            var c = new UnionWithStrings.SubUnionType2WithStringSubType() { MyProperty = 12, MyProperty2 = 200 };
 
             // var binA = MessagePackSerializer.Serialize<RootUnionTypeWithStringSubType>(a);
-            var binB = MessagePackSerializer.Serialize<RootUnionTypeWithStringSubType>(b);
-            var binC = MessagePackSerializer.Serialize<RootUnionTypeWithStringSubType>(c);
+            var binB = MessagePackSerializer.Serialize<UnionWithStrings.RootUnionTypeWithStringSubType>(b);
+            var binC = MessagePackSerializer.Serialize<UnionWithStrings.RootUnionTypeWithStringSubType>(c);
 
-            var b2 = MessagePackSerializer.Deserialize<RootUnionTypeWithStringSubType>(binB) as SubUnionType1WithStringSubType;
-            var c2 = MessagePackSerializer.Deserialize<RootUnionTypeWithStringSubType>(binC) as SubUnionType2WithStringSubType;
+            var b2 = MessagePackSerializer.Deserialize<UnionWithStrings.RootUnionTypeWithStringSubType>(binB) as UnionWithStrings.SubUnionType1WithStringSubType;
+            var c2 = MessagePackSerializer.Deserialize<UnionWithStrings.RootUnionTypeWithStringSubType>(binC) as UnionWithStrings.SubUnionType2WithStringSubType;
 
             b2.MyProperty.Is(11);
             b2.MyProperty1.Is(100);
@@ -384,5 +384,122 @@ namespace ClassUnion
     {
         [Key(1)]
         public int MyProperty2 { get; set; }
+    }
+}
+
+namespace UnionWithStrings
+{
+    [Union(0, "UnionWithStrings.MySubUnion1WithStringSubType, MessagePack.Tests")]
+    [Union(1, "UnionWithStrings.MySubUnion2WithStringSubType, MessagePack.Tests")]
+    [Union(2, "UnionWithStrings.MySubUnion3WithStringSubType, MessagePack.Tests")]
+    [Union(3, "UnionWithStrings.MySubUnion4WithStringSubType, MessagePack.Tests")]
+    public interface IUnionCheckerWithStringSubType
+    {
+    }
+
+    [Union(120, "UnionWithStrings.MySubUnion1WithStringSubType, MessagePack.Tests")]
+    [Union(31, "UnionWithStrings.MySubUnion2WithStringSubType, MessagePack.Tests")]
+    [Union(42, "UnionWithStrings.MySubUnion3WithStringSubType, MessagePack.Tests")]
+    [Union(63, "UnionWithStrings.MySubUnion4WithStringSubType, MessagePack.Tests")]
+    public interface IUnionChecker2WithStringSubType
+    {
+    }
+
+    [Union(0, "UnionWithStrings.MySubUnion1WithStringSubType, MessagePack.Tests")]
+    //[Union(1, "UnionWithStrings.MySubUnion2WithStringSubType, MessagePack.Tests")]
+    //[Union(2, "UnionWithStrings.MySubUnion3WithStringSubType, MessagePack.Tests")]
+    //[Union(3, "UnionWithStrings.MySubUnion4WithStringSubType, MessagePack.Tests")]
+    //[Union(4, "UnionWithStrings.VersioningUnionWithStringSubType, MessagePack.Tests")]
+    public interface IIVersioningUnionWithStringSubType
+    {
+    }
+
+    [Union(0, "UnionWithStrings.SubUnionType1WithStringSubType, MessagePack.Tests")]
+    [Union(1, "UnionWithStrings.SubUnionType2WithStringSubType, MessagePack.Tests")]
+    [MessagePackObject]
+    public abstract class RootUnionTypeWithStringSubType
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType1WithStringSubType : RootUnionTypeWithStringSubType
+    {
+        [Key(1)]
+        public int MyProperty1 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType2WithStringSubType : RootUnionTypeWithStringSubType
+    {
+        [Key(1)]
+        public int MyProperty2 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MySubUnion1WithStringSubType : IUnionCheckerWithStringSubType, IUnionChecker2WithStringSubType
+    {
+        [Key(3)]
+        public int One { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct MySubUnion2WithStringSubType : IUnionCheckerWithStringSubType, IUnionChecker2WithStringSubType
+    {
+        [Key(5)]
+        public int Two { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MySubUnion3WithStringSubType : IUnionCheckerWithStringSubType, IUnionChecker2WithStringSubType
+    {
+        [Key(2)]
+        public int Three { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct MySubUnion4WithStringSubType : IUnionCheckerWithStringSubType, IUnionChecker2WithStringSubType
+    {
+        [Key(7)]
+        public int Four { get; set; }
+    }
+
+    [MessagePackObject]
+    public class VersioningUnionWithStringSubType : IUnionCheckerWithStringSubType, IIVersioningUnionWithStringSubType
+    {
+        [Key(7)]
+        public int FV { get; set; }
+    }
+
+    [Union(10, "UnionWithStrings.TextMessageBodyWithStringSubType, MessagePack.Tests")]
+    [Union(14, "UnionWithStrings.StampMessageBodyWithStringSubType, MessagePack.Tests")]
+    [Union(25, "UnionWithStrings.QuestMessageBodyWithStringSubType, MessagePack.Tests")]
+    public interface IMessageBodyWithStringSubType
+    {
+    }
+
+    [MessagePackObject]
+    public class TextMessageBodyWithStringSubType : IMessageBodyWithStringSubType
+    {
+        [Key(0)]
+        public string Text { get; set; }
+    }
+
+    [MessagePackObject]
+    public class StampMessageBodyWithStringSubType : IMessageBodyWithStringSubType
+    {
+        [Key(0)]
+        public int StampId { get; set; }
+    }
+
+    [MessagePackObject]
+    public class QuestMessageBodyWithStringSubType : IMessageBodyWithStringSubType
+    {
+        [Key(0)]
+        public int QuestId { get; set; }
+
+        [Key(1)]
+        public string Text { get; set; }
     }
 }
