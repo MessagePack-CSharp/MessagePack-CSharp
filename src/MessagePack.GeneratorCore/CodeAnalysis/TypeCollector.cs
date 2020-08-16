@@ -422,7 +422,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 SubTypes = unionAttrs.Select(x => new UnionSubTypeInfo
                 {
                     Key = (int)x[0].Value,
-                    Type = (x[1].Value as ITypeSymbol).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    Type = x[1].Value is ITypeSymbol typeSymbol ? typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : throw new NotSupportedException($"AOT code generation only supports UnionAttribute that uses a Type parameter, but the {type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)} type uses an unsupported parameter."),
                 }).OrderBy(x => x.Key).ToArray(),
             };
 
