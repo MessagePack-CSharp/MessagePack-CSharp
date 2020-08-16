@@ -95,7 +95,7 @@ namespace MessagePack
 
             internal delegate object MessagePackReaderDeserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
 
-            const bool PreferInterpretation =
+            private const bool PreferInterpretation =
 #if ENABLE_IL2CPP
                 true;
 #else
