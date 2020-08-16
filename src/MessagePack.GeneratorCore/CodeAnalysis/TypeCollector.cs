@@ -92,7 +92,7 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             MessagePackFormatterAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackFormatterAttribute");
-            if (IMessagePackSerializationCallbackReceiver == null)
+            if (MessagePackFormatterAttribute == null)
             {
                 throw new InvalidOperationException("failed to get metadata of MessagePack.MessagePackFormatterAttribute");
             }
@@ -1017,7 +1017,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private static string GetMinimallyQualifiedClassName(INamedTypeSymbol type)
         {
-            var name = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            var name = type.ContainingType is object ? GetMinimallyQualifiedClassName(type.ContainingType) + "_" : string.Empty;
+            name += type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             name = name.Replace(".", "_");
             name = name.Replace("<", "_");
             name = name.Replace(">", "_");

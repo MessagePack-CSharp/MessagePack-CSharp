@@ -54,3 +54,23 @@ jobs:
     clean: true
   - template: azure-pipelines/install-dependencies.yml
   - template: azure-pipelines/build_nonWindows.yml
+
+# This job ensures that we're running mpc regularly on the generated code that we check in.
+# It also helps exercise mpc so bugs don't go unnoticed.
+- job: codegen_diff
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+    clean: true
+  - template: azure-pipelines/install-dependencies.yml
+  - pwsh: sandbox/codegen.ps1
+    displayName: Regenerate checked-in code
+  - bash: |
+        git add -u . # compare after applying git EOL normalization
+        git diff --cached --exit-code --stat \
+        || (echo "##[error] found changed files after build. please 'azure-pipelines/codegen.ps1'" \
+                 "and check in all changes" \
+            && git diff --cached \
+            && exit 1)
+    displayName: Check for uncommitted changes
