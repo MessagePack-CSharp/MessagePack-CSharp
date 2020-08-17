@@ -85,6 +85,7 @@ namespace MessagePack.Generator.Tests
                 .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Linq.dll")))
                 .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Console.dll")))
                 .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Runtime.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Memory.dll")))
                 .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "netstandard.dll")))
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
                 .AddReferences(MetadataReference.CreateFromFile(typeof(MessagePack.MessagePackObjectAttribute).Assembly.Location))
