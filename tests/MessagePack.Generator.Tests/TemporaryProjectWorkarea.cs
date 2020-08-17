@@ -70,7 +70,7 @@ namespace MessagePack.Generator.Tests
             File.WriteAllText(Path.Combine(ProjectDirectory, fileName), contents.Trim());
         }
 
-        public CompilationContainer GetOutputCompilation()
+        public OutputCompilation GetOutputCompilation()
         {
             var refAsmDir = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
@@ -91,7 +91,7 @@ namespace MessagePack.Generator.Tests
                 .AddReferences(MetadataReference.CreateFromFile(typeof(IMessagePackFormatter<>).Assembly.Location))
                 .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-            return new CompilationContainer(compilation);
+            return new OutputCompilation(compilation);
         }
 
         public void Dispose()
@@ -103,11 +103,11 @@ namespace MessagePack.Generator.Tests
         }
     }
 
-    public class CompilationContainer
+    public class OutputCompilation
     {
         public Compilation Compilation { get; }
 
-        public CompilationContainer(Compilation compilation)
+        public OutputCompilation(Compilation compilation)
         {
             this.Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
         }
