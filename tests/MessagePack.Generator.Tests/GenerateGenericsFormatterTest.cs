@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,8 +21,10 @@ namespace MessagePack.Generator.Tests
             this.testOutputHelper = testOutputHelper;
         }
 
-        [Fact]
-        public async Task GenericsUnionFormatter()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GenericsUnionFormatter(bool isSingleFileOutput)
         {
             using var tempWorkarea = TemporaryProjectWorkarea.Create(false);
             var contents = @"
@@ -47,7 +50,7 @@ namespace TempProject
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
                 tempWorkarea.CsProjectPath,
-                tempWorkarea.OutputDirectory,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
                 string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
@@ -59,11 +62,20 @@ namespace TempProject
 
             var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
             var formatters = symbols.SelectMany(x => x.Interfaces).Select(x => x.ToDisplayString()).ToArray();
-            formatters.Should().Contain(x => x == "MessagePack.Formatters.IMessagePackFormatter<TempProject.Wrapper<T>>");
+            formatters.Should().Contain("MessagePack.Formatters.IMessagePackFormatter<TempProject.Wrapper<T>>");
+
+            compilation.GetResolverKnownFormatterTypes().Should().Contain(new[]
+            {
+                "TempProject.Generated.Formatters.TempProject.WrapperFormatter<global::System.Collections.Generic.IEnumerable<global::System.Guid>>",
+                "TempProject.Generated.Formatters.TempProject.WrapperFormatter<int[]>",
+                "TempProject.Generated.Formatters.TempProject.WrapperFormatter<string>",
+            });
         }
 
-        [Fact]
-        public async Task GenericsOfTFormatter()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GenericsOfTFormatter(bool isSingleFileOutput)
         {
             using var tempWorkarea = TemporaryProjectWorkarea.Create();
             var contents = @"
@@ -79,6 +91,21 @@ namespace TempProject
         [Key(0)]
         public T Content { get; set; }
     }
+
+
+    [MessagePackObject]
+    public class MyObject
+    {
+        [Key(0)]
+        public MyGenericObject<int> Value { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MyObjectNested
+    {
+        [Key(0)]
+        public MyGenericObject<MyGenericObject<int>> Value { get; set; }
+    }
 }
             ";
             tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
@@ -86,7 +113,7 @@ namespace TempProject
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
                 tempWorkarea.CsProjectPath,
-                tempWorkarea.OutputDirectory,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
                 string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
@@ -102,11 +129,21 @@ namespace TempProject
             types.Should().Contain("TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T>");
 
             var formatters = symbols.SelectMany(x => x.Interfaces).Select(x => x.ToDisplayString()).ToArray();
-            formatters.Should().Contain(x => x == "MessagePack.Formatters.IMessagePackFormatter<TempProject.MyGenericObject<T>>");
+            formatters.Should().Contain("MessagePack.Formatters.IMessagePackFormatter<TempProject.MyGenericObject<T>>");
+
+            compilation.GetResolverKnownFormatterTypes().Should().Contain(new[]
+            {
+                "TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int>>",
+                "TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<int>",
+                "TempProject.Generated.Formatters.TempProject.MyObjectFormatter",
+                "TempProject.Generated.Formatters.TempProject.MyObjectNestedFormatter",
+            });
         }
 
-        [Fact]
-        public async Task GenericsOfT1T2Formatter()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task GenericsOfT1T2Formatter(bool isSingleFileOutput)
         {
             using var tempWorkarea = TemporaryProjectWorkarea.Create();
             var contents = @"
@@ -124,6 +161,20 @@ namespace TempProject
         [Key(1)]
         public T2 ValueB { get; set; }
     }
+
+    [MessagePackObject]
+    public class MyObject
+    {
+        [Key(0)]
+        public MyGenericObject<int, string> Value { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MyObjectNested
+    {
+        [Key(0)]
+        public MyGenericObject<MyGenericObject<int, string>, MyGenericObject<int, string>> Value { get; set; }
+    }
 }
             ";
             tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
@@ -131,7 +182,7 @@ namespace TempProject
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
                 tempWorkarea.CsProjectPath,
-                tempWorkarea.OutputDirectory,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
                 string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
@@ -147,7 +198,15 @@ namespace TempProject
             types.Should().Contain("TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2>");
 
             var formatters = symbols.SelectMany(x => x.Interfaces).Select(x => x.ToDisplayString()).ToArray();
-            formatters.Should().Contain(x => x == "MessagePack.Formatters.IMessagePackFormatter<TempProject.MyGenericObject<T1, T2>>");
+            formatters.Should().Contain("MessagePack.Formatters.IMessagePackFormatter<TempProject.MyGenericObject<T1, T2>>");
+
+            compilation.GetResolverKnownFormatterTypes().Should().Contain(new[]
+            {
+                "TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int, string>, global::TempProject.MyGenericObject<int, string>>",
+                "TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<int, string>",
+                "TempProject.Generated.Formatters.TempProject.MyObjectFormatter",
+                "TempProject.Generated.Formatters.TempProject.MyObjectNestedFormatter",
+            });
         }
     }
 }

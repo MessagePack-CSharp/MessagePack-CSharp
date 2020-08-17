@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using MessagePack.Formatters;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.Generator.Tests
 {
@@ -121,6 +123,26 @@ namespace MessagePack.Generator.Tests
                         .Select(x => semanticModel.GetDeclaredSymbol(x))
                         .OfType<INamedTypeSymbol>();
                 })
+                .ToArray();
+        }
+
+        public IReadOnlyList<string> GetResolverKnownFormatterTypes()
+        {
+            return Compilation.SyntaxTrees
+                .SelectMany(x => x.GetRoot()
+                    .DescendantNodes()
+                    .OfType<ClassDeclarationSyntax>()
+                    .Where(x => x.Identifier.ToString().EndsWith("ResolverGetFormatterHelper"))
+                    .SelectMany(x => x.DescendantNodes())
+                    .OfType<MethodDeclarationSyntax>()
+                    .Where(x => x.Identifier.ToString() == "GetFormatter")
+                    .SelectMany(x => x.DescendantNodes())
+                    .OfType<SwitchSectionSyntax>()
+                    .SelectMany(x => x.DescendantNodes())
+                    .OfType<ObjectCreationExpressionSyntax>()
+                    .SelectMany(x => x.ChildNodes())
+                    .Where(x => x is QualifiedNameSyntax || x is IdentifierNameSyntax || x is GenericNameSyntax || x is PredefinedTypeSyntax)
+                    .Select(x => x.ToString()))
                 .ToArray();
         }
     }
