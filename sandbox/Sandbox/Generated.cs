@@ -2253,6 +2253,90 @@ namespace MessagePack.Formatters.SharedData
         }
     }
 
+    public sealed class DynamicArgumentTupleFormatter<T1,T2,T3,T4,T5,T6,T7,T8,T9> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
+    {
+
+
+        public void Serialize(ref MessagePackWriter writer, global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(9);
+            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
+            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
+            formatterResolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
+            formatterResolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
+            formatterResolver.GetFormatterWithVerify<T5>().Serialize(ref writer, value.Item5, options);
+            formatterResolver.GetFormatterWithVerify<T6>().Serialize(ref writer, value.Item6, options);
+            formatterResolver.GetFormatterWithVerify<T7>().Serialize(ref writer, value.Item7, options);
+            formatterResolver.GetFormatterWithVerify<T8>().Serialize(ref writer, value.Item8, options);
+            formatterResolver.GetFormatterWithVerify<T9>().Serialize(ref writer, value.Item9, options);
+        }
+
+        public global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __Item1__ = default(T1);
+            var __Item2__ = default(T2);
+            var __Item3__ = default(T3);
+            var __Item4__ = default(T4);
+            var __Item5__ = default(T5);
+            var __Item6__ = default(T6);
+            var __Item7__ = default(T7);
+            var __Item8__ = default(T8);
+            var __Item9__ = default(T9);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        __Item1__ = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __Item2__ = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        break;
+                    case 2:
+                        __Item3__ = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                        break;
+                    case 3:
+                        __Item4__ = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
+                        break;
+                    case 4:
+                        __Item5__ = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
+                        break;
+                    case 5:
+                        __Item6__ = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, options);
+                        break;
+                    case 6:
+                        __Item7__ = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(ref reader, options);
+                        break;
+                    case 7:
+                        __Item8__ = formatterResolver.GetFormatterWithVerify<T8>().Deserialize(ref reader, options);
+                        break;
+                    case 8:
+                        __Item9__ = formatterResolver.GetFormatterWithVerify<T9>().Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>(__Item1__, __Item2__, __Item3__, __Item4__, __Item5__, __Item6__, __Item7__, __Item8__, __Item9__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
     public sealed class Empty1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Empty1>
     {
 
@@ -2556,6 +2640,114 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.FooClass();
             ____result.XYZ = __XYZ__;
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class GenericClassFormatter<T1,T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericClass<T1, T2>>
+    {
+
+
+        public void Serialize(ref MessagePackWriter writer, global::SharedData.GenericClass<T1, T2> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(2);
+            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
+            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.MyProperty1, options);
+        }
+
+        public global::SharedData.GenericClass<T1, T2> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __MyProperty0__ = default(T1);
+            var __MyProperty1__ = default(T2);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty0__ = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::SharedData.GenericClass<T1, T2>();
+            ____result.MyProperty0 = __MyProperty0__;
+            ____result.MyProperty1 = __MyProperty1__;
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class GenericStructFormatter<T1,T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericStruct<T1, T2>>
+    {
+
+
+        public void Serialize(ref MessagePackWriter writer, global::SharedData.GenericStruct<T1, T2> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(2);
+            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
+            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.MyProperty1, options);
+        }
+
+        public global::SharedData.GenericStruct<T1, T2> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __MyProperty0__ = default(T1);
+            var __MyProperty1__ = default(T2);
+
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+
+                switch (key)
+                {
+                    case 0:
+                        __MyProperty0__ = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::SharedData.GenericStruct<T1, T2>();
+            ____result.MyProperty0 = __MyProperty0__;
+            ____result.MyProperty1 = __MyProperty1__;
             reader.Depth--;
             return ____result;
         }
