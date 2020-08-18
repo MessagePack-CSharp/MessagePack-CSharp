@@ -626,29 +626,49 @@ namespace MessagePack
         /// <returns>The value.</returns>
         public DateTime ReadDateTime(ExtensionHeader header)
         {
-            if (header.TypeCode != ReservedMessagePackExtensionTypeCode.DateTime)
+            if (header.TypeCode != ReservedMessagePackExtensionTypeCode.DateTime &&
+                header.TypeCode != ReservedMessagePackExtensionTypeCode.DateTimeFluentForward)
             {
                 throw new MessagePackSerializationException(string.Format("Extension TypeCode is invalid. typeCode: {0}", header.TypeCode));
             }
 
-            switch (header.Length)
+            if (header.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
             {
-                case 4:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
-                    return DateTimeConstants.UnixEpoch.AddSeconds(unchecked((uint)intValue));
-                case 8:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longValue));
-                    ulong ulongValue = unchecked((ulong)longValue);
-                    long nanoseconds = (long)(ulongValue >> 34);
-                    ulong seconds = ulongValue & 0x00000003ffffffffL;
-                    return DateTimeConstants.UnixEpoch.AddSeconds(seconds).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
-                case 12:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out intValue));
-                    nanoseconds = unchecked((uint)intValue);
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out longValue));
-                    return DateTimeConstants.UnixEpoch.AddSeconds(longValue).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
-                default:
-                    throw new MessagePackSerializationException($"Length of extension was {header.Length}. Either 4 or 8 were expected.");
+                // https://github.com/msgpack/msgpack/blob/master/spec.md#timestamp-extension-type
+                switch (header.Length)
+                {
+                    case 4:
+                        ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
+                        return DateTimeConstants.UnixEpoch.AddSeconds(unchecked((uint)intValue));
+                    case 8:
+                        ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longValue));
+                        ulong ulongValue = unchecked((ulong)longValue);
+                        long nanoseconds = (long)(ulongValue >> 34);
+                        ulong seconds = ulongValue & 0x00000003ffffffffL;
+                        return DateTimeConstants.UnixEpoch.AddSeconds(seconds).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
+                    case 12:
+                        ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out intValue));
+                        nanoseconds = unchecked((uint)intValue);
+                        ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out longValue));
+                        return DateTimeConstants.UnixEpoch.AddSeconds(longValue).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
+                    default:
+                        throw new MessagePackSerializationException($"Length of extension was {header.Length}. Either 4 or 8 were expected.");
+                }
+            }
+            else
+            {
+                // https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-formate
+                switch (header.Length)
+                {
+                    case 8:
+                        ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out long longValue));
+                        ulong ulongValue = unchecked((ulong)longValue);
+                        ulong seconds = ulongValue >> 32;
+                        long nanoseconds = (long)(ulongValue & 0x00000000ffffffffL);
+                        return DateTimeConstants.UnixEpoch.AddSeconds(seconds).AddTicks(nanoseconds / DateTimeConstants.NanosecondsPerTick);
+                    default:
+                        throw new MessagePackSerializationException($"Length of extension was {header.Length}. Either 4 or 8 were expected.");
+                }
             }
         }
 

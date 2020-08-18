@@ -272,7 +272,8 @@ namespace MessagePack.Formatters
                     return reader.ReadBytes()?.ToArray();
                 case MessagePackType.Extension:
                     ExtensionHeader ext = reader.ReadExtensionFormatHeader();
-                    if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
+                    if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime ||
+                        ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTimeFluentForward)
                     {
                         return reader.ReadDateTime(ext);
                     }

@@ -589,6 +589,8 @@ MessagePack.MessagePackWriter.GetSpan(int length) -> System.Span<byte>
 MessagePack.MessagePackWriter.MessagePackWriter(System.Buffers.IBufferWriter<byte> writer) -> void
 MessagePack.MessagePackWriter.OldSpec.get -> bool
 MessagePack.MessagePackWriter.OldSpec.set -> void
+MessagePack.MessagePackWriter.EventTime.get -> bool
+MessagePack.MessagePackWriter.EventTime.set -> void
 MessagePack.MessagePackWriter.Write(System.DateTime dateTime) -> void
 MessagePack.MessagePackWriter.Write(System.ReadOnlySpan<byte> src) -> void
 MessagePack.MessagePackWriter.Write(System.ReadOnlySpan<char> value) -> void

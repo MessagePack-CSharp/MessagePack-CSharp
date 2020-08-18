@@ -65,6 +65,12 @@ namespace MessagePack
         public bool OldSpec { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether Fluent ext 0 is used for DateTime encoding.
+        /// <see href="https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format">EventTime.</see>.
+        /// </summary>
+        public bool EventTime { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct,
         /// with the same settings as this one, but with its own buffer writer.
         /// </summary>
@@ -623,6 +629,27 @@ namespace MessagePack
             if (this.OldSpec)
             {
                 throw new NotSupportedException($"The MsgPack spec does not define a format for {nameof(DateTime)} in {nameof(this.OldSpec)} mode. Turn off {nameof(this.OldSpec)} mode or use NativeDateTimeFormatter.");
+            }
+            else if (this.EventTime)
+            {
+                // EventTime timestamp spec used according to Fluent forward protocol.
+                // https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format
+                if (dateTime.Kind == DateTimeKind.Local)
+                {
+                    dateTime = dateTime.ToUniversalTime();
+                }
+
+                var secondsSinceBclEpoch = dateTime.Ticks / TimeSpan.TicksPerSecond;
+                var seconds = secondsSinceBclEpoch - DateTimeConstants.BclSecondsAtUnixEpoch;
+                var nanoseconds = (dateTime.Ticks % TimeSpan.TicksPerSecond) * DateTimeConstants.NanosecondsPerTick;
+
+                // timestamp 64(nanoseconds in 32-bit unsigned int | seconds in 32-bit unsigned int)
+                Span<byte> span = this.writer.GetSpan(10);
+                span[0] = MessagePackCode.FixExt8;
+                span[1] = unchecked((byte)ReservedMessagePackExtensionTypeCode.DateTimeFluentForward);
+                var data64 = unchecked((ulong)((seconds << 32) | nanoseconds));
+                WriteBigEndian(data64, span.Slice(2));
+                this.writer.Advance(10);
             }
             else
             {

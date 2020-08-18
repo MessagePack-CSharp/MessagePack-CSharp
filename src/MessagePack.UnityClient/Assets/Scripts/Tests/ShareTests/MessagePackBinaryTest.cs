@@ -773,6 +773,33 @@ namespace MessagePack.Tests
             result.Is(target);
         }
 
+        // FixExt8(0) => seconds(32) + nanoseconds(32) | [1970-01-01 00:00:00.000000000 UTC, 2106-02-07 06:28:16.000000000 UTC) range
+        public static object[][] DateTimeFluentEventTimeTestData = new object[][]
+        {
+            new object[] { new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 10 },
+            new object[] { new DateTime(2010, 12, 1, 3, 4, 57, 0, DateTimeKind.Utc), 10 },
+            new object[] { new DateTime(2106, 2, 7, 6, 28, 15, 0, DateTimeKind.Utc), 10 },
+        };
+
+        [Theory]
+        [MemberData(nameof(DateTimeFluentEventTimeTestData))]
+        public void DateTimeFluentEventTimeTest(DateTime target, int expectedLength)
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            writer.EventTime = true;
+            writer.Write(target);
+            writer.Flush();
+            var returnLength = sequence.Length;
+            returnLength.Is(expectedLength);
+
+            var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
+            DateTime result = sequenceReader.ReadDateTime();
+            sequenceReader.End.IsTrue();
+
+            result.Is(target);
+        }
+
         [Fact]
         public void IntegerRangeTest()
         {
