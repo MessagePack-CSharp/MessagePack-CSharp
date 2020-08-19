@@ -20,3 +20,11 @@ steps:
     projects: tests/MessagePackAnalyzer.Tests/MessagePackAnalyzer.Tests.csproj
     arguments: --no-build -c $(BuildConfiguration) -f netcoreapp3.1 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     testRunTitle: netcoreapp3.1-$(Agent.JobName)-Analyzers
+
+- task: DotNetCoreCLI@2
+  displayName: Run MessagePack.Generator.Tests
+  inputs:
+    command: test
+    projects: tests/MessagePack.Generator.Tests/MessagePack.Generator.Tests.csproj
+    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp3.1 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
+    testRunTitle: netcoreapp3.1-$(Agent.JobName)-Generator

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePackCompiler.CodeAnalysis
@@ -91,7 +92,7 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             MessagePackFormatterAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackFormatterAttribute");
-            if (IMessagePackSerializationCallbackReceiver == null)
+            if (MessagePackFormatterAttribute == null)
             {
                 throw new InvalidOperationException("failed to get metadata of MessagePack.MessagePackFormatterAttribute");
             }
@@ -270,7 +271,6 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<EnumSerializationInfo> collectedEnumInfo;
         private List<GenericSerializationInfo> collectedGenericInfo;
         private List<UnionSerializationInfo> collectedUnionInfo;
-        private List<ObjectSerializationInfo> collectedClosedTypeGenericInfo;
 
         public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
         {
@@ -309,11 +309,10 @@ namespace MessagePackCompiler.CodeAnalysis
             this.collectedEnumInfo = new List<EnumSerializationInfo>();
             this.collectedGenericInfo = new List<GenericSerializationInfo>();
             this.collectedUnionInfo = new List<UnionSerializationInfo>();
-            this.collectedClosedTypeGenericInfo = new List<ObjectSerializationInfo>();
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo, ObjectSerializationInfo[] ClosedTypeGenericInfo) Collect()
+        public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo) Collect()
         {
             this.ResetWorkspace();
 
@@ -326,8 +325,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.collectedObjectInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
-                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray(),
-                this.collectedClosedTypeGenericInfo.OrderBy(x => x.FullName).ToArray());
+                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray());
         }
 
         // Gate of recursive collect
@@ -427,6 +425,24 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             this.collectedUnionInfo.Add(info);
+        }
+
+        private void CollectGenericUnion(INamedTypeSymbol type)
+        {
+            System.Collections.Immutable.ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
+            if (unionAttrs.Length == 0)
+            {
+                return;
+            }
+
+            var subTypes = unionAttrs.Select(x => x[1].Value).OfType<INamedTypeSymbol>().ToArray();
+            foreach (var unionType in subTypes)
+            {
+                if (alreadyCollected.Contains(unionType) == false)
+                {
+                    CollectCore(unionType);
+                }
+            }
         }
 
         private void CollectArray(IArrayTypeSymbol array)
@@ -544,9 +560,11 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
-            // Skip generic symbol declaration itself (open type, e.g. Foo<T>) because we can get nothing useful from it anyways.
+            // Generic types
             if (type.IsDefinition)
             {
+                this.CollectGenericUnion(type);
+                this.CollectObject(type);
                 return;
             }
 
@@ -562,8 +580,10 @@ namespace MessagePackCompiler.CodeAnalysis
                 formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
             }
 
-            formatterBuilder.Append(type.Name + "Formatter");
-            formatterBuilder.Append("<" + string.Join(", ", type.TypeArguments) + ">");
+            formatterBuilder.Append(type.Name);
+            formatterBuilder.Append("Formatter<");
+            formatterBuilder.Append(string.Join(", ", type.TypeArguments.Select(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))));
+            formatterBuilder.Append(">");
 
             var genericSerializationInfo = new GenericSerializationInfo
             {
@@ -572,10 +592,6 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             this.collectedGenericInfo.Add(genericSerializationInfo);
-
-            // Collect only closed generic types (e.g. Foo<string>).
-            var unboundGenericInfo = GetObjectInfo(type);
-            collectedClosedTypeGenericInfo.Add(unboundGenericInfo);
         }
 
         private void CollectObject(INamedTypeSymbol type)
@@ -587,6 +603,7 @@ namespace MessagePackCompiler.CodeAnalysis
         private ObjectSerializationInfo GetObjectInfo(INamedTypeSymbol type)
         {
             var isClass = !type.IsValueType;
+            var isOpenGenericType = type.IsGenericType;
 
             AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
             if (contractAttr == null)
@@ -977,24 +994,15 @@ namespace MessagePackCompiler.CodeAnalysis
                 needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
             }
 
-            string templateParametersString;
-            if (type.TypeParameters.Count() > 0)
-            {
-                templateParametersString = "<" + string.Join(", ", type.TypeParameters) + ">";
-            }
-            else
-            {
-                templateParametersString = null;
-            }
-
             var info = new ObjectSerializationInfo
             {
                 IsClass = isClass,
+                IsOpenGenericType = isOpenGenericType,
+                GenericTypeParameters = isOpenGenericType ? type.TypeParameters.Select(x => x.ToDisplayString()).ToArray() : Array.Empty<string>(),
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
-                Name = type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
-                TemplateParametersString = templateParametersString,
+                Name = isOpenGenericType ? GetGenericFormatterClassName(type) : GetMinimallyQualifiedClassName(type),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
@@ -1003,6 +1011,22 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             return info;
+        }
+
+        private static string GetGenericFormatterClassName(INamedTypeSymbol type)
+        {
+            return type.Name;
+        }
+
+        private static string GetMinimallyQualifiedClassName(INamedTypeSymbol type)
+        {
+            var name = type.ContainingType is object ? GetMinimallyQualifiedClassName(type.ContainingType) + "_" : string.Empty;
+            name += type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            name = name.Replace(".", "_");
+            name = name.Replace("<", "_");
+            name = name.Replace(">", "_");
+            name = Regex.Replace(name, @"\[([,])*\]", match => $"Array{match.Length - 1}");
+            return name;
         }
 
         private static bool TryGetNextConstructor(IEnumerator<IMethodSymbol> ctorEnumerator, ref IMethodSymbol ctor)

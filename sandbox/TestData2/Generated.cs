@@ -14,8 +14,6 @@
 namespace MessagePack.Resolvers
 {
     using System;
-    using System.Buffers;
-    using MessagePack;
 
     public class GeneratedResolver : global::MessagePack.IFormatterResolver
     {

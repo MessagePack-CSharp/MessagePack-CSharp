@@ -27,7 +27,7 @@ namespace <#= Namespace #>
 <# foreach(var objInfo in ObjectSerializationInfos) {
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);#>
 
-    public sealed class <#= objInfo.Name #>Formatter<#= objInfo.TemplateParametersString != null? objInfo.TemplateParametersString : "" #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+    public sealed class <#= objInfo.Name #>Formatter<#= (objInfo.IsOpenGenericType ? $"<{string.Join(",", objInfo.GenericTypeParameters)}>" : "") #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
     {
 <# foreach(var item in objInfo.Members) { #>
 <# if(item.CustomFormatterTypeName != null) { #>
