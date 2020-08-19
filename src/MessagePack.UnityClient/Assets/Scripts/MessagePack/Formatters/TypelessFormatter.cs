@@ -207,7 +207,8 @@ namespace MessagePack.Formatters
                 ExtensionHeader ext = peekReader.ReadExtensionFormatHeader();
                 if (ext.TypeCode == ThisLibraryExtensionTypeCodes.TypelessFormatter)
                 {
-                    reader.ReadExtensionFormatHeader();
+                    reader = peekReader; // commit the experimental read made earlier.
+
                     // it has type name serialized
                     ReadOnlySequence<byte> typeName = reader.ReadStringSequence().Value;
                     ArraySegment<byte> typeNameArraySegment;
