@@ -271,7 +271,6 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<EnumSerializationInfo> collectedEnumInfo;
         private List<GenericSerializationInfo> collectedGenericInfo;
         private List<UnionSerializationInfo> collectedUnionInfo;
-        private List<ObjectSerializationInfo> collectedClosedTypeGenericInfo;
 
         public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
         {
@@ -310,11 +309,10 @@ namespace MessagePackCompiler.CodeAnalysis
             this.collectedEnumInfo = new List<EnumSerializationInfo>();
             this.collectedGenericInfo = new List<GenericSerializationInfo>();
             this.collectedUnionInfo = new List<UnionSerializationInfo>();
-            this.collectedClosedTypeGenericInfo = new List<ObjectSerializationInfo>();
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo, ObjectSerializationInfo[] ClosedTypeGenericInfo) Collect()
+        public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo) Collect()
         {
             this.ResetWorkspace();
 
@@ -327,8 +325,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.collectedObjectInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
-                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray(),
-                this.collectedClosedTypeGenericInfo.OrderBy(x => x.FullName).ToArray());
+                this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray());
         }
 
         // Gate of recursive collect
@@ -443,8 +440,7 @@ namespace MessagePackCompiler.CodeAnalysis
             {
                 if (alreadyCollected.Contains(unionType) == false)
                 {
-                    var info = GetObjectInfo(unionType);
-                    collectedObjectInfo.Add(info);
+                    CollectCore(unionType);
                 }
             }
         }
@@ -564,10 +560,11 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
-            // Skip generic symbol declaration itself (open type, e.g. Foo<T>) because we can get nothing useful from it anyways.
+            // Generic types
             if (type.IsDefinition)
             {
                 this.CollectGenericUnion(type);
+                this.CollectObject(type);
                 return;
             }
 
@@ -583,8 +580,10 @@ namespace MessagePackCompiler.CodeAnalysis
                 formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
             }
 
-            formatterBuilder.Append(GetMinimallyQualifiedClassName(type));
-            formatterBuilder.Append("Formatter");
+            formatterBuilder.Append(type.Name);
+            formatterBuilder.Append("Formatter<");
+            formatterBuilder.Append(string.Join(", ", type.TypeArguments.Select(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))));
+            formatterBuilder.Append(">");
 
             var genericSerializationInfo = new GenericSerializationInfo
             {
@@ -593,10 +592,6 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             this.collectedGenericInfo.Add(genericSerializationInfo);
-
-            // Collect only closed generic types (e.g. Foo<string>).
-            var unboundGenericInfo = GetObjectInfo(type);
-            collectedClosedTypeGenericInfo.Add(unboundGenericInfo);
         }
 
         private void CollectObject(INamedTypeSymbol type)
@@ -608,6 +603,7 @@ namespace MessagePackCompiler.CodeAnalysis
         private ObjectSerializationInfo GetObjectInfo(INamedTypeSymbol type)
         {
             var isClass = !type.IsValueType;
+            var isOpenGenericType = type.IsGenericType;
 
             AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute));
             if (contractAttr == null)
@@ -1001,10 +997,12 @@ namespace MessagePackCompiler.CodeAnalysis
             var info = new ObjectSerializationInfo
             {
                 IsClass = isClass,
+                IsOpenGenericType = isOpenGenericType,
+                GenericTypeParameters = isOpenGenericType ? type.TypeParameters.Select(x => x.ToDisplayString()).ToArray() : Array.Empty<string>(),
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
-                Name = GetMinimallyQualifiedClassName(type),
+                Name = isOpenGenericType ? GetGenericFormatterClassName(type) : GetMinimallyQualifiedClassName(type),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
@@ -1013,6 +1011,11 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             return info;
+        }
+
+        private static string GetGenericFormatterClassName(INamedTypeSymbol type)
+        {
+            return type.Name;
         }
 
         private static string GetMinimallyQualifiedClassName(INamedTypeSymbol type)
