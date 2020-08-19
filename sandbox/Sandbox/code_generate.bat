@@ -1,1 +1,0 @@
-dotnet run -p "..\..\src\MessagePack.Generator\MessagePack.Generator.csproj" -- -i "..\SharedData\SharedData.csproj" -o "Generated.cs"
