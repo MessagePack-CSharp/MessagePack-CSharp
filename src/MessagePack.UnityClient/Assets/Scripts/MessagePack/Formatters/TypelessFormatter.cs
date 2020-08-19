@@ -203,9 +203,12 @@ namespace MessagePack.Formatters
 
             if (reader.NextMessagePackType == MessagePackType.Extension)
             {
-                ExtensionHeader ext = reader.ReadExtensionFormatHeader();
+                MessagePackReader peekReader = reader.CreatePeekReader();
+                ExtensionHeader ext = peekReader.ReadExtensionFormatHeader();
                 if (ext.TypeCode == ThisLibraryExtensionTypeCodes.TypelessFormatter)
                 {
+                    reader = peekReader; // commit the experimental read made earlier.
+
                     // it has type name serialized
                     ReadOnlySequence<byte> typeName = reader.ReadStringSequence().Value;
                     ArraySegment<byte> typeNameArraySegment;
