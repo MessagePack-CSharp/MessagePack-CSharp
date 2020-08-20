@@ -183,32 +183,11 @@ namespace MessagePack.Formatters.TestData2
 {
     using System;
     using System.Buffers;
+    using System.Runtime.InteropServices;
     using MessagePack;
 
     public sealed class AFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.A>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public AFormatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-                { "a", 0 },
-                { "bs", 1 },
-                { "c", 2 },
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("a"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("bs"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("c"),
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.A value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -217,13 +196,16 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
-            writer.WriteRaw(this.____stringByteKeys[0]);
+            // a
+            writer.WriteRaw(new byte[] { 0xA1, 0x61, });
             writer.Write(value.a);
-            writer.WriteRaw(this.____stringByteKeys[1]);
+            // bs
+            writer.WriteRaw(new byte[] { 0xA2, 0x62, 0x73, });
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Serialize(ref writer, value.bs, options);
-            writer.WriteRaw(this.____stringByteKeys[2]);
+            // c
+            writer.WriteRaw(new byte[] { 0xA1, 0x63, });
             formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Serialize(ref writer, value.c, options);
         }
 
@@ -235,36 +217,47 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
+            var formatterResolver = options.Resolver;
             var __a__ = default(int);
             var __bs__ = default(global::System.Collections.Generic.List<global::TestData2.B>);
             var __c__ = default(global::TestData2.C);
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
                 {
-                    reader.Skip();
-                    continue;
-                }
-
-                switch (key)
-                {
-                    case 0:
-                        __a__ = reader.ReadInt32();
-                        break;
-                    case 1:
-                        __bs__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Deserialize(ref reader, options);
-                        break;
-                    case 2:
-                        __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
-                        break;
                     default:
+                    FAIL:
                         reader.Skip();
-                        break;
+                        continue;
+                    case 1:
+                        {
+                            uint last = stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x61U:
+                                    __a__ = reader.ReadInt32();
+                                    continue;
+                                case 0x63U:
+                                    __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
+                    case 2:
+                        {
+                            uint last = stringKey[1];
+                            last <<= 8;
+                            last |= stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x7362U:
+                                    __bs__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
                 }
             }
 
@@ -276,31 +269,8 @@ namespace MessagePack.Formatters.TestData2
             return ____result;
         }
     }
-
     public sealed class BFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.B>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public BFormatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-                { "ass", 0 },
-                { "c", 1 },
-                { "a", 2 },
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("ass"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("c"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("a"),
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.B value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -309,13 +279,16 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
-            writer.WriteRaw(this.____stringByteKeys[0]);
+            // ass
+            writer.WriteRaw(new byte[] { 0xA3, 0x61, 0x73, 0x73, });
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Serialize(ref writer, value.ass, options);
-            writer.WriteRaw(this.____stringByteKeys[1]);
+            // c
+            writer.WriteRaw(new byte[] { 0xA1, 0x63, });
             formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Serialize(ref writer, value.c, options);
-            writer.WriteRaw(this.____stringByteKeys[2]);
+            // a
+            writer.WriteRaw(new byte[] { 0xA1, 0x61, });
             writer.Write(value.a);
         }
 
@@ -327,36 +300,49 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
+            var formatterResolver = options.Resolver;
             var __ass__ = default(global::System.Collections.Generic.List<global::TestData2.A>);
             var __c__ = default(global::TestData2.C);
             var __a__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
                 {
-                    reader.Skip();
-                    continue;
-                }
-
-                switch (key)
-                {
-                    case 0:
-                        __ass__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Deserialize(ref reader, options);
-                        break;
-                    case 1:
-                        __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
-                        break;
-                    case 2:
-                        __a__ = reader.ReadInt32();
-                        break;
                     default:
+                    FAIL:
                         reader.Skip();
-                        break;
+                        continue;
+                    case 1:
+                        {
+                            uint last = stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x61U:
+                                    __a__ = reader.ReadInt32();
+                                    continue;
+                                case 0x63U:
+                                    __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
+                    case 3:
+                        {
+                            uint last = stringKey[2];
+                            last <<= 8;
+                            last |= stringKey[1];
+                            last <<= 8;
+                            last |= stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x737361U:
+                                    __ass__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
                 }
             }
 
@@ -368,29 +354,8 @@ namespace MessagePack.Formatters.TestData2
             return ____result;
         }
     }
-
     public sealed class CFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.C>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public CFormatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-                { "b", 0 },
-                { "a", 1 },
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("b"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("a"),
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.C value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -399,11 +364,13 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            writer.WriteRaw(this.____stringByteKeys[0]);
+            // b
+            writer.WriteRaw(new byte[] { 0xA1, 0x62, });
             formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Serialize(ref writer, value.b, options);
-            writer.WriteRaw(this.____stringByteKeys[1]);
+            // a
+            writer.WriteRaw(new byte[] { 0xA1, 0x61, });
             writer.Write(value.a);
         }
 
@@ -415,32 +382,33 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
+            var formatterResolver = options.Resolver;
             var __b__ = default(global::TestData2.B);
             var __a__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
                 {
-                    reader.Skip();
-                    continue;
-                }
-
-                switch (key)
-                {
-                    case 0:
-                        __b__ = formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Deserialize(ref reader, options);
-                        break;
-                    case 1:
-                        __a__ = reader.ReadInt32();
-                        break;
                     default:
+                    FAIL:
                         reader.Skip();
-                        break;
+                        continue;
+                    case 1:
+                        {
+                            uint last = stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x61U:
+                                    __a__ = reader.ReadInt32();
+                                    continue;
+                                case 0x62U:
+                                    __b__ = formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
                 }
             }
 
@@ -451,29 +419,8 @@ namespace MessagePack.Formatters.TestData2
             return ____result;
         }
     }
-
     public sealed class Nest1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest1>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public Nest1Formatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-                { "EnumId", 0 },
-                { "ClassId", 1 },
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("EnumId"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("ClassId"),
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest1 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -482,11 +429,13 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            writer.WriteRaw(this.____stringByteKeys[0]);
+            // EnumId
+            writer.WriteRaw(new byte[] { 0xA6, 0x45, 0x6E, 0x75, 0x6D, 0x49, 0x64, });
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Serialize(ref writer, value.EnumId, options);
-            writer.WriteRaw(this.____stringByteKeys[1]);
+            // ClassId
+            writer.WriteRaw(new byte[] { 0xA7, 0x43, 0x6C, 0x61, 0x73, 0x73, 0x49, 0x64, });
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Serialize(ref writer, value.ClassId, options);
         }
 
@@ -498,32 +447,63 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
+            var formatterResolver = options.Resolver;
             var __EnumId__ = default(global::TestData2.Nest1.Id);
             var __ClassId__ = default(global::TestData2.Nest1.IdType);
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
                 {
-                    reader.Skip();
-                    continue;
-                }
-
-                switch (key)
-                {
-                    case 0:
-                        __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Deserialize(ref reader, options);
-                        break;
-                    case 1:
-                        __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Deserialize(ref reader, options);
-                        break;
                     default:
+                    FAIL:
                         reader.Skip();
-                        break;
+                        continue;
+                    case 6:
+                        {
+                            ulong last = stringKey[5];
+                            last <<= 8;
+                            last |= stringKey[4];
+                            last <<= 8;
+                            last |= stringKey[3];
+                            last <<= 8;
+                            last |= stringKey[2];
+                            last <<= 8;
+                            last |= stringKey[1];
+                            last <<= 8;
+                            last |= stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x64496D756E45UL:
+                                    __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
+                    case 7:
+                        {
+                            ulong last = stringKey[6];
+                            last <<= 8;
+                            last |= stringKey[5];
+                            last <<= 8;
+                            last |= stringKey[4];
+                            last <<= 8;
+                            last |= stringKey[3];
+                            last <<= 8;
+                            last |= stringKey[2];
+                            last <<= 8;
+                            last |= stringKey[1];
+                            last <<= 8;
+                            last |= stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x64497373616C43UL:
+                                    __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
                 }
             }
 
@@ -534,25 +514,8 @@ namespace MessagePack.Formatters.TestData2
             return ____result;
         }
     }
-
     public sealed class Nest1_IdTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest1.IdType>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public Nest1_IdTypeFormatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest1.IdType value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -561,7 +524,6 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(0);
         }
 
@@ -573,25 +535,11 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
-                {
-                    reader.Skip();
-                    continue;
-                }
-
-                switch (key)
-                {
-                    default:
-                        reader.Skip();
-                        break;
-                }
+                reader.Skip();
+                reader.Skip();
             }
 
             var ____result = new global::TestData2.Nest1.IdType();
@@ -599,29 +547,8 @@ namespace MessagePack.Formatters.TestData2
             return ____result;
         }
     }
-
     public sealed class Nest2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest2>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public Nest2Formatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-                { "EnumId", 0 },
-                { "ClassId", 1 },
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("EnumId"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("ClassId"),
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -630,11 +557,13 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            writer.WriteRaw(this.____stringByteKeys[0]);
+            // EnumId
+            writer.WriteRaw(new byte[] { 0xA6, 0x45, 0x6E, 0x75, 0x6D, 0x49, 0x64, });
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Serialize(ref writer, value.EnumId, options);
-            writer.WriteRaw(this.____stringByteKeys[1]);
+            // ClassId
+            writer.WriteRaw(new byte[] { 0xA7, 0x43, 0x6C, 0x61, 0x73, 0x73, 0x49, 0x64, });
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Serialize(ref writer, value.ClassId, options);
         }
 
@@ -646,32 +575,63 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
+            var formatterResolver = options.Resolver;
             var __EnumId__ = default(global::TestData2.Nest2.Id);
             var __ClassId__ = default(global::TestData2.Nest2.IdType);
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
                 {
-                    reader.Skip();
-                    continue;
-                }
-
-                switch (key)
-                {
-                    case 0:
-                        __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Deserialize(ref reader, options);
-                        break;
-                    case 1:
-                        __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Deserialize(ref reader, options);
-                        break;
                     default:
+                    FAIL:
                         reader.Skip();
-                        break;
+                        continue;
+                    case 6:
+                        {
+                            ulong last = stringKey[5];
+                            last <<= 8;
+                            last |= stringKey[4];
+                            last <<= 8;
+                            last |= stringKey[3];
+                            last <<= 8;
+                            last |= stringKey[2];
+                            last <<= 8;
+                            last |= stringKey[1];
+                            last <<= 8;
+                            last |= stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x64496D756E45UL:
+                                    __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
+                    case 7:
+                        {
+                            ulong last = stringKey[6];
+                            last <<= 8;
+                            last |= stringKey[5];
+                            last <<= 8;
+                            last |= stringKey[4];
+                            last <<= 8;
+                            last |= stringKey[3];
+                            last <<= 8;
+                            last |= stringKey[2];
+                            last <<= 8;
+                            last |= stringKey[1];
+                            last <<= 8;
+                            last |= stringKey[0];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x64497373616C43UL:
+                                    __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
                 }
             }
 
@@ -682,25 +642,8 @@ namespace MessagePack.Formatters.TestData2
             return ____result;
         }
     }
-
     public sealed class Nest2_IdTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest2.IdType>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public Nest2_IdTypeFormatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest2.IdType value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -709,7 +652,6 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(0);
         }
 
@@ -721,25 +663,11 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
-                {
-                    reader.Skip();
-                    continue;
-                }
-
-                switch (key)
-                {
-                    default:
-                        reader.Skip();
-                        break;
-                }
+                reader.Skip();
+                reader.Skip();
             }
 
             var ____result = new global::TestData2.Nest2.IdType();
@@ -747,29 +675,8 @@ namespace MessagePack.Formatters.TestData2
             return ____result;
         }
     }
-
     public sealed class PropNameCheck1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck1>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public PropNameCheck1Formatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-                { "MyProperty1", 0 },
-                { "MyProperty2", 1 },
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("MyProperty1"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("MyProperty2"),
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.PropNameCheck1 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -778,11 +685,13 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            writer.WriteRaw(this.____stringByteKeys[0]);
+            // MyProperty1
+            writer.WriteRaw(new byte[] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x31, });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
-            writer.WriteRaw(this.____stringByteKeys[1]);
+            // MyProperty2
+            writer.WriteRaw(new byte[] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x32, });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty2, options);
         }
 
@@ -794,32 +703,55 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
+            var formatterResolver = options.Resolver;
             var __MyProperty1__ = default(string);
             var __MyProperty2__ = default(string);
+            var isBigEndian = !global::System.BitConverter.IsLittleEndian;
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<ulong> ulongs = isBigEndian ? stackalloc ulong[stringKey.Length >> 3] : MemoryMarshal.Cast<byte, ulong>(stringKey);
+                if (isBigEndian)
                 {
-                    reader.Skip();
-                    continue;
+                    for (var index = 0; index < ulongs.Length; index++)
+                    {
+                        var index8times = index << 3;
+                        ref var number = ref global::System.Runtime.CompilerServices.Unsafe.AsRef(ulongs[index]);
+                        number = stringKey[index8times + 7];
+                        for (var numberIndex = index8times + 6; numberIndex >= index8times; numberIndex--)
+                        {
+                            number <<= 8;
+                            number |= stringKey[numberIndex];
+                        }
+                    }
                 }
 
-                switch (key)
+                switch (stringKey.Length)
                 {
-                    case 0:
-                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                        break;
-                    case 1:
-                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                        break;
                     default:
+                    FAIL:
                         reader.Skip();
-                        break;
+                        continue;
+                    case 11:
+                        if (ulongs[0] != 0x7265706F7250794DUL) goto FAIL; // MyProper
+                        {
+                            uint last = stringKey[10];
+                            last <<= 8;
+                            last |= stringKey[9];
+                            last <<= 8;
+                            last |= stringKey[8];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x317974U:
+                                    __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                    continue;
+                                case 0x327974U:
+                                    __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
                 }
             }
 
@@ -830,29 +762,8 @@ namespace MessagePack.Formatters.TestData2
             return ____result;
         }
     }
-
     public sealed class PropNameCheck2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck2>
     {
-
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public PropNameCheck2Formatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-                { "MyProperty1", 0 },
-                { "MyProperty2", 1 },
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("MyProperty1"),
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("MyProperty2"),
-            };
-        }
-
         public void Serialize(ref MessagePackWriter writer, global::TestData2.PropNameCheck2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
@@ -861,11 +772,13 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            writer.WriteRaw(this.____stringByteKeys[0]);
+            // MyProperty1
+            writer.WriteRaw(new byte[] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x31, });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
-            writer.WriteRaw(this.____stringByteKeys[1]);
+            // MyProperty2
+            writer.WriteRaw(new byte[] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x32, });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty2, options);
         }
 
@@ -877,32 +790,55 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
+            var formatterResolver = options.Resolver;
             var __MyProperty1__ = default(string);
             var __MyProperty2__ = default(string);
+            var isBigEndian = !global::System.BitConverter.IsLittleEndian;
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<ulong> ulongs = isBigEndian ? stackalloc ulong[stringKey.Length >> 3] : MemoryMarshal.Cast<byte, ulong>(stringKey);
+                if (isBigEndian)
                 {
-                    reader.Skip();
-                    continue;
+                    for (var index = 0; index < ulongs.Length; index++)
+                    {
+                        var index8times = index << 3;
+                        ref var number = ref global::System.Runtime.CompilerServices.Unsafe.AsRef(ulongs[index]);
+                        number = stringKey[index8times + 7];
+                        for (var numberIndex = index8times + 6; numberIndex >= index8times; numberIndex--)
+                        {
+                            number <<= 8;
+                            number |= stringKey[numberIndex];
+                        }
+                    }
                 }
 
-                switch (key)
+                switch (stringKey.Length)
                 {
-                    case 0:
-                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                        break;
-                    case 1:
-                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                        break;
                     default:
+                    FAIL:
                         reader.Skip();
-                        break;
+                        continue;
+                    case 11:
+                        if (ulongs[0] != 0x7265706F7250794DUL) goto FAIL; // MyProper
+                        {
+                            uint last = stringKey[10];
+                            last <<= 8;
+                            last |= stringKey[9];
+                            last <<= 8;
+                            last |= stringKey[8];
+                            switch (last)
+                            {
+                                default: goto FAIL;
+                                case 0x317974U:
+                                    __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                    continue;
+                                case 0x327974U:
+                                    __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                    continue;
+                            }
+                        }
                 }
             }
 
@@ -914,16 +850,4 @@ namespace MessagePack.Formatters.TestData2
         }
     }
 }
-
-#pragma warning restore 168
-#pragma warning restore 414
-#pragma warning restore 618
-#pragma warning restore 612
-
-#pragma warning restore SA1129 // Do not use default value type constructor
-#pragma warning restore SA1200 // Using directives should be placed correctly
-#pragma warning restore SA1309 // Field names should not begin with underscore
-#pragma warning restore SA1312 // Variable names should begin with lower-case letter
-#pragma warning restore SA1403 // File may only contain a single namespace
-#pragma warning restore SA1649 // File name should match first type name
 
