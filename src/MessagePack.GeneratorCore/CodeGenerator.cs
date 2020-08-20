@@ -67,7 +67,7 @@ namespace MessagePackCompiler
                     // SingleFile Output
                     var objectFormatterTemplates = objectInfo
                         .GroupBy(x => (x.Namespace, x.IsStringKey))
-                        .Select(x => new FormatterTemplate()
+                        .Select(x =>
                         {
                             var (nameSpace, isStringKey) = x.Key;
                             var objectSerializationInfos = x.ToArray();

@@ -47,7 +47,7 @@ namespace ");
 
 foreach(var objInfo in ObjectSerializationInfos)
 {
-    string formatterName = objInfo.Name + (objInfo.TemplateParametersString == null ? "Formatter" :  ("Formatter"+ objInfo.TemplateParametersString));
+    string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(",", objInfo.GenericTypeParameters)}>" : "Formatter");
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);
 
             this.Write("    public sealed class ");
