@@ -36,6 +36,7 @@ namespace MessagePackCompiler
         /// <param name="namespace">The namespace for the generated type to be created in. May be null.</param>
         /// <param name="useMapMode">A boolean value that indicates whether all formatters should use property maps instead of more compact arrays.</param>
         /// <param name="multipleIfDirectiveOutputSymbols">A comma-delimited list of symbols that should surround redundant generated files. May be null.</param>
+        /// <param name="externalIgnoreTypeNames"> May be null.</param>
         /// <returns>A task that indicates when generation has completed.</returns>
         public async Task GenerateFileAsync(
            Compilation compilation,
@@ -43,7 +44,8 @@ namespace MessagePackCompiler
            string resolverName,
            string @namespace,
            bool useMapMode,
-           string multipleIfDirectiveOutputSymbols)
+           string multipleIfDirectiveOutputSymbols,
+           string[] externalIgnoreTypeNames)
         {
             var namespaceDot = string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace + ".";
             var multipleOutputSymbols = multipleIfDirectiveOutputSymbols?.Split(',') ?? Array.Empty<string>();
@@ -54,7 +56,7 @@ namespace MessagePackCompiler
             {
                 logger("Project Compilation Start:" + compilation.AssemblyName);
 
-                var collector = new TypeCollector(compilation, true, useMapMode, x => Console.WriteLine(x));
+                var collector = new TypeCollector(compilation, true, useMapMode, externalIgnoreTypeNames, x => Console.WriteLine(x));
 
                 logger("Project Compilation Complete:" + sw.Elapsed.ToString());
 
