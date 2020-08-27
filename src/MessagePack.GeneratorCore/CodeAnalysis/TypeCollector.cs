@@ -357,6 +357,12 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
+            var customFormatterAttr = typeSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute));
+            if (customFormatterAttr != null)
+            {
+                return;
+            }
+
             if (typeSymbol.TypeKind == TypeKind.Enum)
             {
                 this.CollectEnum(type);
