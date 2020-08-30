@@ -42,7 +42,7 @@ namespace MessagePack.MSBuild.Tasks
 
         public bool UseMapMode { get; set; }
 
-        public string[] ExternalIgnoreTypeNames { get; set; }
+        public string[]? ExternalIgnoreTypeNames { get; set; }
 
         [Output]
         public string? GeneratedOutputPath { get; set; }
