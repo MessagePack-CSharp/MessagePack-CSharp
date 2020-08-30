@@ -70,6 +70,4 @@ namespace TempProject
                 string.Empty);
         }
     }
-
-
 }
