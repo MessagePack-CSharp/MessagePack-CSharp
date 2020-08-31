@@ -1991,8 +1991,8 @@ namespace MessagePack.Internal
             {
                 get
                 {
-                    MemberInfo mi = this.IsProperty ? (MemberInfo)this.PropertyInfo : this.FieldInfo;
-                    return mi.DeclaringType.GetTypeInfo().IsValueType;
+                    Type t = this.IsProperty ? this.PropertyInfo.PropertyType : this.FieldInfo.FieldType;
+                    return t.IsValueType;
                 }
             }
 
