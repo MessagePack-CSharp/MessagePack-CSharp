@@ -1244,8 +1244,6 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void WriteString_PostEncoding(byte* pBuffer, int estimatedOffset, int byteCount)
         {
-            int bufferLength = estimatedOffset + byteCount;
-
             // move body and write prefix
             if (byteCount <= MessagePackRange.MaxFixStringLength)
             {
