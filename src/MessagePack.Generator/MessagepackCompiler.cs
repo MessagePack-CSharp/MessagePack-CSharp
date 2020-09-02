@@ -45,7 +45,8 @@ namespace MessagePack.Generator
             [Option("r", "Set resolver name.")] string resolverName = "GeneratedResolver",
             [Option("n", "Set namespace root name.")] string @namespace = "MessagePack",
             [Option("m", "Force use map mode serialization.")] bool useMapMode = false,
-            [Option("ms", "Generate #if-- files by symbols, split with ','.")] string? multipleIfDirectiveOutputSymbols = null)
+            [Option("ms", "Generate #if-- files by symbols, split with ','.")] string? multipleIfDirectiveOutputSymbols = null,
+            [Option("ei", "Ignore type names.")] string[]? externalIgnoreTypeNames = null)
         {
             Workspace? workspace = null;
             try
@@ -68,7 +69,8 @@ namespace MessagePack.Generator
                         resolverName,
                         @namespace,
                         useMapMode,
-                        multipleIfDirectiveOutputSymbols).ConfigureAwait(false);
+                        multipleIfDirectiveOutputSymbols,
+                        externalIgnoreTypeNames).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

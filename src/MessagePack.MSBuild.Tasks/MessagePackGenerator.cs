@@ -42,6 +42,8 @@ namespace MessagePack.MSBuild.Tasks
 
         public bool UseMapMode { get; set; }
 
+        public string[]? ExternalIgnoreTypeNames { get; set; }
+
         [Output]
         public string? GeneratedOutputPath { get; set; }
 
@@ -70,7 +72,8 @@ namespace MessagePack.MSBuild.Tasks
                     ResolverName,
                     Namespace,
                     UseMapMode,
-                    null).GetAwaiter().GetResult();
+                    null,
+                    ExternalIgnoreTypeNames).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

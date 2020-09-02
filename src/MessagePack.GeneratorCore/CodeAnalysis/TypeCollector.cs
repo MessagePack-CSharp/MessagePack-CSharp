@@ -265,6 +265,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly bool disallowInternal;
 
+        private HashSet<string> externalIgnoreTypeNames;
+
         // visitor workspace:
         private HashSet<ITypeSymbol> alreadyCollected;
         private List<ObjectSerializationInfo> collectedObjectInfo;
@@ -273,12 +275,13 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<UnionSerializationInfo> collectedUnionInfo;
         private List<ObjectSerializationInfo> collectedClosedTypeGenericInfo;
 
-        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
+        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[] ignoreTypeNames, Action<string> logger)
         {
             this.logger = logger;
             this.typeReferences = new ReferenceSymbols(compilation, logger);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
+            this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
 
             targetTypes = compilation.GetNamedTypeSymbols()
                 .Where(x =>
@@ -340,6 +343,11 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             if (this.embeddedTypes.Contains(typeSymbol.ToString()))
+            {
+                return;
+            }
+
+            if (this.externalIgnoreTypeNames.Contains(typeSymbol.ToString()))
             {
                 return;
             }
