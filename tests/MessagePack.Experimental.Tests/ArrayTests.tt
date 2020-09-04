@@ -1,0 +1,148 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+var types = new Type[]
+{
+    typeof(sbyte),
+    typeof(short),
+    typeof(int),
+    typeof(float),
+    typeof(bool),
+};
+#>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Runtime.InteropServices;
+using NUnit.Framework;
+
+namespace MessagePack.Experimental.Tests
+{
+    public class ArrayTests
+    {
+        private MessagePackSerializerOptions options;
+
+        [SetUp]
+        public void SetUp()
+        {
+            var resolver = MessagePack.Resolvers.CompositeResolver.Create(Resolvers.PrimitiveArrayResolver.Instance, MessagePack.Resolvers.StandardResolver.Instance);
+            options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+        }
+<#
+foreach (var type in types)
+{
+    var name = type.Name;
+#>
+
+        [Test]
+        public void Empty<#= name #>ArrayTests()
+        {
+            var array = Array.Empty<<#= name #>>();
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(0, decoded.Length);
+        }
+
+        [Test]
+        public void Null<#= name #>ArrayTests()
+        {
+            var array = default(<#= name #>[]);
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
+            Assert.IsNull(decoded);
+        }
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void Default<#= name #>ArrayTests(int length)
+        {
+            var array = new <#= name #>[length];
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+<#
+    if (type != typeof(bool))
+    {
+#>
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void MinValue<#= name #>ArrayTests(int length)
+        {
+            var array = new <#= name #>[length];
+            for (var index = 0; index < array.Length; index++)
+            {
+                array[index] = <#= name #>.MinValue;
+            }
+
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+<#
+    }
+#>
+<#
+    if (type != typeof(float) && type != typeof(bool))
+    {
+#>
+
+        [TestCase(1)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(128)]
+        [TestCase(4096)]
+        public void RandomValue<#= name #>ArrayTests(int length)
+        {
+            var array = new <#= name #>[length];
+            var r = new Random();
+            r.NextBytes(MemoryMarshal.AsBytes(array.AsSpan()));
+
+            var encoded = MessagePackSerializer.Serialize(array, options);
+            Assert.IsNotNull(encoded);
+            var decoded = MessagePackSerializer.Deserialize<<#= name #>[]>(encoded, options);
+            Assert.IsNotNull(decoded);
+            Assert.AreEqual(length, decoded.Length);
+            for (var index = 0; index < array.Length; index++)
+            {
+                Assert.AreEqual(array[index], decoded[index]);
+            }
+        }
+<#
+    }
+#>
+<#
+}
+#>
+    }
+}
