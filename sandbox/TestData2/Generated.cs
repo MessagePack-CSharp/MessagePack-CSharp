@@ -243,7 +243,7 @@ namespace MessagePack.Formatters.TestData2
                                 continue;
                         }
                     case 2:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 98, 115 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 29538UL) { goto FAIL; }
 
                         __bs__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Deserialize(ref reader, options);
                         continue;
@@ -305,7 +305,7 @@ namespace MessagePack.Formatters.TestData2
                       reader.Skip();
                       continue;
                     case 3:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 97, 115, 115 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7566177UL) { goto FAIL; }
 
                         __ass__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Deserialize(ref reader, options);
                         continue;
@@ -437,12 +437,12 @@ namespace MessagePack.Formatters.TestData2
                       reader.Skip();
                       continue;
                     case 6:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 69, 110, 117, 109, 73, 100 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 110266531802693UL) { goto FAIL; }
 
                         __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Deserialize(ref reader, options);
                         continue;
                     case 7:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 67, 108, 97, 115, 115, 73, 100 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28228257876896835UL) { goto FAIL; }
 
                         __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Deserialize(ref reader, options);
                         continue;
@@ -481,13 +481,8 @@ namespace MessagePack.Formatters.TestData2
 
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                      reader.Skip();
-                      continue;
-                }
+                reader.Skip();
+                reader.Skip();
             }
 
             var ____result = new global::TestData2.Nest1.IdType();
@@ -537,12 +532,12 @@ namespace MessagePack.Formatters.TestData2
                       reader.Skip();
                       continue;
                     case 6:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 69, 110, 117, 109, 73, 100 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 110266531802693UL) { goto FAIL; }
 
                         __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Deserialize(ref reader, options);
                         continue;
                     case 7:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 67, 108, 97, 115, 115, 73, 100 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28228257876896835UL) { goto FAIL; }
 
                         __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Deserialize(ref reader, options);
                         continue;
@@ -581,13 +576,8 @@ namespace MessagePack.Formatters.TestData2
 
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                      reader.Skip();
-                      continue;
-                }
+                reader.Skip();
+                reader.Skip();
             }
 
             var ____result = new global::TestData2.Nest2.IdType();

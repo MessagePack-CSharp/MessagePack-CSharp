@@ -109,15 +109,35 @@ namespace MessagePackCompiler.Generator
         private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member)
         {
             const string Tab = "    ";
-            buffer.Append("if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { ");
             var binary = member.Binary.AsSpan((tabCount - 1) << 3);
-            buffer.Append(binary[0]);
-            for (var i = 1; i < binary.Length; i++)
+
+            switch (binary.Length)
             {
-                buffer.Append(", ").Append(binary[i]);
+                case 1:
+                    buffer.Append("if (stringKey[0] != ").Append(binary[0]);
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                    buffer.Append("if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != ").Append(member.Key[tabCount - 1]).Append("UL");
+                    break;
+                default:
+                    buffer.Append("if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { ");
+                    buffer.Append(binary[0]);
+                    for (var i = 1; i < binary.Length; i++)
+                    {
+                        buffer.Append(", ").Append(binary[i]);
+                    }
+
+                    buffer.Append(" })");
+                    break;
             }
 
-            buffer.Append(" })) { goto FAIL; }\r\n\r\n").Append(indent);
+            buffer.Append(") { goto FAIL; }\r\n\r\n").Append(indent);
             for (var i = 0; i < tabCount; i++)
             {
                 buffer.Append(Tab);

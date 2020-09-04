@@ -1440,25 +1440,25 @@ namespace MessagePack.Formatters
                         {
                             default: goto FAIL;
                             case 5720808977192022595UL:
-                                if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 110 })) { goto FAIL; }
+                                if (stringKey[0] != 110) { goto FAIL; }
 
                                 __CreatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(ref reader, options);
                                 continue;
 
                             case 5720808977191956565UL:
-                                if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 110 })) { goto FAIL; }
+                                if (stringKey[0] != 110) { goto FAIL; }
 
                                 __UpdatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(ref reader, options);
                                 continue;
 
                         }
                     case 2:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 73, 100 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 25673UL) { goto FAIL; }
 
                         __Id__ = formatterResolver.GetFormatterWithVerify<global::System.Guid>().Deserialize(ref reader, options);
                         continue;
                     case 4:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 78, 97, 109, 101 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
 
                         __Name__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                         continue;
@@ -1538,12 +1538,12 @@ namespace MessagePack.Formatters
                       reader.Skip();
                       continue;
                     case 2:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 73, 100 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 25673UL) { goto FAIL; }
 
                         __Id__ = reader.ReadInt32();
                         continue;
                     case 4:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 78, 97, 109, 101 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
 
                         __Name__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                         continue;
@@ -1552,25 +1552,25 @@ namespace MessagePack.Formatters
                         {
                             default: goto FAIL;
                             case 5720808977192022595UL:
-                                if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 110 })) { goto FAIL; }
+                                if (stringKey[0] != 110) { goto FAIL; }
 
                                 __CreatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, options);
                                 continue;
 
                             case 8028074707240972880UL:
-                                if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 110 })) { goto FAIL; }
+                                if (stringKey[0] != 110) { goto FAIL; }
 
                                 __Precision__ = reader.ReadInt32();
                                 continue;
 
                         }
                     case 5:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 77, 111, 110, 101, 121 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 521392779085UL) { goto FAIL; }
 
                         __Money__ = formatterResolver.GetFormatterWithVerify<decimal>().Deserialize(ref reader, options);
                         continue;
                     case 6:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 65, 109, 111, 117, 110, 116 })) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 128017765461313UL) { goto FAIL; }
 
                         __Amount__ = reader.ReadInt64();
                         continue;
@@ -3793,7 +3793,7 @@ namespace MessagePack.Formatters.SharedData
                       reader.Skip();
                       continue;
                     case 1:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 88 })) { goto FAIL; }
+                        if (stringKey[0] != 88) { goto FAIL; }
 
                         __X__ = reader.ReadInt32();
                         continue;
@@ -3839,7 +3839,7 @@ namespace MessagePack.Formatters.SharedData
                       reader.Skip();
                       continue;
                     case 1:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 88 })) { goto FAIL; }
+                        if (stringKey[0] != 88) { goto FAIL; }
 
                         __X__ = reader.ReadInt32();
                         continue;
@@ -3878,13 +3878,8 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                      reader.Skip();
-                      continue;
-                }
+                reader.Skip();
+                reader.Skip();
             }
 
             var ____result = new global::SharedData.Empty2();

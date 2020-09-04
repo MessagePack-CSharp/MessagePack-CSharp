@@ -114,26 +114,26 @@ foreach(var objInfo in ObjectSerializationInfos)
 
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
+<#if (objInfo.Members.Length != 0)
+{ #>
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
-<#if (objInfo.Members.Length != 0)
-{ #>
                     FAIL:
                       reader.Skip();
                       continue;
 <#= StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, indent) #>
+                }
 <#
 }
 else
 {#>
-                      reader.Skip();
-                      continue;
+                reader.Skip();
+                reader.Skip();
 <#
 }
 #>
-                }
             }
 
             var ____result = new <#= objInfo.GetConstructorString() #>;

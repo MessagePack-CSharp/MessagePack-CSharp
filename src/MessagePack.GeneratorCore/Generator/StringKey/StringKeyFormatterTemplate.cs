@@ -141,29 +141,29 @@ foreach(var objInfo in ObjectSerializationInfos)
     }
 
     const string indent = "                    ";
-            this.Write(@"
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
-            {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+            this.Write("\r\n            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)\r\n" +
+                    "            {\r\n");
+if (objInfo.Members.Length != 0)
+{ 
+            this.Write(@"                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
 ");
-if (objInfo.Members.Length != 0)
-{ 
-            this.Write("                    FAIL:\r\n                      reader.Skip();\r\n                " +
-                    "      continue;\r\n");
             this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, indent)));
-            this.Write("\r\n");
+            this.Write("\r\n                }\r\n");
 
 }
 else
 {
-            this.Write("                      reader.Skip();\r\n                      continue;\r\n");
+            this.Write("                reader.Skip();\r\n                reader.Skip();\r\n");
 
 }
 
-            this.Write("                }\r\n            }\r\n\r\n            var ____result = new ");
+            this.Write("            }\r\n\r\n            var ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             this.Write(";\r\n");
 
