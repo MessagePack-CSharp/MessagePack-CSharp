@@ -1428,7 +1428,9 @@ namespace MessagePack.Formatters
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 18:
@@ -1536,7 +1538,9 @@ namespace MessagePack.Formatters
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 2:
@@ -1680,7 +1684,9 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 11:
@@ -3793,7 +3799,9 @@ namespace MessagePack.Formatters.SharedData
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 1:
@@ -3840,7 +3848,9 @@ namespace MessagePack.Formatters.SharedData
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 1:
@@ -3888,7 +3898,9 @@ namespace MessagePack.Formatters.SharedData
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
 
@@ -3933,7 +3945,9 @@ namespace MessagePack.Formatters.SharedData
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 10:
@@ -3994,7 +4008,9 @@ namespace MessagePack.Formatters.SharedData
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 5:
@@ -4056,7 +4072,9 @@ namespace MessagePack.Formatters.SharedData
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 5:

@@ -149,7 +149,9 @@ foreach(var objInfo in ObjectSerializationInfos)
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
 ");

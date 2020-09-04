@@ -229,7 +229,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 1:
@@ -303,7 +305,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 3:
@@ -373,7 +377,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 1:
@@ -437,7 +443,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 6:
@@ -490,7 +498,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
 
@@ -541,7 +551,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 6:
@@ -594,7 +606,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
 
@@ -645,7 +659,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 11:
@@ -715,7 +731,9 @@ namespace MessagePack.Formatters.TestData2
                 switch (stringKeyLength)
                 {
                     default:
+                    #pragma warning disable CS0164
                     FAIL:
+                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 11:
