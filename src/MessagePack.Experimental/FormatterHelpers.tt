@@ -480,31 +480,3 @@ for (var i1 = 0; i1 < range; i1++)
 #>
 }
 
-namespace MessagePack.Experimental.Resolvers
-{
-    internal static class PrimitiveArrayGetFormatterHelper
-    {
-        internal static object? GetFormatter(Type t)
-        {
-            if (!t.IsArray)
-            {
-                return null;
-            }
-<#
-    foreach (var type in types)
-    {
-        var name = type.Name;
-#>
-
-            if (t == typeof(<#= name #>[]))
-            {
-                return MessagePack.Experimental.Formatters.<#= name + "ArrayFormatter" #>.Instance;
-            }
-<#
-    }
-#>
-
-            return null;
-        }
-    }
-}

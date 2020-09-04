@@ -22,12 +22,21 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>FormatterHelpers.tt</DependentUpon>
     </None>
+    <None Include="PrimitiveArrayGetFormatterHelper.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <None Update="FormatterHelpers.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>FormatterHelpers.cs</LastGenOutput>
+    </None>
+    <None Update="PrimitiveArrayGetFormatterHelper.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PrimitiveArrayGetFormatterHelper.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
@@ -40,6 +49,16 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>FormatterHelpers.tt</DependentUpon>
+    </Compile>
+    <Compile Update="PrimitiveArrayGetFormatterHelper.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>
+    </Compile>
+    <Compile Update="ResolverHelper.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResolverHelper.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 
