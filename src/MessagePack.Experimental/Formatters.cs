@@ -457,6 +457,7 @@ namespace MessagePack.Experimental.Formatters
                 return;
             }
 
+            var outputLength = inputLength;
             fixed (bool* pSource = &value[0])
             {
                 var inputEnd = pSource + inputLength;
@@ -549,7 +550,7 @@ namespace MessagePack.Experimental.Formatters
                     }
                 }
 
-                writer.Advance(destination.Length);
+                writer.Advance(outputLength);
             }
         }
 
