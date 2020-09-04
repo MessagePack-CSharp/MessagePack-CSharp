@@ -1424,13 +1424,10 @@ namespace MessagePack.Formatters
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
                     FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 18:
@@ -1534,13 +1531,10 @@ namespace MessagePack.Formatters
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
                     FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 2:
@@ -1680,13 +1674,10 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
                     FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 11:
@@ -3795,13 +3786,10 @@ namespace MessagePack.Formatters.SharedData
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
                     FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 1:
@@ -3844,13 +3832,10 @@ namespace MessagePack.Formatters.SharedData
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
                     FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 1:
@@ -3894,16 +3879,11 @@ namespace MessagePack.Formatters.SharedData
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
-                    FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
-
                 }
             }
 
@@ -3941,13 +3921,10 @@ namespace MessagePack.Formatters.SharedData
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
                     FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 10:
@@ -4004,13 +3981,10 @@ namespace MessagePack.Formatters.SharedData
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
                     FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 5:
@@ -4068,13 +4042,10 @@ namespace MessagePack.Formatters.SharedData
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
                     FAIL:
-                    #pragma warning restore CS0164
                       reader.Skip();
                       continue;
                     case 5:

@@ -145,18 +145,25 @@ foreach(var objInfo in ObjectSerializationInfos)
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                var stringKeyLength = stringKey.Length;
-                switch (stringKeyLength)
+                switch (stringKey.Length)
                 {
                     default:
-                    #pragma warning disable CS0164
-                    FAIL:
-                    #pragma warning restore CS0164
-                      reader.Skip();
-                      continue;
 ");
+if (objInfo.Members.Length != 0)
+{ 
+            this.Write("                    FAIL:\r\n                      reader.Skip();\r\n                " +
+                    "      continue;\r\n");
             this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, indent)));
-            this.Write("\r\n                }\r\n            }\r\n\r\n            var ____result = new ");
+            this.Write("\r\n");
+
+}
+else
+{
+            this.Write("                      reader.Skip();\r\n                      continue;\r\n");
+
+}
+
+            this.Write("                }\r\n            }\r\n\r\n            var ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             this.Write(";\r\n");
 
