@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="MessagePack_2_1_152">
-      <HintPath>MessagePack_2_1_152.dll</HintPath>
+    <Reference Include="MessagePack_2_1_165">
+      <HintPath>MessagePack_2_1_165.dll</HintPath>
       <Aliases>oldmsgpack</Aliases>
       <Private>true</Private>
       <SpecificVersion>false</SpecificVersion>
