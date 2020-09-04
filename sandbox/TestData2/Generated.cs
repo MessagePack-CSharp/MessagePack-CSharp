@@ -199,13 +199,13 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
             // a
-            writer.WriteRaw(new byte[] { 0xA1, 0x61, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 97 });
             writer.Write(value.a);
             // bs
-            writer.WriteRaw(new byte[] { 0xA2, 0x62, 0x73, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 162, 98, 115 });
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Serialize(ref writer, value.bs, options);
             // c
-            writer.WriteRaw(new byte[] { 0xA1, 0x63, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 99 });
             formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Serialize(ref writer, value.c, options);
         }
 
@@ -225,39 +225,30 @@ namespace MessagePack.Formatters.TestData2
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
                 {
                     default:
                     FAIL:
-                        reader.Skip();
-                        continue;
+                      reader.Skip();
+                      continue;
                     case 1:
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
                         {
-                            uint last = stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x61U:
-                                    __a__ = reader.ReadInt32();
-                                    continue;
-                                case 0x63U:
-                                    __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
-                                    continue;
-                            }
+                            default: goto FAIL;
+                            case 97UL:
+                                __a__ = reader.ReadInt32();
+                                continue;
+                            case 99UL:
+                                __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
+                                continue;
                         }
                     case 2:
-                        {
-                            uint last = stringKey[1];
-                            last <<= 8;
-                            last |= stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x7362U:
-                                    __bs__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Deserialize(ref reader, options);
-                                    continue;
-                            }
-                        }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 98, 115 })) { goto FAIL; }
+
+                        __bs__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Deserialize(ref reader, options);
+                        continue;
+
                 }
             }
 
@@ -282,13 +273,13 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
             // ass
-            writer.WriteRaw(new byte[] { 0xA3, 0x61, 0x73, 0x73, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 163, 97, 115, 115 });
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Serialize(ref writer, value.ass, options);
             // c
-            writer.WriteRaw(new byte[] { 0xA1, 0x63, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 99 });
             formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Serialize(ref writer, value.c, options);
             // a
-            writer.WriteRaw(new byte[] { 0xA1, 0x61, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 97 });
             writer.Write(value.a);
         }
 
@@ -308,41 +299,30 @@ namespace MessagePack.Formatters.TestData2
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
                 {
                     default:
                     FAIL:
-                        reader.Skip();
+                      reader.Skip();
+                      continue;
+                    case 3:
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 97, 115, 115 })) { goto FAIL; }
+
+                        __ass__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Deserialize(ref reader, options);
                         continue;
                     case 1:
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
                         {
-                            uint last = stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x61U:
-                                    __a__ = reader.ReadInt32();
-                                    continue;
-                                case 0x63U:
-                                    __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
-                                    continue;
-                            }
+                            default: goto FAIL;
+                            case 99UL:
+                                __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
+                                continue;
+                            case 97UL:
+                                __a__ = reader.ReadInt32();
+                                continue;
                         }
-                    case 3:
-                        {
-                            uint last = stringKey[2];
-                            last <<= 8;
-                            last |= stringKey[1];
-                            last <<= 8;
-                            last |= stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x737361U:
-                                    __ass__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Deserialize(ref reader, options);
-                                    continue;
-                            }
-                        }
+
                 }
             }
 
@@ -367,10 +347,10 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // b
-            writer.WriteRaw(new byte[] { 0xA1, 0x62, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 98 });
             formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Serialize(ref writer, value.b, options);
             // a
-            writer.WriteRaw(new byte[] { 0xA1, 0x61, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 97 });
             writer.Write(value.a);
         }
 
@@ -389,26 +369,25 @@ namespace MessagePack.Formatters.TestData2
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
                 {
                     default:
                     FAIL:
-                        reader.Skip();
-                        continue;
+                      reader.Skip();
+                      continue;
                     case 1:
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
                         {
-                            uint last = stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x61U:
-                                    __a__ = reader.ReadInt32();
-                                    continue;
-                                case 0x62U:
-                                    __b__ = formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Deserialize(ref reader, options);
-                                    continue;
-                            }
+                            default: goto FAIL;
+                            case 98UL:
+                                __b__ = formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Deserialize(ref reader, options);
+                                continue;
+                            case 97UL:
+                                __a__ = reader.ReadInt32();
+                                continue;
                         }
+
                 }
             }
 
@@ -432,10 +411,10 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // EnumId
-            writer.WriteRaw(new byte[] { 0xA6, 0x45, 0x6E, 0x75, 0x6D, 0x49, 0x64, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 166, 69, 110, 117, 109, 73, 100 });
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Serialize(ref writer, value.EnumId, options);
             // ClassId
-            writer.WriteRaw(new byte[] { 0xA7, 0x43, 0x6C, 0x61, 0x73, 0x73, 0x49, 0x64, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 167, 67, 108, 97, 115, 115, 73, 100 });
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Serialize(ref writer, value.ClassId, options);
         }
 
@@ -454,56 +433,24 @@ namespace MessagePack.Formatters.TestData2
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
                 {
                     default:
                     FAIL:
-                        reader.Skip();
-                        continue;
+                      reader.Skip();
+                      continue;
                     case 6:
-                        {
-                            ulong last = stringKey[5];
-                            last <<= 8;
-                            last |= stringKey[4];
-                            last <<= 8;
-                            last |= stringKey[3];
-                            last <<= 8;
-                            last |= stringKey[2];
-                            last <<= 8;
-                            last |= stringKey[1];
-                            last <<= 8;
-                            last |= stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x64496D756E45UL:
-                                    __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Deserialize(ref reader, options);
-                                    continue;
-                            }
-                        }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 69, 110, 117, 109, 73, 100 })) { goto FAIL; }
+
+                        __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Deserialize(ref reader, options);
+                        continue;
                     case 7:
-                        {
-                            ulong last = stringKey[6];
-                            last <<= 8;
-                            last |= stringKey[5];
-                            last <<= 8;
-                            last |= stringKey[4];
-                            last <<= 8;
-                            last |= stringKey[3];
-                            last <<= 8;
-                            last |= stringKey[2];
-                            last <<= 8;
-                            last |= stringKey[1];
-                            last <<= 8;
-                            last |= stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x64497373616C43UL:
-                                    __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Deserialize(ref reader, options);
-                                    continue;
-                            }
-                        }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 67, 108, 97, 115, 115, 73, 100 })) { goto FAIL; }
+
+                        __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Deserialize(ref reader, options);
+                        continue;
+
                 }
             }
 
@@ -538,8 +485,16 @@ namespace MessagePack.Formatters.TestData2
 
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                reader.Skip();
-                reader.Skip();
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+
+                }
             }
 
             var ____result = new global::TestData2.Nest1.IdType();
@@ -560,10 +515,10 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // EnumId
-            writer.WriteRaw(new byte[] { 0xA6, 0x45, 0x6E, 0x75, 0x6D, 0x49, 0x64, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 166, 69, 110, 117, 109, 73, 100 });
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Serialize(ref writer, value.EnumId, options);
             // ClassId
-            writer.WriteRaw(new byte[] { 0xA7, 0x43, 0x6C, 0x61, 0x73, 0x73, 0x49, 0x64, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 167, 67, 108, 97, 115, 115, 73, 100 });
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Serialize(ref writer, value.ClassId, options);
         }
 
@@ -582,56 +537,24 @@ namespace MessagePack.Formatters.TestData2
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
                 {
                     default:
                     FAIL:
-                        reader.Skip();
-                        continue;
+                      reader.Skip();
+                      continue;
                     case 6:
-                        {
-                            ulong last = stringKey[5];
-                            last <<= 8;
-                            last |= stringKey[4];
-                            last <<= 8;
-                            last |= stringKey[3];
-                            last <<= 8;
-                            last |= stringKey[2];
-                            last <<= 8;
-                            last |= stringKey[1];
-                            last <<= 8;
-                            last |= stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x64496D756E45UL:
-                                    __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Deserialize(ref reader, options);
-                                    continue;
-                            }
-                        }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 69, 110, 117, 109, 73, 100 })) { goto FAIL; }
+
+                        __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Deserialize(ref reader, options);
+                        continue;
                     case 7:
-                        {
-                            ulong last = stringKey[6];
-                            last <<= 8;
-                            last |= stringKey[5];
-                            last <<= 8;
-                            last |= stringKey[4];
-                            last <<= 8;
-                            last |= stringKey[3];
-                            last <<= 8;
-                            last |= stringKey[2];
-                            last <<= 8;
-                            last |= stringKey[1];
-                            last <<= 8;
-                            last |= stringKey[0];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x64497373616C43UL:
-                                    __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Deserialize(ref reader, options);
-                                    continue;
-                            }
-                        }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 67, 108, 97, 115, 115, 73, 100 })) { goto FAIL; }
+
+                        __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Deserialize(ref reader, options);
+                        continue;
+
                 }
             }
 
@@ -666,8 +589,16 @@ namespace MessagePack.Formatters.TestData2
 
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
-                reader.Skip();
-                reader.Skip();
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+
+                }
             }
 
             var ____result = new global::TestData2.Nest2.IdType();
@@ -688,10 +619,10 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // MyProperty1
-            writer.WriteRaw(new byte[] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x31, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
             // MyProperty2
-            writer.WriteRaw(new byte[] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x32, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty2, options);
         }
 
@@ -706,52 +637,35 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             var __MyProperty1__ = default(string);
             var __MyProperty2__ = default(string);
-            var isBigEndian = !global::System.BitConverter.IsLittleEndian;
 
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                ReadOnlySpan<ulong> ulongs = isBigEndian ? stackalloc ulong[stringKey.Length >> 3] : MemoryMarshal.Cast<byte, ulong>(stringKey);
-                if (isBigEndian)
-                {
-                    for (var index = 0; index < ulongs.Length; index++)
-                    {
-                        var index8times = index << 3;
-                        ref var number = ref global::System.Runtime.CompilerServices.Unsafe.AsRef(ulongs[index]);
-                        number = stringKey[index8times + 7];
-                        for (var numberIndex = index8times + 6; numberIndex >= index8times; numberIndex--)
-                        {
-                            number <<= 8;
-                            number |= stringKey[numberIndex];
-                        }
-                    }
-                }
-
-                switch (stringKey.Length)
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
                 {
                     default:
                     FAIL:
-                        reader.Skip();
-                        continue;
+                      reader.Skip();
+                      continue;
                     case 11:
-                        if (ulongs[0] != 0x7265706F7250794DUL) goto FAIL; // MyProper
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
                         {
-                            uint last = stringKey[10];
-                            last <<= 8;
-                            last |= stringKey[9];
-                            last <<= 8;
-                            last |= stringKey[8];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x317974U:
-                                    __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                                    continue;
-                                case 0x327974U:
-                                    __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                                    continue;
-                            }
+                            default: goto FAIL;
+                            case 8243118316933118285UL:
+                                switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                                {
+                                    default: goto FAIL;
+                                    case 3242356UL:
+                                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                        continue;
+                                    case 3307892UL:
+                                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                        continue;
+                                }
+
                         }
+
                 }
             }
 
@@ -775,10 +689,10 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // MyProperty1
-            writer.WriteRaw(new byte[] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x31, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
             // MyProperty2
-            writer.WriteRaw(new byte[] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x32, });
+            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty2, options);
         }
 
@@ -793,52 +707,35 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             var __MyProperty1__ = default(string);
             var __MyProperty2__ = default(string);
-            var isBigEndian = !global::System.BitConverter.IsLittleEndian;
 
             for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
             {
                 var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                ReadOnlySpan<ulong> ulongs = isBigEndian ? stackalloc ulong[stringKey.Length >> 3] : MemoryMarshal.Cast<byte, ulong>(stringKey);
-                if (isBigEndian)
-                {
-                    for (var index = 0; index < ulongs.Length; index++)
-                    {
-                        var index8times = index << 3;
-                        ref var number = ref global::System.Runtime.CompilerServices.Unsafe.AsRef(ulongs[index]);
-                        number = stringKey[index8times + 7];
-                        for (var numberIndex = index8times + 6; numberIndex >= index8times; numberIndex--)
-                        {
-                            number <<= 8;
-                            number |= stringKey[numberIndex];
-                        }
-                    }
-                }
-
-                switch (stringKey.Length)
+                var stringKeyLength = stringKey.Length;
+                switch (stringKeyLength)
                 {
                     default:
                     FAIL:
-                        reader.Skip();
-                        continue;
+                      reader.Skip();
+                      continue;
                     case 11:
-                        if (ulongs[0] != 0x7265706F7250794DUL) goto FAIL; // MyProper
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
                         {
-                            uint last = stringKey[10];
-                            last <<= 8;
-                            last |= stringKey[9];
-                            last <<= 8;
-                            last |= stringKey[8];
-                            switch (last)
-                            {
-                                default: goto FAIL;
-                                case 0x317974U:
-                                    __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                                    continue;
-                                case 0x327974U:
-                                    __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                                    continue;
-                            }
+                            default: goto FAIL;
+                            case 8243118316933118285UL:
+                                switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                                {
+                                    default: goto FAIL;
+                                    case 3242356UL:
+                                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                        continue;
+                                    case 3307892UL:
+                                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                        continue;
+                                }
+
                         }
+
                 }
             }
 
