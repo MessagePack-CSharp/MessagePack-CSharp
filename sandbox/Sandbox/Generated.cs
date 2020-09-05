@@ -1375,37 +1375,7 @@ namespace MessagePack.Formatters
 
     public sealed class ComplexModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ComplexModel>
     {
-        public void Serialize(ref MessagePackWriter writer, global::ComplexModel value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(6);
-            // AdditionalProperty
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 178, 65, 100, 100, 105, 116, 105, 111, 110, 97, 108, 80, 114, 111, 112, 101, 114, 116, 121 });
-            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Serialize(ref writer, value.AdditionalProperty, options);
-            // CreatedOn
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 169, 67, 114, 101, 97, 116, 101, 100, 79, 110 });
-            formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Serialize(ref writer, value.CreatedOn, options);
-            // Id
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 162, 73, 100 });
-            formatterResolver.GetFormatterWithVerify<global::System.Guid>().Serialize(ref writer, value.Id, options);
-            // Name
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 164, 78, 97, 109, 101 });
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Name, options);
-            // UpdatedOn
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 169, 85, 112, 100, 97, 116, 101, 100, 79, 110 });
-            formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Serialize(ref writer, value.UpdatedOn, options);
-            // SimpleModels
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 172, 83, 105, 109, 112, 108, 101, 77, 111, 100, 101, 108, 115 });
-            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Serialize(ref writer, value.SimpleModels, options);
-        }
-
-        public global::ComplexModel Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::ComplexModel Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -1431,7 +1401,7 @@ namespace MessagePack.Formatters
                       reader.Skip();
                       continue;
                     case 18:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 65, 100, 100, 105, 116, 105, 111, 110, 97, 108, 80, 114, 111, 112, 101, 114, 116, 121 })) { goto FAIL; }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_AdditionalProperty().Slice(1)) { goto FAIL; }
 
                         __AdditionalProperty__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Deserialize(ref reader, options);
                         continue;
@@ -1463,7 +1433,7 @@ namespace MessagePack.Formatters
                         __Name__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                         continue;
                     case 12:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 83, 105, 109, 112, 108, 101, 77, 111, 100, 101, 108, 115 })) { goto FAIL; }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_SimpleModels().Slice(1)) { goto FAIL; }
 
                         __SimpleModels__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Deserialize(ref reader, options);
                         continue;
@@ -1479,10 +1449,14 @@ namespace MessagePack.Formatters
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class SimpleModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SimpleModel>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::SimpleModel value, global::MessagePack.MessagePackSerializerOptions options)
+
+        // AdditionalProperty
+        private static global::System.ReadOnlySpan<byte> GetSpan_AdditionalProperty() => new byte[1 + 18] { 178, 65, 100, 100, 105, 116, 105, 111, 110, 97, 108, 80, 114, 111, 112, 101, 114, 116, 121 };
+
+        // SimpleModels
+        private static global::System.ReadOnlySpan<byte> GetSpan_SimpleModels() => new byte[1 + 12] { 172, 83, 105, 109, 112, 108, 101, 77, 111, 100, 101, 108, 115 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::ComplexModel value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -1492,27 +1466,28 @@ namespace MessagePack.Formatters
 
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(6);
-            // Id
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 162, 73, 100 });
-            writer.Write(value.Id);
-            // Name
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 164, 78, 97, 109, 101 });
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Name, options);
             // CreatedOn
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 169, 67, 114, 101, 97, 116, 101, 100, 79, 110 });
-            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.CreatedOn, options);
-            // Precision
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 169, 80, 114, 101, 99, 105, 115, 105, 111, 110 });
-            writer.Write(value.Precision);
-            // Money
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 165, 77, 111, 110, 101, 121 });
-            formatterResolver.GetFormatterWithVerify<decimal>().Serialize(ref writer, value.Money, options);
-            // Amount
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 166, 65, 109, 111, 117, 110, 116 });
-            writer.Write(value.Amount);
+            writer.WriteRaw(new byte[1 + 9] { 169, 67, 114, 101, 97, 116, 101, 100, 79, 110 });
+            formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Serialize(ref writer, value.CreatedOn, options);
+            // UpdatedOn
+            writer.WriteRaw(new byte[1 + 9] { 169, 85, 112, 100, 97, 116, 101, 100, 79, 110 });
+            formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Serialize(ref writer, value.UpdatedOn, options);
+            // Id
+            writer.WriteRaw(new byte[1 + 2] { 162, 73, 100 });
+            formatterResolver.GetFormatterWithVerify<global::System.Guid>().Serialize(ref writer, value.Id, options);
+            // Name
+            writer.WriteRaw(new byte[1 + 4] { 164, 78, 97, 109, 101 });
+            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Name, options);
+            writer.WriteRaw(GetSpan_AdditionalProperty());
+            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Serialize(ref writer, value.AdditionalProperty, options);
+            writer.WriteRaw(GetSpan_SimpleModels());
+            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Serialize(ref writer, value.SimpleModels, options);
         }
+    }
 
-        public global::SimpleModel Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class SimpleModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SimpleModel>
+    {
+        public global::SimpleModel Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -1587,6 +1562,36 @@ namespace MessagePack.Formatters
             reader.Depth--;
             return ____result;
         }
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SimpleModel value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(6);
+            // Id
+            writer.WriteRaw(new byte[1 + 2] { 162, 73, 100 });
+            writer.Write(value.Id);
+            // Name
+            writer.WriteRaw(new byte[1 + 4] { 164, 78, 97, 109, 101 });
+            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Name, options);
+            // CreatedOn
+            writer.WriteRaw(new byte[1 + 9] { 169, 67, 114, 101, 97, 116, 101, 100, 79, 110 });
+            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.CreatedOn, options);
+            // Precision
+            writer.WriteRaw(new byte[1 + 9] { 169, 80, 114, 101, 99, 105, 115, 105, 111, 110 });
+            writer.Write(value.Precision);
+            // Money
+            writer.WriteRaw(new byte[1 + 5] { 165, 77, 111, 110, 101, 121 });
+            formatterResolver.GetFormatterWithVerify<decimal>().Serialize(ref writer, value.Money, options);
+            // Amount
+            writer.WriteRaw(new byte[1 + 6] { 166, 65, 109, 111, 117, 110, 116 });
+            writer.Write(value.Amount);
+        }
     }
 }
 
@@ -1615,45 +1620,7 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
 
     public sealed class StringKeySerializerTargetFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::PerfBenchmarkDotNet.StringKeySerializerTarget>
     {
-        public void Serialize(ref MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            writer.WriteMapHeader(9);
-            // MyProperty1
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
-            writer.Write(value.MyProperty1);
-            // MyProperty2
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 });
-            writer.Write(value.MyProperty2);
-            // MyProperty3
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 51 });
-            writer.Write(value.MyProperty3);
-            // MyProperty4
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 52 });
-            writer.Write(value.MyProperty4);
-            // MyProperty5
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 53 });
-            writer.Write(value.MyProperty5);
-            // MyProperty6
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 54 });
-            writer.Write(value.MyProperty6);
-            // MyProperty7
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 55 });
-            writer.Write(value.MyProperty7);
-            // MyProperty8
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 56 });
-            writer.Write(value.MyProperty8);
-            // MyProperty9
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 57 });
-            writer.Write(value.MyProperty9);
-        }
-
-        public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::PerfBenchmarkDotNet.StringKeySerializerTarget Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -1734,6 +1701,44 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
             ____result.MyProperty9 = __MyProperty9__;
             reader.Depth--;
             return ____result;
+        }
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::PerfBenchmarkDotNet.StringKeySerializerTarget value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            writer.WriteMapHeader(9);
+            // MyProperty1
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
+            writer.Write(value.MyProperty1);
+            // MyProperty2
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 });
+            writer.Write(value.MyProperty2);
+            // MyProperty3
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 51 });
+            writer.Write(value.MyProperty3);
+            // MyProperty4
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 52 });
+            writer.Write(value.MyProperty4);
+            // MyProperty5
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 53 });
+            writer.Write(value.MyProperty5);
+            // MyProperty6
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 54 });
+            writer.Write(value.MyProperty6);
+            // MyProperty7
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 55 });
+            writer.Write(value.MyProperty7);
+            // MyProperty8
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 56 });
+            writer.Write(value.MyProperty8);
+            // MyProperty9
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 57 });
+            writer.Write(value.MyProperty9);
         }
     }
 }
@@ -3764,20 +3769,11 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class Callback2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2>
     {
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.Callback2 value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            value.OnBeforeSerialize();
-            writer.WriteMapHeader(1);
-            // X
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 88 });
-            writer.Write(value.X);
-        }
-
-        public global::SharedData.Callback2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.Callback2 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
-                throw new InvalidOperationException("typecode is null, struct not supported");
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
             }
 
             options.Security.DepthStep(ref reader);
@@ -3807,23 +3803,24 @@ namespace MessagePack.Formatters.SharedData
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class Callback2_2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2_2>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.Callback2_2 value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.Callback2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
+            value.OnBeforeSerialize();
             writer.WriteMapHeader(1);
             // X
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 88 });
+            writer.WriteRaw(new byte[1 + 1] { 161, 88 });
             writer.Write(value.X);
         }
+    }
 
-        public global::SharedData.Callback2_2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class Callback2_2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2_2>
+    {
+        public global::SharedData.Callback2_2 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
-                throw new InvalidOperationException("typecode is null, struct not supported");
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
             }
 
             options.Security.DepthStep(ref reader);
@@ -3849,25 +3846,24 @@ namespace MessagePack.Formatters.SharedData
 
             var ____result = new global::SharedData.Callback2_2(__X__);
             ____result.X = __X__;
-            ((IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
             reader.Depth--;
             return ____result;
         }
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.Callback2_2 value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
+            writer.WriteMapHeader(1);
+            // X
+            writer.WriteRaw(new byte[1 + 1] { 161, 88 });
+            writer.Write(value.X);
+        }
     }
+
     public sealed class Empty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Empty2>
     {
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.Empty2 value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            writer.WriteMapHeader(0);
-        }
-
-        public global::SharedData.Empty2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.Empty2 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -3886,10 +3882,8 @@ namespace MessagePack.Formatters.SharedData
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class NonEmpty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.NonEmpty2>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.NonEmpty2 value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.Empty2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -3897,13 +3891,13 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            writer.WriteMapHeader(1);
-            // MyProperty
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 170, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121 });
-            writer.Write(value.MyProperty);
+            writer.WriteMapHeader(0);
         }
+    }
 
-        public global::SharedData.NonEmpty2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class NonEmpty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.NonEmpty2>
+    {
+        public global::SharedData.NonEmpty2 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -3923,7 +3917,7 @@ namespace MessagePack.Formatters.SharedData
                       reader.Skip();
                       continue;
                     case 10:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, (global::System.ReadOnlySpan<byte>)new byte[] { 77, 121, 80, 114, 111, 112, 101, 114, 116, 121 })) { goto FAIL; }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_MyProperty().Slice(1)) { goto FAIL; }
 
                         __MyProperty__ = reader.ReadInt32();
                         continue;
@@ -3936,10 +3930,11 @@ namespace MessagePack.Formatters.SharedData
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class SimpleStringKeyDataFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimpleStringKeyData>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.SimpleStringKeyData value, global::MessagePack.MessagePackSerializerOptions options)
+
+        // MyProperty
+        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty() => new byte[1 + 10] { 170, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.NonEmpty2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -3947,20 +3942,15 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(3);
-            // Prop1
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 165, 80, 114, 111, 112, 49 });
-            writer.Write(value.Prop1);
-            // Prop2
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 165, 80, 114, 111, 112, 50 });
-            formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref writer, value.Prop2, options);
-            // Prop3
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 165, 80, 114, 111, 112, 51 });
-            writer.Write(value.Prop3);
+            writer.WriteMapHeader(1);
+            writer.WriteRaw(GetSpan_MyProperty());
+            writer.Write(value.MyProperty);
         }
+    }
 
-        public global::SharedData.SimpleStringKeyData Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class SimpleStringKeyDataFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimpleStringKeyData>
+    {
+        public global::SharedData.SimpleStringKeyData Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -4007,26 +3997,36 @@ namespace MessagePack.Formatters.SharedData
             reader.Depth--;
             return ____result;
         }
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.SimpleStringKeyData value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(3);
+            // Prop1
+            writer.WriteRaw(new byte[1 + 5] { 165, 80, 114, 111, 112, 49 });
+            writer.Write(value.Prop1);
+            // Prop2
+            writer.WriteRaw(new byte[1 + 5] { 165, 80, 114, 111, 112, 50 });
+            formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref writer, value.Prop2, options);
+            // Prop3
+            writer.WriteRaw(new byte[1 + 5] { 165, 80, 114, 111, 112, 51 });
+            writer.Write(value.Prop3);
+        }
     }
+
     public sealed class SimpleStructStringKeyDataFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.SimpleStructStringKeyData>
     {
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.SimpleStructStringKeyData value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
-            // key-X
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 165, 107, 101, 121, 45, 88 });
-            writer.Write(value.X);
-            // key-Y
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 165, 107, 101, 121, 45, 89 });
-            formatterResolver.GetFormatterWithVerify<int[]>().Serialize(ref writer, value.Y, options);
-        }
-
-        public global::SharedData.SimpleStructStringKeyData Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.SimpleStructStringKeyData Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
-                throw new InvalidOperationException("typecode is null, struct not supported");
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
             }
 
             options.Security.DepthStep(ref reader);
@@ -4063,6 +4063,18 @@ namespace MessagePack.Formatters.SharedData
             ____result.Y = __Y__;
             reader.Depth--;
             return ____result;
+        }
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.SimpleStructStringKeyData value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            // key-X
+            writer.WriteRaw(new byte[1 + 5] { 165, 107, 101, 121, 45, 88 });
+            writer.Write(value.X);
+            // key-Y
+            writer.WriteRaw(new byte[1 + 5] { 165, 107, 101, 121, 45, 89 });
+            formatterResolver.GetFormatterWithVerify<int[]>().Serialize(ref writer, value.Y, options);
         }
     }
 }

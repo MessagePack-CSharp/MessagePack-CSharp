@@ -188,28 +188,7 @@ namespace MessagePack.Formatters.TestData2
 
     public sealed class AFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.A>
     {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.A value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(3);
-            // a
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 97 });
-            writer.Write(value.a);
-            // bs
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 162, 98, 115 });
-            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Serialize(ref writer, value.bs, options);
-            // c
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 99 });
-            formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Serialize(ref writer, value.c, options);
-        }
-
-        public global::TestData2.A Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::TestData2.A Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -258,10 +237,8 @@ namespace MessagePack.Formatters.TestData2
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class BFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.B>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.B value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.A value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -271,18 +248,21 @@ namespace MessagePack.Formatters.TestData2
 
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
-            // ass
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 163, 97, 115, 115 });
-            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Serialize(ref writer, value.ass, options);
-            // c
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 99 });
-            formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Serialize(ref writer, value.c, options);
             // a
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 97 });
+            writer.WriteRaw(new byte[1 + 1] { 161, 97 });
             writer.Write(value.a);
+            // c
+            writer.WriteRaw(new byte[1 + 1] { 161, 99 });
+            formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Serialize(ref writer, value.c, options);
+            // bs
+            writer.WriteRaw(new byte[1 + 2] { 162, 98, 115 });
+            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Serialize(ref writer, value.bs, options);
         }
+    }
 
-        public global::TestData2.B Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class BFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.B>
+    {
+        public global::TestData2.B Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -331,10 +311,8 @@ namespace MessagePack.Formatters.TestData2
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class CFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.C>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.C value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.B value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -343,16 +321,22 @@ namespace MessagePack.Formatters.TestData2
             }
 
             var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
-            // b
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 98 });
-            formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Serialize(ref writer, value.b, options);
+            writer.WriteMapHeader(3);
+            // ass
+            writer.WriteRaw(new byte[1 + 3] { 163, 97, 115, 115 });
+            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Serialize(ref writer, value.ass, options);
+            // c
+            writer.WriteRaw(new byte[1 + 1] { 161, 99 });
+            formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Serialize(ref writer, value.c, options);
             // a
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 161, 97 });
+            writer.WriteRaw(new byte[1 + 1] { 161, 97 });
             writer.Write(value.a);
         }
+    }
 
-        public global::TestData2.C Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class CFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.C>
+    {
+        public global::TestData2.C Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -394,10 +378,8 @@ namespace MessagePack.Formatters.TestData2
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class Nest1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest1>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest1 value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.C value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -407,15 +389,18 @@ namespace MessagePack.Formatters.TestData2
 
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            // EnumId
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 166, 69, 110, 117, 109, 73, 100 });
-            formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Serialize(ref writer, value.EnumId, options);
-            // ClassId
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 167, 67, 108, 97, 115, 115, 73, 100 });
-            formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Serialize(ref writer, value.ClassId, options);
+            // b
+            writer.WriteRaw(new byte[1 + 1] { 161, 98 });
+            formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Serialize(ref writer, value.b, options);
+            // a
+            writer.WriteRaw(new byte[1 + 1] { 161, 97 });
+            writer.Write(value.a);
         }
+    }
 
-        public global::TestData2.Nest1 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class Nest1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest1>
+    {
+        public global::TestData2.Nest1 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -456,10 +441,8 @@ namespace MessagePack.Formatters.TestData2
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class Nest1_IdTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest1.IdType>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest1.IdType value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Nest1 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -467,10 +450,20 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            writer.WriteMapHeader(0);
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            // EnumId
+            writer.WriteRaw(new byte[1 + 6] { 166, 69, 110, 117, 109, 73, 100 });
+            formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Serialize(ref writer, value.EnumId, options);
+            // ClassId
+            writer.WriteRaw(new byte[1 + 7] { 167, 67, 108, 97, 115, 115, 73, 100 });
+            formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Serialize(ref writer, value.ClassId, options);
         }
+    }
 
-        public global::TestData2.Nest1.IdType Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class Nest1_IdTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest1.IdType>
+    {
+        public global::TestData2.Nest1.IdType Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -489,10 +482,8 @@ namespace MessagePack.Formatters.TestData2
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class Nest2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest2>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest2 value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Nest1.IdType value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -500,17 +491,13 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
-            // EnumId
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 166, 69, 110, 117, 109, 73, 100 });
-            formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Serialize(ref writer, value.EnumId, options);
-            // ClassId
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 167, 67, 108, 97, 115, 115, 73, 100 });
-            formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Serialize(ref writer, value.ClassId, options);
+            writer.WriteMapHeader(0);
         }
+    }
 
-        public global::TestData2.Nest2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class Nest2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest2>
+    {
+        public global::TestData2.Nest2 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -551,10 +538,8 @@ namespace MessagePack.Formatters.TestData2
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class Nest2_IdTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest2.IdType>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest2.IdType value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Nest2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -562,10 +547,20 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            writer.WriteMapHeader(0);
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            // EnumId
+            writer.WriteRaw(new byte[1 + 6] { 166, 69, 110, 117, 109, 73, 100 });
+            formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Serialize(ref writer, value.EnumId, options);
+            // ClassId
+            writer.WriteRaw(new byte[1 + 7] { 167, 67, 108, 97, 115, 115, 73, 100 });
+            formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Serialize(ref writer, value.ClassId, options);
         }
+    }
 
-        public global::TestData2.Nest2.IdType Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class Nest2_IdTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest2.IdType>
+    {
+        public global::TestData2.Nest2.IdType Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -584,10 +579,8 @@ namespace MessagePack.Formatters.TestData2
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class PropNameCheck1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck1>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.PropNameCheck1 value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Nest2.IdType value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -595,17 +588,13 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
-            // MyProperty1
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
-            // MyProperty2
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 });
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty2, options);
+            writer.WriteMapHeader(0);
         }
+    }
 
-        public global::TestData2.PropNameCheck1 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class PropNameCheck1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck1>
+    {
+        public global::TestData2.PropNameCheck1 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -653,10 +642,8 @@ namespace MessagePack.Formatters.TestData2
             reader.Depth--;
             return ____result;
         }
-    }
-    public sealed class PropNameCheck2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck2>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.PropNameCheck2 value, global::MessagePack.MessagePackSerializerOptions options)
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.PropNameCheck1 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -667,14 +654,17 @@ namespace MessagePack.Formatters.TestData2
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // MyProperty1
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
             // MyProperty2
-            writer.WriteRaw((ReadOnlySpan<byte>)new byte[] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 });
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 });
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty2, options);
         }
+    }
 
-        public global::TestData2.PropNameCheck2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+    public sealed class PropNameCheck2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck2>
+    {
+        public global::TestData2.PropNameCheck2 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -721,6 +711,24 @@ namespace MessagePack.Formatters.TestData2
             ____result.MyProperty2 = __MyProperty2__;
             reader.Depth--;
             return ____result;
+        }
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.PropNameCheck2 value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            // MyProperty1
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
+            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
+            // MyProperty2
+            writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 });
+            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty2, options);
         }
     }
 }
