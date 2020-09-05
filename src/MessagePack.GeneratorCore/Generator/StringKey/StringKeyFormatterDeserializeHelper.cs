@@ -163,7 +163,7 @@ namespace MessagePackCompiler.Generator
                 buffer.Append(" + ").Append(startPosition);
             }
 
-            buffer.Append(")");
+            buffer.Append("))");
         }
     }
 

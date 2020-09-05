@@ -1401,7 +1401,7 @@ namespace MessagePack.Formatters
                       reader.Skip();
                       continue;
                     case 18:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_AdditionalProperty().Slice(1)) { goto FAIL; }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_AdditionalProperty().Slice(1))) { goto FAIL; }
 
                         __AdditionalProperty__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Deserialize(ref reader, options);
                         continue;
@@ -1433,7 +1433,7 @@ namespace MessagePack.Formatters
                         __Name__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                         continue;
                     case 12:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_SimpleModels().Slice(1)) { goto FAIL; }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_SimpleModels().Slice(1))) { goto FAIL; }
 
                         __SimpleModels__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Deserialize(ref reader, options);
                         continue;
@@ -3917,7 +3917,7 @@ namespace MessagePack.Formatters.SharedData
                       reader.Skip();
                       continue;
                     case 10:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_MyProperty().Slice(1)) { goto FAIL; }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_MyProperty().Slice(1))) { goto FAIL; }
 
                         __MyProperty__ = reader.ReadInt32();
                         continue;
