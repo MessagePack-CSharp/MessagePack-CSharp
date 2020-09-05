@@ -87,6 +87,25 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class ByteReadOnlyMemoryFormatter : IMessagePackFormatter<ReadOnlyMemory<byte>>
+    {
+        public static readonly ByteReadOnlyMemoryFormatter Instance = new ByteReadOnlyMemoryFormatter();
+
+        private ByteReadOnlyMemoryFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, ReadOnlyMemory<byte> value, MessagePackSerializerOptions options)
+        {
+            writer.Write(value.Span);
+        }
+
+        public ReadOnlyMemory<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new ReadOnlyMemory<byte>(bytes.ToArray()) : default;
+        }
+    }
+
     public sealed class ByteArraySegmentFormatter : IMessagePackFormatter<ArraySegment<byte>>
     {
         public static readonly ByteArraySegmentFormatter Instance = new ByteArraySegmentFormatter();
@@ -117,6 +136,20 @@ namespace MessagePack.Formatters
     {
         public void Serialize(ref MessagePackWriter writer, Memory<T> value, MessagePackSerializerOptions options)
         {
+            var formatter = options.Resolver.GetFormatterWithVerify<ReadOnlyMemory<T>>();
+            formatter.Serialize(ref writer, value, options);
+        }
+
+        public Memory<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return options.Resolver.GetFormatterWithVerify<T[]>().Deserialize(ref reader, options);
+        }
+    }
+
+    public sealed class ReadOnlyMemoryFormatter<T> : IMessagePackFormatter<ReadOnlyMemory<T>>
+    {
+        public void Serialize(ref MessagePackWriter writer, ReadOnlyMemory<T> value, MessagePackSerializerOptions options)
+        {
             IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
             var span = value.Span;
@@ -129,7 +162,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public Memory<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public ReadOnlyMemory<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return options.Resolver.GetFormatterWithVerify<T[]>().Deserialize(ref reader, options);
         }

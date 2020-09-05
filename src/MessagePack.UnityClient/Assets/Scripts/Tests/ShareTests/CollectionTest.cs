@@ -158,5 +158,27 @@ namespace MessagePack.Tests
             nullableTest = null;
             this.Convert(nullableTest).IsNull();
         }
+
+        [Fact]
+        public void ReadOnlyMemoryTest()
+        {
+            var test = new ReadOnlyMemory<int>(new[] { 1, 10, 100 });
+            this.Convert(test).ToArray().Is(1, 10, 100);
+            ReadOnlyMemory<int>? nullableTest = new ReadOnlyMemory<int>(new[] { 1, 10, 100 });
+            this.Convert(nullableTest).Value.ToArray().Is(1, 10, 100);
+            nullableTest = null;
+            this.Convert(nullableTest).IsNull();
+        }
+
+        [Fact]
+        public void ReadOnlyMemoryOfByteTest()
+        {
+            var test = new ReadOnlyMemory<byte>(new[] { (byte)1, (byte)10, (byte)100 });
+            this.Convert(test).ToArray().Is((byte)1, (byte)10, (byte)100);
+            ReadOnlyMemory<byte>? nullableTest = new ReadOnlyMemory<byte>(new[] { (byte)1, (byte)10, (byte)100 });
+            this.Convert(nullableTest).Value.ToArray().Is((byte)1, (byte)10, (byte)100);
+            nullableTest = null;
+            this.Convert(nullableTest).IsNull();
+        }
     }
 }

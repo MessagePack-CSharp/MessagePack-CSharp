@@ -225,6 +225,19 @@ namespace MessagePack.Internal
                     }
                 }
 
+                // ReadOnlyMemory
+                else if (genericType == typeof(ReadOnlyMemory<>))
+                {
+                    if (ti.GenericTypeArguments[0] == typeof(byte))
+                    {
+                        return ByteReadOnlyMemoryFormatter.Instance;
+                    }
+                    else
+                    {
+                        return CreateInstance(typeof(ReadOnlyMemoryFormatter<>), ti.GenericTypeArguments);
+                    }
+                }
+
                 // Standard Nullable
                 else if (isNullable)
                 {

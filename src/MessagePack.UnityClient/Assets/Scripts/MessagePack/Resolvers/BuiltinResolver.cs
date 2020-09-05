@@ -139,6 +139,8 @@ namespace MessagePack.Internal
 
             { typeof(Memory<byte>), ByteMemoryFormatter.Instance },
             { typeof(Memory<byte>?), new StaticNullableFormatter<Memory<byte>>(ByteMemoryFormatter.Instance) },
+            { typeof(ReadOnlyMemory<byte>), ByteReadOnlyMemoryFormatter.Instance },
+            { typeof(ReadOnlyMemory<byte>?), new StaticNullableFormatter<ReadOnlyMemory<byte>>(ByteReadOnlyMemoryFormatter.Instance) },
             { typeof(ArraySegment<byte>), ByteArraySegmentFormatter.Instance },
             { typeof(ArraySegment<byte>?), new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance) },
 
