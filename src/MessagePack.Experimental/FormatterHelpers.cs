@@ -354,6 +354,37 @@ namespace MessagePack.Experimental.Formatters
         }
     }
 
+    public sealed partial class DoubleArrayFormatter
+    {
+        public static readonly DoubleArrayFormatter Instance = new DoubleArrayFormatter();
+
+        private DoubleArrayFormatter()
+        {
+        }
+
+        public Double[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Double>();
+            }
+
+            var array = new Double[len];
+            for (var i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadDouble();
+            }
+
+            return array;
+        }
+    }
+
     public sealed partial class BooleanArrayFormatter
     {
         public static readonly BooleanArrayFormatter Instance = new BooleanArrayFormatter();

@@ -324,4 +324,40 @@ namespace Benchmark
             return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
         }
     }
+
+    [ShortRunJob]
+    public class DoubleArrayBenchmarkMessagePackNoSingleInstructionMultipleDataVsMessagePackSingleInstructionMultipleData
+    {
+        [Params(64, 1024, 16 * 1024 * 1024)]
+        public int Size { get; set; }
+
+        private newmsgpack::MessagePack.MessagePackSerializerOptions options;
+        private double[] input;
+
+        [GlobalSetup]
+        public void SetUp()
+        {
+            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(MessagePack.Experimental.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(resolver);
+            input = new double[Size];
+
+            var r = new Random();
+            for (var i = 0; i < input.Length; i++)
+            {
+                input[i] = r.NextDouble();
+            }
+        }
+
+        [Benchmark]
+        public byte[] SerializeSingleInstructionMultipleData()
+        {
+            return newmsgpack::MessagePack.MessagePackSerializer.Serialize(input, options);
+        }
+
+        [Benchmark]
+        public byte[] SerializeNoSingleInstructionMultipleData()
+        {
+            return oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input);
+        }
+    }
 }

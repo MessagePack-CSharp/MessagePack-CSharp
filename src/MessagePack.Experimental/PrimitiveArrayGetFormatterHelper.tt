@@ -11,6 +11,7 @@ Type[] types = new []
   typeof(short),
   typeof(int),
   typeof(float),
+  typeof(double),
   typeof(bool),
 };
 #>

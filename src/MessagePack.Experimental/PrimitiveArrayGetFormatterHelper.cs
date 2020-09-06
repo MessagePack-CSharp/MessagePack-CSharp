@@ -37,6 +37,11 @@ namespace MessagePack.Experimental.Resolvers
                 return Formatters.SingleArrayFormatter.Instance;
             }
 
+            if (t == typeof(Double[]))
+            {
+                return Formatters.DoubleArrayFormatter.Instance;
+            }
+
             if (t == typeof(Boolean[]))
             {
                 return Formatters.BooleanArrayFormatter.Instance;

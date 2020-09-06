@@ -429,6 +429,7 @@ for (var i1 = 0; i1 < range; i1++)
       typeof(short),
       typeof(int),
       typeof(float),
+      typeof(double),
       typeof(bool),
     };
 
@@ -479,4 +480,3 @@ for (var i1 = 0; i1 < range; i1++)
     }
 #>
 }
-

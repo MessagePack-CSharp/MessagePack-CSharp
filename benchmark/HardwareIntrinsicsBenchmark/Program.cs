@@ -15,6 +15,7 @@ namespace HardwareIntrinsicsBenchmark
             BenchmarkRunner.Run<Int16ArrayBenchmarkMessagePackNoSingleInstructionMultipleDataVsMessagePackSingleInstructionMultipleData>();
             BenchmarkRunner.Run<Int32ArrayBenchmarkMessagePackNoSingleInstructionMultipleDataVsMessagePackSingleInstructionMultipleData>();
             BenchmarkRunner.Run<SingleArrayBenchmarkMessagePackNoSingleInstructionMultipleDataVsMessagePackSingleInstructionMultipleData>();
+            BenchmarkRunner.Run<DoubleArrayBenchmarkMessagePackNoSingleInstructionMultipleDataVsMessagePackSingleInstructionMultipleData>();
         }
     }
 }
