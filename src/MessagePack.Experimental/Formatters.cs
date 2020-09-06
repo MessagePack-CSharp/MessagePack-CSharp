@@ -467,11 +467,11 @@ namespace MessagePack.Experimental.Formatters
                             goto ProcessEach;
                         }
 
-                        var shuffle = Vector256.Create((byte)3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
+                        var vectorShuffle = Vector256.Create((byte)7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
                         for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
                             var current = Avx.LoadVector256((byte*)inputIterator);
-                            var answer = Avx2.Shuffle(current, shuffle).AsUInt64();
+                            var answer = Avx2.Shuffle(current, vectorShuffle).AsUInt64();
                             *outputIterator++ = MessagePackCode.Float64;
                             *(ulong*)outputIterator = answer.GetElement(0);
                             outputIterator += 8;
@@ -496,11 +496,11 @@ namespace MessagePack.Experimental.Formatters
                             goto ProcessEach;
                         }
 
-                        var shuffle = Vector128.Create((byte)3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
+                        var vectorShuffle = Vector128.Create((byte)7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
                         for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
                             var current = Sse2.LoadVector128((byte*)inputIterator);
-                            var answer = Ssse3.Shuffle(current, shuffle).AsUInt64();
+                            var answer = Ssse3.Shuffle(current, vectorShuffle).AsUInt64();
                             *outputIterator++ = MessagePackCode.Float64;
                             *(ulong*)outputIterator = answer.GetElement(0);
                             outputIterator += 8;

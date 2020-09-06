@@ -5,6 +5,7 @@ extern alias oldmsgpack;
 extern alias newmsgpack;
 
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 
@@ -42,6 +43,11 @@ namespace Benchmark
             }
 
             inputSerialized = newmsgpack::MessagePack.MessagePackSerializer.Serialize(input, options);
+
+            if (!oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input).SequenceEqual(inputSerialized))
+            {
+                throw new InvalidProgramException();
+            }
         }
 
         [Benchmark]
@@ -123,6 +129,11 @@ namespace Benchmark
                 inputM32[i] = -32;
                 inputM33[i] = -33;
             }
+
+            if (!oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input).SequenceEqual(newmsgpack::MessagePack.MessagePackSerializer.Serialize(input, options)))
+            {
+                throw new InvalidProgramException();
+            }
         }
 
         [Benchmark]
@@ -195,8 +206,10 @@ namespace Benchmark
             var r = new Random();
             r.NextBytes(MemoryMarshal.AsBytes(input.AsSpan()));
 
-            Console.WriteLine(newmsgpack::MessagePack.MessagePackSerializer.Serialize(input).Length);
-            Console.WriteLine(oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input).Length);
+            if (!oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input).SequenceEqual(newmsgpack::MessagePack.MessagePackSerializer.Serialize(input, options)))
+            {
+                throw new InvalidProgramException();
+            }
         }
 
         [Benchmark]
@@ -249,6 +262,11 @@ namespace Benchmark
             for (var i = 0; i < inputShortMin.Length; i++)
             {
                 inputShortMin[i] = short.MinValue;
+            }
+
+            if (!oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input).SequenceEqual(newmsgpack::MessagePack.MessagePackSerializer.Serialize(input, options)))
+            {
+                throw new InvalidProgramException();
             }
         }
 
@@ -310,6 +328,11 @@ namespace Benchmark
             {
                 input[i] = (float)r.NextDouble();
             }
+
+            if (!oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input).SequenceEqual(newmsgpack::MessagePack.MessagePackSerializer.Serialize(input, options)))
+            {
+                throw new InvalidProgramException();
+            }
         }
 
         [Benchmark]
@@ -345,6 +368,11 @@ namespace Benchmark
             for (var i = 0; i < input.Length; i++)
             {
                 input[i] = r.NextDouble();
+            }
+
+            if (!oldmsgpack::MessagePack.MessagePackSerializer.Serialize(input).SequenceEqual(newmsgpack::MessagePack.MessagePackSerializer.Serialize(input, options)))
+            {
+                throw new InvalidProgramException();
             }
         }
 
