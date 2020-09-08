@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -235,6 +236,19 @@ namespace MessagePack.Internal
                     else
                     {
                         return CreateInstance(typeof(ReadOnlyMemoryFormatter<>), ti.GenericTypeArguments);
+                    }
+                }
+
+                // ReadOnlySequence
+                else if (genericType == typeof(ReadOnlySequence<>))
+                {
+                    if (ti.GenericTypeArguments[0] == typeof(byte))
+                    {
+                        return ByteReadOnlySequenceFormatter.Instance;
+                    }
+                    else
+                    {
+                        return CreateInstance(typeof(ReadOnlySequenceFormatter<>), ti.GenericTypeArguments);
                     }
                 }
 
