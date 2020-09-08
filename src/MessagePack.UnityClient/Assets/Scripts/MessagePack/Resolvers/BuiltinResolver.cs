@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -139,6 +140,10 @@ namespace MessagePack.Internal
 
             { typeof(Memory<byte>), ByteMemoryFormatter.Instance },
             { typeof(Memory<byte>?), new StaticNullableFormatter<Memory<byte>>(ByteMemoryFormatter.Instance) },
+            { typeof(ReadOnlyMemory<byte>), ByteReadOnlyMemoryFormatter.Instance },
+            { typeof(ReadOnlyMemory<byte>?), new StaticNullableFormatter<ReadOnlyMemory<byte>>(ByteReadOnlyMemoryFormatter.Instance) },
+            { typeof(ReadOnlySequence<byte>), ByteReadOnlySequenceFormatter.Instance },
+            { typeof(ReadOnlySequence<byte>?), new StaticNullableFormatter<ReadOnlySequence<byte>>(ByteReadOnlySequenceFormatter.Instance) },
             { typeof(ArraySegment<byte>), ByteArraySegmentFormatter.Instance },
             { typeof(ArraySegment<byte>?), new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance) },
 
