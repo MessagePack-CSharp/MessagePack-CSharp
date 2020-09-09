@@ -19,6 +19,7 @@ if ! [[ -d "${SCRIPT_DIR}/Assets/Plugins" ]] ; then
 fi
 
 cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Buffers.dll ${SCRIPT_DIR}/Assets/Plugins/System.Buffers.dll
+cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Collections.Immutable.dll ${SCRIPT_DIR}/Assets/Plugins/System.Collections.Immutable.dll
 cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Memory.dll ${SCRIPT_DIR}/Assets/Plugins/System.Memory.dll
 cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Runtime.CompilerServices.Unsafe.dll ${SCRIPT_DIR}/Assets/Plugins/System.Runtime.CompilerServices.Unsafe.dll
 cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Threading.Tasks.Extensions.dll ${SCRIPT_DIR}/Assets/Plugins/System.Threading.Tasks.Extensions.dll
