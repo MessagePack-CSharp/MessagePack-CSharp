@@ -9,7 +9,6 @@
     "precompiledReferences": [
       "System.Memory.dll"
       ,"System.Buffers.dll"
-      ,"System.Collections.Immutable.dll"
       ,"System.Threading.Tasks.Extensions.dll"
       ,"System.Runtime.CompilerServices.Unsafe.dll"
       ,"System.Runtime.Extensions.dll"
