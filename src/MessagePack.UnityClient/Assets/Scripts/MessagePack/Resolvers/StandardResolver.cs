@@ -287,6 +287,8 @@ namespace MessagePack.Internal
 
 #if UNITY_2018_3_OR_NEWER
             MessagePack.Unity.UnityResolver.Instance,
+#else
+            ImmutableCollection.ImmutableCollectionResolver.Instance,
 #endif
 
 #if !ENABLE_IL2CPP && !NET_STANDARD_2_0
