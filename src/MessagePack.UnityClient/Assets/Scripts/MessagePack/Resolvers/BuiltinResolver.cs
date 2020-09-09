@@ -104,7 +104,7 @@ namespace MessagePack.Internal
             { typeof(Nil), NilFormatter.Instance },
             { typeof(Nil?), NullableNilFormatter.Instance },
 
-            // otpmitized primitive array formatter
+            // optimized primitive array formatter
             { typeof(Int16[]), Int16ArrayFormatter.Instance },
             { typeof(Int32[]), Int32ArrayFormatter.Instance },
             { typeof(Int64[]), Int64ArrayFormatter.Instance },
