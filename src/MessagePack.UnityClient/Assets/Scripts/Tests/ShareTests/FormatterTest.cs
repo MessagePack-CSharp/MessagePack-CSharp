@@ -291,10 +291,16 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void UriTest()
+        public void UriTest_Absolute()
         {
             var absolute = new Uri("http://google.com/");
             this.Convert(absolute).ToString().Is("http://google.com/");
+        }
+
+        [SkippableFact]
+        public void UriTest_Relative()
+        {
+            Skip.If(TestUtilities.IsRunningOnMono && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
 
             var relative = new Uri("/me/", UriKind.Relative);
             this.Convert(relative).ToString().Is("/me/");
