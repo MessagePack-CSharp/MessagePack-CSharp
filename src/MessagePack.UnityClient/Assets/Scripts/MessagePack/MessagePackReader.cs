@@ -149,6 +149,7 @@ namespace MessagePack
         /// <remarks>
         /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
         /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
+        /// WARNING: when false is returned, the position of the reader is undefined.
         /// </remarks>
         internal bool TrySkip()
         {
@@ -187,11 +188,11 @@ namespace MessagePack
                 case MessagePackCode.Str8:
                 case MessagePackCode.Str16:
                 case MessagePackCode.Str32:
-                    return this.reader.TryAdvance(this.GetStringLengthInBytes());
+                    return this.TryGetStringLengthInBytes(out int length) && this.reader.TryAdvance(length);
                 case MessagePackCode.Bin8:
                 case MessagePackCode.Bin16:
                 case MessagePackCode.Bin32:
-                    return this.reader.TryAdvance(this.GetBytesLength());
+                    return this.TryGetBytesLength(out length) && this.reader.TryAdvance(length);
                 case MessagePackCode.FixExt1:
                 case MessagePackCode.FixExt2:
                 case MessagePackCode.FixExt4:
@@ -220,7 +221,7 @@ namespace MessagePack
 
                     if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
                     {
-                        return this.reader.TryAdvance(this.GetStringLengthInBytes());
+                        return this.TryGetStringLengthInBytes(out length) && this.reader.TryAdvance(length);
                     }
 
                     // We don't actually expect to ever hit this point, since every code is supported.
@@ -659,7 +660,7 @@ namespace MessagePack
         /// or to support OldSpec compatibility:
         /// <see cref="MessagePackCode.Str16"/>,
         /// <see cref="MessagePackCode.Str32"/>,
-        /// or something beteween <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
+        /// or something between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
         /// <returns>
         /// A sequence of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
@@ -956,77 +957,135 @@ namespace MessagePack
 
         private int GetBytesLength()
         {
-            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
+            ThrowInsufficientBufferUnless(this.TryGetBytesLength(out int length));
+            return length;
+        }
+
+        private bool TryGetBytesLength(out int length)
+        {
+            if (!this.reader.TryRead(out byte code))
+            {
+                length = 0;
+                return false;
+            }
 
             // In OldSpec mode, Bin didn't exist, so Str was used. Str8 didn't exist either.
-            int length;
             switch (code)
             {
                 case MessagePackCode.Bin8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteLength));
-                    length = byteLength;
+                    if (this.reader.TryRead(out byte byteLength))
+                    {
+                        length = byteLength;
+                        return true;
+                    }
+
                     break;
                 case MessagePackCode.Bin16:
                 case MessagePackCode.Str16: // OldSpec compatibility
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortLength));
-                    length = unchecked((ushort)shortLength);
+                    if (this.reader.TryReadBigEndian(out short shortLength))
+                    {
+                        length = unchecked((ushort)shortLength);
+                        return true;
+                    }
+
                     break;
                 case MessagePackCode.Bin32:
                 case MessagePackCode.Str32: // OldSpec compatibility
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out length));
+                    if (this.reader.TryReadBigEndian(out length))
+                    {
+                        return true;
+                    }
+
                     break;
                 default:
                     // OldSpec compatibility
                     if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
                     {
                         length = code & 0x1F;
-                        break;
+                        return true;
                     }
 
                     throw ThrowInvalidCode(code);
             }
 
-            return length;
+            length = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the length of the next string.
+        /// </summary>
+        /// <param name="length">Receives the length of the next string, if there were enough bytes to read it.</param>
+        /// <returns><c>true</c> if there were enough bytes to read the length of the next string; <c>false</c> otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool TryGetStringLengthInBytes(out int length)
+        {
+            if (!this.reader.TryRead(out byte code))
+            {
+                length = 0;
+                return false;
+            }
+
+            if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
+            {
+                length = code & 0x1F;
+                return true;
+            }
+
+            return this.TryGetStringLengthInBytesSlow(code, out length);
         }
 
         /// <summary>
         /// Gets the length of the next string.
         /// </summary>
         /// <returns>The length of the next string.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetStringLengthInBytes()
         {
-            ThrowInsufficientBufferUnless(this.reader.TryRead(out byte code));
-
-            if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
-            {
-                return code & 0x1F;
-            }
-
-            return this.GetStringLengthInBytesSlow(code);
+            ThrowInsufficientBufferUnless(this.TryGetStringLengthInBytes(out int length));
+            return length;
         }
 
-        private int GetStringLengthInBytesSlow(byte code)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool TryGetStringLengthInBytesSlow(byte code, out int length)
         {
             switch (code)
             {
                 case MessagePackCode.Str8:
-                    ThrowInsufficientBufferUnless(this.reader.TryRead(out byte byteValue));
-                    return byteValue;
+                    if (this.reader.TryRead(out byte byteValue))
+                    {
+                        length = byteValue;
+                        return true;
+                    }
+
+                    break;
                 case MessagePackCode.Str16:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out short shortValue));
-                    return unchecked((ushort)shortValue);
+                    if (this.reader.TryReadBigEndian(out short shortValue))
+                    {
+                        length = unchecked((ushort)shortValue);
+                        return true;
+                    }
+
+                    break;
                 case MessagePackCode.Str32:
-                    ThrowInsufficientBufferUnless(this.reader.TryReadBigEndian(out int intValue));
-                    return intValue;
+                    if (this.reader.TryReadBigEndian(out int intValue))
+                    {
+                        length = intValue;
+                        return true;
+                    }
+
+                    break;
                 default:
                     if (code >= MessagePackCode.MinFixStr && code <= MessagePackCode.MaxFixStr)
                     {
-                        return code & 0x1F;
+                        length = code & 0x1F;
+                        return true;
                     }
 
                     throw ThrowInvalidCode(code);
             }
+
+            length = 0;
+            return false;
         }
 
         /// <summary>

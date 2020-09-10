@@ -1,14 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <LangVersion>8</LangVersion>
+    <Nullable>enable</Nullable>
 
-    <!-- NuGet Packages for build task. -->
     <NoPackageAnalysis>true</NoPackageAnalysis>
-    <BuildOutputTargetFolder>tasks</BuildOutputTargetFolder>
-    <!-- SKD depenencies local copy. -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);AddBuildOutputAndDependencies</TargetsForTfmSpecificContentInPackage>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <!-- NuGet Info -->
     <DevelopmentDependency>true</DevelopmentDependency>
     <IsPackable>true</IsPackable>
     <Title>MessagePack CodeGenerator Tasks</Title>
@@ -17,32 +18,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- NuGet Tasks path. -->
-    <Content Include="build\MessagePack.MSBuild.Tasks.props" PackagePath="build\" />
+    <None Remove="build\MessagePack.MSBuild.Tasks.targets" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build.Framework" Version="16.0.461" />
+    <Content Include="build\*" PackagePath="build\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="16.0.461" />
-    <PackageReference Update="@(PackageReference)" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MessagePack.GeneratorCore\MessagePack.GeneratorCore.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\MessagePack.GeneratorCore\MessagePack.GeneratorCore.csproj" />
   </ItemGroup>
 
-  <!--
-        The include needs to happen after output has been copied to build output folder
-        but before NuGet generates a nuspec. See https://github.com/NuGet/Home/issues/4704.
-    -->
-  <Target Name="PackTaskDependencies" BeforeTargets="GenerateNuspec">
+  <Target Name="AddBuildOutputAndDependencies">
     <ItemGroup>
-      <_PackageFiles Include="$(OutDir)\**\*.dll" Exclude="$(OutDir)$(TargetFileName)">
-        <PackagePath>tasks\netstandard2.0\%(RecursiveDir)</PackagePath>
-        <Visible>false</Visible>
-        <BuildAction>Content</BuildAction>
-      </_PackageFiles>
+      <TfmSpecificPackageFile Include="$(OutputPath)\**" PackagePath="build\%(RecursiveDir)" />
     </ItemGroup>
   </Target>
-
 </Project>

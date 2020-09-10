@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePackCompiler.CodeAnalysis
@@ -91,7 +92,7 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             MessagePackFormatterAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackFormatterAttribute");
-            if (IMessagePackSerializationCallbackReceiver == null)
+            if (MessagePackFormatterAttribute == null)
             {
                 throw new InvalidOperationException("failed to get metadata of MessagePack.MessagePackFormatterAttribute");
             }
@@ -264,6 +265,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly bool disallowInternal;
 
+        private HashSet<string> externalIgnoreTypeNames;
+
         // visitor workspace:
         private HashSet<ITypeSymbol> alreadyCollected;
         private List<ObjectSerializationInfo> collectedObjectInfo;
@@ -272,12 +275,13 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<UnionSerializationInfo> collectedUnionInfo;
         private List<ObjectSerializationInfo> collectedClosedTypeGenericInfo;
 
-        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
+        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[] ignoreTypeNames, Action<string> logger)
         {
             this.logger = logger;
             this.typeReferences = new ReferenceSymbols(compilation, logger);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
+            this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
 
             targetTypes = compilation.GetNamedTypeSymbols()
                 .Where(x =>
@@ -313,7 +317,7 @@ namespace MessagePackCompiler.CodeAnalysis
         }
 
         // EntryPoint
-        public (ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, GenericSerializationInfo[] genericInfo, UnionSerializationInfo[] unionInfo, ObjectSerializationInfo[] closedTypeGenericInfo) Collect()
+        public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo, ObjectSerializationInfo[] ClosedTypeGenericInfo) Collect()
         {
             this.ResetWorkspace();
 
@@ -339,6 +343,11 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             if (this.embeddedTypes.Contains(typeSymbol.ToString()))
+            {
+                return;
+            }
+
+            if (this.externalIgnoreTypeNames.Contains(typeSymbol.ToString()))
             {
                 return;
             }
@@ -422,11 +431,30 @@ namespace MessagePackCompiler.CodeAnalysis
                 SubTypes = unionAttrs.Select(x => new UnionSubTypeInfo
                 {
                     Key = (int)x[0].Value,
-                    Type = (x[1].Value as ITypeSymbol).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    Type = x[1].Value is ITypeSymbol typeSymbol ? typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : throw new NotSupportedException($"AOT code generation only supports UnionAttribute that uses a Type parameter, but the {type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)} type uses an unsupported parameter."),
                 }).OrderBy(x => x.Key).ToArray(),
             };
 
             this.collectedUnionInfo.Add(info);
+        }
+
+        private void CollectGenericUnion(INamedTypeSymbol type)
+        {
+            System.Collections.Immutable.ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
+            if (unionAttrs.Length == 0)
+            {
+                return;
+            }
+
+            var subTypes = unionAttrs.Select(x => x[1].Value).OfType<INamedTypeSymbol>().ToArray();
+            foreach (var unionType in subTypes)
+            {
+                if (alreadyCollected.Contains(unionType) == false)
+                {
+                    var info = GetObjectInfo(unionType);
+                    collectedObjectInfo.Add(info);
+                }
+            }
         }
 
         private void CollectArray(IArrayTypeSymbol array)
@@ -547,6 +575,7 @@ namespace MessagePackCompiler.CodeAnalysis
             // Skip generic symbol declaration itself (open type, e.g. Foo<T>) because we can get nothing useful from it anyways.
             if (type.IsDefinition)
             {
+                this.CollectGenericUnion(type);
                 return;
             }
 
@@ -562,8 +591,8 @@ namespace MessagePackCompiler.CodeAnalysis
                 formatterBuilder.Append(type.ContainingNamespace.ToDisplayString() + ".");
             }
 
-            formatterBuilder.Append(type.Name + "Formatter");
-            formatterBuilder.Append("<" + string.Join(", ", type.TypeArguments) + ">");
+            formatterBuilder.Append(GetMinimallyQualifiedClassName(type));
+            formatterBuilder.Append("Formatter");
 
             var genericSerializationInfo = new GenericSerializationInfo
             {
@@ -977,24 +1006,13 @@ namespace MessagePackCompiler.CodeAnalysis
                 needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
             }
 
-            string templateParametersString;
-            if (type.TypeParameters.Count() > 0)
-            {
-                templateParametersString = "<" + string.Join(", ", type.TypeParameters) + ">";
-            }
-            else
-            {
-                templateParametersString = null;
-            }
-
             var info = new ObjectSerializationInfo
             {
                 IsClass = isClass,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
-                Name = type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
-                TemplateParametersString = templateParametersString,
+                Name = GetMinimallyQualifiedClassName(type),
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 Namespace = type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
                 HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor,
@@ -1003,6 +1021,17 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             return info;
+        }
+
+        private static string GetMinimallyQualifiedClassName(INamedTypeSymbol type)
+        {
+            var name = type.ContainingType is object ? GetMinimallyQualifiedClassName(type.ContainingType) + "_" : string.Empty;
+            name += type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            name = name.Replace(".", "_");
+            name = name.Replace("<", "_");
+            name = name.Replace(">", "_");
+            name = Regex.Replace(name, @"\[([,])*\]", match => $"Array{match.Length - 1}");
+            return name;
         }
 
         private static bool TryGetNextConstructor(IEnumerator<IMethodSymbol> ctorEnumerator, ref IMethodSymbol ctor)

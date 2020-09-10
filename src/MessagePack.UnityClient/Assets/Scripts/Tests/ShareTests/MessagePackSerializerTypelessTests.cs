@@ -20,11 +20,20 @@ public class MessagePackSerializerTypelessTests
     }
 
     [Fact]
-    public void SerializationOfBuiltInType()
+    public void SerializationOfString()
     {
         byte[] msgpack = MessagePackSerializer.Typeless.Serialize("hi");
         this.logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack));
         Assert.Equal("hi", MessagePackSerializer.Typeless.Deserialize(msgpack));
+    }
+
+    [Fact]
+    public void SerializationOfSystemType()
+    {
+        Type type = typeof(string);
+        byte[] msgpack = MessagePackSerializer.Typeless.Serialize(type);
+        this.logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack));
+        Assert.Equal(type, MessagePackSerializer.Typeless.Deserialize(msgpack));
     }
 
     [Fact]

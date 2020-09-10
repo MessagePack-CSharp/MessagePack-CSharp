@@ -14,8 +14,6 @@
 namespace MessagePack.Resolvers
 {
     using System;
-    using System.Buffers;
-    using MessagePack;
 
     public class GeneratedResolver : global::MessagePack.IFormatterResolver
     {
@@ -1160,7 +1158,7 @@ namespace MessagePack.Formatters
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -1454,7 +1452,7 @@ namespace MessagePack.Formatters
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -1724,7 +1722,7 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -2158,7 +2156,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -2228,7 +2226,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -2343,7 +2341,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -3156,7 +3154,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -3327,7 +3325,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
@@ -3465,7 +3463,7 @@ namespace MessagePack.Formatters.SharedData
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 int key;
                 if (!this.____keyMapping.TryGetValue(stringKey, out key))
                 {
