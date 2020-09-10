@@ -31,7 +31,6 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 - [Dynamic (Untyped) Deserialization](#dynamic-untyped-deserialization)
 - [Object Type Serialization](#object-type-serialization)
 - [Typeless](#typeless)
-    - [ExpandoObject](#expandoobject)
 - [Security](#security)
 - [Performance](#performance)
     - [Deserialization Performance for different options](#deserialization-performance-for-different-options)
@@ -535,6 +534,9 @@ Console.WriteLine(dynamicModel["Name"]); // foobar
 Console.WriteLine(dynamicModel["Items"][2]); // 100
 ```
 
+Exploring object trees using the dictionary indexer syntax is the fastest option for untyped deserialization, but it is tedious to read and write.
+Where performance is not as important as code readability, consider deserializing with [ExpandoObject](doc/ExpandoObject.md).
+
 ## Object Type Serialization
 
 `StandardResolver` and `ContractlessStandardResolver` can serialize `object`/anonymous typed objects.
@@ -616,34 +618,6 @@ MessagePack.Formatters.TypelessFormatter.BindToType = typeName =>
 
     return Type.GetType(typeName, false);
 };
-```
-
-### ExpandoObject
-
-By default, deserializing untyped maps results in a `Dictionary<object, object>` being created to store the map.
-If you would like to use C# `dynamic` to explore the deserialized object graph more naturally (i.e. the way Javascript would allow),
-you can deserialize these maps into .NET `ExpandoObject` and use the C# dynamic keyword:
-
-```cs
-var serializerOptions = MessagePackSerializerOptions.Standard;
-var deserializerOptions = MessagePackSerializerOptions.Standard.WithResolver(
-    CompositeResolver.Create(
-        PrimitiveObjectResolver.InstanceWithExpandoObject,
-        MessagePackSerializerOptions.Standard.Resolver));
-
-dynamic expando = new ExpandoObject();
-expando.Name = "George";
-expando.Age = 18;
-expando.Other = new { OtherProperty = "foo" };
-
-byte[] bin = MessagePackSerializer.Serialize(expando, options);
-this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin)); // {"Name":"George","Age":18,"Other":{"OtherProperty":"foo"}}
-
-dynamic expando2 = MessagePackSerializer.Deserialize<ExpandoObject>(bin, deserializerOptions);
-Assert.Equal(expando.Name, expando2.Name);
-Assert.Equal(expando.Age, expando2.Age);
-Assert.NotNull(expando2.Other);
-Assert.Equal(expando.Other.OtherProperty, expando2.Other.OtherProperty);
 ```
 
 ## <a name="security"></a>Security

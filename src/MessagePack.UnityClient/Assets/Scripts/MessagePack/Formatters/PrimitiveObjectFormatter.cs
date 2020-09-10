@@ -4,16 +4,14 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Dynamic;
+using System.Net.Security;
 using System.Reflection;
 
 namespace MessagePack.Formatters
 {
-    public sealed class PrimitiveObjectFormatter : IMessagePackFormatter<object>
+    public class PrimitiveObjectFormatter : IMessagePackFormatter<object>
     {
-        public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter(useExpandoObject: false);
-
-        public static readonly IMessagePackFormatter<object> InstanceWithExpandoObject = new PrimitiveObjectFormatter(useExpandoObject: true);
+        public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter();
 
         private static readonly Dictionary<Type, int> TypeToJumpCode = new Dictionary<Type, int>()
         {
@@ -35,11 +33,8 @@ namespace MessagePack.Formatters
             { typeof(byte[]), 14 },
         };
 
-        private readonly bool useExpandoObject;
-
-        private PrimitiveObjectFormatter(bool useExpandoObject)
+        protected PrimitiveObjectFormatter()
         {
-            this.useExpandoObject = useExpandoObject;
         }
 
 #if !UNITY_2018_3_OR_NEWER
@@ -310,35 +305,10 @@ namespace MessagePack.Formatters
                     {
                         var length = reader.ReadMapHeader();
 
-                        IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
                         options.Security.DepthStep(ref reader);
                         try
                         {
-                            if (this.useExpandoObject)
-                            {
-                                IMessagePackFormatter<string> keyFormatter = resolver.GetFormatterWithVerify<string>();
-                                IDictionary<string, object> dictionary = new ExpandoObject();
-                                for (int i = 0; i < length; i++)
-                                {
-                                    var key = keyFormatter.Deserialize(ref reader, options);
-                                    var value = objectFormatter.Deserialize(ref reader, options);
-                                    dictionary.Add(key, value);
-                                }
-
-                                return dictionary;
-                            }
-                            else
-                            {
-                                var dictionary = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
-                                for (int i = 0; i < length; i++)
-                                {
-                                    var key = objectFormatter.Deserialize(ref reader, options);
-                                    var value = objectFormatter.Deserialize(ref reader, options);
-                                    dictionary.Add(key, value);
-                                }
-
-                                return dictionary;
-                            }
+                            return this.DeserializeMap(ref reader, length, options);
                         }
                         finally
                         {
@@ -352,6 +322,20 @@ namespace MessagePack.Formatters
                 default:
                     throw new MessagePackSerializationException("Invalid primitive bytes.");
             }
+        }
+
+        protected virtual object DeserializeMap(ref MessagePackReader reader, int length, MessagePackSerializerOptions options)
+        {
+            IMessagePackFormatter<object> objectFormatter = options.Resolver.GetFormatter<object>();
+            var dictionary = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
+            for (int i = 0; i < length; i++)
+            {
+                var key = objectFormatter.Deserialize(ref reader, options);
+                var value = objectFormatter.Deserialize(ref reader, options);
+                dictionary.Add(key, value);
+            }
+
+            return dictionary;
         }
     }
 }

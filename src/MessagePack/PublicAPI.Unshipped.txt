@@ -14,6 +14,7 @@ MessagePack.Formatters.MemoryFormatter<T>
 MessagePack.Formatters.MemoryFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Memory<T>
 MessagePack.Formatters.MemoryFormatter<T>.MemoryFormatter() -> void
 MessagePack.Formatters.MemoryFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, System.Memory<T> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.PrimitiveObjectFormatter.PrimitiveObjectFormatter() -> void
 MessagePack.Formatters.ReadOnlyMemoryFormatter<T>
 MessagePack.Formatters.ReadOnlyMemoryFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.ReadOnlyMemory<T>
 MessagePack.Formatters.ReadOnlyMemoryFormatter<T>.ReadOnlyMemoryFormatter() -> void
@@ -60,8 +61,7 @@ MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.InterfaceImmutableSetFormatter() -> void
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.InterfaceImmutableStackFormatter() -> void
-MessagePack.Resolvers.ExpandoObjectFormatterResolver
-MessagePack.Resolvers.ExpandoObjectFormatterResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.Resolvers.ExpandoObjectResolver
 override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Add(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder collection, int index, TKey key, TValue value, MessagePack.MessagePackSerializerOptions options) -> void
 override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Complete(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder intermediateCollection) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>
 override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder
@@ -107,8 +107,8 @@ static readonly MessagePack.Formatters.ByteMemoryFormatter.Instance -> MessagePa
 static readonly MessagePack.Formatters.ByteReadOnlyMemoryFormatter.Instance -> MessagePack.Formatters.ByteReadOnlyMemoryFormatter
 static readonly MessagePack.Formatters.ByteReadOnlySequenceFormatter.Instance -> MessagePack.Formatters.ByteReadOnlySequenceFormatter
 static readonly MessagePack.Formatters.ExpandoObjectFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Dynamic.ExpandoObject>
-static readonly MessagePack.Formatters.PrimitiveObjectFormatter.InstanceWithExpandoObject -> MessagePack.Formatters.IMessagePackFormatter<object>
 static readonly MessagePack.Formatters.TypeFormatter<T>.Instance -> MessagePack.Formatters.IMessagePackFormatter<T>
 static readonly MessagePack.ImmutableCollection.ImmutableCollectionResolver.Instance -> MessagePack.ImmutableCollection.ImmutableCollectionResolver
-static readonly MessagePack.Resolvers.ExpandoObjectFormatterResolver.Instance -> MessagePack.IFormatterResolver
-static readonly MessagePack.Resolvers.PrimitiveObjectResolver.InstanceWithExpandoObject -> MessagePack.Resolvers.PrimitiveObjectResolver
+static readonly MessagePack.Resolvers.ExpandoObjectResolver.Instance -> MessagePack.IFormatterResolver
+static readonly MessagePack.Resolvers.ExpandoObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
+virtual MessagePack.Formatters.PrimitiveObjectFormatter.DeserializeMap(ref MessagePack.MessagePackReader reader, int length, MessagePack.MessagePackSerializerOptions options) -> object

@@ -19,7 +19,7 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void ExpandoObject()
+        public void ExpandoObject_Roundtrip()
         {
             var options = MessagePackSerializerOptions.Standard;
 
@@ -38,21 +38,15 @@ namespace MessagePack.Tests
         [Fact]
         public void ExpandoObject_DeepGraphContainsAnonymousType()
         {
-            var options = MessagePackSerializerOptions.Standard;
-            var deserializerOptions = MessagePackSerializerOptions.Standard.WithResolver(
-                CompositeResolver.Create(
-                    PrimitiveObjectResolver.InstanceWithExpandoObject,
-                    MessagePackSerializerOptions.Standard.Resolver));
-
             dynamic expando = new ExpandoObject();
             expando.Name = "George";
             expando.Age = 18;
             expando.Other = new { OtherProperty = "foo" };
 
-            byte[] bin = MessagePackSerializer.Serialize(expando, options);
+            byte[] bin = MessagePackSerializer.Serialize(expando, MessagePackSerializerOptions.Standard);
             this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 
-            dynamic expando2 = MessagePackSerializer.Deserialize<ExpandoObject>(bin, deserializerOptions);
+            dynamic expando2 = MessagePackSerializer.Deserialize<ExpandoObject>(bin, ExpandoObjectResolver.Options);
             Assert.Equal(expando.Name, expando2.Name);
             Assert.Equal(expando.Age, expando2.Age);
             Assert.NotNull(expando2.Other);
@@ -63,20 +57,17 @@ namespace MessagePack.Tests
         public void ExpandoObject_DeepGraphContainsCustomTypes()
         {
             var options = MessagePackSerializerOptions.Standard;
-            var deserializerOptions = MessagePackSerializerOptions.Standard.WithResolver(
-                CompositeResolver.Create(
-                    PrimitiveObjectResolver.InstanceWithExpandoObject,
-                    MessagePackSerializerOptions.Standard.Resolver));
+            var f = options.Resolver.GetFormatter<string>();
 
             dynamic expando = new ExpandoObject();
             expando.Name = "George";
             expando.Age = 18;
             expando.Other = new CustomObject { OtherProperty = "foo" };
 
-            byte[] bin = MessagePackSerializer.Serialize(expando, options);
+            byte[] bin = MessagePackSerializer.Serialize(expando, MessagePackSerializerOptions.Standard);
             this.logger.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 
-            dynamic expando2 = MessagePackSerializer.Deserialize<ExpandoObject>(bin, deserializerOptions);
+            dynamic expando2 = MessagePackSerializer.Deserialize<ExpandoObject>(bin, ExpandoObjectResolver.Options);
             Assert.Equal(expando.Name, expando2.Name);
             Assert.Equal(expando.Age, expando2.Age);
             Assert.NotNull(expando2.Other);
