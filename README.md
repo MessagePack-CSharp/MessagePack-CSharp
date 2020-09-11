@@ -1043,7 +1043,7 @@ public interface IMessagePackFormatter<T>
 
 Many built-in formatters exists under `MessagePack.Formatters`. Your custom types are usually automatically supported with the built-in type resolvers that generate new `IMessagePackFormatter<T>` types on-the-fly using dynamic code generation. See our [AOT code generation](#aot) support for platforms that do not support this.
 
-However, some types - especially those provided by third party libraries or the runtime itself, cannot be appropriately annotated, and contractless serialization would produce inefficient or even wrong results.
+However, some types - especially those provided by third party libraries or the runtime itself - cannot be appropriately annotated, and contractless serialization would produce inefficient or even wrong results.
 To take more control over the serialization of such custom types, write your own `IMessagePackFormatter<T>` implementation.
 Here is an example of such a custom formatter implementation. Note its use of the primitive API that is described in the next section.
 
