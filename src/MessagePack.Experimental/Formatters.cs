@@ -386,6 +386,7 @@ namespace MessagePack.Experimental.Formatters
                 return;
             }
 
+            // output byte[] length can be calculated from input float[] length.
             var outputLength = inputLength * 5;
             var destination = writer.GetSpan(outputLength);
             fixed (byte* pDestination = &destination[0])
@@ -403,12 +404,16 @@ namespace MessagePack.Experimental.Formatters
                             goto ProcessEach;
                         }
 
+                        // Process 3 floats at once.
+                        // From 12 bytes to 15 bytes.
                         var vectorConstant = Vector128.Create(MessagePackCode.Float32, 0, 0, 0, 0, MessagePackCode.Float32, 0, 0, 0, 0, MessagePackCode.Float32, 0, 0, 0, 0, 0);
                         var vectorShuffle = Vector128.Create(0x80, 3, 2, 1, 0, 0x80, 7, 6, 5, 4, 0x80, 11, 10, 9, 8, 0x80);
                         var vectorLoopLength = ((inputLength / 3) - 1) * 3;
                         for (var vectorizedEnd = inputIterator + vectorLoopLength; inputIterator != vectorizedEnd; inputIterator += 3, outputIterator += 15)
                         {
+                            // new float[] { 1.0, -2.0, 3.5, } is byte[12] { 00, 00, 80, 3f, 00, 00, 00, c0, 00, 00, 60, 40 } in binary expression;
                             var current = Sse2.LoadVector128((byte*)inputIterator);
+                            // Output binary should be byte[15] { ca, 3f, 80, 00, 00, ca, c0, 00, 00, 00, ca, 40, 60, 00, 00 };
                             Sse2.Store(outputIterator, Sse2.Or(Ssse3.Shuffle(current, vectorShuffle), vectorConstant));
                         }
                     }
@@ -416,6 +421,7 @@ namespace MessagePack.Experimental.Formatters
                 ProcessEach:
                     while (inputIterator != inputEnd)
                     {
+                        // Encode float as Big Endian
                         *outputIterator++ = MessagePackCode.Float32;
                         var current = *inputIterator++;
                         *outputIterator++ = (byte)(current >> 24);
@@ -470,8 +476,11 @@ namespace MessagePack.Experimental.Formatters
                         var vectorShuffle = Vector256.Create((byte)7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
                         for (var vectorizedEnd = inputIterator + ((inputLength >> ShiftCount) << ShiftCount); inputIterator != vectorizedEnd; inputIterator += Stride)
                         {
+                            // Fetch 4 doubles.
                             var current = Avx.LoadVector256((byte*)inputIterator);
+                            // Reorder Little Endian bytes to Big Endian.
                             var answer = Avx2.Shuffle(current, vectorShuffle).AsUInt64();
+                            // Write 4 Big-Endian doubles.
                             *outputIterator++ = MessagePackCode.Float64;
                             *(ulong*)outputIterator = answer.GetElement(0);
                             outputIterator += 8;
