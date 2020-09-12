@@ -4,6 +4,8 @@
 /* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
  * CHANGE THE .tt FILE INSTEAD. */
 
+#pragma warning disable CS0436 // The same name of the primary package
+
 using System;
 
 namespace MessagePack.Resolvers

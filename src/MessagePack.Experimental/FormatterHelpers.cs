@@ -110,6 +110,7 @@
 using System;
 
 #pragma warning disable SA1649 // File name should match first type name
+#pragma warning disable CS0436 // The same name of the primary package
 
 namespace MessagePack.Formatters
 {
