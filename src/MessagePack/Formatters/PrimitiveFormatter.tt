@@ -15,24 +15,8 @@
         typeof(UInt64),
         typeof(Single),
         typeof(Double),
-        typeof(bool), 
-        typeof(byte), 
-        typeof(sbyte),
-        typeof(char),
-        typeof(DateTime)
-    };
-
-    var arrayTypes = new[]
-    {
-        typeof(Int16),
-        typeof(Int32),
-        typeof(Int64),
-        typeof(UInt16),
-        typeof(UInt32),
-        typeof(UInt64),
-        typeof(Single),
-        typeof(Double),
         typeof(bool),
+        typeof(byte),
         typeof(sbyte),
         typeof(char),
         typeof(DateTime)
@@ -103,8 +87,7 @@ namespace MessagePack.Formatters
             }
         }
     }
-<# } #>
-<# foreach(var t in arrayTypes) {  #>
+<# if(t.Name != "Byte") { #>
 
     public sealed class <#= t.Name #>ArrayFormatter : IMessagePackFormatter<<#= t.Name #>[]>
     {
@@ -123,7 +106,7 @@ namespace MessagePack.Formatters
             else
             {
                 writer.WriteArrayHeader(value.Length);
-                for (var i = 0; i < value.Length; i++)
+                for (int i = 0; i < value.Length; i++)
                 {
                     writer.Write(value[i]);
                 }
@@ -144,7 +127,7 @@ namespace MessagePack.Formatters
             }
 
             var array = new <#= t.Name #>[len];
-            for (var i = 0; i < array.Length; i++)
+            for (int i = 0; i < array.Length; i++)
             {
                 array[i] = reader.Read<#= t.Name #>();
             }
@@ -152,5 +135,6 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+<# } #>
 <# } #>
 }

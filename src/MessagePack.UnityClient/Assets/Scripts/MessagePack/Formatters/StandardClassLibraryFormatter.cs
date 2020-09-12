@@ -54,7 +54,7 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NullableStringArrayFormatter : IMessagePackFormatter<string[]>
+    public sealed class NullableStringArrayFormatter : IMessagePackFormatter<String[]>
     {
         public static readonly NullableStringArrayFormatter Instance = new NullableStringArrayFormatter();
 
@@ -62,7 +62,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, string[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, String[] value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -78,7 +78,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public string[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public String[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -87,7 +87,7 @@ namespace MessagePack.Formatters
             else
             {
                 var len = reader.ReadArrayHeader();
-                var array = new string[len];
+                var array = new String[len];
                 for (int i = 0; i < array.Length; i++)
                 {
                     array[i] = reader.ReadString();

@@ -4,6 +4,7 @@
     <TargetFrameworks>netstandard2.0;netcoreapp2.1</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <DefineConstants Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <LangVersion>8.0</LangVersion>
 
@@ -13,14 +14,6 @@
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
     <AssemblyName>MessagePack</AssemblyName>
   </PropertyGroup>
-  
-  <Choose>
-    <When Condition=" '$(TargetFramework)' == 'netcoreapp2.1'">
-      <PropertyGroup>
-        <DefineConstants>$(DefineConstants);SPAN_BUILTIN</DefineConstants>
-      </PropertyGroup>
-    </When>
-  </Choose>
 
   <ItemGroup>
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\**\*.cs"
