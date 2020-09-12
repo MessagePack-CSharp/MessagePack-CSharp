@@ -24,9 +24,11 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string FullName { get; set; }
 
-        public string TemplateParametersString { get; set; }
-
         public string Namespace { get; set; }
+
+        public string[] GenericTypeParameters { get; set; }
+
+        public bool IsOpenGenericType { get; set; }
 
         public bool IsIntKey { get; set; }
 
@@ -52,7 +54,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public bool NeedsCastOnAfter { get; set; }
 
-        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
+        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(",", this.GenericTypeParameters)}>" : string.Empty);
 
         public int WriteCount
         {

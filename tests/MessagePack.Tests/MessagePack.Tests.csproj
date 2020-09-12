@@ -30,11 +30,10 @@
     <PackageReference Include="Nerdbank.Streams" Version="2.4.48" />
     <PackageReference Include="ReactiveProperty" version="4.2.2" />
     <PackageReference Include="xunit" version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" version="2.4.1">
-      <PrivateAssets>none</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0" />
+    <PackageReference Include="xunit.runner.console" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.0" />
+    <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
   </ItemGroup>
   <ItemGroup>
     <None Update="MessagePackReaderTests.ReadInt.tt">
