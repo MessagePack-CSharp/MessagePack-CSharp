@@ -28,7 +28,7 @@ namespace Benchmark
         [GlobalSetup]
         public void SetUp()
         {
-            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(MessagePack.Experimental.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(newmsgpack::MessagePack.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
             options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
             inputFalse = new bool[Size];
@@ -114,7 +114,7 @@ namespace Benchmark
         [GlobalSetup]
         public void SetUp()
         {
-            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(MessagePack.Experimental.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(newmsgpack::MessagePack.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
             options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
             zero = new sbyte[Size];
@@ -198,7 +198,7 @@ namespace Benchmark
         [GlobalSetup]
         public void SetUp()
         {
-            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(MessagePack.Experimental.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(newmsgpack::MessagePack.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
             options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
             input = new short[Size];
@@ -251,7 +251,7 @@ namespace Benchmark
         [GlobalSetup]
         public void SetUp()
         {
-            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(MessagePack.Experimental.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(newmsgpack::MessagePack.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
             options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
             input = new int[Size];
@@ -319,7 +319,7 @@ namespace Benchmark
         [GlobalSetup]
         public void SetUp()
         {
-            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(MessagePack.Experimental.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(newmsgpack::MessagePack.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
             options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(resolver);
             input = new float[Size];
 
@@ -360,7 +360,7 @@ namespace Benchmark
         [GlobalSetup]
         public void SetUp()
         {
-            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(MessagePack.Experimental.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
+            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(newmsgpack::MessagePack.Resolvers.PrimitiveArrayResolver.Instance, newmsgpack::MessagePack.Resolvers.StandardResolver.Instance);
             options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(resolver);
             input = new double[Size];
 

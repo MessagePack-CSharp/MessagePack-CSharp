@@ -3,7 +3,7 @@
 
 using MessagePack.Formatters;
 
-namespace MessagePack.Experimental.Resolvers
+namespace MessagePack.Resolvers
 {
     public sealed class PrimitiveArrayResolver : IFormatterResolver
     {

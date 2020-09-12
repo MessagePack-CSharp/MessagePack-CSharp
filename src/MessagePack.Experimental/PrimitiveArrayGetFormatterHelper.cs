@@ -6,7 +6,7 @@
 
 using System;
 
-namespace MessagePack.Experimental.Resolvers
+namespace MessagePack.Resolvers
 {
     internal static class PrimitiveArrayGetFormatterHelper
     {

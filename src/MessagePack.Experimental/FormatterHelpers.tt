@@ -129,7 +129,7 @@ using System;
 
 #pragma warning disable SA1649 // File name should match first type name
 
-namespace MessagePack.Experimental.Formatters
+namespace MessagePack.Formatters
 {
     internal static class SingleInstructionMultipleDataPrimitiveArrayFormatterHelper
     {

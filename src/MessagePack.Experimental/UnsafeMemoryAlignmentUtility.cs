@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace MessagePack.Experimental.Formatters
+namespace MessagePack.Formatters
 {
     internal static unsafe class UnsafeMemoryAlignmentUtility
     {

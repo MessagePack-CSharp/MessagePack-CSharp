@@ -5,11 +5,10 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using MessagePack.Formatters;
 
 #pragma warning disable SA1649 // File name should match first type name
 
-namespace MessagePack.Experimental.Formatters
+namespace MessagePack.Formatters
 {
     public sealed partial class SByteArrayFormatter : IMessagePackFormatter<sbyte[]?>
     {
