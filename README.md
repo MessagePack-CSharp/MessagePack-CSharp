@@ -534,6 +534,9 @@ Console.WriteLine(dynamicModel["Name"]); // foobar
 Console.WriteLine(dynamicModel["Items"][2]); // 100
 ```
 
+Exploring object trees using the dictionary indexer syntax is the fastest option for untyped deserialization, but it is tedious to read and write.
+Where performance is not as important as code readability, consider deserializing with [ExpandoObject](doc/ExpandoObject.md).
+
 ## Object Type Serialization
 
 `StandardResolver` and `ContractlessStandardResolver` can serialize `object`/anonymous typed objects.

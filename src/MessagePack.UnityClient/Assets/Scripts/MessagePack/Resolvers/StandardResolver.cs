@@ -289,6 +289,7 @@ namespace MessagePack.Internal
             MessagePack.Unity.UnityResolver.Instance,
 #else
             ImmutableCollection.ImmutableCollectionResolver.Instance,
+            CompositeResolver.Create(ExpandoObjectFormatter.Instance),
 #endif
 
 #if !ENABLE_IL2CPP && !NET_STANDARD_2_0
