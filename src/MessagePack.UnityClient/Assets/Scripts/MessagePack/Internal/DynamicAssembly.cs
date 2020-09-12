@@ -20,8 +20,6 @@ namespace MessagePack.Internal
         // don't expose ModuleBuilder
         //// public ModuleBuilder ModuleBuilder { get { return moduleBuilder; } }
 
-        private readonly object gate = new object();
-
         public DynamicAssembly(string moduleName)
         {
 #if NETFRAMEWORK // We don't ship a net472 target, but we might add one for debugging purposes
@@ -36,29 +34,11 @@ namespace MessagePack.Internal
 
         /* requires lock on mono environment. see: https://github.com/neuecc/MessagePack-CSharp/issues/161 */
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr)
-        {
-            lock (this.gate)
-            {
-                return this.moduleBuilder.DefineType(name, attr);
-            }
-        }
+        public TypeBuilder DefineType(string name, TypeAttributes attr) => this.moduleBuilder.DefineType(name, attr);
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr, Type parent)
-        {
-            lock (this.gate)
-            {
-                return this.moduleBuilder.DefineType(name, attr, parent);
-            }
-        }
+        public TypeBuilder DefineType(string name, TypeAttributes attr, Type parent) => this.moduleBuilder.DefineType(name, attr, parent);
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr, Type parent, Type[] interfaces)
-        {
-            lock (this.gate)
-            {
-                return this.moduleBuilder.DefineType(name, attr, parent, interfaces);
-            }
-        }
+        public TypeBuilder DefineType(string name, TypeAttributes attr, Type parent, Type[] interfaces) => this.moduleBuilder.DefineType(name, attr, parent, interfaces);
 
 #if NETFRAMEWORK
 
