@@ -1159,11 +1159,7 @@ namespace MessagePack.Internal
         {
             if (info.IsClass)
             {
-                foreach (ObjectSerializationInfo.EmittableMember item in info.ConstructorParameters)
-                {
-                    DeserializeInfo local = members.First(x => x.MemberInfo == item);
-                    il.EmitLdloc(local.LocalField);
-                }
+                EmitNewObjectConstructorArguments(il, info, members);
 
                 il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
 
@@ -1186,11 +1182,7 @@ namespace MessagePack.Internal
                 }
                 else
                 {
-                    foreach (ObjectSerializationInfo.EmittableMember item in info.ConstructorParameters)
-                    {
-                        DeserializeInfo local = members.First(x => x.MemberInfo == item);
-                        il.EmitLdloc(local.LocalField);
-                    }
+                    EmitNewObjectConstructorArguments(il, info, members);
 
                     il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
                     il.Emit(OpCodes.Stloc, result);
@@ -1204,6 +1196,24 @@ namespace MessagePack.Internal
                 }
 
                 return result; // struct returns local result field
+            }
+        }
+
+        private static void EmitNewObjectConstructorArguments(ILGenerator il, ObjectSerializationInfo info, DeserializeInfo[] members)
+        {
+            foreach (ObjectSerializationInfo.EmittableMemberAndConstructorParameter item in info.ConstructorParameters)
+            {
+                DeserializeInfo local = members.First(x => x.MemberInfo == item.MemberInfo);
+                il.EmitLdloc(local.LocalField);
+
+                if (!item.ConstructorParameter.ParameterType.IsValueType && local.MemberInfo.IsValueType)
+                {
+                    // When a constructor argument of type object is being provided by a serialized member value that is a value type
+                    // then that value must be boxed in order for the generated code to be valid (see issue #987). This may occur because
+                    // the only requirement when determining whether a member value may be used to populate a constructor argument in an
+                    // IsAssignableFrom check and typeof(object) IsAssignableFrom typeof(int), for example.
+                    il.Emit(OpCodes.Box, local.MemberInfo.Type);
+                }
             }
         }
 
@@ -1388,7 +1398,7 @@ namespace MessagePack.Internal
 
         public ConstructorInfo BestmatchConstructor { get; set; }
 
-        public EmittableMember[] ConstructorParameters { get; set; }
+        public EmittableMemberAndConstructorParameter[] ConstructorParameters { get; set; }
 
         public EmittableMember[] Members { get; set; }
 
@@ -1756,7 +1766,7 @@ namespace MessagePack.Internal
                 throw new MessagePackDynamicObjectResolverException("can't find public constructor. type:" + type.FullName);
             }
 
-            var constructorParameters = new List<EmittableMember>();
+            var constructorParameters = new List<EmittableMemberAndConstructorParameter>();
             if (ctor != null)
             {
                 ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
@@ -1775,7 +1785,7 @@ namespace MessagePack.Internal
                                     item.ParameterType.GetTypeInfo().IsAssignableFrom(paramMember.Type))
                                     && paramMember.IsReadable)
                                 {
-                                    constructorParameters.Add(paramMember);
+                                    constructorParameters.Add(new EmittableMemberAndConstructorParameter { ConstructorParameter = item, MemberInfo = paramMember });
                                 }
                                 else
                                 {
@@ -1825,7 +1835,7 @@ namespace MessagePack.Internal
                                 paramMember = hasKey.First().Value;
                                 if (item.ParameterType == paramMember.Type && paramMember.IsReadable)
                                 {
-                                    constructorParameters.Add(paramMember);
+                                    constructorParameters.Add(new EmittableMemberAndConstructorParameter { ConstructorParameter = item, MemberInfo = paramMember });
                                 }
                                 else
                                 {
@@ -1893,7 +1903,7 @@ namespace MessagePack.Internal
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = members.Where(m => m.IsExplicitContract || constructorParameters.Contains(m) || m.IsWritable).ToArray(),
+                Members = members.Where(m => m.IsExplicitContract || constructorParameters.Any(p => p.MemberInfo.Equals(m)) || m.IsWritable).ToArray(),
             };
         }
 
@@ -1950,6 +1960,13 @@ namespace MessagePack.Internal
             }
         }
 
+        public class EmittableMemberAndConstructorParameter
+        {
+            public EmittableMember MemberInfo { get; set; }
+
+            public ParameterInfo ConstructorParameter { get; set; }
+        }
+
         public class EmittableMember
         {
             public bool IsProperty
@@ -1991,8 +2008,8 @@ namespace MessagePack.Internal
             {
                 get
                 {
-                    MemberInfo mi = this.IsProperty ? (MemberInfo)this.PropertyInfo : this.FieldInfo;
-                    return mi.DeclaringType.GetTypeInfo().IsValueType;
+                    Type t = this.IsProperty ? this.PropertyInfo.PropertyType : this.FieldInfo.FieldType;
+                    return t.IsValueType;
                 }
             }
 

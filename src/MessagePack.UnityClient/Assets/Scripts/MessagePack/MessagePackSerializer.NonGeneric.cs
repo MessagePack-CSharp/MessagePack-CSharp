@@ -95,6 +95,13 @@ namespace MessagePack
 
             internal delegate object MessagePackReaderDeserialize(ref MessagePackReader reader, MessagePackSerializerOptions options);
 
+            private const bool PreferInterpretation =
+#if ENABLE_IL2CPP
+                true;
+#else
+                false;
+#endif
+
 #pragma warning disable SA1310 // Field names should not contain underscore
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
@@ -131,7 +138,7 @@ namespace MessagePack
                         ti.IsValueType ? Expression.Unbox(param1, type) : Expression.Convert(param1, type),
                         param2,
                         param3);
-                    Func<object, MessagePackSerializerOptions, CancellationToken, byte[]> lambda = Expression.Lambda<Func<object, MessagePackSerializerOptions, CancellationToken, byte[]>>(body, param1, param2, param3).Compile();
+                    Func<object, MessagePackSerializerOptions, CancellationToken, byte[]> lambda = Expression.Lambda<Func<object, MessagePackSerializerOptions, CancellationToken, byte[]>>(body, param1, param2, param3).Compile(PreferInterpretation);
 
                     this.Serialize_T_Options = lambda;
                 }
@@ -152,7 +159,7 @@ namespace MessagePack
                         ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                         param3,
                         param4);
-                    Action<Stream, object, MessagePackSerializerOptions, CancellationToken> lambda = Expression.Lambda<Action<Stream, object, MessagePackSerializerOptions, CancellationToken>>(body, param1, param2, param3, param4).Compile();
+                    Action<Stream, object, MessagePackSerializerOptions, CancellationToken> lambda = Expression.Lambda<Action<Stream, object, MessagePackSerializerOptions, CancellationToken>>(body, param1, param2, param3, param4).Compile(PreferInterpretation);
 
                     this.Serialize_Stream_T_Options_CancellationToken = lambda;
                 }
@@ -173,7 +180,7 @@ namespace MessagePack
                         ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                         param3,
                         param4);
-                    Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task> lambda = Expression.Lambda<Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task>>(body, param1, param2, param3, param4).Compile();
+                    Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task> lambda = Expression.Lambda<Func<Stream, object, MessagePackSerializerOptions, CancellationToken, Task>>(body, param1, param2, param3, param4).Compile(PreferInterpretation);
 
                     this.SerializeAsync_Stream_T_Options_CancellationToken = lambda;
                 }
@@ -194,7 +201,7 @@ namespace MessagePack
                         ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                         param3,
                         param4);
-                    Action<IBufferWriter<byte>, object, MessagePackSerializerOptions, CancellationToken> lambda = Expression.Lambda<Action<IBufferWriter<byte>, object, MessagePackSerializerOptions, CancellationToken>>(body, param1, param2, param3, param4).Compile();
+                    Action<IBufferWriter<byte>, object, MessagePackSerializerOptions, CancellationToken> lambda = Expression.Lambda<Action<IBufferWriter<byte>, object, MessagePackSerializerOptions, CancellationToken>>(body, param1, param2, param3, param4).Compile(PreferInterpretation);
 
                     this.Serialize_IBufferWriter_T_Options_CancellationToken = lambda;
                 }
@@ -213,7 +220,7 @@ namespace MessagePack
                         param1,
                         ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
                         param3);
-                    MessagePackWriterSerialize lambda = Expression.Lambda<MessagePackWriterSerialize>(body, param1, param2, param3).Compile();
+                    MessagePackWriterSerialize lambda = Expression.Lambda<MessagePackWriterSerialize>(body, param1, param2, param3).Compile(PreferInterpretation);
 
                     this.Serialize_MessagePackWriter_T_Options = lambda;
                 }
@@ -238,7 +245,7 @@ namespace MessagePack
                     ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
                     ParameterExpression param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
                     UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2, param3), typeof(object));
-                    Func<Stream, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<Stream, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile();
+                    Func<Stream, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<Stream, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile(PreferInterpretation);
 
                     this.Deserialize_Stream_Options_CancellationToken = lambda;
                 }
@@ -251,7 +258,7 @@ namespace MessagePack
                     ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
                     ParameterExpression param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
                     UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2, param3), typeof(ValueTask<object>));
-                    Func<Stream, MessagePackSerializerOptions, CancellationToken, ValueTask<object>> lambda = Expression.Lambda<Func<Stream, MessagePackSerializerOptions, CancellationToken, ValueTask<object>>>(body, param1, param2, param3).Compile();
+                    Func<Stream, MessagePackSerializerOptions, CancellationToken, ValueTask<object>> lambda = Expression.Lambda<Func<Stream, MessagePackSerializerOptions, CancellationToken, ValueTask<object>>>(body, param1, param2, param3).Compile(PreferInterpretation);
 
                     this.DeserializeAsync_Stream_Options_CancellationToken = lambda;
                 }
@@ -264,7 +271,7 @@ namespace MessagePack
                     ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
                     ParameterExpression param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
                     UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2, param3), typeof(object));
-                    Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile();
+                    Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile(PreferInterpretation);
 
                     this.Deserialize_ReadOnlyMemory_Options = lambda;
                 }
@@ -277,7 +284,7 @@ namespace MessagePack
                     ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
                     ParameterExpression param3 = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
                     UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2, param3), typeof(object));
-                    Func<ReadOnlySequence<byte>, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<ReadOnlySequence<byte>, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile();
+                    Func<ReadOnlySequence<byte>, MessagePackSerializerOptions, CancellationToken, object> lambda = Expression.Lambda<Func<ReadOnlySequence<byte>, MessagePackSerializerOptions, CancellationToken, object>>(body, param1, param2, param3).Compile(PreferInterpretation);
 
                     this.Deserialize_ReadOnlySequence_Options_CancellationToken = lambda;
                 }

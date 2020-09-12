@@ -14,6 +14,10 @@ namespace Xunit
         public string Skip { get; set; }
     }
 
+    public class SkippableFactAttribute : FactAttribute
+    {
+    }
+
     public class TheoryAttribute : FactAttribute
     {
     }
@@ -32,6 +36,21 @@ namespace Xunit
     {
         public MemberDataAttribute(string memberName)
             : base(memberName)
+        {
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true)]
+    public sealed class TraitAttribute : Attribute
+    {
+        public TraitAttribute(string name, string value)
+        {
+        }
+    }
+
+    public static class Skip
+    {
+        public static void If(bool condition)
         {
         }
     }
