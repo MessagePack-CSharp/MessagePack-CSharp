@@ -68,6 +68,67 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class ByteMemoryFormatter : IMessagePackFormatter<Memory<byte>>
+    {
+        public static readonly ByteMemoryFormatter Instance = new ByteMemoryFormatter();
+
+        private ByteMemoryFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Memory<byte> value, MessagePackSerializerOptions options)
+        {
+            writer.Write(value.Span);
+        }
+
+        public Memory<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new Memory<byte>(bytes.ToArray()) : default;
+        }
+    }
+
+    public sealed class ByteReadOnlyMemoryFormatter : IMessagePackFormatter<ReadOnlyMemory<byte>>
+    {
+        public static readonly ByteReadOnlyMemoryFormatter Instance = new ByteReadOnlyMemoryFormatter();
+
+        private ByteReadOnlyMemoryFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, ReadOnlyMemory<byte> value, MessagePackSerializerOptions options)
+        {
+            writer.Write(value.Span);
+        }
+
+        public ReadOnlyMemory<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new ReadOnlyMemory<byte>(bytes.ToArray()) : default;
+        }
+    }
+
+    public sealed class ByteReadOnlySequenceFormatter : IMessagePackFormatter<ReadOnlySequence<byte>>
+    {
+        public static readonly ByteReadOnlySequenceFormatter Instance = new ByteReadOnlySequenceFormatter();
+
+        private ByteReadOnlySequenceFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, ReadOnlySequence<byte> value, MessagePackSerializerOptions options)
+        {
+            writer.WriteBinHeader(checked((int)value.Length));
+            foreach (ReadOnlyMemory<byte> segment in value)
+            {
+                writer.WriteRaw(segment.Span);
+            }
+        }
+
+        public ReadOnlySequence<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new ReadOnlySequence<byte>(bytes.ToArray()) : default;
+        }
+    }
+
     public sealed class ByteArraySegmentFormatter : IMessagePackFormatter<ArraySegment<byte>>
     {
         public static readonly ByteArraySegmentFormatter Instance = new ByteArraySegmentFormatter();
@@ -94,6 +155,66 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class MemoryFormatter<T> : IMessagePackFormatter<Memory<T>>
+    {
+        public void Serialize(ref MessagePackWriter writer, Memory<T> value, MessagePackSerializerOptions options)
+        {
+            var formatter = options.Resolver.GetFormatterWithVerify<ReadOnlyMemory<T>>();
+            formatter.Serialize(ref writer, value, options);
+        }
+
+        public Memory<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return options.Resolver.GetFormatterWithVerify<T[]>().Deserialize(ref reader, options);
+        }
+    }
+
+    public sealed class ReadOnlyMemoryFormatter<T> : IMessagePackFormatter<ReadOnlyMemory<T>>
+    {
+        public void Serialize(ref MessagePackWriter writer, ReadOnlyMemory<T> value, MessagePackSerializerOptions options)
+        {
+            IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
+
+            var span = value.Span;
+            writer.WriteArrayHeader(span.Length);
+
+            for (int i = 0; i < span.Length; i++)
+            {
+                writer.CancellationToken.ThrowIfCancellationRequested();
+                formatter.Serialize(ref writer, span[i], options);
+            }
+        }
+
+        public ReadOnlyMemory<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return options.Resolver.GetFormatterWithVerify<T[]>().Deserialize(ref reader, options);
+        }
+    }
+
+    public sealed class ReadOnlySequenceFormatter<T> : IMessagePackFormatter<ReadOnlySequence<T>>
+    {
+        public void Serialize(ref MessagePackWriter writer, ReadOnlySequence<T> value, MessagePackSerializerOptions options)
+        {
+            IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
+
+            writer.WriteArrayHeader(checked((int)value.Length));
+            foreach (ReadOnlyMemory<T> segment in value)
+            {
+                ReadOnlySpan<T> span = segment.Span;
+                for (int i = 0; i < span.Length; i++)
+                {
+                    writer.CancellationToken.ThrowIfCancellationRequested();
+                    formatter.Serialize(ref writer, span[i], options);
+                }
+            }
+        }
+
+        public ReadOnlySequence<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return new ReadOnlySequence<T>(options.Resolver.GetFormatterWithVerify<T[]>().Deserialize(ref reader, options));
+        }
+    }
+
     public sealed class ArraySegmentFormatter<T> : IMessagePackFormatter<ArraySegment<T>>
     {
         public void Serialize(ref MessagePackWriter writer, ArraySegment<T> value, MessagePackSerializerOptions options)
@@ -104,17 +225,8 @@ namespace MessagePack.Formatters
             }
             else
             {
-                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
-
-                writer.WriteArrayHeader(value.Count);
-
-                T[] array = value.Array;
-                for (int i = 0; i < value.Count; i++)
-                {
-                    writer.CancellationToken.ThrowIfCancellationRequested();
-                    T item = array[value.Offset + i];
-                    formatter.Serialize(ref writer, item, options);
-                }
+                var formatter = options.Resolver.GetFormatterWithVerify<Memory<T>>();
+                formatter.Serialize(ref writer, value, options);
             }
         }
 

@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -61,13 +62,13 @@ namespace TempProject
 
             // can compile(does not throw MessagePackGeneratorResolveFailedException : Serialization Object must mark MessagePackObjectAttribute. type: global::TempProject.MyMessagePackObject)
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
         }
     }
 }

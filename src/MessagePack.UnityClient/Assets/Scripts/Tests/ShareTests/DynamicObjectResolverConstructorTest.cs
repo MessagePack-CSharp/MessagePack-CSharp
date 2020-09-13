@@ -2,10 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -136,6 +132,55 @@ namespace MessagePack.Tests
             }
         }
 
+        /// <summary>
+        /// This is to test the fix for issue #987 where the constructor argument can be satisfied by the
+        /// property value as typeof(object) IsAssignableFrom typeof(int) but the value has to be boxed.
+        /// </summary>
+        [MessagePackObject]
+        public class TestConstructor4
+        {
+            [Key(0)]
+            public int X { get; }
+
+            public TestConstructor4(object x)
+            {
+                this.X = (int)Convert.ChangeType(x, typeof(int));
+            }
+        }
+
+        /// <summary>
+        /// This variation on TestConstructor4 ensures that the int value is not boxed when use to set
+        /// the property value after the constructor has been called (which would result in the X value
+        /// being set incorrectly).
+        /// </summary>
+        [MessagePackObject]
+        public class TestConstructor5
+        {
+            [Key(0)]
+            public int X { get; set; }
+
+            public TestConstructor5(object x)
+            {
+                this.X = (int)Convert.ChangeType(x, typeof(int));
+            }
+        }
+
+        /// <summary>
+        /// This variation on TestConstructor4 exists because different code branches are followed when
+        /// generated code to instantiate a class as opposed to a value type.
+        /// </summary>
+        [MessagePackObject]
+        public struct TestConstructor6
+        {
+            [Key(0)]
+            public int X { get; }
+
+            public TestConstructor6(object x)
+            {
+                this.X = (int)Convert.ChangeType(x, typeof(int));
+            }
+        }
+
         [Fact]
         public void StringKey()
         {
@@ -164,6 +209,36 @@ namespace MessagePack.Tests
             var r = MessagePackSerializer.Deserialize<TestConstructor3>(bin);
 
             r.CalledConstructorParameterCount.Is(2);
+        }
+
+        [Fact]
+        public void MatchedClassCtorHasObjectArgProvidedByReadonlyValueTypeProperty()
+        {
+            var ctor = new TestConstructor4(10);
+            var bin = MessagePackSerializer.Serialize(ctor);
+            var r = MessagePackSerializer.Deserialize<TestConstructor4>(bin);
+
+            r.X.Is(10);
+        }
+
+        [Fact]
+        public void MatchedClassCtorHasObjectArgProvidedBySettableValueTypeProperty()
+        {
+            var ctor = new TestConstructor5(10);
+            var bin = MessagePackSerializer.Serialize(ctor);
+            var r = MessagePackSerializer.Deserialize<TestConstructor5>(bin);
+
+            r.X.Is(10);
+        }
+
+        [Fact]
+        public void MatchedStructCtorHasObjectArgProvidedByReadonlyValueTypeProperty()
+        {
+            var ctor = new TestConstructor6(10);
+            var bin = MessagePackSerializer.Serialize(ctor);
+            var r = MessagePackSerializer.Deserialize<TestConstructor6>(bin);
+
+            r.X.Is(10);
         }
     }
 }
