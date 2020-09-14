@@ -70,15 +70,38 @@ namespace MessagePack.Tests.ExtensionTests
         }
 
         [Fact]
-        public void ImmutableArrayTest()
+        public void ImmutableArray_WithContent()
         {
-            var a = ImmutableArray.CreateRange(new[] { 1, 10, 100 });
-            ImmutableArray<int>? b = ImmutableArray.CreateRange(new[] { 1, 10, 100 });
-            ImmutableArray<int>? c = null;
+            ImmutableArray<int> populated = ImmutableArray.CreateRange(new[] { 1, 10, 100 });
+            this.Convert(populated).Is(1, 10, 100);
+        }
 
-            this.Convert(a).Is(1, 10, 100);
-            this.Convert(b).Is(1, 10, 100);
-            this.Convert(c).IsNull();
+        [Fact]
+        public void ImmutableArray_Nullable_WithContent()
+        {
+            ImmutableArray<int>? populatedNullable = ImmutableArray.CreateRange(new[] { 1, 10, 100 });
+            this.Convert(populatedNullable).Is(1, 10, 100);
+        }
+
+        [Fact]
+        public void ImmutableArray_Nullable_Null()
+        {
+            ImmutableArray<int>? nullNullable = null;
+            Assert.Null(this.Convert(nullNullable));
+        }
+
+        [Fact]
+        public void ImmutableArray_Empty()
+        {
+            ImmutableArray<int> defaultArray = ImmutableArray<int>.Empty;
+            Assert.True(this.Convert(defaultArray).IsEmpty);
+        }
+
+        [Fact]
+        public void ImmutableArray_Default()
+        {
+            ImmutableArray<int> defaultArray = default;
+            Assert.True(this.Convert(defaultArray).IsDefault);
         }
     }
 }
