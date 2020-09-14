@@ -793,7 +793,7 @@ using (var ms = new MemoryStream())
 using (var ms = new MemoryStream())
 {
     // serialize empty array.
-    ProtoBuf.Serializer.Serialize<Parent>(ms, new Parent { Array = new int[0] });
+    ProtoBuf.Serializer.Serialize<Parent>(ms, new Parent { Array = System.Array.Empty<int>() });
 
     ms.Position = 0;
     var result = ProtoBuf.Serializer.Deserialize<Parent>(ms);
