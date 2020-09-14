@@ -43,28 +43,30 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
+
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
             {
-                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
-
-                var len = reader.ReadArrayHeader();
-                var array = new T[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        reader.CancellationToken.ThrowIfCancellationRequested();
-                        array[i] = formatter.Deserialize(ref reader, options);
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
-
-                return array;
+                return Array.Empty<T>();
             }
+
+            IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
+            var array = new T[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    array[i] = formatter.Deserialize(ref reader, options);
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 
