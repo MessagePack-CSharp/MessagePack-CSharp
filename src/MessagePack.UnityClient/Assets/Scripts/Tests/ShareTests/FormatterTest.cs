@@ -181,7 +181,7 @@ namespace MessagePack.Tests
 
         public static object[][] StandardClassFormatterTestData = new object[][]
         {
-            new object[] { new byte[] { 1, 10, 100 }, new byte[0] { }, null },
+            new object[] { new byte[] { 1, 10, 100 }, Array.Empty<byte>(), null },
             new object[] { "aaa", string.Empty, null },
             new object[] { new Uri("Http://hogehoge.com"), new Uri("Https://hugahuga.com"), null },
             new object[] { new Version(0, 0), new Version(1, 2, 3), new Version(255, 100, 30) },

@@ -218,7 +218,7 @@ namespace MessagePack.ImmutableCollection
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
     }
 
@@ -308,7 +308,7 @@ namespace MessagePack.ImmutableCollection
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
     }
 

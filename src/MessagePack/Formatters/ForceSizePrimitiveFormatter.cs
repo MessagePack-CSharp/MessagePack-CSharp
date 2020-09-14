@@ -93,25 +93,28 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Int16[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        array[i] = reader.ReadInt16();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Int16>();
             }
+
+            var array = new Int16[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadInt16();
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 
@@ -197,25 +200,28 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Int32[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        array[i] = reader.ReadInt32();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Int32>();
             }
+
+            var array = new Int32[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadInt32();
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 
@@ -301,25 +307,28 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Int64[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        array[i] = reader.ReadInt64();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Int64>();
             }
+
+            var array = new Int64[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadInt64();
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 
@@ -405,25 +414,28 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new UInt16[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        array[i] = reader.ReadUInt16();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<UInt16>();
             }
+
+            var array = new UInt16[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadUInt16();
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 
@@ -509,25 +521,28 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new UInt32[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        array[i] = reader.ReadUInt32();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<UInt32>();
             }
+
+            var array = new UInt32[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadUInt32();
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 
@@ -613,25 +628,28 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new UInt64[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        array[i] = reader.ReadUInt64();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<UInt64>();
             }
+
+            var array = new UInt64[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadUInt64();
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 
@@ -769,25 +787,28 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new SByte[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        array[i] = reader.ReadSByte();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<SByte>();
             }
+
+            var array = new SByte[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.ReadSByte();
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 }
