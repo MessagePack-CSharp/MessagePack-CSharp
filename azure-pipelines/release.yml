@@ -25,20 +25,11 @@ stages:
               Write-Host "##vso[build.updatebuildnumber]$(resources.pipeline.CI.runName)"
             displayName: Set pipeline name
           - download: CI
-            artifact: mpc
-            displayName: 'Downloading artifact: mpc'
-          - download: CI
             artifact: unity
             displayName: 'Downloading artifact: unity'
           - download: CI
             artifact: vsix
             displayName: 'Downloading artifact: vsix'
-          - task: ArchiveFiles@2
-            displayName: Archive mpc
-            inputs:
-              rootFolderOrFile: $(Pipeline.Workspace)/CI/mpc
-              includeRootFolder: false
-              archiveFile: $(Pipeline.Workspace)/mpc.zip
           - task: GitHubRelease@1
             displayName: GitHub release (create)
             inputs:
@@ -51,7 +42,6 @@ stages:
               assets: |
                 $(Pipeline.Workspace)/CI/unity/*.unitypackage
                 $(Pipeline.Workspace)/CI/vsix/*
-                $(Pipeline.Workspace)/mpc.zip
               isDraft: true # After running this step, visit the new draft release, edit, and publish.
               changeLogCompareToRelease: lastNonDraftRelease
               changeLogType: issueBased
