@@ -15,16 +15,19 @@ namespace MessagePack.ImmutableCollection
     {
         public void Serialize(ref MessagePackWriter writer, ImmutableArray<T> value, MessagePackSerializerOptions options)
         {
-            if (value == null)
+            if (value.IsDefault)
             {
                 writer.WriteNil();
+            }
+            else if (value.IsEmpty)
+            {
+                writer.WriteArrayHeader(0);
             }
             else
             {
                 IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
 
                 writer.WriteArrayHeader(value.Length);
-
                 foreach (T item in value)
                 {
                     formatter.Serialize(ref writer, item, options);
@@ -36,14 +39,17 @@ namespace MessagePack.ImmutableCollection
         {
             if (reader.TryReadNil())
             {
-                return ImmutableArray<T>.Empty;
+                return default;
             }
             else
             {
-                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
-
                 var len = reader.ReadArrayHeader();
+                if (len == 0)
+                {
+                    return ImmutableArray<T>.Empty;
+                }
 
+                IMessagePackFormatter<T> formatter = options.Resolver.GetFormatterWithVerify<T>();
                 ImmutableArray<T>.Builder builder = ImmutableArray.CreateBuilder<T>(len);
                 options.Security.DepthStep(ref reader);
                 try
@@ -58,7 +64,7 @@ namespace MessagePack.ImmutableCollection
                     reader.Depth--;
                 }
 
-                return builder.ToImmutable();
+                return builder.MoveToImmutable();
             }
         }
     }
