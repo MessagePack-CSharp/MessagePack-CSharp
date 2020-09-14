@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>true</IsPackable>
+    <Title>MessagePack for C#, Experimental Plugins</Title>
+    <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Experimental implementations.</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="FormatterHelpers.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>FormatterHelpers.cs</LastGenOutput>
+    </None>
+    <None Update="PrimitiveArrayGetFormatterHelper.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PrimitiveArrayGetFormatterHelper.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="FormatterHelpers.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>FormatterHelpers.tt</DependentUpon>
+    </Compile>
+    <Compile Update="PrimitiveArrayGetFormatterHelper.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>
+    </Compile>
+    <Compile Update="ResolverHelper.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResolverHelper.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+</Project>
