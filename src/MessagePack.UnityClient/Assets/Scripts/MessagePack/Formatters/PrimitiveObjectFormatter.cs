@@ -282,6 +282,10 @@ namespace MessagePack.Formatters
                 case MessagePackType.Array:
                     {
                         var length = reader.ReadArrayHeader();
+                        if (length == 0)
+                        {
+                            return Array.Empty<object>();
+                        }
 
                         IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
                         var array = new object[length];

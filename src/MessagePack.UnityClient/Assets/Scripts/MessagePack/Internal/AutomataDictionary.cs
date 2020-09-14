@@ -142,9 +142,6 @@ namespace MessagePack.Internal
 
         private class AutomataNode : IComparable<AutomataNode>
         {
-            private static readonly AutomataNode[] EmptyNodes = new AutomataNode[0];
-            private static readonly ulong[] EmptyKeys = new ulong[0];
-
 #pragma warning disable SA1401 // Fields should be private
             internal ulong Key;
             internal int Value;
@@ -164,8 +161,8 @@ namespace MessagePack.Internal
             {
                 this.Key = key;
                 this.Value = -1;
-                this.nexts = EmptyNodes;
-                this.nextKeys = EmptyKeys;
+                this.nexts = Array.Empty<AutomataNode>();
+                this.nextKeys = Array.Empty<ulong>();
                 this.count = 0;
                 this.OriginalKey = null;
             }

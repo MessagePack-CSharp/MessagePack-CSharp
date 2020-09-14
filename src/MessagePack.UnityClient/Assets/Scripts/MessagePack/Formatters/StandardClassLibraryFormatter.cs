@@ -84,17 +84,20 @@ namespace MessagePack.Formatters
             {
                 return null;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new String[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadString();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<String>();
             }
+
+            var array = new String[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadString();
+            }
+
+            return array;
         }
     }
 
