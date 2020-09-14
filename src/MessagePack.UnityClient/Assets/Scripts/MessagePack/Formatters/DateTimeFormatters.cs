@@ -51,20 +51,23 @@ namespace MessagePack.Formatters
         {
             if (reader.TryReadNil())
             {
-                return null;
+                return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new DateTime[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    var dateData = reader.ReadInt64();
-                    array[i] = DateTime.FromBinary(dateData);
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<DateTime>();
             }
+
+            var array = new DateTime[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                var dateData = reader.ReadInt64();
+                array[i] = DateTime.FromBinary(dateData);
+            }
+
+            return array;
         }
     }
 }

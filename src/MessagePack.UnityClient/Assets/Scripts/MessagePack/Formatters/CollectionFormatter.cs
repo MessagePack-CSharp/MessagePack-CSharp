@@ -419,7 +419,7 @@ namespace MessagePack.Formatters
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
 
         protected override Stack<T>.Enumerator GetSourceEnumerator(Stack<T> source)
@@ -475,7 +475,7 @@ namespace MessagePack.Formatters
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
     }
 
@@ -489,7 +489,7 @@ namespace MessagePack.Formatters
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
 
         protected override IList<T> Complete(T[] intermediateCollection)
@@ -508,7 +508,7 @@ namespace MessagePack.Formatters
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
 
         protected override ICollection<T> Complete(T[] intermediateCollection)
@@ -562,7 +562,7 @@ namespace MessagePack.Formatters
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
 
         protected override IEnumerable<T> Complete(T[] intermediateCollection)
@@ -796,6 +796,10 @@ namespace MessagePack.Formatters
             IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             var count = reader.ReadArrayHeader();
+            if (count == 0)
+            {
+                return Array.Empty<object>();
+            }
 
             var list = new object[count];
             options.Security.DepthStep(ref reader);
@@ -969,7 +973,7 @@ namespace MessagePack.Formatters
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
 
         protected override IReadOnlyList<T> Complete(T[] intermediateCollection)
@@ -987,7 +991,7 @@ namespace MessagePack.Formatters
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
 
         protected override IReadOnlyCollection<T> Complete(T[] intermediateCollection)
@@ -1065,7 +1069,7 @@ namespace MessagePack.Formatters
 
         protected override T[] Create(int count, MessagePackSerializerOptions options)
         {
-            return new T[count];
+            return count == 0 ? Array.Empty<T>() : new T[count];
         }
 
         protected override ConcurrentStack<T> Complete(T[] intermediateCollection)

@@ -78,7 +78,7 @@ namespace MessagePack.Tests
         public static object[][] ByteArraySegementData = new object[][]
         {
             new object[] { new ArraySegment<byte>(new byte[] { 0, 0, 1, 2, 3 }, 2, 3), null, new byte[] { 1, 2, 3 } },
-            new object[] { new ArraySegment<byte>(new byte[0], 0, 0), null, new byte[0] },
+            new object[] { new ArraySegment<byte>(Array.Empty<byte>(), 0, 0), null, Array.Empty<byte>() },
         };
 
         [Theory]
