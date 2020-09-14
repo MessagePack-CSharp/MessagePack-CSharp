@@ -793,13 +793,13 @@ namespace MessagePack.Formatters
                 return default(IList);
             }
 
-            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
-
             var count = reader.ReadArrayHeader();
             if (count == 0)
             {
                 return Array.Empty<object>();
             }
+
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
             var list = new object[count];
             options.Security.DepthStep(ref reader);

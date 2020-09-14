@@ -51,7 +51,7 @@ namespace MessagePack.Formatters
         {
             if (reader.TryReadNil())
             {
-                return default;
+                return null;
             }
 
             var len = reader.ReadArrayHeader();
