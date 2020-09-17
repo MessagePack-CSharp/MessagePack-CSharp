@@ -26,7 +26,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string Namespace { get; set; }
 
-        public string[] GenericTypeParameters { get; set; }
+        public GenericTypeParameterInfo[] GenericTypeParameters { get; set; }
 
         public bool IsOpenGenericType { get; set; }
 
@@ -54,7 +54,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public bool NeedsCastOnAfter { get; set; }
 
-        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(",", this.GenericTypeParameters)}>" : string.Empty);
+        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(",", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
 
         public int WriteCount
         {
@@ -88,6 +88,22 @@ namespace MessagePackCompiler.CodeAnalysis
         {
             var args = string.Join(", ", this.ConstructorParameters.Select(x => "__" + x.Name + "__"));
             return $"{this.FullName}({args})";
+        }
+    }
+
+    public class GenericTypeParameterInfo
+    {
+        public string Name { get; }
+
+        public string Constraints { get; }
+
+        public bool HasConstraints { get; }
+
+        public GenericTypeParameterInfo(string name, string constraints)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Constraints = constraints ?? throw new ArgumentNullException(nameof(name));
+            HasConstraints = !string.IsNullOrEmpty(constraints);
         }
     }
 

@@ -26,7 +26,10 @@ namespace <#= Namespace #>
     using MessagePack;
 <# foreach(var objInfo in ObjectSerializationInfos) { #>
 
-    public sealed class <#= objInfo.Name #>Formatter<#= (objInfo.IsOpenGenericType ? $"<{string.Join(",", objInfo.GenericTypeParameters)}>" : "") #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+    public sealed class <#= objInfo.Name #>Formatter<#= (objInfo.IsOpenGenericType ? $"<{string.Join(",", objInfo.GenericTypeParameters.Select(x => x.Name))}>" : "") #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+<# foreach(var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
+        where <#= typeArg.Name #> : <#= typeArg.Constraints #>
+<# } #>
     {
 <# foreach(var item in objInfo.Members) { #>
 <# if(item.CustomFormatterTypeName != null) { #>
