@@ -184,6 +184,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string FormatterName { get; set; }
 
+        public bool IsOpenGenericType { get; set; }
+
         public bool Equals(GenericSerializationInfo other)
         {
             return this.FullName.Equals(other.FullName);

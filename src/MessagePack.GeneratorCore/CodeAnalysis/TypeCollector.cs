@@ -459,6 +459,7 @@ namespace MessagePackCompiler.CodeAnalysis
             var info = new GenericSerializationInfo
             {
                 FullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                IsOpenGenericType = elemType is ITypeParameterSymbol,
             };
 
             if (array.IsSZArray)
@@ -492,6 +493,7 @@ namespace MessagePackCompiler.CodeAnalysis
             INamedTypeSymbol genericType = type.ConstructUnboundGenericType();
             var genericTypeString = genericType.ToDisplayString();
             var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            var isOpenGenericType = type.TypeArguments.Any(x => x is ITypeParameterSymbol);
 
             // special case
             if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
@@ -510,6 +512,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     {
                         FormatterName = $"global::MessagePack.Formatters.NullableFormatter<{type.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>",
                         FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        IsOpenGenericType = isOpenGenericType,
                     };
 
                     this.collectedGenericInfo.Add(info);
@@ -533,6 +536,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 {
                     FormatterName = f,
                     FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    IsOpenGenericType = isOpenGenericType,
                 };
 
                 this.collectedGenericInfo.Add(info);
@@ -546,6 +550,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     {
                         FormatterName = f,
                         FullName = $"global::System.Linq.IGrouping<{typeArgs}>",
+                        IsOpenGenericType = isOpenGenericType,
                     };
 
                     this.collectedGenericInfo.Add(groupingInfo);
@@ -558,6 +563,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     {
                         FormatterName = f,
                         FullName = $"global::System.Collections.Generic.IEnumerable<{typeArgs}>",
+                        IsOpenGenericType = isOpenGenericType,
                     };
 
                     this.collectedGenericInfo.Add(enumerableInfo);
@@ -572,6 +578,13 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.CollectGenericUnion(type);
                 this.CollectObject(type);
                 return;
+            }
+            else
+            {
+                // Collect substituted types for the properties and fields.
+                // NOTE: It is used to register formatters from nested generic type.
+                //       However, closed generic types such as `Foo<string>` are not registered as a formatter.
+                GetObjectInfo(type);
             }
 
             // Collect substituted types for the type parameters (e.g. Bar in Foo<Bar>)
@@ -595,6 +608,7 @@ namespace MessagePackCompiler.CodeAnalysis
             {
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 FormatterName = formatterBuilder.ToString(),
+                IsOpenGenericType = isOpenGenericType,
             };
 
             this.collectedGenericInfo.Add(genericSerializationInfo);
