@@ -528,7 +528,7 @@ var model = new DynamicModel { Name = "foobar", Items = new[] { 1, 10, 100, 1000
 var blob = MessagePackSerializer.Serialize(model, ContractlessStandardResolver.Options);
 
 // Dynamic ("untyped")
-var dynamicModel = MessagePackSerializer.Deserialize<dynamic>(blob, ContractlessStandardResolver.Instance);
+var dynamicModel = MessagePackSerializer.Deserialize<dynamic>(blob, ContractlessStandardResolver.Options);
 
 // You can access the data using array/dictionary indexers, as shown above
 Console.WriteLine(dynamicModel["Name"]); // foobar
