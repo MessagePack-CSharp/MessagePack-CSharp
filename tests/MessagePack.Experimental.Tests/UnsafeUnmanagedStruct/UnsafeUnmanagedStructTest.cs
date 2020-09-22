@@ -7,7 +7,7 @@ using MessagePack;
 using MessagePack.Resolvers;
 using NUnit.Framework;
 
-[module:UnsafeUnmanagedStruct(typeof(Matrix4x4), UnsafeUnmanagedStructFormatterImplementationKind.Array)]
+[module:UnsafeUnmanagedStruct(typeof(Matrix4x4), UnsafeUnmanagedStructFormatterImplementationKind.Array | UnsafeUnmanagedStructFormatterImplementationKind.Self)]
 
 namespace MessagePack.Experimental.Tests
 {
