@@ -12,10 +12,10 @@ namespace MessagePack.Resolvers
     {
         public static readonly DynamicUnsafeUnmanagedStructResolver Instance = new DynamicUnsafeUnmanagedStructResolver();
 
-        private static readonly MethodInfo baseIsReferenceOrContainsReferences = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsReferenceOrContainsReferences)) ?? throw new NullReferenceException();
-        private static readonly Type baseFormatterCache = typeof(FormatterCache<>);
-        private static readonly Type baseStruct = typeof(UnsafeUnmanagedStructFormatter<>);
-        private static readonly Type baseArray = typeof(UnsafeUnmanagedStructArrayFormatter<>);
+        private static readonly MethodInfo BaseIsReferenceOrContainsReferences = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsReferenceOrContainsReferences)) ?? throw new NullReferenceException();
+        private static readonly Type BaseFormatterCache = typeof(FormatterCache<>);
+        private static readonly Type BaseStruct = typeof(UnsafeUnmanagedStructFormatter<>);
+        private static readonly Type BaseArray = typeof(UnsafeUnmanagedStructArrayFormatter<>);
 
         [ThreadStatic] private static Type[]? one;
 
@@ -55,7 +55,7 @@ namespace MessagePack.Resolvers
 
                     var type = attribute.Type;
                     one[0] = type;
-                    var isReferenceOrContainsReferences = (bool)baseIsReferenceOrContainsReferences.MakeGenericMethod(one).Invoke(null, null)!;
+                    var isReferenceOrContainsReferences = (bool)BaseIsReferenceOrContainsReferences.MakeGenericMethod(one).Invoke(null, null)!;
                     if (isReferenceOrContainsReferences)
                     {
                         throw new MessagePackSerializationException("UnsafeUnmanagedStructAttribute target type should be unmanaged type! type: " + type);
@@ -63,15 +63,15 @@ namespace MessagePack.Resolvers
 
                     if ((attribute.Kind & UnsafeUnmanagedStructFormatterImplementationKind.Self) != 0)
                     {
-                        var instance = baseStruct.MakeGenericType(one).GetField("Instance")!.GetValue(default);
-                        baseFormatterCache.MakeGenericType(one).GetField("Formatter")!.SetValue(null, instance);
+                        var instance = BaseStruct.MakeGenericType(one).GetField("Instance")!.GetValue(default);
+                        BaseFormatterCache.MakeGenericType(one).GetField("Formatter")!.SetValue(null, instance);
                     }
 
                     if ((attribute.Kind & UnsafeUnmanagedStructFormatterImplementationKind.Array) != 0)
                     {
-                        var instance = baseArray.MakeGenericType(one).GetField("Instance")!.GetValue(default);
+                        var instance = BaseArray.MakeGenericType(one).GetField("Instance")!.GetValue(default);
                         one[0] = type.MakeArrayType();
-                        baseFormatterCache.MakeGenericType(one).GetField("Formatter")!.SetValue(null, instance);
+                        BaseFormatterCache.MakeGenericType(one).GetField("Formatter")!.SetValue(null, instance);
                     }
                 }
             }
@@ -84,7 +84,9 @@ namespace MessagePack.Resolvers
 
         private static class FormatterCache<T>
         {
-            public static IMessagePackFormatter<T>? Formatter;
+#pragma warning disable SA1401 // Fields should be private
+            public static IMessagePackFormatter<T>? Formatter = default;
+#pragma warning restore SA1401 // Fields should be private
         }
     }
 }
