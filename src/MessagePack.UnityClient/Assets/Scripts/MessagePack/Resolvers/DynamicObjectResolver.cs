@@ -1772,7 +1772,8 @@ namespace MessagePack.Internal
             var constructorParameters = new List<EmittableMemberAndConstructorParameter>();
             if (ctor != null)
             {
-                ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
+                ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupByKeyDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
+                ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupByMemberNameDictionary = stringMembers.ToLookup(x => x.Value.Name, x => x, StringComparer.OrdinalIgnoreCase);
                 do
                 {
                     constructorParameters.Clear();
@@ -1818,8 +1819,22 @@ namespace MessagePack.Internal
                         }
                         else
                         {
-                            IEnumerable<KeyValuePair<string, EmittableMember>> hasKey = constructorLookupDictionary[item.Name];
-                            var len = hasKey.Count();
+                            // Lookup by both string key name and member name
+                            IEnumerable<KeyValuePair<string, EmittableMember>> hasKey = constructorLookupByKeyDictionary[item.Name];
+                            IEnumerable<KeyValuePair<string, EmittableMember>> hasKeyByMemberName = constructorLookupByMemberNameDictionary[item.Name];
+
+                            var lenByKey = hasKey.Count();
+                            var lenByMemberName = hasKeyByMemberName.Count();
+
+                            var len = lenByKey;
+
+                            // Prefer to use string key name unless a matching string key is not found but a matching member name is
+                            if (lenByKey == 0 && lenByMemberName != 0)
+                            {
+                                len = lenByMemberName;
+                                hasKey = hasKeyByMemberName;
+                            }
+
                             if (len != 0)
                             {
                                 if (len != 1)
