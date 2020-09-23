@@ -1,5 +1,11 @@
 ﻿<Project>
   <PropertyGroup>
+    <!-- This is the name of the generated file. -->
+    <MessagePackGeneratedFileName>mpc_generated.cs</MessagePackGeneratedFileName>
+
+    <!-- This is the output path of the generated file. If the path is empty, use 'IntermediateOutputPath' instead. -->
+    <MessagePackGeneratedOutputDirectory></MessagePackGeneratedOutputDirectory>
+
     <!-- This namespace, plus ".Formatters" is used for the generated type. -->
     <MessagePackGeneratedResolverNamespace>MessagePack</MessagePackGeneratedResolverNamespace>
 

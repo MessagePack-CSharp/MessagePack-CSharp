@@ -7,7 +7,8 @@
 
     <MessagePackGenerator
       Compile="@(Compile)"
-      IntermediateOutputPath="$(IntermediateOutputPath)"
+      GeneratedFileName="$(MessagePackGeneratedFileName)"
+      GeneratedOutputDirectory="$([MSBuild]::ValueOrDefault('$(MessagePackGeneratedOutputDirectory)', '$(IntermediateOutputPath)'))"
       ReferencePath="@(ReferencePath)"
       DefineConstants="$(DefineConstants)"
       Namespace="$(MessagePackGeneratedResolverNamespace)"

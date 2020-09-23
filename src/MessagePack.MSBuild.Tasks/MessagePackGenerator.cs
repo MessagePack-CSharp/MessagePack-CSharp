@@ -20,15 +20,16 @@ namespace MessagePack.MSBuild.Tasks
 {
     public class MessagePackGenerator : Microsoft.Build.Utilities.Task, ICancelableTask
     {
-        private const string GeneratedFileName = "mpc_generated.cs";
-
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
         [Required]
         public ITaskItem[] Compile { get; set; } = null!;
 
         [Required]
-        public string IntermediateOutputPath { get; set; } = null!;
+        public string GeneratedFileName { get; set; } = null!;
+
+        [Required]
+        public string GeneratedOutputDirectory { get; set; } = null!;
 
         [Required]
         public ITaskItem[] ReferencePath { get; set; } = null!;
@@ -59,7 +60,7 @@ namespace MessagePack.MSBuild.Tasks
                 return false;
             }
 
-            this.GeneratedOutputPath = Path.Combine(this.IntermediateOutputPath, GeneratedFileName);
+            this.GeneratedOutputPath = Path.Combine(this.GeneratedOutputDirectory, GeneratedFileName);
 
             try
             {
