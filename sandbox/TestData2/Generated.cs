@@ -196,14 +196,15 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
             var __a__ = default(int);
             var __bs__ = default(global::System.Collections.Generic.List<global::TestData2.B>);
             var __c__ = default(global::TestData2.C);
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -246,7 +247,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
             // a
             writer.WriteRaw(new byte[1 + 1] { 161, 97 });
@@ -270,14 +271,15 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
             var __ass__ = default(global::System.Collections.Generic.List<global::TestData2.A>);
             var __c__ = default(global::TestData2.C);
             var __a__ = default(int);
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -320,7 +322,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
             // ass
             writer.WriteRaw(new byte[1 + 3] { 163, 97, 115, 115 });
@@ -344,13 +346,14 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
             var __b__ = default(global::TestData2.B);
             var __a__ = default(int);
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -387,7 +390,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // b
             writer.WriteRaw(new byte[1 + 1] { 161, 98 });
@@ -408,13 +411,14 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
             var __EnumId__ = default(global::TestData2.Nest1.Id);
             var __ClassId__ = default(global::TestData2.Nest1.IdType);
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -450,7 +454,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // EnumId
             writer.WriteRaw(new byte[1 + 6] { 166, 69, 110, 117, 109, 73, 100 });
@@ -471,8 +475,9 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
+            var length = reader.ReadMapHeader();
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 reader.Skip();
                 reader.Skip();
@@ -505,13 +510,14 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
             var __EnumId__ = default(global::TestData2.Nest2.Id);
             var __ClassId__ = default(global::TestData2.Nest2.IdType);
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -547,7 +553,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // EnumId
             writer.WriteRaw(new byte[1 + 6] { 166, 69, 110, 117, 109, 73, 100 });
@@ -568,8 +574,9 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
+            var length = reader.ReadMapHeader();
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 reader.Skip();
                 reader.Skip();
@@ -602,13 +609,14 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
             var __MyProperty1__ = default(string);
             var __MyProperty2__ = default(string);
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -651,7 +659,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // MyProperty1
             writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });
@@ -672,13 +680,14 @@ namespace MessagePack.Formatters.TestData2
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
             var __MyProperty1__ = default(string);
             var __MyProperty2__ = default(string);
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -721,7 +730,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             // MyProperty1
             writer.WriteRaw(new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 });

@@ -59,10 +59,11 @@ foreach(var objInfo in ObjectSerializationInfos)
     if (isFormatterResolverNecessary)
     {
 #>
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
 <#
-    }
-
+    } #>
+            var length = reader.ReadMapHeader();
+<#
     foreach(var memberInfo in objInfo.Members)
     {#>
             var __<#= memberInfo.Name #>__ = default(<#= memberInfo.Type #>);
@@ -70,12 +71,12 @@ foreach(var objInfo in ObjectSerializationInfos)
     }
 #>
 
-            for (int i = 0, length = reader.ReadMapHeader(); i < length; i++)
+            for (int i = 0; i < length; i++)
             {
 <#
     if (objInfo.Members.Length != 0)
     {#>
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -142,7 +143,7 @@ foreach(var objInfo in ObjectSerializationInfos)
 
     if (isFormatterResolverNecessary)
     {#>
-            var formatterResolver = options.Resolver;
+            IFormatterResolver formatterResolver = options.Resolver;
 <#
     }
 
