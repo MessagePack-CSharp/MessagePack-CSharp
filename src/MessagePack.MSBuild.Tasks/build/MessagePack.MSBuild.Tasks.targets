@@ -1,0 +1,21 @@
+﻿<Project>
+  <UsingTask TaskName="MessagePackGenerator" AssemblyFile="MessagePack.MSBuild.Tasks.dll" />
+
+  <Target Name="GenerateMessagePackResolver"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="ResolveReferences">
+
+    <MessagePackGenerator
+      Compile="@(Compile)"
+      IntermediateOutputPath="$(IntermediateOutputPath)"
+      ReferencePath="@(ReferencePath)"
+      DefineConstants="$(DefineConstants)"
+      Namespace="$(MessagePackGeneratedResolverNamespace)"
+      ResolverName="$(MessagePackGeneratedResolverName)"
+      UseMapMode="$(MessagePackGeneratedUsesMapMode)"
+      >
+      <Output TaskParameter="GeneratedOutputPath" ItemName="Compile" />
+      <Output TaskParameter="GeneratedOutputPath" ItemName="FileWrites" />
+    </MessagePackGenerator>
+  </Target>
+</Project>

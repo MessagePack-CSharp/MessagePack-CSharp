@@ -46,10 +46,10 @@ namespace MessagePack.Internal
         public readonly byte Byte15;
 
         // string.Join(", ", Enumerable.Range(0, 256).Select(x => (int)BitConverter.ToString(new byte[] { (byte)x }).ToLower()[0]))
-        private static byte[] byteToHexStringHigh = new byte[256] { 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102 };
+        private static ReadOnlySpan<byte> GetByteToHexStringHigh() => new byte[256] { 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102 };
 
         // string.Join(", ", Enumerable.Range(0, 256).Select(x => (int)BitConverter.ToString(new byte[] { (byte)x }).ToLower()[1]))
-        private static byte[] byteToHexStringLow = new byte[256] { 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102 };
+        private static ReadOnlySpan<byte> GetByteToHexStringLow() => new byte[256] { 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102 };
 
         public GuidBits(ref Guid value)
         {
@@ -311,81 +311,84 @@ ERROR:
         // 4(x2) - 2(x2) - 2(x2) - 2(x2) - 6(x2)
         public void Write(Span<byte> buffer)
         {
+            var high = GetByteToHexStringHigh();
+            var low = GetByteToHexStringLow();
+
             if (BitConverter.IsLittleEndian)
             {
                 // int(_a)
-                buffer[6] = byteToHexStringHigh[this.Byte0];
-                buffer[7] = byteToHexStringLow[this.Byte0];
-                buffer[4] = byteToHexStringHigh[this.Byte1];
-                buffer[5] = byteToHexStringLow[this.Byte1];
-                buffer[2] = byteToHexStringHigh[this.Byte2];
-                buffer[3] = byteToHexStringLow[this.Byte2];
-                buffer[0] = byteToHexStringHigh[this.Byte3];
-                buffer[1] = byteToHexStringLow[this.Byte3];
+                buffer[6] = high[this.Byte0];
+                buffer[7] = low[this.Byte0];
+                buffer[4] = high[this.Byte1];
+                buffer[5] = low[this.Byte1];
+                buffer[2] = high[this.Byte2];
+                buffer[3] = low[this.Byte2];
+                buffer[0] = high[this.Byte3];
+                buffer[1] = low[this.Byte3];
 
                 buffer[8] = (byte)'-';
 
                 // short(_b)
-                buffer[11] = byteToHexStringHigh[this.Byte4];
-                buffer[12] = byteToHexStringLow[this.Byte4];
-                buffer[9] = byteToHexStringHigh[this.Byte5];
-                buffer[10] = byteToHexStringLow[this.Byte5];
+                buffer[11] = high[this.Byte4];
+                buffer[12] = low[this.Byte4];
+                buffer[9] = high[this.Byte5];
+                buffer[10] = low[this.Byte5];
 
                 buffer[13] = (byte)'-';
 
                 // short(_c)
-                buffer[16] = byteToHexStringHigh[this.Byte6];
-                buffer[17] = byteToHexStringLow[this.Byte6];
-                buffer[14] = byteToHexStringHigh[this.Byte7];
-                buffer[15] = byteToHexStringLow[this.Byte7];
+                buffer[16] = high[this.Byte6];
+                buffer[17] = low[this.Byte6];
+                buffer[14] = high[this.Byte7];
+                buffer[15] = low[this.Byte7];
             }
             else
             {
-                buffer[0] = byteToHexStringHigh[this.Byte0];
-                buffer[1] = byteToHexStringLow[this.Byte0];
-                buffer[2] = byteToHexStringHigh[this.Byte1];
-                buffer[3] = byteToHexStringLow[this.Byte1];
-                buffer[4] = byteToHexStringHigh[this.Byte2];
-                buffer[5] = byteToHexStringLow[this.Byte2];
-                buffer[6] = byteToHexStringHigh[this.Byte3];
-                buffer[7] = byteToHexStringLow[this.Byte3];
+                buffer[0] = high[this.Byte0];
+                buffer[1] = low[this.Byte0];
+                buffer[2] = high[this.Byte1];
+                buffer[3] = low[this.Byte1];
+                buffer[4] = high[this.Byte2];
+                buffer[5] = low[this.Byte2];
+                buffer[6] = high[this.Byte3];
+                buffer[7] = low[this.Byte3];
 
                 buffer[8] = (byte)'-';
 
-                buffer[9] = byteToHexStringHigh[this.Byte4];
-                buffer[10] = byteToHexStringLow[this.Byte4];
-                buffer[11] = byteToHexStringHigh[this.Byte5];
-                buffer[12] = byteToHexStringLow[this.Byte5];
+                buffer[9] = high[this.Byte4];
+                buffer[10] = low[this.Byte4];
+                buffer[11] = high[this.Byte5];
+                buffer[12] = low[this.Byte5];
 
                 buffer[13] = (byte)'-';
 
-                buffer[14] = byteToHexStringHigh[this.Byte6];
-                buffer[15] = byteToHexStringLow[this.Byte6];
-                buffer[16] = byteToHexStringHigh[this.Byte7];
-                buffer[17] = byteToHexStringLow[this.Byte7];
+                buffer[14] = high[this.Byte6];
+                buffer[15] = low[this.Byte6];
+                buffer[16] = high[this.Byte7];
+                buffer[17] = low[this.Byte7];
             }
 
             buffer[18] = (byte)'-';
 
-            buffer[19] = byteToHexStringHigh[this.Byte8];
-            buffer[20] = byteToHexStringLow[this.Byte8];
-            buffer[21] = byteToHexStringHigh[this.Byte9];
-            buffer[22] = byteToHexStringLow[this.Byte9];
+            buffer[19] = high[this.Byte8];
+            buffer[20] = low[this.Byte8];
+            buffer[21] = high[this.Byte9];
+            buffer[22] = low[this.Byte9];
 
             buffer[23] = (byte)'-';
 
-            buffer[24] = byteToHexStringHigh[this.Byte10];
-            buffer[25] = byteToHexStringLow[this.Byte10];
-            buffer[26] = byteToHexStringHigh[this.Byte11];
-            buffer[27] = byteToHexStringLow[this.Byte11];
-            buffer[28] = byteToHexStringHigh[this.Byte12];
-            buffer[29] = byteToHexStringLow[this.Byte12];
-            buffer[30] = byteToHexStringHigh[this.Byte13];
-            buffer[31] = byteToHexStringLow[this.Byte13];
-            buffer[32] = byteToHexStringHigh[this.Byte14];
-            buffer[33] = byteToHexStringLow[this.Byte14];
-            buffer[34] = byteToHexStringHigh[this.Byte15];
-            buffer[35] = byteToHexStringLow[this.Byte15];
+            buffer[24] = high[this.Byte10];
+            buffer[25] = low[this.Byte10];
+            buffer[26] = high[this.Byte11];
+            buffer[27] = low[this.Byte11];
+            buffer[28] = high[this.Byte12];
+            buffer[29] = low[this.Byte12];
+            buffer[30] = high[this.Byte13];
+            buffer[31] = low[this.Byte13];
+            buffer[32] = high[this.Byte14];
+            buffer[33] = low[this.Byte14];
+            buffer[34] = high[this.Byte15];
+            buffer[35] = low[this.Byte15];
         }
     }
 }

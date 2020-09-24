@@ -352,102 +352,105 @@ namespace MessagePack.Internal
                 throw new MessagePackSerializationException("Building dynamic formatter only allows public type. Type: " + type.FullName);
             }
 
-            Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
-            TypeBuilder typeBuilder = assembly.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, string.Empty).Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
-
-            FieldBuilder stringByteKeysField = null;
-            Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> customFormatterLookup = null;
-
-            // string key needs string->int mapper for deserialize switch statement
-            if (serializationInfo.IsStringKey)
+            using (MonoProtection.EnterRefEmitLock())
             {
-                ConstructorBuilder method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
-                stringByteKeysField = typeBuilder.DefineField("stringByteKeys", typeof(byte[][]), FieldAttributes.Private | FieldAttributes.InitOnly);
+                Type formatterType = typeof(IMessagePackFormatter<>).MakeGenericType(type);
+                TypeBuilder typeBuilder = assembly.DefineType("MessagePack.Formatters." + SubtractFullNameRegex.Replace(type.FullName, string.Empty).Replace(".", "_") + "Formatter" + Interlocked.Increment(ref nameSequence), TypeAttributes.Public | TypeAttributes.Sealed, null, new[] { formatterType });
 
-                ILGenerator il = method.GetILGenerator();
-                BuildConstructor(type, serializationInfo, method, stringByteKeysField, il);
-                customFormatterLookup = BuildCustomFormatterField(typeBuilder, serializationInfo, il);
-                il.Emit(OpCodes.Ret);
-            }
-            else
-            {
-                ConstructorBuilder method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
-                ILGenerator il = method.GetILGenerator();
-                il.EmitLoadThis();
-                il.Emit(OpCodes.Call, objectCtor);
-                customFormatterLookup = BuildCustomFormatterField(typeBuilder, serializationInfo, il);
-                il.Emit(OpCodes.Ret);
-            }
+                FieldBuilder stringByteKeysField = null;
+                Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> customFormatterLookup = null;
 
-            {
-                MethodBuilder method = typeBuilder.DefineMethod(
-                    "Serialize",
-                    MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
-                    returnType: null,
-                    parameterTypes: new Type[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
-                method.DefineParameter(1, ParameterAttributes.None, "writer");
-                method.DefineParameter(2, ParameterAttributes.None, "value");
-                method.DefineParameter(3, ParameterAttributes.None, "options");
+                // string key needs string->int mapper for deserialize switch statement
+                if (serializationInfo.IsStringKey)
+                {
+                    ConstructorBuilder method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
+                    stringByteKeysField = typeBuilder.DefineField("stringByteKeys", typeof(byte[][]), FieldAttributes.Private | FieldAttributes.InitOnly);
 
-                ILGenerator il = method.GetILGenerator();
-                BuildSerialize(
-                    type,
-                    serializationInfo,
-                    il,
-                    () =>
-                    {
-                        il.EmitLoadThis();
-                        il.EmitLdfld(stringByteKeysField);
-                    },
-                    (index, member) =>
-                    {
-                        FieldInfo fi;
-                        if (!customFormatterLookup.TryGetValue(member, out fi))
-                        {
-                            return null;
-                        }
+                    ILGenerator il = method.GetILGenerator();
+                    BuildConstructor(type, serializationInfo, method, stringByteKeysField, il);
+                    customFormatterLookup = BuildCustomFormatterField(typeBuilder, serializationInfo, il);
+                    il.Emit(OpCodes.Ret);
+                }
+                else
+                {
+                    ConstructorBuilder method = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, Type.EmptyTypes);
+                    ILGenerator il = method.GetILGenerator();
+                    il.EmitLoadThis();
+                    il.Emit(OpCodes.Call, objectCtor);
+                    customFormatterLookup = BuildCustomFormatterField(typeBuilder, serializationInfo, il);
+                    il.Emit(OpCodes.Ret);
+                }
 
-                        return () =>
+                {
+                    MethodBuilder method = typeBuilder.DefineMethod(
+                        "Serialize",
+                        MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
+                        returnType: null,
+                        parameterTypes: new Type[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
+                    method.DefineParameter(1, ParameterAttributes.None, "writer");
+                    method.DefineParameter(2, ParameterAttributes.None, "value");
+                    method.DefineParameter(3, ParameterAttributes.None, "options");
+
+                    ILGenerator il = method.GetILGenerator();
+                    BuildSerialize(
+                        type,
+                        serializationInfo,
+                        il,
+                        () =>
                         {
                             il.EmitLoadThis();
-                            il.EmitLdfld(fi);
-                        };
-                    },
-                    1);
-            }
-
-            {
-                MethodBuilder method = typeBuilder.DefineMethod(
-                    "Deserialize",
-                    MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
-                    type,
-                    new Type[] { refMessagePackReader, typeof(MessagePackSerializerOptions) });
-                method.DefineParameter(1, ParameterAttributes.None, "reader");
-                method.DefineParameter(2, ParameterAttributes.None, "options");
-
-                ILGenerator il = method.GetILGenerator();
-                BuildDeserialize(
-                    type,
-                    serializationInfo,
-                    il,
-                    (index, member) =>
-                    {
-                        FieldInfo fi;
-                        if (!customFormatterLookup.TryGetValue(member, out fi))
+                            il.EmitLdfld(stringByteKeysField);
+                        },
+                        (index, member) =>
                         {
-                            return null;
-                        }
+                            FieldInfo fi;
+                            if (!customFormatterLookup.TryGetValue(member, out fi))
+                            {
+                                return null;
+                            }
 
-                        return () =>
+                            return () =>
+                            {
+                                il.EmitLoadThis();
+                                il.EmitLdfld(fi);
+                            };
+                        },
+                        1);
+                }
+
+                {
+                    MethodBuilder method = typeBuilder.DefineMethod(
+                        "Deserialize",
+                        MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
+                        type,
+                        new Type[] { refMessagePackReader, typeof(MessagePackSerializerOptions) });
+                    method.DefineParameter(1, ParameterAttributes.None, "reader");
+                    method.DefineParameter(2, ParameterAttributes.None, "options");
+
+                    ILGenerator il = method.GetILGenerator();
+                    BuildDeserialize(
+                        type,
+                        serializationInfo,
+                        il,
+                        (index, member) =>
                         {
-                            il.EmitLoadThis();
-                            il.EmitLdfld(fi);
-                        };
-                    },
-                    1); // firstArgIndex:0 is this.
-            }
+                            FieldInfo fi;
+                            if (!customFormatterLookup.TryGetValue(member, out fi))
+                            {
+                                return null;
+                            }
 
-            return typeBuilder.CreateTypeInfo();
+                            return () =>
+                            {
+                                il.EmitLoadThis();
+                                il.EmitLdfld(fi);
+                            };
+                        },
+                        1); // firstArgIndex:0 is this.
+                }
+
+                return typeBuilder.CreateTypeInfo();
+            }
         }
 
         public static object BuildFormatterToDynamicMethod(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
@@ -1159,11 +1162,7 @@ namespace MessagePack.Internal
         {
             if (info.IsClass)
             {
-                foreach (ObjectSerializationInfo.EmittableMember item in info.ConstructorParameters)
-                {
-                    DeserializeInfo local = members.First(x => x.MemberInfo == item);
-                    il.EmitLdloc(local.LocalField);
-                }
+                EmitNewObjectConstructorArguments(il, info, members);
 
                 il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
 
@@ -1186,11 +1185,7 @@ namespace MessagePack.Internal
                 }
                 else
                 {
-                    foreach (ObjectSerializationInfo.EmittableMember item in info.ConstructorParameters)
-                    {
-                        DeserializeInfo local = members.First(x => x.MemberInfo == item);
-                        il.EmitLdloc(local.LocalField);
-                    }
+                    EmitNewObjectConstructorArguments(il, info, members);
 
                     il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
                     il.Emit(OpCodes.Stloc, result);
@@ -1204,6 +1199,24 @@ namespace MessagePack.Internal
                 }
 
                 return result; // struct returns local result field
+            }
+        }
+
+        private static void EmitNewObjectConstructorArguments(ILGenerator il, ObjectSerializationInfo info, DeserializeInfo[] members)
+        {
+            foreach (ObjectSerializationInfo.EmittableMemberAndConstructorParameter item in info.ConstructorParameters)
+            {
+                DeserializeInfo local = members.First(x => x.MemberInfo == item.MemberInfo);
+                il.EmitLdloc(local.LocalField);
+
+                if (!item.ConstructorParameter.ParameterType.IsValueType && local.MemberInfo.IsValueType)
+                {
+                    // When a constructor argument of type object is being provided by a serialized member value that is a value type
+                    // then that value must be boxed in order for the generated code to be valid (see issue #987). This may occur because
+                    // the only requirement when determining whether a member value may be used to populate a constructor argument in an
+                    // IsAssignableFrom check and typeof(object) IsAssignableFrom typeof(int), for example.
+                    il.Emit(OpCodes.Box, local.MemberInfo.Type);
+                }
             }
         }
 
@@ -1391,7 +1404,7 @@ namespace MessagePack.Internal
 
         public ConstructorInfo BestmatchConstructor { get; set; }
 
-        public EmittableMember[] ConstructorParameters { get; set; }
+        public EmittableMemberAndConstructorParameter[] ConstructorParameters { get; set; }
 
         public EmittableMember[] Members { get; set; }
 
@@ -1759,7 +1772,7 @@ namespace MessagePack.Internal
                 throw new MessagePackDynamicObjectResolverException("can't find public constructor. type:" + type.FullName);
             }
 
-            var constructorParameters = new List<EmittableMember>();
+            var constructorParameters = new List<EmittableMemberAndConstructorParameter>();
             if (ctor != null)
             {
                 ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
@@ -1778,7 +1791,7 @@ namespace MessagePack.Internal
                                     item.ParameterType.GetTypeInfo().IsAssignableFrom(paramMember.Type))
                                     && paramMember.IsReadable)
                                 {
-                                    constructorParameters.Add(paramMember);
+                                    constructorParameters.Add(new EmittableMemberAndConstructorParameter { ConstructorParameter = item, MemberInfo = paramMember });
                                 }
                                 else
                                 {
@@ -1828,7 +1841,7 @@ namespace MessagePack.Internal
                                 paramMember = hasKey.First().Value;
                                 if (item.ParameterType == paramMember.Type && paramMember.IsReadable)
                                 {
-                                    constructorParameters.Add(paramMember);
+                                    constructorParameters.Add(new EmittableMemberAndConstructorParameter { ConstructorParameter = item, MemberInfo = paramMember });
                                 }
                                 else
                                 {
@@ -1896,7 +1909,7 @@ namespace MessagePack.Internal
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = members.Where(m => m.IsExplicitContract || constructorParameters.Contains(m) || m.IsWritable).ToArray(),
+                Members = members.Where(m => m.IsExplicitContract || constructorParameters.Any(p => p.MemberInfo.Equals(m)) || m.IsWritable).ToArray(),
             };
         }
 
@@ -1953,6 +1966,13 @@ namespace MessagePack.Internal
             }
         }
 
+        public class EmittableMemberAndConstructorParameter
+        {
+            public EmittableMember MemberInfo { get; set; }
+
+            public ParameterInfo ConstructorParameter { get; set; }
+        }
+
         public class EmittableMember
         {
             public bool IsProperty
@@ -1994,8 +2014,8 @@ namespace MessagePack.Internal
             {
                 get
                 {
-                    MemberInfo mi = this.IsProperty ? (MemberInfo)this.PropertyInfo : this.FieldInfo;
-                    return mi.DeclaringType.GetTypeInfo().IsValueType;
+                    Type t = this.IsProperty ? this.PropertyInfo.PropertyType : this.FieldInfo.FieldType;
+                    return t.IsValueType;
                 }
             }
 

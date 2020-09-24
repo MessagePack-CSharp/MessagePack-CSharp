@@ -84,17 +84,20 @@ namespace MessagePack.Formatters
             {
                 return null;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new String[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadString();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<String>();
             }
+
+            var array = new String[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadString();
+            }
+
+            return array;
         }
     }
 
@@ -594,6 +597,42 @@ namespace MessagePack.Formatters
                     reader.Depth--;
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Serializes any instance of <see cref="Type"/> by its <see cref="Type.AssemblyQualifiedName"/> value.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="Type"/> class itself or a derived type.</typeparam>
+    public sealed class TypeFormatter<T> : IMessagePackFormatter<T>
+        where T : Type
+    {
+        public static readonly IMessagePackFormatter<T> Instance = new TypeFormatter<T>();
+
+        private TypeFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.Write(value.AssemblyQualifiedName);
+            }
+        }
+
+        public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            return (T)Type.GetType(reader.ReadString(), throwOnError: true);
         }
     }
 }

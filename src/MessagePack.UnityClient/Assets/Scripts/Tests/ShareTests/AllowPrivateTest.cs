@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MessagePack.Resolvers;
+using MsgPack.Serialization;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with uppercase letter
@@ -141,6 +142,19 @@ namespace MessagePack.Tests
         {
             [Key(0)]
             public int X;
+        }
+
+        internal enum InternalEnum
+        {
+            One,
+            Two,
+        }
+
+        [MessagePackObject]
+        internal class InternalClass
+        {
+            [Key(0)]
+            internal InternalEnum EnumProperty { get; set; }
         }
 
 #if !ENABLE_IL2CPP
@@ -281,6 +295,19 @@ namespace MessagePack.Tests
         {
             var x = MessagePackSerializer.Serialize(new EmptyConstructorStruct { X = 99 }, StandardResolverAllowPrivate.Options);
             MessagePackSerializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Options).X.Is(99);
+        }
+
+        [Fact]
+        public void InternalClassWithInternalEnum()
+        {
+            InternalClass expected = new InternalClass
+            {
+                EnumProperty = InternalEnum.Two,
+            };
+
+            byte[] bytes = MessagePackSerializer.Serialize(expected, StandardResolverAllowPrivate.Options);
+            InternalClass actual = MessagePackSerializer.Deserialize<InternalClass>(bytes, StandardResolverAllowPrivate.Options);
+            Assert.Equal(expected.EnumProperty, actual.EnumProperty);
         }
 
 #if !ENABLE_IL2CPP

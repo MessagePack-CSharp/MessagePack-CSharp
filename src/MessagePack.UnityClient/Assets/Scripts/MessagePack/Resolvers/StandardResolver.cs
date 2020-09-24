@@ -287,10 +287,9 @@ namespace MessagePack.Internal
 
 #if UNITY_2018_3_OR_NEWER
             MessagePack.Unity.UnityResolver.Instance,
-#endif
-
-#if !ENABLE_IL2CPP && !NET_STANDARD_2_0
-            DynamicEnumResolver.Instance, // Try Enum
+#else
+            ImmutableCollection.ImmutableCollectionResolver.Instance,
+            CompositeResolver.Create(ExpandoObjectFormatter.Instance),
 #endif
 
 #if !ENABLE_IL2CPP

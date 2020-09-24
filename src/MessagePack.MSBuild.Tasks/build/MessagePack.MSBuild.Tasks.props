@@ -1,0 +1,12 @@
+﻿<Project>
+  <PropertyGroup>
+    <!-- This namespace, plus ".Formatters" is used for the generated type. -->
+    <MessagePackGeneratedResolverNamespace>MessagePack</MessagePackGeneratedResolverNamespace>
+
+    <!-- This is the name of the generated type. -->
+    <MessagePackGeneratedResolverName>GeneratedResolver</MessagePackGeneratedResolverName>
+
+    <!-- A boolean value that indicates whether all formatters should use property maps instead of more compact arrays. -->
+    <MessagePackGeneratedUsesMapMode>false</MessagePackGeneratedUsesMapMode>
+  </PropertyGroup>
+</Project>

@@ -119,25 +119,28 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new <#= t.Name #>[len];
-                options.Security.DepthStep(ref reader);
-                try
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        array[i] = reader.Read<#= t.Name #>();
-                    }
-                }
-                finally
-                {
-                    reader.Depth--;
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<<#= t.Name #>>();
             }
+
+            var array = new <#= t.Name #>[len];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array[i] = reader.Read<#= t.Name #>();
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return array;
         }
     }
 <# } #>

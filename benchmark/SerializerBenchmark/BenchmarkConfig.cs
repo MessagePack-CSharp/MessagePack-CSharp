@@ -27,7 +27,7 @@ namespace Benchmark
             Job baseConfig = Job.ShortRun.WithIterationCount(1).WithWarmupCount(1);
 
             // Add(baseConfig.With(Runtime.Clr).With(Jit.RyuJit).With(Platform.X64));
-            this.Add(baseConfig.With(CoreRuntime.Core30).With(Jit.RyuJit).With(Platform.X64));
+            this.Add(baseConfig.With(CoreRuntime.Core31).With(Jit.RyuJit).With(Platform.X64));
 
             this.Add(MarkdownExporter.GitHub);
             this.Add(CsvExporter.Default);

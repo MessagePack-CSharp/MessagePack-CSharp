@@ -1,0 +1,55 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+Type[] types = new []
+{
+  typeof(sbyte),
+  typeof(short),
+  typeof(int),
+  typeof(float),
+  typeof(double),
+  typeof(bool),
+};
+#>
+// Copyright (c) All contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+/* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
+ * CHANGE THE .tt FILE INSTEAD. */
+
+#pragma warning disable CS0436 // The same name of the primary package
+
+using System;
+
+namespace MessagePack.Resolvers
+{
+    internal static class PrimitiveArrayGetFormatterHelper
+    {
+        internal static object? GetFormatter(Type t)
+        {
+            if (!t.IsArray)
+            {
+                return null;
+            }
+<#
+    foreach (var type in types)
+    {
+        var name = type.Name;
+#>
+
+            if (t == typeof(<#= name #>[]))
+            {
+                return Formatters.<#= name + "ArrayFormatter" #>.Instance;
+            }
+<#
+    }
+#>
+
+            return null;
+        }
+    }
+}

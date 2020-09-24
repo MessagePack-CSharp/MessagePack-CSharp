@@ -19,7 +19,7 @@ namespace MessagePack.Tests.ExtensionTests
 
         private T Convert<T>(T value)
         {
-            MessagePackSerializerOptions options = LZ4Standard.WithResolver(new WithImmutableDefaultResolver());
+            MessagePackSerializerOptions options = LZ4Standard;
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
