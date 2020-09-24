@@ -2971,7 +2971,7 @@ namespace MessagePack.Formatters.SharedData
             formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStringKeyData>().Serialize(ref writer, value.Prop4, options);
             formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructIntKeyData>().Serialize(ref writer, value.Prop5, options);
             formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>().Serialize(ref writer, value.Prop6, options);
-            formatterResolver.GetFormatterWithVerify<byte[]>().Serialize(ref writer, value.BytesSpecial, options);
+            writer.Write(value.BytesSpecial);
         }
 
         public global::SharedData.SimpleIntKeyData Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -3015,7 +3015,7 @@ namespace MessagePack.Formatters.SharedData
                         __Prop6__ = formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>().Deserialize(ref reader, options);
                         break;
                     case 6:
-                        __BytesSpecial__ = formatterResolver.GetFormatterWithVerify<byte[]>().Deserialize(ref reader, options);
+                        __BytesSpecial__ = reader.ReadBytes()?.ToArray();
                         break;
                     default:
                         reader.Skip();
@@ -3041,11 +3041,10 @@ namespace MessagePack.Formatters.SharedData
 
         public void Serialize(ref MessagePackWriter writer, global::SharedData.SimpleStructIntKeyData value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(3);
             writer.Write(value.X);
             writer.Write(value.Y);
-            formatterResolver.GetFormatterWithVerify<byte[]>().Serialize(ref writer, value.BytesSpecial, options);
+            writer.Write(value.BytesSpecial);
         }
 
         public global::SharedData.SimpleStructIntKeyData Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -3056,7 +3055,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __X__ = default(int);
             var __Y__ = default(int);
@@ -3073,7 +3071,7 @@ namespace MessagePack.Formatters.SharedData
                         __Y__ = reader.ReadInt32();
                         break;
                     case 2:
-                        __BytesSpecial__ = formatterResolver.GetFormatterWithVerify<byte[]>().Deserialize(ref reader, options);
+                        __BytesSpecial__ = reader.ReadBytes()?.ToArray();
                         break;
                     default:
                         reader.Skip();

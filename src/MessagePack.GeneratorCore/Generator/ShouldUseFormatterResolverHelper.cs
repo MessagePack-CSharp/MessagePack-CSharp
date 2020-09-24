@@ -8,7 +8,10 @@ namespace MessagePackCompiler.Generator
 {
     public static class ShouldUseFormatterResolverHelper
     {
-        private static readonly string[] PrimitiveTypes =
+        /// <devremarks>
+        /// Keep this list in sync with DynamicObjectTypeBuilder.IsOptimizeTargetType.
+        /// </devremarks>
+        internal static readonly string[] PrimitiveTypes =
         {
             "short",
             "int",
@@ -22,9 +25,11 @@ namespace MessagePackCompiler.Generator
             "byte",
             "sbyte",
             "char",
-            ////"global::System.DateTime",
-            ////"byte[]",
-            ////"string",
+            "byte[]",
+
+            // Do not include types that resolvers are allowed to modify.
+            ////"global::System.DateTime",  // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
+            ////"string", // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
         };
 
         public static bool ShouldUseFormatterResolver(MemberSerializationInfo[] infos)

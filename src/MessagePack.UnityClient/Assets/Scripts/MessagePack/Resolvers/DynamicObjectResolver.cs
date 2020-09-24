@@ -1207,6 +1207,9 @@ namespace MessagePack.Internal
             }
         }
 
+        /// <devremarks>
+        /// Keep this list in sync with ShouldUseFormatterResolverHelper.PrimitiveTypes.
+        /// </devremarks>
         private static bool IsOptimizeTargetType(Type type)
         {
             return type == typeof(Int16)
