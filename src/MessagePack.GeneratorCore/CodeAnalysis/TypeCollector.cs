@@ -1004,7 +1004,9 @@ namespace MessagePackCompiler.CodeAnalysis
             {
                 IsClass = isClass,
                 IsOpenGenericType = isOpenGenericType,
-                GenericTypeParameters = isOpenGenericType ? type.TypeParameters.Select(x => x.ToDisplayString()).ToArray() : Array.Empty<string>(),
+                GenericTypeParameters = isOpenGenericType
+                    ? type.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray()
+                    : Array.Empty<GenericTypeParameterInfo>(),
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
@@ -1017,6 +1019,63 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             return info;
+        }
+
+        private static GenericTypeParameterInfo ToGenericTypeParameterInfo(ITypeParameterSymbol typeParameter)
+        {
+            var constraints = new List<string>();
+
+            // `notnull`, `unmanaged`, `class`, `struct` constraint must come before any constraints.
+            if (typeParameter.HasNotNullConstraint)
+            {
+                constraints.Add("notnull");
+            }
+
+            if (typeParameter.HasReferenceTypeConstraint)
+            {
+                if (typeParameter.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated)
+                {
+                    constraints.Add("class?");
+                }
+                else
+                {
+                    constraints.Add("class");
+                }
+            }
+
+            if (typeParameter.HasValueTypeConstraint)
+            {
+                if (typeParameter.HasUnmanagedTypeConstraint)
+                {
+                    constraints.Add("unmanaged");
+                }
+                else
+                {
+                    constraints.Add("struct");
+                }
+            }
+
+            // constraint types (IDisposable, IEnumerable ...)
+            foreach (var (t, index) in typeParameter.ConstraintTypes.Select((x, i) => (x, i)))
+            {
+                var constraintTypeFullName = t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                if (typeParameter.ConstraintNullableAnnotations[index] == NullableAnnotation.Annotated)
+                {
+                    constraints.Add(constraintTypeFullName + "?");
+                }
+                else
+                {
+                    constraints.Add(constraintTypeFullName);
+                }
+            }
+
+            // `new()` constraint must be last in constraints.
+            if (typeParameter.HasConstructorConstraint)
+            {
+                constraints.Add("new()");
+            }
+
+            return new GenericTypeParameterInfo(typeParameter.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), string.Join(", ", constraints));
         }
 
         private static string GetGenericFormatterClassName(INamedTypeSymbol type)

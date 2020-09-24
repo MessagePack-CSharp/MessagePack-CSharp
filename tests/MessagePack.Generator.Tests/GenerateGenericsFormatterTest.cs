@@ -7,8 +7,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.CodeAnalysis;
 using Xunit;
 using Xunit.Abstractions;
+using SymbolDisplayFormat = Microsoft.CodeAnalysis.SymbolDisplayFormat;
 
 namespace MessagePack.Generator.Tests
 {
@@ -357,6 +359,304 @@ namespace TempProject
 
             // The generated resolver doesn't know closed-type generic formatter.
             compilation.GetResolverKnownFormatterTypes().Should().BeEmpty();
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task Generics_Constraints_Type(bool isSingleFileOutput)
+        {
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            var contents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class MyGenericObject<T>
+        where T : IDisposable
+    {
+        [Key(0)]
+        public T Content { get; set; }
+    }
+}
+                ";
+            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+
+            var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
+            await compiler.GenerateFileAsync(
+                tempWorkarea.CsProjectPath,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
+                string.Empty,
+                "TempProjectResolver",
+                "TempProject.Generated",
+                false,
+                string.Empty);
+
+            var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
+            var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
+
+            var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T>");
+            formatterType.Should().NotBeNull();
+            // IDisposable
+            formatterType.TypeParameters[0].HasReferenceTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasValueTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasConstructorConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasNotNullConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasUnmanagedTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::System.IDisposable");
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task Generics_Constraints_NullableReferenceType(bool isSingleFileOutput)
+        {
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            var contents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class MyGenericObject<T1, T2, T3, T4>
+        where T1 : MyClass?
+        where T2 : MyClass
+        where T3 : MyGenericClass<MyGenericClass<MyClass?>?>?
+        where T4 : MyClass, IMyInterface?
+    {
+        [Key(0)]
+        public T1 Content { get; set; }
+    }
+
+    public class MyClass {}
+    public class MyGenericClass<T> {}
+    public interface IMyInterface {}
+}
+                ";
+            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+
+            var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
+            await compiler.GenerateFileAsync(
+                tempWorkarea.CsProjectPath,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
+                string.Empty,
+                "TempProjectResolver",
+                "TempProject.Generated",
+                false,
+                string.Empty);
+
+            var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
+            var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
+
+            var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2, T3, T4>");
+            formatterType.Should().NotBeNull();
+            // MyClass?
+            formatterType.TypeParameters[0].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.MyClass");
+            formatterType.TypeParameters[0].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.Annotated);
+            // MyClass
+            formatterType.TypeParameters[1].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.MyClass");
+            formatterType.TypeParameters[1].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.None);
+            // MyGenericClass<MyGenericClass<MyClass?>?>?
+            formatterType.TypeParameters[2].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier)) == "global::TempProject.MyGenericClass<global::TempProject.MyGenericClass<global::TempProject.MyClass?>?>");
+            formatterType.TypeParameters[2].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.Annotated);
+            // MyClass, IMyInterface?
+            formatterType.TypeParameters[3].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.MyClass");
+            formatterType.TypeParameters[3].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.IMyInterface");
+            formatterType.TypeParameters[3].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.None);
+            formatterType.TypeParameters[3].ConstraintNullableAnnotations[1].Should().Be(NullableAnnotation.Annotated);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task Generics_Constraints_Struct(bool isSingleFileOutput)
+        {
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            var contents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class MyGenericObject<T>
+        where T : struct
+    {
+        [Key(0)]
+        public T Content { get; set; }
+    }
+}
+                ";
+            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+
+            var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
+            await compiler.GenerateFileAsync(
+                tempWorkarea.CsProjectPath,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
+                string.Empty,
+                "TempProjectResolver",
+                "TempProject.Generated",
+                false,
+                string.Empty);
+
+            var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
+            var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
+
+            var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T>");
+            formatterType.Should().NotBeNull();
+            // struct
+            formatterType.TypeParameters[0].HasReferenceTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasValueTypeConstraint.Should().BeTrue();
+            formatterType.TypeParameters[0].HasConstructorConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasNotNullConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasUnmanagedTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].ConstraintTypes.Should().BeEmpty();
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task Generics_Constraints_Multiple(bool isSingleFileOutput)
+        {
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            var contents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class MyGenericObject<T1, T2, T3, T4>
+        where T1 : struct
+        where T2 : IDisposable, new()
+        where T3 : notnull
+        where T4 : unmanaged
+    {
+        [Key(0)]
+        public T1 Content1 { get; set; }
+        [Key(1)]
+        public T2 Content2 { get; set; }
+        [Key(2)]
+        public T3 Content3 { get; set; }
+        [Key(3)]
+        public T4 Content4 { get; set; }
+    }
+}
+                ";
+            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+
+            var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
+            await compiler.GenerateFileAsync(
+                tempWorkarea.CsProjectPath,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
+                string.Empty,
+                "TempProjectResolver",
+                "TempProject.Generated",
+                false,
+                string.Empty);
+
+            var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
+            var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
+
+            var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2, T3, T4>");
+            formatterType.Should().NotBeNull();
+            // struct
+            formatterType.TypeParameters[0].HasReferenceTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasValueTypeConstraint.Should().BeTrue();
+            formatterType.TypeParameters[0].HasConstructorConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasNotNullConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].HasUnmanagedTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[0].ConstraintTypes.Should().BeEmpty();
+            // IDisposable, new()
+            formatterType.TypeParameters[1].HasReferenceTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[1].HasValueTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[1].HasConstructorConstraint.Should().BeTrue();
+            formatterType.TypeParameters[1].HasNotNullConstraint.Should().BeFalse();
+            formatterType.TypeParameters[1].HasUnmanagedTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[1].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::System.IDisposable");
+            // notnull
+            formatterType.TypeParameters[2].HasReferenceTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[2].HasValueTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[2].HasConstructorConstraint.Should().BeFalse();
+            formatterType.TypeParameters[2].HasNotNullConstraint.Should().BeTrue();
+            formatterType.TypeParameters[2].HasUnmanagedTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[2].ConstraintTypes.Should().BeEmpty();
+            // unmanaged
+            formatterType.TypeParameters[3].HasReferenceTypeConstraint.Should().BeFalse();
+            formatterType.TypeParameters[3].HasValueTypeConstraint.Should().BeTrue(); // unmanaged constraint includes value-type constraint
+            formatterType.TypeParameters[3].HasConstructorConstraint.Should().BeFalse();
+            formatterType.TypeParameters[3].HasNotNullConstraint.Should().BeFalse();
+            formatterType.TypeParameters[3].HasUnmanagedTypeConstraint.Should().BeTrue();
+            formatterType.TypeParameters[3].ConstraintTypes.Should().BeEmpty();
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task Generics_Constraints_ReferenceType_Nullable(bool isSingleFileOutput)
+        {
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            var contents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class MyGenericObject<T1, T2>
+        where T1 : class?
+        where T2 : class
+    {
+        [Key(0)]
+        public T1 Content1 { get; set; }
+        [Key(1)]
+        public T2 Content2 { get; set; }
+    }
+}
+                ";
+            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+
+            var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
+            await compiler.GenerateFileAsync(
+                tempWorkarea.CsProjectPath,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
+                string.Empty,
+                "TempProjectResolver",
+                "TempProject.Generated",
+                false,
+                string.Empty);
+
+            var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
+            var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
+
+            var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2>");
+            formatterType.Should().NotBeNull();
+            // class?
+            formatterType.TypeParameters[0].HasReferenceTypeConstraint.Should().BeTrue();
+            formatterType.TypeParameters[0].ConstraintTypes.Should().BeEmpty();
+            formatterType.TypeParameters[0].ReferenceTypeConstraintNullableAnnotation.Should().Be(NullableAnnotation.Annotated);
+            // class
+            formatterType.TypeParameters[1].HasReferenceTypeConstraint.Should().BeTrue();
+            formatterType.TypeParameters[1].ConstraintTypes.Should().BeEmpty();
+            formatterType.TypeParameters[1].ReferenceTypeConstraintNullableAnnotation.Should().Be(NullableAnnotation.None);
         }
     }
 }
