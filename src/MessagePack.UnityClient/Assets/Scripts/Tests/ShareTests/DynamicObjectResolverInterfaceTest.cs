@@ -12,25 +12,47 @@ namespace MessagePack.Tests
     public class DynamicObjectResolverInterfaceTest
     {
         [Fact]
-        public void TestConstructorWithParentInterface()
+        public void TestConstructorWithParentInterface_Array()
         {
-            var myClass = new ConstructorEnumerableTest(new[] { "0", "2", "3" });
+            var myClass = new ConstructorEnumerableTestArray(new[] { "0", "2", "3" });
             var serialized = MessagePackSerializer.Serialize(myClass);
-            ConstructorEnumerableTest deserialized = MessagePackSerializer.Deserialize<ConstructorEnumerableTest>(serialized);
+            var deserialized = MessagePackSerializer.Deserialize<ConstructorEnumerableTestArray>(serialized);
+            deserialized.Values.IsStructuralEqual(myClass.Values);
+        }
+
+        [Fact]
+        public void TestConstructorWithParentInterface_Map()
+        {
+            var myClass = new ConstructorEnumerableTestMap(new[] { "0", "2", "3" });
+            var serialized = MessagePackSerializer.Serialize(myClass);
+            var deserialized = MessagePackSerializer.Deserialize<ConstructorEnumerableTestMap>(serialized);
             deserialized.Values.IsStructuralEqual(myClass.Values);
         }
     }
 
     [MessagePackObject]
-    public class ConstructorEnumerableTest
+    public class ConstructorEnumerableTestArray
     {
         [SerializationConstructor]
-        public ConstructorEnumerableTest(IEnumerable<string> values)
+        public ConstructorEnumerableTestArray(IEnumerable<string> values)
         {
             this.Values = values.ToList().AsReadOnly();
         }
 
         [Key(0)]
+        public IReadOnlyList<string> Values { get; }
+    }
+
+    [MessagePackObject]
+    public class ConstructorEnumerableTestMap
+    {
+        [SerializationConstructor]
+        public ConstructorEnumerableTestMap(IEnumerable<string> values)
+        {
+            this.Values = values.ToList().AsReadOnly();
+        }
+
+        [Key("Values")]
         public IReadOnlyList<string> Values { get; }
     }
 
