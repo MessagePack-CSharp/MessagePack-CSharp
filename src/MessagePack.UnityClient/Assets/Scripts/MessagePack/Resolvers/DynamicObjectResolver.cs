@@ -1836,7 +1836,7 @@ namespace MessagePack.Internal
                                 }
 
                                 paramMember = hasKey.First().Value;
-                                if (item.ParameterType == paramMember.Type && paramMember.IsReadable)
+                                if (item.ParameterType.IsAssignableFrom(paramMember.Type) && paramMember.IsReadable)
                                 {
                                     constructorParameters.Add(new EmittableMemberAndConstructorParameter { ConstructorParameter = item, MemberInfo = paramMember });
                                 }
