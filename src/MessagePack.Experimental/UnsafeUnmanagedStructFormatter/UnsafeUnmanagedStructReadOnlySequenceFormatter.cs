@@ -81,7 +81,7 @@ namespace MessagePack.Formatters
 
             var answer = new T[elementCount];
             reader.ReadRaw(header.Length).CopyTo(MemoryMarshal.AsBytes(answer.AsSpan()));
-            return answer;
+            return new ReadOnlySequence<T>(answer);
         }
     }
 }
