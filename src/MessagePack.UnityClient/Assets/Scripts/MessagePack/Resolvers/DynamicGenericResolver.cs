@@ -266,25 +266,6 @@ namespace MessagePack.Internal
                     {
                         return CreateInstance(formatterType, ti.GenericTypeArguments);
                     }
-
-                    // generic collection
-                    else if (ti.GenericTypeArguments.Length == 1
-                          && ti.ImplementedInterfaces.Any(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(ICollection<>))
-                          && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
-                    {
-                        Type elemType = ti.GenericTypeArguments[0];
-                        return CreateInstance(typeof(GenericCollectionFormatter<,>), new[] { elemType, t });
-                    }
-
-                    // generic dictionary
-                    else if (ti.GenericTypeArguments.Length == 2
-                          && ti.ImplementedInterfaces.Any(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(IDictionary<,>))
-                          && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
-                    {
-                        Type keyType = ti.GenericTypeArguments[0];
-                        Type valueType = ti.GenericTypeArguments[1];
-                        return CreateInstance(typeof(GenericDictionaryFormatter<,,>), new[] { keyType, valueType, t });
-                    }
                 }
             }
             else if (ti.IsEnum)
@@ -294,7 +275,15 @@ namespace MessagePack.Internal
             else
             {
                 // NonGeneric Collection
-                if (t == typeof(IList))
+                if (t == typeof(IEnumerable))
+                {
+                    return NonGenericInterfaceEnumerableFormatter.Instance;
+                }
+                else if (t == typeof(ICollection))
+                {
+                    return NonGenericInterfaceCollectionFormatter.Instance;
+                }
+                else if (t == typeof(IList))
                 {
                     return NonGenericInterfaceListFormatter.Instance;
                 }
@@ -310,6 +299,26 @@ namespace MessagePack.Internal
                 else if (typeof(IDictionary).GetTypeInfo().IsAssignableFrom(ti) && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
                 {
                     return Activator.CreateInstance(typeof(NonGenericDictionaryFormatter<>).MakeGenericType(t));
+                }
+            }
+
+            // check inherited types(e.g. Foo : ICollection<>, Bar<T> : ICollection<T>)
+            {
+                // generic dictionary
+                var dictionaryDef = ti.ImplementedInterfaces.FirstOrDefault(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+                if (dictionaryDef != null && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
+                {
+                    Type keyType = dictionaryDef.GenericTypeArguments[0];
+                    Type valueType = dictionaryDef.GenericTypeArguments[1];
+                    return CreateInstance(typeof(GenericDictionaryFormatter<,,>), new[] { keyType, valueType, t });
+                }
+
+                // generic collection
+                var collectionDef = ti.ImplementedInterfaces.FirstOrDefault(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(ICollection<>));
+                if (collectionDef != null && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
+                {
+                    Type elemType = collectionDef.GenericTypeArguments[0];
+                    return CreateInstance(typeof(GenericCollectionFormatter<,>), new[] { elemType, t });
                 }
             }
 
