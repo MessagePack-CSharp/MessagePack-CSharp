@@ -3,11 +3,9 @@
 
 using System;
 using System.Numerics;
-using MessagePack;
+using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using NUnit.Framework;
-
-[module:UnsafeUnmanagedStruct(typeof(Matrix4x4), UnsafeUnmanagedStructFormatterImplementationKind.Array | UnsafeUnmanagedStructFormatterImplementationKind.Self)]
 
 namespace MessagePack.Experimental.Tests
 {
@@ -20,7 +18,7 @@ namespace MessagePack.Experimental.Tests
         public void SetUp()
         {
             random = new Random();
-            var resolver = CompositeResolver.Create(DynamicUnsafeUnmanagedStructResolver.Instance, StandardResolver.Instance);
+            var resolver = CompositeResolver.Create(new IMessagePackFormatter[] { new UnsafeUnmanagedStructFormatter<Matrix4x4>(50), new UnsafeUnmanagedStructArrayFormatter<Matrix4x4>(51) }, new[] { StandardResolver.Instance });
             options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
         }
 

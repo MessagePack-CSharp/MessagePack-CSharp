@@ -12,12 +12,13 @@ namespace MessagePack.Formatters
     public sealed unsafe class UnsafeUnmanagedStructArrayFormatter<T> : IMessagePackFormatter<T[]?>
         where T : unmanaged
     {
-        public const sbyte ExtensionTypeCode = 51;
+#pragma warning disable SA1401 // Fields should be private
+        public readonly sbyte TypeCode;
+#pragma warning restore SA1401 // Fields should be private
 
-        public static readonly UnsafeUnmanagedStructArrayFormatter<T> Instance = new UnsafeUnmanagedStructArrayFormatter<T>();
-
-        private UnsafeUnmanagedStructArrayFormatter()
+        public UnsafeUnmanagedStructArrayFormatter(sbyte typeCode)
         {
+            TypeCode = typeCode;
         }
 
         public void Serialize(ref MessagePackWriter writer, T[]? value, MessagePackSerializerOptions options)
@@ -29,7 +30,7 @@ namespace MessagePack.Formatters
             }
 
             var byteCount = sizeof(T) * value.Length;
-            writer.WriteExtensionFormatHeader(new ExtensionHeader(ExtensionTypeCode, byteCount));
+            writer.WriteExtensionFormatHeader(new ExtensionHeader(TypeCode, byteCount));
             if (byteCount == 0)
             {
                 return;
@@ -53,7 +54,7 @@ namespace MessagePack.Formatters
             }
 
             var header = reader.ReadExtensionFormatHeader();
-            if (header.TypeCode != ExtensionTypeCode)
+            if (header.TypeCode != TypeCode)
             {
                 throw new MessagePackSerializationException("Extension TypeCode is invalid. typeCode: " + header.TypeCode);
             }
