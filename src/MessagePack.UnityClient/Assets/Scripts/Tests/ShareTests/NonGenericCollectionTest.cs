@@ -22,8 +22,8 @@ namespace MessagePack.Tests
                 var bin = MessagePackSerializer.Serialize<IList>(xs);
                 IList v = MessagePackSerializer.Deserialize<IList>(bin);
 
-                ((byte)v[0]).Is((byte)1);
-                ((byte)v[1]).Is((byte)100);
+                Convert.ToInt32(v[0]).Is(1);
+                Convert.ToInt32(v[1]).Is(100);
                 ((string)v[2]).Is("hoge");
                 ((double)v[3]).Is(999.888);
             }
@@ -32,8 +32,8 @@ namespace MessagePack.Tests
                 var bin = MessagePackSerializer.Serialize(xs);
                 ArrayList v = MessagePackSerializer.Deserialize<ArrayList>(bin);
 
-                ((byte)v[0]).Is((byte)1);
-                ((byte)v[1]).Is((byte)100);
+                Convert.ToInt32(v[0]).Is(1);
+                Convert.ToInt32(v[1]).Is(100);
                 ((string)v[2]).Is("hoge");
                 ((double)v[3]).Is(999.888);
             }
@@ -47,8 +47,8 @@ namespace MessagePack.Tests
                 var bin = MessagePackSerializer.Serialize<IDictionary>(xs);
                 IDictionary v = MessagePackSerializer.Deserialize<IDictionary>(bin);
 
-                v["a"].Is((object)(byte)1);
-                v[(byte)100].Is((object)(string)"hoge");
+                Convert.ToInt32(v["a"]).Is(1);
+                v[100].Is((object)(string)"hoge");
                 v["foo"].Is((object)(double)999.888);
             }
 
@@ -57,8 +57,8 @@ namespace MessagePack.Tests
                 var bin = MessagePackSerializer.Serialize<Hashtable>(xs);
                 Hashtable v = MessagePackSerializer.Deserialize<Hashtable>(bin);
 
-                v["a"].Is((object)(byte)1);
-                v[(byte)100].Is((object)(string)"hoge");
+                Convert.ToInt32(v["a"]).Is(1);
+                v[100].Is((object)(string)"hoge");
                 v["foo"].Is((object)(double)999.888);
             }
         }

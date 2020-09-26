@@ -44,6 +44,24 @@ namespace MessagePack.Tests
             json.Is(@"[[100,[""a"",""b"",""c""]],[300,{""Prop1"":10,""Prop2"":2,""Prop3"":99999}]]");
         }
 
+        [Fact]
+        public void FallbackObjectType()
+        {
+            var data = new DynamicObjectFallbackTestContainer
+            {
+                MyProperty = 3,
+                MoreObject = 10,
+            };
+
+            var bytes = MessagePackSerializer.Serialize(data);
+
+            dynamic obj = MessagePackSerializer.Deserialize<object>(bytes);
+
+            object v = obj[1];
+
+            v.GetType().Is(typeof(int));
+        }
+
         [MessagePackObject]
         public class DynamicObjectFallbackTestContainer
         {
