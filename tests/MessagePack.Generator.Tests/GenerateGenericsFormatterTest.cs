@@ -217,13 +217,13 @@ namespace TempProject
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -301,13 +301,13 @@ namespace TempProject
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -369,13 +369,13 @@ namespace TempProject
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -611,13 +611,13 @@ namespace TempProject
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -668,13 +668,13 @@ namespace TempProject
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -725,13 +725,13 @@ namespace TempProject
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -784,13 +784,13 @@ namespace TempProject
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -858,13 +858,13 @@ namespace TempProject
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
-                tempWorkarea.CsProjectPath,
+                tempWorkarea.GetOutputCompilation().Compilation,
                 isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
-                string.Empty,
                 "TempProjectResolver",
                 "TempProject.Generated",
                 false,
-                string.Empty);
+                string.Empty,
+                Array.Empty<string>());
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
