@@ -37,8 +37,6 @@ namespace MessagePack.Formatters
         {
         }
 
-#if !UNITY_2018_3_OR_NEWER
-
         public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
         {
             if (value == null)
@@ -68,8 +66,6 @@ namespace MessagePack.Formatters
 
             return false;
         }
-
-#endif
 
         public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
         {
