@@ -11,8 +11,8 @@ namespace MessagePack.Experimental.Tests
 {
     public class UnsafeUnmanagedStructTest
     {
-        private MessagePackSerializerOptions options;
-        private Random random;
+        private MessagePackSerializerOptions options = default!;
+        private Random random = default!;
 
         [OneTimeSetUp]
         public void SetUp()

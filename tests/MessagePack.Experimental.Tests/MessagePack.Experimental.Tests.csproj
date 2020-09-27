@@ -4,12 +4,13 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="ArrayTests.tt">
+    <None Update="HardwareIntrinsics\ArrayTests.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ArrayTests.cs</LastGenOutput>
     </None>
@@ -20,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="ArrayTests.cs">
+    <Compile Update="HardwareIntrinsics\ArrayTests.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>ArrayTests.tt</DependentUpon>

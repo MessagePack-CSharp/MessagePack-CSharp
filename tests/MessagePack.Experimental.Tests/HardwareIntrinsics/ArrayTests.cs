@@ -9,7 +9,7 @@ namespace MessagePack.Experimental.Tests
 {
     public class ArrayTests
     {
-        private MessagePackSerializerOptions options;
+        private MessagePackSerializerOptions options = default!;
 
         [SetUp]
         public void SetUp()

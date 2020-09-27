@@ -9,7 +9,7 @@ namespace MessagePack.Experimental.Tests.CircularReference
 {
     public class CircularReferenceTest
     {
-        private MessagePackSerializerOptions options;
+        private MessagePackSerializerOptions options = default!;
 
         [OneTimeSetUp]
         public void SetUp()

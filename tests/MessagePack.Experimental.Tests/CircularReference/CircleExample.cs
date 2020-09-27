@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePack.Formatters;
-
 namespace MessagePack.Experimental.Tests.CircularReference
 {
     [MessagePackObject]
@@ -28,7 +26,6 @@ namespace MessagePack.Experimental.Tests.CircularReference
         private CircleExampleOverwriter()
         {
         }
-
 
         public void DeserializeOverwrite(ref MessagePackReader reader, MessagePackSerializerOptions options, CircleExample value)
         {
