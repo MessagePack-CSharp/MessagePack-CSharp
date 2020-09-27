@@ -27,14 +27,14 @@ namespace MessagePack
 
         public static CircularReferenceMessagePackSerializerOptions Rent(MessagePackSerializerOptions options)
         {
-            var element = table.GetOrCreateValue(options);
+            var element = Table.GetOrCreateValue(options);
             lock (element)
             {
                 return element.GetCircularOption(options);
             }
         }
 
-        private static readonly ConditionalWeakTable<MessagePackSerializerOptions, WeakTableElement> table = new ConditionalWeakTable<MessagePackSerializerOptions, WeakTableElement>();
+        private static readonly ConditionalWeakTable<MessagePackSerializerOptions, WeakTableElement> Table = new ConditionalWeakTable<MessagePackSerializerOptions, WeakTableElement>();
 
         private sealed class WeakTableElement
         {
