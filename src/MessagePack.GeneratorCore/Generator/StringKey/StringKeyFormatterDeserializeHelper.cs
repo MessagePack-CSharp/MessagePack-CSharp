@@ -12,7 +12,7 @@ namespace MessagePackCompiler.Generator
 {
     internal static class StringKeyFormatterDeserializeHelper
     {
-        public static string Classify(MemberSerializationInfo[] memberArray, string indent, List<(MemberSerializationInfo, byte[])> listBoth, List<(MemberSerializationInfo, byte[])> listSerializationOnly)
+        public static string Classify(MemberSerializationInfo[] memberArray, string indent)
         {
             var buffer = new StringBuilder();
             foreach (var memberInfoTuples in memberArray.Select(member => new MemberInfoTuple(member)).GroupBy(member => member.Binary.Length))
@@ -22,7 +22,7 @@ namespace MessagePackCompiler.Generator
                 keyLength += keyLength << 3 == binaryLength ? 0 : 1;
 
                 buffer.Append(indent).Append("case ").Append(binaryLength).Append(":\r\n");
-                ClassifyRecursion(buffer, indent, 1, keyLength, memberInfoTuples, listBoth, listSerializationOnly);
+                ClassifyRecursion(buffer, indent, 1, keyLength, memberInfoTuples);
             }
 
             return buffer.ToString();
@@ -33,7 +33,7 @@ namespace MessagePackCompiler.Generator
             buffer.Append("__").Append(member.Info.Name).Append("__ = ").Append(member.Info.GetDeserializeMethodString()).Append(";\r\n");
         }
 
-        private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection, List<(MemberSerializationInfo, byte[])> listBoth, List<(MemberSerializationInfo, byte[])> listSerializationOnly)
+        private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection)
         {
             const string Tab = "    ";
             buffer.Append(indent);
@@ -46,7 +46,7 @@ namespace MessagePackCompiler.Generator
             if (memberArray.Length == 1)
             {
                 var member = memberArray[0];
-                EmbedOne(buffer, indent, tabCount, member, listBoth, listSerializationOnly);
+                EmbedOne(buffer, indent, tabCount, member);
                 return;
             }
 
@@ -83,7 +83,6 @@ namespace MessagePackCompiler.Generator
                     }
 
                     var member = grouping.Single();
-                    listSerializationOnly.Add((member.Info, member.Binary));
                     Assign(buffer, member);
                     buffer.Append(Tab + Tab).Append(indent);
                     for (var i = 0; i < tabCount; i++)
@@ -95,7 +94,7 @@ namespace MessagePackCompiler.Generator
                     continue;
                 }
 
-                ClassifyRecursion(buffer, indent + Tab, tabCount + 1, keyLength, grouping, listBoth, listSerializationOnly);
+                ClassifyRecursion(buffer, indent + Tab, tabCount + 1, keyLength, grouping);
             }
 
             buffer.Append("\r\n").Append(indent);
@@ -107,7 +106,7 @@ namespace MessagePackCompiler.Generator
             buffer.Append("}\r\n");
         }
 
-        private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member, List<(MemberSerializationInfo, byte[])> listBoth, List<(MemberSerializationInfo, byte[])> listSerializationOnly)
+        private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member)
         {
             const string Tab = "    ";
             var binary = member.Binary.AsSpan((tabCount - 1) << 3);
@@ -115,7 +114,6 @@ namespace MessagePackCompiler.Generator
             switch (binary.Length)
             {
                 case 1:
-                    listSerializationOnly.Add((member.Info, member.Binary));
                     buffer.Append("if (stringKey[0] != ").Append(binary[0]);
                     break;
                 case 2:
@@ -125,11 +123,9 @@ namespace MessagePackCompiler.Generator
                 case 6:
                 case 7:
                 case 8:
-                    listSerializationOnly.Add((member.Info, member.Binary));
                     buffer.Append("if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != ").Append(member.Key[tabCount - 1]).Append("UL");
                     break;
                 default:
-                    listBoth.Add((member.Info, member.Binary));
                     EmbedSequenceEqual(buffer, member, (tabCount << 3) - 8);
                     break;
             }
