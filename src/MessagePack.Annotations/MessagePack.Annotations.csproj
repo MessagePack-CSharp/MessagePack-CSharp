@@ -4,6 +4,7 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <RootNamespace>MessagePack</RootNamespace>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack annotations for C#</Title>

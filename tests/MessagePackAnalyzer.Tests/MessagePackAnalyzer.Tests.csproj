@@ -5,6 +5,7 @@
 
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <CodeAnalysisRuleSet>..\MessagePack.Tests\MessagePack.Tests.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C# Extension Support for ReactiveProperty</Title>

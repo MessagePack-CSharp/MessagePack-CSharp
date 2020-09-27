@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netcoreapp2.2</TargetFrameworks>
     <DefineConstants>$(DefineConstants);SPAN_BUILTIN;MESSAGEPACK_INTERNAL</DefineConstants>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <NoWarn>CS0436;$(NoWarn)</NoWarn>

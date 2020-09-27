@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp3.0</TargetFrameworks>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <IsPackable>true</IsPackable>
     <Title>ASP.NET Core MVC Input/Output MessagePack formatter</Title>
     <Description>ASP.NET Core MVC Input/Output MessagePack formatter.</Description>

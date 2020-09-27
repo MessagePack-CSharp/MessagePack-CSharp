@@ -7,6 +7,7 @@
     <DefineConstants Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <LangVersion>8.0</LangVersion>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C#</Title>
