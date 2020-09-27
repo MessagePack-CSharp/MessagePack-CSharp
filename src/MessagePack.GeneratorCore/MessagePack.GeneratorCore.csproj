@@ -31,6 +31,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>ResolverTemplate.tt</DependentUpon>
     </Compile>
+    <Compile Update="Generator\StringKey\StringKeyFormatterTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>StringKeyFormatterTemplate.tt</DependentUpon>
+    </Compile>
     <Compile Update="Generator\TemplatePartials.cs">
       <DependentUpon>%(FileName).tt</DependentUpon>
       <DesignTime>True</DesignTime>
@@ -56,6 +61,11 @@
       <LastGenOutput>ResolverTemplate.cs</LastGenOutput>
       <Generator>TextTemplatingFilePreprocessor</Generator>
     </None>
+    <None Update="Generator\StringKey\StringKeyFormatterTemplate.tt">
+      <LastGenOutput>StringKeyFormatterTemplate.cs</LastGenOutput>
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <CustomToolNamespace>MessagePackCompiler.Generator</CustomToolNamespace>
+    </None>
     <None Update="Generator\UnionTemplate.tt">
       <LastGenOutput>UnionTemplate.cs</LastGenOutput>
       <Generator>TextTemplatingFilePreprocessor</Generator>
@@ -64,6 +74,10 @@
 
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
 </Project>

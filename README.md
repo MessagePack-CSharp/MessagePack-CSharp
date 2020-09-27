@@ -195,7 +195,7 @@ These types can serialize by default:
 * `ConcurrentBag<>`, `ConcurrentQueue<>`, `ConcurrentStack<>`, `ConcurrentDictionary<,>`
 * Immutable collections (`ImmutableList<>`, etc)
 * Custom implementations of `ICollection<>` or `IDictionary<,>` with a parameterless constructor
-* Custom implementations of `ICollection` or `IDictionary` with a  parameterless constructor
+* Custom implementations of `IList` or `IDictionary` with a parameterless constructor
 
 You can add support for custom types, and there are some official/third-party extension packages for:
 

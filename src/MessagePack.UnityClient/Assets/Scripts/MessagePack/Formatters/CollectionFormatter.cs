@@ -872,6 +872,147 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class NonGenericInterfaceCollectionFormatter : IMessagePackFormatter<ICollection>
+    {
+        public static readonly IMessagePackFormatter<ICollection> Instance = new NonGenericInterfaceCollectionFormatter();
+
+        private NonGenericInterfaceCollectionFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, ICollection value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
+
+            writer.WriteArrayHeader(value.Count);
+            foreach (var item in value)
+            {
+                writer.CancellationToken.ThrowIfCancellationRequested();
+                formatter.Serialize(ref writer, item, options);
+            }
+        }
+
+        public ICollection Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default(ICollection);
+            }
+
+            var count = reader.ReadArrayHeader();
+            if (count == 0)
+            {
+                return Array.Empty<object>();
+            }
+
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
+
+            var list = new object[count];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    list[i] = formatter.Deserialize(ref reader, options);
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return list;
+        }
+    }
+
+    public sealed class NonGenericInterfaceEnumerableFormatter : IMessagePackFormatter<IEnumerable>
+    {
+        public static readonly IMessagePackFormatter<IEnumerable> Instance = new NonGenericInterfaceEnumerableFormatter();
+
+        private NonGenericInterfaceEnumerableFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, IEnumerable value, MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
+
+            using (var scratchRental = SequencePool.Shared.Rent())
+            {
+                var scratch = scratchRental.Value;
+                MessagePackWriter scratchWriter = writer.Clone(scratch);
+                var count = 0;
+                var e = value.GetEnumerator();
+                try
+                {
+                    while (e.MoveNext())
+                    {
+                        writer.CancellationToken.ThrowIfCancellationRequested();
+                        count++;
+                        formatter.Serialize(ref scratchWriter, e.Current, options);
+                    }
+                }
+                finally
+                {
+                    if (e is IDisposable d)
+                    {
+                        d.Dispose();
+                    }
+                }
+
+                scratchWriter.Flush();
+                writer.WriteArrayHeader(count);
+                writer.WriteRaw(scratch.AsReadOnlySequence);
+            }
+        }
+
+        public IEnumerable Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default(IEnumerable);
+            }
+
+            var count = reader.ReadArrayHeader();
+            if (count == 0)
+            {
+                return Array.Empty<object>();
+            }
+
+            IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
+
+            var list = new object[count];
+            options.Security.DepthStep(ref reader);
+            try
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                    list[i] = formatter.Deserialize(ref reader, options);
+                }
+            }
+            finally
+            {
+                reader.Depth--;
+            }
+
+            return list;
+        }
+    }
+
     public sealed class NonGenericInterfaceListFormatter : IMessagePackFormatter<IList>
     {
         public static readonly IMessagePackFormatter<IList> Instance = new NonGenericInterfaceListFormatter();
