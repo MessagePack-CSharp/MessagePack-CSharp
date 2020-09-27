@@ -4,69 +4,17 @@
 namespace MessagePack.Formatters
 {
     public sealed class CircularFormatter<T> : IMessagePackFormatter<T?>
-        where T : class
+        where T : class, new()
     {
 #pragma warning disable SA1401 // Fields should be private
         public readonly IMessagePackFormatter<T?> Formatter;
+        public readonly IMessagePackDeserializeOverwriter<T> Overwriter;
 #pragma warning restore SA1401 // Fields should be private
 
-        public CircularFormatter(IMessagePackFormatter<T?> formatter)
+        public CircularFormatter(IMessagePackFormatter<T?> formatter, IMessagePackDeserializeOverwriter<T> overwriter)
         {
             Formatter = formatter;
-        }
-
-        public T? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return default;
-            }
-
-            if (options is CircularReferenceMessagePackSerializerOptions circularOptions)
-            {
-                if (reader.TryReadArrayHeader(out var count))
-                {
-                    if (count != 1)
-                    {
-                        throw new MessagePackSerializationException("The array length must be 1. actual: " + count);
-                    }
-
-                    return DeserializeInternal(ref reader, circularOptions);
-                }
-                else
-                {
-                    var index = (int)reader.ReadUInt32();
-                    return (T)circularOptions.ReferenceSpan[index];
-                }
-            }
-
-            using (circularOptions = CircularReferenceMessagePackSerializerOptions.Rent(options))
-            {
-                if (!reader.TryReadArrayHeader(out var count))
-                {
-                    throw new MessagePackSerializationException("The circular reference deserialization must start with length 1 array.");
-                }
-
-                if (count != 1)
-                {
-                    throw new MessagePackSerializationException("The array length must be 1. actual: " + count);
-                }
-
-                return DeserializeInternal(ref reader, circularOptions);
-            }
-        }
-
-        private T DeserializeInternal(ref MessagePackReader reader, CircularReferenceMessagePackSerializerOptions circularOptions)
-        {
-            var answer = Formatter.Deserialize(ref reader, circularOptions)
-#if DEBUG
-                ?? throw new MessagePackSerializationException("Deserialized object should not be null!");
-#else
-                !;
-#endif
-
-            circularOptions.Add(answer);
-            return answer;
+            Overwriter = overwriter;
         }
 
         public void Serialize(ref MessagePackWriter writer, T? value, MessagePackSerializerOptions options)
@@ -103,6 +51,61 @@ namespace MessagePack.Formatters
             circularOptions.Add(value);
 
             Formatter.Serialize(ref writer, value, circularOptions);
+        }
+
+        public T? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return default;
+            }
+
+            if (options is CircularReferenceMessagePackSerializerOptions circularOptions)
+            {
+                if (TryReadUInt32(ref reader, out var index))
+                {
+                    return (T)circularOptions.ReferenceSpan[(int)index];
+                }
+
+                var count = reader.ReadArrayHeader();
+                if (count != 1)
+                {
+                    throw new MessagePackSerializationException("The array length must be 1. actual: " + count);
+                }
+
+                return DeserializeInternal(ref reader, circularOptions);
+            }
+
+            using (circularOptions = CircularReferenceMessagePackSerializerOptions.Rent(options))
+            {
+                var count = reader.ReadArrayHeader();
+                if (count != 1)
+                {
+                    throw new MessagePackSerializationException("The array length must be 1. actual: " + count);
+                }
+
+                return DeserializeInternal(ref reader, circularOptions);
+            }
+        }
+
+        private static bool TryReadUInt32(ref MessagePackReader reader, out uint value)
+        {
+            if (reader.NextMessagePackType == MessagePackType.Integer)
+            {
+                value = reader.ReadUInt32();
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        private T DeserializeInternal(ref MessagePackReader reader, CircularReferenceMessagePackSerializerOptions circularOptions)
+        {
+            var answer = new T();
+            circularOptions.Add(answer);
+            Overwriter.DeserializeOverwrite(ref reader, circularOptions, answer);
+            return answer;
         }
     }
 }
