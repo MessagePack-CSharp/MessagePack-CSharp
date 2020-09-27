@@ -82,11 +82,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePackAnalyzer.Tests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Tests", "tests\MessagePack.Generator.Tests\MessagePack.Generator.Tests.csproj", "{6AC51E68-4681-463A-B4B6-BD53517244B2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HardwareIntrinsicsBenchmark", "benchmark\HardwareIntrinsicsBenchmark\HardwareIntrinsicsBenchmark.csproj", "{4C9BB260-62D8-49CD-9F9C-9AA6A8BFC637}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExperimentalBenchmark", "benchmark\ExperimentalBenchmark\ExperimentalBenchmark.csproj", "{4C9BB260-62D8-49CD-9F9C-9AA6A8BFC637}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Experimental", "src\MessagePack.Experimental\MessagePack.Experimental.csproj", "{AC2503A7-736D-4AE6-9355-CF35D9DF6139}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Experimental.Tests", "tests\MessagePack.Experimental.Tests\MessagePack.Experimental.Tests.csproj", "{8AB40D1C-1134-4D77-B39A-19AEDC729450}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Experimental.Tests", "tests\MessagePack.Experimental.Tests\MessagePack.Experimental.Tests.csproj", "{8AB40D1C-1134-4D77-B39A-19AEDC729450}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
