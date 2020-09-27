@@ -42,6 +42,15 @@ namespace MessagePack.Formatters
                 return;
             }
 
+            if (PrimitiveObjectFormatter.IsSupportedType(type, ti, value))
+            {
+                if (!(value is System.Collections.IDictionary || value is System.Collections.ICollection))
+                {
+                    PrimitiveObjectFormatter.Instance.Serialize(ref writer, value, options);
+                    return;
+                }
+            }
+
             object formatter = options.Resolver.GetFormatterDynamicWithVerify(type);
             if (!SerializerDelegates.TryGetValue(type, out SerializeMethod serializerDelegate))
             {
