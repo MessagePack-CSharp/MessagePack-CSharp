@@ -21,7 +21,7 @@ namespace MessagePack
         /// A collection of known dangerous types that are not expected in a typical MessagePack stream,
         /// and thus are rejected by the default implementation of <see cref="ThrowIfDeserializingTypeIsDisallowed(Type)"/>.
         /// </summary>
-        private static readonly HashSet<string> BlacklistCheck = new HashSet<string>
+        private static readonly HashSet<string> DisallowedTypes = new HashSet<string>
         {
             "System.CodeDom.Compiler.TempFileCollection",
             "System.Management.IWbemClassObjectFreeThreaded",
@@ -146,7 +146,7 @@ namespace MessagePack
         /// </remarks>
         public virtual void ThrowIfDeserializingTypeIsDisallowed(Type type)
         {
-            if (BlacklistCheck.Contains(type.FullName))
+            if (DisallowedTypes.Contains(type.FullName))
             {
                 throw new MessagePackSerializationException("Deserialization attempted to create the type " + type.FullName + " which is not allowed.");
             }
