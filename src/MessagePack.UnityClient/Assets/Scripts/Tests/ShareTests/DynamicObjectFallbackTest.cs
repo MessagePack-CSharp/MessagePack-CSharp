@@ -62,6 +62,28 @@ namespace MessagePack.Tests
             v.GetType().Is(typeof(int));
         }
 
+        [Theory]
+        [InlineData((bool)true)]
+        [InlineData((byte)1)]
+        [InlineData((sbyte)1)]
+        [InlineData((short)-4)]
+        [InlineData((ushort)4)]
+        [InlineData((int)3)]
+        [InlineData((UInt32)4)]
+        [InlineData((long)2)]
+        [InlineData((UInt64)6)]
+        [InlineData((float)1f)]
+        [InlineData((double)12)]
+        [InlineData("hogehoge")]
+        public void SerializePrimitiveObjectShouldKeepType<T>(T value)
+        {
+            var bin = MessagePackSerializer.Serialize<object>(value);
+            var v = MessagePackSerializer.Deserialize<object>(bin);
+
+            v.GetType().Is(typeof(T));
+            v.ToString().Is(value.ToString());
+        }
+
         [MessagePackObject]
         public class DynamicObjectFallbackTestContainer
         {
