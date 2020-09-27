@@ -69,7 +69,7 @@ namespace Benchmark
         [GlobalSetup]
         public void SetUp()
         {
-            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(new newmsgpack::MessagePack.Formatters.IMessagePackFormatter[] { new newmsgpack.MessagePack.Formatters.UnsafeUnmanagedStructArrayFormatter<Matrix4x4>(50) }, new[] { newmsgpack::MessagePack.Resolvers.StandardResolver.Instance });
+            var resolver = newmsgpack::MessagePack.Resolvers.CompositeResolver.Create(new newmsgpack::MessagePack.Formatters.IMessagePackFormatter[] { new newmsgpack::MessagePack.Formatters.UnsafeUnmanagedStructArrayFormatter<Matrix4x4>(50) }, new[] { newmsgpack::MessagePack.Resolvers.StandardResolver.Instance });
             options = newmsgpack::MessagePack.MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
             input = new Matrix4x4[Size];
