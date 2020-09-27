@@ -14,29 +14,6 @@ namespace MessagePack.Tests
     {
 #if !ENABLE_IL2CPP
 
-        //[Theory]
-        //[InlineData((bool)true)]
-        //[InlineData((byte)10)]
-        //[InlineData((sbyte)123)]
-        //[InlineData((short)-4123)]
-        //[InlineData((ushort)42342)]
-        //[InlineData((int)int.MaxValue)]
-        //[InlineData((UInt32)432423)]
-        //[InlineData((long)235)]
-        //[InlineData((UInt64)65346464)]
-        //[InlineData((float)1241.42342f)]
-        //[InlineData((double)1241312.4242342)]
-        //[InlineData("hogehoge")]
-        //[InlineData(new byte[] { 1, 10, 100 })]
-        //public void PrimitiveObjectTest<T>(T x)
-        //{
-        //    //var bin = MessagePackSerializer.Serialize<object>(x);
-        //    //var bin2 = MessagePackSerializer.Serialize<T>(x);
-        //    //bin.Is(bin2);
-        //    ////var re1 = MessagePackSerializer.Deserialize<object>(bin);
-        //    ////((T)re1).Is(x);
-        //}
-
         [Fact]
         public void PrimitiveTest2()
         {
