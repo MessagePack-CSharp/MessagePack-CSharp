@@ -4,6 +4,7 @@
   "publicReleaseRefSpec": [
     "^refs/heads/master$",
     "^refs/heads/v1\\.x$",
-    "^refs/heads/v\\d+(?:.\\d+)?$"
+    "^refs/heads/v\\d+(?:.\\d+)?$",
+    "^refs/heads/develop$"
   ]
 }
