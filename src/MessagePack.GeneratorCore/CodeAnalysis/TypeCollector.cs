@@ -467,6 +467,7 @@ namespace MessagePackCompiler.CodeAnalysis
             var info = new GenericSerializationInfo
             {
                 FullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                IsOpenGenericType = elemType is ITypeParameterSymbol,
             };
 
             if (array.IsSZArray)
@@ -500,6 +501,7 @@ namespace MessagePackCompiler.CodeAnalysis
             INamedTypeSymbol genericType = type.ConstructUnboundGenericType();
             var genericTypeString = genericType.ToDisplayString();
             var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            var isOpenGenericType = type.TypeArguments.Any(x => x is ITypeParameterSymbol);
 
             // special case
             if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
@@ -518,6 +520,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     {
                         FormatterName = $"global::MessagePack.Formatters.NullableFormatter<{type.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>",
                         FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        IsOpenGenericType = isOpenGenericType,
                     };
 
                     this.collectedGenericInfo.Add(info);
@@ -541,6 +544,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 {
                     FormatterName = f,
                     FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    IsOpenGenericType = isOpenGenericType,
                 };
 
                 this.collectedGenericInfo.Add(info);
@@ -554,6 +558,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     {
                         FormatterName = f,
                         FullName = $"global::System.Linq.IGrouping<{typeArgs}>",
+                        IsOpenGenericType = isOpenGenericType,
                     };
 
                     this.collectedGenericInfo.Add(groupingInfo);
@@ -566,6 +571,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     {
                         FormatterName = f,
                         FullName = $"global::System.Collections.Generic.IEnumerable<{typeArgs}>",
+                        IsOpenGenericType = isOpenGenericType,
                     };
 
                     this.collectedGenericInfo.Add(enumerableInfo);
@@ -580,6 +586,13 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.CollectGenericUnion(type);
                 this.CollectObject(type);
                 return;
+            }
+            else
+            {
+                // Collect substituted types for the properties and fields.
+                // NOTE: It is used to register formatters from nested generic type.
+                //       However, closed generic types such as `Foo<string>` are not registered as a formatter.
+                GetObjectInfo(type);
             }
 
             // Collect substituted types for the type parameters (e.g. Bar in Foo<Bar>)
@@ -603,6 +616,7 @@ namespace MessagePackCompiler.CodeAnalysis
             {
                 FullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 FormatterName = formatterBuilder.ToString(),
+                IsOpenGenericType = isOpenGenericType,
             };
 
             this.collectedGenericInfo.Add(genericSerializationInfo);
@@ -1012,7 +1026,9 @@ namespace MessagePackCompiler.CodeAnalysis
             {
                 IsClass = isClass,
                 IsOpenGenericType = isOpenGenericType,
-                GenericTypeParameters = isOpenGenericType ? type.TypeParameters.Select(x => x.ToDisplayString()).ToArray() : Array.Empty<string>(),
+                GenericTypeParameters = isOpenGenericType
+                    ? type.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray()
+                    : Array.Empty<GenericTypeParameterInfo>(),
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
                 Members = isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(),
@@ -1025,6 +1041,56 @@ namespace MessagePackCompiler.CodeAnalysis
             };
 
             return info;
+        }
+
+        private static GenericTypeParameterInfo ToGenericTypeParameterInfo(ITypeParameterSymbol typeParameter)
+        {
+            var constraints = new List<string>();
+
+            // `notnull`, `unmanaged`, `class`, `struct` constraint must come before any constraints.
+            if (typeParameter.HasNotNullConstraint)
+            {
+                constraints.Add("notnull");
+            }
+
+            if (typeParameter.HasReferenceTypeConstraint)
+            {
+                if (typeParameter.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated)
+                {
+                    constraints.Add("class?");
+                }
+                else
+                {
+                    constraints.Add("class");
+                }
+            }
+
+            if (typeParameter.HasValueTypeConstraint)
+            {
+                if (typeParameter.HasUnmanagedTypeConstraint)
+                {
+                    constraints.Add("unmanaged");
+                }
+                else
+                {
+                    constraints.Add("struct");
+                }
+            }
+
+            // constraint types (IDisposable, IEnumerable ...)
+            foreach (var t in typeParameter.ConstraintTypes)
+            {
+                var constraintTypeFullName = t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                constraints.Add(constraintTypeFullName);
+            }
+
+            // `new()` constraint must be last in constraints.
+            if (typeParameter.HasConstructorConstraint)
+            {
+                constraints.Add("new()");
+            }
+
+            return new GenericTypeParameterInfo(typeParameter.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), string.Join(", ", constraints));
         }
 
         private static string GetGenericFormatterClassName(INamedTypeSymbol type)

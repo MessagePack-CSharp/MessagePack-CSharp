@@ -111,7 +111,7 @@ namespace MessagePackCompiler
                         Namespace = namespaceDot + "Resolvers",
                         FormatterNamespace = namespaceDot + "Formatters",
                         ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
+                        RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
                     };
 
                     var sb = new StringBuilder();
@@ -190,7 +190,7 @@ namespace MessagePackCompiler
                         Namespace = namespaceDot + "Resolvers",
                         FormatterNamespace = namespaceDot + "Formatters",
                         ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
+                        RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
                     };
 
                     await OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken);
