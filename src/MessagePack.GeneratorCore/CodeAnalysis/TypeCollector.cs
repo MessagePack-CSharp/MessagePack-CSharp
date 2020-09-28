@@ -1078,17 +1078,10 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             // constraint types (IDisposable, IEnumerable ...)
-            foreach (var (t, index) in typeParameter.ConstraintTypes.Select((x, i) => (x, i)))
+            foreach (var t in typeParameter.ConstraintTypes)
             {
                 var constraintTypeFullName = t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-                if (typeParameter.ConstraintNullableAnnotations[index] == NullableAnnotation.Annotated)
-                {
-                    constraints.Add(constraintTypeFullName + "?");
-                }
-                else
-                {
-                    constraints.Add(constraintTypeFullName);
-                }
+                constraints.Add(constraintTypeFullName);
             }
 
             // `new()` constraint must be last in constraints.
