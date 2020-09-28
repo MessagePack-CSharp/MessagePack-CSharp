@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -129,24 +127,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string CustomFormatterTypeName { get; set; }
 
-        private readonly HashSet<string> primitiveTypes = new HashSet<string>(new string[]
-        {
-            "short",
-            "int",
-            "long",
-            "ushort",
-            "uint",
-            "ulong",
-            "float",
-            "double",
-            "bool",
-            "byte",
-            "sbyte",
-            "char",
-            ////"global::System.DateTime",
-            ////"byte[]",
-            ////"string",
-        });
+        private readonly HashSet<string> primitiveTypes = new HashSet<string>(Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
 
         public string GetSerializeMethodString()
         {
@@ -172,7 +153,8 @@ namespace MessagePackCompiler.CodeAnalysis
             }
             else if (this.primitiveTypes.Contains(this.Type))
             {
-                return $"reader.Read{this.ShortTypeName.Replace("[]", "s")}()";
+                string suffix = this.Type == "byte[]" ? "?.ToArray()" : string.Empty;
+                return $"reader.Read{this.ShortTypeName.Replace("[]", "s")}()" + suffix;
             }
             else
             {

@@ -5,13 +5,9 @@
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C# Extension Support for ImmutableCollection</Title>
-    <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for System.Collections.Immutable.</Description>
+    <Description>Deprecated package to add System.Collections.Immutable support to MessagePack. This is now built into the main package.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />

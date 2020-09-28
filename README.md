@@ -86,7 +86,6 @@ Install-Package MessagePackAnalyzer
 There are also a range of official and third party Extension Packages available (learn more in our [extensions section](#extensions)):
 
 ```ps1
-Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
 Install-Package MessagePack.AspNetCoreMvcFormatter
@@ -194,12 +193,12 @@ These types can serialize by default:
 * `ObservableCollection<>`, `ReadOnlyObservableCollection<>`
 * `ISet<>`,
 * `ConcurrentBag<>`, `ConcurrentQueue<>`, `ConcurrentStack<>`, `ConcurrentDictionary<,>`
+* Immutable collections (`ImmutableList<>`, etc)
 * Custom implementations of `ICollection<>` or `IDictionary<,>` with a parameterless constructor
-* Custom implementations of `ICollection` or `IDictionary` with a  parameterless constructor
+* Custom implementations of `IList` or `IDictionary` with a parameterless constructor
 
 You can add support for custom types, and there are some official/third-party extension packages for:
 
-* ImmutableCollections (`ImmutableList<>`, etc)
 * ReactiveProperty
 * for Unity (`Vector3`, `Quaternion`, etc...)
 * F# (Record, FsList, Discriminated Unions, etc...)
@@ -347,7 +346,7 @@ You can use `[DataContract]` annotations instead of `[MessagePackObject]` ones. 
 
 Then `[DataMember(Order = int)]` will behave the same as `[Key(int)]`, `[DataMember(Name = string)]` the same as `[Key(string)]`, and `[DataMember]` the same as `[Key(nameof(member name)]`.
 
-Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization. However, it is not supported by the analyzers nor in code generation by `mpc.exe`. Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used. Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
+Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization. However, it is not supported by the analyzers nor in code generation by the `mpc` tool. Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used. Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
 
 ## Serializing readonly/immutable object members  (SerializationConstructor)
 
@@ -534,6 +533,9 @@ var dynamicModel = MessagePackSerializer.Deserialize<dynamic>(blob, Contractless
 Console.WriteLine(dynamicModel["Name"]); // foobar
 Console.WriteLine(dynamicModel["Items"][2]); // 100
 ```
+
+Exploring object trees using the dictionary indexer syntax is the fastest option for untyped deserialization, but it is tedious to read and write.
+Where performance is not as important as code readability, consider deserializing with [ExpandoObject](doc/ExpandoObject.md).
 
 ## Object Type Serialization
 
@@ -924,13 +926,10 @@ This is some example benchmark performance data;
 MessagePack for C# has extension points that enable you to provide optimal serialization support for custom types. There are official extension support packages.
 
 ```ps1
-Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
 Install-Package MessagePack.AspNetCoreMvcFormatter
 ```
-
-The `MessagePack.ImmutableCollection` package adds support for type of the [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/) library. It adds `ImmutableArray<>`, `ImmutableList<>`, `ImmutableDictionary<,>`, `ImmutableHashSet<>`, `ImmutableSortedDictionary<,>`, `ImmutableSortedSet<>`, `ImmutableQueue<>`, `ImmutableStack<>`, `IImmutableList<>`, `IImmutableDictionary<,>`, `IImmutableQueue<>`, `IImmutableSet<>`, `IImmutableStack<>` serialization support.
 
 The `MessagePack.ReactiveProperty` package adds support for types of the [ReactiveProperty](https://github.com/runceel/ReactiveProperty) library. It adds `ReactiveProperty<>`, `IReactiveProperty<>`, `IReadOnlyReactiveProperty<>`, `ReactiveCollection<>`, `Unit` serialization support. It is useful for save viewmodel state.
 
@@ -942,7 +941,6 @@ After installation, extension packages must be enabled, by creating composite re
 // Set extensions to default resolver.
 var resolver = MessagePack.Resolvers.CompositeResolver.Create(
     // enable extension packages first
-    ImmutableCollectionResolver.Instance,
     ReactivePropertyResolver.Instance,
     MessagePack.Unity.Extension.UnityBlitResolver.Instance,
     MessagePack.Unity.UnityResolver.Instance,
@@ -1233,7 +1231,6 @@ Each instance of `MessagePackSerializer` accepts only a single resolver. Most ob
 // Do this once and store it for reuse.
 var resolver = MessagePack.Resolvers.CompositeResolver.Create(
     // resolver custom types first
-    ImmutableCollectionResolver.Instance,
     ReactivePropertyResolver.Instance,
     MessagePack.Unity.Extension.UnityBlitResolver.Instance,
     MessagePack.Unity.UnityResolver.Instance,
@@ -1530,13 +1527,13 @@ Options:
 
 ```cmd
 // Simple Sample:
-mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs"
+dotnet mpc -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs"
 
 // Use force map simulate DynamicContractlessObjectResolver
-mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
+dotnet mpc -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
 ```
 
-By default, `mpc.exe` generates the resolver as `MessagePack.Resolvers.GeneratedResolver` and formatters as`MessagePack.Formatters.*`.
+By default, `mpc` generates the resolver as `MessagePack.Resolvers.GeneratedResolver` and formatters as`MessagePack.Formatters.*`.
 
 Here is the full sample code to register a generated resolver in Unity.
 
@@ -1583,36 +1580,9 @@ In Unity, you can use MessagePack CodeGen windows at `Windows -> MessagePack -> 
 
 ![](https://user-images.githubusercontent.com/46207/69414381-f14da400-0d55-11ea-9f8d-9af448d347dc.png)
 
-Install the .NET Core runtime, install mpc (as a Global Tool), and execute mpc. Currently this tool is experimental so please tell me your opinion.
+Install the .NET Core runtime, install mpc (as a .NET Core Tool as described above), and execute `dotnet mpc`. Currently this tool is experimental so please tell me your opinion.
 
-In Xamarin, you can use  `MessagePack.MSBuild.Tasks` that can be added to your `.csproj` files easily.
-
-```xml
-<ItemGroup>
-    <!-- Install MSBuild Task (with PrivateAssets="All", i.e. build time dependency only) -->
-    <PackageReference Include="MessagePack.MSBuild.Tasks" Version="*" PrivateAssets="All" />
-</ItemGroup>
-
-<!-- Call code generator before-build. -->
-<Target Name="MessagePackGen" BeforeTargets="BeforeBuild">
-    <!-- Configuration of Code-Generator -->
-    <MessagePackGenerator Input="$(ProjectPath)" Output="$(ProjectDir)MessagePack" />
-</Target>
-```
-
-MSBuild Task's configuration options:
-
-```xml
-<MessagePackGenerator
-    Input="string:required"
-    Output="string:required"
-    ConditionalSymbol="string:optional"
-    ResolverName="string:optional"
-    Namespace="string:optional"
-    UseMapMode="bool:optional"
-    MultipleIfDirectiveOutputSymbols="string:optional"
-/>
-```
+In Xamarin, you can install the [the `MessagePack.MSBuild.Tasks` NuGet package](doc/msbuildtask.md) into your projects to pre-compile fast serialization code and run in environments where JIT compilation is not allowed.
 
 ## RPC
 

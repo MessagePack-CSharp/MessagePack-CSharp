@@ -265,6 +265,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly bool disallowInternal;
 
+        private HashSet<string> externalIgnoreTypeNames;
+
         // visitor workspace:
         private HashSet<ITypeSymbol> alreadyCollected;
         private List<ObjectSerializationInfo> collectedObjectInfo;
@@ -272,12 +274,13 @@ namespace MessagePackCompiler.CodeAnalysis
         private List<GenericSerializationInfo> collectedGenericInfo;
         private List<UnionSerializationInfo> collectedUnionInfo;
 
-        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, Action<string> logger)
+        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[] ignoreTypeNames, Action<string> logger)
         {
             this.logger = logger;
             this.typeReferences = new ReferenceSymbols(compilation, logger);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
+            this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
 
             targetTypes = compilation.GetNamedTypeSymbols()
                 .Where(x =>
@@ -337,6 +340,11 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             if (this.embeddedTypes.Contains(typeSymbol.ToString()))
+            {
+                return;
+            }
+
+            if (this.externalIgnoreTypeNames.Contains(typeSymbol.ToString()))
             {
                 return;
             }
@@ -426,7 +434,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 SubTypes = unionAttrs.Select(x => new UnionSubTypeInfo
                 {
                     Key = (int)x[0].Value,
-                    Type = (x[1].Value as ITypeSymbol).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    Type = x[1].Value is ITypeSymbol typeSymbol ? typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : throw new NotSupportedException($"AOT code generation only supports UnionAttribute that uses a Type parameter, but the {type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)} type uses an unsupported parameter."),
                 }).OrderBy(x => x.Key).ToArray(),
             };
 
@@ -1070,17 +1078,10 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             // constraint types (IDisposable, IEnumerable ...)
-            foreach (var (t, index) in typeParameter.ConstraintTypes.Select((x, i) => (x, i)))
+            foreach (var t in typeParameter.ConstraintTypes)
             {
                 var constraintTypeFullName = t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
-                if (typeParameter.ConstraintNullableAnnotations[index] == NullableAnnotation.Annotated)
-                {
-                    constraints.Add(constraintTypeFullName + "?");
-                }
-                else
-                {
-                    constraints.Add(constraintTypeFullName);
-                }
+                constraints.Add(constraintTypeFullName);
             }
 
             // `new()` constraint must be last in constraints.

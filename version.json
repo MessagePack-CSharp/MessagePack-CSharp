@@ -1,9 +1,10 @@
 {
-  "$schema": "https://raw.githubusercontent.com/AArnott/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
-  "version": "2.1",
+  "$schema": "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
+  "version": "2.2",
   "publicReleaseRefSpec": [
     "^refs/heads/master$",
     "^refs/heads/v1\\.x$",
-    "^refs/heads/v\\d+(?:.\\d+)?$"
+    "^refs/heads/v\\d+(?:.\\d+)?$",
+    "^refs/heads/develop$"
   ]
 }

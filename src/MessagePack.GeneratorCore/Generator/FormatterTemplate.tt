@@ -24,7 +24,8 @@ namespace <#= Namespace #>
     using System;
     using System.Buffers;
     using MessagePack;
-<# foreach(var objInfo in ObjectSerializationInfos) { #>
+<# foreach(var objInfo in ObjectSerializationInfos) {
+    bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);#>
 
     public sealed class <#= objInfo.Name #>Formatter<#= (objInfo.IsOpenGenericType ? $"<{string.Join(",", objInfo.GenericTypeParameters.Select(x => x.Name))}>" : "") #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
 <# foreach(var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
@@ -37,29 +38,6 @@ namespace <#= Namespace #>
 <# } #>
 <# } #>
 
-<# if( objInfo.IsStringKey) { #>
-
-        private readonly global::MessagePack.Internal.AutomataDictionary ____keyMapping;
-        private readonly byte[][] ____stringByteKeys;
-
-        public <#= objInfo.Name #>Formatter()
-        {
-            this.____keyMapping = new global::MessagePack.Internal.AutomataDictionary()
-            {
-<# foreach(var x in objInfo.Members) { #>
-                { "<#= x.StringKey #>", <#= x.IntKey #> },
-<# } #>
-            };
-
-            this.____stringByteKeys = new byte[][]
-            {
-<# foreach(var x in objInfo.Members.Where(x => x.IsReadable)) { #>
-                global::MessagePack.Internal.CodeGenHelpers.GetEncodedStringBytes("<#= x.StringKey #>"),
-<# } #>
-            };
-        }
-<# } #>
-
         public void Serialize(ref MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
 <# if( objInfo.IsClass) { #>
@@ -69,28 +47,23 @@ namespace <#= Namespace #>
                 return;
             }
 
-<# } #>
+<# }
+
+  if (isFormatterResolverNecessary) { #>
             IFormatterResolver formatterResolver = options.Resolver;
-<#if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
+<#}
+
+  if(objInfo.HasIMessagePackSerializationCallbackReceiver && objInfo.NeedsCastOnBefore) { #>
             ((IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
 <# } else if(objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
             value.OnBeforeSerialize();
 <# } #>
-<# if( objInfo.IsIntKey) { #>
             writer.WriteArrayHeader(<#= objInfo.MaxKey + 1 #>);
-<# } else { #>
-            writer.WriteMapHeader(<#= objInfo.WriteCount #>);
-<# } #>
-<# if(objInfo.IsIntKey) { #>
 <# for(var i =0; i<= objInfo.MaxKey; i++) { var member = objInfo.GetMember(i); #>
 <# if( member == null) { #>
             writer.WriteNil();
 <# } else { #>
             <#= member.GetSerializeMethodString() #>;
-<# } } } else { #>
-<# var index = 0; foreach(var x in objInfo.Members) { #>
-            writer.WriteRaw(this.____stringByteKeys[<#= index++ #>]);
-            <#= x.GetSerializeMethodString() #>;
 <# } } #>
         }
 
@@ -106,31 +79,17 @@ namespace <#= Namespace #>
             }
 
             options.Security.DepthStep(ref reader);
+<# if (isFormatterResolverNecessary) { #>
             IFormatterResolver formatterResolver = options.Resolver;
-<# if(objInfo.IsStringKey) { #>
-            var length = reader.ReadMapHeader();
-<# } else { #>
-            var length = reader.ReadArrayHeader();
 <# } #>
+            var length = reader.ReadArrayHeader();
 <# foreach(var x in objInfo.Members) { #>
             var __<#= x.Name #>__ = default(<#= x.Type #>);
 <# } #>
 
             for (int i = 0; i < length; i++)
             {
-<# if(objInfo.IsStringKey) { #>
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                int key;
-                if (!this.____keyMapping.TryGetValue(stringKey, out key))
-                {
-                    reader.Skip();
-                    continue;
-                }
-<# } else { #>
-                var key = i;
-<# } #>
-
-                switch (key)
+                switch (i)
                 {
 <# foreach(var x in objInfo.Members) { #>
                     case <#= x.IntKey #>:
