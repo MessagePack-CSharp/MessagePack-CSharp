@@ -296,7 +296,7 @@ var bin = MessagePackSerializer.Serialize(
   MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
 // {"MyProperty1":99,"MyProperty2":9999}
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 
 // You can also set ContractlessStandardResolver as the default.
 // (Global state; Not recommended when writing library code)
@@ -485,7 +485,7 @@ var bin = MessagePackSerializer.Serialize(data);
 
 // Union is serialized to two-length array, [key, object]
 // [1,["FooBar"]]
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 ```
 
 Using `Union` with abstract classes works the same way.
@@ -546,14 +546,14 @@ var objects = new object[] { 1, "aaa", new ObjectFieldType { Anything = 9999 } }
 var bin = MessagePackSerializer.Serialize(objects);
 
 // [1,"aaa",[9999]]
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 
 // Support anonymous Type Serialize
 var anonType = new { Foo = 100, Bar = "foobar" };
 var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
 // {"Foo":100,"Bar":"foobar"}
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin2));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin2));
 ```
 
 > Unity supports is limited.
@@ -577,7 +577,7 @@ var blob = MessagePackSerializer.Typeless.Serialize(mc);
 
 // Blob has embedded type-assembly information.
 // ["Sandbox.MyClass, Sandbox",10,"hoge","huga"]
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 
 // You can deserialize to MyClass again with the typeless API
 // Note that no type has to be specified explicitly in the Deserialize call
