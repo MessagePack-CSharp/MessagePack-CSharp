@@ -681,20 +681,21 @@ namespace TempProject
 
             var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
 
-            var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2, T3, T4>");
+            var displayFormat = SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+            var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(displayFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2, T3, T4>");
             formatterType.Should().NotBeNull();
             // MyClass?
-            formatterType.TypeParameters[0].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.MyClass");
+            formatterType.TypeParameters[0].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.MyClass?");
             formatterType.TypeParameters[0].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.Annotated);
             // MyClass
-            formatterType.TypeParameters[1].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.MyClass");
+            formatterType.TypeParameters[1].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.MyClass");
             formatterType.TypeParameters[1].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.None);
             // MyGenericClass<MyGenericClass<MyClass?>?>?
-            formatterType.TypeParameters[2].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier)) == "global::TempProject.MyGenericClass<global::TempProject.MyGenericClass<global::TempProject.MyClass?>?>");
+            formatterType.TypeParameters[2].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.MyGenericClass<global::TempProject.MyGenericClass<global::TempProject.MyClass?>?>?");
             formatterType.TypeParameters[2].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.Annotated);
             // MyClass, IMyInterface?
-            formatterType.TypeParameters[3].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.MyClass");
-            formatterType.TypeParameters[3].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.IMyInterface");
+            formatterType.TypeParameters[3].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.MyClass");
+            formatterType.TypeParameters[3].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.IMyInterface?");
             formatterType.TypeParameters[3].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.None);
             formatterType.TypeParameters[3].ConstraintNullableAnnotations[1].Should().Be(NullableAnnotation.Annotated);
         }
