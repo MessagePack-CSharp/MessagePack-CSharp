@@ -34,23 +34,17 @@ namespace MessagePack.Formatters
                     return;
                 }
 
-                SerializeInternal(ref writer, value, circularOptions);
+                circularOptions.Add(value);
+                Formatter.Serialize(ref writer, value, circularOptions);
             }
             else
             {
                 using (circularOptions = CircularReferenceMessagePackSerializerOptions.Rent(options))
                 {
-                    SerializeInternal(ref writer, value, circularOptions);
+                    circularOptions.Add(value);
+                    Formatter.Serialize(ref writer, value, circularOptions);
                 }
             }
-        }
-
-        private void SerializeInternal(ref MessagePackWriter writer, T value, CircularReferenceMessagePackSerializerOptions circularOptions)
-        {
-            writer.WriteArrayHeader(1);
-            circularOptions.Add(value);
-
-            Formatter.Serialize(ref writer, value, circularOptions);
         }
 
         public T? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
@@ -67,24 +61,18 @@ namespace MessagePack.Formatters
                     return (T)circularOptions.ReferenceSpan[(int)index];
                 }
 
-                var count = reader.ReadArrayHeader();
-                if (count != 1)
-                {
-                    throw new MessagePackSerializationException("The array length must be 1. actual: " + count);
-                }
-
-                return DeserializeInternal(ref reader, circularOptions);
+                var answer = new T();
+                circularOptions.Add(answer);
+                Overwriter.DeserializeOverwrite(ref reader, circularOptions, answer);
+                return answer;
             }
 
             using (circularOptions = CircularReferenceMessagePackSerializerOptions.Rent(options))
             {
-                var count = reader.ReadArrayHeader();
-                if (count != 1)
-                {
-                    throw new MessagePackSerializationException("The array length must be 1. actual: " + count);
-                }
-
-                return DeserializeInternal(ref reader, circularOptions);
+                var answer = new T();
+                circularOptions.Add(answer);
+                Overwriter.DeserializeOverwrite(ref reader, circularOptions, answer);
+                return answer;
             }
         }
 
@@ -98,14 +86,6 @@ namespace MessagePack.Formatters
 
             value = default;
             return false;
-        }
-
-        private T DeserializeInternal(ref MessagePackReader reader, CircularReferenceMessagePackSerializerOptions circularOptions)
-        {
-            var answer = new T();
-            circularOptions.Add(answer);
-            Overwriter.DeserializeOverwrite(ref reader, circularOptions, answer);
-            return answer;
         }
     }
 }
