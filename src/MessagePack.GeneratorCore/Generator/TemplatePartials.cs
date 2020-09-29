@@ -1,16 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MessagePackCompiler.CodeAnalysis;
 
 namespace MessagePackCompiler.Generator
 {
-    public partial class FormatterTemplate
+    public partial class FormatterTemplate : IFormatterTemplate
+    {
+        public string Namespace { get; set; }
+
+        public ObjectSerializationInfo[] ObjectSerializationInfos { get; set; }
+    }
+
+    public partial class StringKeyFormatterTemplate : IFormatterTemplate
     {
         public string Namespace { get; set; }
 

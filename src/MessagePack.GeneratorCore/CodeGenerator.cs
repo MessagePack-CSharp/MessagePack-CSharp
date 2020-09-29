@@ -74,11 +74,17 @@ namespace MessagePackCompiler
                 {
                     // SingleFile Output
                     var objectFormatterTemplates = objectInfo
-                        .GroupBy(x => x.Namespace)
-                        .Select(x => new FormatterTemplate()
+                        .GroupBy(x => (x.Namespace, x.IsStringKey))
+                        .Select(x =>
                         {
-                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
-                            ObjectSerializationInfos = x.ToArray(),
+                            var (nameSpace, isStringKey) = x.Key;
+                            var objectSerializationInfos = x.ToArray();
+                            var template = isStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
+
+                            template.Namespace = namespaceDot + "Formatters" + (nameSpace is null ? string.Empty : "." + nameSpace);
+                            template.ObjectSerializationInfos = objectSerializationInfos;
+
+                            return template;
                         })
                         .ToArray();
 
@@ -105,7 +111,7 @@ namespace MessagePackCompiler
                         Namespace = namespaceDot + "Resolvers",
                         FormatterNamespace = namespaceDot + "Formatters",
                         ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
+                        RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
                     };
 
                     var sb = new StringBuilder();
@@ -147,11 +153,9 @@ namespace MessagePackCompiler
                     // Multiple File output
                     foreach (var x in objectInfo)
                     {
-                        var template = new FormatterTemplate()
-                        {
-                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
-                            ObjectSerializationInfos = new[] { x },
-                        };
+                        var template = x.IsStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
+                        template.Namespace = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
+                        template.ObjectSerializationInfos = new[] { x };
 
                         var text = template.TransformText();
                         await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
@@ -186,7 +190,7 @@ namespace MessagePackCompiler
                         Namespace = namespaceDot + "Resolvers",
                         FormatterNamespace = namespaceDot + "Formatters",
                         ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
+                        RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
                     };
 
                     await OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken);

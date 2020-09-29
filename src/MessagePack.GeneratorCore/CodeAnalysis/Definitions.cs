@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -26,7 +24,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string Namespace { get; set; }
 
-        public string[] GenericTypeParameters { get; set; }
+        public GenericTypeParameterInfo[] GenericTypeParameters { get; set; }
 
         public bool IsOpenGenericType { get; set; }
 
@@ -54,7 +52,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public bool NeedsCastOnAfter { get; set; }
 
-        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(",", this.GenericTypeParameters)}>" : string.Empty);
+        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(",", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
 
         public int WriteCount
         {
@@ -91,6 +89,22 @@ namespace MessagePackCompiler.CodeAnalysis
         }
     }
 
+    public class GenericTypeParameterInfo
+    {
+        public string Name { get; }
+
+        public string Constraints { get; }
+
+        public bool HasConstraints { get; }
+
+        public GenericTypeParameterInfo(string name, string constraints)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Constraints = constraints ?? throw new ArgumentNullException(nameof(name));
+            HasConstraints = !string.IsNullOrEmpty(constraints);
+        }
+    }
+
     public class MemberSerializationInfo
     {
         public bool IsProperty { get; set; }
@@ -113,24 +127,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string CustomFormatterTypeName { get; set; }
 
-        private readonly HashSet<string> primitiveTypes = new HashSet<string>(new string[]
-        {
-            "short",
-            "int",
-            "long",
-            "ushort",
-            "uint",
-            "ulong",
-            "float",
-            "double",
-            "bool",
-            "byte",
-            "sbyte",
-            "char",
-            ////"global::System.DateTime",
-            ////"byte[]",
-            ////"string",
-        });
+        private readonly HashSet<string> primitiveTypes = new HashSet<string>(Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
 
         public string GetSerializeMethodString()
         {
@@ -156,7 +153,8 @@ namespace MessagePackCompiler.CodeAnalysis
             }
             else if (this.primitiveTypes.Contains(this.Type))
             {
-                return $"reader.Read{this.ShortTypeName.Replace("[]", "s")}()";
+                string suffix = this.Type == "byte[]" ? "?.ToArray()" : string.Empty;
+                return $"reader.Read{this.ShortTypeName.Replace("[]", "s")}()" + suffix;
             }
             else
             {
@@ -183,6 +181,8 @@ namespace MessagePackCompiler.CodeAnalysis
         public string FullName { get; set; }
 
         public string FormatterName { get; set; }
+
+        public bool IsOpenGenericType { get; set; }
 
         public bool Equals(GenericSerializationInfo other)
         {

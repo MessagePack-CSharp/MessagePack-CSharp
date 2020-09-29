@@ -5,6 +5,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C#, Experimental Plugins</Title>
@@ -13,23 +14,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="FormatterHelpers.tt">
+    <None Update="HardwareIntrinsics\FormatterHelpers.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>FormatterHelpers.cs</LastGenOutput>
     </None>
-    <None Update="PrimitiveArrayGetFormatterHelper.tt">
+    <None Update="HardwareIntrinsics\PrimitiveArrayGetFormatterHelper.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PrimitiveArrayGetFormatterHelper.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="FormatterHelpers.cs">
+    <Compile Update="HardwareIntrinsics\FormatterHelpers.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>FormatterHelpers.tt</DependentUpon>
     </Compile>
-    <Compile Update="PrimitiveArrayGetFormatterHelper.cs">
+    <Compile Update="HardwareIntrinsics\PrimitiveArrayGetFormatterHelper.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>PrimitiveArrayGetFormatterHelper.tt</DependentUpon>

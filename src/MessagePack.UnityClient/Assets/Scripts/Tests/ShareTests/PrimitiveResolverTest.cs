@@ -14,31 +14,6 @@ namespace MessagePack.Tests
     {
 #if !ENABLE_IL2CPP
 
-        [Theory]
-        [InlineData((bool)true)]
-        [InlineData((byte)10)]
-        [InlineData((sbyte)123)]
-        [InlineData((short)-4123)]
-        [InlineData((ushort)42342)]
-        [InlineData((int)int.MaxValue)]
-        [InlineData((UInt32)432423)]
-        [InlineData((long)235)]
-        [InlineData((UInt64)65346464)]
-        [InlineData((float)1241.42342f)]
-        [InlineData((double)1241312.4242342)]
-        [InlineData("hogehoge")]
-        [InlineData(new byte[] { 1, 10, 100 })]
-        public void PrimitiveObjectTest<T>(T x)
-        {
-            var bin = MessagePackSerializer.Serialize<object>(x);
-            var bin2 = MessagePackSerializer.Serialize<T>(x);
-
-            bin.Is(bin2);
-
-            ////var re1 = MessagePackSerializer.Deserialize<object>(bin);
-            ////((T)re1).Is(x);
-        }
-
         [Fact]
         public void PrimitiveTest2()
         {
@@ -60,7 +35,7 @@ namespace MessagePack.Tests
                 SharedData.IntEnum x = SharedData.IntEnum.C;
                 var bin = MessagePackSerializer.Serialize<object>(x);
                 var re1 = MessagePackSerializer.Deserialize<object>(bin);
-                ((SharedData.IntEnum)(int)(byte)re1).Is(x);
+                ((SharedData.IntEnum)(int)re1).Is(x);
             }
 
             {
@@ -69,9 +44,9 @@ namespace MessagePack.Tests
                 var bin = MessagePackSerializer.Serialize<object>(x);
                 var re1 = (object[])MessagePackSerializer.Deserialize<object>(bin);
 
-                x[0].Is((int)(byte)re1[0]);
-                x[1].Is((int)(byte)re1[1]);
-                x[2].Is((int)(ushort)re1[2]);
+                x[0].Is((int)re1[0]);
+                x[1].Is((int)re1[1]);
+                x[2].Is((int)re1[2]);
                 x[5].Is(re1[5]);
 
                 ((int[])x[3])[0].Is((ushort)((object[])re1[3])[0]);
