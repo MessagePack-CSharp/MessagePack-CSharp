@@ -1,0 +1,22 @@
+<Project>
+  <!-- Import the MSB4U generated common project as we will rely on it. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(MSBuildForUnity.Common.props))" Condition="Exists('$([MSBuild]::GetPathOfFileAbove(MSBuildForUnity.Common.props))')" />
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net471</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>.obj\</BaseIntermediateOutputPath>
+    <OutputPath>.bin\</OutputPath>
+  </PropertyGroup>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.Build.NoTargets" Version="2.0.1" />
+
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.Build.NoTargets" Version="2.0.1" />
+</Project>
