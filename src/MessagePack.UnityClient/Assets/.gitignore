@@ -1,1 +1,8 @@
-Plugins/
+/Plugins/
+/Plugins.meta
+
+# MSBuildForUnity
+/Dependencies/
+/Dependencies.meta
+.bin/
+.obj/

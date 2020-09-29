@@ -1,0 +1,17 @@
+{
+  "scopedRegistries": [
+    {
+      "name": "Microsoft",
+      "url": "https://pkgs.dev.azure.com/UnityDeveloperTools/MSBuildForUnity/_packaging/UnityDeveloperTools/npm/registry/",
+      "scopes": [
+        "com.microsoft"
+      ]
+    }
+  ],
+  "dependencies": {
+    "com.microsoft.msbuildforunity": "0.9.2-20200131.11",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.modules.ui": "1.0.0"
+  }
+}

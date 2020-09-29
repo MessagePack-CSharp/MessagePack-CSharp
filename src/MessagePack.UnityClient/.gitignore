@@ -5,3 +5,11 @@
 # Unity wants to see binaries inside its Assets directory.
 # We link them in with make_unity_symlink.bat, but we don't want to actually commit them into git.
 Assets/*.dll
+
+# MSBuildForUnity
+!/Assets/**/*.csproj
+!/Assets/**/*.sln
+!/Packages/**/*.csproj
+!/Packages/**/*.sln
+/MSBuildForUnity.Common.props
+/MSBuild/
