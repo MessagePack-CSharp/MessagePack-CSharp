@@ -1,17 +1,19 @@
 {
     "name": "MessagePack",
-    "references": [],
+    "references": [
+        "MessagePack.Annotations"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": true,
     "precompiledReferences": [
-      "System.Memory.dll"
-      ,"System.Buffers.dll"
-      ,"System.Threading.Tasks.Extensions.dll"
-      ,"System.Runtime.CompilerServices.Unsafe.dll"
-      ,"System.Runtime.Extensions.dll"
+        "System.Memory.dll",
+        "System.Buffers.dll",
+        "System.Threading.Tasks.Extensions.dll",
+        "System.Runtime.CompilerServices.Unsafe.dll",
+        "System.Runtime.Extensions.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
