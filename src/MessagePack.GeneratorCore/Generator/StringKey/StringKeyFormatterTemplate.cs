@@ -43,8 +43,7 @@ namespace MessagePackCompiler.Generator
 
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    using System;\r\n    using System.Buffers;\r\n    using System.Runtime.Inter" +
-                    "opServices;\r\n    using MessagePack;\r\n");
+            this.Write("\r\n{\r\n    using global::System.Buffers;\r\n    using global::MessagePack;\r\n");
 
 var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
 foreach (var objInfo in ObjectSerializationInfos)
@@ -56,14 +55,42 @@ foreach (var objInfo in ObjectSerializationInfos)
         list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
     }
 
-    string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(",", (object[])objInfo.GenericTypeParameters)}>" : "Formatter");
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);
 
             this.Write("\r\n    public sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FormatterNameWithoutNamespace));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
-            this.Write(">\r\n    {\r\n");
+            this.Write(">\r\n");
+
+    foreach(var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints))
+    {
+
+            this.Write("        where ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Name));
+            this.Write(" : ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Constraints));
+            this.Write("\r\n");
+
+    }
+
+            this.Write("    {\r\n");
+
+    foreach(var item in objInfo.Members)
+    {
+        if(item.CustomFormatterTypeName != null)
+        {
+
+            this.Write("        private readonly ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatterTypeName));
+            this.Write(" __");
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.Name));
+            this.Write("CustomFormatter__ = new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatterTypeName));
+            this.Write("();\r\n");
+
+        }
+    }
 
     foreach (var memberAndBinary in list)
     {
@@ -96,7 +123,7 @@ foreach (var objInfo in ObjectSerializationInfos)
     if (isFormatterResolverNecessary)
     {
 
-            this.Write("            IFormatterResolver formatterResolver = options.Resolver;\r\n");
+            this.Write("            var formatterResolver = options.Resolver;\r\n");
 
     }
 
@@ -153,12 +180,14 @@ foreach (var objInfo in ObjectSerializationInfos)
 
     }
 
-            this.Write("            }\r\n\r\n");
+            this.Write("            }\r\n\r\n            ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
+            this.Write(" ____result;\r\n");
 
     if (objInfo.Members.Length == 0)
     {
 
-            this.Write("            reader.Skip();\r\n            var ____result = new ");
+            this.Write("            reader.Skip();\r\n            ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             this.Write(";\r\n");
 
@@ -171,7 +200,7 @@ foreach (var objInfo in ObjectSerializationInfos)
         if (isFormatterResolverNecessary)
         {
 
-            this.Write("            IFormatterResolver formatterResolver = options.Resolver;\r\n");
+            this.Write("            var formatterResolver = options.Resolver;\r\n");
 
         }
 
@@ -191,7 +220,7 @@ foreach (var objInfo in ObjectSerializationInfos)
             this.Write(@"
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -200,23 +229,22 @@ foreach (var objInfo in ObjectSerializationInfos)
                       continue;
 ");
             this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ")));
-            this.Write("\r\n                }\r\n            }\r\n\r\n            var ____result = new ");
+            this.Write("\r\n                }\r\n            }\r\n\r\n            ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
-            this.Write("\r\n            {\r\n");
+            this.Write(";\r\n");
 
-        // Preparation for C#9 Record class
         foreach (var member in objInfo.Members.Where(x => x.IsWritable))
         {
 
-            this.Write("                ");
+            this.Write("            ____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write(" = __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__,\r\n");
+            this.Write("__;\r\n");
 
         }
 
-            this.Write("            };\r\n\r\n");
+            this.Write("\r\n");
 
     }
 

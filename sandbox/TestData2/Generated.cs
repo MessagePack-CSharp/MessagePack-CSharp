@@ -181,10 +181,8 @@ namespace MessagePack.Formatters.TestData2
 
 namespace MessagePack.Formatters.TestData2
 {
-    using System;
-    using System.Buffers;
-    using System.Runtime.InteropServices;
-    using MessagePack;
+    using global::System.Buffers;
+    using global::MessagePack;
 
     public sealed class AFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.A>
     {
@@ -203,7 +201,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
             writer.WriteRaw(GetSpan_a());
             writer.Write(value.a);
@@ -220,8 +218,9 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.A ____result;
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __a__ = default(int);
             var __bs__ = default(global::System.Collections.Generic.List<global::TestData2.B>);
@@ -229,7 +228,7 @@ namespace MessagePack.Formatters.TestData2
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -256,12 +255,10 @@ namespace MessagePack.Formatters.TestData2
                 }
             }
 
-            var ____result = new global::TestData2.A()
-            {
-                a = __a__,
-                bs = __bs__,
-                c = __c__,
-            };
+            ____result = new global::TestData2.A();
+            ____result.a = __a__;
+            ____result.bs = __bs__;
+            ____result.c = __c__;
 
             reader.Depth--;
             return ____result;
@@ -285,7 +282,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
             writer.WriteRaw(GetSpan_ass());
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Serialize(ref writer, value.ass, options);
@@ -302,8 +299,9 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.B ____result;
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __ass__ = default(global::System.Collections.Generic.List<global::TestData2.A>);
             var __c__ = default(global::TestData2.C);
@@ -311,7 +309,7 @@ namespace MessagePack.Formatters.TestData2
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -338,12 +336,10 @@ namespace MessagePack.Formatters.TestData2
                 }
             }
 
-            var ____result = new global::TestData2.B()
-            {
-                ass = __ass__,
-                c = __c__,
-                a = __a__,
-            };
+            ____result = new global::TestData2.B();
+            ____result.ass = __ass__;
+            ____result.c = __c__;
+            ____result.a = __a__;
 
             reader.Depth--;
             return ____result;
@@ -365,7 +361,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_b());
             formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Serialize(ref writer, value.b, options);
@@ -380,15 +376,16 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.C ____result;
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __b__ = default(global::TestData2.B);
             var __a__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -410,11 +407,9 @@ namespace MessagePack.Formatters.TestData2
                 }
             }
 
-            var ____result = new global::TestData2.C()
-            {
-                b = __b__,
-                a = __a__,
-            };
+            ____result = new global::TestData2.C();
+            ____result.b = __b__;
+            ____result.a = __a__;
 
             reader.Depth--;
             return ____result;
@@ -436,7 +431,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_EnumId());
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Serialize(ref writer, value.EnumId, options);
@@ -451,15 +446,16 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.Nest1 ____result;
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __EnumId__ = default(global::TestData2.Nest1.Id);
             var __ClassId__ = default(global::TestData2.Nest1.IdType);
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -480,11 +476,9 @@ namespace MessagePack.Formatters.TestData2
                 }
             }
 
-            var ____result = new global::TestData2.Nest1()
-            {
-                EnumId = __EnumId__,
-                ClassId = __ClassId__,
-            };
+            ____result = new global::TestData2.Nest1();
+            ____result.EnumId = __EnumId__;
+            ____result.ClassId = __ClassId__;
 
             reader.Depth--;
             return ____result;
@@ -512,8 +506,9 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.Nest1.IdType ____result;
             reader.Skip();
-            var ____result = new global::TestData2.Nest1.IdType();
+            ____result = new global::TestData2.Nest1.IdType();
             return ____result;
         }
     }
@@ -533,7 +528,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_EnumId());
             formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Serialize(ref writer, value.EnumId, options);
@@ -548,15 +543,16 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.Nest2 ____result;
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __EnumId__ = default(global::TestData2.Nest2.Id);
             var __ClassId__ = default(global::TestData2.Nest2.IdType);
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -577,11 +573,9 @@ namespace MessagePack.Formatters.TestData2
                 }
             }
 
-            var ____result = new global::TestData2.Nest2()
-            {
-                EnumId = __EnumId__,
-                ClassId = __ClassId__,
-            };
+            ____result = new global::TestData2.Nest2();
+            ____result.EnumId = __EnumId__;
+            ____result.ClassId = __ClassId__;
 
             reader.Depth--;
             return ____result;
@@ -609,8 +603,9 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.Nest2.IdType ____result;
             reader.Skip();
-            var ____result = new global::TestData2.Nest2.IdType();
+            ____result = new global::TestData2.Nest2.IdType();
             return ____result;
         }
     }
@@ -630,7 +625,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_MyProperty1());
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
@@ -645,15 +640,16 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.PropNameCheck1 ____result;
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __MyProperty1__ = default(string);
             var __MyProperty2__ = default(string);
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -681,11 +677,9 @@ namespace MessagePack.Formatters.TestData2
                 }
             }
 
-            var ____result = new global::TestData2.PropNameCheck1()
-            {
-                MyProperty1 = __MyProperty1__,
-                MyProperty2 = __MyProperty2__,
-            };
+            ____result = new global::TestData2.PropNameCheck1();
+            ____result.MyProperty1 = __MyProperty1__;
+            ____result.MyProperty2 = __MyProperty2__;
 
             reader.Depth--;
             return ____result;
@@ -707,7 +701,7 @@ namespace MessagePack.Formatters.TestData2
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_MyProperty1());
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.MyProperty1, options);
@@ -722,15 +716,16 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
+            global::TestData2.PropNameCheck2 ____result;
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __MyProperty1__ = default(string);
             var __MyProperty2__ = default(string);
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -758,11 +753,9 @@ namespace MessagePack.Formatters.TestData2
                 }
             }
 
-            var ____result = new global::TestData2.PropNameCheck2()
-            {
-                MyProperty1 = __MyProperty1__,
-                MyProperty2 = __MyProperty2__,
-            };
+            ____result = new global::TestData2.PropNameCheck2();
+            ____result.MyProperty1 = __MyProperty1__;
+            ____result.MyProperty2 = __MyProperty2__;
 
             reader.Depth--;
             return ____result;
