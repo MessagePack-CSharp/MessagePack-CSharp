@@ -85,7 +85,11 @@ namespace MessagePack.Generator
 
         private async Task<(Workspace Workspace, Compilation Compilation)> OpenMSBuildProjectAsync(string projectPath, CancellationToken cancellationToken)
         {
-            var workspace = MSBuildWorkspace.Create();
+            var workspace = MSBuildWorkspace.Create(new Dictionary<string, string>()
+            {
+                { "IsBuiltWithMessagePackGenerator", "true" },
+            });
+
             try
             {
                 var logger = new ConsoleLogger(Microsoft.Build.Framework.LoggerVerbosity.Quiet);
