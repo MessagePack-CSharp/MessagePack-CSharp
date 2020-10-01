@@ -11,12 +11,12 @@
     <OutputPath>.bin\</OutputPath>
   </PropertyGroup>
 
-  <Import Project="Sdk.props" Sdk="Microsoft.Build.NoTargets" Version="2.0.1" />
+  <Import Project="Sdk.props" Sdk="Microsoft.Build.NoTargets" />
 
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
 
-  <Import Project="Sdk.targets" Sdk="Microsoft.Build.NoTargets" Version="2.0.1" />
+  <Import Project="Sdk.targets" Sdk="Microsoft.Build.NoTargets" />
 </Project>

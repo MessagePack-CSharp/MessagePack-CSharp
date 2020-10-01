@@ -3,5 +3,8 @@
     "version": "3.1.301",
     "rollForward": "patch",
     "allowPrerelease": false
+  },
+  "msbuild-sdks": {
+    "Microsoft.Build.NoTargets": "2.0.1"
   }
 }
