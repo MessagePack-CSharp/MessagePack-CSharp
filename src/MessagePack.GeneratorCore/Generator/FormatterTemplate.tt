@@ -176,24 +176,22 @@ foreach (var objInfo in ObjectSerializationInfos)
 <#
         foreach (var member in objInfo.Members)
         {
-#>
-                    case <#= member.IntKey #>:
-<#
-            if (canOverwriteMember)
+            if (canOverwriteMember && member.IsWritable)
             {
 #>
+                    case <#= member.IntKey #>:
                         ____result.<#= member.Name #> = <#= member.GetDeserializeMethodString() #>;
+                        break;
 <#
             }
             else
             {
 #>
+                    case <#= member.IntKey #>:
                         __<#= member.Name #>__ = <#= member.GetDeserializeMethodString() #>;
-<#
-            }
-#>
                         break;
 <#
+            }
         }
 #>
                     default:

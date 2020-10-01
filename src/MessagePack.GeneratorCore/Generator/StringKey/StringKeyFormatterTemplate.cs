@@ -238,7 +238,7 @@ foreach (var objInfo in ObjectSerializationInfos)
                       reader.Skip();
                       continue;
 ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ", canOverwriteMember)));
+            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(canOverwriteMember ? objInfo.Members.Where(member => member.IsWritable).ToArray() : objInfo.Members, "                    ", canOverwriteMember)));
             this.Write("\r\n                }\r\n            }\r\n\r\n");
 
         if (!canOverwriteMember)

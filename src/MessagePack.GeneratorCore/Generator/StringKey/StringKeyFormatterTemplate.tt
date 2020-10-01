@@ -190,7 +190,7 @@ foreach (var objInfo in ObjectSerializationInfos)
                     FAIL:
                       reader.Skip();
                       continue;
-<#= StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ", canOverwriteMember) #>
+<#= StringKeyFormatterDeserializeHelper.Classify(canOverwriteMember ? objInfo.Members.Where(member => member.IsWritable).ToArray() : objInfo.Members, "                    ", canOverwriteMember) #>
                 }
             }
 

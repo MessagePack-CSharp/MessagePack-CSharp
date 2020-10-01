@@ -1395,11 +1395,6 @@ namespace MessagePack.Formatters
                     FAIL:
                       reader.Skip();
                       continue;
-                    case 18:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_AdditionalProperty().Slice(1))) { goto FAIL; }
-
-                        ____result.AdditionalProperty = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Deserialize(ref reader, options);
-                        continue;
                     case 9:
                         switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
                         {
@@ -1426,11 +1421,6 @@ namespace MessagePack.Formatters
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
 
                         ____result.Name = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
-                        continue;
-                    case 12:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_SimpleModels().Slice(1))) { goto FAIL; }
-
-                        ____result.SimpleModels = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Deserialize(ref reader, options);
                         continue;
 
                 }
@@ -1532,11 +1522,6 @@ namespace MessagePack.Formatters
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 521392779085UL) { goto FAIL; }
 
                         ____result.Money = formatterResolver.GetFormatterWithVerify<decimal>().Deserialize(ref reader, options);
-                        continue;
-                    case 6:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 128017765461313UL) { goto FAIL; }
-
-                        ____result.Amount = reader.ReadInt64();
                         continue;
 
                 }

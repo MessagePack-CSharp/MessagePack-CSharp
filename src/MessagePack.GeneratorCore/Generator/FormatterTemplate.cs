@@ -215,34 +215,30 @@ foreach (var objInfo in ObjectSerializationInfos)
 
         foreach (var member in objInfo.Members)
         {
+            if (canOverwriteMember && member.IsWritable)
+            {
 
             this.Write("                    case ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.IntKey));
-            this.Write(":\r\n");
-
-            if (canOverwriteMember)
-            {
-
-            this.Write("                        ____result.");
+            this.Write(":\r\n                        ____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write(" = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
-            this.Write(";\r\n");
+            this.Write(";\r\n                        break;\r\n");
 
             }
             else
             {
 
-            this.Write("                        __");
+            this.Write("                    case ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.IntKey));
+            this.Write(":\r\n                        __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__ = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
-            this.Write(";\r\n");
+            this.Write(";\r\n                        break;\r\n");
 
             }
-
-            this.Write("                        break;\r\n");
-
         }
 
             this.Write("                    default:\r\n                        reader.Skip();\r\n           " +
