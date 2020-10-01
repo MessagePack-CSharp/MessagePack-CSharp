@@ -180,16 +180,15 @@ foreach (var objInfo in ObjectSerializationInfos)
 
     }
 
-            this.Write("            }\r\n\r\n            ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
-            this.Write(" ____result;\r\n");
+            this.Write("            }\r\n\r\n");
 
+    bool canOverwriteMember = objInfo.ConstructorParameters.Length == 0;
     if (objInfo.Members.Length == 0)
     {
 
-            this.Write("            reader.Skip();\r\n            ____result = new ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
-            this.Write(";\r\n");
+            this.Write("            reader.Skip();\r\n            var ____result = new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
+            this.Write("();\r\n");
 
     }
     else
@@ -206,8 +205,18 @@ foreach (var objInfo in ObjectSerializationInfos)
 
             this.Write("            var length = reader.ReadMapHeader();\r\n");
 
-        foreach (var memberInfo in objInfo.Members)
+        if (canOverwriteMember)
         {
+
+            this.Write("            var ____result = new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
+            this.Write("();\r\n");
+
+        }
+        else
+        {
+            foreach (var memberInfo in objInfo.Members)
+            {
 
             this.Write("            var __");
             this.Write(this.ToStringHelper.ToStringWithCulture(memberInfo.Name));
@@ -215,6 +224,7 @@ foreach (var objInfo in ObjectSerializationInfos)
             this.Write(this.ToStringHelper.ToStringWithCulture(memberInfo.Type));
             this.Write(");\r\n");
 
+            }
         }
 
             this.Write(@"
@@ -228,13 +238,18 @@ foreach (var objInfo in ObjectSerializationInfos)
                       reader.Skip();
                       continue;
 ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ")));
-            this.Write("\r\n                }\r\n            }\r\n\r\n            ____result = new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ", canOverwriteMember)));
+            this.Write("\r\n                }\r\n            }\r\n\r\n");
+
+        if (!canOverwriteMember)
+        {
+
+            this.Write("            var ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             this.Write(";\r\n");
 
-        foreach (var member in objInfo.Members.Where(x => x.IsWritable))
-        {
+            foreach (var member in objInfo.Members.Where(x => x.IsWritable))
+            {
 
             this.Write("            ____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
@@ -242,10 +257,8 @@ foreach (var objInfo in ObjectSerializationInfos)
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__;\r\n");
 
+            }
         }
-
-            this.Write("\r\n");
-
     }
 
     if (objInfo.HasIMessagePackSerializationCallbackReceiver)

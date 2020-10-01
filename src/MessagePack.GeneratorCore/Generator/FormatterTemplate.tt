@@ -130,7 +130,6 @@ foreach (var objInfo in ObjectSerializationInfos)
 #>
             }
 
-            <#= objInfo.FullName #> ____result;
 <#
     if (isFormatterResolverNecessary)
     {
@@ -139,10 +138,11 @@ foreach (var objInfo in ObjectSerializationInfos)
 <#
     }
 
+    bool canOverwriteMember = objInfo.ConstructorParameters.Length == 0;
     if (objInfo.Members.Length == 0)
     {
 #>
-            ____result = new <#= objInfo.GetConstructorString()  #>;
+            var ____result = new <#= objInfo.FullName #>();
             reader.Skip();
 <#
     }
@@ -152,11 +152,20 @@ foreach (var objInfo in ObjectSerializationInfos)
             options.Security.DepthStep(ref reader);
             var length = reader.ReadArrayHeader();
 <#
-        foreach (var member in objInfo.Members)
+        if (canOverwriteMember)
         {
+#>
+            var ____result = new <#= objInfo.FullName #>();
+<#
+        }
+        else
+        {
+            foreach (var member in objInfo.Members)
+            {
 #>
             var __<#= member.Name #>__ = default(<#= member.Type #>);
 <#
+            }
         }
 #>
 
@@ -169,7 +178,20 @@ foreach (var objInfo in ObjectSerializationInfos)
         {
 #>
                     case <#= member.IntKey #>:
+<#
+            if (canOverwriteMember)
+            {
+#>
+                        ____result.<#= member.Name #> = <#= member.GetDeserializeMethodString() #>;
+<#
+            }
+            else
+            {
+#>
                         __<#= member.Name #>__ = <#= member.GetDeserializeMethodString() #>;
+<#
+            }
+#>
                         break;
 <#
         }
@@ -180,13 +202,18 @@ foreach (var objInfo in ObjectSerializationInfos)
                 }
             }
 
-            ____result = new <#= objInfo.GetConstructorString()  #>;
 <#
-        foreach (var member in objInfo.Members.Where(x => x.IsWritable))
+        if (!canOverwriteMember)
         {
+#>
+            var ____result = new <#= objInfo.GetConstructorString()  #>;
+<#
+            foreach (var member in objInfo.Members.Where(x => x.IsWritable))
+            {
 #>
             ____result.<#= member.Name #> = __<#= member.Name #>__;
 <#
+            }
         }
     }
 

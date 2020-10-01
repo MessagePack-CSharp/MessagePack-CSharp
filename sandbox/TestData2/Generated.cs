@@ -218,13 +218,10 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.A ____result;
             options.Security.DepthStep(ref reader);
             var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __a__ = default(int);
-            var __bs__ = default(global::System.Collections.Generic.List<global::TestData2.B>);
-            var __c__ = default(global::TestData2.C);
+            var ____result = new global::TestData2.A();
 
             for (int i = 0; i < length; i++)
             {
@@ -240,25 +237,20 @@ namespace MessagePack.Formatters.TestData2
                         {
                             default: goto FAIL;
                             case 97UL:
-                                __a__ = reader.ReadInt32();
+                                ____result.a = reader.ReadInt32();
                                 continue;
                             case 99UL:
-                                __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
+                                ____result.c = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
                                 continue;
                         }
                     case 2:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 29538UL) { goto FAIL; }
 
-                        __bs__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Deserialize(ref reader, options);
+                        ____result.bs = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>().Deserialize(ref reader, options);
                         continue;
 
                 }
             }
-
-            ____result = new global::TestData2.A();
-            ____result.a = __a__;
-            ____result.bs = __bs__;
-            ____result.c = __c__;
 
             reader.Depth--;
             return ____result;
@@ -299,13 +291,10 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.B ____result;
             options.Security.DepthStep(ref reader);
             var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __ass__ = default(global::System.Collections.Generic.List<global::TestData2.A>);
-            var __c__ = default(global::TestData2.C);
-            var __a__ = default(int);
+            var ____result = new global::TestData2.B();
 
             for (int i = 0; i < length; i++)
             {
@@ -319,27 +308,22 @@ namespace MessagePack.Formatters.TestData2
                     case 3:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7566177UL) { goto FAIL; }
 
-                        __ass__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Deserialize(ref reader, options);
+                        ____result.ass = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>().Deserialize(ref reader, options);
                         continue;
                     case 1:
                         switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
                         {
                             default: goto FAIL;
                             case 99UL:
-                                __c__ = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
+                                ____result.c = formatterResolver.GetFormatterWithVerify<global::TestData2.C>().Deserialize(ref reader, options);
                                 continue;
                             case 97UL:
-                                __a__ = reader.ReadInt32();
+                                ____result.a = reader.ReadInt32();
                                 continue;
                         }
 
                 }
             }
-
-            ____result = new global::TestData2.B();
-            ____result.ass = __ass__;
-            ____result.c = __c__;
-            ____result.a = __a__;
 
             reader.Depth--;
             return ____result;
@@ -376,12 +360,10 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.C ____result;
             options.Security.DepthStep(ref reader);
             var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __b__ = default(global::TestData2.B);
-            var __a__ = default(int);
+            var ____result = new global::TestData2.C();
 
             for (int i = 0; i < length; i++)
             {
@@ -397,19 +379,15 @@ namespace MessagePack.Formatters.TestData2
                         {
                             default: goto FAIL;
                             case 98UL:
-                                __b__ = formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Deserialize(ref reader, options);
+                                ____result.b = formatterResolver.GetFormatterWithVerify<global::TestData2.B>().Deserialize(ref reader, options);
                                 continue;
                             case 97UL:
-                                __a__ = reader.ReadInt32();
+                                ____result.a = reader.ReadInt32();
                                 continue;
                         }
 
                 }
             }
-
-            ____result = new global::TestData2.C();
-            ____result.b = __b__;
-            ____result.a = __a__;
 
             reader.Depth--;
             return ____result;
@@ -446,12 +424,10 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.Nest1 ____result;
             options.Security.DepthStep(ref reader);
             var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __EnumId__ = default(global::TestData2.Nest1.Id);
-            var __ClassId__ = default(global::TestData2.Nest1.IdType);
+            var ____result = new global::TestData2.Nest1();
 
             for (int i = 0; i < length; i++)
             {
@@ -465,20 +441,16 @@ namespace MessagePack.Formatters.TestData2
                     case 6:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 110266531802693UL) { goto FAIL; }
 
-                        __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Deserialize(ref reader, options);
+                        ____result.EnumId = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.Id>().Deserialize(ref reader, options);
                         continue;
                     case 7:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28228257876896835UL) { goto FAIL; }
 
-                        __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Deserialize(ref reader, options);
+                        ____result.ClassId = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest1.IdType>().Deserialize(ref reader, options);
                         continue;
 
                 }
             }
-
-            ____result = new global::TestData2.Nest1();
-            ____result.EnumId = __EnumId__;
-            ____result.ClassId = __ClassId__;
 
             reader.Depth--;
             return ____result;
@@ -506,9 +478,8 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.Nest1.IdType ____result;
             reader.Skip();
-            ____result = new global::TestData2.Nest1.IdType();
+            var ____result = new global::TestData2.Nest1.IdType();
             return ____result;
         }
     }
@@ -543,12 +514,10 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.Nest2 ____result;
             options.Security.DepthStep(ref reader);
             var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __EnumId__ = default(global::TestData2.Nest2.Id);
-            var __ClassId__ = default(global::TestData2.Nest2.IdType);
+            var ____result = new global::TestData2.Nest2();
 
             for (int i = 0; i < length; i++)
             {
@@ -562,20 +531,16 @@ namespace MessagePack.Formatters.TestData2
                     case 6:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 110266531802693UL) { goto FAIL; }
 
-                        __EnumId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Deserialize(ref reader, options);
+                        ____result.EnumId = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.Id>().Deserialize(ref reader, options);
                         continue;
                     case 7:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28228257876896835UL) { goto FAIL; }
 
-                        __ClassId__ = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Deserialize(ref reader, options);
+                        ____result.ClassId = formatterResolver.GetFormatterWithVerify<global::TestData2.Nest2.IdType>().Deserialize(ref reader, options);
                         continue;
 
                 }
             }
-
-            ____result = new global::TestData2.Nest2();
-            ____result.EnumId = __EnumId__;
-            ____result.ClassId = __ClassId__;
 
             reader.Depth--;
             return ____result;
@@ -603,9 +568,8 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.Nest2.IdType ____result;
             reader.Skip();
-            ____result = new global::TestData2.Nest2.IdType();
+            var ____result = new global::TestData2.Nest2.IdType();
             return ____result;
         }
     }
@@ -640,12 +604,10 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.PropNameCheck1 ____result;
             options.Security.DepthStep(ref reader);
             var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __MyProperty1__ = default(string);
-            var __MyProperty2__ = default(string);
+            var ____result = new global::TestData2.PropNameCheck1();
 
             for (int i = 0; i < length; i++)
             {
@@ -665,10 +627,10 @@ namespace MessagePack.Formatters.TestData2
                                 {
                                     default: goto FAIL;
                                     case 3242356UL:
-                                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                        ____result.MyProperty1 = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                                         continue;
                                     case 3307892UL:
-                                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                        ____result.MyProperty2 = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                                         continue;
                                 }
 
@@ -676,10 +638,6 @@ namespace MessagePack.Formatters.TestData2
 
                 }
             }
-
-            ____result = new global::TestData2.PropNameCheck1();
-            ____result.MyProperty1 = __MyProperty1__;
-            ____result.MyProperty2 = __MyProperty2__;
 
             reader.Depth--;
             return ____result;
@@ -716,12 +674,10 @@ namespace MessagePack.Formatters.TestData2
                 return null;
             }
 
-            global::TestData2.PropNameCheck2 ____result;
             options.Security.DepthStep(ref reader);
             var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __MyProperty1__ = default(string);
-            var __MyProperty2__ = default(string);
+            var ____result = new global::TestData2.PropNameCheck2();
 
             for (int i = 0; i < length; i++)
             {
@@ -741,10 +697,10 @@ namespace MessagePack.Formatters.TestData2
                                 {
                                     default: goto FAIL;
                                     case 3242356UL:
-                                        __MyProperty1__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                        ____result.MyProperty1 = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                                         continue;
                                     case 3307892UL:
-                                        __MyProperty2__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                                        ____result.MyProperty2 = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                                         continue;
                                 }
 
@@ -752,10 +708,6 @@ namespace MessagePack.Formatters.TestData2
 
                 }
             }
-
-            ____result = new global::TestData2.PropNameCheck2();
-            ____result.MyProperty1 = __MyProperty1__;
-            ____result.MyProperty2 = __MyProperty2__;
 
             reader.Depth--;
             return ____result;

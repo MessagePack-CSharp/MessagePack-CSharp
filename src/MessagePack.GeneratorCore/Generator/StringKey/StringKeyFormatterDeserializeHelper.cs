@@ -12,7 +12,7 @@ namespace MessagePackCompiler.Generator
 {
     internal static class StringKeyFormatterDeserializeHelper
     {
-        public static string Classify(MemberSerializationInfo[] memberArray, string indent)
+        public static string Classify(MemberSerializationInfo[] memberArray, string indent, bool doesAssignMemberDirectly)
         {
             var buffer = new StringBuilder();
             foreach (var memberInfoTuples in memberArray.Select(member => new MemberInfoTuple(member)).GroupBy(member => member.Binary.Length))
@@ -22,18 +22,27 @@ namespace MessagePackCompiler.Generator
                 keyLength += keyLength << 3 == binaryLength ? 0 : 1;
 
                 buffer.Append(indent).Append("case ").Append(binaryLength).Append(":\r\n");
-                ClassifyRecursion(buffer, indent, 1, keyLength, memberInfoTuples);
+                ClassifyRecursion(buffer, indent, 1, keyLength, memberInfoTuples, doesAssignMemberDirectly);
             }
 
             return buffer.ToString();
         }
 
-        private static void Assign(StringBuilder buffer, in MemberInfoTuple member)
+        private static void Assign(StringBuilder buffer, in MemberInfoTuple member, bool doesAssignMemberDirectly)
         {
-            buffer.Append("__").Append(member.Info.Name).Append("__ = ").Append(member.Info.GetDeserializeMethodString()).Append(";\r\n");
+            if (doesAssignMemberDirectly)
+            {
+                buffer.Append("____result.").Append(member.Info.Name).Append(" = ");
+            }
+            else
+            {
+                buffer.Append("__").Append(member.Info.Name).Append("__ = ");
+            }
+
+            buffer.Append(member.Info.GetDeserializeMethodString()).Append(";\r\n");
         }
 
-        private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection)
+        private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection, bool doesAssignMemberDirectly)
         {
             const string Tab = "    ";
             buffer.Append(indent);
@@ -46,7 +55,7 @@ namespace MessagePackCompiler.Generator
             if (memberArray.Length == 1)
             {
                 var member = memberArray[0];
-                EmbedOne(buffer, indent, tabCount, member);
+                EmbedOne(buffer, indent, tabCount, member, doesAssignMemberDirectly);
                 return;
             }
 
@@ -83,7 +92,7 @@ namespace MessagePackCompiler.Generator
                     }
 
                     var member = grouping.Single();
-                    Assign(buffer, member);
+                    Assign(buffer, member, doesAssignMemberDirectly);
                     buffer.Append(Tab + Tab).Append(indent);
                     for (var i = 0; i < tabCount; i++)
                     {
@@ -94,7 +103,7 @@ namespace MessagePackCompiler.Generator
                     continue;
                 }
 
-                ClassifyRecursion(buffer, indent + Tab, tabCount + 1, keyLength, grouping);
+                ClassifyRecursion(buffer, indent + Tab, tabCount + 1, keyLength, grouping, doesAssignMemberDirectly);
             }
 
             buffer.Append("\r\n").Append(indent);
@@ -106,7 +115,7 @@ namespace MessagePackCompiler.Generator
             buffer.Append("}\r\n");
         }
 
-        private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member)
+        private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member, bool doesAssignMemberDirectly)
         {
             const string Tab = "    ";
             var binary = member.Binary.AsSpan((tabCount - 1) << 3);
@@ -136,7 +145,7 @@ namespace MessagePackCompiler.Generator
                 buffer.Append(Tab);
             }
 
-            Assign(buffer, member);
+            Assign(buffer, member, doesAssignMemberDirectly);
             buffer.Append(indent);
             for (var i = 0; i < tabCount; i++)
             {
