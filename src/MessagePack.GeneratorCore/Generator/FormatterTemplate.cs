@@ -215,8 +215,10 @@ foreach (var objInfo in ObjectSerializationInfos)
 
         foreach (var member in objInfo.Members)
         {
-            if (canOverwriteMember && member.IsWritable)
+            if (canOverwriteMember)
             {
+                if (member.IsWritable)
+                {
 
             this.Write("                    case ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.IntKey));
@@ -226,6 +228,7 @@ foreach (var objInfo in ObjectSerializationInfos)
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
             this.Write(";\r\n                        break;\r\n");
 
+                }
             }
             else
             {
