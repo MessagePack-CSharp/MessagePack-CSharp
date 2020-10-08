@@ -69,7 +69,7 @@ namespace MessagePack.Resolvers
             {
                 TypeInfo ti = typeof(T).GetTypeInfo();
 
-                if (ti.IsInterface)
+                if (ti.IsInterface || ti.IsAbstract)
                 {
                     return;
                 }
@@ -129,7 +129,7 @@ namespace MessagePack.Resolvers
             {
                 TypeInfo ti = typeof(T).GetTypeInfo();
 
-                if (ti.IsInterface)
+                if (ti.IsInterface || ti.IsAbstract)
                 {
                     return;
                 }
@@ -205,7 +205,7 @@ namespace MessagePack.Resolvers
 
                 TypeInfo ti = typeof(T).GetTypeInfo();
 
-                if (ti.IsInterface)
+                if (ti.IsInterface || ti.IsAbstract)
                 {
                     return;
                 }
@@ -266,7 +266,7 @@ namespace MessagePack.Resolvers
 
                 TypeInfo ti = typeof(T).GetTypeInfo();
 
-                if (ti.IsInterface)
+                if (ti.IsInterface || ti.IsAbstract)
                 {
                     return;
                 }

@@ -74,8 +74,6 @@ MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.InterfaceImmut
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.InterfaceImmutableStackFormatter() -> void
 MessagePack.Resolvers.ExpandoObjectResolver
-MessagePack.Resolvers.TypelessInterfaceObjectResolver
-MessagePack.Resolvers.TypelessInterfaceObjectResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Add(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder collection, int index, TKey key, TValue value, MessagePack.MessagePackSerializerOptions options) -> void
 override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Complete(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder intermediateCollection) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>
 override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder
@@ -127,5 +125,4 @@ static readonly MessagePack.Formatters.TypeFormatter<T>.Instance -> MessagePack.
 static readonly MessagePack.ImmutableCollection.ImmutableCollectionResolver.Instance -> MessagePack.ImmutableCollection.ImmutableCollectionResolver
 static readonly MessagePack.Resolvers.ExpandoObjectResolver.Instance -> MessagePack.IFormatterResolver
 static readonly MessagePack.Resolvers.ExpandoObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
-static readonly MessagePack.Resolvers.TypelessInterfaceObjectResolver.Instance -> MessagePack.IFormatterResolver
 virtual MessagePack.Formatters.PrimitiveObjectFormatter.DeserializeMap(ref MessagePack.MessagePackReader reader, int length, MessagePack.MessagePackSerializerOptions options) -> object

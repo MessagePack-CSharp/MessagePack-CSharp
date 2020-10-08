@@ -78,6 +78,8 @@ public class MessagePackSerializerTypelessTests
     [Fact]
     public void SerializeInterface()
     {
+        var foo = MessagePackSerializer.Typeless.DefaultOptions.Resolver.GetFormatter<TypelessAbstract>();
+
         var v = new Holder() { T1 = new TypelessInterface { X = 999 }, T2 = new TypelessNonAbstract { X = 19, Y = 9999 } };
         var bin = MessagePackSerializer.Typeless.Serialize(v);
         var v2 = MessagePackSerializer.Typeless.Deserialize(bin).IsInstanceOf<Holder>();
