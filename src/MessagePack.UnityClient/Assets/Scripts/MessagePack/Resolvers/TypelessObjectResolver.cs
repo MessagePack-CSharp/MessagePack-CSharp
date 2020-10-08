@@ -55,6 +55,29 @@ namespace MessagePack.Resolvers
         }
     }
 
+    /// <summary>
+    /// Helper resolver for interface/abstract type which not implements Union attribute.
+    /// </summary>
+    public sealed class TypelessInterfaceObjectResolver : IFormatterResolver
+    {
+        public static readonly IFormatterResolver Instance = new TypelessInterfaceObjectResolver();
+
+        private TypelessInterfaceObjectResolver()
+        {
+        }
+
+        /// <inheritdoc />
+        public IMessagePackFormatter<T> GetFormatter<T>()
+        {
+            if (typeof(T).IsAbstract || typeof(T).IsInterface)
+            {
+                return new ForceTypelessFormatter<T>();
+            }
+
+            return null;
+        }
+    }
+
     /* helpers for TypelessFormatter */
 
     internal sealed class ForceSizePrimitiveObjectResolver : IFormatterResolver

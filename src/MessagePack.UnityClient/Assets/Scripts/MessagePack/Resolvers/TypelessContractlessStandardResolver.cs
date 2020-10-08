@@ -41,6 +41,7 @@ namespace MessagePack.Resolvers
             DynamicUnionResolver.Instance, // Try Union(Interface)
             DynamicObjectResolver.Instance, // Try Object
 #endif
+            TypelessInterfaceObjectResolver.Instance, // can not serialize abstract/interface type on ContractlessResolver, hook before it.
             DynamicContractlessObjectResolverAllowPrivate.Instance, // Serializes keys as strings
             TypelessObjectResolver.Instance,
         };
