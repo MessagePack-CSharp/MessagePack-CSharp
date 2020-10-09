@@ -10,6 +10,7 @@
   ],
   "dependencies": {
     "com.microsoft.msbuildforunity": "0.9.2-20200131.11",
+    "com.unity.collections": "0.1.1-preview",
     "com.unity.modules.imgui": "1.0.0",
     "com.unity.modules.jsonserialize": "1.0.0",
     "com.unity.modules.ui": "1.0.0"
