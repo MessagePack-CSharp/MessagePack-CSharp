@@ -22,7 +22,7 @@ Alternatively you may build from the command line using `msbuild.exe` or:
 
 ## Unity
 
-Then open `src\MessagePack.UnityClient` directory in the Unity Editor.
+Open `src\MessagePack.UnityClient` directory in the Unity Editor.
 
 ## Where to find our CI feed
 
