@@ -36,8 +36,6 @@ MessagePack.Formatters.ReadOnlySequenceFormatter<T>.Serialize(ref MessagePack.Me
 MessagePack.Formatters.TypeFormatter<T>
 MessagePack.Formatters.TypeFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> T
 MessagePack.Formatters.TypeFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, T value, MessagePack.MessagePackSerializerOptions options) -> void
-MessagePack.Formatters.ValueTupleFormatter<T1>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> ValueTuple<T1>
-MessagePack.Formatters.ValueTupleFormatter<T1>.Serialize(ref MessagePack.MessagePackWriter writer, ValueTuple<T1> value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.ImmutableCollection.ImmutableArrayFormatter<T>
 MessagePack.ImmutableCollection.ImmutableArrayFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableArray<T>
 MessagePack.ImmutableCollection.ImmutableArrayFormatter<T>.ImmutableArrayFormatter() -> void
