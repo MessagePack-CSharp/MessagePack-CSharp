@@ -61,6 +61,36 @@ namespace MessagePack.Tests
             Assert.Null(instance.Prop2);
         }
 
+        /// <summary>
+        /// Verifies that virtual and overridden properties do not cause the dynamic resolver to malfunction.
+        /// </summary>
+        [Fact]
+        public void VirtualOverriddenProperties()
+        {
+            var obj = new DerivedClassThatOverridesProperty { VirtualProperty = 100 };
+            byte[] bin = MessagePackSerializer.Serialize(obj);
+            var obj2 = MessagePackSerializer.Deserialize<DerivedClassThatOverridesProperty>(bin);
+            Assert.Equal(obj.VirtualProperty, obj2.VirtualProperty);
+        }
+
+        [Fact]
+        public void VirtualOverriddenProperties_DataMemberOnBase()
+        {
+            var obj = new DerivedClassThatOverridesPropertyDataMemberOnVirtualOnly { VirtualProperty = 100 };
+            byte[] bin = MessagePackSerializer.Serialize(obj);
+            var obj2 = MessagePackSerializer.Deserialize<DerivedClassThatOverridesPropertyDataMemberOnVirtualOnly>(bin);
+            Assert.Equal(obj.VirtualProperty, obj2.VirtualProperty);
+        }
+
+        [Fact]
+        public void VirtualOverriddenProperties_DataMemberOnOverride()
+        {
+            var obj = new DerivedClassThatOverridesPropertyDataMemberOnOverrideOnly { VirtualProperty = 100 };
+            byte[] bin = MessagePackSerializer.Serialize(obj);
+            var obj2 = MessagePackSerializer.Deserialize<DerivedClassThatOverridesPropertyDataMemberOnOverrideOnly>(bin);
+            Assert.Equal(obj.VirtualProperty, obj2.VirtualProperty);
+        }
+
         private static void Assert3MemberClassSerializedContent(ReadOnlyMemory<byte> msgpack)
         {
             var reader = new MessagePackReader(msgpack);
@@ -79,6 +109,58 @@ namespace MessagePack.Tests
             Assert.Equal(obj.BaseClassFieldAccessor, obj2.BaseClassFieldAccessor);
             Assert.Equal(obj.BaseClassProperty, obj2.BaseClassProperty);
             Assert.Equal(obj.Name, obj2.Name);
+        }
+
+        [DataContract]
+        public class BaseClassWithVirtualProperty
+        {
+            [DataMember]
+            public virtual int VirtualProperty { get; set; }
+        }
+
+        [DataContract]
+        public class DerivedClassThatOverridesProperty : BaseClassWithVirtualProperty
+        {
+            [DataMember]
+            public override int VirtualProperty
+            {
+                get => base.VirtualProperty;
+                set => base.VirtualProperty = value;
+            }
+        }
+
+        [DataContract]
+        public class BaseClassWithVirtualPropertyDataMemberOnOverrideOnly
+        {
+            public virtual int VirtualProperty { get; set; }
+        }
+
+        [DataContract]
+        public class DerivedClassThatOverridesPropertyDataMemberOnOverrideOnly : BaseClassWithVirtualPropertyDataMemberOnOverrideOnly
+        {
+            [DataMember]
+            public override int VirtualProperty
+            {
+                get => base.VirtualProperty;
+                set => base.VirtualProperty = value;
+            }
+        }
+
+        [DataContract]
+        public class BaseClassWithVirtualPropertyDataMemberOnVirtualOnly
+        {
+            [DataMember]
+            public virtual int VirtualProperty { get; set; }
+        }
+
+        [DataContract]
+        public class DerivedClassThatOverridesPropertyDataMemberOnVirtualOnly : BaseClassWithVirtualPropertyDataMemberOnVirtualOnly
+        {
+            public override int VirtualProperty
+            {
+                get => base.VirtualProperty;
+                set => base.VirtualProperty = value;
+            }
         }
 
         [DataContract]
