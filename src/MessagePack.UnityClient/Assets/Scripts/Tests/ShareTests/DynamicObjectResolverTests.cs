@@ -6,6 +6,7 @@
 using System;
 using System.Runtime.Serialization;
 using MessagePack.Resolvers;
+using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -45,6 +46,21 @@ namespace MessagePack.Tests
             PrivateMembersInBaseClass_Helper(options);
         }
 
+        [Fact]
+        public void DeserializerSetsMissingPropertiesToDefaultValue()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(1);
+            writer.Write(nameof(TwoProperties.Prop1));
+            writer.Write("Set");
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<TwoProperties>(seq);
+            Assert.Equal("Set", instance.Prop1);
+            Assert.Null(instance.Prop2);
+        }
+
         private static void Assert3MemberClassSerializedContent(ReadOnlyMemory<byte> msgpack)
         {
             var reader = new MessagePackReader(msgpack);
@@ -63,6 +79,16 @@ namespace MessagePack.Tests
             Assert.Equal(obj.BaseClassFieldAccessor, obj2.BaseClassFieldAccessor);
             Assert.Equal(obj.BaseClassProperty, obj2.BaseClassProperty);
             Assert.Equal(obj.Name, obj2.Name);
+        }
+
+        [DataContract]
+        public class TwoProperties
+        {
+            [DataMember]
+            public string Prop1 { get; set; } = "Uninitialized";
+
+            [DataMember]
+            public string Prop2 { get; set; } = "Uninitialized";
         }
 
         [MessagePackObject]
