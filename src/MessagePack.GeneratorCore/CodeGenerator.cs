@@ -105,6 +105,10 @@ namespace MessagePackCompiler
         /// </summary>
         /// <param name="resolverName">The resolver name.</param>
         /// <param name="namespaceDot">The namespace for the generated type to be created in.</param>
+        /// <param name="objectInfo">The ObjectSerializationInfo array which TypeCollector.Collect returns.</param>
+        /// <param name="enumInfo">The EnumSerializationInfo array which TypeCollector.Collect returns.</param>
+        /// <param name="unionInfo">The UnionSerializationInfo array which TypeCollector.Collect returns.</param>
+        /// <param name="genericInfo">The GenericSerializationInfo array which TypeCollector.Collect returns.</param>
         public static string GenerateSingleFileSync(string resolverName, string namespaceDot, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, GenericSerializationInfo[] genericInfo)
         {
             var objectFormatterTemplates = objectInfo
@@ -182,7 +186,7 @@ namespace MessagePackCompiler
             {
                 var template = x.IsStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
                 template.Namespace = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
-                template.ObjectSerializationInfos = new[] {x};
+                template.ObjectSerializationInfos = new[] { x };
 
                 var text = template.TransformText();
                 waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
@@ -193,7 +197,7 @@ namespace MessagePackCompiler
                 var template = new EnumTemplate()
                 {
                     Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
-                    EnumSerializationInfos = new[] {x},
+                    EnumSerializationInfos = new[] { x },
                 };
 
                 var text = template.TransformText();
@@ -205,7 +209,7 @@ namespace MessagePackCompiler
                 var template = new UnionTemplate()
                 {
                     Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
-                    UnionSerializationInfos = new[] {x},
+                    UnionSerializationInfos = new[] { x },
                 };
 
                 var text = template.TransformText();
