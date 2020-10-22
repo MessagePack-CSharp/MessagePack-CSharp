@@ -35,27 +35,35 @@ namespace MessagePack.Resolvers
         /// <inheritdoc />
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            if (typeof(T).IsAbstract || typeof(T).IsInterface)
-            {
-                return new ForceTypelessFormatter<T>();
-            }
+            return Cache<T>.Formatter;
+        }
 
-            if (typeof(T) == typeof(object))
+        private static class Cache<T>
+        {
+            public static readonly IMessagePackFormatter<T> Formatter;
+
+            static Cache()
             {
-                return (IMessagePackFormatter<T>)TypelessFormatter.Instance;
-            }
-            else
-            {
-                foreach (IFormatterResolver item in Resolvers)
+                if (typeof(T).IsAbstract || typeof(T).IsInterface)
                 {
-                    IMessagePackFormatter<T> f = item.GetFormatter<T>();
-                    if (f != null)
-                    {
-                        return f;
-                    }
+                    Formatter = new ForceTypelessFormatter<T>();
                 }
 
-                return null;
+                if (typeof(T) == typeof(object))
+                {
+                    Formatter = (IMessagePackFormatter<T>)TypelessFormatter.Instance;
+                }
+                else
+                {
+                    foreach (var item in Resolvers)
+                    {
+                        var f = item.GetFormatter<T>();
+                        if (f != null)
+                        {
+                            Formatter = f;
+                        }
+                    }
+                }
             }
         }
     }
