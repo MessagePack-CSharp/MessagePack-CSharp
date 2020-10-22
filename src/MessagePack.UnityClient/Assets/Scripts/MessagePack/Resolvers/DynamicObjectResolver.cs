@@ -1617,8 +1617,14 @@ namespace MessagePack.Internal
                     if (isIntKey)
                     {
                         member.IntKey = key.IntKey.Value;
-                        if (intMembers.ContainsKey(member.IntKey))
+                        if (intMembers.TryGetValue(member.IntKey, out EmittableMember conflictingMember))
                         {
+                            // Quietly skip duplicate if this is an override property.
+                            if ((conflictingMember.PropertyInfo.SetMethod?.IsVirtual ?? false) || (conflictingMember.PropertyInfo.GetMethod?.IsVirtual ?? false))
+                            {
+                                continue;
+                            }
+
                             throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
                         }
 

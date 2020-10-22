@@ -61,6 +61,20 @@ namespace MessagePack.Tests
             Assert.Null(instance.Prop2);
         }
 
+        [Fact]
+        public void DeserializerSetsMissingPropertiesToDefaultValue_OrdinalKey()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteArrayHeader(1);
+            writer.Write("Set");
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<TwoPropertiesOrdinalKey>(seq);
+            Assert.Equal("Set", instance.Prop1);
+            Assert.Null(instance.Prop2);
+        }
+
         /// <summary>
         /// Verifies that virtual and overridden properties do not cause the dynamic resolver to malfunction.
         /// </summary>
@@ -88,6 +102,36 @@ namespace MessagePack.Tests
             var obj = new DerivedClassThatOverridesPropertyDataMemberOnOverrideOnly { VirtualProperty = 100 };
             byte[] bin = MessagePackSerializer.Serialize(obj);
             var obj2 = MessagePackSerializer.Deserialize<DerivedClassThatOverridesPropertyDataMemberOnOverrideOnly>(bin);
+            Assert.Equal(obj.VirtualProperty, obj2.VirtualProperty);
+        }
+
+        /// <summary>
+        /// Verifies that virtual and overridden properties do not cause the dynamic resolver to malfunction.
+        /// </summary>
+        [Fact]
+        public void VirtualOverriddenProperties_OrdinalKey()
+        {
+            var obj = new DerivedClassThatOverridesPropertyOrdinalKey { VirtualProperty = 100 };
+            byte[] bin = MessagePackSerializer.Serialize(obj);
+            var obj2 = MessagePackSerializer.Deserialize<DerivedClassThatOverridesPropertyOrdinalKey>(bin);
+            Assert.Equal(obj.VirtualProperty, obj2.VirtualProperty);
+        }
+
+        [Fact]
+        public void VirtualOverriddenProperties_DataMemberOnBase_OrdinalKey()
+        {
+            var obj = new DerivedClassThatOverridesPropertyDataMemberOnVirtualOnlyOrdinalKey { VirtualProperty = 100 };
+            byte[] bin = MessagePackSerializer.Serialize(obj);
+            var obj2 = MessagePackSerializer.Deserialize<DerivedClassThatOverridesPropertyDataMemberOnVirtualOnlyOrdinalKey>(bin);
+            Assert.Equal(obj.VirtualProperty, obj2.VirtualProperty);
+        }
+
+        [Fact]
+        public void VirtualOverriddenProperties_DataMemberOnOverride_OrdinalKey()
+        {
+            var obj = new DerivedClassThatOverridesPropertyDataMemberOnOverrideOnlyOrdinalKey { VirtualProperty = 100 };
+            byte[] bin = MessagePackSerializer.Serialize(obj);
+            var obj2 = MessagePackSerializer.Deserialize<DerivedClassThatOverridesPropertyDataMemberOnOverrideOnlyOrdinalKey>(bin);
             Assert.Equal(obj.VirtualProperty, obj2.VirtualProperty);
         }
 
@@ -164,12 +208,74 @@ namespace MessagePack.Tests
         }
 
         [DataContract]
+        public class BaseClassWithVirtualPropertyOrdinalKey
+        {
+            [DataMember(Order = 0)]
+            public virtual int VirtualProperty { get; set; }
+        }
+
+        [DataContract]
+        public class DerivedClassThatOverridesPropertyOrdinalKey : BaseClassWithVirtualPropertyOrdinalKey
+        {
+            [DataMember(Order = 0)]
+            public override int VirtualProperty
+            {
+                get => base.VirtualProperty;
+                set => base.VirtualProperty = value;
+            }
+        }
+
+        [DataContract]
+        public class BaseClassWithVirtualPropertyDataMemberOnOverrideOnlyOrdinalKey
+        {
+            public virtual int VirtualProperty { get; set; }
+        }
+
+        [DataContract]
+        public class DerivedClassThatOverridesPropertyDataMemberOnOverrideOnlyOrdinalKey : BaseClassWithVirtualPropertyDataMemberOnOverrideOnlyOrdinalKey
+        {
+            [DataMember(Order = 0)]
+            public override int VirtualProperty
+            {
+                get => base.VirtualProperty;
+                set => base.VirtualProperty = value;
+            }
+        }
+
+        [DataContract]
+        public class BaseClassWithVirtualPropertyDataMemberOnVirtualOnlyOrdinalKey
+        {
+            [DataMember(Order = 0)]
+            public virtual int VirtualProperty { get; set; }
+        }
+
+        [DataContract]
+        public class DerivedClassThatOverridesPropertyDataMemberOnVirtualOnlyOrdinalKey : BaseClassWithVirtualPropertyDataMemberOnVirtualOnlyOrdinalKey
+        {
+            public override int VirtualProperty
+            {
+                get => base.VirtualProperty;
+                set => base.VirtualProperty = value;
+            }
+        }
+
+        [DataContract]
         public class TwoProperties
         {
             [DataMember]
             public string Prop1 { get; set; } = "Uninitialized";
 
             [DataMember]
+            public string Prop2 { get; set; } = "Uninitialized";
+        }
+
+        [DataContract]
+        public class TwoPropertiesOrdinalKey
+        {
+            [DataMember(Order = 0)]
+            public string Prop1 { get; set; } = "Uninitialized";
+
+            [DataMember(Order = 1)]
             public string Prop2 { get; set; } = "Uninitialized";
         }
 
