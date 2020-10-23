@@ -10,6 +10,11 @@ using Xunit.Abstractions;
 
 public class MessagePackSecurityTests
 {
+    public MessagePackSecurityTests()
+    {
+        Logger = new NullTestOutputHelper();
+    }
+
     public MessagePackSecurityTests(ITestOutputHelper logger)
     {
         Logger = logger;
@@ -231,3 +236,4 @@ public class MessagePackSecurityTests
     {
     }
 }
+

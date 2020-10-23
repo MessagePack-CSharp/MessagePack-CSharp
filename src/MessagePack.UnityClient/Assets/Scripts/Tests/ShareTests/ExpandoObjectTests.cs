@@ -13,6 +13,11 @@ namespace MessagePack.Tests
     {
         private readonly ITestOutputHelper logger;
 
+        public ExpandoObjectTests()
+        {
+            this.logger = new NullTestOutputHelper();
+        }
+
         public ExpandoObjectTests(ITestOutputHelper logger)
         {
             this.logger = logger;

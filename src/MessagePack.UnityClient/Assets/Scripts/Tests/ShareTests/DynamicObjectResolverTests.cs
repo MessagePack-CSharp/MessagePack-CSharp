@@ -15,6 +15,11 @@ namespace MessagePack.Tests
     {
         private readonly ITestOutputHelper logger;
 
+        public DynamicObjectResolverTests()
+        {
+            this.logger = new NullTestOutputHelper();
+        }
+
         public DynamicObjectResolverTests(ITestOutputHelper logger)
         {
             this.logger = logger;
