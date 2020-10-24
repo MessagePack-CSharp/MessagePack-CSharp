@@ -937,7 +937,7 @@ namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1031,7 +1031,7 @@ namespace MessagePack.Formatters
             var __MyProperty5__ = default(global::GlobalMyEnum[]);
             var __MyProperty6__ = default(global::QuestMessageBody[]);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1101,7 +1101,7 @@ namespace MessagePack.Formatters
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1155,7 +1155,7 @@ namespace MessagePack.Formatters
             var __PostTime__ = default(global::System.DateTime);
             var __Body__ = default(global::IMessageBody);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1217,7 +1217,7 @@ namespace MessagePack.Formatters
             var __QuestId__ = default(int);
             var __Text__ = default(string);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1267,7 +1267,7 @@ namespace MessagePack.Formatters
             var length = reader.ReadArrayHeader();
             var __StampId__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1315,7 +1315,7 @@ namespace MessagePack.Formatters
             var length = reader.ReadArrayHeader();
             var __Text__ = default(string);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1850,7 +1850,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty14__ = default(int);
             var __MyProperty15__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1958,7 +1958,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __OPQ__ = default(string);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2005,7 +2005,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __X__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2053,7 +2053,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __X__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2112,7 +2112,7 @@ namespace MessagePack.Formatters.SharedData
             var __Item8__ = default(T8);
             var __Item9__ = default(T9);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2179,7 +2179,7 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadArrayHeader();
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2219,7 +2219,7 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadArrayHeader();
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2253,7 +2253,7 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadArrayHeader();
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2301,7 +2301,7 @@ namespace MessagePack.Formatters.SharedData
             var __Prop2__ = default(string);
             var __Prop3__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2355,7 +2355,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __XYZ__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2405,7 +2405,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty0__ = default(T1);
             var __MyProperty1__ = default(T2);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2453,7 +2453,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty0__ = default(T1);
             var __MyProperty1__ = default(T2);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2507,7 +2507,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty1__ = default(global::SharedData.Version0);
             var __After__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2561,7 +2561,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty1__ = default(global::SharedData.Version1);
             var __After__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2615,7 +2615,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty1__ = default(global::SharedData.Version2);
             var __After__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2669,7 +2669,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty2__ = default(int);
             var __MyProperty3__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2726,7 +2726,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __One__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2771,7 +2771,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __Two__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2819,7 +2819,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __Three__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2866,7 +2866,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __Four__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2912,7 +2912,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2958,7 +2958,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3018,7 +3018,7 @@ namespace MessagePack.Formatters.SharedData
             var __Prop6__ = default(global::SharedData.SimpleStructStringKeyData);
             var __BytesSpecial__ = default(byte[]);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3086,7 +3086,7 @@ namespace MessagePack.Formatters.SharedData
             var __Y__ = default(int);
             var __BytesSpecial__ = default(byte[]);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3142,15 +3142,15 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty1__ = default(int);
             var __MyProperty__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
-                    case 1:
-                        __MyProperty1__ = reader.ReadInt32();
-                        break;
                     case 0:
                         __MyProperty__ = reader.ReadInt32();
+                        break;
+                    case 1:
+                        __MyProperty1__ = reader.ReadInt32();
                         break;
                     default:
                         reader.Skip();
@@ -3194,15 +3194,15 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty2__ = default(int);
             var __MyProperty__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
-                    case 1:
-                        __MyProperty2__ = reader.ReadInt32();
-                        break;
                     case 0:
                         __MyProperty__ = reader.ReadInt32();
+                        break;
+                    case 1:
+                        __MyProperty2__ = reader.ReadInt32();
                         break;
                     default:
                         reader.Skip();
@@ -3247,7 +3247,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty__ = default(int);
             var __MyProperty2__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3293,7 +3293,7 @@ namespace MessagePack.Formatters.SharedData
             var __X__ = default(float);
             var __Y__ = default(float);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3339,7 +3339,7 @@ namespace MessagePack.Formatters.SharedData
             var __y__ = default(float);
             var __z__ = default(float);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3389,7 +3389,7 @@ namespace MessagePack.Formatters.SharedData
             var __x__ = default(float);
             var __y__ = default(float);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3442,7 +3442,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3495,7 +3495,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty2__ = default(int);
             var __MyProperty3__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3559,7 +3559,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty3__ = default(int);
             var __MyProperty5__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3623,7 +3623,7 @@ namespace MessagePack.Formatters.SharedData
             var __UnknownBlock__ = default(global::SharedData.MyClass);
             var __MyProperty2__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3684,7 +3684,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __FV__ = default(int);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3734,7 +3734,7 @@ namespace MessagePack.Formatters.SharedData
             var __Data1__ = default(int);
             var __Data2__ = default(string);
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 switch (i)
                 {
