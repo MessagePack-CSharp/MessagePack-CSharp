@@ -16,7 +16,6 @@ namespace MessagePack.Tests
     {
         private readonly ITestOutputHelper logger;
 
-
         public ContractlessStandardResolverTest()
         {
             this.logger = new NullTestOutputHelper();

@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
@@ -14,5 +15,16 @@ namespace MessagePack.Tests
         /// Gets a value indicating whether the mono runtime is executing this code.
         /// </summary>
         internal static bool IsRunningOnMono => Type.GetType("Mono.Runtime") != null;
+    }
+
+    public class NullTestOutputHelper : ITestOutputHelper
+    {
+        public void WriteLine(string message)
+        {
+        }
+
+        public void WriteLine(string format, params object[] args)
+        {
+        }
     }
 }

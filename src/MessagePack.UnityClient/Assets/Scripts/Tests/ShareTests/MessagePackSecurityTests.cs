@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using MessagePack;
+using MessagePack.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
