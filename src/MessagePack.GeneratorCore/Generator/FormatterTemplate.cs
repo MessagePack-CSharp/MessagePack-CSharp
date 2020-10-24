@@ -44,10 +44,8 @@ namespace MessagePackCompiler.Generator
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
             this.Write("\r\n{\r\n    using global::System.Buffers;\r\n    using global::MessagePack;\r\n");
-
 foreach (var objInfo in ObjectSerializationInfos) {
  bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);
-
             this.Write("\r\n    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Name));
             this.Write("Formatter");
