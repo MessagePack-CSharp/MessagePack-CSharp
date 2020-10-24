@@ -63,7 +63,15 @@ foreach (var objInfo in ObjectSerializationInfos)
             this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
-            this.Write(">\r\n    {\r\n");
+            this.Write(">\r\n");
+ foreach(var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) {
+            this.Write("        where ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Name));
+            this.Write(" : ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Constraints));
+            this.Write("\r\n");
+ }
+            this.Write("    {\r\n");
 
     foreach (var memberAndBinary in list)
     {

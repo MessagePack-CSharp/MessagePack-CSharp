@@ -42,6 +42,9 @@ foreach (var objInfo in ObjectSerializationInfos)
 #>
 
     public sealed class <#= formatterName #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+<# foreach(var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) {#>
+        where <#= typeArg.Name #> : <#= typeArg.Constraints #>
+<# }#>
     {
 <#
     foreach (var memberAndBinary in list)
