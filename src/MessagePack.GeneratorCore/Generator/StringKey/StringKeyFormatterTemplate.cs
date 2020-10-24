@@ -64,7 +64,7 @@ foreach (var objInfo in ObjectSerializationInfos)
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(">\r\n");
- foreach(var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) {
+ foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) {
             this.Write("        where ");
             this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Name));
             this.Write(" : ");
