@@ -39,7 +39,7 @@ namespace <#= Namespace #>
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
-<# if (objInfo.IsClass) {#>
+<# if (objInfo.IsClass) { #>
             if (value == null)
             {
                 writer.WriteNil();
@@ -55,16 +55,16 @@ namespace <#= Namespace #>
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
   if (objInfo.NeedsCastOnBefore) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
-<#  } else { #>
+<# } else { #>
             value.OnBeforeSerialize();
 <# } #>
 <# } #>
             writer.WriteArrayHeader(<#= objInfo.MaxKey + 1 #>);
 <# for (var i = 0; i <= objInfo.MaxKey; i++) {
   var member = objInfo.GetMember(i);
-  if (member == null) {#>
+  if (member == null) { #>
             writer.WriteNil();
-<#  } else { #>
+<# } else { #>
             <#= member.GetSerializeMethodString() #>;
 <# } #>
 <# } #>
@@ -74,11 +74,11 @@ namespace <#= Namespace #>
         {
             if (reader.TryReadNil())
             {
-<# if (objInfo.IsClass) {#>
+<# if (objInfo.IsClass) { #>
                 return null;
-<# } else {#>
+<# } else { #>
                 throw new global::System.InvalidOperationException("typecode is null, struct not supported");
-<# }#>
+<# } #>
             }
 
             options.Security.DepthStep(ref reader);
@@ -96,7 +96,7 @@ namespace <#= Namespace #>
                 {
 <# for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
   var member = objInfo.GetMember(memberIndex);
-  if (member == null) { continue; }#>
+  if (member == null) { continue; } #>
                     case <#= member.IntKey #>:
                         __<#= member.Name #>__ = <#= member.GetDeserializeMethodString() #>;
                         break;
@@ -117,7 +117,7 @@ namespace <#= Namespace #>
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
   if (objInfo.NeedsCastOnAfter) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
-<#  } else { #>
+<# } else { #>
             ____result.OnAfterDeserialize();
 <# } #>
 <# } #>

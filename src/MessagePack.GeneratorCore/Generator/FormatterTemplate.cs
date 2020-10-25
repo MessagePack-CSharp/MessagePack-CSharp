@@ -76,7 +76,7 @@ namespace ");
                     " ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n");
- if (objInfo.IsClass) {
+ if (objInfo.IsClass) { 
             this.Write("            if (value == null)\r\n            {\r\n                writer.WriteNil();" +
                     "\r\n                return;\r\n            }\r\n\r\n");
  }
@@ -90,7 +90,7 @@ namespace ");
   if (objInfo.NeedsCastOnBefore) { 
             this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value" +
                     ").OnBeforeSerialize();\r\n");
-  } else { 
+ } else { 
             this.Write("            value.OnBeforeSerialize();\r\n");
  } 
  } 
@@ -99,9 +99,9 @@ namespace ");
             this.Write(");\r\n");
  for (var i = 0; i <= objInfo.MaxKey; i++) {
   var member = objInfo.GetMember(i);
-  if (member == null) {
+  if (member == null) { 
             this.Write("            writer.WriteNil();\r\n");
-  } else { 
+ } else { 
             this.Write("            ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             this.Write(";\r\n");
@@ -112,12 +112,12 @@ namespace ");
             this.Write(" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePac" +
                     "k.MessagePackSerializerOptions options)\r\n        {\r\n            if (reader.TryRe" +
                     "adNil())\r\n            {\r\n");
- if (objInfo.IsClass) {
+ if (objInfo.IsClass) { 
             this.Write("                return null;\r\n");
- } else {
+ } else { 
             this.Write("                throw new global::System.InvalidOperationException(\"typecode is n" +
                     "ull, struct not supported\");\r\n");
- }
+ } 
             this.Write("            }\r\n\r\n            options.Security.DepthStep(ref reader);\r\n");
  if (isFormatterResolverNecessary) { 
             this.Write("            var formatterResolver = options.Resolver;\r\n");
@@ -134,7 +134,7 @@ namespace ");
                     "itch (i)\r\n                {\r\n");
  for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
   var member = objInfo.GetMember(memberIndex);
-  if (member == null) { continue; }
+  if (member == null) { continue; } 
             this.Write("                    case ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.IntKey));
             this.Write(":\r\n                        __");
@@ -162,7 +162,7 @@ namespace ");
   if (objInfo.NeedsCastOnAfter) { 
             this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____r" +
                     "esult).OnAfterDeserialize();\r\n");
-  } else { 
+ } else { 
             this.Write("            ____result.OnAfterDeserialize();\r\n");
  } 
  } 
