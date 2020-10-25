@@ -49,7 +49,7 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(65)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(71)
             {
                 { typeof(global::GlobalMyEnum[,]), 0 },
                 { typeof(global::GlobalMyEnum[]), 1 },
@@ -80,42 +80,48 @@ namespace MessagePack.Resolvers
                 { typeof(global::SharedData.Callback1_2), 26 },
                 { typeof(global::SharedData.Callback2), 27 },
                 { typeof(global::SharedData.Callback2_2), 28 },
-                { typeof(global::SharedData.Empty1), 29 },
-                { typeof(global::SharedData.Empty2), 30 },
-                { typeof(global::SharedData.EmptyClass), 31 },
-                { typeof(global::SharedData.EmptyStruct), 32 },
-                { typeof(global::SharedData.FirstSimpleData), 33 },
-                { typeof(global::SharedData.FooClass), 34 },
-                { typeof(global::SharedData.HolderV0), 35 },
-                { typeof(global::SharedData.HolderV1), 36 },
-                { typeof(global::SharedData.HolderV2), 37 },
-                { typeof(global::SharedData.MyClass), 38 },
-                { typeof(global::SharedData.MySubUnion1), 39 },
-                { typeof(global::SharedData.MySubUnion2), 40 },
-                { typeof(global::SharedData.MySubUnion3), 41 },
-                { typeof(global::SharedData.MySubUnion4), 42 },
-                { typeof(global::SharedData.NestParent.NestContract), 43 },
-                { typeof(global::SharedData.NonEmpty1), 44 },
-                { typeof(global::SharedData.NonEmpty2), 45 },
-                { typeof(global::SharedData.SimpleIntKeyData), 46 },
-                { typeof(global::SharedData.SimpleStringKeyData), 47 },
-                { typeof(global::SharedData.SimpleStructIntKeyData), 48 },
-                { typeof(global::SharedData.SimpleStructStringKeyData), 49 },
-                { typeof(global::SharedData.SubUnionType1), 50 },
-                { typeof(global::SharedData.SubUnionType2), 51 },
-                { typeof(global::SharedData.UnVersionBlockTest), 52 },
-                { typeof(global::SharedData.Vector2), 53 },
-                { typeof(global::SharedData.Vector3Like), 54 },
-                { typeof(global::SharedData.VectorLike2), 55 },
-                { typeof(global::SharedData.Version0), 56 },
-                { typeof(global::SharedData.Version1), 57 },
-                { typeof(global::SharedData.Version2), 58 },
-                { typeof(global::SharedData.VersionBlockTest), 59 },
-                { typeof(global::SharedData.VersioningUnion), 60 },
-                { typeof(global::SharedData.WithIndexer), 61 },
-                { typeof(global::SimpleModel), 62 },
-                { typeof(global::StampMessageBody), 63 },
-                { typeof(global::TextMessageBody), 64 },
+                { typeof(global::SharedData.DefaultValueIntKeyClassWithExplicitConstructor), 29 },
+                { typeof(global::SharedData.DefaultValueIntKeyClassWithoutExplicitConstructor), 30 },
+                { typeof(global::SharedData.DefaultValueIntKeyStructWithExplicitConstructor), 31 },
+                { typeof(global::SharedData.DefaultValueStringKeyClassWithExplicitConstructor), 32 },
+                { typeof(global::SharedData.DefaultValueStringKeyClassWithoutExplicitConstructor), 33 },
+                { typeof(global::SharedData.DefaultValueStringKeyStructWithExplicitConstructor), 34 },
+                { typeof(global::SharedData.Empty1), 35 },
+                { typeof(global::SharedData.Empty2), 36 },
+                { typeof(global::SharedData.EmptyClass), 37 },
+                { typeof(global::SharedData.EmptyStruct), 38 },
+                { typeof(global::SharedData.FirstSimpleData), 39 },
+                { typeof(global::SharedData.FooClass), 40 },
+                { typeof(global::SharedData.HolderV0), 41 },
+                { typeof(global::SharedData.HolderV1), 42 },
+                { typeof(global::SharedData.HolderV2), 43 },
+                { typeof(global::SharedData.MyClass), 44 },
+                { typeof(global::SharedData.MySubUnion1), 45 },
+                { typeof(global::SharedData.MySubUnion2), 46 },
+                { typeof(global::SharedData.MySubUnion3), 47 },
+                { typeof(global::SharedData.MySubUnion4), 48 },
+                { typeof(global::SharedData.NestParent.NestContract), 49 },
+                { typeof(global::SharedData.NonEmpty1), 50 },
+                { typeof(global::SharedData.NonEmpty2), 51 },
+                { typeof(global::SharedData.SimpleIntKeyData), 52 },
+                { typeof(global::SharedData.SimpleStringKeyData), 53 },
+                { typeof(global::SharedData.SimpleStructIntKeyData), 54 },
+                { typeof(global::SharedData.SimpleStructStringKeyData), 55 },
+                { typeof(global::SharedData.SubUnionType1), 56 },
+                { typeof(global::SharedData.SubUnionType2), 57 },
+                { typeof(global::SharedData.UnVersionBlockTest), 58 },
+                { typeof(global::SharedData.Vector2), 59 },
+                { typeof(global::SharedData.Vector3Like), 60 },
+                { typeof(global::SharedData.VectorLike2), 61 },
+                { typeof(global::SharedData.Version0), 62 },
+                { typeof(global::SharedData.Version1), 63 },
+                { typeof(global::SharedData.Version2), 64 },
+                { typeof(global::SharedData.VersionBlockTest), 65 },
+                { typeof(global::SharedData.VersioningUnion), 66 },
+                { typeof(global::SharedData.WithIndexer), 67 },
+                { typeof(global::SimpleModel), 68 },
+                { typeof(global::StampMessageBody), 69 },
+                { typeof(global::TextMessageBody), 70 },
             };
         }
 
@@ -158,42 +164,48 @@ namespace MessagePack.Resolvers
                 case 26: return new MessagePack.Formatters.SharedData.Callback1_2Formatter();
                 case 27: return new MessagePack.Formatters.SharedData.Callback2Formatter();
                 case 28: return new MessagePack.Formatters.SharedData.Callback2_2Formatter();
-                case 29: return new MessagePack.Formatters.SharedData.Empty1Formatter();
-                case 30: return new MessagePack.Formatters.SharedData.Empty2Formatter();
-                case 31: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
-                case 32: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
-                case 33: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
-                case 34: return new MessagePack.Formatters.SharedData.FooClassFormatter();
-                case 35: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
-                case 36: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
-                case 37: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
-                case 38: return new MessagePack.Formatters.SharedData.MyClassFormatter();
-                case 39: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
-                case 40: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
-                case 41: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
-                case 42: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
-                case 43: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
-                case 44: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
-                case 45: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
-                case 46: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
-                case 47: return new MessagePack.Formatters.SharedData.SimpleStringKeyDataFormatter();
-                case 48: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
-                case 49: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
-                case 50: return new MessagePack.Formatters.SharedData.SubUnionType1Formatter();
-                case 51: return new MessagePack.Formatters.SharedData.SubUnionType2Formatter();
-                case 52: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
-                case 53: return new MessagePack.Formatters.SharedData.Vector2Formatter();
-                case 54: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
-                case 55: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
-                case 56: return new MessagePack.Formatters.SharedData.Version0Formatter();
-                case 57: return new MessagePack.Formatters.SharedData.Version1Formatter();
-                case 58: return new MessagePack.Formatters.SharedData.Version2Formatter();
-                case 59: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
-                case 60: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
-                case 61: return new MessagePack.Formatters.SharedData.WithIndexerFormatter();
-                case 62: return new MessagePack.Formatters.SimpleModelFormatter();
-                case 63: return new MessagePack.Formatters.StampMessageBodyFormatter();
-                case 64: return new MessagePack.Formatters.TextMessageBodyFormatter();
+                case 29: return new MessagePack.Formatters.SharedData.DefaultValueIntKeyClassWithExplicitConstructorFormatter();
+                case 30: return new MessagePack.Formatters.SharedData.DefaultValueIntKeyClassWithoutExplicitConstructorFormatter();
+                case 31: return new MessagePack.Formatters.SharedData.DefaultValueIntKeyStructWithExplicitConstructorFormatter();
+                case 32: return new MessagePack.Formatters.SharedData.DefaultValueStringKeyClassWithExplicitConstructorFormatter();
+                case 33: return new MessagePack.Formatters.SharedData.DefaultValueStringKeyClassWithoutExplicitConstructorFormatter();
+                case 34: return new MessagePack.Formatters.SharedData.DefaultValueStringKeyStructWithExplicitConstructorFormatter();
+                case 35: return new MessagePack.Formatters.SharedData.Empty1Formatter();
+                case 36: return new MessagePack.Formatters.SharedData.Empty2Formatter();
+                case 37: return new MessagePack.Formatters.SharedData.EmptyClassFormatter();
+                case 38: return new MessagePack.Formatters.SharedData.EmptyStructFormatter();
+                case 39: return new MessagePack.Formatters.SharedData.FirstSimpleDataFormatter();
+                case 40: return new MessagePack.Formatters.SharedData.FooClassFormatter();
+                case 41: return new MessagePack.Formatters.SharedData.HolderV0Formatter();
+                case 42: return new MessagePack.Formatters.SharedData.HolderV1Formatter();
+                case 43: return new MessagePack.Formatters.SharedData.HolderV2Formatter();
+                case 44: return new MessagePack.Formatters.SharedData.MyClassFormatter();
+                case 45: return new MessagePack.Formatters.SharedData.MySubUnion1Formatter();
+                case 46: return new MessagePack.Formatters.SharedData.MySubUnion2Formatter();
+                case 47: return new MessagePack.Formatters.SharedData.MySubUnion3Formatter();
+                case 48: return new MessagePack.Formatters.SharedData.MySubUnion4Formatter();
+                case 49: return new MessagePack.Formatters.SharedData.NestParent_NestContractFormatter();
+                case 50: return new MessagePack.Formatters.SharedData.NonEmpty1Formatter();
+                case 51: return new MessagePack.Formatters.SharedData.NonEmpty2Formatter();
+                case 52: return new MessagePack.Formatters.SharedData.SimpleIntKeyDataFormatter();
+                case 53: return new MessagePack.Formatters.SharedData.SimpleStringKeyDataFormatter();
+                case 54: return new MessagePack.Formatters.SharedData.SimpleStructIntKeyDataFormatter();
+                case 55: return new MessagePack.Formatters.SharedData.SimpleStructStringKeyDataFormatter();
+                case 56: return new MessagePack.Formatters.SharedData.SubUnionType1Formatter();
+                case 57: return new MessagePack.Formatters.SharedData.SubUnionType2Formatter();
+                case 58: return new MessagePack.Formatters.SharedData.UnVersionBlockTestFormatter();
+                case 59: return new MessagePack.Formatters.SharedData.Vector2Formatter();
+                case 60: return new MessagePack.Formatters.SharedData.Vector3LikeFormatter();
+                case 61: return new MessagePack.Formatters.SharedData.VectorLike2Formatter();
+                case 62: return new MessagePack.Formatters.SharedData.Version0Formatter();
+                case 63: return new MessagePack.Formatters.SharedData.Version1Formatter();
+                case 64: return new MessagePack.Formatters.SharedData.Version2Formatter();
+                case 65: return new MessagePack.Formatters.SharedData.VersionBlockTestFormatter();
+                case 66: return new MessagePack.Formatters.SharedData.VersioningUnionFormatter();
+                case 67: return new MessagePack.Formatters.SharedData.WithIndexerFormatter();
+                case 68: return new MessagePack.Formatters.SimpleModelFormatter();
+                case 69: return new MessagePack.Formatters.StampMessageBodyFormatter();
+                case 70: return new MessagePack.Formatters.TextMessageBodyFormatter();
                 default: return null;
             }
         }
@@ -1968,6 +1980,176 @@ namespace MessagePack.Formatters.SharedData
         }
     }
 
+    public sealed class DefaultValueIntKeyClassWithExplicitConstructorFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DefaultValueIntKeyClassWithExplicitConstructor>
+    {
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.DefaultValueIntKeyClassWithExplicitConstructor value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            writer.WriteArrayHeader(2);
+            writer.Write(value.Prop1);
+            writer.Write(value.Prop2);
+        }
+
+        public global::SharedData.DefaultValueIntKeyClassWithExplicitConstructor Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var length = reader.ReadArrayHeader();
+            var __Prop1__ = default(int);
+            var __Prop2__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __Prop1__ = reader.ReadInt32();
+                        break;
+                    case 1:
+                        __Prop2__ = reader.ReadInt32();
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::SharedData.DefaultValueIntKeyClassWithExplicitConstructor(__Prop1__);
+            if (length <= 0)
+            {
+                goto MEMBER_ASSIGNMENT_END;
+            }
+
+            ____result.Prop1 = __Prop1__;
+            if (length <= 1)
+            {
+                goto MEMBER_ASSIGNMENT_END;
+            }
+
+            ____result.Prop2 = __Prop2__;
+
+        MEMBER_ASSIGNMENT_END:
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class DefaultValueIntKeyClassWithoutExplicitConstructorFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DefaultValueIntKeyClassWithoutExplicitConstructor>
+    {
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.DefaultValueIntKeyClassWithoutExplicitConstructor value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            writer.WriteArrayHeader(2);
+            writer.Write(value.Prop1);
+            writer.Write(value.Prop2);
+        }
+
+        public global::SharedData.DefaultValueIntKeyClassWithoutExplicitConstructor Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var length = reader.ReadArrayHeader();
+            var ____result = new global::SharedData.DefaultValueIntKeyClassWithoutExplicitConstructor();
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        ____result.Prop1 = reader.ReadInt32();
+                        break;
+                    case 1:
+                        ____result.Prop2 = reader.ReadInt32();
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class DefaultValueIntKeyStructWithExplicitConstructorFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DefaultValueIntKeyStructWithExplicitConstructor>
+    {
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.DefaultValueIntKeyStructWithExplicitConstructor value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(2);
+            writer.Write(value.Prop1);
+            writer.Write(value.Prop2);
+        }
+
+        public global::SharedData.DefaultValueIntKeyStructWithExplicitConstructor Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            var length = reader.ReadArrayHeader();
+            var __Prop1__ = default(int);
+            var __Prop2__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __Prop1__ = reader.ReadInt32();
+                        break;
+                    case 1:
+                        __Prop2__ = reader.ReadInt32();
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::SharedData.DefaultValueIntKeyStructWithExplicitConstructor(__Prop1__);
+            if (length <= 0)
+            {
+                goto MEMBER_ASSIGNMENT_END;
+            }
+
+            ____result.Prop1 = __Prop1__;
+            if (length <= 1)
+            {
+                goto MEMBER_ASSIGNMENT_END;
+            }
+
+            ____result.Prop2 = __Prop2__;
+
+        MEMBER_ASSIGNMENT_END:
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
     public sealed class DynamicArgumentTupleFormatter<T1, T2, T3, T4, T5, T6, T7, T8, T9> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
     {
 
@@ -3674,6 +3856,218 @@ namespace MessagePack.Formatters.SharedData
             }
 
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class DefaultValueStringKeyClassWithExplicitConstructorFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DefaultValueStringKeyClassWithExplicitConstructor>
+    {
+        // Prop1
+        private static global::System.ReadOnlySpan<byte> GetSpan_Prop1() => new byte[1 + 5] { 165, 80, 114, 111, 112, 49 };
+        // Prop2
+        private static global::System.ReadOnlySpan<byte> GetSpan_Prop2() => new byte[1 + 5] { 165, 80, 114, 111, 112, 50 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.DefaultValueStringKeyClassWithExplicitConstructor value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_Prop1());
+            writer.Write(value.Prop1);
+            writer.WriteRaw(GetSpan_Prop2());
+            writer.Write(value.Prop2);
+        }
+
+        public global::SharedData.DefaultValueStringKeyClassWithExplicitConstructor Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var length = reader.ReadMapHeader();
+            var __Prop1__ = default(int);
+            var __Prop1__IsInitialized = false;
+            var __Prop2__ = default(int);
+            var __Prop2__IsInitialized = false;
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 5:
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                        {
+                            default: goto FAIL;
+                            case 212339749456UL:
+                                __Prop1__IsInitialized = true;
+                                __Prop1__ = reader.ReadInt32();
+                                continue;
+                            case 216634716752UL:
+                                __Prop2__IsInitialized = true;
+                                __Prop2__ = reader.ReadInt32();
+                                continue;
+                        }
+
+                }
+            }
+
+            var ____result = new global::SharedData.DefaultValueStringKeyClassWithExplicitConstructor(__Prop1__);
+            if (__Prop1__IsInitialized)
+            {
+                ____result.Prop1 = __Prop1__;
+            }
+
+            if (__Prop2__IsInitialized)
+            {
+                ____result.Prop2 = __Prop2__;
+            }
+
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class DefaultValueStringKeyClassWithoutExplicitConstructorFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DefaultValueStringKeyClassWithoutExplicitConstructor>
+    {
+        // Prop1
+        private static global::System.ReadOnlySpan<byte> GetSpan_Prop1() => new byte[1 + 5] { 165, 80, 114, 111, 112, 49 };
+        // Prop2
+        private static global::System.ReadOnlySpan<byte> GetSpan_Prop2() => new byte[1 + 5] { 165, 80, 114, 111, 112, 50 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.DefaultValueStringKeyClassWithoutExplicitConstructor value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_Prop1());
+            writer.Write(value.Prop1);
+            writer.WriteRaw(GetSpan_Prop2());
+            writer.Write(value.Prop2);
+        }
+
+        public global::SharedData.DefaultValueStringKeyClassWithoutExplicitConstructor Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var length = reader.ReadMapHeader();
+            var ____result = new global::SharedData.DefaultValueStringKeyClassWithoutExplicitConstructor();
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 5:
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                        {
+                            default: goto FAIL;
+                            case 212339749456UL:
+                                ____result.Prop1 = reader.ReadInt32();
+                                continue;
+                            case 216634716752UL:
+                                ____result.Prop2 = reader.ReadInt32();
+                                continue;
+                        }
+
+                }
+            }
+
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class DefaultValueStringKeyStructWithExplicitConstructorFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DefaultValueStringKeyStructWithExplicitConstructor>
+    {
+        // Prop1
+        private static global::System.ReadOnlySpan<byte> GetSpan_Prop1() => new byte[1 + 5] { 165, 80, 114, 111, 112, 49 };
+        // Prop2
+        private static global::System.ReadOnlySpan<byte> GetSpan_Prop2() => new byte[1 + 5] { 165, 80, 114, 111, 112, 50 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.DefaultValueStringKeyStructWithExplicitConstructor value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_Prop1());
+            writer.Write(value.Prop1);
+            writer.WriteRaw(GetSpan_Prop2());
+            writer.Write(value.Prop2);
+        }
+
+        public global::SharedData.DefaultValueStringKeyStructWithExplicitConstructor Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            var length = reader.ReadMapHeader();
+            var __Prop1__ = default(int);
+            var __Prop1__IsInitialized = false;
+            var __Prop2__ = default(int);
+            var __Prop2__IsInitialized = false;
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 5:
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                        {
+                            default: goto FAIL;
+                            case 212339749456UL:
+                                __Prop1__IsInitialized = true;
+                                __Prop1__ = reader.ReadInt32();
+                                continue;
+                            case 216634716752UL:
+                                __Prop2__IsInitialized = true;
+                                __Prop2__ = reader.ReadInt32();
+                                continue;
+                        }
+
+                }
+            }
+
+            var ____result = new global::SharedData.DefaultValueStringKeyStructWithExplicitConstructor(__Prop1__);
+            if (__Prop1__IsInitialized)
+            {
+                ____result.Prop1 = __Prop1__;
+            }
+
+            if (__Prop2__IsInitialized)
+            {
+                ____result.Prop2 = __Prop2__;
+            }
+
             reader.Depth--;
             return ____result;
         }

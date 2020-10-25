@@ -116,6 +116,84 @@ namespace SharedData
     }
 
     [MessagePackObject(true)]
+    public class DefaultValueStringKeyClassWithoutExplicitConstructor
+    {
+        public int Prop1 { get; set; } = 114;
+
+        public int Prop2 { get; set; } = 514;
+    }
+
+    [MessagePackObject(true)]
+    public class DefaultValueStringKeyClassWithExplicitConstructor
+    {
+        public int Prop1 { get; set; }
+
+        public int Prop2 { get; set; }
+
+        public DefaultValueStringKeyClassWithExplicitConstructor(int prop1)
+        {
+            Prop1 = prop1;
+            Prop2 = 191;
+        }
+    }
+
+    [MessagePackObject(true)]
+    public struct DefaultValueStringKeyStructWithExplicitConstructor
+    {
+        public int Prop1 { get; set; }
+
+        public int Prop2 { get; set; }
+
+        public DefaultValueStringKeyStructWithExplicitConstructor(int prop1)
+        {
+            Prop1 = prop1;
+            Prop2 = 9810;
+        }
+    }
+
+    [MessagePackObject]
+    public class DefaultValueIntKeyClassWithoutExplicitConstructor
+    {
+        [Key(0)]
+        public int Prop1 { get; set; } = 33;
+
+        [Key(1)]
+        public int Prop2 { get; set; } = -4;
+    }
+
+    [MessagePackObject]
+    public class DefaultValueIntKeyClassWithExplicitConstructor
+    {
+        [Key(0)]
+        public int Prop1 { get; set; }
+
+        [Key(1)]
+        public int Prop2 { get; set; }
+
+        public DefaultValueIntKeyClassWithExplicitConstructor(int prop1)
+        {
+            Prop1 = prop1;
+            Prop2 = -931;
+        }
+    }
+
+    [MessagePackObject]
+    public struct DefaultValueIntKeyStructWithExplicitConstructor
+    {
+        [Key(0)]
+        public int Prop1 { get; set; }
+
+        [Key(1)]
+        public int Prop2 { get; set; }
+
+        public DefaultValueIntKeyStructWithExplicitConstructor(int prop1)
+        {
+            Prop1 = prop1;
+            Prop2 = 810;
+        }
+    }
+
+    [MessagePackObject(true)]
     public class SimpleStringKeyData
     {
         public int Prop1 { get; set; }
