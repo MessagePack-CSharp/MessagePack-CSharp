@@ -3710,7 +3710,6 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadMapHeader();
             var __X__ = default(int);
-            var __X__IsInitialized = false;
 
             for (int i = 0; i < length; i++)
             {
@@ -3724,7 +3723,6 @@ namespace MessagePack.Formatters.SharedData
                     case 1:
                         if (stringKey[0] != 88) { goto FAIL; }
 
-                        __X__IsInitialized = true;
                         __X__ = reader.ReadInt32();
                         continue;
 
@@ -3761,7 +3759,6 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadMapHeader();
             var __X__ = default(int);
-            var __X__IsInitialized = false;
 
             for (int i = 0; i < length; i++)
             {
@@ -3775,7 +3772,6 @@ namespace MessagePack.Formatters.SharedData
                     case 1:
                         if (stringKey[0] != 88) { goto FAIL; }
 
-                        __X__IsInitialized = true;
                         __X__ = reader.ReadInt32();
                         continue;
 
@@ -3821,9 +3817,8 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadMapHeader();
             var __Prop1__ = default(int);
-            var __Prop1__IsInitialized = false;
-            var __Prop2__ = default(int);
             var __Prop2__IsInitialized = false;
+            var __Prop2__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
@@ -3839,7 +3834,6 @@ namespace MessagePack.Formatters.SharedData
                         {
                             default: goto FAIL;
                             case 212339749456UL:
-                                __Prop1__IsInitialized = true;
                                 __Prop1__ = reader.ReadInt32();
                                 continue;
                             case 216634716752UL:
@@ -3950,9 +3944,8 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadMapHeader();
             var __Prop1__ = default(int);
-            var __Prop1__IsInitialized = false;
-            var __Prop2__ = default(int);
             var __Prop2__IsInitialized = false;
+            var __Prop2__ = default(int);
 
             for (int i = 0; i < length; i++)
             {
@@ -3968,7 +3961,6 @@ namespace MessagePack.Formatters.SharedData
                         {
                             default: goto FAIL;
                             case 212339749456UL:
-                                __Prop1__IsInitialized = true;
                                 __Prop1__ = reader.ReadInt32();
                                 continue;
                             case 216634716752UL:

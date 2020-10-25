@@ -12,10 +12,11 @@ namespace MessagePackCompiler.Generator
 {
     internal static class StringKeyFormatterDeserializeHelper
     {
-        public static string Classify(MemberSerializationInfo[] memberArray, string indent, bool canOverwrite)
+        public static string Classify(ObjectSerializationInfo objectSerializationInfo, string indent, bool canOverwrite)
         {
+            var memberArray = objectSerializationInfo.Members;
             var buffer = new StringBuilder();
-            foreach (var memberInfoTuples in memberArray.Select(member => new MemberInfoTuple(member)).GroupBy(member => member.Binary.Length))
+            foreach (var memberInfoTuples in memberArray.Select(member => new MemberInfoTuple(member, IsConstructorParameter(objectSerializationInfo, member))).GroupBy(member => member.Binary.Length))
             {
                 var binaryLength = memberInfoTuples.Key;
                 var keyLength = binaryLength >> 3;
@@ -26,6 +27,19 @@ namespace MessagePackCompiler.Generator
             }
 
             return buffer.ToString();
+        }
+
+        private static bool IsConstructorParameter(ObjectSerializationInfo objectSerializationInfo, MemberSerializationInfo member)
+        {
+            foreach (var parameter in objectSerializationInfo.ConstructorParameters)
+            {
+                if (parameter.Equals(member))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void Assign(StringBuilder buffer, in MemberInfoTuple member, bool canOverwrite, string indent, string tab, int tabCount)
@@ -39,10 +53,13 @@ namespace MessagePackCompiler.Generator
             }
             else
             {
-                buffer.Append("__").Append(member.Info.Name).Append("__IsInitialized = true;\r\n").Append(indent);
-                for (var i = 0; i < tabCount; i++)
+                if (!member.IsConstructorParameter)
                 {
-                    buffer.Append(tab);
+                    buffer.Append("__").Append(member.Info.Name).Append("__IsInitialized = true;\r\n").Append(indent);
+                    for (var i = 0; i < tabCount; i++)
+                    {
+                        buffer.Append(tab);
+                    }
                 }
 
                 buffer.Append("__").Append(member.Info.Name).Append("__ = ");
@@ -184,12 +201,14 @@ namespace MessagePackCompiler.Generator
     internal readonly struct MemberInfoTuple : IComparable<MemberInfoTuple>
     {
         public readonly MemberSerializationInfo Info;
+        public readonly bool IsConstructorParameter;
         public readonly byte[] Binary;
         public readonly ulong[] Key;
 
-        public MemberInfoTuple(MemberSerializationInfo info)
+        public MemberInfoTuple(MemberSerializationInfo info, bool isConstructorParameter)
         {
             Info = info;
+            IsConstructorParameter = isConstructorParameter;
             Binary = EmbedStringHelper.Utf8.GetBytes(info.StringKey);
             ReadOnlySpan<byte> span = Binary;
             var keyLength = Binary.Length >> 3;

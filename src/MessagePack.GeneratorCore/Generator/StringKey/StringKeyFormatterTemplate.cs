@@ -133,13 +133,16 @@ foreach (var objInfo in ObjectSerializationInfos) {
             this.Write(";\r\n");
  } else {
             foreach (var member in objInfo.Members.Where(x => x.IsWritable)) { 
+ if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { 
+            this.Write("            var __");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write("__IsInitialized = false;\r\n");
+ } 
             this.Write("            var __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__ = default(");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Type));
-            this.Write(");\r\n            var __");
-            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__IsInitialized = false;\r\n");
+            this.Write(");\r\n");
  } 
  } 
             this.Write(@"
@@ -153,7 +156,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
                       reader.Skip();
                       continue;
 ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ", canOverwrite)));
+            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo, "                    ", canOverwrite)));
             this.Write("\r\n                }\r\n            }\r\n\r\n");
  if (!canOverwrite) { 
             this.Write("            var ____result = new ");

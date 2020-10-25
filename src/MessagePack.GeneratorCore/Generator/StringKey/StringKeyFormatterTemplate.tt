@@ -101,8 +101,10 @@ foreach (var objInfo in ObjectSerializationInfos) {
             var ____result = new <#= objInfo.GetConstructorString() #>;
 <# } else {
             foreach (var member in objInfo.Members.Where(x => x.IsWritable)) { #>
-            var __<#= member.Name #>__ = default(<#= member.Type #>);
+<# if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { #>
             var __<#= member.Name #>__IsInitialized = false;
+<# } #>
+            var __<#= member.Name #>__ = default(<#= member.Type #>);
 <# } #>
 <# } #>
 
@@ -115,7 +117,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
                     FAIL:
                       reader.Skip();
                       continue;
-<#= StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ", canOverwrite) #>
+<#= StringKeyFormatterDeserializeHelper.Classify(objInfo, "                    ", canOverwrite) #>
                 }
             }
 
