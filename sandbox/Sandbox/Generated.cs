@@ -2432,6 +2432,112 @@ namespace MessagePack.Formatters.SharedData
         }
     }
 
+    public sealed class GenericConstrainedClassIntKeyFormatter<T1,T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericConstrainedClassIntKey<T1, T2>>
+        where T1 : class
+        where T2 : class, global::System.Collections.Generic.IEqualityComparer<T1>
+    {
+
+        public void Serialize(ref MessagePackWriter writer, global::SharedData.GenericConstrainedClassIntKey<T1, T2> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(2);
+            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
+            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Comparer, options);
+        }
+
+        public global::SharedData.GenericConstrainedClassIntKey<T1, T2> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __MyProperty0__ = default(T1);
+            var __Comparer__ = default(T2);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __MyProperty0__ = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __Comparer__ = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::SharedData.GenericConstrainedClassIntKey<T1, T2>();
+            ____result.MyProperty0 = __MyProperty0__;
+            ____result.Comparer = __Comparer__;
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class GenericConstrainedStructIntKeyFormatter<T1,T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericConstrainedStructIntKey<T1, T2>>
+        where T1 : unmanaged
+        where T2 : unmanaged, global::System.Collections.Generic.IEqualityComparer<T1>
+    {
+
+        public void Serialize(ref MessagePackWriter writer, global::SharedData.GenericConstrainedStructIntKey<T1, T2> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(2);
+            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
+            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Comparer, options);
+        }
+
+        public global::SharedData.GenericConstrainedStructIntKey<T1, T2> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __MyProperty0__ = default(T1);
+            var __Comparer__ = default(T2);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __MyProperty0__ = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __Comparer__ = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::SharedData.GenericConstrainedStructIntKey<T1, T2>();
+            ____result.MyProperty0 = __MyProperty0__;
+            ____result.Comparer = __Comparer__;
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
     public sealed class GenericStructFormatter<T1,T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericStruct<T1, T2>>
     {
 
@@ -3926,6 +4032,144 @@ namespace MessagePack.Formatters.SharedData
 
             reader.Skip();
             var ____result = new global::SharedData.Empty2();
+            return ____result;
+        }
+    }
+
+    public sealed class GenericConstrainedClassStringKeyFormatter<T1, T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericConstrainedClassStringKey<T1, T2>>
+        where T1 : class
+        where T2 : class, global::System.Collections.Generic.IEqualityComparer<T1>
+    {
+        // MyProperty0
+        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty0() => new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 48 };
+        // Comparer
+        private static global::System.ReadOnlySpan<byte> GetSpan_Comparer() => new byte[1 + 8] { 168, 67, 111, 109, 112, 97, 114, 101, 114 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.GenericConstrainedClassStringKey<T1, T2> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_MyProperty0());
+            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
+            writer.WriteRaw(GetSpan_Comparer());
+            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Comparer, options);
+        }
+
+        public global::SharedData.GenericConstrainedClassStringKey<T1, T2> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __MyProperty0__ = default(T1);
+            var __Comparer__ = default(T2);
+
+            for (int i = 0; i < length; i++)
+            {
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 11:
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_MyProperty0().Slice(1))) { goto FAIL; }
+
+                        __MyProperty0__ = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        continue;
+                    case 8:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 8243120455795175235UL) { goto FAIL; }
+
+                        __Comparer__ = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::SharedData.GenericConstrainedClassStringKey<T1, T2>()
+            {
+                MyProperty0 = __MyProperty0__,
+                Comparer = __Comparer__,
+            };
+
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class GenericConstrainedStructStringKeyFormatter<T1, T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericConstrainedStructStringKey<T1, T2>>
+        where T1 : unmanaged
+        where T2 : unmanaged, global::System.Collections.Generic.IEqualityComparer<T1>
+    {
+        // MyProperty0
+        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty0() => new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 48 };
+        // Comparer
+        private static global::System.ReadOnlySpan<byte> GetSpan_Comparer() => new byte[1 + 8] { 168, 67, 111, 109, 112, 97, 114, 101, 114 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.GenericConstrainedStructStringKey<T1, T2> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_MyProperty0());
+            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
+            writer.WriteRaw(GetSpan_Comparer());
+            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Comparer, options);
+        }
+
+        public global::SharedData.GenericConstrainedStructStringKey<T1, T2> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __MyProperty0__ = default(T1);
+            var __Comparer__ = default(T2);
+
+            for (int i = 0; i < length; i++)
+            {
+                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 11:
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_MyProperty0().Slice(1))) { goto FAIL; }
+
+                        __MyProperty0__ = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        continue;
+                    case 8:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 8243120455795175235UL) { goto FAIL; }
+
+                        __Comparer__ = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::SharedData.GenericConstrainedStructStringKey<T1, T2>()
+            {
+                MyProperty0 = __MyProperty0__,
+                Comparer = __Comparer__,
+            };
+
+            reader.Depth--;
             return ____result;
         }
     }
