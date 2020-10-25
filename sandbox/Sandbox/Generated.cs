@@ -937,7 +937,7 @@ namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1002,7 +1002,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(7);
             formatterResolver.GetFormatterWithVerify<int[]>().Serialize(ref writer, value.MyProperty0, options);
             formatterResolver.GetFormatterWithVerify<int[,]>().Serialize(ref writer, value.MyProperty1, options);
@@ -1020,8 +1020,8 @@ namespace MessagePack.Formatters
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty0__ = default(int[]);
             var __MyProperty1__ = default(int[,]);
@@ -1031,7 +1031,7 @@ namespace MessagePack.Formatters
             var __MyProperty5__ = default(global::GlobalMyEnum[]);
             var __MyProperty6__ = default(global::QuestMessageBody[]);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1101,7 +1101,7 @@ namespace MessagePack.Formatters
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1132,7 +1132,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(4);
             writer.Write(value.UserId);
             writer.Write(value.RoomId);
@@ -1147,15 +1147,15 @@ namespace MessagePack.Formatters
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __UserId__ = default(int);
             var __RoomId__ = default(int);
             var __PostTime__ = default(global::System.DateTime);
             var __Body__ = default(global::IMessageBody);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1198,7 +1198,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             writer.Write(value.QuestId);
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Text, options);
@@ -1211,13 +1211,13 @@ namespace MessagePack.Formatters
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __QuestId__ = default(int);
             var __Text__ = default(string);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1267,7 +1267,7 @@ namespace MessagePack.Formatters
             var length = reader.ReadArrayHeader();
             var __StampId__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1298,7 +1298,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(1);
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Text, options);
         }
@@ -1310,12 +1310,12 @@ namespace MessagePack.Formatters
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Text__ = default(string);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1850,7 +1850,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty14__ = default(int);
             var __MyProperty15__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -1941,7 +1941,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(1);
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.OPQ, options);
         }
@@ -1953,12 +1953,12 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __OPQ__ = default(string);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2005,7 +2005,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __X__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2053,7 +2053,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __X__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2074,12 +2074,12 @@ namespace MessagePack.Formatters.SharedData
         }
     }
 
-    public sealed class DynamicArgumentTupleFormatter<T1,T2,T3,T4,T5,T6,T7,T8,T9> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
+    public sealed class DynamicArgumentTupleFormatter<T1, T2, T3, T4, T5, T6, T7, T8, T9> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
     {
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(9);
             formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
             formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
@@ -2099,8 +2099,8 @@ namespace MessagePack.Formatters.SharedData
                 throw new global::System.InvalidOperationException("typecode is null, struct not supported");
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Item1__ = default(T1);
             var __Item2__ = default(T2);
@@ -2112,7 +2112,7 @@ namespace MessagePack.Formatters.SharedData
             var __Item8__ = default(T8);
             var __Item9__ = default(T9);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2179,7 +2179,7 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadArrayHeader();
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2219,7 +2219,7 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadArrayHeader();
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2253,7 +2253,7 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadArrayHeader();
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2280,7 +2280,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(3);
             writer.Write(value.Prop1);
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Prop2, options);
@@ -2294,14 +2294,14 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Prop1__ = default(int);
             var __Prop2__ = default(string);
             var __Prop3__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2355,7 +2355,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __XYZ__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2375,7 +2375,7 @@ namespace MessagePack.Formatters.SharedData
         }
     }
 
-    public sealed class GenericClassFormatter<T1,T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericClass<T1, T2>>
+    public sealed class GenericClassFormatter<T1, T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericClass<T1, T2>>
     {
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.GenericClass<T1, T2> value, global::MessagePack.MessagePackSerializerOptions options)
@@ -2386,7 +2386,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
             formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.MyProperty1, options);
@@ -2399,13 +2399,13 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty0__ = default(T1);
             var __MyProperty1__ = default(T2);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2429,12 +2429,12 @@ namespace MessagePack.Formatters.SharedData
         }
     }
 
-    public sealed class GenericStructFormatter<T1,T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericStruct<T1, T2>>
+    public sealed class GenericStructFormatter<T1, T2> : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.GenericStruct<T1, T2>>
     {
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.GenericStruct<T1, T2> value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
             formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.MyProperty1, options);
@@ -2447,13 +2447,13 @@ namespace MessagePack.Formatters.SharedData
                 throw new global::System.InvalidOperationException("typecode is null, struct not supported");
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty0__ = default(T1);
             var __MyProperty1__ = default(T2);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2488,7 +2488,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             formatterResolver.GetFormatterWithVerify<global::SharedData.Version0>().Serialize(ref writer, value.MyProperty1, options);
             writer.Write(value.After);
@@ -2501,13 +2501,13 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version0);
             var __After__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2542,7 +2542,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             formatterResolver.GetFormatterWithVerify<global::SharedData.Version1>().Serialize(ref writer, value.MyProperty1, options);
             writer.Write(value.After);
@@ -2555,13 +2555,13 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version1);
             var __After__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2596,7 +2596,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             formatterResolver.GetFormatterWithVerify<global::SharedData.Version2>().Serialize(ref writer, value.MyProperty1, options);
             writer.Write(value.After);
@@ -2609,13 +2609,13 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version2);
             var __After__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2669,7 +2669,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty2__ = default(int);
             var __MyProperty3__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2726,7 +2726,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __One__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2771,7 +2771,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __Two__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2819,7 +2819,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __Three__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2866,7 +2866,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __Four__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2912,7 +2912,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2958,7 +2958,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -2989,7 +2989,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(7);
             writer.Write(value.Prop1);
             formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref writer, value.Prop2, options);
@@ -3007,8 +3007,8 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Prop1__ = default(int);
             var __Prop2__ = default(global::SharedData.ByteEnum);
@@ -3018,7 +3018,7 @@ namespace MessagePack.Formatters.SharedData
             var __Prop6__ = default(global::SharedData.SimpleStructStringKeyData);
             var __BytesSpecial__ = default(byte[]);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3086,7 +3086,7 @@ namespace MessagePack.Formatters.SharedData
             var __Y__ = default(int);
             var __BytesSpecial__ = default(byte[]);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3142,7 +3142,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty1__ = default(int);
             var __MyProperty__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3194,7 +3194,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty2__ = default(int);
             var __MyProperty__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3247,7 +3247,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty__ = default(int);
             var __MyProperty2__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3293,7 +3293,7 @@ namespace MessagePack.Formatters.SharedData
             var __X__ = default(float);
             var __Y__ = default(float);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3339,7 +3339,7 @@ namespace MessagePack.Formatters.SharedData
             var __y__ = default(float);
             var __z__ = default(float);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3389,7 +3389,7 @@ namespace MessagePack.Formatters.SharedData
             var __x__ = default(float);
             var __y__ = default(float);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3442,7 +3442,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3495,7 +3495,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty2__ = default(int);
             var __MyProperty3__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3559,7 +3559,7 @@ namespace MessagePack.Formatters.SharedData
             var __MyProperty3__ = default(int);
             var __MyProperty5__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3602,7 +3602,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(3);
             writer.Write(value.MyProperty);
             formatterResolver.GetFormatterWithVerify<global::SharedData.MyClass>().Serialize(ref writer, value.UnknownBlock, options);
@@ -3616,14 +3616,14 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
             var __UnknownBlock__ = default(global::SharedData.MyClass);
             var __MyProperty2__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3684,7 +3684,7 @@ namespace MessagePack.Formatters.SharedData
             var length = reader.ReadArrayHeader();
             var __FV__ = default(int);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
@@ -3715,7 +3715,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             writer.Write(value.Data1);
             formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Data2, options);
@@ -3728,13 +3728,13 @@ namespace MessagePack.Formatters.SharedData
                 return null;
             }
 
-            var formatterResolver = options.Resolver;
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Data1__ = default(int);
             var __Data2__ = default(string);
 
-            for (var i = 0; i < length; i++)
+            for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
