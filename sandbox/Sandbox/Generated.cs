@@ -1911,14 +1911,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.Callback1(__X__);
-            if (length <= 0)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.X = __X__;
-
-        MEMBER_ASSIGNMENT_END:
             ____result.OnAfterDeserialize();
             reader.Depth--;
             return ____result;
@@ -1966,14 +1958,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.Callback1_2(__X__);
-            if (length <= 0)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.X = __X__;
-
-        MEMBER_ASSIGNMENT_END:
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
             reader.Depth--;
             return ____result;
@@ -2025,12 +2009,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.DefaultValueIntKeyClassWithExplicitConstructor(__Prop1__);
-            if (length <= 0)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.Prop1 = __Prop1__;
             if (length <= 1)
             {
                 goto MEMBER_ASSIGNMENT_END;
@@ -2131,12 +2109,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.DefaultValueIntKeyStructWithExplicitConstructor(__Prop1__);
-            if (length <= 0)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.Prop1 = __Prop1__;
             if (length <= 1)
             {
                 goto MEMBER_ASSIGNMENT_END;
@@ -3315,26 +3287,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.Vector3Like(__x__, __y__, __z__);
-            if (length <= 0)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.x = __x__;
-            if (length <= 1)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.y = __y__;
-            if (length <= 2)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.z = __z__;
-
-        MEMBER_ASSIGNMENT_END:
             reader.Depth--;
             return ____result;
         }
@@ -3379,20 +3331,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.VectorLike2(__x__, __y__);
-            if (length <= 0)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.x = __x__;
-            if (length <= 1)
-            {
-                goto MEMBER_ASSIGNMENT_END;
-            }
-
-            ____result.y = __y__;
-
-        MEMBER_ASSIGNMENT_END:
             reader.Depth--;
             return ____result;
         }
@@ -3794,11 +3732,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.Callback2(__X__);
-            if (__X__IsInitialized)
-            {
-                ____result.X = __X__;
-            }
-
             ____result.OnAfterDeserialize();
             reader.Depth--;
             return ____result;
@@ -3850,11 +3783,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.Callback2_2(__X__);
-            if (__X__IsInitialized)
-            {
-                ____result.X = __X__;
-            }
-
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
             reader.Depth--;
             return ____result;
@@ -3924,11 +3852,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.DefaultValueStringKeyClassWithExplicitConstructor(__Prop1__);
-            if (__Prop1__IsInitialized)
-            {
-                ____result.Prop1 = __Prop1__;
-            }
-
             if (__Prop2__IsInitialized)
             {
                 ____result.Prop2 = __Prop2__;
@@ -4058,11 +3981,6 @@ namespace MessagePack.Formatters.SharedData
             }
 
             var ____result = new global::SharedData.DefaultValueStringKeyStructWithExplicitConstructor(__Prop1__);
-            if (__Prop1__IsInitialized)
-            {
-                ____result.Prop1 = __Prop1__;
-            }
-
             if (__Prop2__IsInitialized)
             {
                 ____result.Prop2 = __Prop2__;

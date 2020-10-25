@@ -159,7 +159,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
             this.Write("            var ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             this.Write(";\r\n");
- foreach (var member in objInfo.Members.Where(x => x.IsWritable)) { 
+ foreach (var member in objInfo.Members.Where(x => x.IsWritable && !objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { 
             this.Write("            if (__");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__IsInitialized)\r\n            {\r\n                ____result.");

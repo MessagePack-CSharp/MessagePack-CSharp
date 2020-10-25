@@ -178,9 +178,11 @@ namespace ");
             this.Write("            var ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             this.Write(";\r\n");
- for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+ bool memberAssignExists = false;
+  for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
   var member = objInfo.GetMember(memberIndex);
-  if (member == null || !member.IsWritable) { continue; } 
+  if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  memberAssignExists = true;
             this.Write("            if (length <= ");
             this.Write(this.ToStringHelper.ToStringWithCulture(memberIndex));
             this.Write(")\r\n            {\r\n                goto MEMBER_ASSIGNMENT_END;\r\n            }\r\n\r\n " +
@@ -189,10 +191,10 @@ namespace ");
             this.Write(" = __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__;\r\n");
- if (memberIndex == objInfo.MaxKey) { 
+ } 
+ if (memberAssignExists) { 
             this.Write("\r\n        MEMBER_ASSIGNMENT_END:\r\n");
  }
-  }
  }
 
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {

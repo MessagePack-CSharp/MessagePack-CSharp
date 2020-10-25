@@ -125,20 +125,22 @@ namespace <#= Namespace #>
 
 <# if (!canOverwrite) { #>
             var ____result = new <#= objInfo.GetConstructorString()  #>;
-<# for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+<# bool memberAssignExists = false;
+  for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
   var member = objInfo.GetMember(memberIndex);
-  if (member == null || !member.IsWritable) { continue; } #>
+  if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  memberAssignExists = true;#>
             if (length <= <#= memberIndex #>)
             {
                 goto MEMBER_ASSIGNMENT_END;
             }
 
             ____result.<#= member.Name #> = __<#= member.Name #>__;
-<# if (memberIndex == objInfo.MaxKey) { #>
+<# } #>
+<# if (memberAssignExists) { #>
 
         MEMBER_ASSIGNMENT_END:
 <# }
-  }
  }
 
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
