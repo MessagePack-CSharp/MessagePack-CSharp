@@ -118,14 +118,19 @@ namespace SharedData
     [MessagePackObject(true)]
     public class DefaultValueStringKeyClassWithoutExplicitConstructor
     {
-        public int Prop1 { get; set; } = 114;
+        public const int Prop1Constant = 11;
+        public const int Prop2Constant = 45;
 
-        public int Prop2 { get; set; } = 514;
+        public int Prop1 { get; set; } = Prop1Constant;
+
+        public int Prop2 { get; set; } = Prop2Constant;
     }
 
     [MessagePackObject(true)]
     public class DefaultValueStringKeyClassWithExplicitConstructor
     {
+        public const int Prop2Constant = 1419;
+
         public int Prop1 { get; set; }
 
         public int Prop2 { get; set; }
@@ -133,13 +138,15 @@ namespace SharedData
         public DefaultValueStringKeyClassWithExplicitConstructor(int prop1)
         {
             Prop1 = prop1;
-            Prop2 = 191;
+            Prop2 = Prop2Constant;
         }
     }
 
     [MessagePackObject(true)]
     public struct DefaultValueStringKeyStructWithExplicitConstructor
     {
+        public const int Prop2Constant = 198;
+
         public int Prop1 { get; set; }
 
         public int Prop2 { get; set; }
@@ -147,23 +154,28 @@ namespace SharedData
         public DefaultValueStringKeyStructWithExplicitConstructor(int prop1)
         {
             Prop1 = prop1;
-            Prop2 = 9810;
+            Prop2 = Prop2Constant;
         }
     }
 
     [MessagePackObject]
     public class DefaultValueIntKeyClassWithoutExplicitConstructor
     {
+        public const int Prop1Constant = 33;
+        public const int Prop2Constant = -4;
+
         [Key(0)]
-        public int Prop1 { get; set; } = 33;
+        public int Prop1 { get; set; } = Prop1Constant;
 
         [Key(1)]
-        public int Prop2 { get; set; } = -4;
+        public int Prop2 { get; set; } = Prop2Constant;
     }
 
     [MessagePackObject]
     public class DefaultValueIntKeyClassWithExplicitConstructor
     {
+        public const int Prop2Constant = -109;
+
         [Key(0)]
         public int Prop1 { get; set; }
 
@@ -173,13 +185,15 @@ namespace SharedData
         public DefaultValueIntKeyClassWithExplicitConstructor(int prop1)
         {
             Prop1 = prop1;
-            Prop2 = -931;
+            Prop2 = Prop2Constant;
         }
     }
 
     [MessagePackObject]
     public struct DefaultValueIntKeyStructWithExplicitConstructor
     {
+        public const int Prop2Constant = 31;
+
         [Key(0)]
         public int Prop1 { get; set; }
 
@@ -189,7 +203,7 @@ namespace SharedData
         public DefaultValueIntKeyStructWithExplicitConstructor(int prop1)
         {
             Prop1 = prop1;
-            Prop2 = 810;
+            Prop2 = Prop2Constant;
         }
     }
 
