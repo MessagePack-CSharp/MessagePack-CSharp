@@ -56,14 +56,22 @@ foreach (var objInfo in ObjectSerializationInfos)
         list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
     }
 
-    string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(",", (object[])objInfo.GenericTypeParameters)}>" : "Formatter");
+    string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(", ", objInfo.GenericTypeParameters.Select(x => x.Name))}>" : "Formatter");
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);
 
             this.Write("\r\n    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
-            this.Write(">\r\n    {\r\n");
+            this.Write(">\r\n");
+ foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) {
+            this.Write("        where ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Name));
+            this.Write(" : ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Constraints));
+            this.Write("\r\n");
+ }
+            this.Write("    {\r\n");
 
     foreach (var memberAndBinary in list)
     {
