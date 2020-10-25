@@ -51,6 +51,7 @@ namespace <#= Namespace #>
   if (isFormatterResolverNecessary) { #>
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
 <# }
+
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
   if (objInfo.NeedsCastOnBefore) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
@@ -82,7 +83,7 @@ namespace <#= Namespace #>
 
             options.Security.DepthStep(ref reader);
 <# if (isFormatterResolverNecessary) { #>
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
 <# } #>
             var length = reader.ReadArrayHeader();
 <# foreach (var member in objInfo.Members) { #>

@@ -85,6 +85,7 @@ namespace ");
             this.Write("            global::MessagePack.IFormatterResolver formatterResolver = options.Re" +
                     "solver;\r\n");
  }
+
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
   if (objInfo.NeedsCastOnBefore) { 
             this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value" +
@@ -119,7 +120,8 @@ namespace ");
  } 
             this.Write("            }\r\n\r\n            options.Security.DepthStep(ref reader);\r\n");
  if (isFormatterResolverNecessary) { 
-            this.Write("            var formatterResolver = options.Resolver;\r\n");
+            this.Write("            global::MessagePack.IFormatterResolver formatterResolver = options.Re" +
+                    "solver;\r\n");
  } 
             this.Write("            var length = reader.ReadArrayHeader();\r\n");
  foreach (var member in objInfo.Members) { 

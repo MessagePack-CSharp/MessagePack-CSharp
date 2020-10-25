@@ -1021,7 +1021,7 @@ namespace MessagePack.Formatters
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty0__ = default(int[]);
             var __MyProperty1__ = default(int[,]);
@@ -1148,7 +1148,7 @@ namespace MessagePack.Formatters
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __UserId__ = default(int);
             var __RoomId__ = default(int);
@@ -1212,7 +1212,7 @@ namespace MessagePack.Formatters
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __QuestId__ = default(int);
             var __Text__ = default(string);
@@ -1311,7 +1311,7 @@ namespace MessagePack.Formatters
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Text__ = default(string);
 
@@ -1954,7 +1954,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __OPQ__ = default(string);
 
@@ -2100,7 +2100,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Item1__ = default(T1);
             var __Item2__ = default(T2);
@@ -2295,7 +2295,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Prop1__ = default(int);
             var __Prop2__ = default(string);
@@ -2400,7 +2400,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty0__ = default(T1);
             var __MyProperty1__ = default(T2);
@@ -2448,7 +2448,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty0__ = default(T1);
             var __MyProperty1__ = default(T2);
@@ -2502,7 +2502,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version0);
             var __After__ = default(int);
@@ -2556,7 +2556,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version1);
             var __After__ = default(int);
@@ -2610,7 +2610,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty1__ = default(global::SharedData.Version2);
             var __After__ = default(int);
@@ -3008,7 +3008,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Prop1__ = default(int);
             var __Prop2__ = default(global::SharedData.ByteEnum);
@@ -3617,7 +3617,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __MyProperty__ = default(int);
             var __UnknownBlock__ = default(global::SharedData.MyClass);
@@ -3729,7 +3729,7 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Data1__ = default(int);
             var __Data2__ = default(string);
