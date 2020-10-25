@@ -81,8 +81,7 @@ namespace ");
                     "\r\n                return;\r\n            }\r\n\r\n");
  }
 
-  if (isFormatterResolverNecessary) {
-
+  if (isFormatterResolverNecessary) { 
             this.Write("            global::MessagePack.IFormatterResolver formatterResolver = options.Re" +
                     "solver;\r\n");
  }

@@ -48,8 +48,7 @@ namespace <#= Namespace #>
 
 <# }
 
-  if (isFormatterResolverNecessary) {
-#>
+  if (isFormatterResolverNecessary) { #>
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
 <# }
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
