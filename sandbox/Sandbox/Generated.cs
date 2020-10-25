@@ -1332,10 +1332,8 @@ namespace MessagePack.Formatters
 
 namespace MessagePack.Formatters
 {
-    using System;
-    using System.Buffers;
-    using System.Runtime.InteropServices;
-    using MessagePack;
+    using global::System.Buffers;
+    using global::MessagePack;
 
     public sealed class ComplexModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ComplexModel>
     {
@@ -1360,7 +1358,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(6);
             writer.WriteRaw(GetSpan_AdditionalProperty());
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Serialize(ref writer, value.AdditionalProperty, options);
@@ -1384,18 +1382,13 @@ namespace MessagePack.Formatters
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __AdditionalProperty__ = default(global::System.Collections.Generic.IDictionary<string, string>);
-            var __CreatedOn__ = default(global::System.DateTimeOffset);
-            var __Id__ = default(global::System.Guid);
-            var __Name__ = default(string);
-            var __UpdatedOn__ = default(global::System.DateTimeOffset);
-            var __SimpleModels__ = default(global::System.Collections.Generic.IList<global::SimpleModel>);
+            var ____result = new global::ComplexModel();
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -1405,7 +1398,7 @@ namespace MessagePack.Formatters
                     case 18:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_AdditionalProperty().Slice(1))) { goto FAIL; }
 
-                        __AdditionalProperty__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Deserialize(ref reader, options);
+                        formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Deserialize(ref reader, options);
                         continue;
                     case 9:
                         switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
@@ -1414,42 +1407,34 @@ namespace MessagePack.Formatters
                             case 5720808977192022595UL:
                                 if (stringKey[0] != 110) { goto FAIL; }
 
-                                __CreatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(ref reader, options);
+                                ____result.CreatedOn = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(ref reader, options);
                                 continue;
 
                             case 5720808977191956565UL:
                                 if (stringKey[0] != 110) { goto FAIL; }
 
-                                __UpdatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(ref reader, options);
+                                ____result.UpdatedOn = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(ref reader, options);
                                 continue;
 
                         }
                     case 2:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 25673UL) { goto FAIL; }
 
-                        __Id__ = formatterResolver.GetFormatterWithVerify<global::System.Guid>().Deserialize(ref reader, options);
+                        ____result.Id = formatterResolver.GetFormatterWithVerify<global::System.Guid>().Deserialize(ref reader, options);
                         continue;
                     case 4:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
 
-                        __Name__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Name = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                         continue;
                     case 12:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_SimpleModels().Slice(1))) { goto FAIL; }
 
-                        __SimpleModels__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Deserialize(ref reader, options);
+                        formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Deserialize(ref reader, options);
                         continue;
 
                 }
             }
-
-            var ____result = new global::ComplexModel()
-            {
-                CreatedOn = __CreatedOn__,
-                Id = __Id__,
-                Name = __Name__,
-                UpdatedOn = __UpdatedOn__,
-            };
 
             reader.Depth--;
             return ____result;
@@ -1479,7 +1464,7 @@ namespace MessagePack.Formatters
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(6);
             writer.WriteRaw(GetSpan_Id());
             writer.Write(value.Id);
@@ -1503,18 +1488,13 @@ namespace MessagePack.Formatters
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __Id__ = default(int);
-            var __Name__ = default(string);
-            var __CreatedOn__ = default(global::System.DateTime);
-            var __Precision__ = default(int);
-            var __Money__ = default(decimal);
-            var __Amount__ = default(long);
+            var ____result = new global::SimpleModel();
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -1524,12 +1504,12 @@ namespace MessagePack.Formatters
                     case 2:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 25673UL) { goto FAIL; }
 
-                        __Id__ = reader.ReadInt32();
+                        ____result.Id = reader.ReadInt32();
                         continue;
                     case 4:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
 
-                        __Name__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Name = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                         continue;
                     case 9:
                         switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
@@ -1538,38 +1518,29 @@ namespace MessagePack.Formatters
                             case 5720808977192022595UL:
                                 if (stringKey[0] != 110) { goto FAIL; }
 
-                                __CreatedOn__ = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, options);
+                                ____result.CreatedOn = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, options);
                                 continue;
 
                             case 8028074707240972880UL:
                                 if (stringKey[0] != 110) { goto FAIL; }
 
-                                __Precision__ = reader.ReadInt32();
+                                ____result.Precision = reader.ReadInt32();
                                 continue;
 
                         }
                     case 5:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 521392779085UL) { goto FAIL; }
 
-                        __Money__ = formatterResolver.GetFormatterWithVerify<decimal>().Deserialize(ref reader, options);
+                        ____result.Money = formatterResolver.GetFormatterWithVerify<decimal>().Deserialize(ref reader, options);
                         continue;
                     case 6:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 128017765461313UL) { goto FAIL; }
 
-                        __Amount__ = reader.ReadInt64();
+                        reader.ReadInt64();
                         continue;
 
                 }
             }
-
-            var ____result = new global::SimpleModel()
-            {
-                Id = __Id__,
-                Name = __Name__,
-                CreatedOn = __CreatedOn__,
-                Precision = __Precision__,
-                Money = __Money__,
-            };
 
             reader.Depth--;
             return ____result;
@@ -1595,10 +1566,8 @@ namespace MessagePack.Formatters
 
 namespace MessagePack.Formatters.PerfBenchmarkDotNet
 {
-    using System;
-    using System.Buffers;
-    using System.Runtime.InteropServices;
-    using MessagePack;
+    using global::System.Buffers;
+    using global::MessagePack;
 
     public sealed class StringKeySerializerTargetFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::PerfBenchmarkDotNet.StringKeySerializerTarget>
     {
@@ -1659,19 +1628,11 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
 
             options.Security.DepthStep(ref reader);
             var length = reader.ReadMapHeader();
-            var __MyProperty1__ = default(int);
-            var __MyProperty2__ = default(int);
-            var __MyProperty3__ = default(int);
-            var __MyProperty4__ = default(int);
-            var __MyProperty5__ = default(int);
-            var __MyProperty6__ = default(int);
-            var __MyProperty7__ = default(int);
-            var __MyProperty8__ = default(int);
-            var __MyProperty9__ = default(int);
+            var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget();
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -1687,31 +1648,31 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
                                 {
                                     default: goto FAIL;
                                     case 3242356UL:
-                                        __MyProperty1__ = reader.ReadInt32();
+                                        ____result.MyProperty1 = reader.ReadInt32();
                                         continue;
                                     case 3307892UL:
-                                        __MyProperty2__ = reader.ReadInt32();
+                                        ____result.MyProperty2 = reader.ReadInt32();
                                         continue;
                                     case 3373428UL:
-                                        __MyProperty3__ = reader.ReadInt32();
+                                        ____result.MyProperty3 = reader.ReadInt32();
                                         continue;
                                     case 3438964UL:
-                                        __MyProperty4__ = reader.ReadInt32();
+                                        ____result.MyProperty4 = reader.ReadInt32();
                                         continue;
                                     case 3504500UL:
-                                        __MyProperty5__ = reader.ReadInt32();
+                                        ____result.MyProperty5 = reader.ReadInt32();
                                         continue;
                                     case 3570036UL:
-                                        __MyProperty6__ = reader.ReadInt32();
+                                        ____result.MyProperty6 = reader.ReadInt32();
                                         continue;
                                     case 3635572UL:
-                                        __MyProperty7__ = reader.ReadInt32();
+                                        ____result.MyProperty7 = reader.ReadInt32();
                                         continue;
                                     case 3701108UL:
-                                        __MyProperty8__ = reader.ReadInt32();
+                                        ____result.MyProperty8 = reader.ReadInt32();
                                         continue;
                                     case 3766644UL:
-                                        __MyProperty9__ = reader.ReadInt32();
+                                        ____result.MyProperty9 = reader.ReadInt32();
                                         continue;
                                 }
 
@@ -1719,19 +1680,6 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
 
                 }
             }
-
-            var ____result = new global::PerfBenchmarkDotNet.StringKeySerializerTarget()
-            {
-                MyProperty1 = __MyProperty1__,
-                MyProperty2 = __MyProperty2__,
-                MyProperty3 = __MyProperty3__,
-                MyProperty4 = __MyProperty4__,
-                MyProperty5 = __MyProperty5__,
-                MyProperty6 = __MyProperty6__,
-                MyProperty7 = __MyProperty7__,
-                MyProperty8 = __MyProperty8__,
-                MyProperty9 = __MyProperty9__,
-            };
 
             reader.Depth--;
             return ____result;
@@ -3616,10 +3564,8 @@ namespace MessagePack.Formatters.SharedData
 
 namespace MessagePack.Formatters.SharedData
 {
-    using System;
-    using System.Buffers;
-    using System.Runtime.InteropServices;
-    using MessagePack;
+    using global::System.Buffers;
+    using global::MessagePack;
 
     public sealed class Callback2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2>
     {
@@ -3644,10 +3590,11 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadMapHeader();
             var __X__ = default(int);
+            var __X__IsInitialized = false;
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -3657,16 +3604,18 @@ namespace MessagePack.Formatters.SharedData
                     case 1:
                         if (stringKey[0] != 88) { goto FAIL; }
 
+                        __X__IsInitialized = true;
                         __X__ = reader.ReadInt32();
                         continue;
 
                 }
             }
 
-            var ____result = new global::SharedData.Callback2(__X__)
+            var ____result = new global::SharedData.Callback2(__X__);
+            if (__X__IsInitialized)
             {
-                X = __X__,
-            };
+                ____result.X = __X__;
+            }
 
             ____result.OnAfterDeserialize();
             reader.Depth--;
@@ -3697,10 +3646,11 @@ namespace MessagePack.Formatters.SharedData
             options.Security.DepthStep(ref reader);
             var length = reader.ReadMapHeader();
             var __X__ = default(int);
+            var __X__IsInitialized = false;
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -3710,16 +3660,18 @@ namespace MessagePack.Formatters.SharedData
                     case 1:
                         if (stringKey[0] != 88) { goto FAIL; }
 
+                        __X__IsInitialized = true;
                         __X__ = reader.ReadInt32();
                         continue;
 
                 }
             }
 
-            var ____result = new global::SharedData.Callback2_2(__X__)
+            var ____result = new global::SharedData.Callback2_2(__X__);
+            if (__X__IsInitialized)
             {
-                X = __X__,
-            };
+                ____result.X = __X__;
+            }
 
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
             reader.Depth--;
@@ -3729,7 +3681,6 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class Empty2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Empty2>
     {
-
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.Empty2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
@@ -3781,11 +3732,11 @@ namespace MessagePack.Formatters.SharedData
 
             options.Security.DepthStep(ref reader);
             var length = reader.ReadMapHeader();
-            var __MyProperty__ = default(int);
+            var ____result = new global::SharedData.NonEmpty2();
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -3795,16 +3746,11 @@ namespace MessagePack.Formatters.SharedData
                     case 10:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_MyProperty().Slice(1))) { goto FAIL; }
 
-                        __MyProperty__ = reader.ReadInt32();
+                        ____result.MyProperty = reader.ReadInt32();
                         continue;
 
                 }
             }
-
-            var ____result = new global::SharedData.NonEmpty2()
-            {
-                MyProperty = __MyProperty__,
-            };
 
             reader.Depth--;
             return ____result;
@@ -3828,7 +3774,7 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
             writer.WriteRaw(GetSpan_Prop1());
             writer.Write(value.Prop1);
@@ -3846,15 +3792,13 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __Prop1__ = default(int);
-            var __Prop2__ = default(global::SharedData.ByteEnum);
-            var __Prop3__ = default(int);
+            var ____result = new global::SharedData.SimpleStringKeyData();
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -3866,25 +3810,18 @@ namespace MessagePack.Formatters.SharedData
                         {
                             default: goto FAIL;
                             case 212339749456UL:
-                                __Prop1__ = reader.ReadInt32();
+                                ____result.Prop1 = reader.ReadInt32();
                                 continue;
                             case 216634716752UL:
-                                __Prop2__ = formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Deserialize(ref reader, options);
+                                ____result.Prop2 = formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Deserialize(ref reader, options);
                                 continue;
                             case 220929684048UL:
-                                __Prop3__ = reader.ReadInt32();
+                                ____result.Prop3 = reader.ReadInt32();
                                 continue;
                         }
 
                 }
             }
-
-            var ____result = new global::SharedData.SimpleStringKeyData()
-            {
-                Prop1 = __Prop1__,
-                Prop2 = __Prop2__,
-                Prop3 = __Prop3__,
-            };
 
             reader.Depth--;
             return ____result;
@@ -3900,7 +3837,7 @@ namespace MessagePack.Formatters.SharedData
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.SimpleStructStringKeyData value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_X());
             writer.Write(value.X);
@@ -3916,14 +3853,13 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
-            IFormatterResolver formatterResolver = options.Resolver;
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __X__ = default(int);
-            var __Y__ = default(int[]);
+            var ____result = new global::SharedData.SimpleStructStringKeyData();
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -3935,21 +3871,15 @@ namespace MessagePack.Formatters.SharedData
                         {
                             default: goto FAIL;
                             case 378720052587UL:
-                                __X__ = reader.ReadInt32();
+                                ____result.X = reader.ReadInt32();
                                 continue;
                             case 383015019883UL:
-                                __Y__ = formatterResolver.GetFormatterWithVerify<int[]>().Deserialize(ref reader, options);
+                                ____result.Y = formatterResolver.GetFormatterWithVerify<int[]>().Deserialize(ref reader, options);
                                 continue;
                         }
 
                 }
             }
-
-            var ____result = new global::SharedData.SimpleStructStringKeyData()
-            {
-                X = __X__,
-                Y = __Y__,
-            };
 
             reader.Depth--;
             return ____result;
