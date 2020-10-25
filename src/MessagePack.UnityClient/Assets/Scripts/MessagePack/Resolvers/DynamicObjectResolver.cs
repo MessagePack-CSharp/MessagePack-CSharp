@@ -796,7 +796,7 @@ namespace MessagePack.Internal
                 argOptions.EmitLoad();
                 il.EmitCall(getSerialize(t));
             }
-            else if (IsOptimizeTargetType(t))
+            else if (ObjectSerializationInfo.IsOptimizeTargetType(t))
             {
                 if (!t.GetTypeInfo().IsValueType)
                 {
@@ -873,6 +873,24 @@ namespace MessagePack.Internal
 
             il.MarkLabel(falseLabel);
 
+            var canOverwrite = info.ConstructorParameters.Length == 0;
+
+            var localResult = il.DeclareLocal(type);
+            if (canOverwrite)
+            {
+                // var result = new T();
+                if (info.IsClass)
+                {
+                    il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
+                    il.EmitStloc(localResult);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldloca, localResult);
+                    il.Emit(OpCodes.Initobj, type);
+                }
+            }
+
             // options.Security.DepthStep(ref reader);
             argOptions.EmitLoad();
             il.EmitCall(getSecurityFromOptions);
@@ -912,7 +930,7 @@ namespace MessagePack.Internal
                             return new DeserializeInfo
                             {
                                 MemberInfo = member,
-                                LocalField = il.DeclareLocal(member.Type),
+                                LocalField = canOverwrite ? default : il.DeclareLocal(member.Type),
                                 SwitchLabel = il.DefineLabel(),
                             };
                         }
@@ -940,17 +958,22 @@ namespace MessagePack.Internal
                     .Select(item => new DeserializeInfo
                     {
                         MemberInfo = item,
-                        LocalField = il.DeclareLocal(item.Type),
+                        LocalField = canOverwrite ? default : il.DeclareLocal(item.Type),
+                        LocalIsInitializedField = canOverwrite ? default : il.DeclareLocal(typeof(bool)),
                         //// SwitchLabel = il.DefineLabel()
                     })
                     .ToArray();
             }
 
             // IFormatterResolver resolver = options.Resolver;
-            LocalBuilder localResolver = il.DeclareLocal(typeof(IFormatterResolver));
-            argOptions.EmitLoad();
-            il.EmitCall(getResolverFromOptions);
-            il.EmitStloc(localResolver);
+            var localResolver = default(LocalBuilder);
+            if (info.ShouldUseFormatterResolver)
+            {
+                localResolver = il.DeclareLocal(typeof(IFormatterResolver));
+                argOptions.EmitLoad();
+                il.EmitCall(getResolverFromOptions);
+                il.EmitStloc(localResolver);
+            }
 
             // Read Loop(for var i = 0; i < length; i++)
             if (info.IsStringKey)
@@ -984,7 +1007,7 @@ namespace MessagePack.Internal
                             var i = x.Value;
                             if (infoList[i].MemberInfo != null)
                             {
-                                EmitDeserializeValue(il, infoList[i], i, tryEmitLoadCustomFormatter, reader, argOptions, localResolver);
+                                EmitDeserializeValue(il, infoList[i], i, tryEmitLoadCustomFormatter, reader, argOptions, localResolver, canOverwrite, localResult);
                                 il.Emit(OpCodes.Br, loopEnd);
                             }
                             else
@@ -1040,7 +1063,7 @@ namespace MessagePack.Internal
                         if (item.MemberInfo != null)
                         {
                             il.MarkLabel(item.SwitchLabel);
-                            EmitDeserializeValue(il, item, i++, tryEmitLoadCustomFormatter, reader, argOptions, localResolver);
+                            EmitDeserializeValue(il, item, i++, tryEmitLoadCustomFormatter, reader, argOptions, localResolver, canOverwrite, localResult);
                             il.Emit(OpCodes.Br, loopEnd);
                         }
                     }
@@ -1050,7 +1073,10 @@ namespace MessagePack.Internal
             }
 
             // create result object
-            LocalBuilder structLocal = EmitNewObject(il, type, info, infoList);
+            if (!canOverwrite)
+            {
+                EmitNewObject(il, type, info, infoList, localResult, length);
+            }
 
             // IMessagePackSerializationCallbackReceiver.OnAfterDeserialize()
             if (type.GetTypeInfo().ImplementedInterfaces.Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
@@ -1061,25 +1087,25 @@ namespace MessagePack.Internal
                 {
                     if (info.IsClass)
                     {
-                        il.Emit(OpCodes.Dup);
+                        il.EmitLdloc(localResult);
                     }
                     else
                     {
-                        il.EmitLdloca(structLocal);
+                        il.EmitLdloca(localResult);
                     }
 
                     il.Emit(OpCodes.Call, runtimeMethods[0]); // don't use EmitCall helper(must use 'Call')
                 }
                 else
                 {
-                    if (info.IsStruct)
+                    if (info.IsClass)
                     {
-                        il.EmitLdloc(structLocal);
-                        il.Emit(OpCodes.Box, type);
+                        il.EmitLdloc(localResult);
                     }
                     else
                     {
-                        il.Emit(OpCodes.Dup);
+                        il.EmitLdloc(localResult);
+                        il.Emit(OpCodes.Box, type);
                     }
 
                     il.EmitCall(onAfterDeserialize);
@@ -1094,20 +1120,34 @@ namespace MessagePack.Internal
             il.Emit(OpCodes.Sub_Ovf);
             il.EmitCall(readerDepthSet);
 
-            if (info.IsStruct)
-            {
-                il.Emit(OpCodes.Ldloc, structLocal);
-            }
-
+            il.Emit(OpCodes.Ldloc, localResult);
             il.Emit(OpCodes.Ret);
         }
 
-        private static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argReader, ArgumentField argOptions, LocalBuilder localResolver)
+        private static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argReader, ArgumentField argOptions, LocalBuilder localResolver, bool canOverwrite, LocalBuilder localResult)
         {
             Label storeLabel = il.DefineLabel();
             ObjectSerializationInfo.EmittableMember member = info.MemberInfo;
             Type t = member.Type;
             Action emitter = tryEmitLoadCustomFormatter(index, member);
+
+            if (canOverwrite && member.IsWritable)
+            {
+                if (localResult.LocalType.IsClass)
+                {
+                    il.EmitLdloc(localResult);
+                }
+                else
+                {
+                    il.EmitLdloca(localResult);
+                }
+            }
+            else if (info.LocalIsInitializedField != null)
+            {
+                il.EmitLdc_I4(1);
+                il.EmitStloc(info.LocalIsInitializedField);
+            }
+
             if (emitter != null)
             {
                 emitter();
@@ -1115,7 +1155,7 @@ namespace MessagePack.Internal
                 argOptions.EmitLoad();
                 il.EmitCall(getDeserialize(t));
             }
-            else if (IsOptimizeTargetType(t))
+            else if (ObjectSerializationInfo.IsOptimizeTargetType(t))
             {
                 if (!t.GetTypeInfo().IsValueType)
                 {
@@ -1155,51 +1195,92 @@ namespace MessagePack.Internal
             }
 
             il.MarkLabel(storeLabel);
-            il.EmitStloc(info.LocalField);
-        }
-
-        private static LocalBuilder EmitNewObject(ILGenerator il, Type type, ObjectSerializationInfo info, DeserializeInfo[] members)
-        {
-            if (info.IsClass)
+            if (canOverwrite)
             {
-                EmitNewObjectConstructorArguments(il, info, members);
-
-                il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
-
-                foreach (DeserializeInfo item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
+                if (member.IsWritable)
                 {
-                    il.Emit(OpCodes.Dup);
-                    il.EmitLdloc(item.LocalField);
-                    item.MemberInfo.EmitStoreValue(il);
-                }
-
-                return null;
-            }
-            else
-            {
-                LocalBuilder result = il.DeclareLocal(type);
-                if (info.BestmatchConstructor == null)
-                {
-                    il.Emit(OpCodes.Ldloca, result);
-                    il.Emit(OpCodes.Initobj, type);
+                    member.EmitStoreValue(il);
                 }
                 else
                 {
-                    EmitNewObjectConstructorArguments(il, info, members);
-
-                    il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
-                    il.Emit(OpCodes.Stloc, result);
+                    il.Emit(OpCodes.Pop);
                 }
+            }
+            else
+            {
+                il.EmitStloc(info.LocalField);
+            }
+        }
 
-                foreach (DeserializeInfo item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
+        private static void EmitNewObject(ILGenerator il, Type type, ObjectSerializationInfo info, DeserializeInfo[] members, LocalBuilder localResult, LocalBuilder localLength)
+        {
+            EmitNewObjectConstructorArguments(il, info, members);
+
+            il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
+            il.Emit(OpCodes.Stloc, localResult);
+
+            if (info.IsStringKey)
+            {
+                foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
                 {
-                    il.EmitLdloca(result);
+                    var skipLabel = il.DefineLabel();
+                    il.EmitLdloc(item.LocalIsInitializedField);
+                    il.Emit(OpCodes.Brfalse_S, skipLabel);
+
+                    if (info.IsClass)
+                    {
+                        il.EmitLdloc(localResult);
+                    }
+                    else
+                    {
+                        il.EmitLdloca(localResult);
+                    }
+
                     il.EmitLdloc(item.LocalField);
                     item.MemberInfo.EmitStoreValue(il);
+
+                    il.MarkLabel(skipLabel);
                 }
 
-                return result; // struct returns local result field
+                return;
             }
+
+            // use Array
+            var filteredMembers = members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable).ToArray();
+            var maxKey = filteredMembers.Select(x => x.MemberInfo.IntKey).DefaultIfEmpty(-1).Max();
+            if (maxKey == -1)
+            {
+                return;
+            }
+
+            var assignmentDoneLabel = il.DefineLabel();
+            var intKeyMap = filteredMembers.ToDictionary(x => x.MemberInfo.IntKey);
+            for (var key = 0; key <= maxKey; key++)
+            {
+                if (!intKeyMap.TryGetValue(key, out var item))
+                {
+                    continue;
+                }
+
+                // if (length <= key) goto ASSIGNMENT_DONE;
+                il.EmitLdloc(localLength);
+                il.EmitLdc_I4(key);
+                il.Emit(OpCodes.Ble, assignmentDoneLabel);
+
+                if (info.IsClass)
+                {
+                    il.EmitLdloc(localResult);
+                }
+                else
+                {
+                    il.EmitLdloca(localResult);
+                }
+
+                il.EmitLdloc(item.LocalField);
+                item.MemberInfo.EmitStoreValue(il);
+            }
+
+            il.MarkLabel(assignmentDoneLabel);
         }
 
         private static void EmitNewObjectConstructorArguments(ILGenerator il, ObjectSerializationInfo info, DeserializeInfo[] members)
@@ -1218,31 +1299,6 @@ namespace MessagePack.Internal
                     il.Emit(OpCodes.Box, local.MemberInfo.Type);
                 }
             }
-        }
-
-        /// <devremarks>
-        /// Keep this list in sync with ShouldUseFormatterResolverHelper.PrimitiveTypes.
-        /// </devremarks>
-        private static bool IsOptimizeTargetType(Type type)
-        {
-            return type == typeof(Int16)
-                || type == typeof(Int32)
-                || type == typeof(Int64)
-                || type == typeof(UInt16)
-                || type == typeof(UInt32)
-                || type == typeof(UInt64)
-                || type == typeof(Single)
-                || type == typeof(Double)
-                || type == typeof(bool)
-                || type == typeof(byte)
-                || type == typeof(sbyte)
-                || type == typeof(char)
-                || type == typeof(byte[])
-
-            // Do not include types that resolvers are allowed to modify.
-            ////|| type == typeof(DateTime) // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
-            ////|| type == typeof(string) // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
-            ;
         }
 
 #pragma warning disable SA1311 // Static readonly fields should begin with upper-case letter
@@ -1338,6 +1394,8 @@ namespace MessagePack.Internal
 
             public LocalBuilder LocalField { get; set; }
 
+            public LocalBuilder LocalIsInitializedField { get; set; }
+
             public Label SwitchLabel { get; set; }
         }
     }
@@ -1401,6 +1459,8 @@ namespace MessagePack.Internal
         {
             get { return !this.IsClass; }
         }
+
+        public bool ShouldUseFormatterResolver { get; private set; }
 
         public ConstructorInfo BestmatchConstructor { get; set; }
 
@@ -1917,15 +1977,60 @@ namespace MessagePack.Internal
                     .ToArray();
             }
 
+            var shouldUseFormatterResolver = false;
+            var membersArray = members.Where(m => m.IsExplicitContract || constructorParameters.Any(p => p.MemberInfo.Equals(m)) || m.IsWritable).ToArray();
+            foreach (var member in membersArray)
+            {
+                if (IsOptimizeTargetType(member.Type))
+                {
+                    continue;
+                }
+
+                var attr = member.GetMessagePackFormatterAttribute();
+                if (!(attr is null))
+                {
+                    continue;
+                }
+
+                shouldUseFormatterResolver = true;
+                break;
+            }
+
             return new ObjectSerializationInfo
             {
                 Type = type,
                 IsClass = isClass,
+                ShouldUseFormatterResolver = shouldUseFormatterResolver,
                 BestmatchConstructor = ctor,
                 ConstructorParameters = constructorParameters.ToArray(),
                 IsIntKey = isIntKey,
-                Members = members.Where(m => m.IsExplicitContract || constructorParameters.Any(p => p.MemberInfo.Equals(m)) || m.IsWritable).ToArray(),
+                Members = membersArray,
             };
+        }
+
+        /// <devremarks>
+        /// Keep this list in sync with ShouldUseFormatterResolverHelper.PrimitiveTypes.
+        /// </devremarks>
+        internal static bool IsOptimizeTargetType(Type type)
+        {
+            return type == typeof(Int16)
+                   || type == typeof(Int32)
+                   || type == typeof(Int64)
+                   || type == typeof(UInt16)
+                   || type == typeof(UInt32)
+                   || type == typeof(UInt64)
+                   || type == typeof(Single)
+                   || type == typeof(Double)
+                   || type == typeof(bool)
+                   || type == typeof(byte)
+                   || type == typeof(sbyte)
+                   || type == typeof(char)
+                   || type == typeof(byte[])
+
+                // Do not include types that resolvers are allowed to modify.
+                ////|| type == typeof(DateTime) // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
+                ////|| type == typeof(string) // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
+                ;
         }
 
         private static IEnumerable<FieldInfo> GetAllFields(Type type)
