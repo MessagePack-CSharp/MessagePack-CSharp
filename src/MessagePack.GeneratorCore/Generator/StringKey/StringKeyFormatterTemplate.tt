@@ -37,7 +37,7 @@ foreach (var objInfo in ObjectSerializationInfos)
         list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
     }
 
-    string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(",", (object[])objInfo.GenericTypeParameters)}>" : "Formatter");
+    string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(", ", objInfo.GenericTypeParameters.Select(x => x.Name))}>" : "Formatter");
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);
 #>
 
