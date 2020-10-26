@@ -44,28 +44,32 @@ namespace MessagePackCompiler.Generator
 
         private static void Assign(StringBuilder buffer, in MemberInfoTuple member, bool canOverwrite, string indent, string tab, int tabCount)
         {
-            if (canOverwrite)
+            if (member.Info.IsWritable)
             {
-                if (member.Info.IsWritable)
+                if (canOverwrite)
                 {
                     buffer.Append("____result.").Append(member.Info.Name).Append(" = ");
                 }
+                else
+                {
+                    if (!member.IsConstructorParameter)
+                    {
+                        buffer.Append("__").Append(member.Info.Name).Append("__IsInitialized = true;\r\n").Append(indent);
+                        for (var i = 0; i < tabCount; i++)
+                        {
+                            buffer.Append(tab);
+                        }
+                    }
+
+                    buffer.Append("__").Append(member.Info.Name).Append("__ = ");
+                }
+
+                buffer.Append(member.Info.GetDeserializeMethodString()).Append(";\r\n");
             }
             else
             {
-                if (!member.IsConstructorParameter)
-                {
-                    buffer.Append("__").Append(member.Info.Name).Append("__IsInitialized = true;\r\n").Append(indent);
-                    for (var i = 0; i < tabCount; i++)
-                    {
-                        buffer.Append(tab);
-                    }
-                }
-
-                buffer.Append("__").Append(member.Info.Name).Append("__ = ");
+                buffer.Append("reader.Skip();\r\n");
             }
-
-            buffer.Append(member.Info.GetDeserializeMethodString()).Append(";\r\n");
         }
 
         private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection, bool canOverwrite)
