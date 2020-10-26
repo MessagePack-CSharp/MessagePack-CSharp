@@ -1410,7 +1410,7 @@ namespace MessagePack.Formatters
                     case 18:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_AdditionalProperty().Slice(1))) { goto FAIL; }
 
-                        formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Deserialize(ref reader, options);
+                        reader.Skip();
                         continue;
                     case 9:
                         switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
@@ -1442,7 +1442,7 @@ namespace MessagePack.Formatters
                     case 12:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_SimpleModels().Slice(1))) { goto FAIL; }
 
-                        formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Deserialize(ref reader, options);
+                        reader.Skip();
                         continue;
 
                 }
@@ -1548,7 +1548,7 @@ namespace MessagePack.Formatters
                     case 6:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 128017765461313UL) { goto FAIL; }
 
-                        reader.ReadInt64();
+                        reader.Skip();
                         continue;
 
                 }
@@ -1975,9 +1975,12 @@ namespace MessagePack.Formatters.SharedData
                 return;
             }
 
-            writer.WriteArrayHeader(2);
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(4);
             writer.Write(value.Prop1);
             writer.Write(value.Prop2);
+            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Prop3, options);
+            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Prop4, options);
         }
 
         public global::SharedData.DefaultValueIntKeyClassWithExplicitConstructor Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -1988,9 +1991,12 @@ namespace MessagePack.Formatters.SharedData
             }
 
             options.Security.DepthStep(ref reader);
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var __Prop1__ = default(int);
             var __Prop2__ = default(int);
+            var __Prop3__ = default(string);
+            var __Prop4__ = default(string);
 
             for (int i = 0; i < length; i++)
             {
@@ -2001,6 +2007,12 @@ namespace MessagePack.Formatters.SharedData
                         break;
                     case 1:
                         __Prop2__ = reader.ReadInt32();
+                        break;
+                    case 2:
+                        __Prop3__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        break;
+                    case 3:
+                        __Prop4__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -2015,6 +2027,18 @@ namespace MessagePack.Formatters.SharedData
             }
 
             ____result.Prop2 = __Prop2__;
+            if (length <= 2)
+            {
+                goto MEMBER_ASSIGNMENT_END;
+            }
+
+            ____result.Prop3 = __Prop3__;
+            if (length <= 3)
+            {
+                goto MEMBER_ASSIGNMENT_END;
+            }
+
+            ____result.Prop4 = __Prop4__;
 
         MEMBER_ASSIGNMENT_END:
             reader.Depth--;

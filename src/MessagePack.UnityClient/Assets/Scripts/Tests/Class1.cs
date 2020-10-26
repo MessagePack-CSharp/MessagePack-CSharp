@@ -175,6 +175,8 @@ namespace SharedData
     public class DefaultValueIntKeyClassWithExplicitConstructor
     {
         public const int Prop2Constant = -109;
+        public const string Prop3Constant = "生命、宇宙、そして万物についての究極の疑問の答え";
+        public const string Prop4Constant = "Hello, world! To you, From me.";
 
         [Key(0)]
         public int Prop1 { get; set; }
@@ -182,10 +184,18 @@ namespace SharedData
         [Key(1)]
         public int Prop2 { get; set; }
 
+        [Key(2)]
+        public string Prop3 { get; set; }
+
+        [Key(3)]
+        public string Prop4 { get; set; }
+
         public DefaultValueIntKeyClassWithExplicitConstructor(int prop1)
         {
             Prop1 = prop1;
             Prop2 = Prop2Constant;
+            Prop3 = Prop3Constant;
+            Prop4 = Prop4Constant;
         }
     }
 
