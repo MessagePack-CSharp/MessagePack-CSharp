@@ -17,10 +17,14 @@ namespace MessagePack.Tests
     {
         private readonly ITestOutputHelper logger;
 
+#if UNITY_2018_3_OR_NEWER
+
         public DynamicObjectResolverOrderTest()
         {
             this.logger = new NullTestOutputHelper();
         }
+
+#endif
 
         public DynamicObjectResolverOrderTest(ITestOutputHelper logger)
         {

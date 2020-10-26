@@ -13,10 +13,14 @@ namespace MessagePack.Tests
     {
         private readonly ITestOutputHelper logger;
 
+#if UNITY_2018_3_OR_NEWER
+
         public ExpandoObjectTests()
         {
             this.logger = new NullTestOutputHelper();
         }
+
+#endif
 
         public ExpandoObjectTests(ITestOutputHelper logger)
         {
