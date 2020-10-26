@@ -10,6 +10,10 @@ MessagePack.Formatters.ByteReadOnlySequenceFormatter.Serialize(ref MessagePack.M
 MessagePack.Formatters.ExpandoObjectFormatter
 MessagePack.Formatters.ExpandoObjectFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Dynamic.ExpandoObject
 MessagePack.Formatters.ExpandoObjectFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Dynamic.ExpandoObject value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.ForceTypelessFormatter<T>
+MessagePack.Formatters.ForceTypelessFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> T
+MessagePack.Formatters.ForceTypelessFormatter<T>.ForceTypelessFormatter() -> void
+MessagePack.Formatters.ForceTypelessFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, T value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.MemoryFormatter<T>
 MessagePack.Formatters.MemoryFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Memory<T>
 MessagePack.Formatters.MemoryFormatter<T>.MemoryFormatter() -> void

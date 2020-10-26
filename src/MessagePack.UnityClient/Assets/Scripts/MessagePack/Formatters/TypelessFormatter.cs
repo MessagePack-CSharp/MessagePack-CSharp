@@ -16,6 +16,26 @@ using MessagePack.Internal;
 
 namespace MessagePack.Formatters
 {
+#pragma warning disable SA1649 // File name should match first type name
+
+    /// <summary>
+    /// Force serialize object as typeless.
+    /// </summary>
+    public sealed class ForceTypelessFormatter<T> : IMessagePackFormatter<T>
+    {
+        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+        {
+            TypelessFormatter.Instance.Serialize(ref writer, (object)value, options);
+        }
+
+        public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return (T)TypelessFormatter.Instance.Deserialize(ref reader, options);
+        }
+    }
+
+#pragma warning restore SA1649 // File name should match first type name
+
     /// <summary>
     /// For `object` field that holds derived from `object` value, ex: var arr = new object[] { 1, "a", new Model() };.
     /// </summary>
