@@ -851,12 +851,410 @@ namespace MessagePack.Internal
         // T Deserialize([arg:1]ref MessagePackReader reader, [arg:2]MessagePackSerializerOptions options);
         private static void BuildDeserialize(Type type, ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, int firstArgIndex)
         {
-            var reader = new ArgumentField(il, firstArgIndex, @ref: true);
+            var argReader = new ArgumentField(il, firstArgIndex, @ref: true);
             var argOptions = new ArgumentField(il, firstArgIndex + 1);
 
+            // if (reader.TryReadNil()) { throw / return; }
+            BuildDeserializeInternalTryReadNil(type, il, ref argReader);
+
+            // T ____result;
+            var localResult = il.DeclareLocal(type);
+
+            // where T : new()
+            var canOverwrite = info.ConstructorParameters.Length == 0;
+            if (canOverwrite)
+            {
+                // ____result = new T();
+                BuildDeserializeInternalCreateInstance(type, info, il, localResult);
+            }
+
+            // options.Security.DepthStep(ref reader);
+            BuildDeserializeInternalDepthStep(il, ref argReader, ref argOptions);
+
+            // var length = reader.Read(Map|Array)Header();
+            var localLength = BuildDeserializeInternalReadHeaderLength(info, il, ref argReader);
+
+            // var resolver = options.Resolver;
+            var localResolver = BuildDeserializeInternalResolver(info, il, ref argOptions);
+
+            if (info.IsIntKey)
+            {
+                // switch (key) { ... }
+                BuildDeserializeInternalDeserializeEachPropertyIntKey(info, il, tryEmitLoadCustomFormatter, canOverwrite, ref argReader, ref argOptions, localResolver, localResult, localLength);
+            }
+            else
+            {
+                // var span = reader.ReadStringSpan();
+                BuildDeserializeInternalDeserializeEachPropertyStringKey(info, il, tryEmitLoadCustomFormatter, canOverwrite, ref argReader, argOptions, localResolver, localResult, localLength);
+            }
+
+            // ____result.OnAfterDeserialize()
+            BuildDeserializeInternalOnAfterDeserialize(type, info, il, localResult);
+
+            // reader.Depth--;
+            BuildDeserializeInternalDepthUnStep(il, ref argReader);
+
+            // return ____result;
+            il.Emit(OpCodes.Ldloc, localResult);
+            il.Emit(OpCodes.Ret);
+        }
+
+        private static void BuildDeserializeInternalDeserializeEachPropertyStringKey(ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, bool canOverwrite, ref ArgumentField argReader, ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localResult, LocalBuilder localLength)
+        {
+            // Prepare local variables or assignment fields/properties
+            var infoList = BuildDeserializeInternalDeserializationInfoArrayStringKey(info, il, canOverwrite);
+
+            // Read Loop(for var i = 0; i < length; i++)
+            BuildDeserializeInternalDeserializeLoopStringKey(il, tryEmitLoadCustomFormatter, ref argReader, ref argOptions, infoList, localResolver, localResult, localLength, canOverwrite, info);
+
+            if (canOverwrite)
+            {
+                return;
+            }
+
+            // ____result = new T(...);
+            BuildDeserializeInternalCreateInstanceWithArguments(info, il, infoList, localResult);
+
+            // ... if (__field__IsInitialized) { ____result.field = __field__; } ...
+            BuildDeserializeInternalAssignFieldFromLocalVariableStringKey(info, il, infoList, localResult);
+        }
+
+        private static void BuildDeserializeInternalDeserializeEachPropertyIntKey(ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, bool canOverwrite, ref ArgumentField argReader, ref ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localResult, LocalBuilder localLength)
+        {
+            // Prepare local variables or assignment fields/properties
+            var infoList = BuildDeserializeInternalDeserializationInfoArrayIntKey(info, il, canOverwrite, out var gotoDefault, out var maxKey);
+
+            // Read Loop(for var i = 0; i < length; i++)
+            BuildDeserializeInternalDeserializeLoopIntKey(il, tryEmitLoadCustomFormatter, ref argReader, ref argOptions, infoList, localResolver, localResult, localLength, canOverwrite, gotoDefault);
+
+            if (canOverwrite)
+            {
+                return;
+            }
+
+            // ____result = new T(...);
+            BuildDeserializeInternalCreateInstanceWithArguments(info, il, infoList, localResult);
+
+            // ... ____result.field = __field__; ...
+            BuildDeserializeInternalAssignFieldFromLocalVariableIntKey(info, il, infoList, localResult, localLength, maxKey);
+        }
+
+        private static void BuildDeserializeInternalAssignFieldFromLocalVariableStringKey(ObjectSerializationInfo info, ILGenerator il, DeserializeInfo[] infoList, LocalBuilder localResult)
+        {
+            foreach (var item in infoList)
+            {
+                if (item.MemberInfo == null || item.IsInitializedLocalVariable == null)
+                {
+                    continue;
+                }
+
+                // if (__field__IsInitialized) { ____result.field = __field__; }
+                var skipLabel = il.DefineLabel();
+                il.EmitLdloc(item.IsInitializedLocalVariable);
+                il.Emit(OpCodes.Brfalse_S, skipLabel);
+
+                if (info.IsClass)
+                {
+                    il.EmitLdloc(localResult);
+                }
+                else
+                {
+                    il.EmitLdloca(localResult);
+                }
+
+                il.EmitLdloc(item.LocalVariable);
+                item.MemberInfo.EmitStoreValue(il);
+
+                il.MarkLabel(skipLabel);
+            }
+        }
+
+        private static void BuildDeserializeInternalAssignFieldFromLocalVariableIntKey(ObjectSerializationInfo info, ILGenerator il, DeserializeInfo[] infoList, LocalBuilder localResult, LocalBuilder localLength, int maxKey)
+        {
+            if (maxKey == -1)
+            {
+                return;
+            }
+
+            Label? memberAssignmentDoneLabel = null;
+            var intKeyMap = infoList.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable).ToDictionary(x => x.MemberInfo.IntKey);
+            for (var key = 0; key <= maxKey; key++)
+            {
+                if (!intKeyMap.TryGetValue(key, out var item))
+                {
+                    continue;
+                }
+
+                // if (length <= key) { goto MEMBER_ASSIGNMENT_DONE; }
+                il.EmitLdloc(localLength);
+                il.EmitLdc_I4(key);
+                if (memberAssignmentDoneLabel == null)
+                {
+                    memberAssignmentDoneLabel = il.DefineLabel();
+                }
+
+                il.Emit(OpCodes.Ble, memberAssignmentDoneLabel.Value);
+
+                // ____result.field = __field__;
+                if (info.IsClass)
+                {
+                    il.EmitLdloc(localResult);
+                }
+                else
+                {
+                    il.EmitLdloca(localResult);
+                }
+
+                il.EmitLdloc(item.LocalVariable);
+                item.MemberInfo.EmitStoreValue(il);
+            }
+
+            // MEMBER_ASSIGNMENT_DONE:
+            if (memberAssignmentDoneLabel != null)
+            {
+                il.MarkLabel(memberAssignmentDoneLabel.Value);
+            }
+        }
+
+        private static void BuildDeserializeInternalCreateInstanceWithArguments(ObjectSerializationInfo info, ILGenerator il, DeserializeInfo[] infoList, LocalBuilder localResult)
+        {
+            foreach (var item in info.ConstructorParameters)
+            {
+                var local = infoList.First(x => x.MemberInfo == item.MemberInfo);
+                il.EmitLdloc(local.LocalVariable);
+
+                if (!item.ConstructorParameter.ParameterType.IsValueType && local.MemberInfo.IsValueType)
+                {
+                    // When a constructor argument of type object is being provided by a serialized member value that is a value type
+                    // then that value must be boxed in order for the generated code to be valid (see issue #987). This may occur because
+                    // the only requirement when determining whether a member value may be used to populate a constructor argument in an
+                    // IsAssignableFrom check and typeof(object) IsAssignableFrom typeof(int), for example.
+                    il.Emit(OpCodes.Box, local.MemberInfo.Type);
+                }
+            }
+
+            il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
+            il.Emit(OpCodes.Stloc, localResult);
+        }
+
+        private static DeserializeInfo[] BuildDeserializeInternalDeserializationInfoArrayStringKey(ObjectSerializationInfo info, ILGenerator il, bool canOverwrite)
+        {
+            var infoList = new DeserializeInfo[info.Members.Length];
+            for (var i = 0; i < infoList.Length; i++)
+            {
+                var item = info.Members[i];
+                if (canOverwrite && item.IsWritable)
+                {
+                    infoList[i] = new DeserializeInfo
+                    {
+                        MemberInfo = item,
+                    };
+                }
+                else
+                {
+                    var isConstructorParameter = info.ConstructorParameters.Any(p => p.MemberInfo.Equals(item));
+                    infoList[i] = new DeserializeInfo
+                    {
+                        MemberInfo = item,
+                        LocalVariable = il.DeclareLocal(item.Type),
+                        IsInitializedLocalVariable = isConstructorParameter ? default : il.DeclareLocal(typeof(bool)),
+                    };
+                }
+            }
+
+            return infoList;
+        }
+
+        private static DeserializeInfo[] BuildDeserializeInternalDeserializationInfoArrayIntKey(ObjectSerializationInfo info, ILGenerator il, bool canOverwrite, out Label? gotoDefault, out int maxKey)
+        {
+            maxKey = info.Members.Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
+            var len = maxKey + 1;
+            var intKeyMap = info.Members.ToDictionary(x => x.IntKey);
+            gotoDefault = null;
+
+            var infoList = new DeserializeInfo[len];
+            for (var i = 0; i < infoList.Length; i++)
+            {
+                if (intKeyMap.TryGetValue(i, out var member))
+                {
+                    if (canOverwrite && member.IsWritable)
+                    {
+                        infoList[i] = new DeserializeInfo
+                        {
+                            MemberInfo = member,
+                            SwitchLabel = il.DefineLabel(),
+                        };
+                    }
+                    else
+                    {
+                        infoList[i] = new DeserializeInfo
+                        {
+                            MemberInfo = member,
+                            LocalVariable = il.DeclareLocal(member.Type),
+                            SwitchLabel = il.DefineLabel(),
+                        };
+                    }
+                }
+                else
+                {
+                    // return null MemberInfo, should filter null
+                    if (gotoDefault == null)
+                    {
+                        gotoDefault = il.DefineLabel();
+                    }
+
+                    infoList[i] = new DeserializeInfo
+                    {
+                        SwitchLabel = gotoDefault.Value,
+                    };
+                }
+            }
+
+            return infoList;
+        }
+
+        private static void BuildDeserializeInternalDeserializeLoopIntKey(ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, DeserializeInfo[] infoList, LocalBuilder localResolver, LocalBuilder localResult, LocalBuilder localLength, bool canOverwrite, Label? gotoDefault)
+        {
+            var key = il.DeclareLocal(typeof(int));
+            var switchDefault = il.DefineLabel();
+            var reader = argReader;
+            var options = argOptions;
+
+            void ForBody(LocalBuilder forILocal)
+            {
+                var loopEnd = il.DefineLabel();
+
+                il.EmitLdloc(forILocal);
+                il.EmitStloc(key);
+
+                // switch... local = Deserialize
+                il.EmitLdloc(key);
+
+                il.Emit(OpCodes.Switch, infoList.Select(x => x.SwitchLabel).ToArray());
+
+                il.MarkLabel(switchDefault);
+
+                // default, only read. reader.ReadNextBlock();
+                reader.EmitLdarg();
+                il.EmitCall(MessagePackReaderTypeInfo.Skip);
+                il.Emit(OpCodes.Br, loopEnd);
+
+                if (gotoDefault != null)
+                {
+                    il.MarkLabel(gotoDefault.Value);
+                    il.Emit(OpCodes.Br, switchDefault);
+                }
+
+                var i = 0;
+                foreach (var item in infoList)
+                {
+                    if (item.MemberInfo == null)
+                    {
+                        continue;
+                    }
+
+                    il.MarkLabel(item.SwitchLabel);
+                    if (canOverwrite)
+                    {
+                        BuildDeserializeInternalDeserializeValueAssignDirectly(il, item, i++, tryEmitLoadCustomFormatter, ref reader, ref options, localResolver, localResult);
+                    }
+                    else
+                    {
+                        BuildDeserializeInternalDeserializeValueAssignLocalVariable(il, item, i++, tryEmitLoadCustomFormatter, ref reader, ref options, localResolver, localResult);
+                    }
+
+                    il.Emit(OpCodes.Br, loopEnd);
+                }
+
+                il.MarkLabel(loopEnd);
+            }
+
+            il.EmitIncrementFor(localLength, ForBody);
+        }
+
+        private static void BuildDeserializeInternalDeserializeLoopStringKey(ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, DeserializeInfo[] infoList, LocalBuilder localResolver, LocalBuilder localResult, LocalBuilder localLength, bool canOverwrite, ObjectSerializationInfo info)
+        {
+            var automata = new AutomataDictionary();
+            for (var i = 0; i < info.Members.Length; i++)
+            {
+                automata.Add(info.Members[i].StringKey, i);
+            }
+
+            var buffer = il.DeclareLocal(typeof(ReadOnlySpan<byte>));
+            var longKey = il.DeclareLocal(typeof(ulong));
+            var reader = argReader;
+            var options = argOptions;
+
+            // for (int i = 0; i < len; i++)
+            void ForBody(LocalBuilder forILocal)
+            {
+                var readNext = il.DefineLabel();
+                var loopEnd = il.DefineLabel();
+
+                reader.EmitLdarg();
+                il.EmitCall(ReadStringSpan);
+                il.EmitStloc(buffer);
+
+                // gen automata name lookup
+                void OnFoundAssignDirect(KeyValuePair<string, int> x)
+                {
+                    var i = x.Value;
+                    var item = infoList[i];
+                    if (item.MemberInfo != null)
+                    {
+                        BuildDeserializeInternalDeserializeValueAssignDirectly(il, item, i, tryEmitLoadCustomFormatter, ref reader, ref options, localResolver, localResult);
+                        il.Emit(OpCodes.Br, loopEnd);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Br, readNext);
+                    }
+                }
+
+                void OnFoundAssignLocalVariable(KeyValuePair<string, int> x)
+                {
+                    var i = x.Value;
+                    var item = infoList[i];
+                    if (item.MemberInfo != null)
+                    {
+                        BuildDeserializeInternalDeserializeValueAssignLocalVariable(il, item, i, tryEmitLoadCustomFormatter, ref reader, ref options, localResolver, localResult);
+                        il.Emit(OpCodes.Br, loopEnd);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Br, readNext);
+                    }
+                }
+
+                void OnNotFound()
+                {
+                    il.Emit(OpCodes.Br, readNext);
+                }
+
+                if (canOverwrite)
+                {
+                    automata.EmitMatch(il, buffer, longKey, OnFoundAssignDirect, OnNotFound);
+                }
+                else
+                {
+                    automata.EmitMatch(il, buffer, longKey, OnFoundAssignLocalVariable, OnNotFound);
+                }
+
+                il.MarkLabel(readNext);
+                reader.EmitLdarg();
+                il.EmitCall(MessagePackReaderTypeInfo.Skip);
+
+                il.MarkLabel(loopEnd);
+            }
+
+            il.EmitIncrementFor(localLength, ForBody);
+        }
+
+        private static void BuildDeserializeInternalTryReadNil(Type type, ILGenerator il, ref ArgumentField argReader)
+        {
             // if(reader.TryReadNil()) { return null; }
-            Label falseLabel = il.DefineLabel();
-            reader.EmitLdarg();
+            var falseLabel = il.DefineLabel();
+            argReader.EmitLdarg();
             il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
             il.Emit(OpCodes.Brfalse_S, falseLabel);
             if (type.GetTypeInfo().IsClass)
@@ -872,266 +1270,112 @@ namespace MessagePack.Internal
             }
 
             il.MarkLabel(falseLabel);
+        }
 
-            var canOverwrite = info.ConstructorParameters.Length == 0;
-
-            var localResult = il.DeclareLocal(type);
-            if (canOverwrite)
-            {
-                // var result = new T();
-                if (info.IsClass)
-                {
-                    il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
-                    il.EmitStloc(localResult);
-                }
-                else
-                {
-                    il.Emit(OpCodes.Ldloca, localResult);
-                    il.Emit(OpCodes.Initobj, type);
-                }
-            }
-
-            // options.Security.DepthStep(ref reader);
-            argOptions.EmitLoad();
-            il.EmitCall(getSecurityFromOptions);
-            reader.EmitLdarg();
-            il.EmitCall(securityDepthStep);
-
-            // var length = ReadMapHeader(ref byteSequence);
-            LocalBuilder length = il.DeclareLocal(typeof(int)); // [loc:1]
-            reader.EmitLdarg();
-
-            if (info.IsIntKey)
-            {
-                il.EmitCall(MessagePackReaderTypeInfo.ReadArrayHeader);
-            }
-            else
-            {
-                il.EmitCall(MessagePackReaderTypeInfo.ReadMapHeader);
-            }
-
-            il.EmitStloc(length);
-
-            // make local fields
-            Label? gotoDefault = null;
-            DeserializeInfo[] infoList;
-            if (info.IsIntKey)
-            {
-                var maxKey = info.Members.Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
-                var len = maxKey + 1;
-                var intKeyMap = info.Members.ToDictionary(x => x.IntKey);
-
-                infoList = Enumerable.Range(0, len)
-                    .Select(x =>
-                    {
-                        ObjectSerializationInfo.EmittableMember member;
-                        if (intKeyMap.TryGetValue(x, out member))
-                        {
-                            return new DeserializeInfo
-                            {
-                                MemberInfo = member,
-                                LocalVariable = canOverwrite ? default : il.DeclareLocal(member.Type),
-                                SwitchLabel = il.DefineLabel(),
-                            };
-                        }
-                        else
-                        {
-                            // return null MemberInfo, should filter null
-                            if (gotoDefault == null)
-                            {
-                                gotoDefault = il.DefineLabel();
-                            }
-
-                            return new DeserializeInfo
-                            {
-                                MemberInfo = null,
-                                LocalVariable = null,
-                                SwitchLabel = gotoDefault.Value,
-                            };
-                        }
-                    })
-                    .ToArray();
-            }
-            else
-            {
-                infoList = info.Members
-                    .Select(item => new DeserializeInfo
-                    {
-                        MemberInfo = item,
-                        LocalVariable = canOverwrite ? default : il.DeclareLocal(item.Type),
-                        IsInitializedLocalVariable = canOverwrite ? default : il.DeclareLocal(typeof(bool)),
-                        //// SwitchLabel = il.DefineLabel()
-                    })
-                    .ToArray();
-            }
-
-            // IFormatterResolver resolver = options.Resolver;
-            var localResolver = default(LocalBuilder);
-            if (info.ShouldUseFormatterResolver)
-            {
-                localResolver = il.DeclareLocal(typeof(IFormatterResolver));
-                argOptions.EmitLoad();
-                il.EmitCall(getResolverFromOptions);
-                il.EmitStloc(localResolver);
-            }
-
-            // Read Loop(for var i = 0; i < length; i++)
-            if (info.IsStringKey)
-            {
-                var automata = new AutomataDictionary();
-                for (int i = 0; i < info.Members.Length; i++)
-                {
-                    automata.Add(info.Members[i].StringKey, i);
-                }
-
-                LocalBuilder buffer = il.DeclareLocal(typeof(ReadOnlySpan<byte>));
-                LocalBuilder longKey = il.DeclareLocal(typeof(ulong));
-
-                // for (int i = 0; i < len; i++)
-                il.EmitIncrementFor(length, forILocal =>
-                {
-                    Label readNext = il.DefineLabel();
-                    Label loopEnd = il.DefineLabel();
-
-                    reader.EmitLdarg();
-                    il.EmitCall(ReadStringSpan);
-                    il.EmitStloc(buffer);
-
-                    // gen automata name lookup
-                    automata.EmitMatch(
-                        il,
-                        buffer,
-                        longKey,
-                        x =>
-                        {
-                            var i = x.Value;
-                            if (infoList[i].MemberInfo != null)
-                            {
-                                EmitDeserializeValue(il, infoList[i], i, tryEmitLoadCustomFormatter, reader, argOptions, localResolver, canOverwrite, localResult);
-                                il.Emit(OpCodes.Br, loopEnd);
-                            }
-                            else
-                            {
-                                il.Emit(OpCodes.Br, readNext);
-                            }
-                        },
-                        () =>
-                        {
-                            il.Emit(OpCodes.Br, readNext);
-                        });
-
-                    il.MarkLabel(readNext);
-                    reader.EmitLdarg();
-                    il.EmitCall(MessagePackReaderTypeInfo.Skip);
-
-                    il.MarkLabel(loopEnd);
-                });
-            }
-            else
-            {
-                LocalBuilder key = il.DeclareLocal(typeof(int));
-                Label switchDefault = il.DefineLabel();
-
-                il.EmitIncrementFor(length, forILocal =>
-                {
-                    Label loopEnd = il.DefineLabel();
-
-                    il.EmitLdloc(forILocal);
-                    il.EmitStloc(key);
-
-                    // switch... local = Deserialize
-                    il.EmitLdloc(key);
-
-                    il.Emit(OpCodes.Switch, infoList.Select(x => x.SwitchLabel).ToArray());
-
-                    il.MarkLabel(switchDefault);
-
-                    // default, only read. reader.ReadNextBlock();
-                    reader.EmitLdarg();
-                    il.EmitCall(MessagePackReaderTypeInfo.Skip);
-                    il.Emit(OpCodes.Br, loopEnd);
-
-                    if (gotoDefault != null)
-                    {
-                        il.MarkLabel(gotoDefault.Value);
-                        il.Emit(OpCodes.Br, switchDefault);
-                    }
-
-                    var i = 0;
-                    foreach (DeserializeInfo item in infoList)
-                    {
-                        if (item.MemberInfo != null)
-                        {
-                            il.MarkLabel(item.SwitchLabel);
-                            EmitDeserializeValue(il, item, i++, tryEmitLoadCustomFormatter, reader, argOptions, localResolver, canOverwrite, localResult);
-                            il.Emit(OpCodes.Br, loopEnd);
-                        }
-                    }
-
-                    il.MarkLabel(loopEnd);
-                });
-            }
-
-            // create result object
-            if (!canOverwrite)
-            {
-                EmitNewObject(il, type, info, infoList, localResult, length);
-            }
-
-            // IMessagePackSerializationCallbackReceiver.OnAfterDeserialize()
-            if (type.GetTypeInfo().ImplementedInterfaces.Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
-            {
-                // call directly
-                MethodInfo[] runtimeMethods = type.GetRuntimeMethods().Where(x => x.Name == "OnAfterDeserialize").ToArray();
-                if (runtimeMethods.Length == 1)
-                {
-                    if (info.IsClass)
-                    {
-                        il.EmitLdloc(localResult);
-                    }
-                    else
-                    {
-                        il.EmitLdloca(localResult);
-                    }
-
-                    il.Emit(OpCodes.Call, runtimeMethods[0]); // don't use EmitCall helper(must use 'Call')
-                }
-                else
-                {
-                    if (info.IsClass)
-                    {
-                        il.EmitLdloc(localResult);
-                    }
-                    else
-                    {
-                        il.EmitLdloc(localResult);
-                        il.Emit(OpCodes.Box, type);
-                    }
-
-                    il.EmitCall(onAfterDeserialize);
-                }
-            }
-
-            // reader.Depth--;
-            reader.EmitLdarg();
+        private static void BuildDeserializeInternalDepthUnStep(ILGenerator il, ref ArgumentField argReader)
+        {
+            argReader.EmitLdarg();
             il.Emit(OpCodes.Dup);
             il.EmitCall(readerDepthGet);
             il.Emit(OpCodes.Ldc_I4_1);
             il.Emit(OpCodes.Sub_Ovf);
             il.EmitCall(readerDepthSet);
-
-            il.Emit(OpCodes.Ldloc, localResult);
-            il.Emit(OpCodes.Ret);
         }
 
-        private static void EmitDeserializeValue(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argReader, ArgumentField argOptions, LocalBuilder localResolver, bool canOverwrite, LocalBuilder localResult)
+        private static void BuildDeserializeInternalOnAfterDeserialize(Type type, ObjectSerializationInfo info, ILGenerator il, LocalBuilder localResult)
         {
-            Label storeLabel = il.DefineLabel();
-            ObjectSerializationInfo.EmittableMember member = info.MemberInfo;
-            Type t = member.Type;
-            Action emitter = tryEmitLoadCustomFormatter(index, member);
+            if (type.GetTypeInfo().ImplementedInterfaces.All(x => x != typeof(IMessagePackSerializationCallbackReceiver)))
+            {
+                return;
+            }
 
-            if (canOverwrite && member.IsWritable)
+            if (info.IsClass)
+            {
+                il.EmitLdloc(localResult);
+            }
+
+            // call directly
+            var runtimeMethod = type.GetRuntimeMethods().SingleOrDefault(x => x.Name == "OnAfterDeserialize");
+            if (runtimeMethod != null)
+            {
+                if (info.IsStruct)
+                {
+                    il.EmitLdloca(localResult);
+                }
+
+                il.Emit(OpCodes.Call, runtimeMethod); // don't use EmitCall helper(must use 'Call')
+            }
+            else
+            {
+                if (info.IsStruct)
+                {
+                    il.EmitLdloc(localResult);
+                    il.Emit(OpCodes.Box, type);
+                }
+
+                il.EmitCall(onAfterDeserialize);
+            }
+        }
+
+        private static LocalBuilder BuildDeserializeInternalResolver(ObjectSerializationInfo info, ILGenerator il, ref ArgumentField argOptions)
+        {
+            if (!info.ShouldUseFormatterResolver)
+            {
+                return default;
+            }
+
+            // IFormatterResolver resolver = options.Resolver;
+            var localResolver = il.DeclareLocal(typeof(IFormatterResolver));
+            argOptions.EmitLoad();
+            il.EmitCall(getResolverFromOptions);
+            il.EmitStloc(localResolver);
+            return localResolver;
+        }
+
+        private static LocalBuilder BuildDeserializeInternalReadHeaderLength(ObjectSerializationInfo info, ILGenerator il, ref ArgumentField argReader)
+        {
+            // var length = ReadMapHeader(ref byteSequence);
+            var length = il.DeclareLocal(typeof(int)); // [loc:1]
+            argReader.EmitLdarg();
+
+            il.EmitCall(info.IsIntKey ? MessagePackReaderTypeInfo.ReadArrayHeader : MessagePackReaderTypeInfo.ReadMapHeader);
+
+            il.EmitStloc(length);
+            return length;
+        }
+
+        private static void BuildDeserializeInternalDepthStep(ILGenerator il, ref ArgumentField argReader, ref ArgumentField argOptions)
+        {
+            argOptions.EmitLoad();
+            il.EmitCall(getSecurityFromOptions);
+            argReader.EmitLdarg();
+            il.EmitCall(securityDepthStep);
+        }
+
+        // where T : new();
+        private static void BuildDeserializeInternalCreateInstance(Type type, ObjectSerializationInfo info, ILGenerator il, LocalBuilder localResult)
+        {
+            // var result = new T();
+            if (info.IsClass)
+            {
+                il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
+                il.EmitStloc(localResult);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldloca, localResult);
+                il.Emit(OpCodes.Initobj, type);
+            }
+        }
+
+        private static void BuildDeserializeInternalDeserializeValueAssignDirectly(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localResult)
+        {
+            var storeLabel = il.DefineLabel();
+            var member = info.MemberInfo;
+            var t = member.Type;
+            var emitter = tryEmitLoadCustomFormatter(index, member);
+
+            if (member.IsWritable)
             {
                 if (localResult.LocalType.IsClass)
                 {
@@ -1161,7 +1405,7 @@ namespace MessagePack.Internal
                 {
                     // As a nullable type (e.g. byte[] and string) we need to first call TryReadNil
                     // if (reader.TryReadNil())
-                    Label readNonNilValueLabel = il.DefineLabel();
+                    var readNonNilValueLabel = il.DefineLabel();
                     argReader.EmitLdarg();
                     il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
                     il.Emit(OpCodes.Brfalse_S, readNonNilValueLabel);
@@ -1174,7 +1418,7 @@ namespace MessagePack.Internal
                 argReader.EmitLdarg();
                 if (t == typeof(byte[]))
                 {
-                    LocalBuilder local = il.DeclareLocal(typeof(ReadOnlySequence<byte>?));
+                    var local = il.DeclareLocal(typeof(ReadOnlySequence<byte>?));
                     il.EmitCall(MessagePackReaderTypeInfo.ReadBytes);
                     il.EmitStloc(local);
                     il.EmitLdloca(local);
@@ -1195,110 +1439,77 @@ namespace MessagePack.Internal
             }
 
             il.MarkLabel(storeLabel);
-            if (canOverwrite)
+            if (member.IsWritable)
             {
-                if (member.IsWritable)
+                member.EmitStoreValue(il);
+            }
+            else
+            {
+                il.Emit(OpCodes.Pop);
+            }
+        }
+
+        private static void BuildDeserializeInternalDeserializeValueAssignLocalVariable(ILGenerator il, DeserializeInfo info, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argReader, ref ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localResult)
+        {
+            var storeLabel = il.DefineLabel();
+            var member = info.MemberInfo;
+            var t = member.Type;
+            var emitter = tryEmitLoadCustomFormatter(index, member);
+
+            if (info.IsInitializedLocalVariable != null)
+            {
+                il.EmitLdc_I4(1);
+                il.EmitStloc(info.IsInitializedLocalVariable);
+            }
+
+            if (emitter != null)
+            {
+                emitter();
+                argReader.EmitLdarg();
+                argOptions.EmitLoad();
+                il.EmitCall(getDeserialize(t));
+            }
+            else if (ObjectSerializationInfo.IsOptimizeTargetType(t))
+            {
+                if (!t.GetTypeInfo().IsValueType)
                 {
-                    member.EmitStoreValue(il);
+                    // As a nullable type (e.g. byte[] and string) we need to first call TryReadNil
+                    // if (reader.TryReadNil())
+                    var readNonNilValueLabel = il.DefineLabel();
+                    argReader.EmitLdarg();
+                    il.EmitCall(MessagePackReaderTypeInfo.TryReadNil);
+                    il.Emit(OpCodes.Brfalse_S, readNonNilValueLabel);
+                    il.Emit(OpCodes.Ldnull);
+                    il.Emit(OpCodes.Br, storeLabel);
+
+                    il.MarkLabel(readNonNilValueLabel);
+                }
+
+                argReader.EmitLdarg();
+                if (t == typeof(byte[]))
+                {
+                    var local = il.DeclareLocal(typeof(ReadOnlySequence<byte>?));
+                    il.EmitCall(MessagePackReaderTypeInfo.ReadBytes);
+                    il.EmitStloc(local);
+                    il.EmitLdloca(local);
+                    il.EmitCall(ArrayFromNullableReadOnlySequence);
                 }
                 else
                 {
-                    il.Emit(OpCodes.Pop);
+                    il.EmitCall(MessagePackReaderTypeInfo.TypeInfo.GetDeclaredMethods("Read" + t.Name).First(x => x.GetParameters().Length == 0));
                 }
             }
             else
             {
-                il.EmitStloc(info.LocalVariable);
-            }
-        }
-
-        private static void EmitNewObject(ILGenerator il, Type type, ObjectSerializationInfo info, DeserializeInfo[] members, LocalBuilder localResult, LocalBuilder localLength)
-        {
-            EmitNewObjectConstructorArguments(il, info, members);
-
-            il.Emit(OpCodes.Newobj, info.BestmatchConstructor);
-            il.Emit(OpCodes.Stloc, localResult);
-
-            if (info.IsStringKey)
-            {
-                foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
-                {
-                    var skipLabel = il.DefineLabel();
-                    il.EmitLdloc(item.IsInitializedLocalVariable);
-                    il.Emit(OpCodes.Brfalse_S, skipLabel);
-
-                    if (info.IsClass)
-                    {
-                        il.EmitLdloc(localResult);
-                    }
-                    else
-                    {
-                        il.EmitLdloca(localResult);
-                    }
-
-                    il.EmitLdloc(item.LocalVariable);
-                    item.MemberInfo.EmitStoreValue(il);
-
-                    il.MarkLabel(skipLabel);
-                }
-
-                return;
+                il.EmitLdloc(localResolver);
+                il.EmitCall(getFormatterWithVerify.MakeGenericMethod(t));
+                argReader.EmitLdarg();
+                argOptions.EmitLoad();
+                il.EmitCall(getDeserialize(t));
             }
 
-            // use Array
-            var filteredMembers = members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable).ToArray();
-            var maxKey = filteredMembers.Select(x => x.MemberInfo.IntKey).DefaultIfEmpty(-1).Max();
-            if (maxKey == -1)
-            {
-                return;
-            }
-
-            var assignmentDoneLabel = il.DefineLabel();
-            var intKeyMap = filteredMembers.ToDictionary(x => x.MemberInfo.IntKey);
-            for (var key = 0; key <= maxKey; key++)
-            {
-                if (!intKeyMap.TryGetValue(key, out var item))
-                {
-                    continue;
-                }
-
-                // if (length <= key) goto ASSIGNMENT_DONE;
-                il.EmitLdloc(localLength);
-                il.EmitLdc_I4(key);
-                il.Emit(OpCodes.Ble, assignmentDoneLabel);
-
-                if (info.IsClass)
-                {
-                    il.EmitLdloc(localResult);
-                }
-                else
-                {
-                    il.EmitLdloca(localResult);
-                }
-
-                il.EmitLdloc(item.LocalVariable);
-                item.MemberInfo.EmitStoreValue(il);
-            }
-
-            il.MarkLabel(assignmentDoneLabel);
-        }
-
-        private static void EmitNewObjectConstructorArguments(ILGenerator il, ObjectSerializationInfo info, DeserializeInfo[] members)
-        {
-            foreach (ObjectSerializationInfo.EmittableMemberAndConstructorParameter item in info.ConstructorParameters)
-            {
-                DeserializeInfo local = members.First(x => x.MemberInfo == item.MemberInfo);
-                il.EmitLdloc(local.LocalVariable);
-
-                if (!item.ConstructorParameter.ParameterType.IsValueType && local.MemberInfo.IsValueType)
-                {
-                    // When a constructor argument of type object is being provided by a serialized member value that is a value type
-                    // then that value must be boxed in order for the generated code to be valid (see issue #987). This may occur because
-                    // the only requirement when determining whether a member value may be used to populate a constructor argument in an
-                    // IsAssignableFrom check and typeof(object) IsAssignableFrom typeof(int), for example.
-                    il.Emit(OpCodes.Box, local.MemberInfo.Type);
-                }
-            }
+            il.MarkLabel(storeLabel);
+            il.EmitStloc(info.LocalVariable);
         }
 
 #pragma warning disable SA1311 // Static readonly fields should begin with upper-case letter
