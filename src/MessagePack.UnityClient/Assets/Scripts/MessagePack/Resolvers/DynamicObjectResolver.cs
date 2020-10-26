@@ -930,7 +930,7 @@ namespace MessagePack.Internal
                             return new DeserializeInfo
                             {
                                 MemberInfo = member,
-                                LocalField = canOverwrite ? default : il.DeclareLocal(member.Type),
+                                LocalVariable = canOverwrite ? default : il.DeclareLocal(member.Type),
                                 SwitchLabel = il.DefineLabel(),
                             };
                         }
@@ -945,7 +945,7 @@ namespace MessagePack.Internal
                             return new DeserializeInfo
                             {
                                 MemberInfo = null,
-                                LocalField = null,
+                                LocalVariable = null,
                                 SwitchLabel = gotoDefault.Value,
                             };
                         }
@@ -958,8 +958,8 @@ namespace MessagePack.Internal
                     .Select(item => new DeserializeInfo
                     {
                         MemberInfo = item,
-                        LocalField = canOverwrite ? default : il.DeclareLocal(item.Type),
-                        LocalIsInitializedField = canOverwrite ? default : il.DeclareLocal(typeof(bool)),
+                        LocalVariable = canOverwrite ? default : il.DeclareLocal(item.Type),
+                        IsInitializedLocalVariable = canOverwrite ? default : il.DeclareLocal(typeof(bool)),
                         //// SwitchLabel = il.DefineLabel()
                     })
                     .ToArray();
@@ -1142,10 +1142,10 @@ namespace MessagePack.Internal
                     il.EmitLdloca(localResult);
                 }
             }
-            else if (info.LocalIsInitializedField != null)
+            else if (info.IsInitializedLocalVariable != null)
             {
                 il.EmitLdc_I4(1);
-                il.EmitStloc(info.LocalIsInitializedField);
+                il.EmitStloc(info.IsInitializedLocalVariable);
             }
 
             if (emitter != null)
@@ -1208,7 +1208,7 @@ namespace MessagePack.Internal
             }
             else
             {
-                il.EmitStloc(info.LocalField);
+                il.EmitStloc(info.LocalVariable);
             }
         }
 
@@ -1224,7 +1224,7 @@ namespace MessagePack.Internal
                 foreach (var item in members.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable))
                 {
                     var skipLabel = il.DefineLabel();
-                    il.EmitLdloc(item.LocalIsInitializedField);
+                    il.EmitLdloc(item.IsInitializedLocalVariable);
                     il.Emit(OpCodes.Brfalse_S, skipLabel);
 
                     if (info.IsClass)
@@ -1236,7 +1236,7 @@ namespace MessagePack.Internal
                         il.EmitLdloca(localResult);
                     }
 
-                    il.EmitLdloc(item.LocalField);
+                    il.EmitLdloc(item.LocalVariable);
                     item.MemberInfo.EmitStoreValue(il);
 
                     il.MarkLabel(skipLabel);
@@ -1276,7 +1276,7 @@ namespace MessagePack.Internal
                     il.EmitLdloca(localResult);
                 }
 
-                il.EmitLdloc(item.LocalField);
+                il.EmitLdloc(item.LocalVariable);
                 item.MemberInfo.EmitStoreValue(il);
             }
 
@@ -1288,7 +1288,7 @@ namespace MessagePack.Internal
             foreach (ObjectSerializationInfo.EmittableMemberAndConstructorParameter item in info.ConstructorParameters)
             {
                 DeserializeInfo local = members.First(x => x.MemberInfo == item.MemberInfo);
-                il.EmitLdloc(local.LocalField);
+                il.EmitLdloc(local.LocalVariable);
 
                 if (!item.ConstructorParameter.ParameterType.IsValueType && local.MemberInfo.IsValueType)
                 {
@@ -1392,9 +1392,9 @@ namespace MessagePack.Internal
         {
             public ObjectSerializationInfo.EmittableMember MemberInfo { get; set; }
 
-            public LocalBuilder LocalField { get; set; }
+            public LocalBuilder LocalVariable { get; set; }
 
-            public LocalBuilder LocalIsInitializedField { get; set; }
+            public LocalBuilder IsInitializedLocalVariable { get; set; }
 
             public Label SwitchLabel { get; set; }
         }
