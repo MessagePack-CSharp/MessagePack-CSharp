@@ -468,6 +468,50 @@ namespace SharedData
     }
 
     [MessagePackObject]
+    public class GenericConstrainedClassIntKey<T1, T2>
+        where T1 : class
+        where T2 : class, IEqualityComparer<T1>
+    {
+        [Key(0)]
+        public T1 MyProperty0 { get; set; }
+
+        [Key(1)]
+        public T2 Comparer { get; set; }
+    }
+
+    [MessagePackObject(keyAsPropertyName: true)]
+    public class GenericConstrainedClassStringKey<T1, T2>
+        where T1 : class
+        where T2 : class, IEqualityComparer<T1>
+    {
+        public T1 MyProperty0 { get; set; }
+
+        public T2 Comparer { get; set; }
+    }
+
+    [MessagePackObject]
+    public struct GenericConstrainedStructIntKey<T1, T2>
+        where T1 : unmanaged
+        where T2 : unmanaged, IEqualityComparer<T1>
+    {
+        [Key(0)]
+        public T1 MyProperty0 { get; set; }
+
+        [Key(1)]
+        public T2 Comparer { get; set; }
+    }
+
+    [MessagePackObject(keyAsPropertyName: true)]
+    public struct GenericConstrainedStructStringKey<T1, T2>
+        where T1 : unmanaged
+        where T2 : unmanaged, IEqualityComparer<T1>
+    {
+        public T1 MyProperty0 { get; set; }
+
+        public T2 Comparer { get; set; }
+    }
+
+    [MessagePackObject]
     public class VersionBlockTest
     {
         [Key(0)]
