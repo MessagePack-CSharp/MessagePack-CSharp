@@ -16,6 +16,15 @@ namespace MessagePack.Tests
     {
         private readonly ITestOutputHelper logger;
 
+#if UNITY_2018_3_OR_NEWER
+
+        public DynamicObjectResolverTests()
+        {
+            this.logger = new NullTestOutputHelper();
+        }
+
+#endif
+
         public DynamicObjectResolverTests(ITestOutputHelper logger)
         {
             this.logger = logger;
