@@ -6,6 +6,7 @@
 using System;
 using System.Runtime.Serialization;
 using MessagePack;
+using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using Xunit;
 using Xunit.Abstractions;
@@ -104,6 +105,14 @@ public class MessagePackSerializerTypelessTests
         Assert.IsType(boxedValue.GetType(), roundTripValue);
     }
 
+    [Fact]
+    public void TypelessFormatterAsAttribute()
+    {
+        byte[] msgpack = MessagePackSerializer.Serialize(new ClassWithTypelessField { Value = "hi" }, MessagePackSerializerOptions.Standard);
+        var deserialized = MessagePackSerializer.Deserialize<ClassWithTypelessField>(msgpack, MessagePackSerializerOptions.Standard);
+        Assert.Equal("hi", deserialized.Value);
+    }
+
     public class MyObject
     {
         public object SomeValue { get; set; }
@@ -164,6 +173,14 @@ public class MessagePackSerializerTypelessTests
     public class TypelessNonAbstract : TypelessAbstract
     {
         public int Y { get; set; }
+    }
+
+    [MessagePackObject]
+    public class ClassWithTypelessField
+    {
+        [Key("Value")]
+        [MessagePackFormatter(typeof(TypelessFormatter))]
+        public object Value;
     }
 }
 
