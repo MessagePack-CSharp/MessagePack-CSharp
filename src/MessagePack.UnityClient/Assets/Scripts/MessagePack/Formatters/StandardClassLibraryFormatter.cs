@@ -300,7 +300,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                writer.Write(value.ToString());
+                writer.Write(value.OriginalString);
             }
         }
 
