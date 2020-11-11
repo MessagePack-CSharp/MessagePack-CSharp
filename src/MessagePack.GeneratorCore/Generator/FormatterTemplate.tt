@@ -81,13 +81,21 @@ namespace <#= Namespace #>
 <# } #>
             }
 
+<# if (objInfo.MaxKey == -1 && !objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+            reader.Skip();
+            return new <#= objInfo.GetConstructorString()  #>;
+<# } else { #>
             options.Security.DepthStep(ref reader);
 <# if (isFormatterResolverNecessary) { #>
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
 <# } #>
             var length = reader.ReadArrayHeader();
-<# foreach (var member in objInfo.Members) { #>
+<# var canOverwrite = objInfo.ConstructorParameters.Length == 0;
+ if (canOverwrite) { #>
+            var ____result = new <#= objInfo.GetConstructorString()  #>;
+<# } else { foreach (var member in objInfo.Members) { #>
             var __<#= member.Name #>__ = default(<#= member.Type #>);
+<# } #>
 <# } #>
 
             for (int i = 0; i < length; i++)
@@ -98,7 +106,15 @@ namespace <#= Namespace #>
   var member = objInfo.GetMember(memberIndex);
   if (member == null) { continue; } #>
                     case <#= member.IntKey #>:
+<# if (canOverwrite) {
+  if (member.IsWritable) { #>
+                        ____result.<#= member.Name #> = <#= member.GetDeserializeMethodString() #>;
+<# } else { #>
+                        <#= member.GetDeserializeMethodString() #>;
+<# } #>
+<# } else {#>
                         __<#= member.Name #>__ = <#= member.GetDeserializeMethodString() #>;
+<# } #>
                         break;
 <# } #>
                     default:
@@ -107,12 +123,25 @@ namespace <#= Namespace #>
                 }
             }
 
+<# if (!canOverwrite) { #>
             var ____result = new <#= objInfo.GetConstructorString()  #>;
-<# for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+<# bool memberAssignExists = false;
+  for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
   var member = objInfo.GetMember(memberIndex);
-  if (member == null || !member.IsWritable) { continue; } #>
+  if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  memberAssignExists = true;#>
+            if (length <= <#= memberIndex #>)
+            {
+                goto MEMBER_ASSIGNMENT_END;
+            }
+
             ____result.<#= member.Name #> = __<#= member.Name #>__;
+<# } #>
+<# if (memberAssignExists) { #>
+
+        MEMBER_ASSIGNMENT_END:
 <# }
+ }
 
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
   if (objInfo.NeedsCastOnAfter) { #>
@@ -123,6 +152,7 @@ namespace <#= Namespace #>
 <# } #>
             reader.Depth--;
             return ____result;
+<# } #>
         }
     }
 <# } #>

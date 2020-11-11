@@ -22,199 +22,131 @@
 
 namespace <#= Namespace #>
 {
-    using System;
-    using System.Buffers;
-    using System.Runtime.InteropServices;
-    using MessagePack;
-<#
-var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
-foreach (var objInfo in ObjectSerializationInfos)
-{
+    using global::System.Buffers;
+    using global::MessagePack;
+<# var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
+foreach (var objInfo in ObjectSerializationInfos) {
     list.Clear();
-    foreach (var member in objInfo.Members)
-    {
+    foreach (var member in objInfo.Members) {
         var binary = EmbedStringHelper.Utf8.GetBytes(member.StringKey);
         list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
     }
 
     string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(", ", objInfo.GenericTypeParameters.Select(x => x.Name))}>" : "Formatter");
-    bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);
-#>
+    bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members); #>
 
     public sealed class <#= formatterName #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
 <# foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) {#>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# }#>
     {
-<#
-    foreach (var memberAndBinary in list)
-    {
-        var member = memberAndBinary.Item1;
-        var binary = memberAndBinary.Item2;
-#>
+<# for (var i = 0; i < list.Count; i++) {
+        var member = list[i].Item1;
+        var binary = list[i].Item2; #>
         // <#= member.StringKey #>
         private static global::System.ReadOnlySpan<byte> GetSpan_<#= member.Name #>() => <#= EmbedStringHelper.ToByteArrayString(binary) #>;
-<#
-    }
-#>
+<# } #>
+<# if (list.Count != 0) { #>
 
+<# } #>
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
-<#
-    if (objInfo.IsClass)
-    {
-#>
+<# if (objInfo.IsClass) { #>
             if (value is null)
             {
                 writer.WriteNil();
                 return;
             }
 
-<#
-    }
+<# }
 
-    if (isFormatterResolverNecessary)
-    {
-#>
-            IFormatterResolver formatterResolver = options.Resolver;
-<#
-    }
+    if (isFormatterResolverNecessary) { #>
+            var formatterResolver = options.Resolver;
+<# }
 
-    if (objInfo.HasIMessagePackSerializationCallbackReceiver)
-    {
-        if (objInfo.NeedsCastOnBefore)
-        {
-#>
+    if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
+        if (objInfo.NeedsCastOnBefore) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
-<#
-        }
-        else
-        {
-#>
+<# } else { #>
             value.OnBeforeSerialize();
-<#
-        }
-    }
-#>
+<# } #>
+<# } #>
             writer.WriteMapHeader(<#= list.Count #>);
-<#
-    foreach (var memberAndBinary in list)
-    {
-        var member = memberAndBinary.Item1;
-#>
+<# foreach (var memberAndBinary in list) {
+        var member = memberAndBinary.Item1; #>
             writer.WriteRaw(GetSpan_<#= member.Name #>());
             <#= member.GetSerializeMethodString() #>;
-<#
-    }
-#>
+<# } #>
         }
 
         public <#= objInfo.FullName #> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
-<#
-    if (objInfo.IsClass)
-    {
-#>
+<# if (objInfo.IsClass) { #>
                 return null;
-<#
-    }
-    else
-    {
-#>
+<# } else { #>
                 throw new global::System.InvalidOperationException("typecode is null, struct not supported");
-<#
-    }
-#>
+<# } #>
             }
 
-<#
-    if (objInfo.Members.Length == 0)
-    {
-#>
+<# if (objInfo.Members.Length == 0) { #>
             reader.Skip();
             var ____result = new <#= objInfo.GetConstructorString() #>;
-<#
-    }
-    else
-    {
-#>
+<# } else { #>
             options.Security.DepthStep(ref reader);
-<#
-        if (isFormatterResolverNecessary)
-        {
-#>
-            IFormatterResolver formatterResolver = options.Resolver;
-<#
-        }
-#>
+<# if (isFormatterResolverNecessary) { #>
+            var formatterResolver = options.Resolver;
+<# } #>
             var length = reader.ReadMapHeader();
-<#
-        foreach (var memberInfo in objInfo.Members)
-        {
-#>
-            var __<#= memberInfo.Name #>__ = default(<#= memberInfo.Type #>);
-<#
-        }
-#>
+<# var canOverwrite = objInfo.ConstructorParameters.Length == 0;
+        if (canOverwrite) { #>
+            var ____result = new <#= objInfo.GetConstructorString() #>;
+<# } else {
+            foreach (var member in objInfo.Members.Where(x => x.IsWritable)) { #>
+<# if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { #>
+            var __<#= member.Name #>__IsInitialized = false;
+<# } #>
+            var __<#= member.Name #>__ = default(<#= member.Type #>);
+<# } #>
+<# } #>
 
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
                     FAIL:
                       reader.Skip();
                       continue;
-<#= StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ") #>
+<#= StringKeyFormatterDeserializeHelper.Classify(objInfo, "                    ", canOverwrite) #>
                 }
             }
 
-            var ____result = new <#= objInfo.GetConstructorString() #>
+<# if (!canOverwrite) { #>
+            var ____result = new <#= objInfo.GetConstructorString() #>;
+<# foreach (var member in objInfo.Members.Where(x => x.IsWritable && !objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { #>
+            if (__<#= member.Name #>__IsInitialized)
             {
-<#
-        // Preparation for C#9 Record class
-        foreach (var member in objInfo.Members.Where(x => x.IsWritable))
-        {
-#>
-                <#= member.Name #> = __<#= member.Name #>__,
-<#
-        }
-#>
-            };
+                ____result.<#= member.Name #> = __<#= member.Name #>__;
+            }
 
-<#
-    }
-
-    if (objInfo.HasIMessagePackSerializationCallbackReceiver)
-    {
-        if (objInfo.NeedsCastOnAfter)
-        {
-#>
+<# } #>
+<# } #>
+<# } #>
+<# if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
+        if (objInfo.NeedsCastOnAfter) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
-<#
-        }
-        else
-        {
-#>
+<# } else { #>
             ____result.OnAfterDeserialize();
-<#
-        }
-    }
-
-    if (objInfo.Members.Length != 0)
-    {
-#>
+<# } #>
+<# } #>
+<# if (objInfo.Members.Length != 0) { #>
             reader.Depth--;
-<#
-    }
-#>
+<# } #>
             return ____result;
         }
     }
-<#
-}
-#>
+<# } #>
 }

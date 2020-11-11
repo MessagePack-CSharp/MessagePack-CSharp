@@ -118,18 +118,30 @@ namespace ");
             this.Write("                throw new global::System.InvalidOperationException(\"typecode is n" +
                     "ull, struct not supported\");\r\n");
  } 
-            this.Write("            }\r\n\r\n            options.Security.DepthStep(ref reader);\r\n");
+            this.Write("            }\r\n\r\n");
+ if (objInfo.MaxKey == -1 && !objInfo.HasIMessagePackSerializationCallbackReceiver) { 
+            this.Write("            reader.Skip();\r\n            return new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
+            this.Write(";\r\n");
+ } else { 
+            this.Write("            options.Security.DepthStep(ref reader);\r\n");
  if (isFormatterResolverNecessary) { 
             this.Write("            global::MessagePack.IFormatterResolver formatterResolver = options.Re" +
                     "solver;\r\n");
  } 
             this.Write("            var length = reader.ReadArrayHeader();\r\n");
- foreach (var member in objInfo.Members) { 
+ var canOverwrite = objInfo.ConstructorParameters.Length == 0;
+ if (canOverwrite) { 
+            this.Write("            var ____result = new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
+            this.Write(";\r\n");
+ } else { foreach (var member in objInfo.Members) { 
             this.Write("            var __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__ = default(");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Type));
             this.Write(");\r\n");
+ } 
  } 
             this.Write("\r\n            for (int i = 0; i < length; i++)\r\n            {\r\n                sw" +
                     "itch (i)\r\n                {\r\n");
@@ -138,25 +150,51 @@ namespace ");
   if (member == null) { continue; } 
             this.Write("                    case ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.IntKey));
-            this.Write(":\r\n                        __");
+            this.Write(":\r\n");
+ if (canOverwrite) {
+  if (member.IsWritable) { 
+            this.Write("                        ____result.");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(" = ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
+            this.Write(";\r\n");
+ } else { 
+            this.Write("                        ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
+            this.Write(";\r\n");
+ } 
+ } else {
+            this.Write("                        __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__ = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetDeserializeMethodString()));
-            this.Write(";\r\n                        break;\r\n");
+            this.Write(";\r\n");
+ } 
+            this.Write("                        break;\r\n");
  } 
             this.Write("                    default:\r\n                        reader.Skip();\r\n           " +
-                    "             break;\r\n                }\r\n            }\r\n\r\n            var ____res" +
-                    "ult = new ");
+                    "             break;\r\n                }\r\n            }\r\n\r\n");
+ if (!canOverwrite) { 
+            this.Write("            var ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             this.Write(";\r\n");
- for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+ bool memberAssignExists = false;
+  for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
   var member = objInfo.GetMember(memberIndex);
-  if (member == null || !member.IsWritable) { continue; } 
-            this.Write("            ____result.");
+  if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  memberAssignExists = true;
+            this.Write("            if (length <= ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(memberIndex));
+            this.Write(")\r\n            {\r\n                goto MEMBER_ASSIGNMENT_END;\r\n            }\r\n\r\n " +
+                    "           ____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write(" = __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__;\r\n");
+ } 
+ if (memberAssignExists) { 
+            this.Write("\r\n        MEMBER_ASSIGNMENT_END:\r\n");
+ }
  }
 
  if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
@@ -167,7 +205,9 @@ namespace ");
             this.Write("            ____result.OnAfterDeserialize();\r\n");
  } 
  } 
-            this.Write("            reader.Depth--;\r\n            return ____result;\r\n        }\r\n    }\r\n");
+            this.Write("            reader.Depth--;\r\n            return ____result;\r\n");
+ } 
+            this.Write("        }\r\n    }\r\n");
  } 
             this.Write(@"}
 

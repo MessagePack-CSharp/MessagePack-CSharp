@@ -43,22 +43,17 @@ namespace MessagePackCompiler.Generator
 
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    using System;\r\n    using System.Buffers;\r\n    using System.Runtime.Inter" +
-                    "opServices;\r\n    using MessagePack;\r\n");
-
-var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
-foreach (var objInfo in ObjectSerializationInfos)
-{
+            this.Write("\r\n{\r\n    using global::System.Buffers;\r\n    using global::MessagePack;\r\n");
+ var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
+foreach (var objInfo in ObjectSerializationInfos) {
     list.Clear();
-    foreach (var member in objInfo.Members)
-    {
+    foreach (var member in objInfo.Members) {
         var binary = EmbedStringHelper.Utf8.GetBytes(member.StringKey);
         list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
     }
 
     string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(", ", objInfo.GenericTypeParameters.Select(x => x.Name))}>" : "Formatter");
-    bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);
-
+    bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members); 
             this.Write("\r\n    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
@@ -72,12 +67,9 @@ foreach (var objInfo in ObjectSerializationInfos)
             this.Write("\r\n");
  }
             this.Write("    {\r\n");
-
-    foreach (var memberAndBinary in list)
-    {
-        var member = memberAndBinary.Item1;
-        var binary = memberAndBinary.Item2;
-
+ for (var i = 0; i < list.Count; i++) {
+        var member = list[i].Item1;
+        var binary = list[i].Item2; 
             this.Write("        // ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.StringKey));
             this.Write("\r\n        private static global::System.ReadOnlySpan<byte> GetSpan_");
@@ -85,121 +77,86 @@ foreach (var objInfo in ObjectSerializationInfos)
             this.Write("() => ");
             this.Write(this.ToStringHelper.ToStringWithCulture(EmbedStringHelper.ToByteArrayString(binary)));
             this.Write(";\r\n");
-
-    }
-
-            this.Write("\r\n        public void Serialize(ref global::MessagePack.MessagePackWriter writer," +
-                    " ");
+ } 
+ if (list.Count != 0) { 
+            this.Write("\r\n");
+ } 
+            this.Write("        public void Serialize(ref global::MessagePack.MessagePackWriter writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n");
-
-    if (objInfo.IsClass)
-    {
-
+ if (objInfo.IsClass) { 
             this.Write("            if (value is null)\r\n            {\r\n                writer.WriteNil();" +
                     "\r\n                return;\r\n            }\r\n\r\n");
+ }
 
-    }
+    if (isFormatterResolverNecessary) { 
+            this.Write("            var formatterResolver = options.Resolver;\r\n");
+ }
 
-    if (isFormatterResolverNecessary)
-    {
-
-            this.Write("            IFormatterResolver formatterResolver = options.Resolver;\r\n");
-
-    }
-
-    if (objInfo.HasIMessagePackSerializationCallbackReceiver)
-    {
-        if (objInfo.NeedsCastOnBefore)
-        {
-
+    if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
+        if (objInfo.NeedsCastOnBefore) { 
             this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value" +
                     ").OnBeforeSerialize();\r\n");
-
-        }
-        else
-        {
-
+ } else { 
             this.Write("            value.OnBeforeSerialize();\r\n");
-
-        }
-    }
-
+ } 
+ } 
             this.Write("            writer.WriteMapHeader(");
             this.Write(this.ToStringHelper.ToStringWithCulture(list.Count));
             this.Write(");\r\n");
-
-    foreach (var memberAndBinary in list)
-    {
-        var member = memberAndBinary.Item1;
-
+ foreach (var memberAndBinary in list) {
+        var member = memberAndBinary.Item1; 
             this.Write("            writer.WriteRaw(GetSpan_");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("());\r\n            ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             this.Write(";\r\n");
-
-    }
-
+ } 
             this.Write("        }\r\n\r\n        public ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePac" +
                     "k.MessagePackSerializerOptions options)\r\n        {\r\n            if (reader.TryRe" +
                     "adNil())\r\n            {\r\n");
-
-    if (objInfo.IsClass)
-    {
-
+ if (objInfo.IsClass) { 
             this.Write("                return null;\r\n");
-
-    }
-    else
-    {
-
+ } else { 
             this.Write("                throw new global::System.InvalidOperationException(\"typecode is n" +
                     "ull, struct not supported\");\r\n");
-
-    }
-
+ } 
             this.Write("            }\r\n\r\n");
-
-    if (objInfo.Members.Length == 0)
-    {
-
+ if (objInfo.Members.Length == 0) { 
             this.Write("            reader.Skip();\r\n            var ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
             this.Write(";\r\n");
-
-    }
-    else
-    {
-
+ } else { 
             this.Write("            options.Security.DepthStep(ref reader);\r\n");
-
-        if (isFormatterResolverNecessary)
-        {
-
-            this.Write("            IFormatterResolver formatterResolver = options.Resolver;\r\n");
-
-        }
-
+ if (isFormatterResolverNecessary) { 
+            this.Write("            var formatterResolver = options.Resolver;\r\n");
+ } 
             this.Write("            var length = reader.ReadMapHeader();\r\n");
-
-        foreach (var memberInfo in objInfo.Members)
-        {
-
+ var canOverwrite = objInfo.ConstructorParameters.Length == 0;
+        if (canOverwrite) { 
+            this.Write("            var ____result = new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
+            this.Write(";\r\n");
+ } else {
+            foreach (var member in objInfo.Members.Where(x => x.IsWritable)) { 
+ if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { 
             this.Write("            var __");
-            this.Write(this.ToStringHelper.ToStringWithCulture(memberInfo.Name));
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write("__IsInitialized = false;\r\n");
+ } 
+            this.Write("            var __");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__ = default(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(memberInfo.Type));
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Type));
             this.Write(");\r\n");
-
-        }
-
+ } 
+ } 
             this.Write(@"
             for (int i = 0; i < length; i++)
             {
-                ReadOnlySpan<byte> stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
                 switch (stringKey.Length)
                 {
                     default:
@@ -207,55 +164,36 @@ foreach (var objInfo in ObjectSerializationInfos)
                       reader.Skip();
                       continue;
 ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo.Members, "                    ")));
-            this.Write("\r\n                }\r\n            }\r\n\r\n            var ____result = new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(objInfo, "                    ", canOverwrite)));
+            this.Write("\r\n                }\r\n            }\r\n\r\n");
+ if (!canOverwrite) { 
+            this.Write("            var ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.GetConstructorString()));
-            this.Write("\r\n            {\r\n");
-
-        // Preparation for C#9 Record class
-        foreach (var member in objInfo.Members.Where(x => x.IsWritable))
-        {
-
-            this.Write("                ");
+            this.Write(";\r\n");
+ foreach (var member in objInfo.Members.Where(x => x.IsWritable && !objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { 
+            this.Write("            if (__");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write("__IsInitialized)\r\n            {\r\n                ____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write(" = __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__,\r\n");
-
-        }
-
-            this.Write("            };\r\n\r\n");
-
-    }
-
-    if (objInfo.HasIMessagePackSerializationCallbackReceiver)
-    {
-        if (objInfo.NeedsCastOnAfter)
-        {
-
+            this.Write("__;\r\n            }\r\n\r\n");
+ } 
+ } 
+ } 
+ if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
+        if (objInfo.NeedsCastOnAfter) { 
             this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____r" +
                     "esult).OnAfterDeserialize();\r\n");
-
-        }
-        else
-        {
-
+ } else { 
             this.Write("            ____result.OnAfterDeserialize();\r\n");
-
-        }
-    }
-
-    if (objInfo.Members.Length != 0)
-    {
-
+ } 
+ } 
+ if (objInfo.Members.Length != 0) { 
             this.Write("            reader.Depth--;\r\n");
-
-    }
-
+ } 
             this.Write("            return ____result;\r\n        }\r\n    }\r\n");
-
-}
-
+ } 
             this.Write("}\r\n");
             return this.GenerationEnvironment.ToString();
         }
