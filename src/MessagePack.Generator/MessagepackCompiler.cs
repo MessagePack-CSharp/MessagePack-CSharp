@@ -39,7 +39,7 @@ namespace MessagePack.Generator
         }
 
         public async Task RunAsync(
-            [Option("i", "Input path of analyze MSBuild project file or directory, if input multiple project files split with ','.")] string input,
+            [Option("i", "Input path to MSBuild project file or the directory containing Unity source files.")] string input,
             [Option("o", "Output file path(.cs) or directory (multiple generate file).")] string output,
             [Option("c", "Conditional compiler symbols, split with ','. Ignored if a project file is specified for input.")] string? conditionalSymbol = null,
             [Option("r", "Set resolver name.")] string resolverName = "GeneratedResolver",
