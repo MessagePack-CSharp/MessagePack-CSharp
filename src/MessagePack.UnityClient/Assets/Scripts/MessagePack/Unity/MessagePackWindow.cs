@@ -150,7 +150,7 @@ namespace MessagePack.Unity.Editor
                 invokingMpc = true;
                 try
                 {
-                    var log = await ProcessHelper.InvokeProcessStartAsync("mpc " + commnadLineArguments);
+                    var log = await ProcessHelper.InvokeProcessStartAsync("mpc", commnadLineArguments);
                     UnityEngine.Debug.Log(log);
                 }
                 finally
