@@ -312,5 +312,16 @@ namespace MessagePack.Tests
             var relative = new Uri("/me/", UriKind.Relative);
             this.Convert(relative).ToString().Is("/me/");
         }
+
+#if NET5_0
+
+        [Fact]
+        public void HalfTest()
+        {
+            Convert((Half)1.34f).Is((Half)1.34f);
+            Convert((Half)0).Is((Half)0);
+        }
+
+#endif
     }
 }

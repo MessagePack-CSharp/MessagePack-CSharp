@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 using MessagePack.Internal;
 
@@ -635,4 +636,28 @@ namespace MessagePack.Formatters
             return (T)Type.GetType(reader.ReadString(), throwOnError: true);
         }
     }
+
+#if NET5_0
+
+    public sealed class HalfFormatter : IMessagePackFormatter<Half>
+    {
+        public static readonly IMessagePackFormatter<Half> Instance = new HalfFormatter();
+
+        private HalfFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Half value, MessagePackSerializerOptions options)
+        {
+            writer.Write((float)value);
+        }
+
+        public Half Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return (Half)reader.ReadSingle();
+        }
+    }
+
+#endif
+
 }
