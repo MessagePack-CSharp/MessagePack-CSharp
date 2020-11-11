@@ -403,6 +403,16 @@ public struct Point
 }
 ```
 
+C# 9.0 record with primary constructor is similar immutable object, also supports serialize/deserialize.
+
+```csharp
+// use key as property name
+[MessagePackObject(true)]public record Point(int X, int Y);
+
+// use property: to set KeyAttribute
+[MessagePackObject] public record Point([property:Key(0)] int X, [property: Key(1)] int Y);
+```
+
 ## Serialization Callback
 
 Objects implementing the `IMessagePackSerializationCallbackReceiver` interface will received `OnBeforeSerialize` and `OnAfterDeserialize` calls during serialization/deserialization.
