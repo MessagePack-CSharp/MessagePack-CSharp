@@ -44,6 +44,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
     - [Be careful when copying buffers](#be-careful-when-copying-buffers)
     - [Choosing compression](#choosing-compression)
 - [Extensions](#extensions)
+- [Experimental Features](#experimental-features)
 - [High-Level API (`MessagePackSerializer`)](#high-level-api-messagepackserializer)
     - [Multiple MessagePack structures on a single `Stream`](#multiple-messagepack-structures-on-a-single-stream)
 - [Low-Level API (`IMessagePackFormatter<T>`)](#low-level-api-imessagepackformattert)
@@ -992,6 +993,16 @@ You can make your own extension serializers or integrate with frameworks. Let's 
 * [MessagePack.NodaTime](https://github.com/ARKlab/MessagePack) - Support for NodaTime types to MessagePack C#
 * [WebApiContrib.Core.Formatter.MessagePack](https://github.com/WebApiContrib/WebAPIContrib.Core#formatters) - supports ASP.NET Core MVC ([details in blog post](https://www.strathweb.com/2017/06/using-messagepack-with-asp-net-core-mvc/))
 * [MessagePack.MediaTypeFormatter](https://github.com/sketch7/MessagePack.MediaTypeFormatter) - MessagePack MediaTypeFormatter
+
+## Experimental Features
+
+MessagePack for C# has experimental features which provides you with very performant formatters. There is an official package.
+
+```ps1
+Install-Package MessagePack.Experimental
+```
+
+For detailed information, see: [Experimental.md](src/MessagePack.Experimental/Experimental.md)
 
 # API
 
