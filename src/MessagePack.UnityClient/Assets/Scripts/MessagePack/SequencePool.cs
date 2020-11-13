@@ -14,13 +14,13 @@ namespace MessagePack
     internal class SequencePool
     {
         /// <summary>
-        /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
+        /// Gets or sets a thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
         /// </summary>
         /// <remarks>
         /// We use a <see cref="maxSize"/> that allows every processor to be involved in messagepack serialization concurrently,
         /// plus one nested serialization per processor (since LZ4 and sometimes other nested serializations may exist).
         /// </remarks>
-        internal static SequencePool Shared = new SequencePool(Environment.ProcessorCount * 2);
+        internal static SequencePool Shared { get; set; } = new SequencePool(Environment.ProcessorCount * 2);
 
         /// <summary>
         /// The value to use for <see cref="Sequence{T}.MinimumSpanLength"/>.
