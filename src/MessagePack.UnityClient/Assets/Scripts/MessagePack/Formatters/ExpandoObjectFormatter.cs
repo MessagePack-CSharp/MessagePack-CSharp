@@ -51,8 +51,16 @@ namespace MessagePack.Formatters
 
         public void Serialize(ref MessagePackWriter writer, ExpandoObject value, MessagePackSerializerOptions options)
         {
-            var dictionaryFormatter = options.Resolver.GetFormatterWithVerify<IDictionary<string, object>>();
-            dictionaryFormatter.Serialize(ref writer, value, options);
+            var dict = (IDictionary<string, object>)value;
+            var keyFormatter = options.Resolver.GetFormatterWithVerify<string>();
+            var valueFormatter = options.Resolver.GetFormatterWithVerify<object>();
+
+            writer.WriteMapHeader(dict.Count);
+            foreach (var item in dict)
+            {
+                keyFormatter.Serialize(ref writer, item.Key, options);
+                valueFormatter.Serialize(ref writer, item.Value, options);
+            }
         }
     }
 }
