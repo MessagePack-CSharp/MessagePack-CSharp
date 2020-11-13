@@ -90,6 +90,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Experimental.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.GeneratedCode.Tests", "tests\MessagePack.GeneratedCode.Tests\MessagePack.GeneratedCode.Tests.csproj", "{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.SourceGenerator", "src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj", "{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.GeneratedCode.Tests.SourceGenerator", "tests\MessagePack.GeneratedCode.Tests\MessagePack.GeneratedCode.Tests.SourceGenerator.csproj", "{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -320,6 +324,22 @@ Global
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}.Release|NoVSIX.ActiveCfg = Release|Any CPU
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}.Release|NoVSIX.Build.0 = Release|Any CPU
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}.Debug|NoVSIX.ActiveCfg = Debug|Any CPU
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}.Debug|NoVSIX.Build.0 = Debug|Any CPU
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}.Release|NoVSIX.ActiveCfg = Release|Any CPU
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4}.Release|NoVSIX.Build.0 = Release|Any CPU
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}.Debug|NoVSIX.ActiveCfg = Debug|Any CPU
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}.Debug|NoVSIX.Build.0 = Debug|Any CPU
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}.Release|NoVSIX.ActiveCfg = Release|Any CPU
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78}.Release|NoVSIX.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -353,6 +373,8 @@ Global
 		{AC2503A7-736D-4AE6-9355-CF35D9DF6139} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{8AB40D1C-1134-4D77-B39A-19AEDC729450} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
+		{E2785DA1-6F97-42B4-A711-69DB2AE15BB4} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
+		{C0ACC3B4-9CD4-4ECD-8462-312E97A24C78} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}
