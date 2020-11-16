@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Nerdbank.Streams;
 
 namespace MessagePack
 {
@@ -60,6 +61,7 @@ namespace MessagePack
             this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
             this.Security = copyFrom.Security;
+            this.Pool = copyFrom.Pool;
         }
 
         /// <summary>
@@ -112,6 +114,11 @@ namespace MessagePack
         /// The default value is to use <see cref="MessagePackSecurity.TrustedData"/>.
         /// </value>
         public MessagePackSecurity Security { get; private set; } = MessagePackSecurity.TrustedData;
+
+        /// <summary>
+        /// Gets a thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
+        /// </summary>
+        public SequencePool Pool { get; private set; } = new SequencePool();
 
         /// <summary>
         /// Gets a type given a string representation of the type.
@@ -256,6 +263,23 @@ namespace MessagePack
 
             var result = this.Clone();
             result.Security = security;
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="Pool"/> property set to a new value.
+        /// </summary>
+        /// <param name="pool">The new value for the <see cref="Pool"/> property.</param>
+        /// <returns>The new instance.</returns>
+        public MessagePackSerializerOptions WithPool(SequencePool pool)
+        {
+            if (pool is null)
+            {
+                throw new ArgumentNullException(nameof(pool));
+            }
+
+            var result = this.Clone();
+            result.Pool = pool;
             return result;
         }
 

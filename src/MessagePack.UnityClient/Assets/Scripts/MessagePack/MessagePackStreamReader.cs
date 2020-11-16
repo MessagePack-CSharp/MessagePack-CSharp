@@ -21,7 +21,7 @@ namespace MessagePack
     {
         private readonly Stream stream;
         private readonly bool leaveOpen;
-        private SequencePool.Rental sequenceRental = SequencePool.Shared.Rent();
+        private SequencePool.Rental sequenceRental = MessagePackSerializer.DefaultOptions.Pool.Rent();
         private SequencePosition? endOfLastMessage;
 
         /// <summary>

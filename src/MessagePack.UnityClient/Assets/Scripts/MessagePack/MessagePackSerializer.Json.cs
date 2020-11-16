@@ -21,7 +21,9 @@ namespace MessagePack
         /// <exception cref="MessagePackSerializationException">Thrown if an error occurs during serialization.</exception>
         public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            using (var sequenceRental = SequencePool.Shared.Rent())
+            options = options ?? DefaultOptions;
+
+            using (var sequenceRental = options.Pool.Rent())
             {
                 var msgpackWriter = new MessagePackWriter(sequenceRental.Value)
                 {
@@ -85,7 +87,7 @@ namespace MessagePack
             {
                 if (options.Compression.IsCompression())
                 {
-                    using (var scratchRental = SequencePool.Shared.Rent())
+                    using (var scratchRental = options.Pool.Rent())
                     {
                         if (TryDecompress(ref reader, scratchRental.Value))
                         {
@@ -133,7 +135,9 @@ namespace MessagePack
         /// </summary>
         public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
         {
-            using (var scratchRental = SequencePool.Shared.Rent())
+            options = options ?? DefaultOptions;
+
+            using (var scratchRental = options.Pool.Rent())
             {
                 var writer = new MessagePackWriter(scratchRental.Value)
                 {
@@ -155,9 +159,10 @@ namespace MessagePack
         public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
         {
             options = options ?? DefaultOptions;
+
             if (options.Compression.IsCompression())
             {
-                using (var scratchRental = SequencePool.Shared.Rent())
+                using (var scratchRental = options.Pool.Rent())
                 {
                     MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                     using (var jr = new TinyJsonReader(reader, false))
@@ -189,7 +194,7 @@ namespace MessagePack
                         break;
                     case TinyJsonToken.StartObject:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        using (var scratchRental = SequencePool.Shared.Rent())
+                        using (var scratchRental = DefaultOptions.Pool.Rent())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                             var mapCount = FromJsonCore(jr, ref scratchWriter);
@@ -206,7 +211,7 @@ namespace MessagePack
                         return count; // break
                     case TinyJsonToken.StartArray:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        using (var scratchRental = SequencePool.Shared.Rent())
+                        using (var scratchRental = DefaultOptions.Pool.Rent())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                             var arrayCount = FromJsonCore(jr, ref scratchWriter);
