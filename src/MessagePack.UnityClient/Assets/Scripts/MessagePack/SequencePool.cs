@@ -8,14 +8,14 @@ using Nerdbank.Streams;
 
 namespace MessagePack
 {
+    /// <summary>
+    /// A thread-safe, alloc-free reusable object pool.
+    /// </summary>
 #if MESSAGEPACK_INTERNAL
     internal
 #else
     public
 #endif
-    /// <summary>
-    /// A thread-safe, alloc-free reusable object pool.
-    /// </summary>
     class SequencePool
     {
         /// <summary>
