@@ -52,10 +52,9 @@ foreach (var objInfo in ObjectSerializationInfos) {
         list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
     }
 
-    string formatterName = objInfo.Name + (objInfo.IsOpenGenericType ? $"Formatter<{string.Join(", ", objInfo.GenericTypeParameters.Select(x => x.Name))}>" : "Formatter");
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members); 
             this.Write("\r\n    public sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(formatterName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FormatterNameWithoutNameSpace));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(">\r\n");
