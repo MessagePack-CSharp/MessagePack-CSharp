@@ -21,7 +21,7 @@ namespace MessagePack
     {
         private readonly Stream stream;
         private readonly bool leaveOpen;
-        private SequencePool.Rental sequenceRental = MessagePackSerializer.DefaultOptions.Pool.Rent();
+        private SequencePool.Rental sequenceRental;
         private SequencePosition? endOfLastMessage;
 
         /// <summary>
@@ -39,9 +39,36 @@ namespace MessagePack
         /// <param name="stream">The stream to read from.</param>
         /// <param name="leaveOpen">If true, leaves the stream open after this <see cref="MessagePackStreamReader"/> is disposed; otherwise, false.</param>
         public MessagePackStreamReader(Stream stream, bool leaveOpen)
+            : this(stream, SequencePool.Shared, leaveOpen)
         {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackStreamReader"/> class.
+        /// </summary>
+        /// <param name="stream">The stream to read from. This stream will be disposed of when this <see cref="MessagePackStreamReader"/> is disposed.</param>
+        /// <param name="pool">The pool to get result.</param>
+        public MessagePackStreamReader(Stream stream, SequencePool pool)
+            : this(stream, pool, leaveOpen: false)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackStreamReader"/> class.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <param name="pool">The pool to get result.</param>
+        /// <param name="leaveOpen">If true, leaves the stream open after this <see cref="MessagePackStreamReader"/> is disposed; otherwise, false.</param>
+        public MessagePackStreamReader(Stream stream, SequencePool pool, bool leaveOpen)
+        {
+            if (pool == null)
+            {
+                throw new ArgumentNullException(nameof(pool));
+            }
+
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
             this.leaveOpen = leaveOpen;
+            this.sequenceRental = pool.Rent();
         }
 
         /// <summary>

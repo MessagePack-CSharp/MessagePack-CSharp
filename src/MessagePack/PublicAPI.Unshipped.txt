@@ -72,6 +72,8 @@ MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.InterfaceImmutableSetFormatter() -> void
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.InterfaceImmutableStackFormatter() -> void
+MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, MessagePack.SequencePool pool) -> void
+MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, MessagePack.SequencePool pool, bool leaveOpen) -> void
 MessagePack.Resolvers.ExpandoObjectResolver
 MessagePack.SequencePool
 MessagePack.SequencePool.SequencePool() -> void

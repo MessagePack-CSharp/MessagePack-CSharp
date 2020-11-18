@@ -278,6 +278,11 @@ namespace MessagePack
                 throw new ArgumentNullException(nameof(pool));
             }
 
+            if (this.Pool == pool)
+            {
+                return this;
+            }
+
             var result = this.Clone();
             result.Pool = pool;
             return result;

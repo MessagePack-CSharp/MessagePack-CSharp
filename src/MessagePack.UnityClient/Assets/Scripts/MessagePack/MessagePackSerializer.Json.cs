@@ -167,7 +167,7 @@ namespace MessagePack
                     MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                     using (var jr = new TinyJsonReader(reader, false))
                     {
-                        FromJsonCore(jr, ref scratchWriter);
+                        FromJsonCore(jr, ref scratchWriter, options);
                     }
 
                     scratchWriter.Flush();
@@ -178,12 +178,12 @@ namespace MessagePack
             {
                 using (var jr = new TinyJsonReader(reader, false))
                 {
-                    FromJsonCore(jr, ref writer);
+                    FromJsonCore(jr, ref writer, options);
                 }
             }
         }
 
-        private static uint FromJsonCore(TinyJsonReader jr, ref MessagePackWriter writer)
+        private static uint FromJsonCore(TinyJsonReader jr, ref MessagePackWriter writer, MessagePackSerializerOptions options)
         {
             uint count = 0;
             while (jr.Read())
@@ -194,10 +194,10 @@ namespace MessagePack
                         break;
                     case TinyJsonToken.StartObject:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        using (var scratchRental = DefaultOptions.Pool.Rent())
+                        using (var scratchRental = options.Pool.Rent())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
-                            var mapCount = FromJsonCore(jr, ref scratchWriter);
+                            var mapCount = FromJsonCore(jr, ref scratchWriter, options);
                             scratchWriter.Flush();
 
                             mapCount = mapCount / 2; // remove propertyname string count.
@@ -211,10 +211,10 @@ namespace MessagePack
                         return count; // break
                     case TinyJsonToken.StartArray:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        using (var scratchRental = DefaultOptions.Pool.Rent())
+                        using (var scratchRental = options.Pool.Rent())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
-                            var arrayCount = FromJsonCore(jr, ref scratchWriter);
+                            var arrayCount = FromJsonCore(jr, ref scratchWriter, options);
                             scratchWriter.Flush();
 
                             writer.WriteArrayHeader(arrayCount);
@@ -304,7 +304,7 @@ namespace MessagePack
                     WriteJsonString(reader.ReadString(), writer);
                     break;
                 case MessagePackType.Binary:
-                    ArraySegment<byte> segment = ByteArraySegmentFormatter.Instance.Deserialize(ref reader, DefaultOptions);
+                    ArraySegment<byte> segment = ByteArraySegmentFormatter.Instance.Deserialize(ref reader, options);
                     writer.Write("\"" + Convert.ToBase64String(segment.Array, segment.Offset, segment.Count) + "\"");
                     break;
                 case MessagePackType.Array:

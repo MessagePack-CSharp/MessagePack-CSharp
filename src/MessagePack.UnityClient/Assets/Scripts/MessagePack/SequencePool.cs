@@ -19,6 +19,11 @@ namespace MessagePack
     class SequencePool
     {
         /// <summary>
+        /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
+        /// </summary>
+        internal static readonly SequencePool Shared = new SequencePool();
+
+        /// <summary>
         /// The value to use for <see cref="Sequence{T}.MinimumSpanLength"/>.
         /// </summary>
         /// <remarks>

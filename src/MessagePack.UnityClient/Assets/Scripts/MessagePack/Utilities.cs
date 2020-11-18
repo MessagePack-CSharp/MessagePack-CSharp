@@ -20,17 +20,11 @@ namespace MessagePack
         internal static readonly bool IsMono = Type.GetType("Mono.Runtime") is Type;
 #endif
 
-#if MESSAGEPACK_INTERNAL || DYNAMICCODEDUMPER
-        internal static SequencePool Pool { get; } = new SequencePool();
-#else
-        internal static SequencePool Pool => MessagePackSerializer.DefaultOptions.Pool;
-#endif
-
         internal delegate void GetWriterBytesAction<TArg>(ref MessagePackWriter writer, TArg argument);
 
         internal static byte[] GetWriterBytes<TArg>(TArg arg, GetWriterBytesAction<TArg> action)
         {
-            using (var sequenceRental = Pool.Rent())
+            using (var sequenceRental = SequencePool.Shared.Rent())
             {
                 var writer = new MessagePackWriter(sequenceRental.Value);
                 action(ref writer, arg);
