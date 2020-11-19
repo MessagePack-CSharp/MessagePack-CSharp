@@ -476,7 +476,7 @@ namespace MessagePack.Formatters
 
         public void Serialize(ref MessagePackWriter writer, System.Numerics.BigInteger value, MessagePackSerializerOptions options)
         {
-#if NETCOREAPP2_1
+#if NETCOREAPP
             if (!writer.OldSpec)
             {
                 // try to get bin8 buffer.
@@ -504,7 +504,7 @@ namespace MessagePack.Formatters
         public System.Numerics.BigInteger Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             ReadOnlySequence<byte> bytes = reader.ReadBytes().Value;
-#if NETCOREAPP2_1
+#if NETCOREAPP
             if (bytes.IsSingleSegment)
             {
                 return new System.Numerics.BigInteger(bytes.First.Span);

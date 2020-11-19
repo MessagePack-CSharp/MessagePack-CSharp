@@ -11,16 +11,17 @@ namespace MessagePack
     /// <summary>
     /// A thread-safe, alloc-free reusable object pool.
     /// </summary>
-    internal class SequencePool
+#if MESSAGEPACK_INTERNAL
+    internal
+#else
+    public
+#endif
+    class SequencePool
     {
         /// <summary>
         /// A thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
         /// </summary>
-        /// <remarks>
-        /// We use a <see cref="maxSize"/> that allows every processor to be involved in messagepack serialization concurrently,
-        /// plus one nested serialization per processor (since LZ4 and sometimes other nested serializations may exist).
-        /// </remarks>
-        internal static readonly SequencePool Shared = new SequencePool(Environment.ProcessorCount * 2);
+        internal static readonly SequencePool Shared = new SequencePool();
 
         /// <summary>
         /// The value to use for <see cref="Sequence{T}.MinimumSpanLength"/>.
@@ -41,18 +42,41 @@ namespace MessagePack
         /// <summary>
         /// The array pool which we share with all <see cref="Sequence{T}"/> objects created by this <see cref="SequencePool"/> instance.
         /// </summary>
-        /// <devremarks>
-        /// We allow 100 arrays to be shared (instead of the default 50) and reduce the max array length from the default 1MB to something more reasonable for our expected use.
-        /// </devremarks>
-        private readonly ArrayPool<byte> arrayPool = ArrayPool<byte>.Create(80 * 1024, 100);
+        private readonly ArrayPool<byte> arrayPool;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SequencePool"/> class.
+        /// </summary>
+        /// <remarks>
+        /// We use a <see cref="maxSize"/> that allows every processor to be involved in messagepack serialization concurrently,
+        /// plus one nested serialization per processor (since LZ4 and sometimes other nested serializations may exist).
+        /// </remarks>
+        public SequencePool()
+            : this(Environment.ProcessorCount * 2, ArrayPool<byte>.Create(80 * 1024, 100))
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SequencePool"/> class.
         /// </summary>
         /// <param name="maxSize">The maximum size to allow the pool to grow.</param>
-        internal SequencePool(int maxSize)
+        /// <devremarks>
+        /// We allow 100 arrays to be shared (instead of the default 50) and reduce the max array length from the default 1MB to something more reasonable for our expected use.
+        /// </devremarks>
+        public SequencePool(int maxSize)
+            : this(maxSize, ArrayPool<byte>.Create(80 * 1024, 100))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SequencePool"/> class.
+        /// </summary>
+        /// <param name="maxSize">The maximum size to allow the pool to grow.</param>
+        /// <param name="arrayPool">Array pool that will be used.</param>
+        public SequencePool(int maxSize, ArrayPool<byte> arrayPool)
         {
             this.maxSize = maxSize;
+            this.arrayPool = arrayPool;
         }
 
         /// <summary>

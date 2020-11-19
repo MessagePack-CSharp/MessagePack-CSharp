@@ -52,7 +52,9 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public bool NeedsCastOnAfter { get; set; }
 
-        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(",", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
+        public string FormatterName => this.Namespace == null ? FormatterNameWithoutNameSpace : this.Namespace + "." + FormatterNameWithoutNameSpace;
+
+        public string FormatterNameWithoutNameSpace => this.Name + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(", ", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
 
         public int WriteCount
         {

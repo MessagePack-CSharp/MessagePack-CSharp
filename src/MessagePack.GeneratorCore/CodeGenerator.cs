@@ -73,127 +73,22 @@ namespace MessagePackCompiler
                 if (Path.GetExtension(output) == ".cs")
                 {
                     // SingleFile Output
-                    var objectFormatterTemplates = objectInfo
-                        .GroupBy(x => (x.Namespace, x.IsStringKey))
-                        .Select(x =>
-                        {
-                            var (nameSpace, isStringKey) = x.Key;
-                            var objectSerializationInfos = x.ToArray();
-                            var template = isStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
-
-                            template.Namespace = namespaceDot + "Formatters" + (nameSpace is null ? string.Empty : "." + nameSpace);
-                            template.ObjectSerializationInfos = objectSerializationInfos;
-
-                            return template;
-                        })
-                        .ToArray();
-
-                    var enumFormatterTemplates = enumInfo
-                        .GroupBy(x => x.Namespace)
-                        .Select(x => new EnumTemplate()
-                        {
-                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
-                            EnumSerializationInfos = x.ToArray(),
-                        })
-                        .ToArray();
-
-                    var unionFormatterTemplates = unionInfo
-                        .GroupBy(x => x.Namespace)
-                        .Select(x => new UnionTemplate()
-                        {
-                            Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
-                            UnionSerializationInfos = x.ToArray(),
-                        })
-                        .ToArray();
-
-                    var resolverTemplate = new ResolverTemplate()
-                    {
-                        Namespace = namespaceDot + "Resolvers",
-                        FormatterNamespace = namespaceDot + "Formatters",
-                        ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
-                    };
-
-                    var sb = new StringBuilder();
-                    sb.AppendLine(resolverTemplate.TransformText());
-                    sb.AppendLine();
-                    foreach (var item in enumFormatterTemplates)
-                    {
-                        var text = item.TransformText();
-                        sb.AppendLine(text);
-                    }
-
-                    sb.AppendLine();
-                    foreach (var item in unionFormatterTemplates)
-                    {
-                        var text = item.TransformText();
-                        sb.AppendLine(text);
-                    }
-
-                    sb.AppendLine();
-                    foreach (var item in objectFormatterTemplates)
-                    {
-                        var text = item.TransformText();
-                        sb.AppendLine(text);
-                    }
-
+                    var fullGeneratedProgramText = GenerateSingleFileSync(resolverName, namespaceDot, objectInfo, enumInfo, unionInfo, genericInfo);
                     if (multioutSymbol == string.Empty)
                     {
-                        await OutputAsync(output, sb.ToString(), cancellationToken);
+                        await OutputAsync(output, fullGeneratedProgramText, cancellationToken);
                     }
                     else
                     {
                         var fname = Path.GetFileNameWithoutExtension(output) + "." + MultiSymbolToSafeFilePath(multioutSymbol) + ".cs";
-                        var text = $"#if {multioutSymbol}" + Environment.NewLine + sb.ToString() + Environment.NewLine + "#endif";
+                        var text = $"#if {multioutSymbol}" + Environment.NewLine + fullGeneratedProgramText + Environment.NewLine + "#endif";
                         await OutputAsync(Path.Combine(Path.GetDirectoryName(output), fname), text, cancellationToken);
                     }
                 }
                 else
                 {
                     // Multiple File output
-                    foreach (var x in objectInfo)
-                    {
-                        var template = x.IsStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
-                        template.Namespace = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
-                        template.ObjectSerializationInfos = new[] { x };
-
-                        var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
-                    }
-
-                    foreach (var x in enumInfo)
-                    {
-                        var template = new EnumTemplate()
-                        {
-                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
-                            EnumSerializationInfos = new[] { x },
-                        };
-
-                        var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
-                    }
-
-                    foreach (var x in unionInfo)
-                    {
-                        var template = new UnionTemplate()
-                        {
-                            Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
-                            UnionSerializationInfos = new[] { x },
-                        };
-
-                        var text = template.TransformText();
-                        await OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
-                    }
-
-                    var resolverTemplate = new ResolverTemplate()
-                    {
-                        Namespace = namespaceDot + "Resolvers",
-                        FormatterNamespace = namespaceDot + "Formatters",
-                        ResolverName = resolverName,
-                        RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
-                    };
-
-                    await OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken);
+                    await GenerateMultipleFileAsync(output, resolverName, objectInfo, enumInfo, unionInfo, namespaceDot, multioutSymbol, genericInfo);
                 }
 
                 if (objectInfo.Length == 0 && enumInfo.Length == 0 && genericInfo.Length == 0 && unionInfo.Length == 0)
@@ -203,6 +98,134 @@ namespace MessagePackCompiler
             }
 
             logger("Output Generation Complete:" + sw.Elapsed.ToString());
+        }
+
+        /// <summary>
+        /// Generates the specialized resolver and formatters for the types that require serialization in a given compilation.
+        /// </summary>
+        /// <param name="resolverName">The resolver name.</param>
+        /// <param name="namespaceDot">The namespace for the generated type to be created in.</param>
+        /// <param name="objectInfo">The ObjectSerializationInfo array which TypeCollector.Collect returns.</param>
+        /// <param name="enumInfo">The EnumSerializationInfo array which TypeCollector.Collect returns.</param>
+        /// <param name="unionInfo">The UnionSerializationInfo array which TypeCollector.Collect returns.</param>
+        /// <param name="genericInfo">The GenericSerializationInfo array which TypeCollector.Collect returns.</param>
+        public static string GenerateSingleFileSync(string resolverName, string namespaceDot, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, GenericSerializationInfo[] genericInfo)
+        {
+            var objectFormatterTemplates = objectInfo
+                .GroupBy(x => (x.Namespace, x.IsStringKey))
+                .Select(x =>
+                {
+                    var (nameSpace, isStringKey) = x.Key;
+                    var objectSerializationInfos = x.ToArray();
+                    var template = isStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
+
+                    template.Namespace = namespaceDot + "Formatters" + (nameSpace is null ? string.Empty : "." + nameSpace);
+                    template.ObjectSerializationInfos = objectSerializationInfos;
+
+                    return template;
+                })
+                .ToArray();
+
+            var enumFormatterTemplates = enumInfo
+                .GroupBy(x => x.Namespace)
+                .Select(x => new EnumTemplate()
+                {
+                    Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
+                    EnumSerializationInfos = x.ToArray(),
+                })
+                .ToArray();
+
+            var unionFormatterTemplates = unionInfo
+                .GroupBy(x => x.Namespace)
+                .Select(x => new UnionTemplate()
+                {
+                    Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
+                    UnionSerializationInfos = x.ToArray(),
+                })
+                .ToArray();
+
+            var resolverTemplate = new ResolverTemplate()
+            {
+                Namespace = namespaceDot + "Resolvers",
+                FormatterNamespace = namespaceDot + "Formatters",
+                ResolverName = resolverName,
+                RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
+            };
+
+            var sb = new StringBuilder();
+            sb.AppendLine(resolverTemplate.TransformText());
+            sb.AppendLine();
+            foreach (var item in enumFormatterTemplates)
+            {
+                var text = item.TransformText();
+                sb.AppendLine(text);
+            }
+
+            sb.AppendLine();
+            foreach (var item in unionFormatterTemplates)
+            {
+                var text = item.TransformText();
+                sb.AppendLine(text);
+            }
+
+            sb.AppendLine();
+            foreach (var item in objectFormatterTemplates)
+            {
+                var text = item.TransformText();
+                sb.AppendLine(text);
+            }
+
+            return sb.ToString();
+        }
+
+        private Task GenerateMultipleFileAsync(string output, string resolverName, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, string namespaceDot, string multioutSymbol, GenericSerializationInfo[] genericInfo)
+        {
+            var waitingTasks = new Task[objectInfo.Length + enumInfo.Length + unionInfo.Length + 1];
+            var waitingIndex = 0;
+            foreach (var x in objectInfo)
+            {
+                var template = x.IsStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
+                template.Namespace = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
+                template.ObjectSerializationInfos = new[] { x };
+
+                var text = template.TransformText();
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+            }
+
+            foreach (var x in enumInfo)
+            {
+                var template = new EnumTemplate()
+                {
+                    Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
+                    EnumSerializationInfos = new[] { x },
+                };
+
+                var text = template.TransformText();
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+            }
+
+            foreach (var x in unionInfo)
+            {
+                var template = new UnionTemplate()
+                {
+                    Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
+                    UnionSerializationInfos = new[] { x },
+                };
+
+                var text = template.TransformText();
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+            }
+
+            var resolverTemplate = new ResolverTemplate()
+            {
+                Namespace = namespaceDot + "Resolvers",
+                FormatterNamespace = namespaceDot + "Formatters",
+                ResolverName = resolverName,
+                RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
+            };
+
+            waitingTasks[waitingIndex] = OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken);
+            return Task.WhenAll(waitingTasks);
         }
 
         private Task OutputToDirAsync(string dir, string ns, string name, string multipleOutSymbol, string text, CancellationToken cancellationToken)
