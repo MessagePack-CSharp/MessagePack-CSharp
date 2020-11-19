@@ -124,13 +124,26 @@ namespace MessagePack
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (!this.leaveOpen)
-            {
-                this.stream.Dispose();
-            }
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-            this.sequenceRental.Dispose();
-            this.sequenceRental = default;
+        /// <summary>
+        /// Disposes of managed and unmanaged resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> if this instance is being disposed; <see langword="false"/> if it is being finalized.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (!this.leaveOpen)
+                {
+                    this.stream.Dispose();
+                }
+
+                this.sequenceRental.Dispose();
+                this.sequenceRental = default;
+            }
         }
 
         /// <summary>
