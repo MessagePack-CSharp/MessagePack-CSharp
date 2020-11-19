@@ -61,7 +61,7 @@ namespace MessagePack
             this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
             this.Security = copyFrom.Security;
-            this.Pool = copyFrom.Pool;
+            this.SequencePool = copyFrom.SequencePool;
         }
 
         /// <summary>
@@ -118,7 +118,8 @@ namespace MessagePack
         /// <summary>
         /// Gets a thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
         /// </summary>
-        public SequencePool Pool { get; private set; } = new SequencePool();
+        /// <value>The default value is the <see cref="SequencePool.Shared"/> instance.</value>
+        public SequencePool SequencePool { get; private set; } = SequencePool.Shared;
 
         /// <summary>
         /// Gets a type given a string representation of the type.
@@ -267,9 +268,9 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Gets a copy of these options with the <see cref="Pool"/> property set to a new value.
+        /// Gets a copy of these options with the <see cref="SequencePool"/> property set to a new value.
         /// </summary>
-        /// <param name="pool">The new value for the <see cref="Pool"/> property.</param>
+        /// <param name="pool">The new value for the <see cref="SequencePool"/> property.</param>
         /// <returns>The new instance.</returns>
         public MessagePackSerializerOptions WithPool(SequencePool pool)
         {
@@ -278,13 +279,13 @@ namespace MessagePack
                 throw new ArgumentNullException(nameof(pool));
             }
 
-            if (this.Pool == pool)
+            if (this.SequencePool == pool)
             {
                 return this;
             }
 
             var result = this.Clone();
-            result.Pool = pool;
+            result.SequencePool = pool;
             return result;
         }
 

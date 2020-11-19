@@ -72,14 +72,13 @@ MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.InterfaceImmutableSetFormatter() -> void
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.InterfaceImmutableStackFormatter() -> void
-MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, MessagePack.SequencePool pool) -> void
-MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, MessagePack.SequencePool pool, bool leaveOpen) -> void
+MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
+MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, bool leaveOpen, MessagePack.SequencePool sequencePool) -> void
 MessagePack.Resolvers.ExpandoObjectResolver
 MessagePack.SequencePool
 MessagePack.SequencePool.SequencePool() -> void
 MessagePack.SequencePool.SequencePool(int maxSize) -> void
 MessagePack.SequencePool.SequencePool(int maxSize, System.Buffers.ArrayPool<byte> arrayPool) -> void
-MessagePack.MessagePackSerializerOptions.Pool.get -> MessagePack.SequencePool
 MessagePack.MessagePackSerializerOptions.WithPool(MessagePack.SequencePool pool) -> MessagePack.MessagePackSerializerOptions
 override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Add(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder collection, int index, TKey key, TValue value, MessagePack.MessagePackSerializerOptions options) -> void
 override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Complete(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder intermediateCollection) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>

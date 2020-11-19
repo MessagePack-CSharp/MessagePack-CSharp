@@ -79,7 +79,7 @@ namespace MessagePack
             {
                 if (options.Compression.IsCompression() && !PrimitiveChecker<T>.IsMessagePackFixedSizePrimitive)
                 {
-                    using (var scratchRental = options.Pool.Rent())
+                    using (var scratchRental = options.SequencePool.Rent())
                     {
                         var scratch = scratchRental.Value;
                         MessagePackWriter scratchWriter = writer.Clone(scratch);
@@ -120,7 +120,7 @@ namespace MessagePack
             }
 
             options = options ?? DefaultOptions;
-            var msgpackWriter = new MessagePackWriter(options.Pool, array)
+            var msgpackWriter = new MessagePackWriter(options.SequencePool, array)
             {
                 CancellationToken = cancellationToken,
             };
@@ -141,7 +141,7 @@ namespace MessagePack
             options = options ?? DefaultOptions;
             cancellationToken.ThrowIfCancellationRequested();
 
-            using (SequencePool.Rental sequenceRental = options.Pool.Rent())
+            using (SequencePool.Rental sequenceRental = options.SequencePool.Rent())
             {
                 Serialize<T>(sequenceRental.Value, value, options, cancellationToken);
 
@@ -174,7 +174,7 @@ namespace MessagePack
             options = options ?? DefaultOptions;
             cancellationToken.ThrowIfCancellationRequested();
 
-            using (SequencePool.Rental sequenceRental = options.Pool.Rent())
+            using (SequencePool.Rental sequenceRental = options.SequencePool.Rent())
             {
                 Serialize<T>(sequenceRental.Value, value, options, cancellationToken);
 
@@ -227,7 +227,7 @@ namespace MessagePack
             {
                 if (options.Compression.IsCompression())
                 {
-                    using (var msgPackUncompressedRental = options.Pool.Rent())
+                    using (var msgPackUncompressedRental = options.SequencePool.Rent())
                     {
                         var msgPackUncompressed = msgPackUncompressedRental.Value;
                         if (TryDecompress(ref reader, msgPackUncompressed))
@@ -327,7 +327,7 @@ namespace MessagePack
                 return result;
             }
 
-            using (var sequenceRental = options.Pool.Rent())
+            using (var sequenceRental = options.SequencePool.Rent())
             {
                 var sequence = sequenceRental.Value;
                 try
@@ -376,7 +376,7 @@ namespace MessagePack
                 return result;
             }
 
-            using (var sequenceRental = options.Pool.Rent())
+            using (var sequenceRental = options.SequencePool.Rent())
             {
                 var sequence = sequenceRental.Value;
                 try

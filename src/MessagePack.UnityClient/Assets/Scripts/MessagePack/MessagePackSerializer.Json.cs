@@ -23,7 +23,7 @@ namespace MessagePack
         {
             options = options ?? DefaultOptions;
 
-            using (var sequenceRental = options.Pool.Rent())
+            using (var sequenceRental = options.SequencePool.Rent())
             {
                 var msgpackWriter = new MessagePackWriter(sequenceRental.Value)
                 {
@@ -87,7 +87,7 @@ namespace MessagePack
             {
                 if (options.Compression.IsCompression())
                 {
-                    using (var scratchRental = options.Pool.Rent())
+                    using (var scratchRental = options.SequencePool.Rent())
                     {
                         if (TryDecompress(ref reader, scratchRental.Value))
                         {
@@ -137,7 +137,7 @@ namespace MessagePack
         {
             options = options ?? DefaultOptions;
 
-            using (var scratchRental = options.Pool.Rent())
+            using (var scratchRental = options.SequencePool.Rent())
             {
                 var writer = new MessagePackWriter(scratchRental.Value)
                 {
@@ -162,7 +162,7 @@ namespace MessagePack
 
             if (options.Compression.IsCompression())
             {
-                using (var scratchRental = options.Pool.Rent())
+                using (var scratchRental = options.SequencePool.Rent())
                 {
                     MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                     using (var jr = new TinyJsonReader(reader, false))
@@ -194,7 +194,7 @@ namespace MessagePack
                         break;
                     case TinyJsonToken.StartObject:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        using (var scratchRental = options.Pool.Rent())
+                        using (var scratchRental = options.SequencePool.Rent())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                             var mapCount = FromJsonCore(jr, ref scratchWriter, options);
@@ -211,7 +211,7 @@ namespace MessagePack
                         return count; // break
                     case TinyJsonToken.StartArray:
                         // Set up a scratch area to serialize the collection since we don't know its length yet, which must be written first.
-                        using (var scratchRental = options.Pool.Rent())
+                        using (var scratchRental = options.SequencePool.Rent())
                         {
                             MessagePackWriter scratchWriter = writer.Clone(scratchRental.Value);
                             var arrayCount = FromJsonCore(jr, ref scratchWriter, options);
