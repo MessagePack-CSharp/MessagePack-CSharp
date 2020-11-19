@@ -47,9 +47,7 @@ namespace ");
  foreach (var objInfo in ObjectSerializationInfos) {
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);
             this.Write("\r\n    public sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.Name));
-            this.Write("Formatter");
-            this.Write(this.ToStringHelper.ToStringWithCulture((objInfo.IsOpenGenericType ? $"<{string.Join(", ", objInfo.GenericTypeParameters.Select(x => x.Name))}>" : "")));
+            this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FormatterNameWithoutNameSpace));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(">\r\n");
