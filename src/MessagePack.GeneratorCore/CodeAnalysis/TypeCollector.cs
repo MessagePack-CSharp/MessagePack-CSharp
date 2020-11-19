@@ -273,10 +273,10 @@ namespace MessagePackCompiler.CodeAnalysis
                     return false;
                 })
                 .Where(x =>
-                       ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass != null && x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
-                    || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass != null && x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
-                    || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass != null && x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))
-                    || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass != null && x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute))))
+                       ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
+                    || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
+                    || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))
+                    || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute))))
                 .ToArray();
         }
 
@@ -341,7 +341,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
-            var customFormatterAttr = typeSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute));
+            var customFormatterAttr = typeSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute));
             if (customFormatterAttr != null)
             {
                 return;
@@ -387,7 +387,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private void CollectUnion(INamedTypeSymbol type)
         {
-            ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
+            ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
             if (unionAttrs.Length == 0)
             {
                 throw new MessagePackGeneratorResolveFailedException("Serialization Type must mark UnionAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -412,7 +412,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private void CollectGenericUnion(INamedTypeSymbol type)
         {
-            var unionAttrs = type.GetAttributes().Where(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments);
+            var unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments);
             using var enumerator = unionAttrs.GetEnumerator();
             if (!enumerator.MoveNext())
             {
@@ -581,7 +581,7 @@ namespace MessagePackCompiler.CodeAnalysis
             var isClass = !type.IsValueType;
             var isOpenGenericType = type.IsGenericType;
 
-            AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute))
+            AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute))
                 ?? throw new MessagePackGeneratorResolveFailedException("Serialization Object must mark MessagePackObjectAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
 
             var isIntKey = true;
@@ -597,7 +597,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
                 foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>().Where(x => !x.IsOverride))
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass != null && (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || string.Equals(x.AttributeClass.Name, this.typeReferences.IgnoreDataMemberAttribute?.Name, StringComparison.InvariantCulture))))
+                    if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)))
                     {
                         continue;
                     }
@@ -609,7 +609,7 @@ namespace MessagePackCompiler.CodeAnalysis
                         continue;
                     }
 
-                    var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
+                    var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
                     var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                     stringMembers.Add(member.StringKey, member);
 
@@ -618,7 +618,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
                 foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => x.AttributeClass != null && (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)))
+                    if (item.GetAttributes().Any(x => (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass?.Name == this.typeReferences.IgnoreDataMemberAttribute?.Name)))
                     {
                         continue;
                     }
@@ -635,7 +635,7 @@ namespace MessagePackCompiler.CodeAnalysis
                         continue;
                     }
 
-                    var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
+                    var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
                     var member = new MemberSerializationInfo(false, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                     stringMembers.Add(member.StringKey, member);
                     this.CollectCore(item.Type); // recursive collect
@@ -657,7 +657,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     if (item.GetAttributes().Any(x =>
                     {
                         var typeReferencesIgnoreDataMemberAttribute = this.typeReferences.IgnoreDataMemberAttribute;
-                        return typeReferencesIgnoreDataMemberAttribute != null && x.AttributeClass != null && (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass.ApproximatelyEqual(typeReferencesIgnoreDataMemberAttribute));
+                        return typeReferencesIgnoreDataMemberAttribute != null && (x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute) || x.AttributeClass.ApproximatelyEqual(typeReferencesIgnoreDataMemberAttribute));
                     }))
                     {
                         continue;
@@ -670,8 +670,8 @@ namespace MessagePackCompiler.CodeAnalysis
                         continue;
                     }
 
-                    var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0]
+                    var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
+                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0]
                               ?? throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);
@@ -725,7 +725,7 @@ namespace MessagePackCompiler.CodeAnalysis
                         continue;
                     }
 
-                    if (item.GetAttributes().Any(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute)))
+                    if (item.GetAttributes().Any(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.IgnoreAttribute)))
                     {
                         continue;
                     }
@@ -737,8 +737,8 @@ namespace MessagePackCompiler.CodeAnalysis
                         continue;
                     }
 
-                    var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass != null && x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0]
+                    var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
+                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0]
                               ?? throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
 
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);

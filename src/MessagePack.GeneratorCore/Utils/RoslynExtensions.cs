@@ -36,11 +36,11 @@ namespace MessagePackCompiler
             }
         }
 
-        public static bool ApproximatelyEqual(this INamedTypeSymbol left, INamedTypeSymbol right)
+        public static bool ApproximatelyEqual(this INamedTypeSymbol? left, INamedTypeSymbol? right)
         {
             if (left is IErrorTypeSymbol || right is IErrorTypeSymbol)
             {
-                return left.ToDisplayString() == right.ToDisplayString();
+                return left?.ToDisplayString() == right?.ToDisplayString();
             }
             else
             {
