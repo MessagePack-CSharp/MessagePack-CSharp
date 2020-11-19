@@ -7,9 +7,9 @@ namespace MessagePackCompiler.Generator
 {
     public interface IFormatterTemplate
     {
-        string Namespace { get; set; }
+        string Namespace { get; }
 
-        ObjectSerializationInfo[] ObjectSerializationInfos { get; set; }
+        ObjectSerializationInfo[] ObjectSerializationInfos { get; }
 
         string TransformText();
     }
