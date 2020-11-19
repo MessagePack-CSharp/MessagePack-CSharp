@@ -325,9 +325,9 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
-            if (typeSymbol.TypeKind == TypeKind.Array)
+            if (typeSymbol is IArrayTypeSymbol arrayTypeSymbol)
             {
-                this.CollectArray(typeSymbol as IArrayTypeSymbol ?? throw new InvalidOperationException());
+                this.CollectArray(arrayTypeSymbol);
                 return;
             }
 
