@@ -184,7 +184,7 @@ These types can serialize by default:
 * Primitives (`int`, `string`, etc...), `Enum`s, `Nullable<>`, `Lazy<>`
 * `TimeSpan`,  `DateTime`, `DateTimeOffset`
 * `Guid`, `Uri`, `Version`, `StringBuilder`
-* `BigInteger`, `Complex`
+* `BigInteger`, `Complex`, `Half`
 * `Array[]`, `Array[,]`, `Array[,,]`, `Array[,,,]`, `ArraySegment<>`, `BitArray`
 * `KeyValuePair<,>`, `Tuple<,...>`, `ValueTuple<,...>`
 * `ArrayList`, `Hashtable`
