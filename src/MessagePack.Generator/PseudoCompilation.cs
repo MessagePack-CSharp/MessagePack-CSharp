@@ -91,7 +91,7 @@ namespace MessagePack.Generator
                .Distinct()
                .ToList();
 
-            var dir = new FileInfo(typeof(object).Assembly.Location).Directory;
+            var dir = new FileInfo(typeof(object).Assembly.Location).Directory ?? throw new NullReferenceException("Assembly location directory not found!");
             {
                 var path = Path.Combine(dir.FullName, "netstandard.dll");
                 if (File.Exists(path))
