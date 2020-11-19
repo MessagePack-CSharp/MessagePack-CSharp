@@ -1,0 +1,131 @@
+MessagePack.Formatters.ByteMemoryFormatter
+MessagePack.Formatters.ByteMemoryFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Memory<byte>
+MessagePack.Formatters.ByteMemoryFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Memory<byte> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.ByteReadOnlyMemoryFormatter
+MessagePack.Formatters.ByteReadOnlyMemoryFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.ReadOnlyMemory<byte>
+MessagePack.Formatters.ByteReadOnlyMemoryFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.ReadOnlyMemory<byte> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.ByteReadOnlySequenceFormatter
+MessagePack.Formatters.ByteReadOnlySequenceFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Buffers.ReadOnlySequence<byte>
+MessagePack.Formatters.ByteReadOnlySequenceFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Buffers.ReadOnlySequence<byte> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.ExpandoObjectFormatter
+MessagePack.Formatters.ExpandoObjectFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Dynamic.ExpandoObject
+MessagePack.Formatters.ExpandoObjectFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Dynamic.ExpandoObject value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.ForceTypelessFormatter<T>
+MessagePack.Formatters.ForceTypelessFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> T
+MessagePack.Formatters.ForceTypelessFormatter<T>.ForceTypelessFormatter() -> void
+MessagePack.Formatters.ForceTypelessFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, T value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.HalfFormatter
+MessagePack.Formatters.HalfFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Half
+MessagePack.Formatters.HalfFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Half value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.MemoryFormatter<T>
+MessagePack.Formatters.MemoryFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Memory<T>
+MessagePack.Formatters.MemoryFormatter<T>.MemoryFormatter() -> void
+MessagePack.Formatters.MemoryFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, System.Memory<T> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.NonGenericInterfaceCollectionFormatter
+MessagePack.Formatters.NonGenericInterfaceCollectionFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Collections.ICollection
+MessagePack.Formatters.NonGenericInterfaceCollectionFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.ICollection value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.NonGenericInterfaceEnumerableFormatter
+MessagePack.Formatters.NonGenericInterfaceEnumerableFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Collections.IEnumerable
+MessagePack.Formatters.NonGenericInterfaceEnumerableFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.IEnumerable value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.PrimitiveObjectFormatter.PrimitiveObjectFormatter() -> void
+MessagePack.Formatters.ReadOnlyMemoryFormatter<T>
+MessagePack.Formatters.ReadOnlyMemoryFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.ReadOnlyMemory<T>
+MessagePack.Formatters.ReadOnlyMemoryFormatter<T>.ReadOnlyMemoryFormatter() -> void
+MessagePack.Formatters.ReadOnlyMemoryFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, System.ReadOnlyMemory<T> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.ReadOnlySequenceFormatter<T>
+MessagePack.Formatters.ReadOnlySequenceFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Buffers.ReadOnlySequence<T>
+MessagePack.Formatters.ReadOnlySequenceFormatter<T>.ReadOnlySequenceFormatter() -> void
+MessagePack.Formatters.ReadOnlySequenceFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, System.Buffers.ReadOnlySequence<T> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.TypeFormatter<T>
+MessagePack.Formatters.TypeFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> T
+MessagePack.Formatters.TypeFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, T value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.TypelessFormatter.TypelessFormatter() -> void
+MessagePack.ImmutableCollection.ImmutableArrayFormatter<T>
+MessagePack.ImmutableCollection.ImmutableArrayFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableArray<T>
+MessagePack.ImmutableCollection.ImmutableArrayFormatter<T>.ImmutableArrayFormatter() -> void
+MessagePack.ImmutableCollection.ImmutableArrayFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, System.Collections.Immutable.ImmutableArray<T> value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.ImmutableCollection.ImmutableCollectionResolver
+MessagePack.ImmutableCollection.ImmutableCollectionResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>
+MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.ImmutableDictionaryFormatter() -> void
+MessagePack.ImmutableCollection.ImmutableHashSetFormatter<T>
+MessagePack.ImmutableCollection.ImmutableHashSetFormatter<T>.ImmutableHashSetFormatter() -> void
+MessagePack.ImmutableCollection.ImmutableListFormatter<T>
+MessagePack.ImmutableCollection.ImmutableListFormatter<T>.ImmutableListFormatter() -> void
+MessagePack.ImmutableCollection.ImmutableQueueBuilder<T>
+MessagePack.ImmutableCollection.ImmutableQueueBuilder<T>.Add(T value) -> void
+MessagePack.ImmutableCollection.ImmutableQueueBuilder<T>.ImmutableQueueBuilder() -> void
+MessagePack.ImmutableCollection.ImmutableQueueBuilder<T>.Q.get -> System.Collections.Immutable.ImmutableQueue<T>
+MessagePack.ImmutableCollection.ImmutableQueueBuilder<T>.Q.set -> void
+MessagePack.ImmutableCollection.ImmutableQueueFormatter<T>
+MessagePack.ImmutableCollection.ImmutableQueueFormatter<T>.ImmutableQueueFormatter() -> void
+MessagePack.ImmutableCollection.ImmutableSortedDictionaryFormatter<TKey, TValue>
+MessagePack.ImmutableCollection.ImmutableSortedDictionaryFormatter<TKey, TValue>.ImmutableSortedDictionaryFormatter() -> void
+MessagePack.ImmutableCollection.ImmutableSortedSetFormatter<T>
+MessagePack.ImmutableCollection.ImmutableSortedSetFormatter<T>.ImmutableSortedSetFormatter() -> void
+MessagePack.ImmutableCollection.ImmutableStackFormatter<T>
+MessagePack.ImmutableCollection.ImmutableStackFormatter<T>.ImmutableStackFormatter() -> void
+MessagePack.ImmutableCollection.InterfaceImmutableDictionaryFormatter<TKey, TValue>
+MessagePack.ImmutableCollection.InterfaceImmutableDictionaryFormatter<TKey, TValue>.InterfaceImmutableDictionaryFormatter() -> void
+MessagePack.ImmutableCollection.InterfaceImmutableListFormatter<T>
+MessagePack.ImmutableCollection.InterfaceImmutableListFormatter<T>.InterfaceImmutableListFormatter() -> void
+MessagePack.ImmutableCollection.InterfaceImmutableQueueFormatter<T>
+MessagePack.ImmutableCollection.InterfaceImmutableQueueFormatter<T>.InterfaceImmutableQueueFormatter() -> void
+MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>
+MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.InterfaceImmutableSetFormatter() -> void
+MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>
+MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.InterfaceImmutableStackFormatter() -> void
+MessagePack.Resolvers.ExpandoObjectResolver
+override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Add(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder collection, int index, TKey key, TValue value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Complete(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder intermediateCollection) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>
+override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder
+override MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TKey, TValue>.GetSourceEnumerator(System.Collections.Immutable.ImmutableDictionary<TKey, TValue> source) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Enumerator
+override MessagePack.ImmutableCollection.ImmutableHashSetFormatter<T>.Add(System.Collections.Immutable.ImmutableHashSet<T>.Builder collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.ImmutableHashSetFormatter<T>.Complete(System.Collections.Immutable.ImmutableHashSet<T>.Builder intermediateCollection) -> System.Collections.Immutable.ImmutableHashSet<T>
+override MessagePack.ImmutableCollection.ImmutableHashSetFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableHashSet<T>.Builder
+override MessagePack.ImmutableCollection.ImmutableHashSetFormatter<T>.GetSourceEnumerator(System.Collections.Immutable.ImmutableHashSet<T> source) -> System.Collections.Immutable.ImmutableHashSet<T>.Enumerator
+override MessagePack.ImmutableCollection.ImmutableListFormatter<T>.Add(System.Collections.Immutable.ImmutableList<T>.Builder collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.ImmutableListFormatter<T>.Complete(System.Collections.Immutable.ImmutableList<T>.Builder intermediateCollection) -> System.Collections.Immutable.ImmutableList<T>
+override MessagePack.ImmutableCollection.ImmutableListFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableList<T>.Builder
+override MessagePack.ImmutableCollection.ImmutableListFormatter<T>.GetSourceEnumerator(System.Collections.Immutable.ImmutableList<T> source) -> System.Collections.Immutable.ImmutableList<T>.Enumerator
+override MessagePack.ImmutableCollection.ImmutableQueueFormatter<T>.Add(MessagePack.ImmutableCollection.ImmutableQueueBuilder<T> collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.ImmutableQueueFormatter<T>.Complete(MessagePack.ImmutableCollection.ImmutableQueueBuilder<T> intermediateCollection) -> System.Collections.Immutable.ImmutableQueue<T>
+override MessagePack.ImmutableCollection.ImmutableQueueFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> MessagePack.ImmutableCollection.ImmutableQueueBuilder<T>
+override MessagePack.ImmutableCollection.ImmutableSortedDictionaryFormatter<TKey, TValue>.Add(System.Collections.Immutable.ImmutableSortedDictionary<TKey, TValue>.Builder collection, int index, TKey key, TValue value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.ImmutableSortedDictionaryFormatter<TKey, TValue>.Complete(System.Collections.Immutable.ImmutableSortedDictionary<TKey, TValue>.Builder intermediateCollection) -> System.Collections.Immutable.ImmutableSortedDictionary<TKey, TValue>
+override MessagePack.ImmutableCollection.ImmutableSortedDictionaryFormatter<TKey, TValue>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableSortedDictionary<TKey, TValue>.Builder
+override MessagePack.ImmutableCollection.ImmutableSortedDictionaryFormatter<TKey, TValue>.GetSourceEnumerator(System.Collections.Immutable.ImmutableSortedDictionary<TKey, TValue> source) -> System.Collections.Immutable.ImmutableSortedDictionary<TKey, TValue>.Enumerator
+override MessagePack.ImmutableCollection.ImmutableSortedSetFormatter<T>.Add(System.Collections.Immutable.ImmutableSortedSet<T>.Builder collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.ImmutableSortedSetFormatter<T>.Complete(System.Collections.Immutable.ImmutableSortedSet<T>.Builder intermediateCollection) -> System.Collections.Immutable.ImmutableSortedSet<T>
+override MessagePack.ImmutableCollection.ImmutableSortedSetFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableSortedSet<T>.Builder
+override MessagePack.ImmutableCollection.ImmutableSortedSetFormatter<T>.GetSourceEnumerator(System.Collections.Immutable.ImmutableSortedSet<T> source) -> System.Collections.Immutable.ImmutableSortedSet<T>.Enumerator
+override MessagePack.ImmutableCollection.ImmutableStackFormatter<T>.Add(T[] collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.ImmutableStackFormatter<T>.Complete(T[] intermediateCollection) -> System.Collections.Immutable.ImmutableStack<T>
+override MessagePack.ImmutableCollection.ImmutableStackFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> T[]
+override MessagePack.ImmutableCollection.InterfaceImmutableDictionaryFormatter<TKey, TValue>.Add(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder collection, int index, TKey key, TValue value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.InterfaceImmutableDictionaryFormatter<TKey, TValue>.Complete(System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder intermediateCollection) -> System.Collections.Immutable.IImmutableDictionary<TKey, TValue>
+override MessagePack.ImmutableCollection.InterfaceImmutableDictionaryFormatter<TKey, TValue>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableDictionary<TKey, TValue>.Builder
+override MessagePack.ImmutableCollection.InterfaceImmutableListFormatter<T>.Add(System.Collections.Immutable.ImmutableList<T>.Builder collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.InterfaceImmutableListFormatter<T>.Complete(System.Collections.Immutable.ImmutableList<T>.Builder intermediateCollection) -> System.Collections.Immutable.IImmutableList<T>
+override MessagePack.ImmutableCollection.InterfaceImmutableListFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableList<T>.Builder
+override MessagePack.ImmutableCollection.InterfaceImmutableQueueFormatter<T>.Add(MessagePack.ImmutableCollection.ImmutableQueueBuilder<T> collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.InterfaceImmutableQueueFormatter<T>.Complete(MessagePack.ImmutableCollection.ImmutableQueueBuilder<T> intermediateCollection) -> System.Collections.Immutable.IImmutableQueue<T>
+override MessagePack.ImmutableCollection.InterfaceImmutableQueueFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> MessagePack.ImmutableCollection.ImmutableQueueBuilder<T>
+override MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.Add(System.Collections.Immutable.ImmutableHashSet<T>.Builder collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.Complete(System.Collections.Immutable.ImmutableHashSet<T>.Builder intermediateCollection) -> System.Collections.Immutable.IImmutableSet<T>
+override MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> System.Collections.Immutable.ImmutableHashSet<T>.Builder
+override MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.Add(T[] collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
+override MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.Complete(T[] intermediateCollection) -> System.Collections.Immutable.IImmutableStack<T>
+override MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> T[]
+static readonly MessagePack.Formatters.ByteMemoryFormatter.Instance -> MessagePack.Formatters.ByteMemoryFormatter
+static readonly MessagePack.Formatters.ByteReadOnlyMemoryFormatter.Instance -> MessagePack.Formatters.ByteReadOnlyMemoryFormatter
+static readonly MessagePack.Formatters.ByteReadOnlySequenceFormatter.Instance -> MessagePack.Formatters.ByteReadOnlySequenceFormatter
+static readonly MessagePack.Formatters.ExpandoObjectFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Dynamic.ExpandoObject>
+static readonly MessagePack.Formatters.HalfFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Half>
+static readonly MessagePack.Formatters.NonGenericInterfaceCollectionFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Collections.ICollection>
+static readonly MessagePack.Formatters.NonGenericInterfaceEnumerableFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Collections.IEnumerable>
+static readonly MessagePack.Formatters.TypeFormatter<T>.Instance -> MessagePack.Formatters.IMessagePackFormatter<T>
+static readonly MessagePack.ImmutableCollection.ImmutableCollectionResolver.Instance -> MessagePack.ImmutableCollection.ImmutableCollectionResolver
+static readonly MessagePack.Resolvers.ExpandoObjectResolver.Instance -> MessagePack.IFormatterResolver
+static readonly MessagePack.Resolvers.ExpandoObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
+virtual MessagePack.Formatters.PrimitiveObjectFormatter.DeserializeMap(ref MessagePack.MessagePackReader reader, int length, MessagePack.MessagePackSerializerOptions options) -> object
