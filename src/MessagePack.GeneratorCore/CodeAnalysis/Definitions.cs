@@ -135,6 +135,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string StringKey { get; }
 
+        public bool IgnoreSerializationWhenNull { get; }
+
         public string Type { get; }
 
         public string Name { get; }
@@ -145,13 +147,14 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly HashSet<string> primitiveTypes = new (Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
 
-        public MemberSerializationInfo(bool isProperty, bool isWritable, bool isReadable, int intKey, string stringKey, string name, string type, string shortTypeName, string? customFormatterTypeName)
+        public MemberSerializationInfo(bool isProperty, bool isWritable, bool isReadable, int intKey, string stringKey, bool ignoreSerializationWhenNull, string name, string type, string shortTypeName, string? customFormatterTypeName)
         {
             IsProperty = isProperty;
             IsWritable = isWritable;
             IsReadable = isReadable;
             IntKey = intKey;
             StringKey = stringKey;
+            IgnoreSerializationWhenNull = ignoreSerializationWhenNull;
             Type = type;
             Name = name;
             ShortTypeName = shortTypeName;
@@ -160,17 +163,18 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string GetSerializeMethodString()
         {
+            var prefix = this.IgnoreSerializationWhenNull ? "____" : "value.";
             if (CustomFormatterTypeName != null)
             {
-                return $"this.__{this.Name}CustomFormatter__.Serialize(ref writer, value.{this.Name}, options)";
+                return "this.__" + this.Name + "CustomFormatter__.Serialize(ref writer, " + prefix + this.Name + ", options)";
             }
             else if (this.primitiveTypes.Contains(this.Type))
             {
-                return "writer.Write(value." + this.Name + ")";
+                return "writer.Write(" + prefix + this.Name + ")";
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{this.Type}>().Serialize(ref writer, value.{this.Name}, options)";
+                return "formatterResolver.GetFormatterWithVerify<" + this.Type + ">().Serialize(ref writer, " + prefix + this.Name + ", options)";
             }
         }
 

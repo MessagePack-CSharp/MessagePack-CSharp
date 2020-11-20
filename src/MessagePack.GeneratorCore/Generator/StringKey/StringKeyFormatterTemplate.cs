@@ -100,16 +100,46 @@ foreach (var objInfo in ObjectSerializationInfos) {
             this.Write("            value.OnBeforeSerialize();\r\n");
  } 
  } 
-            this.Write("            writer.WriteMapHeader(");
+ bool anyIgnoreSerializationWhenNull = list.Any(memberAndBinary => memberAndBinary.Item1.IgnoreSerializationWhenNull);
+  if (anyIgnoreSerializationWhenNull) { 
+            this.Write("            var count = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(list.Count));
+            this.Write(";\r\n");
+ }
+
+  foreach (var memberAndBinary in list) {
+    var member = memberAndBinary.Item1;
+    if (member.IgnoreSerializationWhenNull) { 
+            this.Write("            var ____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(" = value.");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(";\r\n            if (____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(" is null) { --count; }\r\n");
+ } 
+ } 
+            this.Write("            writer.WriteMapHeader(");
+            this.Write(this.ToStringHelper.ToStringWithCulture(anyIgnoreSerializationWhenNull ? "count" : list.Count.ToString()));
             this.Write(");\r\n");
  foreach (var memberAndBinary in list) {
-        var member = memberAndBinary.Item1; 
+        var member = memberAndBinary.Item1;
+        if (member.IgnoreSerializationWhenNull) { 
+            this.Write("            if (!(____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(" is null))\r\n            {\r\n");
+ } 
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.IgnoreSerializationWhenNull ? "    " : ""));
             this.Write("            writer.WriteRaw(GetSpan_");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("());\r\n            ");
+            this.Write("());\r\n");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.IgnoreSerializationWhenNull ? "    " : ""));
+            this.Write("            ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             this.Write(";\r\n");
+ if (member.IgnoreSerializationWhenNull) { 
+            this.Write("            }\r\n\r\n");
+ } 
  } 
             this.Write("        }\r\n\r\n        public ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));

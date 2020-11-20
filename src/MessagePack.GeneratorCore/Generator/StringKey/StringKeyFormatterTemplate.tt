@@ -70,11 +70,31 @@ foreach (var objInfo in ObjectSerializationInfos) {
             value.OnBeforeSerialize();
 <# } #>
 <# } #>
-            writer.WriteMapHeader(<#= list.Count #>);
+<# bool anyIgnoreSerializationWhenNull = list.Any(memberAndBinary => memberAndBinary.Item1.IgnoreSerializationWhenNull);
+  if (anyIgnoreSerializationWhenNull) { #>
+            var count = <#= list.Count #>;
+<# }
+
+  foreach (var memberAndBinary in list) {
+    var member = memberAndBinary.Item1;
+    if (member.IgnoreSerializationWhenNull) { #>
+            var ____<#= member.Name #> = value.<#= member.Name #>;
+            if (____<#= member.Name #> is null) { --count; }
+<# } #>
+<# } #>
+            writer.WriteMapHeader(<#= anyIgnoreSerializationWhenNull ? "count" : list.Count.ToString() #>);
 <# foreach (var memberAndBinary in list) {
-        var member = memberAndBinary.Item1; #>
-            writer.WriteRaw(GetSpan_<#= member.Name #>());
-            <#= member.GetSerializeMethodString() #>;
+        var member = memberAndBinary.Item1;
+        if (member.IgnoreSerializationWhenNull) { #>
+            if (!(____<#= member.Name #> is null))
+            {
+<# } #>
+<#= member.IgnoreSerializationWhenNull ? "    " : "" #>            writer.WriteRaw(GetSpan_<#= member.Name #>());
+<#= member.IgnoreSerializationWhenNull ? "    " : "" #>            <#= member.GetSerializeMethodString() #>;
+<# if (member.IgnoreSerializationWhenNull) { #>
+            }
+
+<# } #>
 <# } #>
         }
 

@@ -56,6 +56,34 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void IgnoreSerializationWhenNull_BothNull()
+        {
+            var value = new TwoPropertiesIgnoreNull { Prop1 = null, Prop2 = null };
+            var reader = new MessagePackReader(MessagePackSerializer.Serialize(value));
+            Assert.Equal(0, reader.ReadMapHeader());
+        }
+
+        [Fact]
+        public void IgnoreSerializationWhenNull_Prop1Null()
+        {
+            var value = new TwoPropertiesIgnoreNull { Prop1 = null, Prop2 = "じゅげむ！" };
+            var reader = new MessagePackReader(MessagePackSerializer.Serialize(value));
+            Assert.Equal(1, reader.ReadMapHeader());
+            Assert.Equal(nameof(TwoPropertiesIgnoreNull.Prop2), reader.ReadString());
+            Assert.Equal(value.Prop2, reader.ReadString());
+        }
+
+        [Fact]
+        public void IgnoreSerializationWhenNull_Prop2Null()
+        {
+            var value = new TwoPropertiesIgnoreNull { Prop1 = string.Empty, Prop2 = null };
+            var reader = new MessagePackReader(MessagePackSerializer.Serialize(value));
+            Assert.Equal(1, reader.ReadMapHeader());
+            Assert.Equal(nameof(TwoPropertiesIgnoreNull.Prop1), reader.ReadString());
+            Assert.Equal(string.Empty, reader.ReadString());
+        }
+
+        [Fact]
         public void DeserializerSetsMissingPropertiesToDefaultValue()
         {
             var seq = new Sequence<byte>();
@@ -506,6 +534,16 @@ namespace MessagePack.Tests
                 get => base.VirtualProperty;
                 set => base.VirtualProperty = value;
             }
+        }
+
+        [DataContract]
+        public class TwoPropertiesIgnoreNull
+        {
+            [DataMember(EmitDefaultValue = false)]
+            public string Prop1 { get; set; }
+
+            [DataMember(EmitDefaultValue = false)]
+            public string Prop2 { get; set; }
         }
 
         [DataContract]

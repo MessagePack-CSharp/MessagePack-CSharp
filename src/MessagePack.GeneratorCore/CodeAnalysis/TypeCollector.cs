@@ -610,7 +610,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     }
 
                     var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                    var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, false, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                     stringMembers.Add(member.StringKey, member);
 
                     this.CollectCore(item.Type); // recursive collect
@@ -636,7 +636,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     }
 
                     var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                    var member = new MemberSerializationInfo(false, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    var member = new MemberSerializationInfo(false, isWritable, isReadable, hiddenIntKey++, item.Name, false, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                     stringMembers.Add(member.StringKey, member);
                     this.CollectCore(item.Type); // recursive collect
                 }
@@ -671,8 +671,14 @@ namespace MessagePackCompiler.CodeAnalysis
                     }
 
                     var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0]
-                              ?? throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                    var keyAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))
+                                  ?? throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                    var key = keyAttr.ConstructorArguments[0];
+                    var ignoreSerializationWhenNull = item.Type.IsReferenceType && keyAttr.ConstructorArguments.Length > 1;
+                    if (ignoreSerializationWhenNull)
+                    {
+                        ignoreSerializationWhenNull &= keyAttr.ConstructorArguments[1].Value is bool ignoreSerializationWhenNull1 && ignoreSerializationWhenNull1;
+                    }
 
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
@@ -701,7 +707,7 @@ namespace MessagePackCompiler.CodeAnalysis
                             throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, ignoreSerializationWhenNull, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         intMembers.Add(member.IntKey, member);
                     }
                     else
@@ -711,7 +717,7 @@ namespace MessagePackCompiler.CodeAnalysis
                             throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, ignoreSerializationWhenNull, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         stringMembers.Add(member.StringKey, member);
                     }
 
@@ -738,8 +744,14 @@ namespace MessagePackCompiler.CodeAnalysis
                     }
 
                     var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
-                    var key = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))?.ConstructorArguments[0]
-                              ?? throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                    var keyAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.KeyAttribute))
+                        ?? throw new MessagePackGeneratorResolveFailedException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                    var key = keyAttr.ConstructorArguments[0];
+                    var ignoreSerializationWhenNull = item.Type.IsReferenceType && keyAttr.ConstructorArguments.Length > 1;
+                    if (ignoreSerializationWhenNull)
+                    {
+                        ignoreSerializationWhenNull &= keyAttr.ConstructorArguments[1].Value is bool ignoreSerializationWhenNull1 && ignoreSerializationWhenNull1;
+                    }
 
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
@@ -768,7 +780,7 @@ namespace MessagePackCompiler.CodeAnalysis
                             throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, false, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         intMembers.Add(member.IntKey, member);
                     }
                     else
@@ -778,7 +790,7 @@ namespace MessagePackCompiler.CodeAnalysis
                             throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
                         }
 
-                        var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, ignoreSerializationWhenNull, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         stringMembers.Add(member.StringKey, member);
                     }
 

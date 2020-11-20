@@ -665,7 +665,8 @@ namespace MessagePack.Internal
             var argOptions = new ArgumentField(il, firstArgIndex + 2);
 
             // if(value == null) return WriteNil
-            if (type.GetTypeInfo().IsClass)
+            var typeInfo = type.GetTypeInfo();
+            if (typeInfo.IsClass)
             {
                 Label elseBody = il.DefineLabel();
 
@@ -679,7 +680,7 @@ namespace MessagePack.Internal
             }
 
             // IMessagePackSerializationCallbackReceiver.OnBeforeSerialize()
-            if (type.GetTypeInfo().ImplementedInterfaces.Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
+            if (typeInfo.ImplementedInterfaces.Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
             {
                 // call directly
                 MethodInfo[] runtimeMethods = type.GetRuntimeMethods().Where(x => x.Name == "OnBeforeSerialize").ToArray();
@@ -697,92 +698,160 @@ namespace MessagePack.Internal
             }
 
             // IFormatterResolver resolver = options.Resolver;
-            LocalBuilder localResolver = il.DeclareLocal(typeof(IFormatterResolver));
-            argOptions.EmitLoad();
-            il.EmitCall(getResolverFromOptions);
-            il.EmitStloc(localResolver);
+            var localResolver = default(LocalBuilder);
+            if (info.ShouldUseFormatterResolver)
+            {
+                localResolver = il.DeclareLocal(typeof(IFormatterResolver));
+                argOptions.EmitLoad();
+                il.EmitCall(getResolverFromOptions);
+                il.EmitStloc(localResolver);
+            }
 
             if (info.IsIntKey)
             {
-                // use Array
-                var maxKey = info.Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
-                var intKeyMap = info.Members.Where(x => x.IsReadable).ToDictionary(x => x.IntKey);
-
-                var len = maxKey + 1;
-                argWriter.EmitLoad();
-                il.EmitLdc_I4(len);
-                il.EmitCall(MessagePackWriterTypeInfo.WriteArrayHeader);
-
-                var index = 0;
-                for (int i = 0; i <= maxKey; i++)
-                {
-                    ObjectSerializationInfo.EmittableMember member;
-                    if (intKeyMap.TryGetValue(i, out member))
-                    {
-                        EmitSerializeValue(il, type.GetTypeInfo(), member, index++, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver);
-                    }
-                    else
-                    {
-                        // Write Nil as Blanc
-                        argWriter.EmitLoad();
-                        il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
-                    }
-                }
+                BuildSerializeInternalIntKey(info, il, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver);
             }
             else
             {
-                // use Map
-                var writeCount = info.Members.Count(x => x.IsReadable);
-
-                argWriter.EmitLoad();
-                il.EmitLdc_I4(writeCount);
-                ////if (writeCount <= MessagePackRange.MaxFixMapCount)
-                ////{
-                ////    il.EmitCall(MessagePackWriterTypeInfo.WriteFixedMapHeaderUnsafe);
-                ////}
-                ////else
-                {
-                    il.EmitCall(MessagePackWriterTypeInfo.WriteMapHeader);
-                }
-
-                var index = 0;
-                foreach (ObjectSerializationInfo.EmittableMember item in info.Members.Where(x => x.IsReadable))
-                {
-                    argWriter.EmitLoad();
-                    emitStringByteKeys();
-                    il.EmitLdc_I4(index);
-                    il.Emit(OpCodes.Ldelem_Ref);
-                    il.Emit(OpCodes.Call, ReadOnlySpanFromByteArray); // convert byte[] to ReadOnlySpan<byte>
-
-                    // Optimize, WriteRaw(Unity, large) or UnsafeMemory32/64.WriteRawX
-#if !UNITY_2018_3_OR_NEWER
-                    var valueLen = CodeGenHelpers.GetEncodedStringBytes(item.StringKey).Length;
-                    if (valueLen <= MessagePackRange.MaxFixStringLength)
-                    {
-                        if (UnsafeMemory.Is32Bit)
-                        {
-                            il.EmitCall(typeof(UnsafeMemory32).GetRuntimeMethod("WriteRaw" + valueLen, new[] { typeof(MessagePackWriter).MakeByRefType(), typeof(ReadOnlySpan<byte>) }));
-                        }
-                        else
-                        {
-                            il.EmitCall(typeof(UnsafeMemory64).GetRuntimeMethod("WriteRaw" + valueLen, new[] { typeof(MessagePackWriter).MakeByRefType(), typeof(ReadOnlySpan<byte>) }));
-                        }
-                    }
-                    else
-#endif
-                    {
-                        il.EmitCall(MessagePackWriterTypeInfo.WriteRaw);
-                    }
-
-                    EmitSerializeValue(il, type.GetTypeInfo(), item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver);
-                    index++;
-                }
+                BuildSerializeInternalStringKey(info, il, emitStringByteKeys, tryEmitLoadCustomFormatter, argValue, argWriter, argOptions, localResolver);
             }
 
             il.Emit(OpCodes.Ret);
         }
 
-        private static void EmitSerializeValue(ILGenerator il, TypeInfo type, ObjectSerializationInfo.EmittableMember member, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argOptions, LocalBuilder localResolver)
+        private static void BuildSerializeInternalIntKey(ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argOptions, LocalBuilder localResolver)
+        {
+            var maxKey = info.Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
+            var intKeyMap = info.Members.Where(x => x.IsReadable).ToDictionary(x => x.IntKey);
+
+            var len = maxKey + 1;
+            argWriter.EmitLoad();
+            il.EmitLdc_I4(len);
+            il.EmitCall(MessagePackWriterTypeInfo.WriteArrayHeader);
+
+            var index = 0;
+            for (var i = 0; i <= maxKey; i++)
+            {
+                if (intKeyMap.TryGetValue(i, out var member))
+                {
+                    EmitSerializeValue(il, member, index++, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver, default);
+                }
+                else
+                {
+                    // Write Nil as Blanc
+                    argWriter.EmitLoad();
+                    il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
+                }
+            }
+        }
+
+        private static void BuildSerializeInternalStringKey(ObjectSerializationInfo info, ILGenerator il, Action emitStringByteKeys, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argValue, ArgumentField argWriter, ArgumentField argOptions, LocalBuilder localResolver)
+        {
+            var writeCount = info.Members.Count(x => x.IsReadable);
+            var ignoreSerializationWhenNullMembers = info.Members.Where(x => x.IsReadable && x.IgnoreSerializationWhenNull).ToArray();
+            var localCount = default(LocalBuilder);
+            if (ignoreSerializationWhenNullMembers.Length != 0)
+            {
+                // var count = <#= writeCount #>;
+                localCount = il.DeclareLocal(typeof(int));
+                il.EmitLdc_I4(writeCount);
+                il.EmitStloc(localCount);
+            }
+
+            var localIgnoreValueMembers = ignoreSerializationWhenNullMembers.Length == 0 ? Array.Empty<LocalBuilder>() : new LocalBuilder[ignoreSerializationWhenNullMembers.Length];
+            for (var i = 0; i < localIgnoreValueMembers.Length; i++)
+            {
+                var item = ignoreSerializationWhenNullMembers[i];
+                var localIgnoreValueMember = localIgnoreValueMembers[i] = il.DeclareLocal(item.Type);
+                // var ____<#= item.Name #> = value.<#= item.Name #>;
+                il.EmitLdloc(localCount);
+                argValue.EmitLoad();
+                item.EmitLoadValue(il);
+                il.Emit(OpCodes.Dup);
+                il.EmitStloc(localIgnoreValueMember);
+                // count -= ____<#= item.Name #> == null ? 1 : 0;
+                il.Emit(OpCodes.Ldnull);
+                il.Emit(OpCodes.Ceq);
+                il.Emit(OpCodes.Sub);
+                il.EmitStloc(localCount);
+            }
+
+            argWriter.EmitLoad();
+            if (localIgnoreValueMembers.Length == 0)
+            {
+                il.EmitLdc_I4(writeCount);
+            }
+            else
+            {
+                il.EmitLdloc(localCount);
+            }
+
+            ////if (writeCount <= MessagePackRange.MaxFixMapCount)
+            ////{
+            ////    il.EmitCall(MessagePackWriterTypeInfo.WriteFixedMapHeaderUnsafe);
+            ////}
+            ////else
+            {
+                il.EmitCall(MessagePackWriterTypeInfo.WriteMapHeader);
+            }
+
+            var index = 0;
+            var indexIgnoreSerializationWhenNull = 0;
+            foreach (var item in info.Members.Where(x => x.IsReadable))
+            {
+                var localValueObject = default(LocalBuilder);
+                Label? ignoreWhenNullLabel = default;
+                var ignoreSerializationWhenNull = !item.IsValueType && item.IgnoreSerializationWhenNull;
+                if (ignoreSerializationWhenNull)
+                {
+                    ignoreWhenNullLabel = il.DefineLabel();
+                    localValueObject = localIgnoreValueMembers[indexIgnoreSerializationWhenNull++];
+                    il.EmitLdloc(localValueObject);
+                    // if (____<#= item.Name #> != null) { writer.WriteRaw(""); resolver.GetFormatterWithVerify<T>.Serialize(____<#= item.Name #>, options); }
+                    il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel.Value);
+                }
+
+                EmitStringKeySpanRaw(il, emitStringByteKeys, ref argWriter, index, item);
+                EmitSerializeValue(il, item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver, localValueObject);
+                if (ignoreWhenNullLabel.HasValue)
+                {
+                    il.MarkLabel(ignoreWhenNullLabel.Value);
+                }
+
+                index++;
+            }
+        }
+
+        private static void EmitStringKeySpanRaw(ILGenerator il, Action emitStringByteKeys, ref ArgumentField argWriter, int index, ObjectSerializationInfo.EmittableMember item)
+        {
+            argWriter.EmitLoad();
+            emitStringByteKeys();
+            il.EmitLdc_I4(index);
+            il.Emit(OpCodes.Ldelem_Ref);
+            il.Emit(OpCodes.Call, ReadOnlySpanFromByteArray); // convert byte[] to ReadOnlySpan<byte>
+
+            // Optimize, WriteRaw(Unity, large) or UnsafeMemory32/64.WriteRawX
+#if !UNITY_2018_3_OR_NEWER
+            var valueLen = CodeGenHelpers.GetEncodedStringBytes(item.StringKey).Length;
+            if (valueLen <= MessagePackRange.MaxFixStringLength)
+            {
+                if (UnsafeMemory.Is32Bit)
+                {
+                    il.EmitCall(typeof(UnsafeMemory32).GetRuntimeMethod("WriteRaw" + valueLen, new[] { typeof(MessagePackWriter).MakeByRefType(), typeof(ReadOnlySpan<byte>) }));
+                }
+                else
+                {
+                    il.EmitCall(typeof(UnsafeMemory64).GetRuntimeMethod("WriteRaw" + valueLen, new[] { typeof(MessagePackWriter).MakeByRefType(), typeof(ReadOnlySpan<byte>) }));
+                }
+            }
+            else
+#endif
+            {
+                il.EmitCall(MessagePackWriterTypeInfo.WriteRaw);
+            }
+        }
+
+        private static void EmitSerializeValue(ILGenerator il, ObjectSerializationInfo.EmittableMember member, int index, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argOptions, LocalBuilder localResolver, LocalBuilder localValueObject)
         {
             Label endLabel = il.DefineLabel();
             Type t = member.Type;
@@ -791,14 +860,28 @@ namespace MessagePack.Internal
             {
                 emitter();
                 argWriter.EmitLoad();
-                argValue.EmitLoad();
-                member.EmitLoadValue(il);
+                if (localValueObject is null)
+                {
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                }
+                else
+                {
+                    il.EmitLdloc(localValueObject);
+                }
+
                 argOptions.EmitLoad();
                 il.EmitCall(getSerialize(t));
             }
             else if (ObjectSerializationInfo.IsOptimizeTargetType(t))
             {
-                if (!t.GetTypeInfo().IsValueType)
+                if (t.GetTypeInfo().IsValueType)
+                {
+                    argWriter.EmitLoad();
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                }
+                else if (localValueObject is null)
                 {
                     // As a nullable type (e.g. byte[] and string) we need to call WriteNil for null values.
                     Label writeNonNilValueLabel = il.DefineLabel();
@@ -819,8 +902,7 @@ namespace MessagePack.Internal
                 else
                 {
                     argWriter.EmitLoad();
-                    argValue.EmitLoad();
-                    member.EmitLoadValue(il);
+                    il.EmitLdloc(localValueObject);
                 }
 
                 if (t == typeof(byte[]))
@@ -839,8 +921,16 @@ namespace MessagePack.Internal
                 il.Emit(OpCodes.Call, getFormatterWithVerify.MakeGenericMethod(t));
 
                 argWriter.EmitLoad();
-                argValue.EmitLoad();
-                member.EmitLoadValue(il);
+                if (localValueObject is null)
+                {
+                    argValue.EmitLoad();
+                    member.EmitLoadValue(il);
+                }
+                else
+                {
+                    il.EmitLdloc(localValueObject);
+                }
+
                 argOptions.EmitLoad();
                 il.EmitCall(getSerialize(t));
             }
@@ -1864,11 +1954,11 @@ namespace MessagePack.Internal
                         }
                         else if (pseudokey.Name != null)
                         {
-                            key = new KeyAttribute(pseudokey.Name);
+                            key = new KeyAttribute(pseudokey.Name, !pseudokey.EmitDefaultValue);
                         }
                         else
                         {
-                            key = new KeyAttribute(item.Name); // use property name
+                            key = new KeyAttribute(item.Name, !pseudokey.EmitDefaultValue); // use property name
                         }
                     }
 
@@ -1916,6 +2006,7 @@ namespace MessagePack.Internal
                         }
 
                         member.IntKey = hiddenIntKey++;
+                        member.IgnoreSerializationWhenNull = key.IgnoreSerializationWhenNull;
                         stringMembers.Add(member.StringKey, member);
                     }
                 }
@@ -1989,11 +2080,11 @@ namespace MessagePack.Internal
                         }
                         else if (pseudokey.Name != null)
                         {
-                            key = new KeyAttribute(pseudokey.Name);
+                            key = new KeyAttribute(pseudokey.Name, !pseudokey.EmitDefaultValue);
                         }
                         else
                         {
-                            key = new KeyAttribute(item.Name); // use property name
+                            key = new KeyAttribute(item.Name, !pseudokey.EmitDefaultValue); // use property name
                         }
                     }
 
@@ -2029,6 +2120,7 @@ namespace MessagePack.Internal
                         }
 
                         member.IntKey = hiddenIntKey++;
+                        member.IgnoreSerializationWhenNull = key.IgnoreSerializationWhenNull;
                         stringMembers.Add(member.StringKey, member);
                     }
                 }
@@ -2335,6 +2427,8 @@ namespace MessagePack.Internal
             public int IntKey { get; set; }
 
             public string StringKey { get; set; }
+
+            public bool IgnoreSerializationWhenNull { get; set; }
 
             public Type Type
             {

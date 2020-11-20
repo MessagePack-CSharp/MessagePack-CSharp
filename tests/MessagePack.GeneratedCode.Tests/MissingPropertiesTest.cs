@@ -19,6 +19,91 @@ namespace MessagePack.GeneratedCode.Tests
         }
 
         [Fact]
+        public void IgnoreSerializationWhenNullTypeTest_BothNull()
+        {
+            var value = new IgnoreSerializationWhenNullType { MyProperty1 = null, MyProperty2 = null, MyProperty3 = 114 };
+            var reader = new MessagePackReader(MessagePackSerializer.Serialize(value, options));
+            Assert.Equal(1, reader.ReadMapHeader());
+            Assert.Equal("MyProp3", reader.ReadString());
+            Assert.Equal(value.MyProperty3, reader.ReadInt64());
+        }
+
+        [Fact]
+        public void IgnoreSerializationWhenNullTypeTest_Prop1Null()
+        {
+            var value = new IgnoreSerializationWhenNullType { MyProperty1 = null, MyProperty2 = "null", MyProperty3 = 514 };
+            var reader = new MessagePackReader(MessagePackSerializer.Serialize(value, options));
+            Assert.Equal(2, reader.ReadMapHeader());
+            for (var i = 0; i < 2; i++)
+            {
+                var prop = reader.ReadString();
+                switch (prop)
+                {
+                    case "MyProp2":
+                        Assert.Equal(value.MyProperty2, reader.ReadString());
+                        break;
+                    case "MyProp3":
+                        Assert.Equal(value.MyProperty3, reader.ReadInt64());
+                        break;
+                    default:
+                        Assert.True(false);
+                        break;
+                }
+            }
+        }
+
+        [Fact]
+        public void IgnoreSerializationWhenNullTypeTest_Prop2Null()
+        {
+            var value = new IgnoreSerializationWhenNullType { MyProperty1 = "null", MyProperty2 = null, MyProperty3 = 1919 };
+            var reader = new MessagePackReader(MessagePackSerializer.Serialize(value, options));
+            Assert.Equal(2, reader.ReadMapHeader());
+            for (var i = 0; i < 2; i++)
+            {
+                var prop = reader.ReadString();
+                switch (prop)
+                {
+                    case "MyProp1":
+                        Assert.Equal(value.MyProperty1, reader.ReadString());
+                        break;
+                    case "MyProp3":
+                        Assert.Equal(value.MyProperty3, reader.ReadInt64());
+                        break;
+                    default:
+                        Assert.True(false);
+                        break;
+                }
+            }
+        }
+
+        [Fact]
+        public void IgnoreSerializationWhenNullTypeTest_NotNull()
+        {
+            var value = new IgnoreSerializationWhenNullType { MyProperty1 = "null", MyProperty2 = "ref", MyProperty3 = 1919 };
+            var reader = new MessagePackReader(MessagePackSerializer.Serialize(value, options));
+            Assert.Equal(3, reader.ReadMapHeader());
+            for (var i = 0; i < 3; i++)
+            {
+                var prop = reader.ReadString();
+                switch (prop)
+                {
+                    case "MyProp1":
+                        Assert.Equal(value.MyProperty1, reader.ReadString());
+                        break;
+                    case "MyProp2":
+                        Assert.Equal(value.MyProperty2, reader.ReadString());
+                        break;
+                    case "MyProp3":
+                        Assert.Equal(value.MyProperty3, reader.ReadInt64());
+                        break;
+                    default:
+                        Assert.True(false);
+                        break;
+                }
+            }
+        }
+
+        [Fact]
         public void DefaultValueStringKeyClassWithoutExplicitConstructorTest()
         {
             var seq = new Sequence<byte>();

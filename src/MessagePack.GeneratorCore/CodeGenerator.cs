@@ -185,7 +185,7 @@ namespace MessagePackCompiler
             var waitingIndex = 0;
             foreach (var x in objectInfo)
             {
-                var ns = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
+                var ns = GetNamespace(x);
                 var template = x.IsStringKey ? new StringKeyFormatterTemplate(ns, new[] { x }) : (IFormatterTemplate)new FormatterTemplate(ns, new[] { x });
                 var text = template.TransformText();
                 waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);

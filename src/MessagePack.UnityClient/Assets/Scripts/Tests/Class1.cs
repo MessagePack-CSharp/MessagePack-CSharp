@@ -344,6 +344,19 @@ namespace SharedData
     }
 
     [MessagePackObject]
+    public class IgnoreSerializationWhenNullType
+    {
+        [Key("MyProp1", true)]
+        public string MyProperty1 { get; set; }
+
+        [Key("MyProp2", true)]
+        public string MyProperty2 { get; set; }
+
+        [Key("MyProp3", true)]
+        public long MyProperty3 { get; set; }
+    }
+
+    [MessagePackObject]
     public class Callback1 : IMessagePackSerializationCallbackReceiver
     {
         [Key(0)]
