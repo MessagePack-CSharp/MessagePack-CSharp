@@ -171,7 +171,7 @@ namespace MessagePackCompiler
 
         private Task GenerateMultipleFileAsync(string output, string resolverName, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, string namespaceDot, string multioutSymbol, GenericSerializationInfo[] genericInfo)
         {
-            string GetNamespace(INameSpaceInfo x)
+            string GetNamespace(INamespaceInfo x)
             {
                 if (x.Namespace == null)
                 {
