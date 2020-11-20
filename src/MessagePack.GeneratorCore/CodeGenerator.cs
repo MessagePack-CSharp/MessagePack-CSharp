@@ -18,13 +18,11 @@ namespace MessagePackCompiler
     {
         private static readonly Encoding NoBomUtf8 = new UTF8Encoding(false);
 
-        private Action<string> logger;
-        private CancellationToken cancellationToken;
+        private readonly Action<string> logger;
 
         public CodeGenerator(Action<string> logger, CancellationToken cancellationToken)
         {
             this.logger = logger;
-            this.cancellationToken = cancellationToken;
         }
 
         /// <summary>
@@ -42,21 +40,21 @@ namespace MessagePackCompiler
            Compilation compilation,
            string output,
            string resolverName,
-           string @namespace,
+           string? @namespace,
            bool useMapMode,
-           string multipleIfDirectiveOutputSymbols,
-           string[] externalIgnoreTypeNames)
+           string? multipleIfDirectiveOutputSymbols,
+           string[]? externalIgnoreTypeNames)
         {
             var namespaceDot = string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace + ".";
             var multipleOutputSymbols = multipleIfDirectiveOutputSymbols?.Split(',') ?? Array.Empty<string>();
 
             var sw = Stopwatch.StartNew();
 
-            foreach (var multioutSymbol in multipleOutputSymbols.Length == 0 ? new[] { string.Empty } : multipleOutputSymbols)
+            foreach (var multiOutputSymbol in multipleOutputSymbols.Length == 0 ? new[] { string.Empty } : multipleOutputSymbols)
             {
                 logger("Project Compilation Start:" + compilation.AssemblyName);
 
-                var collector = new TypeCollector(compilation, true, useMapMode, externalIgnoreTypeNames, x => Console.WriteLine(x));
+                var collector = new TypeCollector(compilation, true, useMapMode, externalIgnoreTypeNames, Console.WriteLine);
 
                 logger("Project Compilation Complete:" + sw.Elapsed.ToString());
 
@@ -74,21 +72,21 @@ namespace MessagePackCompiler
                 {
                     // SingleFile Output
                     var fullGeneratedProgramText = GenerateSingleFileSync(resolverName, namespaceDot, objectInfo, enumInfo, unionInfo, genericInfo);
-                    if (multioutSymbol == string.Empty)
+                    if (multiOutputSymbol == string.Empty)
                     {
-                        await OutputAsync(output, fullGeneratedProgramText, cancellationToken);
+                        await OutputAsync(output, fullGeneratedProgramText);
                     }
                     else
                     {
-                        var fname = Path.GetFileNameWithoutExtension(output) + "." + MultiSymbolToSafeFilePath(multioutSymbol) + ".cs";
-                        var text = $"#if {multioutSymbol}" + Environment.NewLine + fullGeneratedProgramText + Environment.NewLine + "#endif";
-                        await OutputAsync(Path.Combine(Path.GetDirectoryName(output), fname), text, cancellationToken);
+                        var fname = Path.GetFileNameWithoutExtension(output) + "." + MultiSymbolToSafeFilePath(multiOutputSymbol) + ".cs";
+                        var text = $"#if {multiOutputSymbol}" + Environment.NewLine + fullGeneratedProgramText + Environment.NewLine + "#endif";
+                        await OutputAsync(Path.Combine(Path.GetDirectoryName(output) ?? string.Empty, fname), text);
                     }
                 }
                 else
                 {
                     // Multiple File output
-                    await GenerateMultipleFileAsync(output, resolverName, objectInfo, enumInfo, unionInfo, namespaceDot, multioutSymbol, genericInfo);
+                    await GenerateMultipleFileAsync(output, resolverName, objectInfo, enumInfo, unionInfo, namespaceDot, multiOutputSymbol, genericInfo);
                 }
 
                 if (objectInfo.Length == 0 && enumInfo.Length == 0 && genericInfo.Length == 0 && unionInfo.Length == 0)
@@ -117,40 +115,33 @@ namespace MessagePackCompiler
                 {
                     var (nameSpace, isStringKey) = x.Key;
                     var objectSerializationInfos = x.ToArray();
-                    var template = isStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
-
-                    template.Namespace = namespaceDot + "Formatters" + (nameSpace is null ? string.Empty : "." + nameSpace);
-                    template.ObjectSerializationInfos = objectSerializationInfos;
-
+                    var ns = namespaceDot + "Formatters" + (nameSpace is null ? string.Empty : "." + nameSpace);
+                    var template = isStringKey ? new StringKeyFormatterTemplate(ns, objectSerializationInfos) : (IFormatterTemplate)new FormatterTemplate(ns, objectSerializationInfos);
                     return template;
                 })
                 .ToArray();
 
+            string GetNamespace<T>(IGrouping<string?, T> x)
+            {
+                if (x.Key == null)
+                {
+                    return namespaceDot + "Formatters";
+                }
+
+                return namespaceDot + "Formatters." + x.Key;
+            }
+
             var enumFormatterTemplates = enumInfo
                 .GroupBy(x => x.Namespace)
-                .Select(x => new EnumTemplate()
-                {
-                    Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
-                    EnumSerializationInfos = x.ToArray(),
-                })
+                .Select(x => new EnumTemplate(GetNamespace(x), x.ToArray()))
                 .ToArray();
 
             var unionFormatterTemplates = unionInfo
                 .GroupBy(x => x.Namespace)
-                .Select(x => new UnionTemplate()
-                {
-                    Namespace = namespaceDot + "Formatters" + ((x.Key == null) ? string.Empty : "." + x.Key),
-                    UnionSerializationInfos = x.ToArray(),
-                })
+                .Select(x => new UnionTemplate(GetNamespace(x), x.ToArray()))
                 .ToArray();
 
-            var resolverTemplate = new ResolverTemplate()
-            {
-                Namespace = namespaceDot + "Resolvers",
-                FormatterNamespace = namespaceDot + "Formatters",
-                ResolverName = resolverName,
-                RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
-            };
+            var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
 
             var sb = new StringBuilder();
             sb.AppendLine(resolverTemplate.TransformText());
@@ -180,68 +171,59 @@ namespace MessagePackCompiler
 
         private Task GenerateMultipleFileAsync(string output, string resolverName, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, string namespaceDot, string multioutSymbol, GenericSerializationInfo[] genericInfo)
         {
+            string GetNamespace(INamespaceInfo x)
+            {
+                if (x.Namespace == null)
+                {
+                    return namespaceDot + "Formatters";
+                }
+
+                return namespaceDot + "Formatters." + x.Namespace;
+            }
+
             var waitingTasks = new Task[objectInfo.Length + enumInfo.Length + unionInfo.Length + 1];
             var waitingIndex = 0;
             foreach (var x in objectInfo)
             {
-                var template = x.IsStringKey ? new StringKeyFormatterTemplate() : (IFormatterTemplate)new FormatterTemplate();
-                template.Namespace = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
-                template.ObjectSerializationInfos = new[] { x };
-
+                var ns = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
+                var template = x.IsStringKey ? new StringKeyFormatterTemplate(ns, new[] { x }) : (IFormatterTemplate)new FormatterTemplate(ns, new[] { x });
                 var text = template.TransformText();
-                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);
             }
 
             foreach (var x in enumInfo)
             {
-                var template = new EnumTemplate()
-                {
-                    Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
-                    EnumSerializationInfos = new[] { x },
-                };
-
+                var template = new EnumTemplate(GetNamespace(x), new[] { x });
                 var text = template.TransformText();
-                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);
             }
 
             foreach (var x in unionInfo)
             {
-                var template = new UnionTemplate()
-                {
-                    Namespace = namespaceDot + "Formatters" + ((x.Namespace == null) ? string.Empty : "." + x.Namespace),
-                    UnionSerializationInfos = new[] { x },
-                };
-
+                var template = new UnionTemplate(GetNamespace(x), new[] { x });
                 var text = template.TransformText();
-                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text, cancellationToken);
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);
             }
 
-            var resolverTemplate = new ResolverTemplate()
-            {
-                Namespace = namespaceDot + "Resolvers",
-                FormatterNamespace = namespaceDot + "Formatters",
-                ResolverName = resolverName,
-                RegisterInfos = genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray(),
-            };
-
-            waitingTasks[waitingIndex] = OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText(), cancellationToken);
+            var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
+            waitingTasks[waitingIndex] = OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText());
             return Task.WhenAll(waitingTasks);
         }
 
-        private Task OutputToDirAsync(string dir, string ns, string name, string multipleOutSymbol, string text, CancellationToken cancellationToken)
+        private Task OutputToDirAsync(string dir, string ns, string name, string multipleOutSymbol, string text)
         {
             if (multipleOutSymbol == string.Empty)
             {
-                return OutputAsync(Path.Combine(dir, $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text, cancellationToken);
+                return OutputAsync(Path.Combine(dir, $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text);
             }
             else
             {
                 text = $"#if {multipleOutSymbol}" + Environment.NewLine + text + Environment.NewLine + "#endif";
-                return OutputAsync(Path.Combine(dir, MultiSymbolToSafeFilePath(multipleOutSymbol), $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text, cancellationToken);
+                return OutputAsync(Path.Combine(dir, MultiSymbolToSafeFilePath(multipleOutSymbol), $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text);
             }
         }
 
-        private Task OutputAsync(string path, string text, CancellationToken cancellationToken)
+        private Task OutputAsync(string path, string text)
         {
             path = path.Replace("global::", string.Empty);
 
@@ -249,12 +231,12 @@ namespace MessagePackCompiler
             logger(prefix + path);
 
             var fi = new FileInfo(path);
-            if (!fi.Directory.Exists)
+            if (fi.Directory != null && !fi.Directory.Exists)
             {
                 fi.Directory.Create();
             }
 
-            System.IO.File.WriteAllText(path, NormalizeNewLines(text), NoBomUtf8);
+            File.WriteAllText(path, NormalizeNewLines(text), NoBomUtf8);
             return Task.CompletedTask;
         }
 
