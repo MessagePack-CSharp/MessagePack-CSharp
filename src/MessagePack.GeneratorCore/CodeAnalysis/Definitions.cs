@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace MessagePackCompiler.CodeAnalysis
 {
-    public interface INameSpaceInfo
+    public interface INamespaceInfo
     {
         string? Namespace { get; }
     }
@@ -21,7 +21,7 @@ namespace MessagePackCompiler.CodeAnalysis
         string FormatterName { get; }
     }
 
-    public class ObjectSerializationInfo : IResolverRegisterInfo, INameSpaceInfo
+    public class ObjectSerializationInfo : IResolverRegisterInfo, INamespaceInfo
     {
         public string Name { get; }
 
@@ -192,7 +192,7 @@ namespace MessagePackCompiler.CodeAnalysis
         }
     }
 
-    public class EnumSerializationInfo : IResolverRegisterInfo, INameSpaceInfo
+    public class EnumSerializationInfo : IResolverRegisterInfo, INamespaceInfo
     {
         public EnumSerializationInfo(string? @namespace, string name, string fullName, string underlyingType)
         {
@@ -239,7 +239,7 @@ namespace MessagePackCompiler.CodeAnalysis
         }
     }
 
-    public class UnionSerializationInfo : IResolverRegisterInfo, INameSpaceInfo
+    public class UnionSerializationInfo : IResolverRegisterInfo, INamespaceInfo
     {
         public string? Namespace { get; }
 
