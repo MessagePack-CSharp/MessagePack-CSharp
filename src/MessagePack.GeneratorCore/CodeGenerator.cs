@@ -121,7 +121,7 @@ namespace MessagePackCompiler
                 })
                 .ToArray();
 
-            string GetNameSpace<T>(IGrouping<string?, T> x)
+            string GetNamespace<T>(IGrouping<string?, T> x)
             {
                 if (x.Key == null)
                 {
@@ -133,12 +133,12 @@ namespace MessagePackCompiler
 
             var enumFormatterTemplates = enumInfo
                 .GroupBy(x => x.Namespace)
-                .Select(x => new EnumTemplate(GetNameSpace(x), x.ToArray()))
+                .Select(x => new EnumTemplate(GetNamespace(x), x.ToArray()))
                 .ToArray();
 
             var unionFormatterTemplates = unionInfo
                 .GroupBy(x => x.Namespace)
-                .Select(x => new UnionTemplate(GetNameSpace(x), x.ToArray()))
+                .Select(x => new UnionTemplate(GetNamespace(x), x.ToArray()))
                 .ToArray();
 
             var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
@@ -171,7 +171,7 @@ namespace MessagePackCompiler
 
         private Task GenerateMultipleFileAsync(string output, string resolverName, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, string namespaceDot, string multioutSymbol, GenericSerializationInfo[] genericInfo)
         {
-            string GetNameSpace(INameSpaceInfo x)
+            string GetNamespace(INameSpaceInfo x)
             {
                 if (x.Namespace == null)
                 {
@@ -193,14 +193,14 @@ namespace MessagePackCompiler
 
             foreach (var x in enumInfo)
             {
-                var template = new EnumTemplate(GetNameSpace(x), new[] { x });
+                var template = new EnumTemplate(GetNamespace(x), new[] { x });
                 var text = template.TransformText();
                 waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);
             }
 
             foreach (var x in unionInfo)
             {
-                var template = new UnionTemplate(GetNameSpace(x), new[] { x });
+                var template = new UnionTemplate(GetNamespace(x), new[] { x });
                 var text = template.TransformText();
                 waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);
             }
