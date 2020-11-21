@@ -139,6 +139,14 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string Type { get; }
 
+        public bool IsPrimitiveType => primitiveTypes.Contains(Type);
+
+        public bool IsUnmanagedType { get; }
+
+        public bool IsValueType { get; }
+
+        public bool IsReferenceType { get; }
+
         public string Name { get; }
 
         public string ShortTypeName { get; }
@@ -147,7 +155,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly HashSet<string> primitiveTypes = new (Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
 
-        public MemberSerializationInfo(bool isProperty, bool isWritable, bool isReadable, int intKey, string stringKey, bool ignoreSerializationWhenNull, string name, string type, string shortTypeName, string? customFormatterTypeName)
+        public MemberSerializationInfo(bool isProperty, bool isWritable, bool isReadable, int intKey, string stringKey, bool ignoreSerializationWhenNull, string name, string type, string shortTypeName, string? customFormatterTypeName, bool isUnmanagedType, bool isValueType, bool isReferenceType)
         {
             IsProperty = isProperty;
             IsWritable = isWritable;
@@ -159,6 +167,9 @@ namespace MessagePackCompiler.CodeAnalysis
             Name = name;
             ShortTypeName = shortTypeName;
             CustomFormatterTypeName = customFormatterTypeName;
+            IsUnmanagedType = isUnmanagedType;
+            IsValueType = isValueType;
+            IsReferenceType = isReferenceType;
         }
 
         public string GetSerializeMethodString()

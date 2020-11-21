@@ -56,9 +56,9 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void IgnoreSerializationWhenNull_BothNull()
+        public void IgnoreSerializationWhenNull_AllDefault()
         {
-            var value = new TwoPropertiesIgnoreNull { Prop1 = null, Prop2 = null };
+            var value = new TwoPropertiesIgnoreNull { Prop1 = null, Prop2 = null, Prop3 = default, Prop4 = default };
             var reader = new MessagePackReader(MessagePackSerializer.Serialize(value));
             Assert.Equal(0, reader.ReadMapHeader());
         }
@@ -544,6 +544,12 @@ namespace MessagePack.Tests
 
             [DataMember(EmitDefaultValue = false)]
             public string Prop2 { get; set; }
+
+            [DataMember(EmitDefaultValue = false)]
+            public long Prop3 { get; set; }
+
+            [DataMember(EmitDefaultValue = false)]
+            public byte Prop4 { get; set; }
         }
 
         [DataContract]

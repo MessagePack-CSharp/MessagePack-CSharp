@@ -73,6 +73,7 @@ MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.InterfaceImmutableSetFormatter() -> void
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.InterfaceImmutableStackFormatter() -> void
+MessagePack.Internal.ZeroTestHelper
 MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
 MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, bool leaveOpen, MessagePack.SequencePool sequencePool) -> void
 MessagePack.Resolvers.ExpandoObjectResolver
@@ -123,6 +124,8 @@ override MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.Creat
 override MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.Add(T[] collection, int index, T value, MessagePack.MessagePackSerializerOptions options) -> void
 override MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.Complete(T[] intermediateCollection) -> System.Collections.Immutable.IImmutableStack<T>
 override MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.Create(int count, MessagePack.MessagePackSerializerOptions options) -> T[]
+static MessagePack.Internal.ZeroTestHelper.IsDefault<T>(ref T value) -> bool
+static MessagePack.Internal.ZeroTestHelper.IsDefaultUnmanaged<T>(ulong* pointer8) -> bool
 static MessagePack.Nil.operator !=(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static MessagePack.Nil.operator ==(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static readonly MessagePack.Formatters.ByteMemoryFormatter.Instance -> MessagePack.Formatters.ByteMemoryFormatter

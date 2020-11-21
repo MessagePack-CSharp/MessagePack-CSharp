@@ -334,6 +334,8 @@ namespace MessagePack.Internal
             { typeof(MessagePack.Nil) },
         };
 
+        private static readonly MethodInfo MethodZeroTestHelperIsDefault = typeof(ZeroTestHelper).GetMethod("IsDefault") ?? throw new NullReferenceException();
+
         public static TypeInfo BuildType(DynamicAssembly assembly, Type type, bool forceStringKey, bool contractless)
         {
             if (ignoreTypes.Contains(type))
@@ -664,62 +666,88 @@ namespace MessagePack.Internal
             var argValue = new ArgumentField(il, firstArgIndex + 1, type);
             var argOptions = new ArgumentField(il, firstArgIndex + 2);
 
-            // if(value == null) return WriteNil
             var typeInfo = type.GetTypeInfo();
-            if (typeInfo.IsClass)
-            {
-                Label elseBody = il.DefineLabel();
+            BuildSerializeInternalReturnWriteNil(il, typeInfo, ref argWriter, ref argValue);
 
-                argValue.EmitLoad();
-                il.Emit(OpCodes.Brtrue_S, elseBody);
-                argWriter.EmitLoad();
-                il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
-                il.Emit(OpCodes.Ret);
+            BuildSerializeInternalOnBeforeSerialize(type, il, typeInfo, ref argValue);
 
-                il.MarkLabel(elseBody);
-            }
-
-            // IMessagePackSerializationCallbackReceiver.OnBeforeSerialize()
-            if (typeInfo.ImplementedInterfaces.Any(x => x == typeof(IMessagePackSerializationCallbackReceiver)))
-            {
-                // call directly
-                MethodInfo[] runtimeMethods = type.GetRuntimeMethods().Where(x => x.Name == "OnBeforeSerialize").ToArray();
-                if (runtimeMethods.Length == 1)
-                {
-                    argValue.EmitLoad();
-                    il.Emit(OpCodes.Call, runtimeMethods[0]); // don't use EmitCall helper(must use 'Call')
-                }
-                else
-                {
-                    argValue.EmitLdarg(); // force ldarg
-                    il.EmitBoxOrDoNothing(type);
-                    il.EmitCall(onBeforeSerialize);
-                }
-            }
-
-            // IFormatterResolver resolver = options.Resolver;
-            var localResolver = default(LocalBuilder);
-            if (info.ShouldUseFormatterResolver)
-            {
-                localResolver = il.DeclareLocal(typeof(IFormatterResolver));
-                argOptions.EmitLoad();
-                il.EmitCall(getResolverFromOptions);
-                il.EmitStloc(localResolver);
-            }
+            var localResolver = BuildSerializeInternalLocalResolver(info, il, ref argOptions);
 
             if (info.IsIntKey)
             {
-                BuildSerializeInternalIntKey(info, il, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver);
+                BuildSerializeInternalIntKey(info, il, tryEmitLoadCustomFormatter, ref argWriter, ref argValue, ref argOptions, localResolver);
             }
             else
             {
-                BuildSerializeInternalStringKey(info, il, emitStringByteKeys, tryEmitLoadCustomFormatter, argValue, argWriter, argOptions, localResolver);
+                BuildSerializeInternalStringKey(info, il, tryEmitLoadCustomFormatter, ref argWriter, ref argValue, ref argOptions, localResolver, emitStringByteKeys);
             }
 
             il.Emit(OpCodes.Ret);
         }
 
-        private static void BuildSerializeInternalIntKey(ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argWriter, ArgumentField argValue, ArgumentField argOptions, LocalBuilder localResolver)
+        private static void BuildSerializeInternalReturnWriteNil(ILGenerator il, TypeInfo typeInfo, ref ArgumentField argWriter, ref ArgumentField argValue)
+        {
+            // if(value == null) return WriteNil
+            if (!typeInfo.IsClass)
+            {
+                return;
+            }
+
+            var elseBody = il.DefineLabel();
+
+            argValue.EmitLoad();
+            il.Emit(OpCodes.Brtrue_S, elseBody);
+            argWriter.EmitLoad();
+            il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(elseBody);
+        }
+
+        private static LocalBuilder BuildSerializeInternalLocalResolver(ObjectSerializationInfo info, ILGenerator il, ref ArgumentField argOptions)
+        {
+            // IFormatterResolver resolver = options.Resolver;
+            if (!info.ShouldUseFormatterResolver)
+            {
+                return default;
+            }
+
+            var localResolver = il.DeclareLocal(typeof(IFormatterResolver));
+            argOptions.EmitLoad();
+            il.EmitCall(getResolverFromOptions);
+            il.EmitStloc(localResolver);
+            return localResolver;
+        }
+
+        private static void BuildSerializeInternalOnBeforeSerialize(Type type, ILGenerator il, TypeInfo typeInfo, ref ArgumentField argValue)
+        {
+            // IMessagePackSerializationCallbackReceiver.OnBeforeSerialize()
+            if (typeInfo.ImplementedInterfaces.All(x => x != typeof(IMessagePackSerializationCallbackReceiver)))
+            {
+                return;
+            }
+
+            // call directly
+            using (var enumerator = type.GetRuntimeMethods().Where(x => x.Name == "OnBeforeSerialize").GetEnumerator())
+            {
+                if (enumerator.MoveNext())
+                {
+                    var runtimeMethod = enumerator.Current;
+                    if (!enumerator.MoveNext())
+                    {
+                        argValue.EmitLoad();
+                        il.Emit(OpCodes.Call, runtimeMethod); // don't use EmitCall helper(must use 'Call')
+                        return;
+                    }
+                }
+
+                argValue.EmitLdarg(); // force ldarg
+                il.EmitBoxOrDoNothing(type);
+                il.EmitCall(onBeforeSerialize);
+            }
+        }
+
+        private static void BuildSerializeInternalIntKey(ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argWriter, ref ArgumentField argValue, ref ArgumentField argOptions, LocalBuilder localResolver)
         {
             var maxKey = info.Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
             var intKeyMap = info.Members.Where(x => x.IsReadable).ToDictionary(x => x.IntKey);
@@ -738,17 +766,18 @@ namespace MessagePack.Internal
                 }
                 else
                 {
-                    // Write Nil as Blanc
+                    // Write Nil as Blank
                     argWriter.EmitLoad();
                     il.EmitCall(MessagePackWriterTypeInfo.WriteNil);
                 }
             }
         }
 
-        private static void BuildSerializeInternalStringKey(ObjectSerializationInfo info, ILGenerator il, Action emitStringByteKeys, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ArgumentField argValue, ArgumentField argWriter, ArgumentField argOptions, LocalBuilder localResolver)
+        private static void BuildSerializeInternalStringKey(ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argWriter, ref ArgumentField argValue, ref ArgumentField argOptions, LocalBuilder localResolver, Action emitStringByteKeys)
         {
-            var writeCount = info.Members.Count(x => x.IsReadable);
-            var ignoreSerializationWhenNullMembers = info.Members.Where(x => x.IsReadable && x.IgnoreSerializationWhenNull).ToArray();
+            var readableMembers = info.Members.Where(x => x.IsReadable).ToArray();
+            var writeCount = readableMembers.Length;
+            var ignoreSerializationWhenNullMembers = readableMembers.Where(x => x.IgnoreSerializationWhenNull).ToArray();
             var localCount = default(LocalBuilder);
             if (ignoreSerializationWhenNullMembers.Length != 0)
             {
@@ -767,11 +796,22 @@ namespace MessagePack.Internal
                 il.EmitLdloc(localCount);
                 argValue.EmitLoad();
                 item.EmitLoadValue(il);
-                il.Emit(OpCodes.Dup);
-                il.EmitStloc(localIgnoreValueMember);
+                if (!item.IsPrimitive && item.IsValueType)
+                {
+                    il.EmitStloc(localIgnoreValueMember);
+                    il.EmitLdloca(localIgnoreValueMember);
+                    var methodIsDefault = MethodZeroTestHelperIsDefault.MakeGenericMethod(item.Type);
+                    il.EmitCall(methodIsDefault);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Dup);
+                    il.EmitStloc(localIgnoreValueMember);
+                    il.Emit(OpCodes.Ldnull);
+                    il.Emit(OpCodes.Ceq);
+                }
+
                 // count -= ____<#= item.Name #> == null ? 1 : 0;
-                il.Emit(OpCodes.Ldnull);
-                il.Emit(OpCodes.Ceq);
                 il.Emit(OpCodes.Sub);
                 il.EmitStloc(localCount);
             }
@@ -797,7 +837,7 @@ namespace MessagePack.Internal
 
             var index = 0;
             var indexIgnoreSerializationWhenNull = 0;
-            foreach (var item in info.Members.Where(x => x.IsReadable))
+            foreach (var item in readableMembers)
             {
                 var localValueObject = default(LocalBuilder);
                 Label? ignoreWhenNullLabel = default;
@@ -806,9 +846,19 @@ namespace MessagePack.Internal
                 {
                     ignoreWhenNullLabel = il.DefineLabel();
                     localValueObject = localIgnoreValueMembers[indexIgnoreSerializationWhenNull++];
-                    il.EmitLdloc(localValueObject);
                     // if (____<#= item.Name #> != null) { writer.WriteRaw(""); resolver.GetFormatterWithVerify<T>.Serialize(____<#= item.Name #>, options); }
-                    il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel.Value);
+                    if (item.IsValueType)
+                    {
+                        il.EmitLdloca(localValueObject);
+                        var methodIsDefault = MethodZeroTestHelperIsDefault.MakeGenericMethod(item.Type);
+                        il.EmitCall(methodIsDefault);
+                        il.Emit(OpCodes.Brtrue_S, ignoreWhenNullLabel.Value);
+                    }
+                    else
+                    {
+                        il.EmitLdloc(localValueObject);
+                        il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel.Value);
+                    }
                 }
 
                 EmitStringKeySpanRaw(il, emitStringByteKeys, ref argWriter, index, item);
@@ -2444,6 +2494,15 @@ namespace MessagePack.Internal
                 get
                 {
                     return this.IsProperty ? this.PropertyInfo.Name : this.FieldInfo.Name;
+                }
+            }
+
+            public bool IsPrimitive
+            {
+                get
+                {
+                    Type t = this.IsProperty ? this.PropertyInfo.PropertyType : this.FieldInfo.FieldType;
+                    return t.IsPrimitive;
                 }
             }
 

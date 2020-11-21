@@ -4266,7 +4266,7 @@ namespace MessagePack.Formatters.SharedData
         // MyProp3
         private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty3() => new byte[1 + 7] { 167, 77, 121, 80, 114, 111, 112, 51 };
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IgnoreSerializationWhenNullType value, global::MessagePack.MessagePackSerializerOptions options)
+        public unsafe void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IgnoreSerializationWhenNullType value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -4280,6 +4280,8 @@ namespace MessagePack.Formatters.SharedData
             if (____MyProperty1 is null) { --count; }
             var ____MyProperty2 = value.MyProperty2;
             if (____MyProperty2 is null) { --count; }
+            var ____MyProperty3 = value.MyProperty3;
+            if (____MyProperty3 == default) { --count; }
             writer.WriteMapHeader(count);
             if (!(____MyProperty1 is null))
             {
@@ -4293,8 +4295,12 @@ namespace MessagePack.Formatters.SharedData
                 formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, ____MyProperty2, options);
             }
 
-            writer.WriteRaw(GetSpan_MyProperty3());
-            writer.Write(value.MyProperty3);
+            if (____MyProperty3 != default)
+            {
+                writer.WriteRaw(GetSpan_MyProperty3());
+                writer.Write(____MyProperty3);
+            }
+
         }
 
         public global::SharedData.IgnoreSerializationWhenNullType Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)

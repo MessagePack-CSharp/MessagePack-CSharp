@@ -80,7 +80,9 @@ foreach (var objInfo in ObjectSerializationInfos) {
  if (list.Count != 0) { 
             this.Write("\r\n");
  } 
-            this.Write("        public void Serialize(ref global::MessagePack.MessagePackWriter writer, ");
+            this.Write("        public");
+            this.Write(this.ToStringHelper.ToStringWithCulture(list.Any(memberAndBinary => memberAndBinary.Item1.IgnoreSerializationWhenNull && memberAndBinary.Item1.IsUnmanagedType) ? " unsafe" : ""));
+            this.Write(" void Serialize(ref global::MessagePack.MessagePackWriter writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
             this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n");
  if (objInfo.IsClass) { 
@@ -114,9 +116,25 @@ foreach (var objInfo in ObjectSerializationInfos) {
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write(" = value.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write(";\r\n            if (____");
+            this.Write(";\r\n");
+ if (member.IsPrimitiveType) { 
+            this.Write("            if (____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(" == default) { --count; }\r\n");
+ } else if (member.IsUnmanagedType) { 
+            this.Write("            if (global::MessagePack.Internal.ZeroTestHelper.IsDefaultUnmanaged((u" +
+                    "long*)&____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(")) { --count; }\r\n");
+ } else if (member.IsValueType) { 
+            this.Write("            if (global::MessagePack.Internal.ZeroTestHelper.IsDefault(ref ____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(")) { --count; }\r\n");
+ } else { 
+            this.Write("            if (____");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write(" is null) { --count; }\r\n");
+ } 
  } 
  } 
             this.Write("            writer.WriteMapHeader(");
@@ -125,9 +143,25 @@ foreach (var objInfo in ObjectSerializationInfos) {
  foreach (var memberAndBinary in list) {
         var member = memberAndBinary.Item1;
         if (member.IgnoreSerializationWhenNull) { 
+ if (member.IsPrimitiveType) { 
+            this.Write("            if (____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write(" != default)\r\n");
+ } else if (member.IsUnmanagedType) { 
+            this.Write("            if (!global::MessagePack.Internal.ZeroTestHelper.IsDefaultUnmanaged((" +
+                    "ulong*)&____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write("))\r\n");
+ } else if (member.IsValueType) { 
+            this.Write("            if (!global::MessagePack.Internal.ZeroTestHelper.IsDefault(ref ____");
+            this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
+            this.Write("))\r\n");
+ } else { 
             this.Write("            if (!(____");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write(" is null))\r\n            {\r\n");
+            this.Write(" is null))\r\n");
+ } 
+            this.Write("            {\r\n");
  } 
             this.Write(this.ToStringHelper.ToStringWithCulture(member.IgnoreSerializationWhenNull ? "    " : ""));
             this.Write("            writer.WriteRaw(GetSpan_");

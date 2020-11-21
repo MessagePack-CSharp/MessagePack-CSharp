@@ -48,7 +48,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
 <# if (list.Count != 0) { #>
 
 <# } #>
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public<#= list.Any(memberAndBinary => memberAndBinary.Item1.IgnoreSerializationWhenNull && memberAndBinary.Item1.IsUnmanagedType) ? " unsafe" : "" #> void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
 <# if (objInfo.IsClass) { #>
             if (value is null)
@@ -79,14 +79,30 @@ foreach (var objInfo in ObjectSerializationInfos) {
     var member = memberAndBinary.Item1;
     if (member.IgnoreSerializationWhenNull) { #>
             var ____<#= member.Name #> = value.<#= member.Name #>;
+<# if (member.IsPrimitiveType) { #>
+            if (____<#= member.Name #> == default) { --count; }
+<# } else if (member.IsUnmanagedType) { #>
+            if (global::MessagePack.Internal.ZeroTestHelper.IsDefaultUnmanaged((ulong*)&____<#= member.Name #>)) { --count; }
+<# } else if (member.IsValueType) { #>
+            if (global::MessagePack.Internal.ZeroTestHelper.IsDefault(ref ____<#= member.Name #>)) { --count; }
+<# } else { #>
             if (____<#= member.Name #> is null) { --count; }
+<# } #>
 <# } #>
 <# } #>
             writer.WriteMapHeader(<#= anyIgnoreSerializationWhenNull ? "count" : list.Count.ToString() #>);
 <# foreach (var memberAndBinary in list) {
         var member = memberAndBinary.Item1;
         if (member.IgnoreSerializationWhenNull) { #>
+<# if (member.IsPrimitiveType) { #>
+            if (____<#= member.Name #> != default)
+<# } else if (member.IsUnmanagedType) { #>
+            if (!global::MessagePack.Internal.ZeroTestHelper.IsDefaultUnmanaged((ulong*)&____<#= member.Name #>))
+<# } else if (member.IsValueType) { #>
+            if (!global::MessagePack.Internal.ZeroTestHelper.IsDefault(ref ____<#= member.Name #>))
+<# } else { #>
             if (!(____<#= member.Name #> is null))
+<# } #>
             {
 <# } #>
 <#= member.IgnoreSerializationWhenNull ? "    " : "" #>            writer.WriteRaw(GetSpan_<#= member.Name #>());
