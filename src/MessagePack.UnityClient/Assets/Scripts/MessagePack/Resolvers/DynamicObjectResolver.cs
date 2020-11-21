@@ -796,7 +796,33 @@ namespace MessagePack.Internal
                 il.EmitLdloc(localCount);
                 argValue.EmitLoad();
                 item.EmitLoadValue(il);
-                if (!item.IsPrimitive && item.IsValueType)
+                if (item.IsPrimitive)
+                {
+                    il.Emit(OpCodes.Dup);
+                    il.EmitStloc(localIgnoreValueMember);
+                    if (item.Type == typeof(IntPtr) || item.Type == typeof(UIntPtr))
+                    {
+                        il.Emit(OpCodes.Ldc_I4_0);
+                    }
+                    else if (item.Type == typeof(IntPtr) || item.Type == typeof(UIntPtr))
+                    {
+                        il.Emit(OpCodes.Ldc_I4_0);
+                        il.Emit(OpCodes.Conv_I);
+                    }
+                    else if (item.Type == typeof(ulong) || item.Type == typeof(long))
+                    {
+                        il.Emit(OpCodes.Ldc_I4_0);
+                        il.Emit(OpCodes.Conv_I8);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Conv_I4);
+                        il.Emit(OpCodes.Ldc_I4_0);
+                    }
+
+                    il.Emit(OpCodes.Ceq);
+                }
+                else if (item.IsValueType)
                 {
                     il.EmitStloc(localIgnoreValueMember);
                     il.EmitLdloca(localIgnoreValueMember);
@@ -847,7 +873,32 @@ namespace MessagePack.Internal
                     ignoreWhenNullLabel = il.DefineLabel();
                     localValueObject = localIgnoreValueMembers[indexIgnoreSerializationWhenNull++];
                     // if (____<#= item.Name #> != null) { writer.WriteRaw(""); resolver.GetFormatterWithVerify<T>.Serialize(____<#= item.Name #>, options); }
-                    if (item.IsValueType)
+                    if (item.IsPrimitive)
+                    {
+                        il.EmitLdloc(localValueObject);
+                        if (item.Type == typeof(int) || item.Type == typeof(uint))
+                        {
+                            il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel.Value);
+                        }
+                        else if (item.Type == typeof(IntPtr) || item.Type == typeof(UIntPtr))
+                        {
+                            il.EmitLdc_I4(0);
+                            il.Emit(OpCodes.Conv_I);
+                            il.Emit(OpCodes.Beq_S, ignoreWhenNullLabel.Value);
+                        }
+                        else if (item.Type == typeof(long) || item.Type == typeof(ulong))
+                        {
+                            il.EmitLdc_I4(0);
+                            il.Emit(OpCodes.Conv_I8);
+                            il.Emit(OpCodes.Beq_S, ignoreWhenNullLabel.Value);
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Conv_I4);
+                            il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel.Value);
+                        }
+                    }
+                    else if (item.IsValueType)
                     {
                         il.EmitLdloca(localValueObject);
                         var methodIsDefault = MethodZeroTestHelperIsDefault.MakeGenericMethod(item.Type);
