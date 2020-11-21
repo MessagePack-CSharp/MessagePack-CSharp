@@ -63,6 +63,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\UnsafeMemory.Low.cs">
       <Link>Code\UnsafeMemory.Low.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ZeroTestHelper.cs">
+      <Link>Code\ZeroTestHelper.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\ExtensionHeader.cs">
       <Link>Code\ExtensionHeader.cs</Link>
     </Compile>
