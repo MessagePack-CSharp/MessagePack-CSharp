@@ -1954,11 +1954,11 @@ namespace MessagePack.Internal
                         }
                         else if (pseudokey.Name != null)
                         {
-                            key = new KeyAttribute(pseudokey.Name, !pseudokey.EmitDefaultValue);
+                            key = new KeyAttribute(pseudokey.Name, pseudokey.EmitDefaultValue);
                         }
                         else
                         {
-                            key = new KeyAttribute(item.Name, !pseudokey.EmitDefaultValue); // use property name
+                            key = new KeyAttribute(item.Name, pseudokey.EmitDefaultValue); // use property name
                         }
                     }
 
@@ -2006,7 +2006,7 @@ namespace MessagePack.Internal
                         }
 
                         member.IntKey = hiddenIntKey++;
-                        member.IgnoreSerializationWhenNull = key.IgnoreSerializationWhenNull;
+                        member.IgnoreSerializationWhenNull = !key.EmitDefaultValue;
                         stringMembers.Add(member.StringKey, member);
                     }
                 }
@@ -2080,11 +2080,11 @@ namespace MessagePack.Internal
                         }
                         else if (pseudokey.Name != null)
                         {
-                            key = new KeyAttribute(pseudokey.Name, !pseudokey.EmitDefaultValue);
+                            key = new KeyAttribute(pseudokey.Name, pseudokey.EmitDefaultValue);
                         }
                         else
                         {
-                            key = new KeyAttribute(item.Name, !pseudokey.EmitDefaultValue); // use property name
+                            key = new KeyAttribute(item.Name, pseudokey.EmitDefaultValue); // use property name
                         }
                     }
 
@@ -2120,7 +2120,7 @@ namespace MessagePack.Internal
                         }
 
                         member.IntKey = hiddenIntKey++;
-                        member.IgnoreSerializationWhenNull = key.IgnoreSerializationWhenNull;
+                        member.IgnoreSerializationWhenNull = !key.EmitDefaultValue;
                         stringMembers.Add(member.StringKey, member);
                     }
                 }

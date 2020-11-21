@@ -25,17 +25,17 @@ namespace MessagePack
 
         public string StringKey { get; private set; }
 
-        public bool IgnoreSerializationWhenNull { get; private set; }
+        public bool EmitDefaultValue { get; private set; }
 
         public KeyAttribute(int x)
         {
             this.IntKey = x;
         }
 
-        public KeyAttribute(string x, bool ignoreSerializationWhenNull = false)
+        public KeyAttribute(string x, bool emitDefaultValue = true)
         {
             this.StringKey = x;
-            this.IgnoreSerializationWhenNull = ignoreSerializationWhenNull;
+            this.EmitDefaultValue = emitDefaultValue;
         }
     }
 

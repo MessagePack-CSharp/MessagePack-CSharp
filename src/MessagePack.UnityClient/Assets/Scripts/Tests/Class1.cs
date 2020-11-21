@@ -346,13 +346,13 @@ namespace SharedData
     [MessagePackObject]
     public class IgnoreSerializationWhenNullType
     {
-        [Key("MyProp1", true)]
+        [Key("MyProp1", false)]
         public string MyProperty1 { get; set; }
 
-        [Key("MyProp2", true)]
+        [Key("MyProp2", false)]
         public string MyProperty2 { get; set; }
 
-        [Key("MyProp3", true)]
+        [Key("MyProp3", false)]
         public long MyProperty3 { get; set; }
     }
 

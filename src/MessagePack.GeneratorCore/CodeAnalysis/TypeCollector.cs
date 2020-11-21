@@ -677,7 +677,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     var ignoreSerializationWhenNull = item.Type.IsReferenceType && keyAttr.ConstructorArguments.Length > 1;
                     if (ignoreSerializationWhenNull)
                     {
-                        ignoreSerializationWhenNull &= keyAttr.ConstructorArguments[1].Value is bool ignoreSerializationWhenNull1 && ignoreSerializationWhenNull1;
+                        ignoreSerializationWhenNull &= keyAttr.ConstructorArguments[1].Value is bool emitDefaultValue && !emitDefaultValue;
                     }
 
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);
@@ -750,7 +750,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     var ignoreSerializationWhenNull = item.Type.IsReferenceType && keyAttr.ConstructorArguments.Length > 1;
                     if (ignoreSerializationWhenNull)
                     {
-                        ignoreSerializationWhenNull &= keyAttr.ConstructorArguments[1].Value is bool ignoreSerializationWhenNull1 && ignoreSerializationWhenNull1;
+                        ignoreSerializationWhenNull &= keyAttr.ConstructorArguments[1].Value is bool emitDefaultValue && !emitDefaultValue;
                     }
 
                     var intKey = key is { Value: int intKeyValue } ? intKeyValue : default(int?);
