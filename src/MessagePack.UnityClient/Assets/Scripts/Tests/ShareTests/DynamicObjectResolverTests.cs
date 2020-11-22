@@ -312,6 +312,17 @@ namespace MessagePack.Tests
             Assert.Equal(-98, instance.Prop2);
         }
 
+#if NET5_0
+        [Fact]
+        public void RoundtripGenericClass()
+        {
+            var person = new GenericPerson<int> { Name = "bob" };
+            byte[] msgpack = MessagePackSerializer.Serialize(person, MessagePackSerializerOptions.Standard);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, MessagePackSerializerOptions.Standard);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+#endif
+
         [MessagePackObject(true)]
         public class DefaultValueStringKeyClassWithoutExplicitConstructor
         {
@@ -597,6 +608,15 @@ namespace MessagePack.Tests
             [DataMember]
             public string Name { get; set; }
         }
+
+#if NET5_0
+        [MessagePackObject]
+        public class GenericPerson<T>
+        {
+            [Key(0)]
+            public string Name { get; init; }
+        }
+#endif
     }
 }
 
