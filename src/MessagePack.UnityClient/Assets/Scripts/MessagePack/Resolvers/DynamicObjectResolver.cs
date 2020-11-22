@@ -776,18 +776,112 @@ namespace MessagePack.Internal
         private static void BuildSerializeInternalStringKey(ObjectSerializationInfo info, ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argWriter, ref ArgumentField argValue, ref ArgumentField argOptions, LocalBuilder localResolver, Action emitStringByteKeys)
         {
             var readableMembers = info.Members.Where(x => x.IsReadable).ToArray();
-            var writeCount = readableMembers.Length;
             var ignoreSerializationWhenNullMembers = readableMembers.Where(x => x.IgnoreSerializationWhenNull).ToArray();
-            var localCount = default(LocalBuilder);
-            if (ignoreSerializationWhenNullMembers.Length != 0)
+            if (ignoreSerializationWhenNullMembers.Length == 0)
             {
-                // var count = <#= writeCount #>;
-                localCount = il.DeclareLocal(typeof(int));
-                il.EmitLdc_I4(writeCount);
-                il.EmitStloc(localCount);
+                BuildSerializeInternalStringKey_NoIgnore(il, tryEmitLoadCustomFormatter, ref argWriter, ref argValue, ref argOptions, localResolver, emitStringByteKeys, readableMembers);
             }
+            else
+            {
+                BuildSerializeInternalStringKey_Ignore(il, tryEmitLoadCustomFormatter, ref argWriter, ref argValue, ref argOptions, localResolver, emitStringByteKeys, readableMembers, ignoreSerializationWhenNullMembers);
+            }
+        }
 
-            var localIgnoreValueMembers = ignoreSerializationWhenNullMembers.Length == 0 ? Array.Empty<LocalBuilder>() : new LocalBuilder[ignoreSerializationWhenNullMembers.Length];
+        private static void BuildSerializeInternalStringKey_Ignore(ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argWriter, ref ArgumentField argValue, ref ArgumentField argOptions, LocalBuilder localResolver, Action emitStringByteKeys, ObjectSerializationInfo.EmittableMember[] readableMembers, ObjectSerializationInfo.EmittableMember[] ignoreSerializationWhenNullMembers)
+        {
+            // var count = <#= writeCount #>;
+            var localCount = il.DeclareLocal(typeof(int));
+            il.EmitLdc_I4(readableMembers.Length);
+            il.EmitStloc(localCount);
+            var localIgnoreValueMembers = BuildSerializeInternalStringKey_InitializeLocalIgnoreValueMembers(il, ref argValue, ignoreSerializationWhenNullMembers, localCount);
+            // writer.WriteMapHeader(count);
+            argWriter.EmitLoad();
+            il.EmitLdloc(localCount);
+            il.EmitCall(MessagePackWriterTypeInfo.WriteMapHeader);
+
+            for (int index = 0, indexIgnoreSerializationWhenNull = 0; index < readableMembers.Length; index++)
+            {
+                var item = readableMembers[index];
+                if (item.IgnoreSerializationWhenNull)
+                {
+                    var ignoreWhenNullLabel = il.DefineLabel();
+                    BuildSerializeInternalStringKey_EachMemberSerialization_JumpTo(il, item, localIgnoreValueMembers, ref indexIgnoreSerializationWhenNull, ref ignoreWhenNullLabel);
+                    BuildSerializeInternalStringKey_EachMemberSerialization_EncodeKeyAndValue(il, tryEmitLoadCustomFormatter, ref argWriter, ref argValue, ref argOptions, localResolver, emitStringByteKeys, item, index);
+                    il.MarkLabel(ignoreWhenNullLabel);
+                }
+                else
+                {
+                    BuildSerializeInternalStringKey_EachMemberSerialization_EncodeKeyAndValue(il, tryEmitLoadCustomFormatter, ref argWriter, ref argValue, ref argOptions, localResolver, emitStringByteKeys, item, index);
+                }
+            }
+        }
+
+        private static void BuildSerializeInternalStringKey_NoIgnore(ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argWriter, ref ArgumentField argValue, ref ArgumentField argOptions, LocalBuilder localResolver, Action emitStringByteKeys, ObjectSerializationInfo.EmittableMember[] readableMembers)
+        {
+            // writer.WriteMapHeader(<#= readableMembers.Length #>);
+            argWriter.EmitLoad();
+            il.EmitLdc_I4(readableMembers.Length);
+            il.EmitCall(MessagePackWriterTypeInfo.WriteMapHeader);
+
+            for (var index = 0; index < readableMembers.Length; index++)
+            {
+                var item = readableMembers[index];
+                BuildSerializeInternalStringKey_EachMemberSerialization_EncodeKeyAndValue(il, tryEmitLoadCustomFormatter, ref argWriter, ref argValue, ref argOptions, localResolver, emitStringByteKeys, item, index);
+            }
+        }
+
+        private static void BuildSerializeInternalStringKey_EachMemberSerialization_EncodeKeyAndValue(ILGenerator il, Func<int, ObjectSerializationInfo.EmittableMember, Action> tryEmitLoadCustomFormatter, ref ArgumentField argWriter, ref ArgumentField argValue, ref ArgumentField argOptions, LocalBuilder localResolver, Action emitStringByteKeys, ObjectSerializationInfo.EmittableMember item, int index)
+        {
+            EmitStringKeySpanRaw(il, emitStringByteKeys, ref argWriter, index, item);
+            EmitSerializeValue(il, item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver, default);
+        }
+
+        private static void BuildSerializeInternalStringKey_EachMemberSerialization_JumpTo(ILGenerator il, ObjectSerializationInfo.EmittableMember item, LocalBuilder[] localIgnoreValueMembers, ref int indexIgnoreSerializationWhenNull, ref Label ignoreWhenNullLabel)
+        {
+            var localValueObject = localIgnoreValueMembers[indexIgnoreSerializationWhenNull++];
+            // if (____<#= item.Name #> != null) { writer.WriteRaw(""); resolver.GetFormatterWithVerify<T>.Serialize(____<#= item.Name #>, options); }
+            if (item.IsPrimitive)
+            {
+                il.EmitLdloc(localValueObject);
+                if (item.Type == typeof(int) || item.Type == typeof(uint))
+                {
+                    il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel);
+                }
+                else if (item.Type == typeof(IntPtr) || item.Type == typeof(UIntPtr))
+                {
+                    il.EmitLdc_I4(0);
+                    il.Emit(OpCodes.Conv_I);
+                    il.Emit(OpCodes.Beq_S, ignoreWhenNullLabel);
+                }
+                else if (item.Type == typeof(long) || item.Type == typeof(ulong))
+                {
+                    il.EmitLdc_I4(0);
+                    il.Emit(OpCodes.Conv_I8);
+                    il.Emit(OpCodes.Beq_S, ignoreWhenNullLabel);
+                }
+                else
+                {
+                    il.Emit(OpCodes.Conv_I4);
+                    il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel);
+                }
+            }
+            else if (item.IsValueType)
+            {
+                il.EmitLdloca(localValueObject);
+                var methodIsDefault = MethodZeroTestHelperIsDefault.MakeGenericMethod(item.Type);
+                il.EmitCall(methodIsDefault);
+                il.Emit(OpCodes.Brtrue_S, ignoreWhenNullLabel);
+            }
+            else
+            {
+                il.EmitLdloc(localValueObject);
+                il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel);
+            }
+        }
+
+        private static LocalBuilder[] BuildSerializeInternalStringKey_InitializeLocalIgnoreValueMembers(ILGenerator il, ref ArgumentField argValue, ObjectSerializationInfo.EmittableMember[] ignoreSerializationWhenNullMembers, LocalBuilder localCount)
+        {
+            var localIgnoreValueMembers = new LocalBuilder[ignoreSerializationWhenNullMembers.Length];
             for (var i = 0; i < localIgnoreValueMembers.Length; i++)
             {
                 var item = ignoreSerializationWhenNullMembers[i];
@@ -800,7 +894,7 @@ namespace MessagePack.Internal
                 {
                     il.Emit(OpCodes.Dup);
                     il.EmitStloc(localIgnoreValueMember);
-                    if (item.Type == typeof(IntPtr) || item.Type == typeof(UIntPtr))
+                    if (item.Type == typeof(int) || item.Type == typeof(uint))
                     {
                         il.Emit(OpCodes.Ldc_I4_0);
                     }
@@ -842,85 +936,7 @@ namespace MessagePack.Internal
                 il.EmitStloc(localCount);
             }
 
-            argWriter.EmitLoad();
-            if (localIgnoreValueMembers.Length == 0)
-            {
-                il.EmitLdc_I4(writeCount);
-            }
-            else
-            {
-                il.EmitLdloc(localCount);
-            }
-
-            ////if (writeCount <= MessagePackRange.MaxFixMapCount)
-            ////{
-            ////    il.EmitCall(MessagePackWriterTypeInfo.WriteFixedMapHeaderUnsafe);
-            ////}
-            ////else
-            {
-                il.EmitCall(MessagePackWriterTypeInfo.WriteMapHeader);
-            }
-
-            var index = 0;
-            var indexIgnoreSerializationWhenNull = 0;
-            foreach (var item in readableMembers)
-            {
-                var localValueObject = default(LocalBuilder);
-                Label? ignoreWhenNullLabel = default;
-                var ignoreSerializationWhenNull = !item.IsValueType && item.IgnoreSerializationWhenNull;
-                if (ignoreSerializationWhenNull)
-                {
-                    ignoreWhenNullLabel = il.DefineLabel();
-                    localValueObject = localIgnoreValueMembers[indexIgnoreSerializationWhenNull++];
-                    // if (____<#= item.Name #> != null) { writer.WriteRaw(""); resolver.GetFormatterWithVerify<T>.Serialize(____<#= item.Name #>, options); }
-                    if (item.IsPrimitive)
-                    {
-                        il.EmitLdloc(localValueObject);
-                        if (item.Type == typeof(int) || item.Type == typeof(uint))
-                        {
-                            il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel.Value);
-                        }
-                        else if (item.Type == typeof(IntPtr) || item.Type == typeof(UIntPtr))
-                        {
-                            il.EmitLdc_I4(0);
-                            il.Emit(OpCodes.Conv_I);
-                            il.Emit(OpCodes.Beq_S, ignoreWhenNullLabel.Value);
-                        }
-                        else if (item.Type == typeof(long) || item.Type == typeof(ulong))
-                        {
-                            il.EmitLdc_I4(0);
-                            il.Emit(OpCodes.Conv_I8);
-                            il.Emit(OpCodes.Beq_S, ignoreWhenNullLabel.Value);
-                        }
-                        else
-                        {
-                            il.Emit(OpCodes.Conv_I4);
-                            il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel.Value);
-                        }
-                    }
-                    else if (item.IsValueType)
-                    {
-                        il.EmitLdloca(localValueObject);
-                        var methodIsDefault = MethodZeroTestHelperIsDefault.MakeGenericMethod(item.Type);
-                        il.EmitCall(methodIsDefault);
-                        il.Emit(OpCodes.Brtrue_S, ignoreWhenNullLabel.Value);
-                    }
-                    else
-                    {
-                        il.EmitLdloc(localValueObject);
-                        il.Emit(OpCodes.Brfalse_S, ignoreWhenNullLabel.Value);
-                    }
-                }
-
-                EmitStringKeySpanRaw(il, emitStringByteKeys, ref argWriter, index, item);
-                EmitSerializeValue(il, item, index, tryEmitLoadCustomFormatter, argWriter, argValue, argOptions, localResolver, localValueObject);
-                if (ignoreWhenNullLabel.HasValue)
-                {
-                    il.MarkLabel(ignoreWhenNullLabel.Value);
-                }
-
-                index++;
-            }
+            return localIgnoreValueMembers;
         }
 
         private static void EmitStringKeySpanRaw(ILGenerator il, Action emitStringByteKeys, ref ArgumentField argWriter, int index, ObjectSerializationInfo.EmittableMember item)
