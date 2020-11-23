@@ -314,11 +314,46 @@ namespace MessagePack.Tests
 
 #if NET5_0
         [Fact]
-        public void RoundtripGenericClass()
+        public void RoundtripGenericClass_StandardResolverThrowsOnInitProperty()
         {
             var person = new GenericPerson<int> { Name = "bob" };
-            byte[] msgpack = MessagePackSerializer.Serialize(person, MessagePackSerializerOptions.Standard);
-            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, MessagePackSerializerOptions.Standard);
+            var options = StandardResolver.Options;
+            var exception = Assert.Throws<MessagePackSerializationException>(() =>
+            {
+                byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+                var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
+                ////Assert.Equal(person.Name, deserialized.Name);
+            });
+            Assert.Contains("https://github.com/neuecc/MessagePack-CSharp/issues/1134", exception.ToString());
+        }
+
+        [Fact]
+        public void RoundtripNonGenericClass_StandardResolverWorksWithInitPropertySetter()
+        {
+            var person = new Person { Name = "bob" };
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<Person>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripGenericClass_StandardResolverWorksWithDeserializingCtor()
+        {
+            var person = new GenericPersonWithCtor<int>("bob");
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPersonWithCtor<int>>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripGenericClass_AllowPrivateStandardResolver()
+        {
+            var person = new GenericPerson<int> { Name = "bob" };
+            var options = StandardResolverAllowPrivate.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
             Assert.Equal(person.Name, deserialized.Name);
         }
 #endif
@@ -611,8 +646,25 @@ namespace MessagePack.Tests
 
 #if NET5_0
         [MessagePackObject]
+        public class Person
+        {
+            [Key(0)]
+            public string Name { get; init; }
+        }
+
+        [MessagePackObject]
         public class GenericPerson<T>
         {
+            [Key(0)]
+            public string Name { get; init; }
+        }
+
+        [MessagePackObject]
+        public class GenericPersonWithCtor<T>
+        {
+            [SerializationConstructor]
+            public GenericPersonWithCtor(string name) => this.Name = name;
+
             [Key(0)]
             public string Name { get; init; }
         }

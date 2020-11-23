@@ -22,6 +22,12 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void RoundtripGenericPositionalRecord()
+        {
+            this.AssertRoundTrip(new GenericPersonPositional<int>("bob", "smith"));
+        }
+
+        [Fact]
         public void RoundtripDerivedRecord()
         {
             this.AssertRoundTrip(new Student { FirstName = "bob", LastName = "smith", Grade = 5 });
@@ -40,6 +46,9 @@ namespace MessagePack.Tests
             Assert.Equal(value, deserializedValue);
             return deserializedValue;
         }
+
+        [MessagePackObject]
+        public record GenericPersonPositional<T>([property: Key(0)] string FirstName, [property: Key(1)] string LastName);
 
         [MessagePackObject]
         public record PersonPositional([property: Key(0)] string FirstName, [property: Key(1)] string LastName);
