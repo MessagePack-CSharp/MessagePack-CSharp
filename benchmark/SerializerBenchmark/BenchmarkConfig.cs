@@ -96,19 +96,22 @@ namespace Benchmark
             public string GetValue(Summary summary, BenchmarkCase benchmarkCase, SummaryStyle style)
             {
                 System.Reflection.MethodInfo mi = benchmarkCase.Descriptor.WorkloadMethod;
-                if (mi.Name.Contains("Serialize"))
-                {
-                    var instance = Activator.CreateInstance(mi.DeclaringType);
-                    mi.DeclaringType.GetField("Serializer").SetValue(instance, benchmarkCase.Parameters[0].Value);
-                    mi.DeclaringType.GetMethod("Setup").Invoke(instance, null);
-
-                    var bytes = (byte[])mi.Invoke(instance, null);
-                    return ToHumanReadableSize(bytes.Length);
-                }
-                else
+                if (!mi.Name.Contains("Serialize"))
                 {
                     return "-";
                 }
+
+                var instance = Activator.CreateInstance(mi.DeclaringType);
+                mi.DeclaringType.GetField("Serializer").SetValue(instance, benchmarkCase.Parameters[0].Value);
+                mi.DeclaringType.GetMethod("Setup").Invoke(instance, null);
+
+                var bytes = (byte[]) mi.Invoke(instance, null);
+                var byteSize = bytes.Length;
+                var cultureInfo = summary.GetCultureInfo();
+                if (style.PrintUnitsInContent)
+                    return SizeValue.FromBytes(byteSize).ToString(style.SizeUnit, cultureInfo);
+
+                return byteSize.ToString("0.##", cultureInfo);
             }
 
             public bool IsAvailable(Summary summary)
@@ -119,65 +122,6 @@ namespace Benchmark
             public bool IsDefault(Summary summary, BenchmarkCase benchmarkCase)
             {
                 return false;
-            }
-
-            private static string ToHumanReadableSize(long size)
-            {
-                return ToHumanReadableSize(new long?(size));
-            }
-
-            private static string ToHumanReadableSize(long? size)
-            {
-                if (size == null)
-                {
-                    return "NULL";
-                }
-
-                double bytes = size.Value;
-
-                if (bytes <= 1024)
-                {
-                    return bytes.ToString("f2") + " B";
-                }
-
-                bytes = bytes / 1024;
-                if (bytes <= 1024)
-                {
-                    return bytes.ToString("f2") + " KB";
-                }
-
-                bytes = bytes / 1024;
-                if (bytes <= 1024)
-                {
-                    return bytes.ToString("f2") + " MB";
-                }
-
-                bytes = bytes / 1024;
-                if (bytes <= 1024)
-                {
-                    return bytes.ToString("f2") + " GB";
-                }
-
-                bytes = bytes / 1024;
-                if (bytes <= 1024)
-                {
-                    return bytes.ToString("f2") + " TB";
-                }
-
-                bytes = bytes / 1024;
-                if (bytes <= 1024)
-                {
-                    return bytes.ToString("f2") + " PB";
-                }
-
-                bytes = bytes / 1024;
-                if (bytes <= 1024)
-                {
-                    return bytes.ToString("f2") + " EB";
-                }
-
-                bytes = bytes / 1024;
-                return bytes + " ZB";
             }
         }
     }
