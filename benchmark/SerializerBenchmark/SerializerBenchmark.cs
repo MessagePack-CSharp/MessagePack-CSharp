@@ -21,7 +21,7 @@ namespace Benchmark
         [ParamsSource(nameof(Serializers))]
         public SerializerBase Serializer;
 
-        // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
+        // Currently BenchmarkDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),
@@ -568,7 +568,7 @@ namespace Benchmark
         [ParamsSource(nameof(Serializers))]
         public SerializerBase Serializer;
 
-        // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
+        // Currently BenchmarkDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),
@@ -1099,7 +1099,7 @@ namespace Benchmark
 
         private bool isContractless;
 
-        // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
+        // Currently BenchmarkDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),
@@ -1197,7 +1197,7 @@ namespace Benchmark
         [ParamsSource(nameof(Serializers))]
         public SerializerBase Serializer;
 
-        // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
+        // Currently BenchmarkDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),
