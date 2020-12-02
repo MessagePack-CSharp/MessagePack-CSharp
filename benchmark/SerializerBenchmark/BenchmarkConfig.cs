@@ -27,13 +27,13 @@ namespace Benchmark
             Job baseConfig = Job.ShortRun.WithIterationCount(1).WithWarmupCount(1);
 
             // Add(baseConfig.With(Runtime.Clr).With(Jit.RyuJit).With(Platform.X64));
-            this.Add(baseConfig.With(CoreRuntime.Core31).With(Jit.RyuJit).With(Platform.X64));
+            this.AddJob(baseConfig.WithRuntime(CoreRuntime.Core31).WithJit(Jit.RyuJit).WithPlatform(Platform.X64));
 
-            this.Add(MarkdownExporter.GitHub);
-            this.Add(CsvExporter.Default);
-            this.Add(MemoryDiagnoser.Default);
+            this.AddExporter(MarkdownExporter.GitHub);
+            this.AddExporter(CsvExporter.Default);
+            this.AddDiagnoser(MemoryDiagnoser.Default);
 
-            this.Add(new DataSizeColumn());
+            this.AddColumn(new DataSizeColumn());
 
             this.Orderer = new CustomOrderer();
         }
@@ -105,11 +105,13 @@ namespace Benchmark
                 mi.DeclaringType.GetField("Serializer").SetValue(instance, benchmarkCase.Parameters[0].Value);
                 mi.DeclaringType.GetMethod("Setup").Invoke(instance, null);
 
-                var bytes = (byte[]) mi.Invoke(instance, null);
+                var bytes = (byte[])mi.Invoke(instance, null);
                 var byteSize = bytes.Length;
                 var cultureInfo = summary.GetCultureInfo();
                 if (style.PrintUnitsInContent)
+                {
                     return SizeValue.FromBytes(byteSize).ToString(style.SizeUnit, cultureInfo);
+                }
 
                 return byteSize.ToString("0.##", cultureInfo);
             }
