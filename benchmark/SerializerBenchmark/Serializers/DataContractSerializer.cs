@@ -26,4 +26,9 @@ public class DataContract_ : SerializerBase
             return ms.ToArray();
         }
     }
+
+    public override string ToString()
+    {
+        return "DataContract";
+    }
 }

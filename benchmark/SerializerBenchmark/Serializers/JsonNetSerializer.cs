@@ -36,4 +36,9 @@ public class JsonNet : SerializerBase
             return ms.ToArray();
         }
     }
+
+    public override string ToString()
+    {
+        return "JsonNet";
+    }
 }

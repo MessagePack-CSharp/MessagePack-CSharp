@@ -28,4 +28,9 @@ public class FsPickler_ : SerializerBase
             return ms.ToArray();
         }
     }
+
+    public override string ToString()
+    {
+        return "FsPickler";
+    }
 }

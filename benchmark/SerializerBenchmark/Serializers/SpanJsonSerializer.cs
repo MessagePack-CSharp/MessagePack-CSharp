@@ -16,4 +16,9 @@ public class SpanJson_ : SerializerBase
     {
         return SpanJson.JsonSerializer.Generic.Utf8.Deserialize<T>((byte[])input);
     }
+
+    public override string ToString()
+    {
+        return "SpanJson";
+    }
 }

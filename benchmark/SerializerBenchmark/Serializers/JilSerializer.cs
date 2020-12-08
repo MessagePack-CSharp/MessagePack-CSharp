@@ -18,4 +18,9 @@ public class Jil_ : SerializerBase
     {
         return Jil.JSON.Deserialize<T>(Encoding.UTF8.GetString((byte[])input), Options.ISO8601);
     }
+
+    public override string ToString()
+    {
+        return "Jil";
+    }
 }

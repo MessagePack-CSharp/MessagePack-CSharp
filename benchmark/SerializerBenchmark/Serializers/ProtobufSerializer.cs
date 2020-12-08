@@ -25,5 +25,10 @@ ProtobufNet : SerializerBase
             Serializer.Serialize(ms, input);
             return ms.ToArray();
         }
+
+    public override string ToString()
+    {
+        return "ProtobufNet";
+    }
     }
 }

@@ -18,4 +18,9 @@ public class Ceras_ : SerializerBase
     {
         return this.ceras.Serialize(input);
     }
+
+    public override string ToString()
+    {
+        return "Ceras";
+    }
 }

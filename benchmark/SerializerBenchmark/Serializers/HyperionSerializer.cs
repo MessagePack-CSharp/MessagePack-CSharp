@@ -28,4 +28,9 @@ public class Hyperion_ : SerializerBase
             return ms.ToArray();
         }
     }
+
+    public override string ToString()
+    {
+        return "Hyperion";
+    }
 }

@@ -19,6 +19,11 @@ public class MessagePack_v1 : SerializerBase
     {
         return oldmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input);
     }
+
+    public override string ToString()
+    {
+        return "MessagePack_v1";
+    }
 }
 
 public class MessagePack_v2 : SerializerBase
@@ -32,6 +37,11 @@ public class MessagePack_v2 : SerializerBase
     {
         return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input);
     }
+
+    public override string ToString()
+    {
+        return "MessagePack_v2";
+    }
 }
 
 public class MsgPack_v1_string : SerializerBase
@@ -44,6 +54,11 @@ public class MsgPack_v1_string : SerializerBase
     public override object Serialize<T>(T input)
     {
         return oldmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+    }
+
+    public override string ToString()
+    {
+        return "MsgPack_v1_string";
     }
 }
 
@@ -60,6 +75,11 @@ public class MsgPack_v2_string : SerializerBase
     {
         return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, options: Options);
     }
+
+    public override string ToString()
+    {
+        return "MsgPack_v2_string";
+    }
 }
 
 public class MessagePackLz4_v1 : SerializerBase
@@ -72,6 +92,11 @@ public class MessagePackLz4_v1 : SerializerBase
     public override object Serialize<T>(T input)
     {
         return oldmsgpack::MessagePack.LZ4MessagePackSerializer.Serialize<T>(input);
+    }
+
+    public override string ToString()
+    {
+        return "MessagePackLz4_v1";
     }
 }
 
@@ -88,6 +113,11 @@ public class MessagePackLz4_v2 : SerializerBase
     {
         return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, LZ4BlockArray);
     }
+
+    public override string ToString()
+    {
+        return "MessagePackLz4_v2";
+    }
 }
 
 public class MsgPack_v1_str_lz4 : SerializerBase
@@ -100,6 +130,11 @@ public class MsgPack_v1_str_lz4 : SerializerBase
     public override object Serialize<T>(T input)
     {
         return oldmsgpack::MessagePack.LZ4MessagePackSerializer.Serialize<T>(input, oldmsgpack::MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+    }
+
+    public override string ToString()
+    {
+        return "MsgPack_v1_str_lz4";
     }
 }
 
@@ -116,6 +151,11 @@ public class MsgPack_v2_str_lz4 : SerializerBase
     {
         return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, Options);
     }
+
+    public override string ToString()
+    {
+        return "MsgPack_v2_str_lz4";
+    }
 }
 
 public class MsgPack_v2_opt : SerializerBase
@@ -130,6 +170,11 @@ public class MsgPack_v2_opt : SerializerBase
     public override object Serialize<T>(T input)
     {
         return newmsgpack::MessagePack.MessagePackSerializer.Serialize<T>(input, Options);
+    }
+
+    public override string ToString()
+    {
+        return "MsgPack_v2_opt";
     }
 }
 

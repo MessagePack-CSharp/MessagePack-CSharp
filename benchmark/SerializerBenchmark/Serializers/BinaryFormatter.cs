@@ -26,4 +26,9 @@ public class BinaryFormatter_ : SerializerBase
             return ms.ToArray();
         }
     }
+
+    public override string ToString()
+    {
+        return "BinaryFormatter";
+    }
 }

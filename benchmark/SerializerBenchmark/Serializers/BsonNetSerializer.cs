@@ -40,4 +40,9 @@ public class BsonNet : SerializerBase
             return ms.ToArray();
         }
     }
+
+    public override string ToString()
+    {
+        return "BsonNet";
+    }
 }

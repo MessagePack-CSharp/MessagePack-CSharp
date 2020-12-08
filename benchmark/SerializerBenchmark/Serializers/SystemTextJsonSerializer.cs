@@ -17,4 +17,9 @@ public class SystemTextJson : SerializerBase
         var span = (byte[])input;
         return System.Text.Json.JsonSerializer.Deserialize<T>(span);
     }
+
+    public override string ToString()
+    {
+        return "SystemTextJson";
+    }
 }

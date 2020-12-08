@@ -15,5 +15,10 @@ public class Utf8Json_ : SerializerBase
     public override T Deserialize<T>(object input)
     {
         return Utf8Json.JsonSerializer.Deserialize<T>((byte[])input);
+
+        public override string ToString()
+        {
+            return "UTF8Json";
+        }
     }
 }

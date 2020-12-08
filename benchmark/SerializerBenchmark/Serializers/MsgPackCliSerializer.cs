@@ -16,4 +16,9 @@ public class MsgPackCli : SerializerBase
     {
         return MsgPack.Serialization.MessagePackSerializer.Get<T>().PackSingleObject(input);
     }
+
+    public override string ToString()
+    {
+        return "MsgPackCli";
+    }
 }
