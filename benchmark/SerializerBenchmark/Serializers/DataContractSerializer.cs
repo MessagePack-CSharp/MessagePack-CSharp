@@ -2,33 +2,32 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.IO;
-using System.Runtime.Serialization;
-using Benchmark.Serializers;
 
-#pragma warning disable SA1649 // File name should match first type name
-
-public class DataContract_ : SerializerBase
+namespace Benchmark.Serializers
 {
-    public override T Deserialize<T>(object input)
+    public class DataContractSerializer : SerializerBase
     {
-        using (var ms = new MemoryStream((byte[])input))
+        public override T Deserialize<T>(object input)
         {
-            return (T)new DataContractSerializer(typeof(T)).ReadObject(ms);
+            using (var ms = new MemoryStream((byte[])input))
+            {
+                return (T)new System.Runtime.Serialization.DataContractSerializer(typeof(T)).ReadObject(ms);
+            }
         }
-    }
 
-    public override object Serialize<T>(T input)
-    {
-        using (var ms = new MemoryStream())
+        public override object Serialize<T>(T input)
         {
-            new DataContractSerializer(typeof(T)).WriteObject(ms, input);
-            ms.Flush();
-            return ms.ToArray();
+            using (var ms = new MemoryStream())
+            {
+                new System.Runtime.Serialization.DataContractSerializer(typeof(T)).WriteObject(ms, input);
+                ms.Flush();
+                return ms.ToArray();
+            }
         }
-    }
 
-    public override string ToString()
-    {
-        return "DataContract";
+        public override string ToString()
+        {
+            return "DataContract";
+        }
     }
 }
