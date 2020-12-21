@@ -2,19 +2,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.IO;
-using Hyperion;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Benchmark.Serializers
 {
-    public class HyperionSerializer : SerializerBase
+    public class BinaryFormatterSerializer : SerializerBase
     {
-        private static readonly Serializer Serializer = new Hyperion.Serializer();
-
         public override T Deserialize<T>(object input)
         {
             using (var ms = new MemoryStream((byte[])input))
             {
-                return Serializer.Deserialize<T>(ms);
+                return (T)new BinaryFormatter().Deserialize(ms);
             }
         }
 
@@ -22,7 +20,7 @@ namespace Benchmark.Serializers
         {
             using (var ms = new MemoryStream())
             {
-                Serializer.Serialize(input, ms);
+                new BinaryFormatter().Serialize(ms, input);
                 ms.Flush();
                 return ms.ToArray();
             }
@@ -30,7 +28,7 @@ namespace Benchmark.Serializers
 
         public override string ToString()
         {
-            return "Hyperion";
+            return "BinaryFormatter";
         }
     }
 }
