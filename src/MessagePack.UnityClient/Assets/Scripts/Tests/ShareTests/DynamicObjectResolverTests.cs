@@ -91,9 +91,8 @@ namespace MessagePack.Tests
             byte[] bin = MessagePackSerializer.Serialize(m1);
             var m2 = MessagePackSerializer.Deserialize<ClassWithPropertySetterAndDummyCtor>(bin);
 
-            // In this version of the deserializer, we expect the property setter to be invoked
-            // and reaffirm the value already passed to the constructor.
-            Assert.Equal(m1.MyProperty, m2.MyProperty);
+            // We do NOT use the property setter since the constructor is expected to set the property.
+            Assert.Equal(0, m2.MyProperty);
         }
 
         /// <summary>
