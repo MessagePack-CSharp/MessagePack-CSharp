@@ -94,7 +94,17 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), false, false);
+                TypeInfo formatterTypeInfo;
+                try
+                {
+                    formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), false, false);
+                }
+                catch (InitAccessorInGenericClassNotSupportedException)
+                {
+                    Formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), false, false, false);
+                    return;
+                }
+
                 if (formatterTypeInfo == null)
                 {
                     return;
@@ -341,7 +351,7 @@ namespace MessagePack.Internal
                 return null;
             }
 
-            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, false);
+            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, false, dynamicMethod: false);
             if (serializationInfo == null)
             {
                 return null;
@@ -455,7 +465,7 @@ namespace MessagePack.Internal
 
         public static object BuildFormatterToDynamicMethod(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
         {
-            var serializationInfo = ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, allowPrivate);
+            var serializationInfo = ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, allowPrivate, dynamicMethod: true);
             if (serializationInfo == null)
             {
                 return null;
@@ -1683,7 +1693,7 @@ namespace MessagePack.Internal
         {
         }
 
-        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate, bool dynamicMethod)
         {
             TypeInfo ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
@@ -1739,7 +1749,7 @@ namespace MessagePack.Internal
                             MethodInfo getMethod = property.GetGetMethod(true);
                             MethodInfo setMethod = property.GetSetMethod(true);
 
-                            member = new EmittableMember(allowPrivate)
+                            member = new EmittableMember(dynamicMethod)
                             {
                                 PropertyInfo = property,
                                 IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
@@ -1759,7 +1769,7 @@ namespace MessagePack.Internal
                                 continue;
                             }
 
-                            member = new EmittableMember(allowPrivate)
+                            member = new EmittableMember(dynamicMethod)
                             {
                                 FieldInfo = field,
                                 IsReadable = allowPrivate || field.IsPublic,
@@ -1817,7 +1827,7 @@ namespace MessagePack.Internal
                     MethodInfo getMethod = item.GetGetMethod(true);
                     MethodInfo setMethod = item.GetSetMethod(true);
 
-                    var member = new EmittableMember(allowPrivate)
+                    var member = new EmittableMember(dynamicMethod)
                     {
                         PropertyInfo = item,
                         IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
@@ -1942,7 +1952,7 @@ namespace MessagePack.Internal
                         continue;
                     }
 
-                    var member = new EmittableMember(allowPrivate)
+                    var member = new EmittableMember(dynamicMethod)
                     {
                         FieldInfo = item,
                         IsReadable = allowPrivate || item.IsPublic,
@@ -2456,7 +2466,7 @@ namespace MessagePack.Internal
             {
                 if (this.IsProblematicInitProperty && !this.dynamicMethod)
                 {
-                    throw new NotSupportedException(
+                    throw new InitAccessorInGenericClassNotSupportedException(
                         $"`init` property accessor {this.PropertyInfo.SetMethod.DeclaringType.FullName}.{this.PropertyInfo.Name} found in generic type, " +
                         $"which is not supported with the DynamicObjectResolver. Use the AllowPrivate variety of the resolver instead. " +
                         $"See https://github.com/neuecc/MessagePack-CSharp/issues/1134 for details.");
@@ -2511,6 +2521,35 @@ namespace MessagePack.Internal
     {
         public MessagePackDynamicObjectResolverException(string message)
             : base(message)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Identifies the unsupported scenario of <see href="https://github.com/neuecc/MessagePack-CSharp/issues/1134">an
+    /// <see langword="init"/> property accessor within a generic class</see>.
+    /// </summary>
+    [Serializable]
+    internal class InitAccessorInGenericClassNotSupportedException : NotSupportedException
+    {
+        public InitAccessorInGenericClassNotSupportedException()
+        {
+        }
+
+        public InitAccessorInGenericClassNotSupportedException(string message)
+            : base(message)
+        {
+        }
+
+        public InitAccessorInGenericClassNotSupportedException(string message, Exception inner)
+            : base(message, inner)
+        {
+        }
+
+        protected InitAccessorInGenericClassNotSupportedException(
+          SerializationInfo info,
+          StreamingContext context)
+            : base(info, context)
         {
         }
     }

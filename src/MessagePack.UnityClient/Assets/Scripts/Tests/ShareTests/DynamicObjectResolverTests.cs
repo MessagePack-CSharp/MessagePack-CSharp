@@ -313,17 +313,13 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void RoundtripGenericClass_StandardResolverThrowsOnInitProperty()
+        public void RoundtripGenericClass_StandardResolverFallsBackOnInitProperty()
         {
             var person = new GenericPerson<int> { Name = "bob" };
             var options = StandardResolver.Options;
-            var exception = Assert.Throws<MessagePackSerializationException>(() =>
-            {
-                byte[] msgpack = MessagePackSerializer.Serialize(person, options);
-                var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
-                ////Assert.Equal(person.Name, deserialized.Name);
-            });
-            Assert.Contains("https://github.com/neuecc/MessagePack-CSharp/issues/1134", exception.ToString());
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
         }
 
         [Fact]
