@@ -312,6 +312,8 @@ namespace MessagePack.Tests
             Assert.Equal(-98, instance.Prop2);
         }
 
+#if !UNITY_2018_3_OR_NEWER
+
         [Fact]
         public void RoundtripGenericClass_StandardResolverFallsBackOnInitProperty()
         {
@@ -351,6 +353,8 @@ namespace MessagePack.Tests
             var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
             Assert.Equal(person.Name, deserialized.Name);
         }
+
+#endif
 
         [MessagePackObject(true)]
         public class DefaultValueStringKeyClassWithoutExplicitConstructor
@@ -638,6 +642,7 @@ namespace MessagePack.Tests
             public string Name { get; set; }
         }
 
+#if !UNITY_2018_3_OR_NEWER
         [MessagePackObject]
         public class Person
         {
@@ -661,6 +666,7 @@ namespace MessagePack.Tests
             [Key(0)]
             public string Name { get; init; }
         }
+#endif
     }
 }
 
