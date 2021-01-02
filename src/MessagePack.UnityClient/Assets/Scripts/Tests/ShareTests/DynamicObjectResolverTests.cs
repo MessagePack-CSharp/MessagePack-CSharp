@@ -84,6 +84,17 @@ namespace MessagePack.Tests
             Assert.Equal("Uninitialized", instance.Prop2);
         }
 
+        [Fact]
+        public void CtorParameterAndPropertySetterExists()
+        {
+            var m1 = new ClassWithPropertySetterAndDummyCtor(999) { MyProperty = 100 };
+            byte[] bin = MessagePackSerializer.Serialize(m1);
+            var m2 = MessagePackSerializer.Deserialize<ClassWithPropertySetterAndDummyCtor>(bin);
+
+            // We do NOT use the property setter since the constructor is expected to set the property.
+            Assert.Equal(0, m2.MyProperty);
+        }
+
         /// <summary>
         /// Verifies that virtual and overridden properties do not cause the dynamic resolver to malfunction.
         /// </summary>
@@ -667,6 +678,17 @@ namespace MessagePack.Tests
             public string Name { get; init; }
         }
 #endif
+
+        [MessagePackObject(true)]
+        public class ClassWithPropertySetterAndDummyCtor
+        {
+            public int MyProperty { get; set; }
+
+            public ClassWithPropertySetterAndDummyCtor(int myProperty)
+            {
+                // This constructor intentionally left blank.
+            }
+        }
     }
 }
 

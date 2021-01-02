@@ -96,3 +96,4 @@ stages:
         command: push
         packagesToPush: $(Pipeline.Workspace)/nuget/*.nupkg
         publishVstsFeed: MessagePack-CSharp/MessagePack-CI
+      continueOnError: true
