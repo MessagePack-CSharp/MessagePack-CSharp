@@ -1,7 +1,6 @@
 {
     "name": "MessagePack",
     "references": [
-        "MessagePack.Annotations"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
