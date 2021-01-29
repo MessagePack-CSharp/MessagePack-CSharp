@@ -94,7 +94,17 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), false, false);
+                TypeInfo formatterTypeInfo;
+                try
+                {
+                    formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), false, false);
+                }
+                catch (InitAccessorInGenericClassNotSupportedException)
+                {
+                    Formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), false, false, false);
+                    return;
+                }
+
                 if (formatterTypeInfo == null)
                 {
                     return;
@@ -341,7 +351,7 @@ namespace MessagePack.Internal
                 return null;
             }
 
-            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, false);
+            var serializationInfo = MessagePack.Internal.ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, false, dynamicMethod: false);
             if (serializationInfo == null)
             {
                 return null;
@@ -455,7 +465,7 @@ namespace MessagePack.Internal
 
         public static object BuildFormatterToDynamicMethod(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
         {
-            var serializationInfo = ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, allowPrivate);
+            var serializationInfo = ObjectSerializationInfo.CreateOrNull(type, forceStringKey, contractless, allowPrivate, dynamicMethod: true);
             if (serializationInfo == null)
             {
                 return null;
@@ -611,7 +621,7 @@ namespace MessagePack.Internal
         private static Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> BuildCustomFormatterField(TypeBuilder builder, ObjectSerializationInfo info, ILGenerator il)
         {
             Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo> dict = new Dictionary<ObjectSerializationInfo.EmittableMember, FieldInfo>();
-            foreach (ObjectSerializationInfo.EmittableMember item in info.Members.Where(x => x.IsReadable || x.IsWritable))
+            foreach (ObjectSerializationInfo.EmittableMember item in info.Members.Where(x => x.IsReadable || x.IsActuallyWritable))
             {
                 MessagePackFormatterAttribute attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
@@ -977,7 +987,7 @@ namespace MessagePack.Internal
             }
 
             Label? memberAssignmentDoneLabel = null;
-            var intKeyMap = infoList.Where(x => x.MemberInfo != null && x.MemberInfo.IsWritable).ToDictionary(x => x.MemberInfo.IntKey);
+            var intKeyMap = infoList.Where(x => x.MemberInfo != null && x.MemberInfo.IsActuallyWritable).ToDictionary(x => x.MemberInfo.IntKey);
             for (var key = 0; key <= maxKey; key++)
             {
                 if (!intKeyMap.TryGetValue(key, out var item))
@@ -1043,7 +1053,7 @@ namespace MessagePack.Internal
             for (var i = 0; i < infoList.Length; i++)
             {
                 var item = info.Members[i];
-                if (canOverwrite && item.IsWritable)
+                if (canOverwrite && item.IsActuallyWritable)
                 {
                     infoList[i] = new DeserializeInfo
                     {
@@ -1077,7 +1087,7 @@ namespace MessagePack.Internal
             {
                 if (intKeyMap.TryGetValue(i, out var member))
                 {
-                    if (canOverwrite && member.IsWritable)
+                    if (canOverwrite && member.IsActuallyWritable)
                     {
                         infoList[i] = new DeserializeInfo
                         {
@@ -1375,7 +1385,7 @@ namespace MessagePack.Internal
             var t = member.Type;
             var emitter = tryEmitLoadCustomFormatter(index, member);
 
-            if (member.IsWritable)
+            if (member.IsActuallyWritable)
             {
                 if (localResult.LocalType.IsClass)
                 {
@@ -1439,7 +1449,7 @@ namespace MessagePack.Internal
             }
 
             il.MarkLabel(storeLabel);
-            if (member.IsWritable)
+            if (member.IsActuallyWritable)
             {
                 member.EmitStoreValue(il);
             }
@@ -1683,7 +1693,7 @@ namespace MessagePack.Internal
         {
         }
 
-        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate)
+        public static ObjectSerializationInfo CreateOrNull(Type type, bool forceStringKey, bool contractless, bool allowPrivate, bool dynamicMethod)
         {
             TypeInfo ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
@@ -1739,7 +1749,7 @@ namespace MessagePack.Internal
                             MethodInfo getMethod = property.GetGetMethod(true);
                             MethodInfo setMethod = property.GetSetMethod(true);
 
-                            member = new EmittableMember
+                            member = new EmittableMember(dynamicMethod)
                             {
                                 PropertyInfo = property,
                                 IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
@@ -1759,7 +1769,7 @@ namespace MessagePack.Internal
                                 continue;
                             }
 
-                            member = new EmittableMember
+                            member = new EmittableMember(dynamicMethod)
                             {
                                 FieldInfo = field,
                                 IsReadable = allowPrivate || field.IsPublic,
@@ -1817,7 +1827,7 @@ namespace MessagePack.Internal
                     MethodInfo getMethod = item.GetGetMethod(true);
                     MethodInfo setMethod = item.GetSetMethod(true);
 
-                    var member = new EmittableMember
+                    var member = new EmittableMember(dynamicMethod)
                     {
                         PropertyInfo = item,
                         IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
@@ -1942,7 +1952,7 @@ namespace MessagePack.Internal
                         continue;
                     }
 
-                    var member = new EmittableMember
+                    var member = new EmittableMember(dynamicMethod)
                     {
                         FieldInfo = item,
                         IsReadable = allowPrivate || item.IsPublic,
@@ -2219,6 +2229,15 @@ namespace MessagePack.Internal
                 break;
             }
 
+            // Under a certain combination of conditions, throw to draw attention to the fact that we cannot set a property.
+            if (!allowPrivate)
+            {
+                // A property is not actually problematic if we can set it via the type's constructor.
+                var problematicProperties = membersArray
+                    .Where(m => m.IsProblematicInitProperty && !constructorParameters.Any(cp => cp.MemberInfo == m));
+                problematicProperties.FirstOrDefault()?.ThrowIfNotWritable();
+            }
+
             return new ObjectSerializationInfo
             {
                 Type = type,
@@ -2318,6 +2337,13 @@ namespace MessagePack.Internal
 
         public class EmittableMember
         {
+            private readonly bool dynamicMethod;
+
+            internal EmittableMember(bool dynamicMethod)
+            {
+                this.dynamicMethod = dynamicMethod;
+            }
+
             public bool IsProperty
             {
                 get { return this.PropertyInfo != null; }
@@ -2329,6 +2355,11 @@ namespace MessagePack.Internal
             }
 
             public bool IsWritable { get; set; }
+
+            /// <summary>
+            /// Gets a value indicating whether the property can only be set by an object initializer, a constructor, or another `init` member.
+            /// </summary>
+            public bool IsInitOnly => this.PropertyInfo?.GetSetMethod(true)?.ReturnParameter.GetRequiredCustomModifiers().Any(modifierType => modifierType.FullName == "System.Runtime.CompilerServices.IsExternalInit") ?? false;
 
             public bool IsReadable { get; set; }
 
@@ -2366,6 +2397,22 @@ namespace MessagePack.Internal
             /// Gets or sets a value indicating whether this member is explicitly opted in with an attribute.
             /// </summary>
             public bool IsExplicitContract { get; set; }
+
+            /// <summary>
+            /// Gets a value indicating whether a dynamic resolver can write to this property,
+            /// going beyond <see cref="IsWritable"/> by also considering CLR bugs.
+            /// </summary>
+            internal bool IsActuallyWritable => this.IsWritable && (this.dynamicMethod || !this.IsProblematicInitProperty);
+
+            /// <summary>
+            /// Gets a value indicating whether this member is a property with an <see langword="init" /> property setter
+            /// and is declared on a generic class.
+            /// </summary>
+            /// <remarks>
+            /// <see href="https://github.com/neuecc/MessagePack-CSharp/issues/1134">A bug</see> in <see cref="MethodBuilder"/>
+            /// blocks its ability to invoke property init accessors when in a generic class.
+            /// </remarks>
+            internal bool IsProblematicInitProperty => this.PropertyInfo is PropertyInfo property && property.DeclaringType.IsGenericType && this.IsInitOnly;
 
             public MessagePackFormatterAttribute GetMessagePackFormatterAttribute()
             {
@@ -2412,6 +2459,17 @@ namespace MessagePack.Internal
                 else
                 {
                     il.Emit(OpCodes.Stfld, this.FieldInfo);
+                }
+            }
+
+            internal void ThrowIfNotWritable()
+            {
+                if (this.IsProblematicInitProperty && !this.dynamicMethod)
+                {
+                    throw new InitAccessorInGenericClassNotSupportedException(
+                        $"`init` property accessor {this.PropertyInfo.SetMethod.DeclaringType.FullName}.{this.PropertyInfo.Name} found in generic type, " +
+                        $"which is not supported with the DynamicObjectResolver. Use the AllowPrivate variety of the resolver instead. " +
+                        $"See https://github.com/neuecc/MessagePack-CSharp/issues/1134 for details.");
                 }
             }
 
@@ -2463,6 +2521,35 @@ namespace MessagePack.Internal
     {
         public MessagePackDynamicObjectResolverException(string message)
             : base(message)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Identifies the unsupported scenario of <see href="https://github.com/neuecc/MessagePack-CSharp/issues/1134">an
+    /// <see langword="init"/> property accessor within a generic class</see>.
+    /// </summary>
+    [Serializable]
+    internal class InitAccessorInGenericClassNotSupportedException : NotSupportedException
+    {
+        public InitAccessorInGenericClassNotSupportedException()
+        {
+        }
+
+        public InitAccessorInGenericClassNotSupportedException(string message)
+            : base(message)
+        {
+        }
+
+        public InitAccessorInGenericClassNotSupportedException(string message, Exception inner)
+            : base(message, inner)
+        {
+        }
+
+        protected InitAccessorInGenericClassNotSupportedException(
+          SerializationInfo info,
+          StreamingContext context)
+            : base(info, context)
         {
         }
     }
