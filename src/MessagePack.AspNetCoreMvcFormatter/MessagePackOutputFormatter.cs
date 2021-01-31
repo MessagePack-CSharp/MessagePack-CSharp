@@ -3,11 +3,10 @@
 
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Extensions.Primitives;
 
 namespace MessagePack.AspNetCoreMvcFormatter
 {
-    public class MessagePackOutputFormatter : IOutputFormatter
+    public class MessagePackOutputFormatter : OutputFormatter
     {
         private const string ContentType = "application/x-msgpack";
         private readonly MessagePackSerializerOptions options;
@@ -20,23 +19,12 @@ namespace MessagePack.AspNetCoreMvcFormatter
         public MessagePackOutputFormatter(MessagePackSerializerOptions options)
         {
             this.options = options;
+
+            SupportedMediaTypes.Add(ContentType);
         }
 
-        public bool CanWriteResult(OutputFormatterCanWriteContext context)
+        public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
         {
-            if (!context.ContentType.HasValue)
-            {
-                context.ContentType = new StringSegment(ContentType);
-                return true;
-            }
-
-            return context.ContentType.Value == ContentType;
-        }
-
-        public Task WriteAsync(OutputFormatterWriteContext context)
-        {
-            context.HttpContext.Response.ContentType = ContentType;
-
             if (context.ObjectType == typeof(object))
             {
                 if (context.Object == null)

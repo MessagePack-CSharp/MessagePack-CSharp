@@ -15,7 +15,7 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="1.1.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.0" />
       </ItemGroup>
     </Otherwise>
   </Choose>
