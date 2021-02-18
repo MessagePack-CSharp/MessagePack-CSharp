@@ -181,6 +181,20 @@ namespace MessagePack.Tests.ExtensionTests
             inputFormatter.CanRead(inputFormatterContext).IsFalse();
         }
 
+        [Fact]
+        public void MessagePackOutputFormatterSupportsXMsgPack()
+        {
+            var outputFormatter = new MessagePackOutputFormatter();
+            outputFormatter.SupportedMediaTypes.Is(MsgPackContentType);
+        }
+
+        [Fact]
+        public void MessagePackInputFormatterSupportsXMsgPack()
+        {
+            var inputFormatter = new MessagePackInputFormatter();
+            inputFormatter.SupportedMediaTypes.Is(MsgPackContentType);
+        }
+
         /// <summary>
         /// <see href="https://github.com/aspnet/Mvc/blob/master/test/Microsoft.AspNetCore.Mvc.Formatters.Json.Test/JsonOutputFormatterTests.cs#L453">JsonOutputFormatterTests.cs#L453</see>.
         /// </summary>
