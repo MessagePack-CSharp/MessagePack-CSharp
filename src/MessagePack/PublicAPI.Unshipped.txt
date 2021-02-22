@@ -14,6 +14,10 @@ MessagePack.Formatters.ForceTypelessFormatter<T>
 MessagePack.Formatters.ForceTypelessFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> T
 MessagePack.Formatters.ForceTypelessFormatter<T>.ForceTypelessFormatter() -> void
 MessagePack.Formatters.ForceTypelessFormatter<T>.Serialize(ref MessagePack.MessagePackWriter writer, T value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>
+MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>.GenericEnumerableFormatter() -> void
+MessagePack.Formatters.GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary>
+MessagePack.Formatters.GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary>.GenericReadOnlyDictionaryFormatter() -> void
 MessagePack.Formatters.MemoryFormatter<T>
 MessagePack.Formatters.MemoryFormatter<T>.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Memory<T>
 MessagePack.Formatters.MemoryFormatter<T>.MemoryFormatter() -> void
