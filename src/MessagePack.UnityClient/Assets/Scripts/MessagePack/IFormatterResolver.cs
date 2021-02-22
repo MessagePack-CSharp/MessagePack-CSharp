@@ -35,18 +35,18 @@ namespace MessagePack
             }
 
             IMessagePackFormatter<T> formatter;
-            try
-            {
+            //try
+            //{
                 formatter = resolver.GetFormatter<T>();
-            }
-            catch (TypeInitializationException ex)
-            {
-                // The fact that we're using static constructors to initialize this is an internal detail.
-                // Rethrow the inner exception if there is one.
-                // Do it carefully so as to not stomp on the original callstack.
-                Throw(ex);
-                return default; // not reachable
-            }
+            //}
+            //catch (TypeInitializationException ex)
+            //{
+            //    // The fact that we're using static constructors to initialize this is an internal detail.
+            //    // Rethrow the inner exception if there is one.
+            //    // Do it carefully so as to not stomp on the original callstack.
+            //    Throw(ex);
+            //    return default; // not reachable
+            //}
 
             if (formatter == null)
             {

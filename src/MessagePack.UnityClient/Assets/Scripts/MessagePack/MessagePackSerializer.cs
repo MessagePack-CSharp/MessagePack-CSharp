@@ -93,10 +93,10 @@ namespace MessagePack
                     options.Resolver.GetFormatterWithVerify<T>().Serialize(ref writer, value, options);
                 }
             }
-            catch (Exception ex)
-            {
-                throw new MessagePackSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
-            }
+            //catch (Exception ex)
+            //{
+            //    throw new MessagePackSerializationException($"Failed to serialize {typeof(T).FullName} value.", ex);
+            //}
             finally
             {
                 writer.OldSpec = originalOldSpecValue;

@@ -94,7 +94,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                TypeInfo formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), false, false);
+                TypeInfo formatterTypeInfo = DynamicObjectTypeBuilder.BuildType(DynamicAssembly.Value, typeof(T), false, true);
                 if (formatterTypeInfo == null)
                 {
                     return;
@@ -1525,7 +1525,6 @@ namespace MessagePack.Internal
                 // Public members with KeyAttribute except [Ignore] member.
                 var searchFirst = true;
                 var hiddenIntKey = 0;
-
                 foreach (PropertyInfo item in GetAllProperties(type))
                 {
                     if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
