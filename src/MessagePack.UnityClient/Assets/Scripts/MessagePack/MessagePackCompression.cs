@@ -22,7 +22,7 @@ namespace MessagePack
         /// Uses msgpack type code ext99 and is compatible with v1 of this library.
         /// </remarks>
         /// <devremarks>
-        /// See also ThisLibraryExtensionTypeCodes.Lz4Block
+        /// See also ThisLibraryExtensionTypeCodes.Lz4Block.
         /// </devremarks>
         Lz4Block,
 
@@ -35,7 +35,7 @@ namespace MessagePack
         /// Uses msgpack type code ext98 in array.
         /// </remarks>
         /// <devremarks>
-        /// See also ThisLibraryExtensionTypeCodes.Lz4BlockArray
+        /// See also ThisLibraryExtensionTypeCodes.Lz4BlockArray.
         /// </devremarks>
         Lz4BlockArray,
     }

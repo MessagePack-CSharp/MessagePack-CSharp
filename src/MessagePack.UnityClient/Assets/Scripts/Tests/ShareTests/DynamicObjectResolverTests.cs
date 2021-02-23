@@ -112,6 +112,17 @@ namespace MessagePack.Tests
             Assert.Equal("Uninitialized", instance.Prop2);
         }
 
+        [Fact]
+        public void CtorParameterAndPropertySetterExists()
+        {
+            var m1 = new ClassWithPropertySetterAndDummyCtor(999) { MyProperty = 100 };
+            byte[] bin = MessagePackSerializer.Serialize(m1);
+            var m2 = MessagePackSerializer.Deserialize<ClassWithPropertySetterAndDummyCtor>(bin);
+
+            // We do NOT use the property setter since the constructor is expected to set the property.
+            Assert.Equal(0, m2.MyProperty);
+        }
+
         /// <summary>
         /// Verifies that virtual and overridden properties do not cause the dynamic resolver to malfunction.
         /// </summary>
@@ -339,6 +350,50 @@ namespace MessagePack.Tests
             Assert.Equal(-1, instance.Prop1);
             Assert.Equal(-98, instance.Prop2);
         }
+
+#if !UNITY_2018_3_OR_NEWER
+
+        [Fact]
+        public void RoundtripGenericClass_StandardResolverFallsBackOnInitProperty()
+        {
+            var person = new GenericPerson<int> { Name = "bob" };
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripNonGenericClass_StandardResolverWorksWithInitPropertySetter()
+        {
+            var person = new Person { Name = "bob" };
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<Person>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripGenericClass_StandardResolverWorksWithDeserializingCtor()
+        {
+            var person = new GenericPersonWithCtor<int>("bob");
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPersonWithCtor<int>>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripGenericClass_AllowPrivateStandardResolver()
+        {
+            var person = new GenericPerson<int> { Name = "bob" };
+            var options = StandardResolverAllowPrivate.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+#endif
 
         [MessagePackObject(true)]
         public class DefaultValueStringKeyClassWithoutExplicitConstructor
@@ -640,6 +695,43 @@ namespace MessagePack.Tests
         {
             [DataMember]
             public string Name { get; set; }
+        }
+
+#if !UNITY_2018_3_OR_NEWER
+        [MessagePackObject]
+        public class Person
+        {
+            [Key(0)]
+            public string Name { get; init; }
+        }
+
+        [MessagePackObject]
+        public class GenericPerson<T>
+        {
+            [Key(0)]
+            public string Name { get; init; }
+        }
+
+        [MessagePackObject]
+        public class GenericPersonWithCtor<T>
+        {
+            [SerializationConstructor]
+            public GenericPersonWithCtor(string name) => this.Name = name;
+
+            [Key(0)]
+            public string Name { get; init; }
+        }
+#endif
+
+        [MessagePackObject(true)]
+        public class ClassWithPropertySetterAndDummyCtor
+        {
+            public int MyProperty { get; set; }
+
+            public ClassWithPropertySetterAndDummyCtor(int myProperty)
+            {
+                // This constructor intentionally left blank.
+            }
         }
     }
 }

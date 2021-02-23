@@ -153,7 +153,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string? CustomFormatterTypeName { get; }
 
-        private readonly HashSet<string> primitiveTypes = new (Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
+        private readonly HashSet<string> primitiveTypes = new(Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
 
         public MemberSerializationInfo(bool isProperty, bool isWritable, bool isReadable, int intKey, string stringKey, bool ignoreSerializationWhenNull, string name, string type, string shortTypeName, string? customFormatterTypeName, bool isUnmanagedType, bool isValueType, bool isReferenceType)
         {

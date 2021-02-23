@@ -92,7 +92,7 @@ namespace MessagePackCompiler.CodeAnalysis
         private readonly bool isForceUseMap;
         private readonly ReferenceSymbols typeReferences;
         private readonly INamedTypeSymbol[] targetTypes;
-        private readonly HashSet<string> embeddedTypes = new (new[]
+        private readonly HashSet<string> embeddedTypes = new(new[]
         {
             "short",
             "int",
@@ -163,7 +163,7 @@ namespace MessagePackCompiler.CodeAnalysis
             "System.Reactive.Unit",
         });
 
-        private readonly Dictionary<string, string> knownGenericTypes = new ()
+        private readonly Dictionary<string, string> knownGenericTypes = new()
         {
 #pragma warning disable SA1509 // Opening braces should not be preceded by blank line
             { "System.Collections.Generic.List<>", "global::MessagePack.Formatters.ListFormatter<TREPLACE>" },
@@ -244,11 +244,11 @@ namespace MessagePackCompiler.CodeAnalysis
         private readonly HashSet<string> externalIgnoreTypeNames;
 
         // visitor workspace:
-        private readonly HashSet<ITypeSymbol> alreadyCollected = new ();
-        private readonly List<ObjectSerializationInfo> collectedObjectInfo = new ();
-        private readonly List<EnumSerializationInfo> collectedEnumInfo = new ();
-        private readonly List<GenericSerializationInfo> collectedGenericInfo = new ();
-        private readonly List<UnionSerializationInfo> collectedUnionInfo = new ();
+        private readonly HashSet<ITypeSymbol> alreadyCollected = new();
+        private readonly List<ObjectSerializationInfo> collectedObjectInfo = new();
+        private readonly List<EnumSerializationInfo> collectedEnumInfo = new();
+        private readonly List<GenericSerializationInfo> collectedGenericInfo = new();
+        private readonly List<UnionSerializationInfo> collectedUnionInfo = new();
 
         public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, Action<string> logger)
         {
