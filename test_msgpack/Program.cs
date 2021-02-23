@@ -1,5 +1,6 @@
 ﻿using System;
 using MessagePack;
+using System.Collections.Generic;
 
 namespace TestMessagePack
 {
@@ -28,6 +29,20 @@ namespace TestMessagePack
 
             var c1 = new byte[] { 166, 49, 50, 51, 49, 50, 51 };
             var x1 = MessagePackSerializer.Deserialize(typeof(string), c1);
+
+            var t1 = new List<string>();
+            t1.Add("1111111");
+            t1.Add("2222222222");
+            var t2 = MessagePackSerializer.Serialize(typeof(List<string>), t1);
+
+            t1 = MessagePackSerializer.Deserialize(typeof(List<string>), t2) as List<string>;
+
+            var g1 = new List<Guid>();
+            g1.Add(Guid.NewGuid());
+            g1.Add(Guid.NewGuid());
+            var g2 = MessagePackSerializer.Serialize(typeof(List<Guid>), g1);
+            g1 = MessagePackSerializer.Deserialize(typeof(List<Guid>), g2) as List<Guid>;
+
 
         }
     }
