@@ -20,12 +20,15 @@ namespace MessagePack.Generator.Tests
     public class TemporaryProjectWorkarea : IDisposable
     {
         private readonly string tempDirPath;
-        private readonly string csprojFileName = "TempProject.csproj";
+        private readonly string targetCsprojFileName = "TempTargetProject.csproj";
         private readonly bool cleanOnDisposing;
 
-        public string CsProjectPath { get; }
+        /// <summary>
+        /// Generator target csproj
+        /// </summary>
+        public string TargetCsProjectPath { get; }
 
-        public string ProjectDirectory { get; }
+        public string TargetProjectDirectory { get; }
 
         public string OutputDirectory { get; }
 
@@ -39,17 +42,17 @@ namespace MessagePack.Generator.Tests
             this.cleanOnDisposing = cleanOnDisposing;
             this.tempDirPath = Path.Combine(Path.GetTempPath(), $"MessagePack.Generator.Tests-{Guid.NewGuid()}");
 
-            ProjectDirectory = Path.Combine(tempDirPath, "Project");
+            TargetProjectDirectory = Path.Combine(tempDirPath, "TargetProject");
             OutputDirectory = Path.Combine(tempDirPath, "Output");
 
-            Directory.CreateDirectory(ProjectDirectory);
+            Directory.CreateDirectory(TargetProjectDirectory);
             Directory.CreateDirectory(OutputDirectory);
 
             var solutionRootDir = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../../../.."));
             var messagePackProjectDir = Path.Combine(solutionRootDir, "src/MessagePack/MessagePack.csproj");
             var annotationsProjectDir = Path.Combine(solutionRootDir, "src/MessagePack.Annotations/MessagePack.Annotations.csproj");
 
-            CsProjectPath = Path.Combine(ProjectDirectory, csprojFileName);
+            TargetCsProjectPath = Path.Combine(TargetProjectDirectory, targetCsprojFileName);
             var csprojContents = @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -62,12 +65,12 @@ namespace MessagePack.Generator.Tests
   </ItemGroup>
 </Project>
 ";
-            AddFileToProject(csprojFileName, csprojContents);
+            AddFileToTargetProject(targetCsprojFileName, csprojContents);
         }
 
-        public void AddFileToProject(string fileName, string contents)
+        public void AddFileToTargetProject(string fileName, string contents)
         {
-            File.WriteAllText(Path.Combine(ProjectDirectory, fileName), contents.Trim());
+            File.WriteAllText(Path.Combine(TargetProjectDirectory, fileName), contents.Trim());
         }
 
         public OutputCompilation GetOutputCompilation()
@@ -76,7 +79,7 @@ namespace MessagePack.Generator.Tests
 
             var compilation = CSharpCompilation.Create(Guid.NewGuid().ToString())
                 .AddSyntaxTrees(
-                    Directory.EnumerateFiles(ProjectDirectory, "*.cs", SearchOption.AllDirectories)
+                    Directory.EnumerateFiles(TargetProjectDirectory, "*.cs", SearchOption.AllDirectories)
                         .Concat(Directory.EnumerateFiles(OutputDirectory, "*.cs", SearchOption.AllDirectories))
                         .Select(x => CSharpSyntaxTree.ParseText(File.ReadAllText(x), CSharpParseOptions.Default, x)))
                 .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Private.CoreLib.dll")))

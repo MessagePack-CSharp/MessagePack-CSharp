@@ -56,7 +56,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
 
