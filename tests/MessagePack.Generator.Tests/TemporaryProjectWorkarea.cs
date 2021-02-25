@@ -25,12 +25,12 @@ namespace MessagePack.Generator.Tests
         private readonly bool cleanOnDisposing;
 
         /// <summary>
-        /// Generator target csproj
+        /// Gets Generator target csproj file path.
         /// </summary>
         public string TargetCsProjectPath { get; }
 
         /// <summary>
-        /// Referenced from <see cref="TargetCsProjectPath"/> csproj
+        /// Gets csproj file path Referenced from TargetProject.
         /// </summary>
         public string ReferencedCsProjectPath { get; }
 
