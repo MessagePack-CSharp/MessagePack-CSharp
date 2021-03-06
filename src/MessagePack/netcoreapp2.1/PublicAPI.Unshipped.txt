@@ -1,3 +1,5 @@
+MessagePack.ExtensionHeader.ExtensionHeader() -> void
+MessagePack.ExtensionResult.ExtensionResult() -> void
 MessagePack.FormatterNotRegisteredException.FormatterNotRegisteredException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
 MessagePack.Formatters.ByteMemoryFormatter
 MessagePack.Formatters.ByteMemoryFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Memory<byte>
@@ -73,8 +75,10 @@ MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<T>.InterfaceImmutableSetFormatter() -> void
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>
 MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<T>.InterfaceImmutableStackFormatter() -> void
+MessagePack.MessagePackReader.MessagePackReader() -> void
 MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
 MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, bool leaveOpen, MessagePack.SequencePool sequencePool) -> void
+MessagePack.MessagePackWriter.MessagePackWriter() -> void
 MessagePack.Resolvers.ExpandoObjectResolver
 MessagePack.SequencePool
 MessagePack.SequencePool.SequencePool() -> void
