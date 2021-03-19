@@ -1015,7 +1015,9 @@ MessagePack.MessagePackSerializerOptions.Security.get -> MessagePack.MessagePack
 MessagePack.MessagePackSerializerOptions.WithSecurity(MessagePack.MessagePackSecurity security) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackStreamReader.DiscardBufferedData() -> void
 MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, bool leaveOpen) -> void
+MessagePack.MessagePackStreamReader.ReadArrayHeaderAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 MessagePack.MessagePackStreamReader.ReadArrayAsync(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<System.Buffers.ReadOnlySequence<byte>>
+MessagePack.MessagePackStreamReader.ReadMapHeaderAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 MessagePack.MessagePackWriter.WriteBinHeader(int length) -> void
 MessagePack.MessagePackWriter.WriteStringHeader(int byteCount) -> void
 static readonly MessagePack.MessagePackSecurity.TrustedData -> MessagePack.MessagePackSecurity
