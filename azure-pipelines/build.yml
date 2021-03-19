@@ -1,12 +1,8 @@
 steps:
-# Use VSBuild to pack because `dotnet pack` can't build VSIX projects.
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
   inputs:
-    vsVersion: 16.0
-    solution: MessagePack.sln
-    msbuildArgs: /t:build,pack /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.binlog"
-    platform: $(BuildPlatform)
-    configuration: $(BuildConfiguration)
+    command: build
+    arguments: --configuration $(BuildConfiguration) /t:build,pack /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.binlog"
   displayName: Build MessagePack.sln
 
 - task: DotNetCoreCLI@2

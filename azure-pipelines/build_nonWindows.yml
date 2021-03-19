@@ -3,7 +3,7 @@ steps:
   displayName: Build MessagePack.sln
   inputs:
     command: build
-    arguments: --no-restore /p:platform=NoVSIX -c $(BuildConfiguration)
+    arguments: --no-restore -c $(BuildConfiguration)
 
 - task: DotNetCoreCLI@2
   displayName: Run MessagePack.Tests (netcoreapp2.1)

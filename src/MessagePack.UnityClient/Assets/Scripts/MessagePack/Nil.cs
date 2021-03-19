@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Data.Common;
 
 namespace MessagePack
 {
@@ -14,6 +15,10 @@ namespace MessagePack
     struct Nil : IEquatable<Nil>
     {
         public static readonly Nil Default = default(Nil);
+
+        public static bool operator ==(Nil left, Nil right) => true;
+
+        public static bool operator !=(Nil left, Nil right) => false;
 
         public override bool Equals(object obj)
         {
