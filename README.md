@@ -1363,7 +1363,7 @@ internal static class SampleCustomResolverGetFormatterHelper
         }
 
         // If target type is generics, use MakeGenericType.
-        if (t.IsGenericParameter && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
+        if (t.IsGeneric && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
         {
             return Activator.CreateInstance(typeof(ValueTupleFormatter<,>).MakeGenericType(t.GenericTypeArguments));
         }
