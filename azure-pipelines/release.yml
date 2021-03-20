@@ -27,9 +27,6 @@ stages:
           - download: CI
             artifact: unity
             displayName: 'Downloading artifact: unity'
-          - download: CI
-            artifact: vsix
-            displayName: 'Downloading artifact: vsix'
           - task: GitHubRelease@1
             displayName: GitHub release (create)
             inputs:
@@ -41,7 +38,6 @@ stages:
               title: v$(resources.pipeline.CI.runName)
               assets: |
                 $(Pipeline.Workspace)/CI/unity/*.unitypackage
-                $(Pipeline.Workspace)/CI/vsix/*
               isDraft: true # After running this step, visit the new draft release, edit, and publish.
               changeLogCompareToRelease: lastNonDraftRelease
               changeLogType: issueBased
