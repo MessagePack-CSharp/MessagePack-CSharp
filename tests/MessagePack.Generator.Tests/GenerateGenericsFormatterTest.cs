@@ -53,7 +53,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -100,7 +100,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -148,7 +148,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -213,7 +213,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -297,7 +297,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -365,7 +365,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -434,7 +434,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -503,7 +503,7 @@ namespace TempProject
     }
 }
             ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -558,7 +558,7 @@ namespace TempProject
     }
 }
                 ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -607,7 +607,7 @@ namespace TempProject
     }
 }
                 ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -664,7 +664,7 @@ namespace TempProject
     public interface IMyInterface {}
 }
                 ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -722,7 +722,7 @@ namespace TempProject
     }
 }
                 ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -781,7 +781,7 @@ namespace TempProject
     }
 }
                 ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -855,7 +855,7 @@ namespace TempProject
     }
 }
                 ";
-            tempWorkarea.AddFileToProject("MyMessagePackObject.cs", contents);
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
 
             var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
             await compiler.GenerateFileAsync(
@@ -882,6 +882,83 @@ namespace TempProject
             formatterType.TypeParameters[1].HasReferenceTypeConstraint.Should().BeTrue();
             formatterType.TypeParameters[1].ConstraintTypes.Should().BeEmpty();
             formatterType.TypeParameters[1].ReferenceTypeConstraintNullableAnnotation.Should().Be(NullableAnnotation.None);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task Generics_Defined_In_ReferencedProject(bool isSingleFileOutput)
+        {
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            var defineContents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class MyGenericObject<T>
+    {
+        [Key(0)]
+        public T Content { get; set; }
+    }
+}
+            ";
+            tempWorkarea.AddFileToReferencedProject("MyGenericObject.cs", defineContents);
+
+            var usageContents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public class MyObject
+    {
+        [Key(0)]
+        public MyGenericObject<int> Value { get; set; }
+    }
+
+    [MessagePackObject]
+    public class MyObjectNested
+    {
+        [Key(0)]
+        public MyGenericObject<MyGenericObject<int>> Value { get; set; }
+    }
+}
+            ";
+            tempWorkarea.AddFileToTargetProject("MyObject.cs", usageContents);
+
+            var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
+            await compiler.GenerateFileAsync(
+                tempWorkarea.GetOutputCompilation().Compilation,
+                isSingleFileOutput ? Path.Combine(tempWorkarea.OutputDirectory, "Generated.cs") : tempWorkarea.OutputDirectory,
+                "TempProjectResolver",
+                "TempProject.Generated",
+                false,
+                string.Empty,
+                Array.Empty<string>());
+
+            var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
+
+            var symbols = compilation.GetNamedTypeSymbolsFromGenerated();
+
+            var types = symbols.Select(x => x.ToDisplayString()).ToArray();
+            types.Should().Contain("TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T>");
+
+            var formatters = symbols.SelectMany(x => x.Interfaces).Select(x => x.ToDisplayString()).ToArray();
+            formatters.Should().Contain("MessagePack.Formatters.IMessagePackFormatter<TempProject.MyGenericObject<T>>");
+
+            compilation.GetResolverKnownFormatterTypes().Should().Contain(new[]
+            {
+                "TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int>>",
+                "TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<int>",
+                "TempProject.Generated.Formatters.TempProject.MyObjectFormatter",
+                "TempProject.Generated.Formatters.TempProject.MyObjectNestedFormatter",
+            });
         }
     }
 }
