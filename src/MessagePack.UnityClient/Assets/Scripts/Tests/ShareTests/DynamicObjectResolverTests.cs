@@ -67,7 +67,7 @@ namespace MessagePack.Tests
 
             var instance = MessagePackSerializer.Deserialize<TwoProperties>(seq);
             Assert.Equal("Set", instance.Prop1);
-            Assert.Null(instance.Prop2);
+            Assert.Equal("Uninitialized", instance.Prop2);
         }
 
         [Fact]
@@ -81,7 +81,7 @@ namespace MessagePack.Tests
 
             var instance = MessagePackSerializer.Deserialize<TwoPropertiesOrdinalKey>(seq);
             Assert.Equal("Set", instance.Prop1);
-            Assert.Null(instance.Prop2);
+            Assert.Equal("Uninitialized", instance.Prop2);
         }
 
         [Fact]
@@ -91,9 +91,8 @@ namespace MessagePack.Tests
             byte[] bin = MessagePackSerializer.Serialize(m1);
             var m2 = MessagePackSerializer.Deserialize<ClassWithPropertySetterAndDummyCtor>(bin);
 
-            // In this version of the deserializer, we expect the property setter to be invoked
-            // and reaffirm the value already passed to the constructor.
-            Assert.Equal(m1.MyProperty, m2.MyProperty);
+            // We do NOT use the property setter since the constructor is expected to set the property.
+            Assert.Equal(0, m2.MyProperty);
         }
 
         /// <summary>
@@ -174,6 +173,290 @@ namespace MessagePack.Tests
             Assert.Equal(obj.BaseClassFieldAccessor, obj2.BaseClassFieldAccessor);
             Assert.Equal(obj.BaseClassProperty, obj2.BaseClassProperty);
             Assert.Equal(obj.Name, obj2.Name);
+        }
+
+        [Fact]
+        public void DefaultValueStringKeyClassWithoutExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(0);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringKeyClassWithoutExplicitConstructor>(seq);
+            Assert.Equal(DefaultValueStringKeyClassWithoutExplicitConstructor.Prop1Constant, instance.Prop1);
+            Assert.Equal(DefaultValueStringKeyClassWithoutExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueStringKeyClassWithExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(1);
+            writer.Write(nameof(DefaultValueStringKeyClassWithExplicitConstructor.Prop1));
+            writer.Write(-1);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringKeyClassWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(DefaultValueStringKeyClassWithExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueStringKeyClassWithExplicitConstructorSetPropertyTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(2);
+            writer.Write(nameof(DefaultValueStringKeyClassWithExplicitConstructor.Prop1));
+            writer.Write(-1);
+            writer.Write(nameof(DefaultValueStringKeyClassWithExplicitConstructor.Prop2));
+            writer.Write(int.MaxValue);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringKeyClassWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(int.MaxValue, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueStringKeyStructWithExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(1);
+            writer.Write(nameof(DefaultValueStringKeyStructWithExplicitConstructor.Prop1));
+            writer.Write(-1);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringKeyStructWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(DefaultValueStringKeyStructWithExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueStringKeyStructWithExplicitConstructorSetPropertyTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteMapHeader(2);
+            writer.Write(nameof(DefaultValueStringKeyStructWithExplicitConstructor.Prop1));
+            writer.Write(-1);
+            writer.Write(nameof(DefaultValueStringKeyStructWithExplicitConstructor.Prop2));
+            writer.Write(int.MinValue);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringKeyStructWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(int.MinValue, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueIntKeyClassWithoutExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteArrayHeader(0);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueIntKeyClassWithoutExplicitConstructor>(seq);
+            Assert.Equal(DefaultValueIntKeyClassWithoutExplicitConstructor.Prop1Constant, instance.Prop1);
+            Assert.Equal(DefaultValueIntKeyClassWithoutExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueIntKeyClassWithExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteArrayHeader(1);
+            writer.Write(-1);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueIntKeyClassWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(DefaultValueIntKeyClassWithExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueIntKeyClassWithExplicitConstructorSetPropertyTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteArrayHeader(2);
+            writer.Write(-1);
+            writer.Write(42);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueIntKeyClassWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(42, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueIntKeyStructWithExplicitConstructorTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteArrayHeader(1);
+            writer.Write(-1);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueIntKeyStructWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(DefaultValueIntKeyStructWithExplicitConstructor.Prop2Constant, instance.Prop2);
+        }
+
+        [Fact]
+        public void DefaultValueIntKeyStructWithExplicitConstructorSetPropertyTest()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteArrayHeader(2);
+            writer.Write(-1);
+            writer.Write(-98);
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueIntKeyStructWithExplicitConstructor>(seq);
+            Assert.Equal(-1, instance.Prop1);
+            Assert.Equal(-98, instance.Prop2);
+        }
+
+#if !UNITY_2018_3_OR_NEWER
+
+        [Fact]
+        public void RoundtripGenericClass_StandardResolverFallsBackOnInitProperty()
+        {
+            var person = new GenericPerson<int> { Name = "bob" };
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripNonGenericClass_StandardResolverWorksWithInitPropertySetter()
+        {
+            var person = new Person { Name = "bob" };
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<Person>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripGenericClass_StandardResolverWorksWithDeserializingCtor()
+        {
+            var person = new GenericPersonWithCtor<int>("bob");
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPersonWithCtor<int>>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+        [Fact]
+        public void RoundtripGenericClass_AllowPrivateStandardResolver()
+        {
+            var person = new GenericPerson<int> { Name = "bob" };
+            var options = StandardResolverAllowPrivate.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(person, options);
+            var deserialized = MessagePackSerializer.Deserialize<GenericPerson<int>>(msgpack, options);
+            Assert.Equal(person.Name, deserialized.Name);
+        }
+
+#endif
+
+        [MessagePackObject(true)]
+        public class DefaultValueStringKeyClassWithoutExplicitConstructor
+        {
+            public const int Prop1Constant = 11;
+            public const int Prop2Constant = 45;
+
+            public int Prop1 { get; set; } = Prop1Constant;
+
+            public int Prop2 { get; set; } = Prop2Constant;
+        }
+
+        [MessagePackObject(true)]
+        public class DefaultValueStringKeyClassWithExplicitConstructor
+        {
+            public const int Prop2Constant = 1419;
+
+            public int Prop1 { get; set; }
+
+            public int Prop2 { get; set; }
+
+            public DefaultValueStringKeyClassWithExplicitConstructor(int prop1)
+            {
+                Prop1 = prop1;
+                Prop2 = Prop2Constant;
+            }
+        }
+
+        [MessagePackObject(true)]
+        public struct DefaultValueStringKeyStructWithExplicitConstructor
+        {
+            public const int Prop2Constant = 198;
+
+            public int Prop1 { get; set; }
+
+            public int Prop2 { get; set; }
+
+            public DefaultValueStringKeyStructWithExplicitConstructor(int prop1)
+            {
+                Prop1 = prop1;
+                Prop2 = Prop2Constant;
+            }
+        }
+
+        [MessagePackObject]
+        public class DefaultValueIntKeyClassWithoutExplicitConstructor
+        {
+            public const int Prop1Constant = 33;
+            public const int Prop2Constant = -4;
+
+            [Key(0)]
+            public int Prop1 { get; set; } = Prop1Constant;
+
+            [Key(1)]
+            public int Prop2 { get; set; } = Prop2Constant;
+        }
+
+        [MessagePackObject]
+        public class DefaultValueIntKeyClassWithExplicitConstructor
+        {
+            public const int Prop2Constant = -109;
+
+            [Key(0)]
+            public int Prop1 { get; set; }
+
+            [Key(1)]
+            public int Prop2 { get; set; }
+
+            public DefaultValueIntKeyClassWithExplicitConstructor(int prop1)
+            {
+                Prop1 = prop1;
+                Prop2 = Prop2Constant;
+            }
+        }
+
+        [MessagePackObject]
+        public struct DefaultValueIntKeyStructWithExplicitConstructor
+        {
+            public const int Prop2Constant = 31;
+
+            [Key(0)]
+            public int Prop1 { get; set; }
+
+            [Key(1)]
+            public int Prop2 { get; set; }
+
+            public DefaultValueIntKeyStructWithExplicitConstructor(int prop1)
+            {
+                Prop1 = prop1;
+                Prop2 = Prop2Constant;
+            }
         }
 
         [DataContract]
@@ -369,6 +652,32 @@ namespace MessagePack.Tests
             [DataMember]
             public string Name { get; set; }
         }
+
+#if !UNITY_2018_3_OR_NEWER
+        [MessagePackObject]
+        public class Person
+        {
+            [Key(0)]
+            public string Name { get; init; }
+        }
+
+        [MessagePackObject]
+        public class GenericPerson<T>
+        {
+            [Key(0)]
+            public string Name { get; init; }
+        }
+
+        [MessagePackObject]
+        public class GenericPersonWithCtor<T>
+        {
+            [SerializationConstructor]
+            public GenericPersonWithCtor(string name) => this.Name = name;
+
+            [Key(0)]
+            public string Name { get; init; }
+        }
+#endif
 
         [MessagePackObject(true)]
         public class ClassWithPropertySetterAndDummyCtor

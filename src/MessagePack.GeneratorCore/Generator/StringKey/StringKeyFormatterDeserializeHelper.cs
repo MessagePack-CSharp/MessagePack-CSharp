@@ -12,28 +12,67 @@ namespace MessagePackCompiler.Generator
 {
     internal static class StringKeyFormatterDeserializeHelper
     {
-        public static string Classify(MemberSerializationInfo[] memberArray, string indent)
+        public static string Classify(ObjectSerializationInfo objectSerializationInfo, string indent, bool canOverwrite)
         {
+            var memberArray = objectSerializationInfo.Members;
             var buffer = new StringBuilder();
-            foreach (var memberInfoTuples in memberArray.Select(member => new MemberInfoTuple(member)).GroupBy(member => member.Binary.Length))
+            foreach (var memberInfoTuples in memberArray.Select(member => new MemberInfoTuple(member, IsConstructorParameter(objectSerializationInfo, member))).GroupBy(member => member.Binary.Length))
             {
                 var binaryLength = memberInfoTuples.Key;
                 var keyLength = binaryLength >> 3;
                 keyLength += keyLength << 3 == binaryLength ? 0 : 1;
 
                 buffer.Append(indent).Append("case ").Append(binaryLength).Append(":\r\n");
-                ClassifyRecursion(buffer, indent, 1, keyLength, memberInfoTuples);
+                ClassifyRecursion(buffer, indent, 1, keyLength, memberInfoTuples, canOverwrite);
             }
 
             return buffer.ToString();
         }
 
-        private static void Assign(StringBuilder buffer, in MemberInfoTuple member)
+        private static bool IsConstructorParameter(ObjectSerializationInfo objectSerializationInfo, MemberSerializationInfo member)
         {
-            buffer.Append("__").Append(member.Info.Name).Append("__ = ").Append(member.Info.GetDeserializeMethodString()).Append(";\r\n");
+            foreach (var parameter in objectSerializationInfo.ConstructorParameters)
+            {
+                if (parameter.Equals(member))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
-        private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection)
+        private static void Assign(StringBuilder buffer, in MemberInfoTuple member, bool canOverwrite, string indent, string tab, int tabCount)
+        {
+            if (member.Info.IsWritable)
+            {
+                if (canOverwrite)
+                {
+                    buffer.Append("____result.").Append(member.Info.Name).Append(" = ");
+                }
+                else
+                {
+                    if (!member.IsConstructorParameter)
+                    {
+                        buffer.Append("__").Append(member.Info.Name).Append("__IsInitialized = true;\r\n").Append(indent);
+                        for (var i = 0; i < tabCount; i++)
+                        {
+                            buffer.Append(tab);
+                        }
+                    }
+
+                    buffer.Append("__").Append(member.Info.Name).Append("__ = ");
+                }
+
+                buffer.Append(member.Info.GetDeserializeMethodString()).Append(";\r\n");
+            }
+            else
+            {
+                buffer.Append("reader.Skip();\r\n");
+            }
+        }
+
+        private static void ClassifyRecursion(StringBuilder buffer, string indent, int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection, bool canOverwrite)
         {
             const string Tab = "    ";
             buffer.Append(indent);
@@ -46,7 +85,7 @@ namespace MessagePackCompiler.Generator
             if (memberArray.Length == 1)
             {
                 var member = memberArray[0];
-                EmbedOne(buffer, indent, tabCount, member);
+                EmbedOne(buffer, indent, tabCount, member, canOverwrite);
                 return;
             }
 
@@ -83,7 +122,7 @@ namespace MessagePackCompiler.Generator
                     }
 
                     var member = grouping.Single();
-                    Assign(buffer, member);
+                    Assign(buffer, member, canOverwrite, indent, Tab, tabCount + 2);
                     buffer.Append(Tab + Tab).Append(indent);
                     for (var i = 0; i < tabCount; i++)
                     {
@@ -94,7 +133,7 @@ namespace MessagePackCompiler.Generator
                     continue;
                 }
 
-                ClassifyRecursion(buffer, indent + Tab, tabCount + 1, keyLength, grouping);
+                ClassifyRecursion(buffer, indent + Tab, tabCount + 1, keyLength, grouping, canOverwrite);
             }
 
             buffer.Append("\r\n").Append(indent);
@@ -106,7 +145,7 @@ namespace MessagePackCompiler.Generator
             buffer.Append("}\r\n");
         }
 
-        private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member)
+        private static void EmbedOne(StringBuilder buffer, string indent, int tabCount, in MemberInfoTuple member, bool canOverwrite)
         {
             const string Tab = "    ";
             var binary = member.Binary.AsSpan((tabCount - 1) << 3);
@@ -136,7 +175,7 @@ namespace MessagePackCompiler.Generator
                 buffer.Append(Tab);
             }
 
-            Assign(buffer, member);
+            Assign(buffer, member, canOverwrite, indent, Tab, tabCount);
             buffer.Append(indent);
             for (var i = 0; i < tabCount; i++)
             {
@@ -166,12 +205,14 @@ namespace MessagePackCompiler.Generator
     internal readonly struct MemberInfoTuple : IComparable<MemberInfoTuple>
     {
         public readonly MemberSerializationInfo Info;
+        public readonly bool IsConstructorParameter;
         public readonly byte[] Binary;
         public readonly ulong[] Key;
 
-        public MemberInfoTuple(MemberSerializationInfo info)
+        public MemberInfoTuple(MemberSerializationInfo info, bool isConstructorParameter)
         {
             Info = info;
+            IsConstructorParameter = isConstructorParameter;
             Binary = EmbedStringHelper.Utf8.GetBytes(info.StringKey);
             ReadOnlySpan<byte> span = Binary;
             var keyLength = Binary.Length >> 3;

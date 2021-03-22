@@ -346,7 +346,7 @@ namespace MessagePack.Formatters
                     }
                     else
                     {
-                        using (var scratchRental = SequencePool.Shared.Rent())
+                        using (var scratchRental = options.SequencePool.Rent())
                         {
                             var scratch = scratchRental.Value;
                             MessagePackWriter scratchWriter = writer.Clone(scratch);
@@ -969,7 +969,7 @@ namespace MessagePack.Formatters
 
             IMessagePackFormatter<object> formatter = options.Resolver.GetFormatterWithVerify<object>();
 
-            using (var scratchRental = SequencePool.Shared.Rent())
+            using (var scratchRental = options.SequencePool.Rent())
             {
                 var scratch = scratchRental.Value;
                 MessagePackWriter scratchWriter = writer.Clone(scratch);

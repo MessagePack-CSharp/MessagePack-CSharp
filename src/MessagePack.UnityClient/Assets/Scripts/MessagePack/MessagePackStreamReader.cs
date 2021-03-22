@@ -21,7 +21,7 @@ namespace MessagePack
     {
         private readonly Stream stream;
         private readonly bool leaveOpen;
-        private SequencePool.Rental sequenceRental = SequencePool.Shared.Rent();
+        private SequencePool.Rental sequenceRental;
         private SequencePosition? endOfLastMessage;
 
         /// <summary>
@@ -39,9 +39,26 @@ namespace MessagePack
         /// <param name="stream">The stream to read from.</param>
         /// <param name="leaveOpen">If true, leaves the stream open after this <see cref="MessagePackStreamReader"/> is disposed; otherwise, false.</param>
         public MessagePackStreamReader(Stream stream, bool leaveOpen)
+            : this(stream, leaveOpen, SequencePool.Shared)
         {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePackStreamReader"/> class.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <param name="leaveOpen">If true, leaves the stream open after this <see cref="MessagePackStreamReader"/> is disposed; otherwise, false.</param>
+        /// <param name="sequencePool">The pool to rent a <see cref="Sequence{T}"/> object from.</param>
+        public MessagePackStreamReader(Stream stream, bool leaveOpen, SequencePool sequencePool)
+        {
+            if (sequencePool == null)
+            {
+                throw new ArgumentNullException(nameof(sequencePool));
+            }
+
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
             this.leaveOpen = leaveOpen;
+            this.sequenceRental = sequencePool.Rent();
         }
 
         /// <summary>
@@ -107,13 +124,26 @@ namespace MessagePack
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (!this.leaveOpen)
-            {
-                this.stream.Dispose();
-            }
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-            this.sequenceRental.Dispose();
-            this.sequenceRental = default;
+        /// <summary>
+        /// Disposes of managed and unmanaged resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> if this instance is being disposed; <see langword="false"/> if it is being finalized.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (!this.leaveOpen)
+                {
+                    this.stream.Dispose();
+                }
+
+                this.sequenceRental.Dispose();
+                this.sequenceRental = default;
+            }
         }
 
         /// <summary>

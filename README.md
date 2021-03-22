@@ -184,7 +184,7 @@ These types can serialize by default:
 * Primitives (`int`, `string`, etc...), `Enum`s, `Nullable<>`, `Lazy<>`
 * `TimeSpan`,  `DateTime`, `DateTimeOffset`
 * `Guid`, `Uri`, `Version`, `StringBuilder`
-* `BigInteger`, `Complex`
+* `BigInteger`, `Complex`, `Half`
 * `Array[]`, `Array[,]`, `Array[,,]`, `Array[,,,]`, `ArraySegment<>`, `BitArray`
 * `KeyValuePair<,>`, `Tuple<,...>`, `ValueTuple<,...>`
 * `ArrayList`, `Hashtable`
@@ -404,6 +404,8 @@ public struct Point
 }
 ```
 
+### C# 9 `record` types
+
 C# 9.0 record with primary constructor is similar immutable object, also supports serialize/deserialize.
 
 ```csharp
@@ -412,7 +414,25 @@ C# 9.0 record with primary constructor is similar immutable object, also support
 
 // use property: to set KeyAttribute
 [MessagePackObject] public record Point([property:Key(0)] int X, [property: Key(1)] int Y);
+
+// Or use explicit properties
+[MessagePackObject]
+public record Person
+{
+    [Key(0)]
+    public string FirstName { get; init; }
+
+    [Key(1)]
+    public string LastName { get; init; }
+}
 ```
+
+### C# 9 `init` property setter limitations
+
+When using `init` property setters in _generic_ classes, [a CLR bug](https://github.com/neuecc/MessagePack-CSharp/issues/1134) prevents our most efficient code generation from invoking the property setter.
+As a result, you should avoid using `init` on property setters in generic classes when using the public-only `DynamicObjectResolver`/`StandardResolver`.
+
+When using the `DynamicObjectResolverAllowPrivate`/`StandardResolverAllowPrivate` resolver the bug does not apply and you may use `init` without restriction.
 
 ## Serialization Callback
 
@@ -1343,7 +1363,7 @@ internal static class SampleCustomResolverGetFormatterHelper
         }
 
         // If target type is generics, use MakeGenericType.
-        if (t.IsGenericParameter && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
+        if (t.IsGeneric && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
         {
             return Activator.CreateInstance(typeof(ValueTupleFormatter<,>).MakeGenericType(t.GenericTypeArguments));
         }
