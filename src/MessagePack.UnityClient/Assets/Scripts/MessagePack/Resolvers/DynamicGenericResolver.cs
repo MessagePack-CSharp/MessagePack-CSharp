@@ -313,12 +313,13 @@ namespace MessagePack.Internal
                     return CreateInstance(typeof(GenericDictionaryFormatter<,,>), new[] { keyType, valueType, t });
                 }
 
-                // generic readonly dictionary
-                var readOnlyDictionaryDef = ti.ImplementedInterfaces.FirstOrDefault(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
-                if (readOnlyDictionaryDef != null)
+                // generic dictionary with collection ctor
+                var dictionaryInterfaceDef = ti.ImplementedInterfaces.FirstOrDefault(x => x.GetTypeInfo().IsConstructedGenericType() &&
+                    (x.GetGenericTypeDefinition() == typeof(IDictionary<,>) || x.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>)));
+                if (dictionaryInterfaceDef != null)
                 {
-                    Type keyType = readOnlyDictionaryDef.GenericTypeArguments[0];
-                    Type valueType = readOnlyDictionaryDef.GenericTypeArguments[1];
+                    Type keyType = dictionaryInterfaceDef.GenericTypeArguments[0];
+                    Type valueType = dictionaryInterfaceDef.GenericTypeArguments[1];
                     Type[] allowedParameterTypes = new Type[]
                     {
                         typeof(IDictionary<,>).MakeGenericType(keyType, valueType),
@@ -329,7 +330,7 @@ namespace MessagePack.Internal
                     {
                         ParameterInfo[] parameters = constructor.GetParameters();
                         if (parameters.Length == 1 &&
-                            allowedParameterTypes.Any(allowedType => allowedType.IsAssignableFrom(parameters[0].ParameterType)))
+                            allowedParameterTypes.Any(allowedType => parameters[0].ParameterType.IsAssignableFrom(allowedType)))
                         {
                             return CreateInstance(typeof(GenericReadOnlyDictionaryFormatter<,,>), new[] { keyType, valueType, t });
                         }
@@ -354,7 +355,7 @@ namespace MessagePack.Internal
                     foreach (var constructor in ti.DeclaredConstructors)
                     {
                         var parameters = constructor.GetParameters();
-                        if (parameters.Length == 1 && paramInterface.IsAssignableFrom(parameters[0].ParameterType))
+                        if (parameters.Length == 1 && parameters[0].ParameterType.IsAssignableFrom(paramInterface))
                         {
                             return CreateInstance(typeof(GenericEnumerableFormatter<,>), new[] { elemType, t });
                         }
