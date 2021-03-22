@@ -14,3 +14,7 @@ MessagePack.TinyJsonException.TinyJsonException(System.Runtime.Serialization.Ser
 static MessagePack.Nil.operator !=(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static MessagePack.Nil.operator ==(MessagePack.Nil left, MessagePack.Nil right) -> bool
 virtual MessagePack.MessagePackStreamReader.Dispose(bool disposing) -> void
+MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>
+MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>.GenericEnumerableFormatter() -> void
+MessagePack.Formatters.GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary>
+MessagePack.Formatters.GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary>.GenericReadOnlyDictionaryFormatter() -> void

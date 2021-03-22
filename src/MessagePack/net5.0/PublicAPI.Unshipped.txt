@@ -20,3 +20,7 @@ static MessagePack.Nil.operator !=(MessagePack.Nil left, MessagePack.Nil right) 
 static MessagePack.Nil.operator ==(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static readonly MessagePack.Formatters.HalfFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Half>
 virtual MessagePack.MessagePackStreamReader.Dispose(bool disposing) -> void
+MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>
+MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>.GenericEnumerableFormatter() -> void
+MessagePack.Formatters.GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary>
+MessagePack.Formatters.GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary>.GenericReadOnlyDictionaryFormatter() -> void
