@@ -636,7 +636,7 @@ namespace MessagePack.Formatters
         }
     }
 
-#if NET5_0
+#if NET5_0_OR_GREATER
 
     public sealed class HalfFormatter : IMessagePackFormatter<Half>
     {

@@ -3,7 +3,7 @@
 
 using Xunit;
 
-#if NET5_0
+#if NET5_0_OR_GREATER
 
 namespace MessagePack.Tests
 {
