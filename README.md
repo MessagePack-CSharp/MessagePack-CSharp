@@ -1546,7 +1546,7 @@ Check in your `.config\dotnet-tools.json` file. On another machine you can "rest
 Once you have the tool installed, simply invoke using `dotnet mpc` within your repo:
 
 ```
-dotnet mpc -h
+dotnet mpc --help
 ```
 
 Alternatively, you can download mpc from the [releases][Releases] page, that includes platform native binaries (that don't require a separate dotnet runtime).
@@ -1555,7 +1555,7 @@ Alternatively, you can download mpc from the [releases][Releases] page, that inc
 Usage: mpc [options...]
 
 Options:
-  -i, -input <String>                                Input path of analyze csproj or directory, if input multiple csproj split with ','. (Required)
+  -i, -input <String>                                Input path to MSBuild project file or the directory containing Unity source files. (Required)
   -o, -output <String>                               Output file path(.cs) or directory(multiple generate file). (Required)
   -c, -conditionalSymbol <String>                    Conditional compiler symbols, split with ','. (Default: null)
   -r, -resolverName <String>                         Set resolver name. (Default: GeneratedResolver)

@@ -534,6 +534,9 @@ namespace MessagePackCompiler.CodeAnalysis
                 // NOTE: It is used to register formatters from nested generic type.
                 //       However, closed generic types such as `Foo<string>` are not registered as a formatter.
                 GetObjectInfo(type);
+
+                // Collect generic type definition, that is not collected when it is defined outside target project.
+                CollectCore(type.OriginalDefinition);
             }
 
             // Collect substituted types for the type parameters (e.g. Bar in Foo<Bar>)
