@@ -316,12 +316,53 @@ namespace MessagePack.Internal
                     return CreateInstance(typeof(GenericDictionaryFormatter<,,>), new[] { keyType, valueType, t });
                 }
 
+                // generic dictionary with collection ctor
+                var dictionaryInterfaceDef = ti.ImplementedInterfaces.FirstOrDefault(x => x.GetTypeInfo().IsConstructedGenericType() &&
+                    (x.GetGenericTypeDefinition() == typeof(IDictionary<,>) || x.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>)));
+                if (dictionaryInterfaceDef != null)
+                {
+                    Type keyType = dictionaryInterfaceDef.GenericTypeArguments[0];
+                    Type valueType = dictionaryInterfaceDef.GenericTypeArguments[1];
+                    Type[] allowedParameterTypes = new Type[]
+                    {
+                        typeof(IDictionary<,>).MakeGenericType(keyType, valueType),
+                        typeof(IReadOnlyDictionary<,>).MakeGenericType(keyType, valueType),
+                        typeof(IEnumerable<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(keyType, valueType)),
+                    };
+                    foreach (var constructor in ti.DeclaredConstructors)
+                    {
+                        ParameterInfo[] parameters = constructor.GetParameters();
+                        if (parameters.Length == 1 &&
+                            allowedParameterTypes.Any(allowedType => parameters[0].ParameterType.IsAssignableFrom(allowedType)))
+                        {
+                            return CreateInstance(typeof(GenericReadOnlyDictionaryFormatter<,,>), new[] { keyType, valueType, t });
+                        }
+                    }
+                }
+
                 // generic collection
                 var collectionDef = ti.ImplementedInterfaces.FirstOrDefault(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(ICollection<>));
                 if (collectionDef != null && ti.DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
                 {
                     Type elemType = collectionDef.GenericTypeArguments[0];
                     return CreateInstance(typeof(GenericCollectionFormatter<,>), new[] { elemType, t });
+                }
+
+                // generic IEnumerable collection
+                // looking for combination of IEnumerable<T> and constructor that takes
+                // enumeration of the same type
+                foreach (var enumerableCollectionDef in ti.ImplementedInterfaces.Where(x => x.GetTypeInfo().IsConstructedGenericType() && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+                {
+                    Type elemType = enumerableCollectionDef.GenericTypeArguments[0];
+                    Type paramInterface = typeof(IEnumerable<>).MakeGenericType(elemType);
+                    foreach (var constructor in ti.DeclaredConstructors)
+                    {
+                        var parameters = constructor.GetParameters();
+                        if (parameters.Length == 1 && parameters[0].ParameterType.IsAssignableFrom(paramInterface))
+                        {
+                            return CreateInstance(typeof(GenericEnumerableFormatter<,>), new[] { elemType, t });
+                        }
+                    }
                 }
             }
 

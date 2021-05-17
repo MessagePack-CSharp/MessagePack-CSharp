@@ -252,9 +252,56 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void CustomGenericEnumerableCollectionTest()
+        {
+            {
+                var xs = new ImplGenericEnumerable();
+                xs.Add(1);
+                xs.Add(2);
+                xs.Add(3);
+
+                this.Convert(xs).Is(1, 2, 3);
+            }
+        }
+
+        [Fact]
+        public void CustomGenericInterfaceReadOnlyCollectionTest()
+        {
+            {
+                var xs = new ImplGenericReadonlyCollection();
+                xs.Add(1);
+                xs.Add(2);
+                xs.Add(3);
+
+                this.Convert(xs).Is(1, 2, 3);
+            }
+
+            {
+                var xs = new ImplGenericGenericReadOnlyCollection<int>();
+                xs.Add(1);
+                xs.Add(2);
+                xs.Add(3);
+
+                this.Convert(xs).Is(1, 2, 3);
+            }
+        }
+
+        [Fact]
         public void CustomGenericDictionaryTest()
         {
             var d = new ImplDictionary();
+            d.Add("foo", 10);
+            d.Add("bar", 20);
+
+            var d2 = this.Convert(d);
+            d2["foo"].Is(10);
+            d2["bar"].Is(20);
+        }
+
+        [Fact]
+        public void CustomGenericReadOnlyDictionaryTest()
+        {
+            var d = new ImplReadonlyDictionary();
             d.Add("foo", 10);
             d.Add("bar", 20);
 
@@ -429,6 +476,38 @@ namespace MessagePack.Tests
         }
     }
 
+    public class ImplGenericGenericReadOnlyCollection<T> : IReadOnlyCollection<T>
+    {
+        private readonly ICollection<T> inner;
+
+        public ImplGenericGenericReadOnlyCollection()
+        {
+            this.inner = new List<T>();
+        }
+
+        public ImplGenericGenericReadOnlyCollection(IEnumerable<T> items)
+        {
+            this.inner = new List<T>(items);
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return inner.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)inner).GetEnumerator();
+        }
+
+        public int Count => inner.Count;
+
+        public void Add(T item)
+        {
+            inner.Add(item);
+        }
+    }
+
     public class ImplDictionary : IDictionary<string, int>
     {
         private readonly Dictionary<string, int> inner;
@@ -502,5 +581,120 @@ namespace MessagePack.Tests
         {
             return ((IDictionary<string, int>)inner).GetEnumerator();
         }
+    }
+
+    public class ImplGenericReadonlyCollection : IReadOnlyCollection<int>
+    {
+        private readonly ICollection<int> inner;
+
+        public ImplGenericReadonlyCollection()
+        {
+            this.inner = new List<int>();
+        }
+
+        public ImplGenericReadonlyCollection(IEnumerable<int> items)
+        {
+            this.inner = new List<int>(items);
+        }
+
+        public int Count => inner.Count;
+
+        public IEnumerator<int> GetEnumerator()
+        {
+            return inner.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return inner.GetEnumerator();
+        }
+
+        public void Add(int item)
+        {
+            inner.Add(item);
+        }
+    }
+
+    public class ImplReadonlyDictionary : IReadOnlyDictionary<string, int>
+    {
+        private readonly Dictionary<string, int> inner;
+
+        public ImplReadonlyDictionary()
+        {
+            this.inner = new Dictionary<string, int>();
+        }
+
+        public ImplReadonlyDictionary(IDictionary<string, int> inner)
+        {
+            this.inner = new Dictionary<string, int>(inner);
+        }
+
+        public IEnumerator<KeyValuePair<string, int>> GetEnumerator()
+        {
+            return inner.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)inner).GetEnumerator();
+        }
+
+        public int Count => inner.Count;
+
+        public bool ContainsKey(string key)
+        {
+            return inner.ContainsKey(key);
+        }
+
+        public bool TryGetValue(string key, out int value)
+        {
+            return inner.TryGetValue(key, out value);
+        }
+
+        public int this[string key] => inner[key];
+
+        public IEnumerable<string> Keys => inner.Keys;
+
+        public IEnumerable<int> Values => inner.Values;
+
+        public void Add(string key, int value)
+        {
+            inner.Add(key, value);
+        }
+    }
+
+    public class ImplGenericEnumerable : IEnumerable<int>
+    {
+        private readonly List<int> inner = new List<int>();
+
+        public ImplGenericEnumerable()
+        {
+        }
+
+        public ImplGenericEnumerable(IEnumerable<double> values)
+        {
+        }
+
+        public ImplGenericEnumerable(IEnumerable<int> values)
+        {
+            inner.AddRange(values);
+        }
+
+        public ImplGenericEnumerable(ICollection<int> values)
+        {
+            inner.AddRange(values);
+        }
+
+        public IEnumerator<int> GetEnumerator()
+        {
+            return inner.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)inner).GetEnumerator();
+        }
+
+        public void Add(int item) => inner.Add(item);
     }
 }
