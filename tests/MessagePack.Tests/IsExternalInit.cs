@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !NET5_0
+#if !NET5_0_OR_GREATER
 
 #pragma warning disable CA1812
 

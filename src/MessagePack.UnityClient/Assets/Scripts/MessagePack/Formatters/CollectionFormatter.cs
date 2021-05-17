@@ -1271,6 +1271,28 @@ namespace MessagePack.Formatters
         }
     }
 
+#if NET5_0_OR_GREATER
+
+    public sealed class InterfaceReadOnlySetFormatter<T> : CollectionFormatterBase<T, HashSet<T>, IReadOnlySet<T>>
+    {
+        protected override void Add(HashSet<T> collection, int index, T value, MessagePackSerializerOptions options)
+        {
+            collection.Add(value);
+        }
+
+        protected override IReadOnlySet<T> Complete(HashSet<T> intermediateCollection)
+        {
+            return intermediateCollection;
+        }
+
+        protected override HashSet<T> Create(int count, MessagePackSerializerOptions options)
+        {
+            return new HashSet<T>(options.Security.GetEqualityComparer<T>());
+        }
+    }
+
+#endif
+
     public sealed class ConcurrentBagFormatter<T> : CollectionFormatterBase<T, System.Collections.Concurrent.ConcurrentBag<T>>
     {
         protected override int? GetCount(ConcurrentBag<T> sequence)

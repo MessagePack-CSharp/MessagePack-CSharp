@@ -152,7 +152,7 @@ namespace MessagePack.Internal
             { typeof(System.Numerics.Complex), ComplexFormatter.Instance },
             { typeof(System.Numerics.Complex?), new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance) },
 
-#if NET5_0
+#if NET5_0_OR_GREATER
             { typeof(System.Half), HalfFormatter.Instance },
 #endif
         };

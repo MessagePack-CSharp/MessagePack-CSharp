@@ -70,6 +70,9 @@ namespace MessagePack.Internal
               { typeof(IReadOnlyList<>), typeof(InterfaceReadOnlyListFormatter<>) },
               { typeof(IReadOnlyCollection<>), typeof(InterfaceReadOnlyCollectionFormatter<>) },
               { typeof(ISet<>), typeof(InterfaceSetFormatter<>) },
+#if NET5_0_OR_GREATER
+              { typeof(IReadOnlySet<>), typeof(InterfaceReadOnlySetFormatter<>) },
+#endif
               { typeof(System.Collections.Concurrent.ConcurrentBag<>), typeof(ConcurrentBagFormatter<>) },
               { typeof(System.Collections.Concurrent.ConcurrentQueue<>), typeof(ConcurrentQueueFormatter<>) },
               { typeof(System.Collections.Concurrent.ConcurrentStack<>), typeof(ConcurrentStackFormatter<>) },

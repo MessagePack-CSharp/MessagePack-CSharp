@@ -4,6 +4,8 @@ MessagePack.FormatterNotRegisteredException.FormatterNotRegisteredException(Syst
 MessagePack.Formatters.HalfFormatter
 MessagePack.Formatters.HalfFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Half
 MessagePack.Formatters.HalfFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Half value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.InterfaceReadOnlySetFormatter<T>
+MessagePack.Formatters.InterfaceReadOnlySetFormatter<T>.InterfaceReadOnlySetFormatter() -> void
 MessagePack.MessagePackReader.MessagePackReader() -> void
 MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
 MessagePack.MessagePackSerializerOptions.WithPool(MessagePack.SequencePool pool) -> MessagePack.MessagePackSerializerOptions
