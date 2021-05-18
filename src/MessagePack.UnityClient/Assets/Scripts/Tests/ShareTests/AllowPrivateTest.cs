@@ -193,6 +193,25 @@ namespace MessagePack.Tests
             public bool CreatedUsingPrivateCtor { get; }
         }
 
+        public class ContractlessClassPrivateCtor
+        {
+            public int X { get; private set; }
+
+            public int Y { get; private set; }
+
+            [SerializationConstructor]
+            private ContractlessClassPrivateCtor(int x, int y)
+            {
+                X = x;
+                Y = y;
+            }
+
+            public static ContractlessClassPrivateCtor Create(int x, int y)
+            {
+                return new ContractlessClassPrivateCtor(x, y);
+            }
+        }
+
         [MessagePackObject]
         public class CompletelyPrivateConstructor
         {
@@ -331,6 +350,17 @@ namespace MessagePack.Tests
             var p1 = CompletelyPrivateConstructor.Create(10, 20);
             var bin = MessagePackSerializer.Serialize(p1, StandardResolverAllowPrivate.Options);
             var p2 = MessagePackSerializer.Deserialize<CompletelyPrivateConstructor>(bin, StandardResolverAllowPrivate.Options);
+
+            Assert.Equal(p1.X, p2.X);
+            Assert.Equal(p1.Y, p2.Y);
+        }
+
+        [Fact]
+        public void ContractlessAttributedPrivateConstructor()
+        {
+            var p1 = ContractlessClassPrivateCtor.Create(10, 20);
+            var bin = MessagePackSerializer.Serialize(p1, ContractlessStandardResolver.Options);
+            var p2 = MessagePackSerializer.Deserialize<ContractlessClassPrivateCtor>(bin, ContractlessStandardResolver.Options);
 
             Assert.Equal(p1.X, p2.X);
             Assert.Equal(p1.Y, p2.Y);

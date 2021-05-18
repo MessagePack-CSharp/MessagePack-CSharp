@@ -224,7 +224,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                if (ti.IsAnonymous())
+                if (ti.IsAnonymous() || ti.HasPrivateCtorForSerialization())
                 {
                     Formatter = (IMessagePackFormatter<T>)DynamicObjectTypeBuilder.BuildFormatterToDynamicMethod(typeof(T), true, true, false);
                     return;
