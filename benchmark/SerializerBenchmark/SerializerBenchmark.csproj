@@ -40,6 +40,12 @@
       <Private>true</Private>
       <SpecificVersion>false</SpecificVersion>
     </Reference>
+    <Reference Include="OdinSerializer">
+      <HintPath>OdinSerializer.dll</HintPath>
+      <Aliases>odin</Aliases>
+      <Private>true</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
   </ItemGroup>
 
 </Project>
