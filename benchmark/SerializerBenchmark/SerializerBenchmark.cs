@@ -44,6 +44,7 @@ namespace Benchmark
             new MsgPackCli(),
             new FsPickler_(),
             new Ceras_(),
+            new Odin_(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
@@ -1124,6 +1125,7 @@ namespace Benchmark
             new MsgPackCli(),
             new FsPickler_(),
             new Ceras_(),
+            new Odin_(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
