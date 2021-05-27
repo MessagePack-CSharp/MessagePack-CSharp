@@ -5,6 +5,7 @@ extern alias odin;
 
 using Benchmark.Serializers;
 using odin::OdinSerializer;
+using odin::OdinSerializer.Utilities;
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -12,11 +13,19 @@ public class Odin_ : SerializerBase
 {
     public override object Serialize<T>(T input)
     {
-        return SerializationUtility.SerializeValue(input, DataFormat.Binary);
+        using (var ctx = Cache<SerializationContext>.Claim())
+        {
+            ctx.Value.Config.SerializationPolicy = SerializationPolicies.Everything;
+            return SerializationUtility.SerializeValue(input, DataFormat.Binary, ctx.Value);
+        }
     }
 
     public override T Deserialize<T>(object input)
     {
-        return SerializationUtility.DeserializeValue<T>((byte[])input, DataFormat.Binary);
+        using (var ctx = Cache<DeserializationContext>.Claim())
+        {
+            ctx.Value.Config.SerializationPolicy = SerializationPolicies.Everything;
+            return SerializationUtility.DeserializeValue<T>((byte[])input, DataFormat.Binary, ctx.Value);
+        }
     }
 }
