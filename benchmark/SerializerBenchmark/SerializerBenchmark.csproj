@@ -45,7 +45,8 @@
       <Aliases>odin</Aliases>
       <Private>true</Private>
       <SpecificVersion>false</SpecificVersion>
+      <!-- Odin is not available on NuGet -->
     </Reference>
-  </ItemGroup>
+  </ItemGroup> 
 
 </Project>
