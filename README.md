@@ -10,7 +10,7 @@
 The extremely fast [MessagePack](http://msgpack.org/) serializer for C#.
 It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and outperforms other C# serializers. MessagePack for C# also ships with built-in support for LZ4 compression - an extremely fast compression algorithm. Performance is important, particularly in applications like games, distributed computing, microservices, or data caches.
 
-![Perf comparison graph](https://cloud.githubusercontent.com/assets/46207/23835716/89c8ab08-07af-11e7-9183-9e9415bdc87f.png)
+![Perf comparison graph](https://user-images.githubusercontent.com/3548/120086583-336b4a80-c09d-11eb-8f59-a43896df7a71.png)
 
 MessagePack has a compact binary size and a full set of general purpose expressive data types. Please have a look at the [comparison with JSON, protobuf, ZeroFormatter section](#comparison) and learn [why MessagePack C# is the fastest](#performance).
 
