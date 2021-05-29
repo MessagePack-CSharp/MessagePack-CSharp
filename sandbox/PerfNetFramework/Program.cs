@@ -56,11 +56,16 @@ namespace PerfNetFramework
 
             var jsonSerializer = new JsonSerializer();
             MsgPack.Serialization.SerializationContext msgpack = MsgPack.Serialization.SerializationContext.Default;
-            msgpack.GetSerializer<T>().PackSingleObject(target);
-            MessagePackSerializer.Serialize(target);
-            MessagePackSerializer.Serialize(target, LZ4Standard);
-            ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
-            ProtoBuf.Serializer.Serialize(new MemoryStream(), target);
+            byte[] msgpackCliData = msgpack.GetSerializer<T>().PackSingleObject(target);
+            byte[] messagePackData = MessagePackSerializer.Serialize(target);
+            byte[] messagePackLZ4Data = MessagePackSerializer.Serialize(target, LZ4Standard);
+            byte[] zeroFormatterData = ZeroFormatterSerializer.Serialize(target);
+            MemoryStream ms = new MemoryStream();
+            ProtoBuf.Serializer.Serialize(ms, target);
+            byte[] protobufData = ms.ToArray();
+#if NETCOREAPP3_1
+            byte[] dataOdin = OdinSerialize();
+#endif
             jsonSerializer.Serialize(new JsonTextWriter(new StringWriter()), target);
 
             Console.WriteLine(typeof(T).Name + " serialization test");
@@ -69,55 +74,99 @@ namespace PerfNetFramework
             Console.WriteLine("Serialize::");
             Deserializing = false;
 
-            byte[] data = null;
-            var data0 = new Nerdbank.Streams.Sequence<byte>();
-            byte[] data1 = null;
-            byte[] data2 = null;
-            byte[] data3 = null;
             byte[] dataJson = null;
             byte[] dataGzipJson = null;
+
+            // prime the CPU
+            for (int i = 0; i < Iteration; i++)
+            {
+                MessagePackSerializer.Serialize(target);
+            }
 
             using (new Measure("MessagePack for C#"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data0.Reset();
-                    MessagePackSerializer.Serialize(data0, target);
+                    MessagePackSerializer.Serialize(target);
                 }
+            }
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                MessagePackSerializer.Serialize(target, LZ4Standard);
             }
 
             using (new Measure("MessagePack for C# (LZ4)"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data3 = MessagePackSerializer.Serialize(target, LZ4Standard);
+                    MessagePackSerializer.Serialize(target, LZ4Standard);
                 }
+            }
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                msgpack.GetSerializer<T>().PackSingleObject(target);
             }
 
             using (new Measure("MsgPack-Cli"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data = msgpack.GetSerializer<T>().PackSingleObject(target);
+                    msgpack.GetSerializer<T>().PackSingleObject(target);
                 }
+            }
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                ms.SetLength(0);
+                ProtoBuf.Serializer.Serialize(ms, target);
             }
 
             using (new Measure("protobuf-net"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    using (var ms = new MemoryStream())
-                    {
-                        ProtoBuf.Serializer.Serialize(ms, target);
-                    }
+                    ms.SetLength(0);
+                    ProtoBuf.Serializer.Serialize(ms, target);
                 }
+            }
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                ZeroFormatterSerializer.Serialize(target);
             }
 
             using (new Measure("ZeroFormatter"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    data1 = ZeroFormatter.ZeroFormatterSerializer.Serialize(target);
+                    ZeroFormatterSerializer.Serialize(target);
+                }
+            }
+
+#if NETCOREAPP3_1
+            for (int i = 0; i < Iteration; i++)
+            {
+                OdinSerialize();
+            }
+
+            using (new Measure("OdinSerializer"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    OdinSerialize();
+                }
+            }
+#endif
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                ms.SetLength(0);
+                using (var sw = new StreamWriter(ms, Encoding.UTF8, 1024, leaveOpen: true))
+                using (var jw = new JsonTextWriter(sw))
+                {
+                    jsonSerializer.Serialize(jw, target);
                 }
             }
 
@@ -125,12 +174,23 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    using (var ms = new MemoryStream())
-                    using (var sw = new StreamWriter(ms, Encoding.UTF8, 1024, true))
+                    ms.SetLength(0);
+                    using (var sw = new StreamWriter(ms, Encoding.UTF8, 1024, leaveOpen: true))
                     using (var jw = new JsonTextWriter(sw))
                     {
                         jsonSerializer.Serialize(jw, target);
                     }
+                }
+            }
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                ms.SetLength(0);
+                using (var gzip = new GZipStream(ms, CompressionLevel.Fastest, leaveOpen: true))
+                using (var sw = new StreamWriter(gzip, Encoding.UTF8, 1024, leaveOpen: true))
+                using (var jw = new JsonTextWriter(sw))
+                {
+                    jsonSerializer.Serialize(jw, target);
                 }
             }
 
@@ -138,9 +198,9 @@ namespace PerfNetFramework
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    using (var ms = new MemoryStream())
-                    using (var gzip = new GZipStream(ms, CompressionLevel.Fastest))
-                    using (var sw = new StreamWriter(gzip, Encoding.UTF8, 1024, true))
+                    ms.SetLength(0);
+                    using (var gzip = new GZipStream(ms, CompressionLevel.Fastest, leaveOpen: true))
+                    using (var sw = new StreamWriter(gzip, Encoding.UTF8, 1024, leaveOpen: true))
                     using (var jw = new JsonTextWriter(sw))
                     {
                         jsonSerializer.Serialize(jw, target);
@@ -148,95 +208,148 @@ namespace PerfNetFramework
                 }
             }
 
-            using (var ms = new MemoryStream())
+            ms.SetLength(0);
+            ProtoBuf.Serializer.Serialize(ms, target);
+
+            ms.SetLength(0);
+            using (var sw = new StreamWriter(ms, Encoding.UTF8, 1024, leaveOpen: true))
+            using (var jw = new JsonTextWriter(sw))
             {
-                ProtoBuf.Serializer.Serialize(ms, target);
-                data2 = ms.ToArray();
+                jsonSerializer.Serialize(jw, target);
             }
 
-            using (var ms = new MemoryStream())
-            {
-                using (var sw = new StreamWriter(ms, Encoding.UTF8, 1024, true))
-                using (var jw = new JsonTextWriter(sw))
-                {
-                    jsonSerializer.Serialize(jw, target);
-                }
+            dataJson = ms.ToArray();
 
-                dataJson = ms.ToArray();
+            ms.SetLength(0);
+            using (var gzip = new GZipStream(ms, CompressionLevel.Fastest, leaveOpen: true))
+            using (var sw = new StreamWriter(gzip, Encoding.UTF8, 1024, leaveOpen: true))
+            using (var jw = new JsonTextWriter(sw))
+            {
+                jsonSerializer.Serialize(jw, target);
             }
 
-            using (var ms = new MemoryStream())
-            {
-                using (var gzip = new GZipStream(ms, CompressionLevel.Fastest))
-                using (var sw = new StreamWriter(gzip, Encoding.UTF8, 1024, true))
-                using (var jw = new JsonTextWriter(sw))
-                {
-                    jsonSerializer.Serialize(jw, target);
-                }
+            dataGzipJson = ms.ToArray();
 
-                dataGzipJson = ms.ToArray();
-            }
-
-            msgpack.GetSerializer<T>().UnpackSingleObject(data);
-            MessagePackSerializer.Deserialize<T>(data0);
+            msgpack.GetSerializer<T>().UnpackSingleObject(msgpackCliData);
+            MessagePackSerializer.Deserialize<T>(messagePackData);
             ////ZeroFormatterSerializer.Deserialize<T>(data1);
-            ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(data2));
-            MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
+            ProtoBuf.Serializer.Deserialize<T>(new MemoryStream(protobufData));
+#if NETCOREAPP3_1
+            OdinDeserialize(dataOdin);
+#endif
+            MessagePackSerializer.Deserialize<T>(messagePackLZ4Data, LZ4Standard);
             jsonSerializer.Deserialize<T>(new JsonTextReader(new StreamReader(new MemoryStream(dataJson))));
 
             Console.WriteLine();
             Console.WriteLine("Deserialize::");
             Deserializing = true;
 
+            for (int i = 0; i < Iteration; i++)
+            {
+                MessagePackSerializer.Deserialize<T>(messagePackData);
+            }
+
             using (new Measure("MessagePack for C#"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    MessagePackSerializer.Deserialize<T>(data0);
+                    MessagePackSerializer.Deserialize<T>(messagePackData);
                 }
+            }
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                MessagePackSerializer.Deserialize<T>(messagePackLZ4Data, LZ4Standard);
             }
 
             using (new Measure("MessagePack for C# (LZ4)"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    MessagePackSerializer.Deserialize<T>(data3, LZ4Standard);
+                    MessagePackSerializer.Deserialize<T>(messagePackLZ4Data, LZ4Standard);
                 }
+            }
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                msgpack.GetSerializer<T>().UnpackSingleObject(msgpackCliData);
             }
 
             using (new Measure("MsgPack-Cli"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    msgpack.GetSerializer<T>().UnpackSingleObject(data);
+                    msgpack.GetSerializer<T>().UnpackSingleObject(msgpackCliData);
                 }
+            }
+
+            ms.SetLength(0);
+            ms.Write(protobufData, 0, protobufData.Length);
+            for (int i = 0; i < Iteration; i++)
+            {
+                ms.Position = 0;
+                ProtoBuf.Serializer.Deserialize<T>(ms);
             }
 
             using (new Measure("protobuf-net"))
             {
+                ms.SetLength(0);
+                ms.Write(protobufData, 0, protobufData.Length);
                 for (int i = 0; i < Iteration; i++)
                 {
-                    using (var ms = new MemoryStream(data2))
-                    {
-                        ProtoBuf.Serializer.Deserialize<T>(ms);
-                    }
+                    ms.Position = 0;
+                    ProtoBuf.Serializer.Deserialize<T>(ms);
                 }
+            }
+
+            for (int i = 0; i < Iteration; i++)
+            {
+                ZeroFormatterSerializer.Deserialize<T>(zeroFormatterData);
             }
 
             using (new Measure("ZeroFormatter"))
             {
                 for (int i = 0; i < Iteration; i++)
                 {
-                    ZeroFormatterSerializer.Deserialize<T>(data1);
+                    ZeroFormatterSerializer.Deserialize<T>(zeroFormatterData);
+                }
+            }
+
+#if NETCOREAPP3_1
+            for (int i = 0; i < Iteration; i++)
+            {
+                OdinDeserialize(dataOdin);
+            }
+
+            using (new Measure("OdinSerializer"))
+            {
+                for (int i = 0; i < Iteration; i++)
+                {
+                    OdinDeserialize(dataOdin);
+                }
+            }
+#endif
+
+            ms.SetLength(0);
+            ms.Write(dataJson, 0, dataJson.Length);
+            for (int i = 0; i < Iteration; i++)
+            {
+                ms.Position = 0;
+                using (var sr = new StreamReader(ms, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true))
+                using (var jr = new JsonTextReader(sr))
+                {
+                    jsonSerializer.Deserialize<T>(jr);
                 }
             }
 
             using (new Measure("Json.NET"))
             {
+                ms.SetLength(0);
+                ms.Write(dataJson, 0, dataJson.Length);
                 for (int i = 0; i < Iteration; i++)
                 {
-                    using (var ms = new MemoryStream(dataJson))
-                    using (var sr = new StreamReader(ms, Encoding.UTF8))
+                    ms.Position = 0;
+                    using (var sr = new StreamReader(ms, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true))
                     using (var jr = new JsonTextReader(sr))
                     {
                         jsonSerializer.Deserialize<T>(jr);
@@ -244,12 +357,27 @@ namespace PerfNetFramework
                 }
             }
 
+            ms.SetLength(0);
+            ms.Write(dataGzipJson, 0, dataGzipJson.Length);
+            for (int i = 0; i < Iteration; i++)
+            {
+                ms.Position = 0;
+                using (var gzip = new GZipStream(ms, CompressionMode.Decompress, leaveOpen: true))
+                using (var sr = new StreamReader(gzip, Encoding.UTF8))
+                using (var jr = new JsonTextReader(sr))
+                {
+                    jsonSerializer.Deserialize<T>(jr);
+                }
+            }
+
             using (new Measure("Json.NET(+GZip)"))
             {
+                ms.SetLength(0);
+                ms.Write(dataGzipJson, 0, dataGzipJson.Length);
                 for (int i = 0; i < Iteration; i++)
                 {
-                    using (var ms = new MemoryStream(dataGzipJson))
-                    using (var gzip = new GZipStream(ms, CompressionMode.Decompress))
+                    ms.Position = 0;
+                    using (var gzip = new GZipStream(ms, CompressionMode.Decompress, leaveOpen: true))
                     using (var sr = new StreamReader(gzip, Encoding.UTF8))
                     using (var jr = new JsonTextReader(sr))
                     {
@@ -262,15 +390,19 @@ namespace PerfNetFramework
             Console.WriteLine("FileSize::");
             var label = string.Empty;
             label = "MessagePack for C#";
-            Console.WriteLine($"{label,-25} {data0.Length,14} byte");
+            Console.WriteLine($"{label,-25} {messagePackData.Length,14} byte");
             label = "MessagePack for C# (LZ4)";
-            Console.WriteLine($"{label,-25} {data3.Length,14} byte");
+            Console.WriteLine($"{label,-25} {messagePackLZ4Data.Length,14} byte");
             label = "MsgPack-Cli";
-            Console.WriteLine($"{label,-25} {data.Length,14} byte");
+            Console.WriteLine($"{label,-25} {msgpackCliData.Length,14} byte");
             label = "protobuf-net";
-            Console.WriteLine($"{label,-25} {data2.Length,14} byte");
+            Console.WriteLine($"{label,-25} {protobufData.Length,14} byte");
             label = "ZeroFormatter";
-            Console.WriteLine($"{label,-25} {data1.Length,14} byte");
+            Console.WriteLine($"{label,-25} {zeroFormatterData.Length,14} byte");
+#if NETCOREAPP3_1
+            label = "OdinSerializer";
+            Console.WriteLine($"{label,-25} {dataOdin.Length,14} byte");
+#endif
             label = "Json.NET";
             Console.WriteLine($"{label,-25} {dataJson.Length,14} byte");
             label = "Json.NET(+GZip)";
@@ -278,6 +410,26 @@ namespace PerfNetFramework
 
             Console.WriteLine();
             Console.WriteLine();
+
+#if NETCOREAPP3_1
+            byte[] OdinSerialize()
+            {
+                using (var ctx = OdinSerializer.Utilities.Cache<OdinSerializer.SerializationContext>.Claim())
+                {
+                    ctx.Value.Config.SerializationPolicy = OdinSerializer.SerializationPolicies.Everything;
+                    return OdinSerializer.SerializationUtility.SerializeValue(target, OdinSerializer.DataFormat.Binary, ctx.Value);
+                }
+            }
+
+            T OdinDeserialize(byte[] input)
+            {
+                using (var ctx = OdinSerializer.Utilities.Cache<OdinSerializer.DeserializationContext>.Claim())
+                {
+                    ctx.Value.Config.SerializationPolicy = OdinSerializer.SerializationPolicies.Everything;
+                    return OdinSerializer.SerializationUtility.DeserializeValue<T>(input, OdinSerializer.DataFormat.Binary, ctx.Value);
+                }
+            }
+#endif
         }
 
         private static string ToHumanReadableSize(long size)
