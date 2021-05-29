@@ -40,12 +40,7 @@
       <Private>true</Private>
       <SpecificVersion>false</SpecificVersion>
     </Reference>
-    <Reference Include="OdinSerializer">
-      <HintPath>OdinSerializer.dll</HintPath>
-      <Private>true</Private>
-      <SpecificVersion>false</SpecificVersion>
-      <!-- Odin is not available on NuGet -->
-    </Reference>
+    <Reference Include="OdinSerializer.dll" /> <!-- Odin is not available on NuGet -->
   </ItemGroup> 
 
 </Project>
