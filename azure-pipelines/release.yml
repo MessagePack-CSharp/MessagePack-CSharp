@@ -21,6 +21,7 @@ stages:
       runOnce:
         deploy:
           steps:
+          - download: none
           - powershell: |
               Write-Host "##vso[build.updatebuildnumber]$(resources.pipeline.CI.runName)"
             displayName: Set pipeline name
