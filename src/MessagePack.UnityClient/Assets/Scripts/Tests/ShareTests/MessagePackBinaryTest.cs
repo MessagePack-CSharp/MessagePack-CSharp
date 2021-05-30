@@ -41,7 +41,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(1);
 
-            packer.PackNull().Position.Is(sequence.Length);
+            packer.PackNull();
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -64,7 +65,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -89,7 +91,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -120,7 +123,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.PackBinary(target).Position.Is(sequence.Length);
+            packer.PackBinary(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -152,7 +156,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -182,7 +187,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -212,7 +218,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -249,7 +256,8 @@ namespace MessagePack.Tests
 
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             //// stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -293,15 +301,18 @@ namespace MessagePack.Tests
             // bug of msgpack-cli
             if (target == 255)
             {
-                packer.Pack((byte)255).Position.Is(sequence.Length);
+                packer.Pack((byte)255);
+                stream.Position.Is(sequence.Length);
             }
             else if (target == 50000)
             {
-                packer.Pack((ushort)50000).Position.Is(sequence.Length);
+                packer.Pack((ushort)50000);
+                stream.Position.Is(sequence.Length);
             }
             else
             {
-                packer.Pack(target).Position.Is(sequence.Length);
+                packer.Pack(target);
+                stream.Position.Is(sequence.Length);
             }
 
             //// stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
@@ -354,19 +365,23 @@ namespace MessagePack.Tests
             // bug of msgpack-cli
             if (target == 255)
             {
-                packer.Pack((byte)255).Position.Is(sequence.Length);
+                packer.Pack((byte)255);
+                stream.Position.Is(sequence.Length);
             }
             else if (target == 50000)
             {
-                packer.Pack((ushort)50000).Position.Is(sequence.Length);
+                packer.Pack((ushort)50000);
+                stream.Position.Is(sequence.Length);
             }
             else if (target == uint.MaxValue)
             {
-                packer.Pack(uint.MaxValue).Position.Is(sequence.Length);
+                packer.Pack(uint.MaxValue);
+                stream.Position.Is(sequence.Length);
             }
             else
             {
-                packer.Pack(target).Position.Is(sequence.Length);
+                packer.Pack(target);
+                stream.Position.Is(sequence.Length);
             }
 
             //// stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
@@ -403,7 +418,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.PackMapHeader((int)target).Position.Is(sequence.Length);
+            packer.PackMapHeader((int)target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             // Expand sequence enough that ReadArrayHeader doesn't throw due to its security check.
@@ -447,7 +463,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.PackArrayHeader((int)target).Position.Is(sequence.Length);
+            packer.PackArrayHeader((int)target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             // Expand sequence enough that ReadArrayHeader doesn't throw due to its security check.
@@ -487,7 +504,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -521,7 +539,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -559,7 +578,8 @@ namespace MessagePack.Tests
             writer.Flush();
             sequence.Length.Is(length);
 
-            packer.Pack(target).Position.Is(sequence.Length);
+            packer.Pack(target);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -606,7 +626,7 @@ namespace MessagePack.Tests
             var returnLength = sequence.Length;
 
             MsgPack.Packer referencePacked = packer.PackString(target);
-            referencePacked.Position.Is(returnLength);
+            stream.Position.Is(returnLength);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -629,7 +649,7 @@ namespace MessagePack.Tests
             var returnLength = sequence.Length;
 
             MsgPack.Packer referencePacked = packer.PackString(target);
-            referencePacked.Position.Is(returnLength);
+            stream.Position.Is(returnLength);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -659,8 +679,8 @@ namespace MessagePack.Tests
             var returnLength = sequence.Length;
 
             MsgPack.Packer referencePacked = packer.Pack(target);
-            referencePacked.Position.Is(returnLength);
-            referencePacked.Position.Is(sequence.Length);
+            stream.Position.Is(returnLength);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
@@ -718,8 +738,8 @@ namespace MessagePack.Tests
             var returnLength = sequence.Length;
 
             MsgPack.Packer referencePacked = packer.PackExtendedTypeValue((byte)typeCode, target);
-            referencePacked.Position.Is(returnLength);
-            referencePacked.Position.Is(sequence.Length);
+            stream.Position.Is(returnLength);
+            stream.Position.Is(sequence.Length);
             stream.ToArray().SequenceEqual(sequence.AsReadOnlySequence.ToArray()).IsTrue();
 
             var sequenceReader = new MessagePackReader(sequence.AsReadOnlySequence);
