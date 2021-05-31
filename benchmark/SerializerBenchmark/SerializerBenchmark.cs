@@ -44,6 +44,7 @@ namespace Benchmark
             new MsgPackCliSerializer(),
             new FsPicklerSerializer(),
             new CerasSerializer(),
+            new OdinSerializer_(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
@@ -1124,6 +1125,7 @@ namespace Benchmark
             new MsgPackCliSerializer(),
             new FsPicklerSerializer(),
             new CerasSerializer(),
+            new OdinSerializer_(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
