@@ -179,7 +179,7 @@ namespace MessagePackAnalyzer
             return;
         }
 
-        private void ICollectObject(INamedTypeSymbol type, ISymbol? callerSymbol)
+        private void CollectObject(INamedTypeSymbol type, ISymbol? callerSymbol)
         {
             var isClass = !type.IsValueType;
 
