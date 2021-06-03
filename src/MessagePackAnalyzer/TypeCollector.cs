@@ -191,8 +191,9 @@ namespace MessagePackAnalyzer
                 var isMessagePackFormatter = formatterType.AllInterfaces.Any(x => x.Equals(this.typeReferences.MessagePackFormatter));
                 if (!isMessagePackFormatter)
                 {
+                    var location = formatterAttr.ApplicationSyntaxReference.SyntaxTree.GetLocation(formatterAttr.ApplicationSyntaxReference.Span);
                     var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", formatterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
-                    this.ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.MessageFormatterMustBeMessagePackFormatter, formatterType.Locations[0], typeInfo));
+                    this.ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.MessageFormatterMustBeMessagePackFormatter, location, typeInfo));
                 }
 
                 return;

@@ -57,9 +57,9 @@ public class SomeClass {
     {
         string input = Preamble + @"using MessagePack.Formatters;
 
-public class {|MsgPack006:InvalidMessageFormatter|} { }
+public class InvalidMessageFormatter { }
 
-[MessagePackFormatter(typeof(InvalidMessageFormatter))]
+[{|MsgPack006:MessagePackFormatter(typeof(InvalidMessageFormatter))|}]
 public struct Foo
 {
 }
@@ -73,7 +73,6 @@ public class SomeClass {
 
         await VerifyCS.VerifyAnalyzerAsync(input);
     }
-
 
     [Fact]
     public async Task NullStringKey()
