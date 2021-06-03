@@ -183,6 +183,13 @@ namespace MessagePackAnalyzer
         {
             var isClass = !type.IsValueType;
 
+            AttributeData formatterAttr = type.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.FormatterAttribute));
+            if( formatterAttr != null )
+            {
+                // TODO: Validate that ConstructorArguments[0] is in fact of type IMessagePackFormatter
+                return;
+            }
+
             AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.MessagePackObjectAttribute));
             if (contractAttr == null)
             {
