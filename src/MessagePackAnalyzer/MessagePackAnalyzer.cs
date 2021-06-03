@@ -16,6 +16,7 @@ namespace MessagePackAnalyzer
         public const string UseMessagePackObjectAttributeId = "MsgPack003";
         public const string AttributeMessagePackObjectMembersId = "MsgPack004";
         public const string InvalidMessagePackObjectId = "MsgPack005";
+        public const string MessagePackFormatterMustBeMessagePackFormatterId = "MsgPack006";
 
         internal const string Category = "Usage";
 
@@ -31,6 +32,16 @@ namespace MessagePackAnalyzer
             category: Category,
             messageFormat: "Type must be marked with MessagePackObjectAttribute. {0}.", // type.Name
             description: "Type must be marked with MessagePackObjectAttribute.",
+            defaultSeverity: DiagnosticSeverity.Error,
+            isEnabledByDefault: true,
+            helpLinkUri: AnalyzerUtilities.GetHelpLink(UseMessagePackObjectAttributeId));
+
+        internal static readonly DiagnosticDescriptor MessageFormatterMustBeMessagePackFormatter = new DiagnosticDescriptor(
+            id: MessagePackFormatterMustBeMessagePackFormatterId,
+            title: "Must be IMessageFormatter",
+            category: Category,
+            messageFormat: "Type must be of IMessagePackFormatter. {0}.", // type.Name
+            description: "Type must be of IMessagePackFormatter.",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             helpLinkUri: AnalyzerUtilities.GetHelpLink(UseMessagePackObjectAttributeId));
@@ -58,7 +69,9 @@ namespace MessagePackAnalyzer
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
             TypeMustBeMessagePackObject,
             PublicMemberNeedsKey,
-            InvalidMessagePackObject);
+            InvalidMessagePackObject,
+            MessageFormatterMustBeMessagePackFormatter
+            );
 
         public override void Initialize(AnalysisContext context)
         {

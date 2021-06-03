@@ -179,14 +179,21 @@ namespace MessagePackAnalyzer
             return;
         }
 
-        private void CollectObject(INamedTypeSymbol type, ISymbol? callerSymbol)
+        private void ICollectObject(INamedTypeSymbol type, ISymbol? callerSymbol)
         {
             var isClass = !type.IsValueType;
 
             AttributeData formatterAttr = type.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.FormatterAttribute));
             if( formatterAttr != null )
             {
-                // TODO: Validate that ConstructorArguments[0] is in fact of type IMessagePackFormatter
+                // Validate that the typed formatter is actually of `IMessagePackFormatter`
+                var formatterType = (ITypeSymbol)formatterAttr.ConstructorArguments[0].Value;
+                var isMessagePackFormatter = formatterType.AllInterfaces.Any(x => x.Equals(this.typeReferences.MessagePackFormatter));
+                if( !isMessagePackFormatter )
+                {
+                    var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", formatterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    this.ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.MessageFormatterMustBeMessagePackFormatter, formatterType.Locations[0], typeInfo));
+                }
                 return;
             }
 

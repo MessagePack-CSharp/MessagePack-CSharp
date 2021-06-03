@@ -37,7 +37,29 @@ public class FooFormatter : IMessagePackFormatter<Foo> {
 }
 
 
-[MessagePackFormatter(typeof(Foo))]
+[MessagePackFormatter(typeof(FooFormatter))]
+public struct Foo
+{
+}
+
+[MessagePackObject]
+public class SomeClass {
+    [Key(0)]
+    public Foo SomeFoo { get; set; }
+}
+";
+
+        await VerifyCS.VerifyAnalyzerAsync(input);
+    }
+
+    [Fact]
+    public async Task InvalidMessageFormatterType()
+    {
+        string input = Preamble + @"using MessagePack.Formatters;
+
+public class {|MsgPack006:InvalidMessageFormatter|} { }
+
+[MessagePackFormatter(typeof(InvalidMessageFormatter))]
 public struct Foo
 {
 }

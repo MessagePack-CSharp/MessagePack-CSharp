@@ -14,6 +14,7 @@ namespace MessagePackAnalyzer
             INamedTypeSymbol keyAttribute,
             INamedTypeSymbol ignoreAttribute,
             INamedTypeSymbol formatterAttribute,
+            INamedTypeSymbol messagePackFormatter,
             INamedTypeSymbol ignoreDataMemberAttribute)
         {
             this.MessagePackObjectAttribute = messagePackObjectAttribute;
@@ -21,6 +22,7 @@ namespace MessagePackAnalyzer
             this.KeyAttribute = keyAttribute;
             this.IgnoreAttribute = ignoreAttribute;
             this.FormatterAttribute = formatterAttribute;
+            this.MessagePackFormatter = messagePackFormatter;
             this.IgnoreDataMemberAttribute = ignoreDataMemberAttribute;
         }
 
@@ -33,6 +35,8 @@ namespace MessagePackAnalyzer
         internal INamedTypeSymbol IgnoreAttribute { get; }
 
         internal INamedTypeSymbol FormatterAttribute { get; }
+
+        internal INamedTypeSymbol MessagePackFormatter { get; }
 
         internal INamedTypeSymbol IgnoreDataMemberAttribute { get; }
 
@@ -70,6 +74,12 @@ namespace MessagePackAnalyzer
                 return false;
             }
 
+            var messageFormatter = compilation.GetTypeByMetadataName("MessagePack.Formatters.IMessagePackFormatter");
+            if (messageFormatter is null)
+            {
+                return false;
+            }
+
             var ignoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
             if (ignoreDataMemberAttribute is null)
             {
@@ -82,6 +92,7 @@ namespace MessagePackAnalyzer
                 keyAttribute,
                 ignoreAttribute,
                 formatterAttribute,
+                messageFormatter,
                 ignoreDataMemberAttribute);
             return true;
         }
