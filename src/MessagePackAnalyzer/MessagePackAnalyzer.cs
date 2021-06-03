@@ -70,8 +70,7 @@ namespace MessagePackAnalyzer
             TypeMustBeMessagePackObject,
             PublicMemberNeedsKey,
             InvalidMessagePackObject,
-            MessageFormatterMustBeMessagePackFormatter
-            );
+            MessageFormatterMustBeMessagePackFormatter);
 
         public override void Initialize(AnalysisContext context)
         {
