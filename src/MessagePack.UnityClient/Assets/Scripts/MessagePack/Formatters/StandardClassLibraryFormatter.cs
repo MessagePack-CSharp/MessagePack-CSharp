@@ -15,7 +15,10 @@ namespace MessagePack.Formatters
 {
     // NET40 -> BigInteger, Complex, Tuple
 
-    // byte[] is special. represents bin type.
+    /// <summary>
+    /// Serializes a <see cref="byte"/> array as a bin type.
+    /// Deserializes a bin type or an array of byte-sized integers into a <see cref="byte"/> array.
+    /// </summary>
     public sealed class ByteArrayFormatter : IMessagePackFormatter<byte[]>
     {
         public static readonly ByteArrayFormatter Instance = new ByteArrayFormatter();
@@ -31,7 +34,35 @@ namespace MessagePack.Formatters
 
         public byte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            return reader.ReadBytes()?.ToArray();
+            if (reader.NextMessagePackType == MessagePackType.Array)
+            {
+                int len = reader.ReadArrayHeader();
+                if (len == 0)
+                {
+                    return Array.Empty<byte>();
+                }
+
+                byte[] array = new byte[len];
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    for (int i = 0; i < len; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        array[i] = reader.ReadByte();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
+
+                return array;
+            }
+            else
+            {
+                return reader.ReadBytes()?.ToArray();
+            }
         }
     }
 
