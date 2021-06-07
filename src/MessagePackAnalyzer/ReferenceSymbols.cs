@@ -13,12 +13,16 @@ namespace MessagePackAnalyzer
             INamedTypeSymbol unionAttribute,
             INamedTypeSymbol keyAttribute,
             INamedTypeSymbol ignoreAttribute,
+            INamedTypeSymbol formatterAttribute,
+            INamedTypeSymbol messagePackFormatter,
             INamedTypeSymbol ignoreDataMemberAttribute)
         {
             this.MessagePackObjectAttribute = messagePackObjectAttribute;
             this.UnionAttribute = unionAttribute;
             this.KeyAttribute = keyAttribute;
             this.IgnoreAttribute = ignoreAttribute;
+            this.FormatterAttribute = formatterAttribute;
+            this.MessagePackFormatter = messagePackFormatter;
             this.IgnoreDataMemberAttribute = ignoreDataMemberAttribute;
         }
 
@@ -29,6 +33,10 @@ namespace MessagePackAnalyzer
         internal INamedTypeSymbol KeyAttribute { get; }
 
         internal INamedTypeSymbol IgnoreAttribute { get; }
+
+        internal INamedTypeSymbol FormatterAttribute { get; }
+
+        internal INamedTypeSymbol MessagePackFormatter { get; }
 
         internal INamedTypeSymbol IgnoreDataMemberAttribute { get; }
 
@@ -60,6 +68,18 @@ namespace MessagePackAnalyzer
                 return false;
             }
 
+            var formatterAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackFormatterAttribute");
+            if (formatterAttribute is null)
+            {
+                return false;
+            }
+
+            var messageFormatter = compilation.GetTypeByMetadataName("MessagePack.Formatters.IMessagePackFormatter");
+            if (messageFormatter is null)
+            {
+                return false;
+            }
+
             var ignoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
             if (ignoreDataMemberAttribute is null)
             {
@@ -71,6 +91,8 @@ namespace MessagePackAnalyzer
                 unionAttribute,
                 keyAttribute,
                 ignoreAttribute,
+                formatterAttribute,
+                messageFormatter,
                 ignoreDataMemberAttribute);
             return true;
         }

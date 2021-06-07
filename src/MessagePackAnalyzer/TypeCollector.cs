@@ -183,6 +183,22 @@ namespace MessagePackAnalyzer
         {
             var isClass = !type.IsValueType;
 
+            AttributeData formatterAttr = type.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.FormatterAttribute));
+            if (formatterAttr != null)
+            {
+                // Validate that the typed formatter is actually of `IMessagePackFormatter`
+                var formatterType = (ITypeSymbol)formatterAttr.ConstructorArguments[0].Value;
+                var isMessagePackFormatter = formatterType.AllInterfaces.Any(x => x.Equals(this.typeReferences.MessagePackFormatter));
+                if (!isMessagePackFormatter)
+                {
+                    var location = formatterAttr.ApplicationSyntaxReference.SyntaxTree.GetLocation(formatterAttr.ApplicationSyntaxReference.Span);
+                    var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", formatterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    this.ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.MessageFormatterMustBeMessagePackFormatter, location, typeInfo));
+                }
+
+                return;
+            }
+
             AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.MessagePackObjectAttribute));
             if (contractAttr == null)
             {
