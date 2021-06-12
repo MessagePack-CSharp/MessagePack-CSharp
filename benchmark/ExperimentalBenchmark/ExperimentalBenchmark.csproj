@@ -6,6 +6,7 @@
     <RootNamespace>Benchmark</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);MSB3243</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
