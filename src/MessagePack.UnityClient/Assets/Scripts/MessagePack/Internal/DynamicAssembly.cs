@@ -26,7 +26,7 @@ namespace MessagePack.Internal
             AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.RunAndSave;
             this.moduleName = moduleName;
 #else
-            AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.Run;
+            AssemblyBuilderAccess builderAccess = AssemblyBuilderAccess.RunAndCollect;
 #endif
             this.assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(moduleName), builderAccess);
             this.moduleBuilder = this.assemblyBuilder.DefineDynamicModule(moduleName + ".dll");
