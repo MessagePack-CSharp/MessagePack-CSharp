@@ -1458,7 +1458,9 @@ MessagePack for C# already used some MessagePack extension type codes, be carefu
 
 Unity lowest supported version is `2018.3`, API Compatibility Level supports both `.NET 4.x` and `.NET Standard 2.0`.
 
-You can install the `unitypackage` from the [releases][Releases] page. If your build targets PC, you can use it as is, but if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
+You can install the `unitypackage` from the [releases][Releases] page.
+If your build targets .NET Framework 4.x and runs on mono, you can use it as is.
+But if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
 
 MessagePack for C# includes some additional `System.*.dll` libraries that originally provides in NuGet. They are located under `Plugins`. If other packages use these libraries (e.g. Unity Collections package using `System.Runtime.CompilerServices.Unsafe.dll`), to avoid conflicts, please delete the DLL under `Plugins`.
 
@@ -1504,7 +1506,8 @@ If you want to share a class between Unity and a server, you can use `SharedProj
 By default, MessagePack for C# serializes custom objects by [generating IL](https://msdn.microsoft.com/en-us/library/system.reflection.emit.ilgenerator.aspx) on the fly at runtime to create custom, highly tuned formatters for each type. This code generation has a minor upfront performance cost.
 Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
 
-> Note: When Unity targets the PC it allows dynamic code generation, so AOT is not required.
+> Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
+For all other Unity targets, AOT is required.
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
 
