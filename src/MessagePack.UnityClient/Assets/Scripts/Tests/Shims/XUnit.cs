@@ -87,6 +87,11 @@ namespace Xunit
             NUnit.Framework.Assert.IsNull(expected);
         }
 
+        public static void Empty(System.Collections.IEnumerable enumerable)
+        {
+            Assert.False(enumerable.GetEnumerator().MoveNext());
+        }
+
         public static T IsType<T>(object o)
         {
             NUnit.Framework.Assert.AreEqual(typeof(T), o.GetType());
