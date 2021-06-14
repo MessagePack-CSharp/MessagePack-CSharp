@@ -1492,7 +1492,7 @@ namespace MessagePack.Internal
                             {
                                 FieldInfo = field,
                                 IsReadable = allowPrivate || field.IsPublic,
-                                IsWritable = allowPrivate || (field.IsPublic && !field.IsInitOnly),
+                                IsWritable = (allowPrivate || field.IsPublic) && !field.IsInitOnly,
                                 StringKey = firstMemberByName ? item.Name : $"{item.DeclaringType.FullName}.{item.Name}",
                             };
                         }
@@ -1675,7 +1675,7 @@ namespace MessagePack.Internal
                     {
                         FieldInfo = item,
                         IsReadable = allowPrivate || item.IsPublic,
-                        IsWritable = allowPrivate || (item.IsPublic && !item.IsInitOnly),
+                        IsWritable = (allowPrivate || item.IsPublic) && !item.IsInitOnly,
                     };
                     if (!member.IsReadable && !member.IsWritable)
                     {
