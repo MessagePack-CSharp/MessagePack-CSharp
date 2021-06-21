@@ -16,14 +16,16 @@ It has been a while since the implementation of v2, and I believe there are a fe
 If we do change it, it will have to be at the same time as v3, as it will be a major interface changes.
 I have prepared a minimal implementation and benchmark results as a base for discussion.
 
-1. `MessagePackSerializer.Deserialize` should be accept `ReadOnlySpan<byte>`
----
+https://user-images.githubusercontent.com/46207/122743956-7f876480-d2c2-11eb-8fc7-53f819d22e61.png
+
+(v3 is x2 faster in .NET 5)
+
+## 1. `MessagePackSerializer.Deserialize` should be accept `ReadOnlySpan<byte>`
 I think the lack of acceptance of `ReadOnlySpan<byte>` is a major failure of v2.
 To fix it, we need to change the `MessagePackReader`.
 I think we need to abolish `SequenceReader` and control `ReadOnlySpan` and `ReadOnlySequence` manually in MessagePackReader.
 
-2. Requires static write/read function(such as v1's `MessagePackBinary`)
----
+## 2. Requires static write/read function(such as v1's `MessagePackBinary`)
 It is a big frustration not to be able to write even a small thing without an `IBufferWriter<byte>`.
 Another drawback is that it cannot be used in an async environment.
 
@@ -65,8 +67,7 @@ public void WriteInt32(int value)
 }
 ```
 
-3. `ref T value` for large struct(for Serialize) and overwrite(for Deserialize)
----
+## 3. `ref T value` for large struct(for Serialize) and overwrite(for Deserialize)
 Change the `IMessagePackFormatter<T>` interface like the following.
 
 ```csharp
@@ -106,8 +107,7 @@ public static class MessagePackSerializer
 }
 ```
 
-4. Bufferless StreamingSerializer/StreamingDeserializer
----
+## 4. Bufferless StreamingSerializer/StreamingDeserializer
 The MessagePack format itself supports streaming read/write, but currently requires a full buffer for both Serialize and Deserialize (Stream APIs, etc. also read into the buffer once).
 
 It is written in Issues several times, but it requires complex code, so we think it is better to provide it as standard.
@@ -183,8 +183,7 @@ As for Deserialize, it will be a 2-pass process, but how about preparing a buffe
 
 I'd like to reuse the generation of `Writer/Reader`, but it's difficult due to the compatibility of async/await and ref struct. I don't have any good ideas.
 
-5. Unified code-generation(dynamicassembly/source-generator/standalone code-generator/analyzer)
----
+## 5. Unified code-generation(dynamicassembly/source-generator/standalone code-generator/analyzer)
 DynamicAssembly, DynamicMethod, Analyzer, Commandline Code Generator, MSBuild Task, and Source Generator. overlapping and scattered code is very frustrating and a breeding ground for bugs. Duplicate and scattered code is very frustrating and a breeding ground for bugs. I would like to introduce an intermediate abstract metatype to centralize the management. It will also allow users to dynamically create this MetaType and generate custom Formatters.
 
 ```csharp
@@ -249,32 +248,27 @@ public sealed class ReflectionMetaParameter : MessagePackMetaParameter
 // ...
 ```
 
-6. nullable
----
+## 6. nullable
 Unity support needs to continue; LTS does not yet support C# 8.0. We also need to wait for eventual C# 9.0 support for Generic Constraint. It does not work with the current Unity.
 
 In my ZString, ZLogger, and MessagePipe, I handled it by copying from the post-build rewrite. NET side instead of Unity/Client side, so it is easier to handle the source code. NET side, so it's easier to handle the source code. Currently, I'm not able to make everything a source reference, such as copying the T4 stuff, so it should be good to split it up and make everything a copy.
 
-7. .NET 6
----
+## 7. .NET 6
 using VS2022 preview. record, struct record, new types, etc...
 
-8. CI to GitHub Actions
----
+## 8. CI to GitHub Actions
 For OSS, CI with GitHub Actions would be better, and Unity is built as follows
 https://github.com/Cysharp/ZString/blob/master/.github/workflows/build-debug.yml
 
 I think it's a good idea to continue to put Canary builds in Azure DevOps. In my other repositories, I have achieved this by doing the following
 https://github.com/Cysharp/MagicOnion/blob/master/.github/workflows/build-canary.yml
 
-9. avoid SlowSpan for Unity
----
+## 9. avoid SlowSpan for Unity
 In Unity, Span uses Slow Span, and doesn't perform very well (I tested this issue with ZString). If you can use arrays, you can get back better performance by using arrays. Here are the results from a simple benchmark in Unity IL2CPP, arrays are 5 times faster.
 
 ![image](https://user-images.githubusercontent.com/46207/122743924-76969300-d2c2-11eb-9d27-b16b80dc80d3.png)
 
-10. more performance improvement
----
+## 10. more performance improvement
 This is a simple benchmark result from the current prototype implementation.
 
 ```csharp
