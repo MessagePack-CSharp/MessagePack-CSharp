@@ -16,7 +16,7 @@ It has been a while since the implementation of v2, and I believe there are a fe
 If we do change it, it will have to be at the same time as v3, as it will be a major interface changes.
 I have prepared a minimal implementation and benchmark results as a base for discussion.
 
-https://user-images.githubusercontent.com/46207/122743956-7f876480-d2c2-11eb-8fc7-53f819d22e61.png
+![image](https://user-images.githubusercontent.com/46207/122743956-7f876480-d2c2-11eb-8fc7-53f819d22e61.png)
 
 (v3 is x2 faster in .NET 5)
 
