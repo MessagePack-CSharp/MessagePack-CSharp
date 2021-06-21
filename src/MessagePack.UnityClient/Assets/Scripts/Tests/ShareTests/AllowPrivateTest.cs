@@ -157,6 +157,28 @@ namespace MessagePack.Tests
             internal InternalEnum EnumProperty { get; set; }
         }
 
+        [MessagePackObject]
+        public class PrivateReadonlyField
+        {
+            public static PrivateReadonlyField WithNullValue { get; } = new PrivateReadonlyField();
+
+            [Key(0)]
+            private readonly string field;
+
+            [SerializationConstructor]
+            public PrivateReadonlyField(string field)
+            {
+                this.field = field ?? "not null";
+            }
+
+            private PrivateReadonlyField()
+            {
+            }
+
+            [IgnoreMember]
+            public string Field => field;
+        }
+
 #if !ENABLE_IL2CPP
 
         [MessagePackObject]
@@ -327,6 +349,15 @@ namespace MessagePack.Tests
             byte[] bytes = MessagePackSerializer.Serialize(expected, StandardResolverAllowPrivate.Options);
             InternalClass actual = MessagePackSerializer.Deserialize<InternalClass>(bytes, StandardResolverAllowPrivate.Options);
             Assert.Equal(expected.EnumProperty, actual.EnumProperty);
+        }
+
+        [Fact]
+        public void PrivateReadonlyFieldSetInConstructor()
+        {
+            PrivateReadonlyField initial = PrivateReadonlyField.WithNullValue;
+            var bin = MessagePackSerializer.Serialize(initial, StandardResolverAllowPrivate.Options);
+            var deserialized = MessagePackSerializer.Deserialize<PrivateReadonlyField>(bin, StandardResolverAllowPrivate.Options);
+            Assert.Equal("not null", deserialized.Field);
         }
 
 #if !ENABLE_IL2CPP
