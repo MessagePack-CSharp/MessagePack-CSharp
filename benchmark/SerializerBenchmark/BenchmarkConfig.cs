@@ -1,5 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+﻿#pragma warning disable CS0618 // Type or member is obsolete
 
 using System;
 using System.Collections.Generic;
@@ -27,7 +26,8 @@ namespace Benchmark
             Job baseConfig = Job.ShortRun.WithIterationCount(1).WithWarmupCount(1);
 
             // Add(baseConfig.With(Runtime.Clr).With(Jit.RyuJit).With(Platform.X64));
-            this.Add(baseConfig.With(CoreRuntime.Core31).With(Jit.RyuJit).With(Platform.X64));
+            this.Add(baseConfig.With(CoreRuntime.Core50).With(Jit.RyuJit).With(Platform.X64));
+            this.Add(baseConfig.With(ClrRuntime.Net462).With(Jit.RyuJit).With(Platform.X64));
 
             this.Add(MarkdownExporter.GitHub);
             this.Add(CsvExporter.Default);
@@ -65,8 +65,8 @@ namespace Benchmark
             public IEnumerable<BenchmarkCase> GetSummaryOrder(ImmutableArray<BenchmarkCase> benchmarksCases, Summary summary)
             {
                 return benchmarksCases
-                    .OrderBy(x => x.Descriptor.WorkloadMethod.Name)
-                    .ThenBy(x => x.Parameters.Items.Select(y => y.Value).OfType<SerializerBase>().First().GetType().Name);
+                    .OrderBy(x => x.Descriptor.WorkloadMethod.Name);
+                    //.ThenBy(x => x.Parameters.Items.Select(y => y.Value).OfType<SerializerBase>().First().GetType().Name);
             }
         }
 

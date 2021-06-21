@@ -1,52 +1,24 @@
-﻿// Copyright (c) All contributors. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using Benchmark;
-using Benchmark.Serializers;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
 using System.Buffers;
+using System.Collections;
 using System.Collections.Generic;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
-namespace ConsoleApp1
+public class NewTestScript
 {
-    internal class Program
+    ArrayBufferWriter<byte> bufferWriter = default;
+    const int loopCount = 100;
+    [SetUp]
+    public void Init()
     {
-        private static void Main(string[] args)
-        {
-#if !DEBUG
-            //BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
-            BenchmarkRunner.Run<SimpleSerializerTest>();
-#else
-            var test = new SimpleSerializerTest();
-            test.Setup();
-            test.MessagePackV3_Array();
-#endif
-        }
+        bufferWriter = new ArrayBufferWriter<byte>(1024);
     }
 
-
-    [Config(typeof(BenchmarkConfig))]
-    public class SimpleSerializerTest
+    [Test]
+    public void MessagePackV2()
     {
-        //[ParamsSource(nameof(Serializers))]
-        //public SerializerBase Serializer;
-        //public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
-        //{
-        //    new MessagePack_v2(),
-        //    new MessagePack_v3(),
-        //};
-
-        ArrayBufferWriter<byte> bufferWriter = default!;
-
-        [GlobalSetup]
-        public void Setup()
-        {
-            bufferWriter = new ArrayBufferWriter<byte>(1024);
-        }
-
-        [Benchmark]
-        public byte[] MessagePackV2()
+        for (int j = 0; j < loopCount; j++)
         {
             var writer = new MessagePack.MessagePackWriter(bufferWriter);
             writer.WriteArrayHeader(10);
@@ -60,11 +32,13 @@ namespace ConsoleApp1
             writer.Flush();
             var xs = bufferWriter.WrittenSpan.ToArray();
             bufferWriter.Clear();
-            return xs;
         }
+    }
 
-        [Benchmark]
-        public byte[] MessagePackV3_Array()
+    [Test]
+    public void MessagePackV3_Array()
+    {
+        for (int j = 0; j < loopCount; j++)
         {
             var writer = new MessagePackv3.MessagePackWriter(bufferWriter, true);
             writer.WriteArrayHeader(10);
@@ -78,11 +52,14 @@ namespace ConsoleApp1
             writer.Flush();
             var xs = bufferWriter.WrittenSpan.ToArray();
             bufferWriter.Clear();
-            return xs;
+            //return xs;
         }
+    }
 
-        [Benchmark]
-        public byte[] MessagePackV3_Span()
+    [Test]
+    public void MessagePackV3_Span()
+    {
+        for (int j = 0; j < loopCount; j++)
         {
             var writer = new MessagePackv3.MessagePackWriter(bufferWriter, false);
             writer.WriteArrayHeader(10);
@@ -96,7 +73,7 @@ namespace ConsoleApp1
             writer.Flush();
             var xs = bufferWriter.WrittenSpan.ToArray();
             bufferWriter.Clear();
-            return xs;
+            //return xs;
         }
     }
 }

@@ -1,3 +1,0 @@
-# Our analyzer code fix tests fail when checked out with LF endings.
-# Probably a bug in our code fixer that doesn't respect the input document's own line endings.
-*.cs text eol=crlf

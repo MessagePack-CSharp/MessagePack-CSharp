@@ -41,10 +41,16 @@ TestResult.xml
 [Rr]eleasePS/
 dlldata.c
 
+# DNX
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
 *_i.c
 *_p.c
 *_i.h
 *.ilk
+*.meta
 *.obj
 *.pch
 *.pdb
@@ -281,3 +287,5 @@ nuget/unity*
 
 # BenchmarkDotNet results
 BenchmarkDotNet.Artifacts/
+/src/MessagePack.Unity/Temp
+/src/MessagePack.Unity/Library
