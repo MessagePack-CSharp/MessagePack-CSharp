@@ -1812,7 +1812,7 @@ namespace MessagePack.Internal
                                     if (ctorEnumerator != null)
                                     {
                                         ctor = null;
-                                        continue;
+                                        break;
                                     }
                                     else
                                     {
@@ -1825,7 +1825,7 @@ namespace MessagePack.Internal
                                 if (ctorEnumerator != null)
                                 {
                                     ctor = null;
-                                    continue;
+                                    break;
                                 }
                                 else
                                 {
@@ -1858,7 +1858,7 @@ namespace MessagePack.Internal
                                     if (ctorEnumerator != null)
                                     {
                                         ctor = null;
-                                        continue;
+                                        break;
                                     }
                                     else
                                     {
@@ -1876,7 +1876,7 @@ namespace MessagePack.Internal
                                     if (ctorEnumerator != null)
                                     {
                                         ctor = null;
-                                        continue;
+                                        break;
                                     }
                                     else
                                     {
@@ -1889,7 +1889,7 @@ namespace MessagePack.Internal
                                 if (ctorEnumerator != null)
                                 {
                                     ctor = null;
-                                    continue;
+                                    break;
                                 }
                                 else
                                 {
