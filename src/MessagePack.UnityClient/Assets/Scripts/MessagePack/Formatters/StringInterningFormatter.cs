@@ -11,6 +11,11 @@ namespace MessagePack.Formatters
         /// <inheritdoc/>
         public string Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
             if (options.StringInterning is null)
             {
                 return reader.ReadString();
