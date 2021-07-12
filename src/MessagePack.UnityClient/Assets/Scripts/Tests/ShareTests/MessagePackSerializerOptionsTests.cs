@@ -13,7 +13,19 @@ public class MessagePackSerializerOptionsTests
         .WithOmitAssemblyVersion(true)
         .WithResolver(BuiltinResolver.Instance)
         .WithOldSpec(false)
-        .WithSecurity(MySecurityOptions.Instance);
+        .WithSecurity(MySecurityOptions.Instance)
+        .WithStringInterning(new InternedStringCollection());
+
+    [Fact]
+    public void StringInterning()
+    {
+        Assert.Null(MessagePackSerializerOptions.Standard.StringInterning);
+        var collection = new InternedStringCollection();
+        Assert.Same(collection, MessagePackSerializerOptions.Standard.WithStringInterning(collection).StringInterning);
+
+        Assert.Same(NonDefaultOptions, NonDefaultOptions.WithStringInterning(NonDefaultOptions.StringInterning));
+        Assert.Null(NonDefaultOptions.WithStringInterning(null).StringInterning);
+    }
 
     [Fact]
     public void AllowAssemblyVersionMismatch()

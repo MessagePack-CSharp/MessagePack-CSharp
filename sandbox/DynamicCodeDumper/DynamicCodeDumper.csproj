@@ -72,6 +72,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializerOptions.cs">
       <Link>Code\MessagePackSerializerOptions.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\InternedStringCollection.cs">
+      <Link>Code\InternedStringCollection.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSecurity.cs">
       <Link>Code\MessagePackSecurity.cs</Link>
     </Compile>

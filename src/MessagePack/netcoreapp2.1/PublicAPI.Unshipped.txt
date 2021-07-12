@@ -1,11 +1,21 @@
 MessagePack.ExtensionHeader.ExtensionHeader() -> void
 MessagePack.ExtensionResult.ExtensionResult() -> void
 MessagePack.FormatterNotRegisteredException.FormatterNotRegisteredException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
+MessagePack.Formatters.StringInterningFormatter
+MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> string
+MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> void
+MessagePack.InternedStringCollection
+MessagePack.InternedStringCollection.InternedStringCollection() -> void
 MessagePack.MessagePackReader.MessagePackReader() -> void
 MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
+MessagePack.MessagePackSerializerOptions.StringInterning.get -> MessagePack.InternedStringCollection
 MessagePack.MessagePackSerializerOptions.WithPool(MessagePack.SequencePool pool) -> MessagePack.MessagePackSerializerOptions
+MessagePack.MessagePackSerializerOptions.WithStringInterning(MessagePack.InternedStringCollection value) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, bool leaveOpen, MessagePack.SequencePool sequencePool) -> void
 MessagePack.MessagePackWriter.MessagePackWriter() -> void
+MessagePack.Resolvers.StringInterningResolver
+MessagePack.Resolvers.StringInterningResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.SequencePool
 MessagePack.SequencePool.SequencePool() -> void
 MessagePack.SequencePool.SequencePool(int maxSize) -> void
@@ -13,6 +23,8 @@ MessagePack.SequencePool.SequencePool(int maxSize, System.Buffers.ArrayPool<byte
 MessagePack.TinyJsonException.TinyJsonException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
 static MessagePack.Nil.operator !=(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static MessagePack.Nil.operator ==(MessagePack.Nil left, MessagePack.Nil right) -> bool
+static readonly MessagePack.Resolvers.StringInterningResolver.Instance -> MessagePack.Resolvers.StringInterningResolver
+virtual MessagePack.InternedStringCollection.GetString(ref MessagePack.MessagePackReader reader) -> string
 virtual MessagePack.MessagePackStreamReader.Dispose(bool disposing) -> void
 MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>
 MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>.GenericEnumerableFormatter() -> void
