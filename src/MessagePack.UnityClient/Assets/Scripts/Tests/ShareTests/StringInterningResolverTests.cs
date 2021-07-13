@@ -18,16 +18,17 @@ namespace MessagePack.Tests
             writer.Flush();
 
             var reader = new MessagePackReader(seq);
-            var options = MessagePackSerializerOptions.Standard.WithStringInterning(new InternedStringCollection());
-            string result = StringInterningResolver.Instance.GetFormatter<string>().Deserialize(ref reader, options);
+            string result = StandardResolver.Instance.GetFormatter<string>().Deserialize(ref reader, MessagePackSerializerOptions.Standard);
             Assert.Null(result);
         }
 
-        [Fact]
-        public void EquivalentStringsGetSharedInstance()
+        [Theory]
+        [InlineData(3)]
+        [InlineData(1024 * 1024)]
+        public void EquivalentStringsGetSharedInstance(int length)
         {
-            string originalValue1 = new string('a', 5);
-            string originalValue3 = new string('b', 5);
+            string originalValue1 = new string('a', length);
+            string originalValue3 = new string('b', length);
             var seq = new Sequence<byte>();
             var writer = new MessagePackWriter(seq);
             writer.Write(originalValue1);
@@ -36,11 +37,10 @@ namespace MessagePack.Tests
             writer.Flush();
 
             var reader = new MessagePackReader(seq);
-            var options = MessagePackSerializerOptions.Standard.WithStringInterning(new InternedStringCollection());
-            var formatter = StringInterningResolver.Instance.GetFormatter<string>();
-            string value1 = formatter.Deserialize(ref reader, options);
-            string value2 = formatter.Deserialize(ref reader, options);
-            string value3 = formatter.Deserialize(ref reader, options);
+            var formatter = StandardResolver.Instance.GetFormatter<string>();
+            string value1 = formatter.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+            string value2 = formatter.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+            string value3 = formatter.Deserialize(ref reader, MessagePackSerializerOptions.Standard);
 
             Assert.Equal(originalValue1, value1);
             Assert.Equal(originalValue3, value3);

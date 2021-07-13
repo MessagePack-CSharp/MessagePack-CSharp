@@ -82,7 +82,7 @@ namespace MessagePack.Internal
             { typeof(char?), NullableCharFormatter.Instance },
 
             // StandardClassLibraryFormatter
-            { typeof(string), NullableStringFormatter.Instance },
+            { typeof(string), StringInterningFormatter.Instance },
             { typeof(decimal), DecimalFormatter.Instance },
             { typeof(decimal?), new StaticNullableFormatter<decimal>(DecimalFormatter.Instance) },
             { typeof(TimeSpan), TimeSpanFormatter.Instance },

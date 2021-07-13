@@ -283,7 +283,6 @@ namespace MessagePack.Internal
         public static readonly IFormatterResolver[] DefaultResolvers = new IFormatterResolver[]
         {
             BuiltinResolver.Instance, // Try Builtin
-            StringInterningResolver.Instance, // intern strings if enabled.
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
 
 #if UNITY_2018_3_OR_NEWER

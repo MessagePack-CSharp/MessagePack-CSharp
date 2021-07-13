@@ -62,7 +62,6 @@ namespace MessagePack
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
             this.Security = copyFrom.Security;
             this.SequencePool = copyFrom.SequencePool;
-            this.StringInterning = copyFrom.StringInterning;
         }
 
         /// <summary>
@@ -121,15 +120,6 @@ namespace MessagePack
         /// </summary>
         /// <value>The default value is the <see cref="SequencePool.Shared"/> instance.</value>
         public SequencePool SequencePool { get; private set; } = SequencePool.Shared;
-
-        /// <summary>
-        /// Gets an optional collection used for string interning on deserialization.
-        /// </summary>
-        /// <value>The default value is <see langword="null"/>.</value>
-        /// <remarks>
-        /// When <see langword="null"/>, string interning is disabled.
-        /// </remarks>
-        public InternedStringCollection StringInterning { get; private set; }
 
         /// <summary>
         /// Gets a type given a string representation of the type.
@@ -296,23 +286,6 @@ namespace MessagePack
 
             var result = this.Clone();
             result.SequencePool = pool;
-            return result;
-        }
-
-        /// <summary>
-        /// Gets a copy of these options with the <see cref="StringInterning"/> property set to a new value.
-        /// </summary>
-        /// <param name="value">The new value for the <see cref="StringInterning"/> property.</param>
-        /// <returns>The new instance.</returns>
-        public MessagePackSerializerOptions WithStringInterning(InternedStringCollection value)
-        {
-            if (this.StringInterning == value)
-            {
-                return this;
-            }
-
-            var result = this.Clone();
-            result.StringInterning = value;
             return result;
         }
 
