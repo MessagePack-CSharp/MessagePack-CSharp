@@ -1697,6 +1697,7 @@ namespace MessagePack.Internal
         {
             TypeInfo ti = type.GetTypeInfo();
             var isClass = ti.IsClass || ti.IsInterface || ti.IsAbstract;
+            var isClassRecord = isClass && IsClassRecord(ti);
             var isStruct = ti.IsValueType;
 
             MessagePackObjectAttribute contractAttr = ti.GetCustomAttributes<MessagePackObjectAttribute>().FirstOrDefault();
@@ -1816,6 +1817,13 @@ namespace MessagePack.Internal
 
                     if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
                     {
+                        continue;
+                    }
+
+                    if (isClassRecord && item.Name == "EqualityContract")
+                    {
+                        // This is a special compiler-generated property that the user cannot add
+                        // [IgnoreMember] to, nor do we want to serialize it.
                         continue;
                     }
 
@@ -2307,6 +2315,14 @@ namespace MessagePack.Internal
             {
                 yield return item;
             }
+        }
+
+        private static bool IsClassRecord(TypeInfo type)
+        {
+            // The only truly unique thing about a C# 9 record class is the presence of a <Clone>$ method,
+            // which cannot be declared in C# because of the reserved characters in its name.
+            return type.IsClass
+                && type.GetMethod("<Clone>$", BindingFlags.Public | BindingFlags.Instance) is object;
         }
 
         private static bool TryGetNextConstructor(IEnumerator<ConstructorInfo> ctorEnumerator, ref ConstructorInfo ctor)
