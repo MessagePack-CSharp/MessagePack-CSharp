@@ -1787,6 +1787,7 @@ namespace MessagePack.Internal
             var constructorParameters = new List<EmittableMemberAndConstructorParameter>();
             if (ctor != null)
             {
+                IReadOnlyDictionary<int, EmittableMember> ctorParamIndexIntMembersDictionary = intMembers.OrderBy(x => x.Key).Select((x, i) => (Key: x.Value, Index: i)).ToDictionary(x => x.Index, x => x.Key);
                 ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupByKeyDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
                 ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupByMemberNameDictionary = stringMembers.ToLookup(x => x.Value.Name, x => x, StringComparer.OrdinalIgnoreCase);
                 do
@@ -1798,7 +1799,7 @@ namespace MessagePack.Internal
                         EmittableMember paramMember;
                         if (isIntKey)
                         {
-                            if (intMembers.TryGetValue(ctorParamIndex, out paramMember))
+                            if (ctorParamIndexIntMembersDictionary.TryGetValue(ctorParamIndex, out paramMember))
                             {
                                 if ((item.ParameterType == paramMember.Type ||
                                     item.ParameterType.GetTypeInfo().IsAssignableFrom(paramMember.Type))
@@ -1811,7 +1812,7 @@ namespace MessagePack.Internal
                                     if (ctorEnumerator != null)
                                     {
                                         ctor = null;
-                                        continue;
+                                        break;
                                     }
                                     else
                                     {
@@ -1824,7 +1825,7 @@ namespace MessagePack.Internal
                                 if (ctorEnumerator != null)
                                 {
                                     ctor = null;
-                                    continue;
+                                    break;
                                 }
                                 else
                                 {
@@ -1857,7 +1858,7 @@ namespace MessagePack.Internal
                                     if (ctorEnumerator != null)
                                     {
                                         ctor = null;
-                                        continue;
+                                        break;
                                     }
                                     else
                                     {
@@ -1875,7 +1876,7 @@ namespace MessagePack.Internal
                                     if (ctorEnumerator != null)
                                     {
                                         ctor = null;
-                                        continue;
+                                        break;
                                     }
                                     else
                                     {
@@ -1888,7 +1889,7 @@ namespace MessagePack.Internal
                                 if (ctorEnumerator != null)
                                 {
                                     ctor = null;
-                                    continue;
+                                    break;
                                 }
                                 else
                                 {
