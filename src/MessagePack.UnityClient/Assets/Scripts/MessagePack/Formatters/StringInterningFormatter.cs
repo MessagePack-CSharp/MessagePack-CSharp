@@ -30,6 +30,11 @@ namespace MessagePack.Formatters
             {
                 if (bytes.Length < 4096)
                 {
+                    if (bytes.Length == 0)
+                    {
+                        return string.Empty;
+                    }
+
                     Span<char> chars = stackalloc char[bytes.Length];
                     int charLength;
 #if SPAN_BUILTIN

@@ -22,6 +22,19 @@ namespace MessagePack.Tests
             Assert.Null(result);
         }
 
+        [Fact]
+        public void EmptyString()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.Write(string.Empty);
+            writer.Flush();
+
+            var reader = new MessagePackReader(seq);
+            string result = StandardResolver.Instance.GetFormatter<string>().Deserialize(ref reader, MessagePackSerializerOptions.Standard);
+            Assert.Same(string.Empty, result);
+        }
+
         [Theory]
         [InlineData(3)]
         [InlineData(1024 * 1024)]
