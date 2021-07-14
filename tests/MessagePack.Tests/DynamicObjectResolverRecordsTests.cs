@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using MessagePack.Resolvers;
 using Xunit;
 
 #if NET5_0_OR_GREATER
@@ -39,10 +40,20 @@ namespace MessagePack.Tests
             this.AssertRoundTrip(new StudentPositional("bob", "smith", 5));
         }
 
-        protected T AssertRoundTrip<T>(T value)
+        [Fact]
+        public void RoundtripRecordWithPrivateProperties()
         {
-            byte[] msgpack = MessagePackSerializer.Serialize(value, MessagePackSerializerOptions.Standard, this.TimeoutToken);
-            T deserializedValue = MessagePackSerializer.Deserialize<T>(msgpack, MessagePackSerializerOptions.Standard, this.TimeoutToken);
+            var original = new RecordWithPrivateProperties("PublicValue");
+            original.SetPrivateProperty("PrivateValue");
+            var deserializedValue = this.AssertRoundTrip(original, allowPrivate: true);
+            Assert.Equal(original.GetPrivateProperty(), deserializedValue.GetPrivateProperty());
+        }
+
+        protected T AssertRoundTrip<T>(T value, bool allowPrivate = false)
+        {
+            var options = allowPrivate ? StandardResolverAllowPrivate.Options : MessagePackSerializerOptions.Standard;
+            byte[] msgpack = MessagePackSerializer.Serialize(value, options, this.TimeoutToken);
+            T deserializedValue = MessagePackSerializer.Deserialize<T>(msgpack, options, this.TimeoutToken);
             Assert.Equal(value, deserializedValue);
             return deserializedValue;
         }
@@ -72,6 +83,17 @@ namespace MessagePack.Tests
         {
             [Key(2)]
             public int Grade { get; init; }
+        }
+
+        [MessagePackObject]
+        public record RecordWithPrivateProperties([property: Key(0)] string SomePublicProperty)
+        {
+            [Key(1)]
+            private string SomePrivateProperty { get; set; }
+
+            public string GetPrivateProperty() => this.SomePrivateProperty;
+
+            public void SetPrivateProperty(string value) => this.SomePrivateProperty = value;
         }
     }
 }
