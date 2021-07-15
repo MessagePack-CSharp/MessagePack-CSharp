@@ -49,7 +49,7 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(13)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(14)
             {
                 { typeof(global::System.Collections.Generic.List<global::TestData2.A>), 0 },
                 { typeof(global::System.Collections.Generic.List<global::TestData2.B>), 1 },
@@ -64,6 +64,7 @@ namespace MessagePack.Resolvers
                 { typeof(global::TestData2.Nest2.IdType), 10 },
                 { typeof(global::TestData2.PropNameCheck1), 11 },
                 { typeof(global::TestData2.PropNameCheck2), 12 },
+                { typeof(global::TestData2.Record), 13 },
             };
         }
 
@@ -90,6 +91,7 @@ namespace MessagePack.Resolvers
                 case 10: return new MessagePack.Formatters.TestData2.Nest2_IdTypeFormatter();
                 case 11: return new MessagePack.Formatters.TestData2.PropNameCheck1Formatter();
                 case 12: return new MessagePack.Formatters.TestData2.PropNameCheck2Formatter();
+                case 13: return new MessagePack.Formatters.TestData2.RecordFormatter();
                 default: return null;
             }
         }
@@ -707,6 +709,61 @@ namespace MessagePack.Formatters.TestData2
                 }
             }
 
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class RecordFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Record>
+    {
+        // SomeProperty
+        private static global::System.ReadOnlySpan<byte> GetSpan_SomeProperty() => new byte[1 + 12] { 172, 83, 111, 109, 101, 80, 114, 111, 112, 101, 114, 116, 121 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Record value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(1);
+            writer.WriteRaw(GetSpan_SomeProperty());
+            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.SomeProperty, options);
+        }
+
+        public global::TestData2.Record Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __SomeProperty__ = default(string);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 12:
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_SomeProperty().Slice(1))) { goto FAIL; }
+
+                        __SomeProperty__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::TestData2.Record(__SomeProperty__);
             reader.Depth--;
             return ____result;
         }

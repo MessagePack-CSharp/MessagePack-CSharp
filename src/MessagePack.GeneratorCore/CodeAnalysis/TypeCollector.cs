@@ -244,7 +244,9 @@ namespace MessagePackCompiler.CodeAnalysis
         private readonly HashSet<string> externalIgnoreTypeNames;
 
         // visitor workspace:
-        private readonly HashSet<ITypeSymbol> alreadyCollected = new();
+#pragma warning disable RS1024 // Compare symbols correctly (https://github.com/dotnet/roslyn-analyzers/issues/5246)
+        private readonly HashSet<ITypeSymbol> alreadyCollected = new(SymbolEqualityComparer.Default);
+#pragma warning restore RS1024 // Compare symbols correctly
         private readonly List<ObjectSerializationInfo> collectedObjectInfo = new();
         private readonly List<EnumSerializationInfo> collectedEnumInfo = new();
         private readonly List<GenericSerializationInfo> collectedGenericInfo = new();
