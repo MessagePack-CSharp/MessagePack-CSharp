@@ -7,7 +7,7 @@ using OdinSerializer.Utilities;
 
 #pragma warning disable SA1649 // File name should match first type name
 
-public class Odin_ : SerializerBase
+public class OdinSerializer_ : SerializerBase
 {
     public override object Serialize<T>(T input)
     {

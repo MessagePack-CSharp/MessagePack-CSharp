@@ -33,6 +33,19 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public async Task ReadArrayHeader()
+        {
+            var reader = new MessagePackStreamReader(this.arraySequence.AsStream());
+            var length = await reader.ReadArrayHeaderAsync(this.TimeoutToken);
+            Assert.Equal(ArrayContent.Count, length);
+            for (var i = 0; i < length; i++)
+            {
+                var elementSequence = await reader.ReadAsync(this.TimeoutToken);
+                Assert.Equal(ArrayContent[i], MessagePackSerializer.Deserialize<object>(elementSequence.Value));
+            }
+        }
+
+        [Fact]
         public async Task EnumerateArrayElements_AllAtOnce()
         {
             var reader = new MessagePackStreamReader(this.arraySequence.AsStream());

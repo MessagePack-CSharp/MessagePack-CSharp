@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Nerdbank.Streams;
 
 namespace MessagePack
 {
@@ -60,6 +61,7 @@ namespace MessagePack
             this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
             this.Security = copyFrom.Security;
+            this.SequencePool = copyFrom.SequencePool;
         }
 
         /// <summary>
@@ -112,6 +114,12 @@ namespace MessagePack
         /// The default value is to use <see cref="MessagePackSecurity.TrustedData"/>.
         /// </value>
         public MessagePackSecurity Security { get; private set; } = MessagePackSecurity.TrustedData;
+
+        /// <summary>
+        /// Gets a thread-safe pool of reusable <see cref="Sequence{T}"/> objects.
+        /// </summary>
+        /// <value>The default value is the <see cref="SequencePool.Shared"/> instance.</value>
+        public SequencePool SequencePool { get; private set; } = SequencePool.Shared;
 
         /// <summary>
         /// Gets a type given a string representation of the type.
@@ -256,6 +264,28 @@ namespace MessagePack
 
             var result = this.Clone();
             result.Security = security;
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="SequencePool"/> property set to a new value.
+        /// </summary>
+        /// <param name="pool">The new value for the <see cref="SequencePool"/> property.</param>
+        /// <returns>The new instance.</returns>
+        public MessagePackSerializerOptions WithPool(SequencePool pool)
+        {
+            if (pool is null)
+            {
+                throw new ArgumentNullException(nameof(pool));
+            }
+
+            if (this.SequencePool == pool)
+            {
+                return this;
+            }
+
+            var result = this.Clone();
+            result.SequencePool = pool;
             return result;
         }
 
