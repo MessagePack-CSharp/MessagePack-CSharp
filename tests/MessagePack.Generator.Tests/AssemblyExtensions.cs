@@ -10,7 +10,7 @@ namespace MessagePack.Generator.Tests
         public static IFormatterResolver GetResolverInstance(this Assembly assembly, string name)
         {
             var resolverType = assembly.GetType(name);
-            return (IFormatterResolver) resolverType.GetField("Instance", BindingFlags.Static | BindingFlags.Public).GetValue(null);
+            return (IFormatterResolver)resolverType.GetField("Instance", BindingFlags.Static | BindingFlags.Public).GetValue(null);
         }
     }
 }

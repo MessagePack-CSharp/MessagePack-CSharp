@@ -172,13 +172,13 @@ namespace MessagePack.Generator.Tests
 
     public class OutputCompilation
     {
-        private readonly TemporaryProjectWorkarea _workarea;
+        private readonly TemporaryProjectWorkarea workarea;
 
         public Compilation Compilation { get; }
 
         public OutputCompilation(TemporaryProjectWorkarea workarea, Compilation compilation)
         {
-            this._workarea = workarea;
+            this.workarea = workarea;
             this.Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
         }
 
@@ -225,7 +225,7 @@ namespace MessagePack.Generator.Tests
             Compilation.Emit(memoryStream);
             memoryStream.Position = 0;
 
-            var assemblyLoadContext = new AssemblyLoadContext($"TempProject-{_workarea.WorkareaId}", isCollectible: true);
+            var assemblyLoadContext = new AssemblyLoadContext($"TempProject-{workarea.WorkareaId}", isCollectible: true);
             try
             {
                 assemblyLoadContext.LoadFromStream(memoryStream);
