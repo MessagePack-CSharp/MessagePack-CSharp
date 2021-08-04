@@ -1857,7 +1857,10 @@ namespace MessagePack.Internal
                         // This member has no DataMemberAttribute nor IgnoreMemberAttribute.
                         // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
                         var pseudokey = memberInfo.GetCustomAttribute<DataMemberAttribute>(true);
-                        if (pseudokey == null) continue;
+                        if (pseudokey == null)
+                        {
+                            continue;
+                        }
 
                         key =
                             pseudokey.Order != -1 ? new KeyAttribute(pseudokey.Order) :
