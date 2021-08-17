@@ -9,11 +9,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using MessagePack.Formatters;
 using MessagePack.Internal;
+using MessagePack.Resolvers;
 
 #pragma warning disable SA1403 // File may only contain a single namespace
 
@@ -24,7 +26,7 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class DynamicObjectResolver : IFormatterResolver
     {
-        private const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
+        internal const string ModuleName = "MessagePack.Resolvers.DynamicObjectResolver";
 
         /// <summary>
         /// The singleton instance that can be used.
@@ -359,7 +361,17 @@ namespace MessagePack.Internal
 
             if (!(type.IsPublic || type.IsNestedPublic))
             {
-                throw new MessagePackSerializationException("Building dynamic formatter only allows public type. Type: " + type.FullName);
+                IEnumerable<InternalsVisibleToAttribute> internalsVisibleToAttributes = type.Assembly
+                    .GetCustomAttributes(typeof(InternalsVisibleToAttribute))
+                    .Cast<InternalsVisibleToAttribute>();
+                bool internalsVisible = internalsVisibleToAttributes.Any(a =>
+                    a.AssemblyName == DynamicObjectResolver.ModuleName);
+
+                if (!internalsVisible)
+                {
+                    throw new MessagePackSerializationException(
+                        $"Building dynamic formatter only allows public type (or internal type with [assembly: InternalsVisibleTo(\"{DynamicObjectResolver.ModuleName}\")]) Type: {type.FullName}");
+                }
             }
 
             using (MonoProtection.EnterRefEmitLock())

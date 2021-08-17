@@ -4,11 +4,15 @@
 #if !ENABLE_IL2CPP
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using MessagePack.Resolvers;
 using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
+
+// required to use internal types with the dynamic object resolver
+[assembly: InternalsVisibleTo("MessagePack.Resolvers.DynamicObjectResolver")]
 
 namespace MessagePack.Tests
 {
@@ -40,6 +44,12 @@ namespace MessagePack.Tests
         public void SerializeTypeWithReadOnlyProperty()
         {
             Assert3MemberClassSerializedContent(MessagePackSerializer.Serialize(new TestMessageWithReadOnlyProperty()));
+        }
+
+        [Fact]
+        public void SerializeInternalType()
+        {
+            Assert3MemberClassSerializedContent(MessagePackSerializer.Serialize(new InternalTestMessage()));
         }
 
         [Fact]
@@ -574,6 +584,16 @@ namespace MessagePack.Tests
         }
 
         [DataContract]
+        internal class TwoPropertiesInternal
+        {
+            [DataMember]
+            public string Prop1 { get; set; } = "Uninitialized";
+
+            [DataMember]
+            public string Prop2 { get; set; } = "Uninitialized";
+        }
+
+        [DataContract]
         public class TwoPropertiesOrdinalKey
         {
             [DataMember(Order = 0)]
@@ -611,6 +631,19 @@ namespace MessagePack.Tests
 
         [MessagePackObject]
         public class TestMessageWithReadOnlyProperty
+        {
+            [Key(0)]
+            public int Property1 { get; set; } = 1;
+
+            [Key(1)]
+            public int Property2 => 2;
+
+            [Key(2)]
+            public int Property3 { get; set; } = 3;
+        }
+
+        [MessagePackObject]
+        internal class InternalTestMessage
         {
             [Key(0)]
             public int Property1 { get; set; } = 1;
