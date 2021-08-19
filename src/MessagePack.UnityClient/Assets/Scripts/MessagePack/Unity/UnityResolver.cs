@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
 using UnityEngine;
+#if USE_UNITY_MATHEMATICS
+using Unity.Mathematics;
+#endif
 
 namespace MessagePack.Unity
 {
@@ -183,6 +186,75 @@ namespace MessagePack.Unity
             {typeof(List<RectInt?>),         new ListFormatter<RectInt?>()},
             {typeof(List<BoundsInt?>),       new ListFormatter<BoundsInt?>()},
 
+#endif
+
+#if USE_UNITY_MATHEMATICS
+            // unity mathematics
+            { typeof(bool2),             new Bool2Formatter() },
+            { typeof(bool2x2),           new Bool2x2Formatter() },
+            { typeof(bool2x3),           new Bool2x3Formatter() },
+            { typeof(bool2x4),           new Bool2x4Formatter() },
+            { typeof(bool3),             new Bool3Formatter() },
+            { typeof(bool3x2),           new Bool3x2Formatter() },
+            { typeof(bool3x3),           new Bool3x3Formatter() },
+            { typeof(bool3x4),           new Bool3x4Formatter() },
+            { typeof(bool4),             new Bool4Formatter() },
+            { typeof(bool4x2),           new Bool4x2Formatter() },
+            { typeof(bool4x3),           new Bool4x3Formatter() },
+            { typeof(bool4x4),           new Bool4x4Formatter() },
+            { typeof(double2),           new Double2Formatter() },
+            { typeof(double2x2),         new Double2x2Formatter() },
+            { typeof(double2x3),         new Double2x3Formatter() },
+            { typeof(double2x4),         new Double2x4Formatter() },
+            { typeof(double3),           new Double3Formatter() },
+            { typeof(double3x2),         new Double3x2Formatter() },
+            { typeof(double3x3),         new Double3x3Formatter() },
+            { typeof(double3x4),         new Double3x4Formatter() },
+            { typeof(double4),           new Double4Formatter() },
+            { typeof(double4x2),         new Double4x2Formatter() },
+            { typeof(double4x3),         new Double4x3Formatter() },
+            { typeof(double4x4),         new Double4x4Formatter() },
+            { typeof(float2),            new Float2Formatter() },
+            { typeof(float2x2),          new Float2x2Formatter() },
+            { typeof(float2x3),          new Float2x3Formatter() },
+            { typeof(float2x4),          new Float2x4Formatter() },
+            { typeof(float3),            new Float3Formatter() },
+            { typeof(float3x2),          new Float3x2Formatter() },
+            { typeof(float3x3),          new Float3x3Formatter() },
+            { typeof(float3x4),          new Float3x4Formatter() },
+            { typeof(float4),            new Float4Formatter() },
+            { typeof(float4x2),          new Float4x2Formatter() },
+            { typeof(float4x3),          new Float4x3Formatter() },
+            { typeof(float4x4),          new Float4x4Formatter() },
+            { typeof(half),              new HalfFormatter() },
+            { typeof(half2),             new Half2Formatter() },
+            { typeof(half3),             new Half3Formatter() },
+            { typeof(half4),             new Half4Formatter() },
+            { typeof(int2),              new Int2Formatter() },
+            { typeof(int2x2),            new Int2x2Formatter() },
+            { typeof(int2x3),            new Int2x3Formatter() },
+            { typeof(int2x4),            new Int2x4Formatter() },
+            { typeof(int3),              new Int3Formatter() },
+            { typeof(int3x2),            new Int3x2Formatter() },
+            { typeof(int3x3),            new Int3x3Formatter() },
+            { typeof(int3x4),            new Int3x4Formatter() },
+            { typeof(int4),              new Int4Formatter() },
+            { typeof(int4x2),            new Int4x2Formatter() },
+            { typeof(int4x3),            new Int4x3Formatter() },
+            { typeof(int4x4),            new Int4x4Formatter() },
+            { typeof(uint2),             new UInt2Formatter() },
+            { typeof(uint2x2),           new UInt2x2Formatter() },
+            { typeof(uint2x3),           new UInt2x3Formatter() },
+            { typeof(uint2x4),           new UInt2x4Formatter() },
+            { typeof(uint3),             new UInt3Formatter() },
+            { typeof(uint3x2),           new UInt3x2Formatter() },
+            { typeof(uint3x3),           new UInt3x3Formatter() },
+            { typeof(uint3x4),           new UInt3x4Formatter() },
+            { typeof(uint4),             new UInt4Formatter() },
+            { typeof(uint4x2),           new UInt4x2Formatter() },
+            { typeof(uint4x3),           new UInt4x3Formatter() },
+            { typeof(uint4x4),           new UInt4x4Formatter() },
+            { typeof(quaternion),        new MathQuaternionFormatter() }
 #endif
         };
 
