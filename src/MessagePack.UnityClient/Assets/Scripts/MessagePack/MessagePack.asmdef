@@ -1,10 +1,8 @@
 {
     "name": "MessagePack",
     "references": [
-        "MessagePack.Annotations",
-        "Unity.Mathematics"
+        "MessagePack.Annotations"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
@@ -18,12 +16,6 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.mathematics",
-            "expression": "",
-            "define": "USE_UNITY_MATHEMATICS"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }
