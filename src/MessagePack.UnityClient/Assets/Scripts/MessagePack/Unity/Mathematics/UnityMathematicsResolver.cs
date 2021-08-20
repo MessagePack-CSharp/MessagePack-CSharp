@@ -438,7 +438,6 @@ namespace MessagePack.Unity
             { typeof(List<uint4x3?>),     new ListFormatter<uint4x3?>() },
             { typeof(List<uint4x4?>),     new ListFormatter<uint4x4?>() },
             { typeof(List<quaternion?>),  new ListFormatter<quaternion?>() }
-#endif
         };
 
         internal static object GetFormatter(Type t)
@@ -453,3 +452,4 @@ namespace MessagePack.Unity
         }
     }
 }
+#endif
