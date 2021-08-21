@@ -67,7 +67,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ }`.
                 var seq = new Sequence<byte>();
@@ -132,7 +132,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1, "B": "foobar" }`.
                 var seq = new Sequence<byte>();
@@ -192,7 +192,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1, "B": "foobar" }`.
                 var seq = new Sequence<byte>();
@@ -252,7 +252,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ }`.
                 var seq = new Sequence<byte>();
@@ -309,7 +309,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build an empty data.
                 var seq = new Sequence<byte>();
@@ -375,7 +375,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1 }`
                 var seq = new Sequence<byte>();
@@ -449,7 +449,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1, "B": "foobar" }`
                 var seq = new Sequence<byte>();
@@ -518,7 +518,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1, "B": "foobar" }`
                 var seq = new Sequence<byte>();
@@ -583,7 +583,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1, "B": "foobar" }`
                 var seq = new Sequence<byte>();
@@ -649,7 +649,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1, "B": "foobar" }`
                 var seq = new Sequence<byte>();
@@ -718,7 +718,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1, "B": "foobar" }`
                 var seq = new Sequence<byte>();
@@ -785,7 +785,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1 }`
                 var seq = new Sequence<byte>();
@@ -847,7 +847,7 @@ namespace TempProject
                 var options = MessagePackSerializerOptions.Standard
                     .WithResolver(CompositeResolver.Create(
                         StandardResolver.Instance,
-                        assembly.GetResolverInstance("TempProject.Generated.Resolvers.TempProjectResolver")));
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
 
                 // Build `{ "A": -1 }`
                 var seq = new Sequence<byte>();
