@@ -228,8 +228,7 @@ namespace MessagePack.Generator.Tests
             var assemblyLoadContext = new AssemblyLoadContext($"TempProject-{workarea.WorkareaId}", isCollectible: true);
             try
             {
-                assemblyLoadContext.LoadFromStream(memoryStream);
-                var assembly = assemblyLoadContext.Assemblies.First();
+                Assembly assembly = assemblyLoadContext.LoadFromStream(memoryStream);
                 action(assemblyLoadContext, assembly);
             }
             finally
