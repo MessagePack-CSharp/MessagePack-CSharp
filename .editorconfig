@@ -1,4 +1,4 @@
-# EditorConfig is awesome:http://EditorConfig.org
+﻿# EditorConfig is awesome:http://EditorConfig.org
 
 # top-most EditorConfig file
 root = true
@@ -10,6 +10,10 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 
 # (Please don't specify an indent_size here; that has too many unintended consequences.)
+
+[*.yml]
+indent_size = 2
+indent_style = space
 
 # Code files
 [*.{cs,csx,vb,vbx,h,cpp,idl}]
@@ -29,6 +33,14 @@ indent_size = 2
 
 # Dotnet code style settings:
 [*.{cs,vb}]
+
+# Use tuple syntax
+dotnet_diagnostic.SA1141.severity = silent
+# Tuple types in signatures should have element names
+dotnet_diagnostic.SA1414.severity = silent
+# Braces should not be omitted from multi-line child statement
+dotnet_diagnostic.SA1519.severity = silent
+
 # Sort using and Import directives with System.* appearing first
 dotnet_sort_system_directives_first = true
 dotnet_style_qualification_for_field = false:silent

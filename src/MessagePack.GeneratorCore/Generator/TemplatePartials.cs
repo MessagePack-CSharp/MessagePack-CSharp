@@ -1,44 +1,78 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MessagePackCompiler.CodeAnalysis;
 
 namespace MessagePackCompiler.Generator
 {
-    public partial class FormatterTemplate
+    public partial class FormatterTemplate : IFormatterTemplate
     {
-        public string Namespace { get; set; }
+        public FormatterTemplate(string @namespace, ObjectSerializationInfo[] objectSerializationInfos)
+        {
+            Namespace = @namespace;
+            ObjectSerializationInfos = objectSerializationInfos;
+        }
 
-        public ObjectSerializationInfo[] ObjectSerializationInfos { get; set; }
+        public string Namespace { get; }
+
+        public ObjectSerializationInfo[] ObjectSerializationInfos { get; }
+    }
+
+    public partial class StringKeyFormatterTemplate : IFormatterTemplate
+    {
+        public StringKeyFormatterTemplate(string @namespace, ObjectSerializationInfo[] objectSerializationInfos)
+        {
+            Namespace = @namespace;
+            ObjectSerializationInfos = objectSerializationInfos;
+        }
+
+        public string Namespace { get; }
+
+        public ObjectSerializationInfo[] ObjectSerializationInfos { get; }
     }
 
     public partial class ResolverTemplate
     {
-        public string Namespace { get; set; }
+        public ResolverTemplate(string @namespace, string formatterNamespace, string resolverName, IResolverRegisterInfo[] registerInfos)
+        {
+            Namespace = @namespace;
+            FormatterNamespace = formatterNamespace;
+            ResolverName = resolverName;
+            RegisterInfos = registerInfos;
+        }
 
-        public string FormatterNamespace { get; set; }
+        public string Namespace { get; }
 
-        public string ResolverName { get; set; } = "GeneratedResolver";
+        public string FormatterNamespace { get; }
 
-        public IResolverRegisterInfo[] RegisterInfos { get; set; }
+        public string ResolverName { get; }
+
+        public IResolverRegisterInfo[] RegisterInfos { get; }
     }
 
     public partial class EnumTemplate
     {
-        public string Namespace { get; set; }
+        public EnumTemplate(string @namespace, EnumSerializationInfo[] enumSerializationInfos)
+        {
+            Namespace = @namespace;
+            EnumSerializationInfos = enumSerializationInfos;
+        }
 
-        public EnumSerializationInfo[] EnumSerializationInfos { get; set; }
+        public string Namespace { get; }
+
+        public EnumSerializationInfo[] EnumSerializationInfos { get; }
     }
 
     public partial class UnionTemplate
     {
-        public string Namespace { get; set; }
+        public UnionTemplate(string @namespace, UnionSerializationInfo[] unionSerializationInfos)
+        {
+            Namespace = @namespace;
+            UnionSerializationInfos = unionSerializationInfos;
+        }
 
-        public UnionSerializationInfo[] UnionSerializationInfos { get; set; }
+        public string Namespace { get; }
+
+        public UnionSerializationInfo[] UnionSerializationInfos { get; }
     }
 }

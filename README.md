@@ -14,6 +14,55 @@ It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and 
 
 MessagePack has a compact binary size and a full set of general purpose expressive data types. Please have a look at the [comparison with JSON, protobuf, ZeroFormatter section](#comparison) and learn [why MessagePack C# is the fastest](#performance).
 
+## Table of Contents
+
+- [Installation](#installation)
+    - [NuGet packages](#nuget-packages)
+    - [Unity](#unity)
+    - [Migration notes from v1.x](#migration-notes-from-v1x)
+- [Quick Start](#quick-start)
+- [Analyzer](#analyzer)
+- [Built-in supported types](#built-in-supported-types)
+- [Object Serialization](#object-serialization)
+- [DataContract compatibility](#datacontract-compatibility)
+- [Serializing readonly/immutable object members  (SerializationConstructor)](#serializing-readonlyimmutable-object-members--serializationconstructor)
+- [Serialization Callback](#serialization-callback)
+- [Union](#union)
+- [Dynamic (Untyped) Deserialization](#dynamic-untyped-deserialization)
+- [Object Type Serialization](#object-type-serialization)
+- [Typeless](#typeless)
+- [Security](#security)
+- [Performance](#performance)
+    - [Deserialization Performance for different options](#deserialization-performance-for-different-options)
+- [LZ4 Compression](#lz4-compression)
+    - [Attributions](#attributions)
+- [Comparison with protobuf, JSON, ZeroFormatter](#comparison-with-protobuf-json-zeroformatter)
+- [Hints to achieve maximum performance when using MessagePack for C#](#hints-to-achieve-maximum-performance-when-using-messagepack-for-c)
+    - [Use indexed keys instead of string keys (Contractless)](#use-indexed-keys-instead-of-string-keys-contractless)
+    - [Create own custom composite resolver](#create-own-custom-composite-resolver)
+    - [Use native resolvers](#use-native-resolvers)
+    - [Be careful when copying buffers](#be-careful-when-copying-buffers)
+    - [Choosing compression](#choosing-compression)
+- [Extensions](#extensions)
+- [Experimental Features](#experimental-features)
+- [High-Level API (`MessagePackSerializer`)](#high-level-api-messagepackserializer)
+    - [Multiple MessagePack structures on a single `Stream`](#multiple-messagepack-structures-on-a-single-stream)
+- [Low-Level API (`IMessagePackFormatter<T>`)](#low-level-api-imessagepackformattert)
+- [Primitive API (`MessagePackWriter`, `MessagePackReader`)](#primitive-api-messagepackwriter-messagepackreader)
+    - [`MessagePackReader`](#messagepackreader)
+    - [`MessagePackWriter`](#messagepackwriter)
+- [Main Extension Point (`IFormatterResolver`)](#main-extension-point-iformatterresolver)
+- [MessagePackFormatterAttribute](#messagepackformatterattribute)
+- [IgnoreFormatter](#ignoreformatter)
+- [Reserved Extension Types](#reserved-extension-types)
+- [Unity support](#unity-support)
+- [AOT Code Generation (support for Unity/Xamarin)](#aot-code-generation-support-for-unityxamarin)
+- [RPC](#rpc)
+    - [MagicOnion](#magiconion)
+    - [StreamJsonRpc](#streamjsonrpc)
+- [How to build](#how-to-build)
+- [Author Info](#author-info)
+
 ## Installation
 
 This library is distributed via NuGet. Special [Unity support](#unity) is available, too.
@@ -38,7 +87,6 @@ Install-Package MessagePackAnalyzer
 There are also a range of official and third party Extension Packages available (learn more in our [extensions section](#extensions)):
 
 ```ps1
-Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
 Install-Package MessagePack.AspNetCoreMvcFormatter
@@ -80,7 +128,7 @@ public class MyClass
 ```
 
 Call `MessagePackSerializer.Serialize<T>/Deserialize<T>` to serialize/deserialize your object instance.
-You can use the `ConvertToJson` method to get a human readable representation of any msgpack binary blob.
+You can use the `ConvertToJson` method to get a human readable representation of any MessagePack binary blob.
 
 ```csharp
 class Program
@@ -98,8 +146,8 @@ class Program
         byte[] bytes = MessagePackSerializer.Serialize(mc);
         MyClass mc2 = MessagePackSerializer.Deserialize<MyClass>(bytes);
 
-        // You can dump msgpack binary blobs to human readable json.
-        // Using indexed keys (as opposed to string keys) will serialize to msgpack arrays,
+        // You can dump MessagePack binary blobs to human readable json.
+        // Using indexed keys (as opposed to string keys) will serialize to MessagePack arrays,
         // hence property names are not available.
         // [99,"hoge","huga"]
         var json = MessagePackSerializer.ConvertToJson(bytes);
@@ -136,22 +184,22 @@ These types can serialize by default:
 * Primitives (`int`, `string`, etc...), `Enum`s, `Nullable<>`, `Lazy<>`
 * `TimeSpan`,  `DateTime`, `DateTimeOffset`
 * `Guid`, `Uri`, `Version`, `StringBuilder`
-* `BigInteger`, `Complex`
+* `BigInteger`, `Complex`, `Half`
 * `Array[]`, `Array[,]`, `Array[,,]`, `Array[,,,]`, `ArraySegment<>`, `BitArray`
 * `KeyValuePair<,>`, `Tuple<,...>`, `ValueTuple<,...>`
 * `ArrayList`, `Hashtable`
 * `List<>`, `LinkedList<>`, `Queue<>`, `Stack<>`, `HashSet<>`, `ReadOnlyCollection<>`, `SortedList<,>`
 * `IList<>`, `ICollection<>`, `IEnumerable<>`, `IReadOnlyCollection<>`, `IReadOnlyList<>`
 * `Dictionary<,>`, `IDictionary<,>`, `SortedDictionary<,>`, `ILookup<,>`, `IGrouping<,>`, `ReadOnlyDictionary<,>`, `IReadOnlyDictionary<,>`
-* `ObservableCollection<>`, `ReadOnlyOnservableCollection<>`
+* `ObservableCollection<>`, `ReadOnlyObservableCollection<>`
 * `ISet<>`,
 * `ConcurrentBag<>`, `ConcurrentQueue<>`, `ConcurrentStack<>`, `ConcurrentDictionary<,>`
+* Immutable collections (`ImmutableList<>`, etc)
 * Custom implementations of `ICollection<>` or `IDictionary<,>` with a parameterless constructor
-* Custom implementations of `ICollection` or `IDictionary` with a  parameterless constructor
+* Custom implementations of `IList` or `IDictionary` with a parameterless constructor
 
 You can add support for custom types, and there are some official/third-party extension packages for:
 
-* ImmutableCollections (`ImmutableList<>`, etc)
 * ReactiveProperty
 * for Unity (`Vector3`, `Quaternion`, etc...)
 * F# (Record, FsList, Discriminated Unions, etc...)
@@ -162,7 +210,7 @@ Please see the [extensions section](#extensions).
 
 ## Object Serialization
 
-MessagePack for C# can serialize your own public `class` or `struct` types. By default, serializable types must be annotated with the `[MessagePackObject]` attribute and members with the `[Key]` attribute. Keys can be either indexes (`int`) or arbitrary strings. If all keys are indexes, arrays are used for serialization, which offers advantages in performance and binary size. Otherwise, msgpack maps (dictionaries) will be used.
+MessagePack for C# can serialize your own public `class` or `struct` types. By default, serializable types must be annotated with the `[MessagePackObject]` attribute and members with the `[Key]` attribute. Keys can be either indexes (`int`) or arbitrary strings. If all keys are indexes, arrays are used for serialization, which offers advantages in performance and binary size. Otherwise, MessagePack maps (dictionaries) will be used.
 
 If you use `[MessagePackObject(keyAsPropertyName: true)]`, then members do not require explicit `Key` attributes, but string keys will be used.
 
@@ -234,7 +282,7 @@ public class IntKeySample
 Console.WriteLine(MessagePackSerializer.SerializeToJson(new IntKeySample()));
 ```
 
-If you do not want to explicitly annotate with the `MessagePackObject`/`Key` attributes and instead want to use MessagePack for C# more like e.g. JSON.NET, you can make use of the contractless resolver.
+If you do not want to explicitly annotate with the `MessagePackObject`/`Key` attributes and instead want to use MessagePack for C# more like e.g. [Json.NET](https://github.com/JamesNK/Newtonsoft.Json), you can make use of the contractless resolver.
 
 ```csharp
 public class ContractlessSample
@@ -249,7 +297,7 @@ var bin = MessagePackSerializer.Serialize(
   MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
 // {"MyProperty1":99,"MyProperty2":9999}
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 
 // You can also set ContractlessStandardResolver as the default.
 // (Global state; Not recommended when writing library code)
@@ -299,7 +347,7 @@ You can use `[DataContract]` annotations instead of `[MessagePackObject]` ones. 
 
 Then `[DataMember(Order = int)]` will behave the same as `[Key(int)]`, `[DataMember(Name = string)]` the same as `[Key(string)]`, and `[DataMember]` the same as `[Key(nameof(member name)]`.
 
-Using `DataContract`, e.g. in shared libaries, makes your classes/structs independent from MessagePack for C# serialization. However, it is not supported by the analyzers nor in code generation by `mpc.exe`. Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used. Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
+Using `DataContract`, e.g. in shared libraries, makes your classes/structs independent from MessagePack for C# serialization. However, it is not supported by the analyzers nor in code generation by the `mpc` tool. Also, features like `UnionAttribute`, `MessagePackFormatter`, `SerializationConstructor`, etc can not be used. Due to this, we recommend that you use the specific MessagePack for C# annotations when possible.
 
 ## Serializing readonly/immutable object members  (SerializationConstructor)
 
@@ -324,7 +372,7 @@ public struct Point
 var data = new Point(99, 9999);
 var bin = MessagePackSerializer.Serialize(data);
 
-// Okay to deserialize immutable obejct
+// Okay to deserialize immutable object
 var point = MessagePackSerializer.Deserialize<Point>(bin);
 ```
 
@@ -355,6 +403,36 @@ public struct Point
     }
 }
 ```
+
+### C# 9 `record` types
+
+C# 9.0 record with primary constructor is similar immutable object, also supports serialize/deserialize.
+
+```csharp
+// use key as property name
+[MessagePackObject(true)]public record Point(int X, int Y);
+
+// use property: to set KeyAttribute
+[MessagePackObject] public record Point([property:Key(0)] int X, [property: Key(1)] int Y);
+
+// Or use explicit properties
+[MessagePackObject]
+public record Person
+{
+    [Key(0)]
+    public string FirstName { get; init; }
+
+    [Key(1)]
+    public string LastName { get; init; }
+}
+```
+
+### C# 9 `init` property setter limitations
+
+When using `init` property setters in _generic_ classes, [a CLR bug](https://github.com/neuecc/MessagePack-CSharp/issues/1134) prevents our most efficient code generation from invoking the property setter.
+As a result, you should avoid using `init` on property setters in generic classes when using the public-only `DynamicObjectResolver`/`StandardResolver`.
+
+When using the `DynamicObjectResolverAllowPrivate`/`StandardResolverAllowPrivate` resolver the bug does not apply and you may use `init` without restriction.
 
 ## Serialization Callback
 
@@ -438,7 +516,7 @@ var bin = MessagePackSerializer.Serialize(data);
 
 // Union is serialized to two-length array, [key, object]
 // [1,["FooBar"]]
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 ```
 
 Using `Union` with abstract classes works the same way.
@@ -480,12 +558,15 @@ var model = new DynamicModel { Name = "foobar", Items = new[] { 1, 10, 100, 1000
 var blob = MessagePackSerializer.Serialize(model, ContractlessStandardResolver.Options);
 
 // Dynamic ("untyped")
-var dynamicModel = MessagePackSerializer.Deserialize<dynamic>(blob, ContractlessStandardResolver.Instance);
+var dynamicModel = MessagePackSerializer.Deserialize<dynamic>(blob, ContractlessStandardResolver.Options);
 
 // You can access the data using array/dictionary indexers, as shown above
 Console.WriteLine(dynamicModel["Name"]); // foobar
 Console.WriteLine(dynamicModel["Items"][2]); // 100
 ```
+
+Exploring object trees using the dictionary indexer syntax is the fastest option for untyped deserialization, but it is tedious to read and write.
+Where performance is not as important as code readability, consider deserializing with [ExpandoObject](doc/ExpandoObject.md).
 
 ## Object Type Serialization
 
@@ -496,14 +577,14 @@ var objects = new object[] { 1, "aaa", new ObjectFieldType { Anything = 9999 } }
 var bin = MessagePackSerializer.Serialize(objects);
 
 // [1,"aaa",[9999]]
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 
 // Support anonymous Type Serialize
 var anonType = new { Foo = 100, Bar = "foobar" };
 var bin2 = MessagePackSerializer.Serialize(anonType, MessagePack.Resolvers.ContractlessStandardResolver.Options);
 
 // {"Foo":100,"Bar":"foobar"}
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin2));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin2));
 ```
 
 > Unity supports is limited.
@@ -525,9 +606,9 @@ object mc = new Sandbox.MyClass()
 // Serialize with the typeless API
 var blob = MessagePackSerializer.Typeless.Serialize(mc);
 
-// Blob has embeded type-assembly information.
+// Blob has embedded type-assembly information.
 // ["Sandbox.MyClass, Sandbox",10,"hoge","huga"]
-Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
+Console.WriteLine(MessagePackSerializer.ConvertToJson(bin));
 
 // You can deserialize to MyClass again with the typeless API
 // Note that no type has to be specified explicitly in the Deserialize call
@@ -535,7 +616,7 @@ Console.WriteLine(MessagePackSerializer.SerializeToJson(bin));
 var objModel = MessagePackSerializer.Typeless.Deserialize(bin) as MyClass;
 ```
 
-Type information is represented by the msgpack `ext` format, type code `100`.
+Type information is represented by the MessagePack `ext` format, type code `100`.
 
 `MessagePackSerializer.Typeless` is a shortcut of `Serialize/Deserialize<object>(TypelessContractlessStandardResolver.Instance)`.
 If you want to configure it as the default resolver, you can use `MessagePackSerializer.Typeless.RegisterDefaultResolver`.
@@ -574,7 +655,7 @@ MessagePack.Formatters.TypelessFormatter.BindToType = typeName =>
 
 Deserializing data from an untrusted source can introduce security vulnerabilities in your application.
 Depending on the settings used during deserialization, **untrusted data may be able to execute arbitrary code** or cause a denial of service attack.
-Untrusted data might come from over the network from an untrusted source (e.g. any and every networked client) or can be tampered with by an intermediary when transmitted over an unauthenticated connection, or from a local storage that might have been tampered with, or many other sources. MessagePack for C# does not provide any means to authenticate data or make it tamper-resistant. Please use an appropriate method of authenticating data before deserialzation - such as a [`MAC`](https://en.wikipedia.org/wiki/Message_authentication_code) .
+Untrusted data might come from over the network from an untrusted source (e.g. any and every networked client) or can be tampered with by an intermediary when transmitted over an unauthenticated connection, or from a local storage that might have been tampered with, or many other sources. MessagePack for C# does not provide any means to authenticate data or make it tamper-resistant. Please use an appropriate method of authenticating data before deserialization - such as a [`MAC`](https://en.wikipedia.org/wiki/Message_authentication_code) .
 
 Please be very mindful of these attack scenarios; many projects and companies, and serialization library users in general, have been bitten by untrusted user data deserialization in the past.
 
@@ -598,7 +679,7 @@ The `UntrustedData` mode merely hardens against some common attacks, but is no f
 ## Performance
 
 Benchmarks comparing MessagePack For C# to other serializers were run on `Windows 10 Pro x64 Intel Core i7-6700K 4.00GHz, 32GB RAM`. Benchmark code is [available here](https://github.com/neuecc/ZeroFormatter/tree/master/sandbox/PerformanceComparison) - and their [version info](https://github.com/neuecc/ZeroFormatter/blob/bc63cb925d/sandbox/PerformanceComparison/packages.config).
-ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) have infinitely fast deserializers, so ignore their deserialization performance.
+[ZeroFormatter](https://github.com/neuecc/ZeroFormatter/) and [FlatBuffers](https://google.github.io/flatbuffers/) have infinitely fast deserializers, so ignore their deserialization performance.
 
 ![image](https://cloud.githubusercontent.com/assets/46207/23835765/55fe494e-07b0-11e7-98be-5e7a9411da40.png)
 
@@ -608,7 +689,7 @@ ZeroFormatter and [FlatBuffers](https://google.github.io/flatbuffers/) have infi
 * Buffers are rented from pools to reduce allocations, keeping throughput high through reduced GC pressure.
 * Don't create intermediate utility instances (`*Writer/*Reader`, `*Context`, etc...)
 * Utilize dynamic code generation and JIT to avoid boxing value types. Use AOT generation on platforms that prohibit JITs.
-* Cached generated formatters on static generic fields (don't use dictinary-cache because dictionary lookup is overhead). See [Resolvers](https://github.com/neuecc/MessagePack-CSharp/tree/209f301e2e595ed366408624011ba2e856d23429/src/MessagePack/Resolvers)
+* Cached generated formatters on static generic fields (don't use dictionary-cache because dictionary lookup is overhead). See [Resolvers](https://github.com/neuecc/MessagePack-CSharp/tree/209f301e2e595ed366408624011ba2e856d23429/src/MessagePack/Resolvers)
 * Heavily tuned dynamic IL code generation and JIT to avoid boxing value types. See [DynamicObjectTypeBuilder](https://github.com/neuecc/MessagePack-CSharp/blob/209f301e2e595ed366408624011ba2e856d23429/src/MessagePack/Resolvers/DynamicObjectResolver.cs#L142-L754). Use AOT generation on platforms that prohibit JIT.
 * Call the Primitive API directly when IL code generation determines target types to be  primitive.
 * Reduce branching of variable length formats when IL code generation knows the target type (integer/string) ranges
@@ -688,16 +769,16 @@ var lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePa
 MessagePackSerializer.Serialize(obj, lz4Options);
 ```
 
-`MessagePackCompression` has two modes, `Lz4Block` and `Lz4BlockArray`. Neither is a simple binary LZ4 compression, but a special compression integrated into the serialization pipeline, using msgpack `ext` code (`Lz4BlockArray (98)` or `Lz4Block (99)`). Therefore, it is not readily compatible with compression offered in other languages.
+`MessagePackCompression` has two modes, `Lz4Block` and `Lz4BlockArray`. Neither is a simple binary LZ4 compression, but a special compression integrated into the serialization pipeline, using MessagePack `ext` code (`Lz4BlockArray (98)` or `Lz4Block (99)`). Therefore, it is not readily compatible with compression offered in other languages.
 
-`Lz4Block` compresses an entire msgpack sequence as a single LZ4 block. This is the simple compression that achieves best compression ratio, at the cost of copying the entire sequence when necessary to get contiguous memory.
+`Lz4Block` compresses an entire MessagePack sequence as a single LZ4 block. This is the simple compression that achieves best compression ratio, at the cost of copying the entire sequence when necessary to get contiguous memory.
 
-`Lz4BlockArray` compresses an entire msgpack sequence as a array of LZ4 blocks. Compressed/decompressed blocks are  chunked and thus do not enter the GC's Large-Object-Heap, but the compression ratio is slightly worse.
+`Lz4BlockArray` compresses an entire MessagePack sequence as a array of LZ4 blocks. Compressed/decompressed blocks are  chunked and thus do not enter the GC's Large-Object-Heap, but the compression ratio is slightly worse.
 
 We recommend to use `Lz4BlockArray` as the default when using compression.
 For compatibility with MessagePack v1.x, use `Lz4Block`.
 
-Regardless of which LZ4 option is set at the deserialization, both methods can be deserialized. For example, when the `Lz4BlockArray` option was used, binary data using either `Lz4Block` and `Lz4BlockArray` can be deserialized. Neither can be decompressed and hence deserizalized when the compression option is set to `None`.
+Regardless of which LZ4 option is set at the deserialization, both methods can be deserialized. For example, when the `Lz4BlockArray` option was used, binary data using either `Lz4Block` and `Lz4BlockArray` can be deserialized. Neither can be decompressed and hence deserialized when the compression option is set to `None`.
 
 ### Attributions
 
@@ -705,7 +786,7 @@ LZ4 compression support is using Milosz Krajewski's [lz4net](https://github.com/
 
 ## <a name="comparison"></a>Comparison with protobuf, JSON, ZeroFormatter
 
-[protbuf-net](https://github.com/mgravell/protobuf-net) is major, widely used binary-format library on .NET. I love protobuf-net and respect their great work. But when you use protobuf-net as a general purpose serialization format, you may encounter an annoying issue.
+[protobuf-net](https://github.com/mgravell/protobuf-net) is major, widely used binary-format library on .NET. I love protobuf-net and respect their great work. But when you use protobuf-net as a general purpose serialization format, you may encounter an annoying issue.
 
 ```csharp
 [ProtoContract]
@@ -743,7 +824,7 @@ using (var ms = new MemoryStream())
 using (var ms = new MemoryStream())
 {
     // serialize empty array.
-    ProtoBuf.Serializer.Serialize<Parent>(ms, new Parent { Array = new int[0] });
+    ProtoBuf.Serializer.Serialize<Parent>(ms, new Parent { Array = System.Array.Empty<int>() });
 
     ms.Position = 0;
     var result = ProtoBuf.Serializer.Deserialize<Parent>(ms);
@@ -752,11 +833,11 @@ using (var ms = new MemoryStream())
 }
 ```
 
-protobuf(-net) cannot handle null and empty collection correctly, because protobuf has no `null` representation (see [this SO answer from a protonet-buf author](http://stackoverflow.com/questions/21631428/protobuf-net-deserializes-empty-collection-to-null-when-the-collection-is-a-prop)).
+protobuf(-net) cannot handle null and empty collection correctly, because protobuf has no `null` representation (see [this SO answer from a protobuf-net author](https://stackoverflow.com/questions/21631428/protobuf-net-deserializes-empty-collection-to-null-when-the-collection-is-a-prop/21632160#21632160)).
 
-[MessagePack](https://github.com/msgpack/msgpack/blob/master/spec.md) can correctly serialize the entire C# type system. This is a strong reason to recommend MessagePack over protobuf.
+[MessagePack's type system](https://github.com/msgpack/msgpack/blob/master/spec.md#type-system) can correctly serialize the entire C# type system. This is a strong reason to recommend MessagePack over protobuf.
 
-Protocol Buffers have good IDL and [gRPC](http://www.grpc.io/) support. If you want to use IDL, I recommend [Google.Protobuf](https://github.com/google/protobuf/tree/master/csharp/src/Google.Protobuf) over MessagePack.
+Protocol Buffers have good IDL and [gRPC](https://www.grpc.io/) support. If you want to use IDL, I recommend [Google.Protobuf](https://github.com/google/protobuf/tree/master/csharp/src/Google.Protobuf) over MessagePack.
 
 JSON is good general-purpose format. It is simple, human-readable and thoroughly-enough specified. [Utf8Json](https://github.com/neuecc/Utf8Json) - which I created as well - adopts same architecture as MessagePack for C# and avoids encoding/decoding costs as much as possible just like this library does. If you want to know more about binary vs text formats, see [Utf8Json/which serializer should be used](https://github.com/neuecc/Utf8Json#which-serializer-should-be-used).
 
@@ -770,7 +851,7 @@ MessagePack for C# prioritizes maximum performance by default. However, there ar
 
 ### Use indexed keys instead of string keys (Contractless)
 
-The [Deserialization Performance for different options](https://github.com/neuecc/MessagePack-CSharp#deserialize-performance) section shows the results of indexed keys (`IntKey`) vs string keys (`StringKey`) performance. Indexed keys serialize the object graph as a msgpack-array. String keys serializes the object graph as a msgpack-map.
+The [Deserialization Performance for different options](https://github.com/neuecc/MessagePack-CSharp#deserialize-performance) section shows the results of indexed keys (`IntKey`) vs string keys (`StringKey`) performance. Indexed keys serialize the object graph as a MessagePack array. String keys serializes the object graph as a MessagePack map.
 
 For example this type is serialized to
 
@@ -792,7 +873,7 @@ new Person { Name = "foobar", Age = 999 }
 
  `IntKey` is always fast in both serialization and deserialization because it does not have to handle and lookup key names, and always has the smaller binary size.
 
-`StringKey` is often a useful, contractless, simple replacement for JSON, interoperability with other languages with msgpack support, and less error prone versioning. But to achieve maximum performance, use `IntKey`.
+`StringKey` is often a useful, contractless, simple replacement for JSON, interoperability with other languages with MessagePack support, and less error prone versioning. But to achieve maximum performance, use `IntKey`.
 
 ### Create own custom composite resolver
 
@@ -869,24 +950,21 @@ This is some example benchmark performance data;
 |          StringKey |  4.340 us | 1023.00 B |
 |     StringKey(Lz4) |  5.469 us |  868.00 B |
 
-`IntKey(Lz4)` is not as effectively compressed, but performance is still somewhat degraded. On the other hand, `StringKey` can be expected to have a sufficient effect on the binary size. However, this is just an example. Compression can be quite effective depending on the data, too, or have little effect other than slowing down your program. There are also cases in which well-compressable data exists in the values (such as long strings, e.g. containing HTML data with many repeated HTML tags). It is important to verify the actual effects of compression on a case by case basis.
+`IntKey(Lz4)` is not as effectively compressed, but performance is still somewhat degraded. On the other hand, `StringKey` can be expected to have a sufficient effect on the binary size. However, this is just an example. Compression can be quite effective depending on the data, too, or have little effect other than slowing down your program. There are also cases in which well-compressible data exists in the values (such as long strings, e.g. containing HTML data with many repeated HTML tags). It is important to verify the actual effects of compression on a case by case basis.
 
 ## Extensions
 
 MessagePack for C# has extension points that enable you to provide optimal serialization support for custom types. There are official extension support packages.
 
 ```ps1
-Install-Package MessagePack.ImmutableCollection
 Install-Package MessagePack.ReactiveProperty
 Install-Package MessagePack.UnityShims
 Install-Package MessagePack.AspNetCoreMvcFormatter
 ```
 
-The `MessagePack.ImmutableCollection` package adds support for type of the [System.Collections.Immutable](https://www.nuget.org/packages/System.Collections.Immutable/) library. It adds `ImmutableArray<>`, `ImmutableList<>`, `ImmutableDictionary<,>`, `ImmutableHashSet<>`, `ImmutableSortedDictionary<,>`, `ImmutableSortedSet<>`, `ImmutableQueue<>`, `ImmutableStack<>`, `IImmutableList<>`, `IImmutableDictionary<,>`, `IImmutableQueue<>`, `IImmutableSet<>`, `IImmutableStack<>` serialization support.
-
 The `MessagePack.ReactiveProperty` package adds support for types of the [ReactiveProperty](https://github.com/runceel/ReactiveProperty) library. It adds `ReactiveProperty<>`, `IReactiveProperty<>`, `IReadOnlyReactiveProperty<>`, `ReactiveCollection<>`, `Unit` serialization support. It is useful for save viewmodel state.
 
-The `MessagePack.UnityShims` package provides shims for [Unity](https://unity3d.com/)'s standard structs (`Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt`) and corresponding formatters. It can enable proper communiction between servers and Unity clients.
+The `MessagePack.UnityShims` package provides shims for [Unity](https://unity3d.com/)'s standard structs (`Vector2`, `Vector3`, `Vector4`, `Quaternion`, `Color`, `Bounds`, `Rect`, `AnimationCurve`, `Keyframe`, `Matrix4x4`, `Gradient`, `Color32`, `RectOffset`, `LayerMask`, `Vector2Int`, `Vector3Int`, `RangeInt`, `RectInt`, `BoundsInt`) and corresponding formatters. It can enable proper communication between servers and Unity clients.
 
 After installation, extension packages must be enabled, by creating composite resolvers. Here is an example showing how to enable all extensions.
 
@@ -894,12 +972,11 @@ After installation, extension packages must be enabled, by creating composite re
 // Set extensions to default resolver.
 var resolver = MessagePack.Resolvers.CompositeResolver.Create(
     // enable extension packages first
-    ImmutableCollectionResolver.Instance,
     ReactivePropertyResolver.Instance,
     MessagePack.Unity.Extension.UnityBlitResolver.Instance,
     MessagePack.Unity.UnityResolver.Instance,
 
-    // finaly use standard (default) resolver
+    // finally use standard (default) resolver
     StandardResolver.Instance
 );
 var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
@@ -937,6 +1014,16 @@ You can make your own extension serializers or integrate with frameworks. Let's 
 * [WebApiContrib.Core.Formatter.MessagePack](https://github.com/WebApiContrib/WebAPIContrib.Core#formatters) - supports ASP.NET Core MVC ([details in blog post](https://www.strathweb.com/2017/06/using-messagepack-with-asp-net-core-mvc/))
 * [MessagePack.MediaTypeFormatter](https://github.com/sketch7/MessagePack.MediaTypeFormatter) - MessagePack MediaTypeFormatter
 
+## Experimental Features
+
+MessagePack for C# has experimental features which provides you with very performant formatters. There is an official package.
+
+```ps1
+Install-Package MessagePack.Experimental
+```
+
+For detailed information, see: [Experimental.md](src/MessagePack.Experimental/Experimental.md)
+
 # API
 
 ## High-Level API (`MessagePackSerializer`)
@@ -945,13 +1032,13 @@ The `MessagePackSerializer` class is the entry point of MessagePack for C#. Stat
 
 | API | Description |
 | --- | --- |
-| `Serialize<T>` | Serializes an object graph to a msgpack binary blob. Async variant for Stream available. Non-generic overloads available. |
-| `Deserialize<T>` | Deserializes a msgpack binary to an object graph. Async variant for Stream available. Non-generic overloads available. |
-| `SerializeToJson` | Serialize a MessagePack-compatible object graph to JSON instead of msgpack. Useful for debugging. |
-| `ConvertToJson` | Convert msgpack binary to JSON. Useful for debugging.  |
-| `ConvertFromJson` | Convert JSON to a msgpack binary. |
+| `Serialize<T>` | Serializes an object graph to a MessagePack binary blob. Async variant for Stream available. Non-generic overloads available. |
+| `Deserialize<T>` | Deserializes a MessagePack binary to an object graph. Async variant for Stream available. Non-generic overloads available. |
+| `SerializeToJson` | Serialize a MessagePack-compatible object graph to JSON instead of MessagePack. Useful for debugging. |
+| `ConvertToJson` | Convert MessagePack binary to JSON. Useful for debugging.  |
+| `ConvertFromJson` | Convert JSON to a MessagePack binary. |
 
-The `MessagePackSerializer.Typeless` class offers most of the same APIs as above, but removes all type arguments from the API, forcing serialization to include the full type name of the root object. It uses the `TypelessContractlessStandardResolver`. Consider the result to be a .NET-specific msgpack binary that isn't readily compatible with msgpack deserializers in other runtimes.
+The `MessagePackSerializer.Typeless` class offers most of the same APIs as above, but removes all type arguments from the API, forcing serialization to include the full type name of the root object. It uses the `TypelessContractlessStandardResolver`. Consider the result to be a .NET-specific MessagePack binary that isn't readily compatible with MessagePack deserializers in other runtimes.
 
 MessagePack for C# fundamentally serializes using `IBufferWriter<byte>` and deserializes using `ReadOnlySequence<byte>` or `Memory<byte>`. Method overloads are provided to conveniently use it with common buffer types and the .NET `Stream` class, but some of these convenience overloads require copying buffers once and therefore have a certain overhead.
 
@@ -961,7 +1048,7 @@ Each serialize/deserialize method takes an optional `MessagePackSerializerOption
 
 ### Multiple MessagePack structures on a single `Stream`
 
-To deserialize a `Stream` that contains multiple consecutive messagepack data structures,
+To deserialize a `Stream` that contains multiple consecutive MessagePack data structures,
 you can use the `MessagePackStreamReader` class to efficiently identify the `ReadOnlySequence<byte>`
 for each data structure and deserialize it. For example:
 
@@ -995,7 +1082,7 @@ public interface IMessagePackFormatter<T>
 
 Many built-in formatters exists under `MessagePack.Formatters`. Your custom types are usually automatically supported with the built-in type resolvers that generate new `IMessagePackFormatter<T>` types on-the-fly using dynamic code generation. See our [AOT code generation](#aot) support for platforms that do not support this.
 
-However, some types - especially those provided by third party libraries or the runtime itself, cannot be appropriately annotated, and contractless serialization would produce inefficient or even wrong results.
+However, some types - especially those provided by third party libraries or the runtime itself - cannot be appropriately annotated, and contractless serialization would produce inefficient or even wrong results.
 To take more control over the serialization of such custom types, write your own `IMessagePackFormatter<T>` implementation.
 Here is an example of such a custom formatter implementation. Note its use of the primitive API that is described in the next section.
 
@@ -1034,9 +1121,70 @@ public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
 ```
 
 The `DepthStep` and `Depth--` statements provide a level of security while deserializing untrusted data
-that might otherwise be able to execute a denial of service attack by sending messagepack data that would
+that might otherwise be able to execute a denial of service attack by sending MessagePack data that would
 deserialize into a very deep object graph leading to a `StackOverflowException` that would crash the process.
 This pair of statements should surround the bulk of any `IMessagePackFormatter<T>.Deserialize` method.
+
+**Important**: A message pack formatter must *read or write exactly one data structure*.
+In the above example we just read/write a string. If you have more than one element to write out,
+you must precede it with a map or array header. You must read the entire map/array when deserializing.
+For example:
+
+```csharp
+public class MySpecialObjectFormatter<T> : IMessagePackFormatter<MySpecialObject>
+{
+    public void Serialize(
+      ref MessagePackWriter writer, MySpecialObject value, MessagePackSerializerOptions options)
+    {
+        if (value == null)
+        {
+            writer.WriteNil();
+            return;
+        }
+
+        writer.WriteArrayHeader(2);
+        writer.WriteString(value.FullName);
+        writer.WriteString(value.Age);
+    }
+
+    public MySpecialObject Deserialize(
+      ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        if (reader.TryReadNil())
+        {
+            return null;
+        }
+
+        options.Security.DepthStep(ref reader);
+
+        string fullName = null;
+        int age = 0;
+
+        // Loop over *all* array elements independently of how many we expect,
+        // since if we're serializing an older/newer version of this object it might
+        // vary in number of elements that were serialized, but the contract of the formatter
+        // is that exactly one data structure must be read, regardless.
+        // Alternatively, we could check that the size of the array/map is what we expect
+        // and throw if it is not.
+        int count = reader.ReadArrayHeader();
+        for (int i = 0; i < count; i++)
+        {
+            case 0:
+                fullName = reader.ReadString();
+                break;
+            case 1:
+                age = reader.ReadInt32();
+                break;
+            default:
+                reader.Skip();
+                break;
+        }
+
+        reader.Depth--;
+        return new MySpecialObject(fullName, age);
+    }
+}
+```
 
 Your custom formatters must be discoverable via some `IFormatterResolver`. Learn more in our [resolvers](#resolvers) section.
 
@@ -1044,7 +1192,7 @@ You can see many other samples from [builtin formatters](https://github.com/neue
 
 ## Primitive API (`MessagePackWriter`, `MessagePackReader`)
 
-The `MessagePackWriter` and `MessagePackReader` structs make up the lowest-level API. They read and write the primitives types defined in the msgpack specification.
+The `MessagePackWriter` and `MessagePackReader` structs make up the lowest-level API. They read and write the primitives types defined in the MessagePack specification.
 
 ### `MessagePackReader`
 
@@ -1060,25 +1208,25 @@ Reading directly from `ReadOnlySequence<byte>` means the reader can directly con
 | `ReadStringSequence` | Returns a slice of the input sequence representing the contents of a `string` without decoding it, and advances the reader. |
 | `Clone` | Creates a new `MessagePackReader` with the specified input sequence and the same settings as the original reader. |
 | `CreatePeekReader` | Creates a new reader with the same position as this one, allowing the caller to "read ahead" without impacting the original reader's position. |
-| `NextCode` | Reads the low-level msgpack `byte` that describes the type of the next value. Does not advance the reader. See [msgpack format of first byte](https://github.com/msgpack/msgpack/blob/master/spec.md#overview). Its static class has `ToMessagePackType` and `ToFormatName` utility methods. `MessagePackRange` means Min-Max fix range of msgpack format. |
-| `NextMessagePackType` | Describes the `NextCode` value as a higher level category. Does not advance the reader. See [msgpack spec of source types](https://github.com/msgpack/msgpack/blob/master/spec.md#serialization-type-to-format-conversion). |
+| `NextCode` | Reads the low-level MessagePack `byte` that describes the type of the next value. Does not advance the reader. See [MessagePack format of first byte](https://github.com/msgpack/msgpack/blob/master/spec.md#overview). Its static class has `ToMessagePackType` and `ToFormatName` utility methods. `MessagePackRange` means Min-Max fix range of MessagePack format. |
+| `NextMessagePackType` | Describes the `NextCode` value as a higher level category. Does not advance the reader. See [MessagePack spec of source types](https://github.com/msgpack/msgpack/blob/master/spec.md#serialization-type-to-format-conversion). |
 | (others) | Other methods and properties as described by the .xml doc comment file and Intellisense. |
 
-The `MessagePackReader` is capable of automatically interpreting both the old and new msgpack spec.
+The `MessagePackReader` is capable of automatically interpreting both the old and new MessagePack spec.
 
 ### `MessagePackWriter`
 
 A `MessagePackWriter` writes to a given instance of `IBufferWriter<byte>`. Several common implementations of this exist, allowing zero allocations and minimal buffer copies while writing directly to several I/O APIs including `PipeWriter`.
 
-The `MessagePackWriter` writes the new msgpack spec by default, but can write msgpack compatible with the old spec by setting the `OldSpec` property to `true`.
+The `MessagePackWriter` writes the new MessagePack spec by default, but can write MessagePack compatible with the old spec by setting the `OldSpec` property to `true`.
 
 | Method | Description |
 | --- | --- |
 | `Clone` | Creates a new `MessagePackWriter` with the specified underlying `IBufferWriter<byte>` and the same settings as the original writer. |
 | `Flush` | Writes any buffered bytes to the underlying `IBufferWriter<byte>`. |
-| `WriteNil` | Writes the msgpack equivalent of .NET's `null` value. |
-| `Write` | Writes any msgpack primitive value in the most compact form possible. Has overloads for every primitive type defined by the msgpack spec. |
-| `Write*IntType*` | Writes an integer value in exactly the msgpack type specified, even if a more compact format exists. |
+| `WriteNil` | Writes the MessagePack equivalent of .NET's `null` value. |
+| `Write` | Writes any MessagePack primitive value in the most compact form possible. Has overloads for every primitive type defined by the MessagePack spec. |
+| `Write*IntType*` | Writes an integer value in exactly the MessagePack type specified, even if a more compact format exists. |
 | `WriteMapHeader` | Introduces a map by specifying the number of key=value pairs it contains. |
 | `WriteArrayHeader` | Introduces an array by specifying the number of elements it contains. |
 | `WriteExtensionFormat` | Writes the full content of an extension value including length, type code and content. |
@@ -1087,7 +1235,7 @@ The `MessagePackWriter` writes the new msgpack spec by default, but can write ms
 | (others) | Other methods and properties as described by the .xml doc comment file and Intellisense. |
 
 `DateTime` is serialized to [MessagePack Timestamp format](https://github.com/msgpack/msgpack/blob/master/spec.md#formats-timestamp), it serialize/deserialize UTC and loses `Kind` info and requires that `MessagePackWriter.OldSpec == false`.
-If you use the `NativeDateTimeResolver`, `DateTime` values will be serialized using .NET's native `Int64` represnetation, which preserves `Kind` info but may not be interoperable with non-.NET platforms.
+If you use the `NativeDateTimeResolver`, `DateTime` values will be serialized using .NET's native `Int64` representation, which preserves `Kind` info but may not be interoperable with non-.NET platforms.
 
 ## <a name="resolvers"></a>Main Extension Point (`IFormatterResolver`)
 
@@ -1095,7 +1243,7 @@ An `IFormatterResolver` is storage of typed serializers. The `MessagePackSeriali
 
 | Resolver Name | Description |
 | --- | --- |
-| BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(Guid, Uri, BigInteger, etc...). |
+| BuiltinResolver | Builtin primitive and standard classes resolver. It includes primitive(int, bool, string...) and there nullable, array and list. and some extra builtin types(`Guid`, `Uri`, `BigInteger`, etc...). |
 | StandardResolver | Composited resolver. It resolves in the following order `builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> dynamic object fallback`. This is the default of MessagePackSerializer. |
 | ContractlessStandardResolver | Composited `StandardResolver`(except dynamic object fallback) -> `DynamicContractlessObjectResolver` -> `DynamicObjectTypeFallbackResolver`. It enables contractless serialization. |
 | StandardResolverAllowPrivate | Same as StandardResolver but allow serialize/deserialize private members. |
@@ -1104,34 +1252,33 @@ An `IFormatterResolver` is storage of typed serializers. The `MessagePackSeriali
 | DynamicObjectTypeFallbackResolver | Serialize is used type in from `object` type, deserialize is used PrimitiveObjectResolver. |
 | AttributeFormatterResolver | Get formatter from `[MessagePackFormatter]` attribute. |
 | CompositeResolver | Composes several resolvers and/or formatters together in an ordered list, allowing reuse and overriding of behaviors of existing resolvers and formatters. |
-| NativeDateTimeResolver | Serialize by .NET native DateTime binary format. It keeps `DateTime.Kind` that loses by standard(msgpack timestamp) format. |
+| NativeDateTimeResolver | Serialize by .NET native DateTime binary format. It keeps `DateTime.Kind` that loses by standard(MessagePack timestamp) format. |
 | NativeGuidResolver | Serialize by .NET native Guid binary representation. It is faster than standard(string) representation. |
-| NativeDecimalResolver | Serialize by .NET natvie decimal binary representation. It is faster than standard(string) representation. |
+| NativeDecimalResolver | Serialize by .NET native decimal binary representation. It is faster than standard(string) representation. |
 | DynamicEnumResolver | Resolver of enum and there nullable, serialize there underlying type. It uses dynamic code generation to avoid boxing and boostup performance serialize there name. |
 | DynamicEnumAsStringResolver | Resolver of enum and there nullable.  It uses reflection call for resolve nullable at first time. |
 | DynamicGenericResolver | Resolver of generic type(`Tuple<>`, `List<>`, `Dictionary<,>`, `Array`, etc). It uses reflection call for resolve generic argument at first time. |
 | DynamicUnionResolver | Resolver of interface marked by UnionAttribute. It uses dynamic code generation to create dynamic formatter. |
-| DynamicObjectResolver | Resolver of class and struct maked by MessagePackObjectAttribute. It uses dynamic code generation to create dynamic formatter. |
-| DynamicContractlessObjectResolver | Resolver of all classes and structs. It does not needs MessagePackObjectAttribute and serialized key as string(same as marked [MessagePackObject(true)]). |
+| DynamicObjectResolver | Resolver of class and struct made by MessagePackObjectAttribute. It uses dynamic code generation to create dynamic formatter. |
+| DynamicContractlessObjectResolver | Resolver of all classes and structs. It does not needs `MessagePackObjectAttribute` and serialized key as string(same as marked `[MessagePackObject(true)]`). |
 | DynamicObjectResolverAllowPrivate | Same as DynamicObjectResolver but allow serialize/deserialize private members. |
 | DynamicContractlessObjectResolverAllowPrivate | Same as DynamicContractlessObjectResolver but allow serialize/deserialize private members. |
-| TypelessObjectResolver | Used for `object`, embed .NET type in binary by `ext(100)` format so no need to pass type in deserilization.  |
+| TypelessObjectResolver | Used for `object`, embed .NET type in binary by `ext(100)` format so no need to pass type in deserialization.  |
 | TypelessContractlessStandardResolver | Composited resolver. It resolves in the following order `nativedatetime -> builtin -> attribute -> dynamic enum -> dynamic generic -> dynamic union -> dynamic object -> dynamiccontractless -> typeless`. This is the default of `MessagePackSerializer.Typeless`  |
 
 Each instance of `MessagePackSerializer` accepts only a single resolver. Most object graphs will need more than one for serialization, so composing a single resolver made up of several is often required, and can be done with the `CompositeResolver` as shown below:
 
 ```csharp
 // Do this once and store it for reuse.
-var resolver = new MessagePack.Resolvers.CompositeResolver();
-resolver.RegisterResolver(
+var resolver = MessagePack.Resolvers.CompositeResolver.Create(
     // resolver custom types first
-    ImmutableCollectionResolver.Instance,
     ReactivePropertyResolver.Instance,
     MessagePack.Unity.Extension.UnityBlitResolver.Instance,
     MessagePack.Unity.UnityResolver.Instance,
 
     // finally use standard resolver
-    StandardResolver.Instance);
+    StandardResolver.Instance
+);
 var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
 
 // Each time you serialize/deserialize, specify the options:
@@ -1143,12 +1290,11 @@ A resolver can be set as default with `MessagePackSerializer.DefaultOptions = op
 When developing an application where you control all MessagePack-related code it may be safe to rely on this mutable static to control behavior.
 For all other libraries or multi-purpose applications that use `MessagePackSerializer` you should explicitly specify the `MessagePackSerializerOptions` to use with each method invocation to guarantee your code behaves as you expect even when sharing an `AppDomain` or process with other MessagePack users that may change this static property.
 
-Here is sample of use `DynamicEnumAsStringResolver` with `DynamicContractlessObjectResolver` (It is JSON.NET-like lightweight setting.)
+Here is sample of use `DynamicEnumAsStringResolver` with `DynamicContractlessObjectResolver` (It is Json.NET-like lightweight setting.)
 
 ```csharp
 // composite same as StandardResolver
-var resolver = new MessagePack.Resolvers.CompositeResolver();
-resolver.RegisterResolver(
+var resolver = MessagePack.Resolvers.CompositeResolver.Create(
     MessagePack.Resolvers.BuiltinResolver.Instance,
     MessagePack.Resolvers.AttributeFormatterResolver.Instance,
 
@@ -1162,7 +1308,8 @@ resolver.RegisterResolver(
     MessagePack.Resolvers.PrimitiveObjectResolver.Instance,
 
     // final fallback(last priority)
-    MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance);
+    MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance
+);
 ```
 
 If you want to make an extension package, you should write both a formatter and resolver
@@ -1216,12 +1363,12 @@ internal static class SampleCustomResolverGetFormatterHelper
         }
 
         // If target type is generics, use MakeGenericType.
-        if (t.IsGenericParameter && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
+        if (t.IsGeneric && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
         {
             return Activator.CreateInstance(typeof(ValueTupleFormatter<,>).MakeGenericType(t.GenericTypeArguments));
         }
 
-        // If type can not get, must return null for fallback mecanism.
+        // If type can not get, must return null for fallback mechanism.
         return null;
     }
 }
@@ -1229,7 +1376,7 @@ internal static class SampleCustomResolverGetFormatterHelper
 
 ## MessagePackFormatterAttribute
 
-MessagePackFormatterAttribute is a lightweight extension point of class, struct, interface, enum and property/field. This is like JSON.NET's JsonConverterAttribute. For example, serialize private field, serialize x10 formatter.
+MessagePackFormatterAttribute is a lightweight extension point of class, struct, interface, enum and property/field. This is like Json.NET's JsonConverterAttribute. For example, serialize private field, serialize x10 formatter.
 
 ```csharp
 [MessagePackFormatter(typeof(CustomObjectFormatter))]
@@ -1308,11 +1455,11 @@ var resolver = MessagePack.Resolvers.CompositeResolver.Create(
 
 ## Reserved Extension Types
 
-MessagePack for C# already used some msgpack extension type codes, be careful to use same ext code.
+MessagePack for C# already used some MessagePack extension type codes, be careful to use same ext code.
 
 | Code | Type | Use by |
 | ---  | ---  | --- |
-| -1 | DateTime | msgpack-spec reserved for timestamp |
+| -1 | DateTime | MessagePack-spec reserved for timestamp |
 | 30 | Vector2[] | for Unity, UnsafeBlitFormatter |
 | 31 | Vector3[] | for Unity, UnsafeBlitFormatter |
 | 32 | Vector4[] | for Unity, UnsafeBlitFormatter |
@@ -1331,7 +1478,9 @@ MessagePack for C# already used some msgpack extension type codes, be careful to
 
 Unity lowest supported version is `2018.3`, API Compatibility Level supports both `.NET 4.x` and `.NET Standard 2.0`.
 
-You can install the `unitypackage` from the [releases][Releases] page. If your build targets PC, you can use it as is, but if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
+You can install the `unitypackage` from the [releases][Releases] page.
+If your build targets .NET Framework 4.x and runs on mono, you can use it as is.
+But if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
 
 MessagePack for C# includes some additional `System.*.dll` libraries that originally provides in NuGet. They are located under `Plugins`. If other packages use these libraries (e.g. Unity Collections package using `System.Runtime.CompilerServices.Unsafe.dll`), to avoid conflicts, please delete the DLL under `Plugins`.
 
@@ -1365,19 +1514,20 @@ The `MessagePack.UnityShims` NuGet package is for .NET server-side serialization
 If you want to share a class between Unity and a server, you can use `SharedProject` or `Reference as Link` or a glob reference (with `LinkBase`), etc. Anyway, you need to share at source-code level. This is a sample project structure using a glob reference (recommended).
 
 - ServerProject(.NET 4.6/.NET Core/.NET Standard)
-  - [`<Compile Include="..\UnityProject\Assets\Scripts\Shared\**\*.cs" LinkBase="Shared" />`]
-  - [MessagePack]
-  - [MessagePack.UnityShims]
+  - \[`<Compile Include="..\UnityProject\Assets\Scripts\Shared\**\*.cs" LinkBase="Shared" />`\]
+  - \[MessagePack\]
+  - \[MessagePack.UnityShims\]
 - UnityProject
-  - [Concrete SharedCodes]
-  - [MessagePack](not dll/NuGet, use MessagePack.Unity.unitypackage's sourcecodes)
+  - \[Concrete SharedCodes\]
+  - \[MessagePack\](not dll/NuGet, use MessagePack.Unity.unitypackage's sourcecode)
 
 ## <a name="aot"></a>AOT Code Generation (support for Unity/Xamarin)
 
 By default, MessagePack for C# serializes custom objects by [generating IL](https://msdn.microsoft.com/en-us/library/system.reflection.emit.ilgenerator.aspx) on the fly at runtime to create custom, highly tuned formatters for each type. This code generation has a minor upfront performance cost.
 Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
 
-> Note: When Unity targets the PC it allows dynamic code generation, so AOT is not required.
+> Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
+For all other Unity targets, AOT is required.
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
 
@@ -1399,7 +1549,7 @@ Check in your `.config\dotnet-tools.json` file. On another machine you can "rest
 Once you have the tool installed, simply invoke using `dotnet mpc` within your repo:
 
 ```
-dotnet mpc -h
+dotnet mpc --help
 ```
 
 Alternatively, you can download mpc from the [releases][Releases] page, that includes platform native binaries (that don't require a separate dotnet runtime).
@@ -1408,7 +1558,7 @@ Alternatively, you can download mpc from the [releases][Releases] page, that inc
 Usage: mpc [options...]
 
 Options:
-  -i, -input <String>                                Input path of analyze csproj or directory, if input multiple csproj split with ','. (Required)
+  -i, -input <String>                                Input path to MSBuild project file or the directory containing Unity source files. (Required)
   -o, -output <String>                               Output file path(.cs) or directory(multiple generate file). (Required)
   -c, -conditionalSymbol <String>                    Conditional compiler symbols, split with ','. (Default: null)
   -r, -resolverName <String>                         Set resolver name. (Default: GeneratedResolver)
@@ -1421,13 +1571,13 @@ Options:
 
 ```cmd
 // Simple Sample:
-mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs"
+dotnet mpc -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs"
 
 // Use force map simulate DynamicContractlessObjectResolver
-mpc.exe -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
+dotnet mpc -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
 ```
 
-By default, `mpc.exe` generates the resolver as `MessagePack.Resolvers.GeneratedResolver` and formatters as`MessagePack.Formatters.*`.
+By default, `mpc` generates the resolver as `MessagePack.Resolvers.GeneratedResolver` and formatters as`MessagePack.Formatters.*`.
 
 Here is the full sample code to register a generated resolver in Unity.
 
@@ -1474,36 +1624,9 @@ In Unity, you can use MessagePack CodeGen windows at `Windows -> MessagePack -> 
 
 ![](https://user-images.githubusercontent.com/46207/69414381-f14da400-0d55-11ea-9f8d-9af448d347dc.png)
 
-Install the .NET Core runtime, install mpc (as a Global Tool), and execute mpc. Currently this tool is experimental so please tell me your opinion.
+Install the .NET Core runtime, install mpc (as a .NET Core Tool as described above), and execute `dotnet mpc`. Currently this tool is experimental so please tell me your opinion.
 
-In Xamarin, you can use  `MessagePack.MSBuild.Tasks` that can be added to your `.csproj` files easily.
-
-```xml
-<ItemGroup>
-    <!-- Install MSBuild Task (with PrivateAssets="All", i.e. build time dependency only) -->
-    <PackageReference Include="MessagePack.MSBuild.Tasks" Version="*" PrivateAssets="All" />
-</ItemGroup>
-
-<!-- Call code generator before-build. -->
-<Target Name="MessagePackGen" BeforeTargets="BeforeBuild">
-    <!-- Configuration of Code-Generator -->
-    <MessagePackGenerator Input="$(ProjectPath)" Output="$(ProjectDir)MessagePack" />
-</Target>
-```
-
-MSBuild Task's configuration options:
-
-```xml
-<MessagePackGenerator
-    Input="string:required"
-    Output="string:required"
-    ConditionalSymbol="string:optional"
-    ResolverName="string:optional"
-    Namespace="string:optional"
-    UseMapMode="bool:optional"
-    MultipleIfDirectiveOutputSymbols="string:optional"
-/>
-```
+In Xamarin, you can install the [the `MessagePack.MSBuild.Tasks` NuGet package](doc/msbuildtask.md) into your projects to pre-compile fast serialization code and run in environments where JIT compilation is not allowed.
 
 ## RPC
 
@@ -1527,7 +1650,7 @@ Yoshifumi Kawai (a.k.a. neuecc) is a software developer in Japan.
 He is the Director/CTO at Grani, Inc.
 Grani is a mobile game developer company in Japan and well known for using C#.
 He is awarding Microsoft MVP for Visual C# since 2011.
-He is known as the creator of [UniRx](http://github.com/neuecc/UniRx/) (Reactive Extensions for Unity)
+He is known as the creator of [UniRx](https://github.com/neuecc/UniRx/) (Reactive Extensions for Unity)
 
 * Blog: [https://medium.com/@neuecc](https://medium.com/@neuecc) (English)
 * Blog: [http://neue.cc/](http://neue.cc/) (Japanese)

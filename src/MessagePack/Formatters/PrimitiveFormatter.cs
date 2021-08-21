@@ -93,17 +93,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Int16[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadInt16();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Int16>();
             }
+
+            var array = new Int16[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadInt16();
+            }
+
+            return array;
         }
     }
 
@@ -189,17 +192,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Int32[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadInt32();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Int32>();
             }
+
+            var array = new Int32[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadInt32();
+            }
+
+            return array;
         }
     }
 
@@ -285,17 +291,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Int64[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadInt64();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Int64>();
             }
+
+            var array = new Int64[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadInt64();
+            }
+
+            return array;
         }
     }
 
@@ -381,17 +390,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new UInt16[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadUInt16();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<UInt16>();
             }
+
+            var array = new UInt16[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadUInt16();
+            }
+
+            return array;
         }
     }
 
@@ -477,17 +489,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new UInt32[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadUInt32();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<UInt32>();
             }
+
+            var array = new UInt32[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadUInt32();
+            }
+
+            return array;
         }
     }
 
@@ -573,17 +588,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new UInt64[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadUInt64();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<UInt64>();
             }
+
+            var array = new UInt64[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadUInt64();
+            }
+
+            return array;
         }
     }
 
@@ -669,17 +687,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Single[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadSingle();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Single>();
             }
+
+            var array = new Single[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadSingle();
+            }
+
+            return array;
         }
     }
 
@@ -765,17 +786,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Double[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadDouble();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Double>();
             }
+
+            var array = new Double[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadDouble();
+            }
+
+            return array;
         }
     }
 
@@ -861,17 +885,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Boolean[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadBoolean();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Boolean>();
             }
+
+            var array = new Boolean[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadBoolean();
+            }
+
+            return array;
         }
     }
 
@@ -1009,17 +1036,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new SByte[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadSByte();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<SByte>();
             }
+
+            var array = new SByte[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadSByte();
+            }
+
+            return array;
         }
     }
 
@@ -1105,17 +1135,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new Char[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadChar();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<Char>();
             }
+
+            var array = new Char[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadChar();
+            }
+
+            return array;
         }
     }
 
@@ -1201,17 +1234,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new DateTime[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadDateTime();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<DateTime>();
             }
+
+            var array = new DateTime[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadDateTime();
+            }
+
+            return array;
         }
     }
 }

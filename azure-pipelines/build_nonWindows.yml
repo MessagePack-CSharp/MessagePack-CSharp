@@ -3,20 +3,31 @@ steps:
   displayName: Build MessagePack.sln
   inputs:
     command: build
-    arguments: --no-restore /p:platform=NoVSIX -c $(BuildConfiguration)
+    arguments: --no-restore -c $(BuildConfiguration)
 
 - task: DotNetCoreCLI@2
-  displayName: Run MessagePack.Tests
+  displayName: Run MessagePack.Tests (netcoreapp2.1)
   inputs:
     command: test
     projects: tests/MessagePack.Tests/MessagePack.Tests.csproj
-    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp2.1 -v n
+    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp2.1 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     testRunTitle: netcoreapp2.1-$(Agent.JobName)
+
+- bash: mono ~/.nuget/packages/xunit.runner.console/2.4.1/tools/net472/xunit.console.exe bin/MessagePack.Tests/$(BuildConfiguration)/net472/MessagePack.Tests.dll -html $(BUILD.ARTIFACTSTAGINGDIRECTORY)/build_logs/mono_testrun.html
+  displayName: Run MessagePack.Tests (mono)
 
 - task: DotNetCoreCLI@2
   displayName: Run MessagePackAnalyzer.Tests
   inputs:
     command: test
     projects: tests/MessagePackAnalyzer.Tests/MessagePackAnalyzer.Tests.csproj
-    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp3.1 -v n
+    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp3.1 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     testRunTitle: netcoreapp3.1-$(Agent.JobName)-Analyzers
+
+- task: DotNetCoreCLI@2
+  displayName: Run MessagePack.Generator.Tests
+  inputs:
+    command: test
+    projects: tests/MessagePack.Generator.Tests/MessagePack.Generator.Tests.csproj
+    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp3.1 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
+    testRunTitle: netcoreapp3.1-$(Agent.JobName)-Generator

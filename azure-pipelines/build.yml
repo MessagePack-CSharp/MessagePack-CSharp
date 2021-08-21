@@ -1,12 +1,8 @@
 steps:
-# Use VSBuild to pack because `dotnet pack` can't build VSIX projects.
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
   inputs:
-    vsVersion: 16.0
-    solution: MessagePack.sln
-    msbuildArgs: /t:build,pack /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.binlog"
-    platform: $(BuildPlatform)
-    configuration: $(BuildConfiguration)
+    command: build
+    arguments: --configuration $(BuildConfiguration) /t:build,pack /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.binlog"
   displayName: Build MessagePack.sln
 
 - task: DotNetCoreCLI@2
@@ -14,14 +10,8 @@ steps:
   inputs:
     command: test
     projects: tests/**/*.Tests.csproj
-    arguments: --configuration $(BuildConfiguration) --no-build -v n
+    arguments: --configuration $(BuildConfiguration) --no-build -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     testRunTitle: $(Agent.JobName)
-
-- script: |
-    dotnet publish src/MessagePack.Generator -r win-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
-    dotnet publish src/MessagePack.Generator -r osx-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
-    dotnet publish src/MessagePack.Generator -r linux-x64 -c $(BuildConfiguration) /p:PublishSingleFile=true,PublishTrimmed=true,IncludeSymbolsInSingleFile=true
-  displayName: Building standalone mpc tool for all OSs
 
 ## The rest of these steps are for deployment and skipped for PR builds
 

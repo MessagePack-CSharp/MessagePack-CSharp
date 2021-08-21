@@ -21,7 +21,7 @@ namespace Benchmark
         [ParamsSource(nameof(Serializers))]
         public SerializerBase Serializer;
 
-        // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
+        // Currently BenchmarkDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),
@@ -31,18 +31,20 @@ namespace Benchmark
             new MsgPack_v2_opt(),
             //new MsgPack_v2_string(),
             //new MsgPack_v2_str_lz4(),
-            new ProtobufNet(),
-            new JsonNet(),
-            new BinaryFormatter_(),
-            new DataContract_(),
-            new Hyperion_(),
-            new Jil_(),
-            new SpanJson_(),
-            new Utf8Json_(),
-            new SystemTextJson(),
-            new MsgPackCli(),
-            new FsPickler_(),
-            new Ceras_(),
+            new ProtobufNetSerializer(),
+            new JsonNetSerializer(),
+            new BsonNetSerializer(),
+            new BinaryFormatterSerializer(),
+            new DataContractSerializer(),
+            new HyperionSerializer(),
+            new JilSerializer(),
+            new SpanJsonSerializer(),
+            new Utf8JsonSerializer(),
+            new SystemTextJsonSerializer(),
+            new MsgPackCliSerializer(),
+            new FsPicklerSerializer(),
+            new CerasSerializer(),
+            new OdinSerializer_(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
@@ -567,7 +569,7 @@ namespace Benchmark
         [ParamsSource(nameof(Serializers))]
         public SerializerBase Serializer;
 
-        // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
+        // Currently BenchmarkDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),
@@ -1098,7 +1100,7 @@ namespace Benchmark
 
         private bool isContractless;
 
-        // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
+        // Currently BenchmarkDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),
@@ -1110,18 +1112,20 @@ namespace Benchmark
             new MsgPack_v2_string(),
             new MsgPack_v1_str_lz4(),
             new MsgPack_v2_str_lz4(),
-            new ProtobufNet(),
-            new JsonNet(),
-            new BinaryFormatter_(),
-            new DataContract_(),
-            new Hyperion_(),
-            new Jil_(),
-            new SpanJson_(),
-            new Utf8Json_(),
-            new SystemTextJson(),
-            new MsgPackCli(),
-            new FsPickler_(),
-            new Ceras_(),
+            new ProtobufNetSerializer(),
+            new JsonNetSerializer(),
+            new BsonNetSerializer(),
+            new BinaryFormatterSerializer(),
+            new DataContractSerializer(),
+            new HyperionSerializer(),
+            new JilSerializer(),
+            new SpanJsonSerializer(),
+            new Utf8JsonSerializer(),
+            new SystemTextJsonSerializer(),
+            new MsgPackCliSerializer(),
+            new FsPicklerSerializer(),
+            new CerasSerializer(),
+            new OdinSerializer_(),
         };
 
         protected static readonly ExpressionTreeFixture ExpressionTreeFixture = new ExpressionTreeFixture();
@@ -1195,7 +1199,7 @@ namespace Benchmark
         [ParamsSource(nameof(Serializers))]
         public SerializerBase Serializer;
 
-        // Currently BenchmarkdDotNet does not detect inherited ParamsSource so use copy and paste:)
+        // Currently BenchmarkDotNet does not detect inherited ParamsSource so use copy and paste:)
         public IEnumerable<SerializerBase> Serializers => new SerializerBase[]
         {
             new MessagePack_v1(),

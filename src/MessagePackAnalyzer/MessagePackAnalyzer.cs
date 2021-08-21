@@ -16,6 +16,7 @@ namespace MessagePackAnalyzer
         public const string UseMessagePackObjectAttributeId = "MsgPack003";
         public const string AttributeMessagePackObjectMembersId = "MsgPack004";
         public const string InvalidMessagePackObjectId = "MsgPack005";
+        public const string MessagePackFormatterMustBeMessagePackFormatterId = "MsgPack006";
 
         internal const string Category = "Usage";
 
@@ -31,6 +32,16 @@ namespace MessagePackAnalyzer
             category: Category,
             messageFormat: "Type must be marked with MessagePackObjectAttribute. {0}.", // type.Name
             description: "Type must be marked with MessagePackObjectAttribute.",
+            defaultSeverity: DiagnosticSeverity.Error,
+            isEnabledByDefault: true,
+            helpLinkUri: AnalyzerUtilities.GetHelpLink(UseMessagePackObjectAttributeId));
+
+        internal static readonly DiagnosticDescriptor MessageFormatterMustBeMessagePackFormatter = new DiagnosticDescriptor(
+            id: MessagePackFormatterMustBeMessagePackFormatterId,
+            title: "Must be IMessageFormatter",
+            category: Category,
+            messageFormat: "Type must be of IMessagePackFormatter. {0}.", // type.Name
+            description: "Type must be of IMessagePackFormatter.",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             helpLinkUri: AnalyzerUtilities.GetHelpLink(UseMessagePackObjectAttributeId));
@@ -58,32 +69,30 @@ namespace MessagePackAnalyzer
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
             TypeMustBeMessagePackObject,
             PublicMemberNeedsKey,
-            InvalidMessagePackObject);
+            InvalidMessagePackObject,
+            MessageFormatterMustBeMessagePackFormatter);
 
         public override void Initialize(AnalysisContext context)
         {
             context.EnableConcurrentExecution();
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
-            context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration);
+            context.RegisterCompilationStartAction(ctxt =>
+            {
+                if (ReferenceSymbols.TryCreate(ctxt.Compilation, out ReferenceSymbols? typeReferences))
+                {
+                    ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences), SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration);
+                }
+            });
         }
 
-        private static void Analyze(SyntaxNodeAnalysisContext context)
+        private static void Analyze(SyntaxNodeAnalysisContext context, ReferenceSymbols typeReferences)
         {
-            SemanticModel model = context.SemanticModel;
-
-            var typeDeclaration = context.Node as TypeDeclarationSyntax;
-            if (typeDeclaration == null)
+            TypeDeclarationSyntax typeDeclaration = (TypeDeclarationSyntax)context.Node;
+            INamedTypeSymbol? declaredSymbol = context.SemanticModel.GetDeclaredSymbol(typeDeclaration);
+            if (declaredSymbol is null)
             {
                 return;
             }
-
-            INamedTypeSymbol declaredSymbol = model.GetDeclaredSymbol(typeDeclaration);
-            if (declaredSymbol == null)
-            {
-                return;
-            }
-
-            var typeReferences = new ReferenceSymbols(model.Compilation);
 
             if (
                ((declaredSymbol.TypeKind == TypeKind.Interface) && declaredSymbol.GetAttributes().Any(x2 => Equals(x2.AttributeClass, typeReferences.UnionAttribute)))
@@ -91,7 +100,7 @@ namespace MessagePackAnalyzer
             || ((declaredSymbol.TypeKind == TypeKind.Struct) && declaredSymbol.GetAttributes().Any(x2 => Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute))))
             {
                 var reportContext = new DiagnosticsReportContext(context);
-                var collector = new TypeCollector(reportContext, model.Compilation);
+                var collector = new TypeCollector(reportContext, typeReferences);
                 collector.CollectCore(declaredSymbol);
                 reportContext.ReportAll();
             }

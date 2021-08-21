@@ -4,13 +4,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePackCompiler.CodeAnalysis
 {
+    public interface INamespaceInfo
+    {
+        string? Namespace { get; }
+    }
+
     public interface IResolverRegisterInfo
     {
         string FullName { get; }
@@ -18,41 +21,40 @@ namespace MessagePackCompiler.CodeAnalysis
         string FormatterName { get; }
     }
 
-    public class ObjectSerializationInfo : IResolverRegisterInfo
+    public class ObjectSerializationInfo : IResolverRegisterInfo, INamespaceInfo
     {
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public string FullName { get; set; }
+        public string FullName { get; }
 
-        public string TemplateParametersString { get; set; }
+        public string? Namespace { get; }
 
-        public string Namespace { get; set; }
+        public GenericTypeParameterInfo[] GenericTypeParameters { get; }
 
-        public bool IsIntKey { get; set; }
+        public bool IsOpenGenericType { get; }
+
+        public bool IsIntKey { get; }
 
         public bool IsStringKey
         {
             get { return !this.IsIntKey; }
         }
 
-        public bool IsClass { get; set; }
+        public bool IsClass { get; }
 
-        public bool IsStruct
-        {
-            get { return !this.IsClass; }
-        }
+        public MemberSerializationInfo[] ConstructorParameters { get; }
 
-        public MemberSerializationInfo[] ConstructorParameters { get; set; }
+        public MemberSerializationInfo[] Members { get; }
 
-        public MemberSerializationInfo[] Members { get; set; }
+        public bool HasIMessagePackSerializationCallbackReceiver { get; }
 
-        public bool HasIMessagePackSerializationCallbackReceiver { get; set; }
+        public bool NeedsCastOnBefore { get; }
 
-        public bool NeedsCastOnBefore { get; set; }
+        public bool NeedsCastOnAfter { get; }
 
-        public bool NeedsCastOnAfter { get; set; }
+        public string FormatterName => this.Namespace == null ? FormatterNameWithoutNameSpace : this.Namespace + "." + FormatterNameWithoutNameSpace;
 
-        public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
+        public string FormatterNameWithoutNameSpace => this.Name + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(", ", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
 
         public int WriteCount
         {
@@ -77,7 +79,7 @@ namespace MessagePackCompiler.CodeAnalysis
             }
         }
 
-        public MemberSerializationInfo GetMember(int index)
+        public MemberSerializationInfo? GetMember(int index)
         {
             return this.Members.FirstOrDefault(x => x.IntKey == index);
         }
@@ -87,48 +89,74 @@ namespace MessagePackCompiler.CodeAnalysis
             var args = string.Join(", ", this.ConstructorParameters.Select(x => "__" + x.Name + "__"));
             return $"{this.FullName}({args})";
         }
+
+        public ObjectSerializationInfo(bool isClass, bool isOpenGenericType, GenericTypeParameterInfo[] genericTypeParameterInfos, MemberSerializationInfo[] constructorParameters, bool isIntKey, MemberSerializationInfo[] members, string name, string fullName, string? @namespace, bool hasSerializationConstructor, bool needsCastOnAfter, bool needsCastOnBefore)
+        {
+            IsClass = isClass;
+            IsOpenGenericType = isOpenGenericType;
+            GenericTypeParameters = genericTypeParameterInfos;
+            ConstructorParameters = constructorParameters;
+            IsIntKey = isIntKey;
+            Members = members;
+            Name = name;
+            FullName = fullName;
+            Namespace = @namespace;
+            HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor;
+            NeedsCastOnAfter = needsCastOnAfter;
+            NeedsCastOnBefore = needsCastOnBefore;
+        }
+    }
+
+    public class GenericTypeParameterInfo
+    {
+        public string Name { get; }
+
+        public string Constraints { get; }
+
+        public bool HasConstraints { get; }
+
+        public GenericTypeParameterInfo(string name, string constraints)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Constraints = constraints ?? throw new ArgumentNullException(nameof(name));
+            HasConstraints = constraints != string.Empty;
+        }
     }
 
     public class MemberSerializationInfo
     {
-        public bool IsProperty { get; set; }
+        public bool IsProperty { get; }
 
-        public bool IsField { get; set; }
+        public bool IsWritable { get; }
 
-        public bool IsWritable { get; set; }
+        public bool IsReadable { get; }
 
-        public bool IsReadable { get; set; }
+        public int IntKey { get; }
 
-        public int IntKey { get; set; }
+        public string StringKey { get; }
 
-        public string StringKey { get; set; }
+        public string Type { get; }
 
-        public string Type { get; set; }
+        public string Name { get; }
 
-        public string Name { get; set; }
+        public string ShortTypeName { get; }
 
-        public string ShortTypeName { get; set; }
+        public string? CustomFormatterTypeName { get; }
 
-        public string CustomFormatterTypeName { get; set; }
+        private readonly HashSet<string> primitiveTypes = new(Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
 
-        private readonly HashSet<string> primitiveTypes = new HashSet<string>(new string[]
+        public MemberSerializationInfo(bool isProperty, bool isWritable, bool isReadable, int intKey, string stringKey, string name, string type, string shortTypeName, string? customFormatterTypeName)
         {
-            "short",
-            "int",
-            "long",
-            "ushort",
-            "uint",
-            "ulong",
-            "float",
-            "double",
-            "bool",
-            "byte",
-            "sbyte",
-            "char",
-            ////"global::System.DateTime",
-            ////"byte[]",
-            ////"string",
-        });
+            IsProperty = isProperty;
+            IsWritable = isWritable;
+            IsReadable = isReadable;
+            IntKey = intKey;
+            StringKey = stringKey;
+            Type = type;
+            Name = name;
+            ShortTypeName = shortTypeName;
+            CustomFormatterTypeName = customFormatterTypeName;
+        }
 
         public string GetSerializeMethodString()
         {
@@ -138,7 +166,7 @@ namespace MessagePackCompiler.CodeAnalysis
             }
             else if (this.primitiveTypes.Contains(this.Type))
             {
-                return $"writer.Write(value.{this.Name})";
+                return "writer.Write(value." + this.Name + ")";
             }
             else
             {
@@ -154,7 +182,8 @@ namespace MessagePackCompiler.CodeAnalysis
             }
             else if (this.primitiveTypes.Contains(this.Type))
             {
-                return $"reader.Read{this.ShortTypeName.Replace("[]", "s")}()";
+                string suffix = this.Type == "byte[]" ? "?.ToArray()" : string.Empty;
+                return $"reader.Read{this.ShortTypeName!.Replace("[]", "s")}()" + suffix;
             }
             else
             {
@@ -163,53 +192,84 @@ namespace MessagePackCompiler.CodeAnalysis
         }
     }
 
-    public class EnumSerializationInfo : IResolverRegisterInfo
+    public class EnumSerializationInfo : IResolverRegisterInfo, INamespaceInfo
     {
-        public string Namespace { get; set; }
+        public EnumSerializationInfo(string? @namespace, string name, string fullName, string underlyingType)
+        {
+            Namespace = @namespace;
+            Name = name;
+            FullName = fullName;
+            UnderlyingType = underlyingType;
+        }
 
-        public string Name { get; set; }
+        public string? Namespace { get; }
 
-        public string FullName { get; set; }
+        public string Name { get; }
 
-        public string UnderlyingType { get; set; }
+        public string FullName { get; }
+
+        public string UnderlyingType { get; }
 
         public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
     }
 
     public class GenericSerializationInfo : IResolverRegisterInfo, IEquatable<GenericSerializationInfo>
     {
-        public string FullName { get; set; }
+        public string FullName { get; }
 
-        public string FormatterName { get; set; }
+        public string FormatterName { get; }
 
-        public bool Equals(GenericSerializationInfo other)
+        public bool IsOpenGenericType { get; }
+
+        public bool Equals(GenericSerializationInfo? other)
         {
-            return this.FullName.Equals(other.FullName);
+            return this.FullName.Equals(other?.FullName);
         }
 
         public override int GetHashCode()
         {
             return this.FullName.GetHashCode();
         }
+
+        public GenericSerializationInfo(string fullName, string formatterName, bool isOpenGenericType)
+        {
+            FullName = fullName;
+            FormatterName = formatterName;
+            IsOpenGenericType = isOpenGenericType;
+        }
     }
 
-    public class UnionSerializationInfo : IResolverRegisterInfo
+    public class UnionSerializationInfo : IResolverRegisterInfo, INamespaceInfo
     {
-        public string Namespace { get; set; }
+        public string? Namespace { get; }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public string FullName { get; set; }
+        public string FullName { get; }
 
         public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
 
-        public UnionSubTypeInfo[] SubTypes { get; set; }
+        public UnionSubTypeInfo[] SubTypes { get; }
+
+        public UnionSerializationInfo(string? @namespace, string name, string fullName, UnionSubTypeInfo[] subTypes)
+        {
+            Namespace = @namespace;
+            Name = name;
+            FullName = fullName;
+            SubTypes = subTypes;
+        }
     }
 
     public class UnionSubTypeInfo
     {
-        public string Type { get; set; }
+        public UnionSubTypeInfo(int key, string type)
+        {
+            Key = key;
+            Type = type;
+        }
 
-        public int Key { get; set; }
+        public int Key { get; }
+
+        public string Type { get; }
     }
 }

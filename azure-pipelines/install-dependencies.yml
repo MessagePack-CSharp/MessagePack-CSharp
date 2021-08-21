@@ -4,12 +4,17 @@ parameters:
 steps:
 
 - powershell: |
-    .\init.ps1 -AccessToken '$(System.AccessToken)' ${{ parameters['initArgs'] }}
+    $AccessToken = '$(System.AccessToken)' # Avoid specifying the access token directly on the init.ps1 command line to avoid it showing up in errors
+    .\init.ps1 -AccessToken $AccessToken ${{ parameters['initArgs'] }} -UpgradePrerequisites
     dotnet --info
+
+    # Print mono version if it is present.
+    if (Get-Command mono -ErrorAction SilentlyContinue) {
+      mono --version
+    }
   displayName: Install prerequisites
 
-- task: PowerShell@2
-  inputs:
-    filePath: azure-pipelines/variables/_pipelines.ps1
-    failOnStderr: true
+- powershell: azure-pipelines/variables/_pipelines.ps1
+  failOnStderr: true
   displayName: Set pipeline variables based on source
+  name: SetPipelineVariables

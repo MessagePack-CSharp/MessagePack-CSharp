@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MessagePack.Resolvers;
+using MsgPack.Serialization;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with uppercase letter
@@ -143,6 +144,41 @@ namespace MessagePack.Tests
             public int X;
         }
 
+        internal enum InternalEnum
+        {
+            One,
+            Two,
+        }
+
+        [MessagePackObject]
+        internal class InternalClass
+        {
+            [Key(0)]
+            internal InternalEnum EnumProperty { get; set; }
+        }
+
+        [MessagePackObject]
+        public class PrivateReadonlyField
+        {
+            public static PrivateReadonlyField WithNullValue { get; } = new PrivateReadonlyField();
+
+            [Key(0)]
+            private readonly string field;
+
+            [SerializationConstructor]
+            public PrivateReadonlyField(string field)
+            {
+                this.field = field ?? "not null";
+            }
+
+            private PrivateReadonlyField()
+            {
+            }
+
+            [IgnoreMember]
+            public string Field => field;
+        }
+
 #if !ENABLE_IL2CPP
 
         [MessagePackObject]
@@ -177,6 +213,52 @@ namespace MessagePack.Tests
 
             [IgnoreMember]
             public bool CreatedUsingPrivateCtor { get; }
+        }
+
+        public class ContractlessClassPrivateCtor
+        {
+            public int X { get; private set; }
+
+            public int Y { get; private set; }
+
+            [SerializationConstructor]
+            private ContractlessClassPrivateCtor(int x, int y)
+            {
+                X = x;
+                Y = y;
+            }
+
+            public static ContractlessClassPrivateCtor Create(int x, int y)
+            {
+                return new ContractlessClassPrivateCtor(x, y);
+            }
+        }
+
+        [MessagePackObject]
+        public class CompletelyPrivateConstructor
+        {
+            [Key(0)]
+            private int x;
+
+            [Key(1)]
+            private int y;
+
+            private CompletelyPrivateConstructor(int x, int y)
+            {
+                this.x = x;
+                this.y = y;
+            }
+
+            public static CompletelyPrivateConstructor Create(int x, int y)
+            {
+                return new CompletelyPrivateConstructor(x, y);
+            }
+
+            [IgnoreMember]
+            public int X => this.x;
+
+            [IgnoreMember]
+            public int Y => this.y;
         }
 
 #endif
@@ -256,6 +338,28 @@ namespace MessagePack.Tests
             MessagePackSerializer.Deserialize<EmptyConstructorStruct>(x, StandardResolverAllowPrivate.Options).X.Is(99);
         }
 
+        [Fact]
+        public void InternalClassWithInternalEnum()
+        {
+            InternalClass expected = new InternalClass
+            {
+                EnumProperty = InternalEnum.Two,
+            };
+
+            byte[] bytes = MessagePackSerializer.Serialize(expected, StandardResolverAllowPrivate.Options);
+            InternalClass actual = MessagePackSerializer.Deserialize<InternalClass>(bytes, StandardResolverAllowPrivate.Options);
+            Assert.Equal(expected.EnumProperty, actual.EnumProperty);
+        }
+
+        [Fact]
+        public void PrivateReadonlyFieldSetInConstructor()
+        {
+            PrivateReadonlyField initial = PrivateReadonlyField.WithNullValue;
+            var bin = MessagePackSerializer.Serialize(initial, StandardResolverAllowPrivate.Options);
+            var deserialized = MessagePackSerializer.Deserialize<PrivateReadonlyField>(bin, StandardResolverAllowPrivate.Options);
+            Assert.Equal("not null", deserialized.Field);
+        }
+
 #if !ENABLE_IL2CPP
 
         [Fact]
@@ -271,6 +375,27 @@ namespace MessagePack.Tests
             Assert.True(p2.CreatedUsingPrivateCtor);
         }
 
+        [Fact]
+        public void PrivateConstructor2()
+        {
+            var p1 = CompletelyPrivateConstructor.Create(10, 20);
+            var bin = MessagePackSerializer.Serialize(p1, StandardResolverAllowPrivate.Options);
+            var p2 = MessagePackSerializer.Deserialize<CompletelyPrivateConstructor>(bin, StandardResolverAllowPrivate.Options);
+
+            Assert.Equal(p1.X, p2.X);
+            Assert.Equal(p1.Y, p2.Y);
+        }
+
+        [Fact]
+        public void ContractlessAttributedPrivateConstructor()
+        {
+            var p1 = ContractlessClassPrivateCtor.Create(10, 20);
+            var bin = MessagePackSerializer.Serialize(p1, ContractlessStandardResolver.Options);
+            var p2 = MessagePackSerializer.Deserialize<ContractlessClassPrivateCtor>(bin, ContractlessStandardResolver.Options);
+
+            Assert.Equal(p1.X, p2.X);
+            Assert.Equal(p1.Y, p2.Y);
+        }
 #endif
     }
 }

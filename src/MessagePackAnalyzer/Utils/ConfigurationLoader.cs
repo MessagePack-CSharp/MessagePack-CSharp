@@ -13,11 +13,9 @@ namespace MessagePackAnalyzer
 {
     public static class ConfigurationLoader
     {
-        private static readonly string[] Empty = new string[0];
-
         public static System.Collections.Generic.IReadOnlyList<string> GetAdditionalAllowTypes(this AnalyzerOptions option)
         {
-            Microsoft.CodeAnalysis.AdditionalText config = option.AdditionalFiles.FirstOrDefault(x => System.IO.Path.GetFileName(x.Path).Equals("MessagePackAnalyzer.json", StringComparison.OrdinalIgnoreCase));
+            Microsoft.CodeAnalysis.AdditionalText? config = option.AdditionalFiles.FirstOrDefault(x => System.IO.Path.GetFileName(x.Path).Equals("MessagePackAnalyzer.json", StringComparison.OrdinalIgnoreCase));
             if (config != null)
             {
                 try
@@ -41,12 +39,12 @@ namespace MessagePackAnalyzer
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine("Can't load MessagePackAnalyzer.json:" + ex.ToString());
-                    return Empty;
+                    return Array.Empty<string>();
                 }
             }
             else
             {
-                return Empty;
+                return Array.Empty<string>();
             }
         }
     }

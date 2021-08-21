@@ -8,12 +8,38 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Nerdbank.Streams;
 
 namespace MessagePack
 {
     public partial class MessagePackStreamReader : IDisposable
     {
+        /// <summary>
+        /// Reads the next messagepack array header.
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>
+        /// A task whose result is the length of the next array from the stream.
+        /// </returns>
+        /// <remarks>
+        /// Any extra bytes read (between the last complete message and the end of the stream) will be available via the <see cref="RemainingBytes"/> property.
+        /// </remarks>
+        public async ValueTask<int> ReadArrayHeaderAsync(CancellationToken cancellationToken)
+        {
+            this.RecycleLastMessage();
+
+            cancellationToken.ThrowIfCancellationRequested();
+            int count;
+            while (!this.TryReadArrayHeader(out count))
+            {
+                if (!await this.TryReadMoreDataAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    throw new EndOfStreamException("The stream ended before a map header could be found.");
+                }
+            }
+
+            return count;
+        }
+
         /// <summary>
         /// Reads the next messagepack array and produces each element individually.
         /// </summary>

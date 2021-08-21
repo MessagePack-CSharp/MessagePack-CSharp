@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>Benchmark</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);MSB3243</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.12.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack.Experimental\MessagePack.Experimental.csproj">
+      <Aliases>newmsgpack</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj">
+      <Aliases>newmsgpack</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj">
+      <Aliases>newmsgpack</Aliases>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MessagePack_2_1_165">
+      <HintPath>MessagePack_2_1_165.dll</HintPath>
+      <Aliases>oldmsgpack</Aliases>
+      <Private>true</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+  </ItemGroup>
+
+</Project>

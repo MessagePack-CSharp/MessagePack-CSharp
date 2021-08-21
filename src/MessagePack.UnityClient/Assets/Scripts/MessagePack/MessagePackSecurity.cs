@@ -255,7 +255,7 @@ namespace MessagePack
         /// </summary>
         private class ObjectFallbackEqualityComparer : IEqualityComparer<object>, IEqualityComparer
         {
-            private static readonly MethodInfo GetHashCollisionResistantEqualityComparerOpenGenericMethod = typeof(MessagePackSecurity).GetTypeInfo().DeclaredMethods.Single(m => m.Name == nameof(MessagePackSecurity.GetHashCollisionResistantEqualityComparer) && m.IsGenericMethod);
+            private static readonly Lazy<MethodInfo> GetHashCollisionResistantEqualityComparerOpenGenericMethod = new Lazy<MethodInfo>(() => typeof(MessagePackSecurity).GetTypeInfo().DeclaredMethods.Single(m => m.Name == nameof(MessagePackSecurity.GetHashCollisionResistantEqualityComparer) && m.IsGenericMethod));
             private readonly MessagePackSecurity security;
             private readonly ThreadsafeTypeKeyHashTable<IEqualityComparer> equalityComparerCache = new ThreadsafeTypeKeyHashTable<IEqualityComparer>();
 
@@ -288,7 +288,7 @@ namespace MessagePack
                 {
                     try
                     {
-                        equalityComparer = (IEqualityComparer)GetHashCollisionResistantEqualityComparerOpenGenericMethod.MakeGenericMethod(valueType).Invoke(this.security, Array.Empty<object>());
+                        equalityComparer = (IEqualityComparer)GetHashCollisionResistantEqualityComparerOpenGenericMethod.Value.MakeGenericMethod(valueType).Invoke(this.security, Array.Empty<object>());
                     }
                     catch (TargetInvocationException ex)
                     {

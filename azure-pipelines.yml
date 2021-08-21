@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
     - master
+    - develop
     - 'v?.*'
     - 'validate/*'
   paths:
@@ -13,44 +14,86 @@ variables:
   BuildConfiguration: Release
   BuildPlatform: Any CPU
 
-jobs:
-- job: Windows
-  pool:
-    vmImage: windows-2019
-  steps:
-  - checkout: self
-    clean: true
-  - template: azure-pipelines/install-dependencies.yml
+stages:
+- stage: Build
+  jobs:
+  - job: Windows
+    pool:
+      vmImage: windows-2019
+    steps:
+    - checkout: self
+      clean: true
+    - template: azure-pipelines/install-dependencies.yml
 
-  - powershell: '& (./azure-pipelines/Get-nbgv.ps1) cloud'
-    displayName: Set build number
+    - powershell: '& (./azure-pipelines/Get-nbgv.ps1) cloud'
+      displayName: Set build number
 
-  - template: azure-pipelines/build.yml
+    - template: azure-pipelines/build.yml
 
-- job: Unity
-  pool:
-    name: CustomAgents
-    demands: UNITYHUB_EDITORS_FOLDER_LOCATION
-  steps:
-  - checkout: self
-    clean: true
-  - template: azure-pipelines/install-dependencies.yml
-  - template: azure-pipelines/build_unity.yml
+  - job: Unity
+    pool:
+      name: CustomAgents
+      demands: UNITYHUB_EDITORS_FOLDER_LOCATION
+    steps:
+    - checkout: self
+      clean: true
+    - template: azure-pipelines/install-dependencies.yml
+    - template: azure-pipelines/build_unity.yml
 
-- job: Linux
-  pool:
-    vmImage: Ubuntu 16.04
-  steps:
-  - checkout: self
-    clean: true
-  - template: azure-pipelines/install-dependencies.yml
-  - template: azure-pipelines/build_nonWindows.yml
+  - job: Linux
+    pool:
+      vmImage: Ubuntu 16.04
+    steps:
+    - checkout: self
+      clean: true
+    - template: azure-pipelines/install-dependencies.yml
+    - template: azure-pipelines/build_nonWindows.yml
 
-- job: macOS
-  pool:
-    vmImage: macOS-10.15
-  steps:
-  - checkout: self
-    clean: true
-  - template: azure-pipelines/install-dependencies.yml
-  - template: azure-pipelines/build_nonWindows.yml
+  - job: macOS
+    pool:
+      vmImage: macOS-10.15
+    steps:
+    - checkout: self
+      clean: true
+    - template: azure-pipelines/install-dependencies.yml
+    - template: azure-pipelines/build_nonWindows.yml
+
+# This job ensures that we're running mpc regularly on the generated code that we check in.
+# It also helps exercise mpc so bugs don't go unnoticed.
+  - job: codegen_diff
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - checkout: self
+      clean: true
+    - template: azure-pipelines/install-dependencies.yml
+    - pwsh: sandbox/codegen.ps1
+      displayName: Regenerate checked-in code
+    - bash: |
+          git add -u . # compare after applying git EOL normalization
+          git diff --cached --exit-code --stat \
+          || (echo "##[error] found changed files after build. please 'azure-pipelines/codegen.ps1'" \
+                  "and check in all changes" \
+              && git diff --cached \
+              && exit 1)
+      displayName: Check for uncommitted changes
+- stage: Publish
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  jobs:
+  - job: push
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - download: current
+      artifact: nuget
+    - task: NuGetToolInstaller@1
+      displayName: Use NuGet 5.x
+      inputs:
+        versionSpec: 5.x
+    - task: NuGetCommand@2
+      displayName: NuGet push
+      inputs:
+        command: push
+        packagesToPush: $(Pipeline.Workspace)/nuget/*.nupkg
+        publishVstsFeed: MessagePack-CSharp/MessagePack-CI
+      continueOnError: true

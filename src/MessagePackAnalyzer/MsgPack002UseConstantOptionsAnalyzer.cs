@@ -1,15 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePackAnalyzer
 {
+    /// <summary>
+    /// An analyzer to guide callers to avoid use of mutable static fields for MessagePackSerializerOptions.
+    /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
     public class MsgPack002UseConstantOptionsAnalyzer : DiagnosticAnalyzer
     {

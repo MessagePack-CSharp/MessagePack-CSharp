@@ -1,0 +1,75 @@
+trigger: none # We only want to trigger manually or based on resources
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: CI
+    source: MessagePack-CSharp-CI
+    trigger:
+      tags:
+      - auto-release
+
+stages:
+- stage: GitHubRelease
+  displayName: GitHub Release
+  jobs:
+  - deployment: create
+    pool:
+      vmImage: ubuntu-latest
+    environment: No-Approval
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: none
+          - powershell: |
+              Write-Host "##vso[build.updatebuildnumber]$(resources.pipeline.CI.runName)"
+            displayName: Set pipeline name
+          - download: CI
+            artifact: unity
+            displayName: 'Downloading artifact: unity'
+          - task: GitHubRelease@1
+            displayName: GitHub release (create)
+            inputs:
+              gitHubConnection: AArnott github
+              repositoryName: $(Build.Repository.Name)
+              target: $(resources.pipeline.CI.sourceCommit)
+              tagSource: userSpecifiedTag
+              tag: v$(resources.pipeline.CI.runName)
+              title: v$(resources.pipeline.CI.runName)
+              assets: |
+                $(Pipeline.Workspace)/CI/unity/*.unitypackage
+              isDraft: true # After running this step, visit the new draft release, edit, and publish.
+              changeLogCompareToRelease: lastNonDraftRelease
+              changeLogType: issueBased
+              changeLogLabels: |
+                [
+                  { "label" : "bug", "displayName" : "Fixes", "state" : "closed" },
+                  { "label" : "enhancement", "displayName": "Enhancements", "state" : "closed" }
+                ]
+
+- stage: nuget_org
+  displayName: nuget.org
+  dependsOn: GitHubRelease
+  jobs:
+  - deployment: push
+    pool:
+      vmImage: ubuntu-latest
+    environment: No-Approval
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: CI
+            artifact: nuget
+          - task: NuGetToolInstaller@1
+            displayName: Use NuGet 5.x
+            inputs:
+              versionSpec: 5.x
+          - task: NuGetCommand@2
+            displayName: NuGet push
+            inputs:
+              command: push
+              packagesToPush: $(Pipeline.Workspace)/CI/nuget/*.nupkg
+              nuGetFeedType: external
+              publishFeedCredentials: nuget.org (aarnott)

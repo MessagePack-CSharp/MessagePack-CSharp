@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Serialization;
 using MessagePack.Formatters;
 using MessagePack.Internal;
 
@@ -107,10 +108,16 @@ namespace MessagePack
         }
     }
 
+    [Serializable]
     public class FormatterNotRegisteredException : MessagePackSerializationException
     {
         public FormatterNotRegisteredException(string message)
             : base(message)
+        {
+        }
+
+        protected FormatterNotRegisteredException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
         {
         }
     }

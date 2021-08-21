@@ -15,8 +15,8 @@
         typeof(UInt64),
         typeof(Single),
         typeof(Double),
-        typeof(bool), 
-        typeof(byte), 
+        typeof(bool),
+        typeof(byte),
         typeof(sbyte),
         typeof(char),
         typeof(DateTime)
@@ -119,17 +119,20 @@ namespace MessagePack.Formatters
             {
                 return default;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new <#= t.Name #>[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.Read<#= t.Name #>();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<<#= t.Name #>>();
             }
+
+            var array = new <#= t.Name #>[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.Read<#= t.Name #>();
+            }
+
+            return array;
         }
     }
 <# } #>

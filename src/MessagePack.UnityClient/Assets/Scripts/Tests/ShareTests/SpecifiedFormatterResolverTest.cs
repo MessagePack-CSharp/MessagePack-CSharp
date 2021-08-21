@@ -177,6 +177,48 @@ namespace MessagePack.Tests
             }
         }
 
+        [MessagePackFormatter(typeof(GenericFormatterObjectFormatter<,>))]
+        public class GenericFormatterObject<T1, T2>
+        {
+            public T1 MyProperty1 { get; set; }
+
+            public T2 MyProperty2 { get; set; }
+        }
+
+        public class GenericFormatterObjectFormatter<T1, T2> : IMessagePackFormatter<GenericFormatterObject<T1, T2>>
+        {
+            public GenericFormatterObject<T1, T2> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            {
+                T1 t1 = default;
+                T2 t2 = default;
+
+                var len = reader.ReadArrayHeader();
+                for (int i = 0; i < len; i++)
+                {
+                    switch (i)
+                    {
+                        case 0:
+                            t1 = options.Resolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                            break;
+                        case 1:
+                            t2 = options.Resolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                return new GenericFormatterObject<T1, T2> { MyProperty1 = t1, MyProperty2 = t2 };
+            }
+
+            public void Serialize(ref MessagePackWriter writer, GenericFormatterObject<T1, T2> value, MessagePackSerializerOptions options)
+            {
+                writer.WriteArrayHeader(2);
+                options.Resolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty1, options);
+                options.Resolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.MyProperty2, options);
+            }
+        }
+
         private T Convert<T>(T value)
         {
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value));
@@ -196,6 +238,16 @@ namespace MessagePack.Tests
         public void WithArg()
         {
             this.Convert(new CustomClassObjectWithArgument(999)).GetX().Is(999 * 2);
+        }
+
+        [Fact]
+        public void GenericFormatters()
+        {
+            var x = new GenericFormatterObject<int, string> { MyProperty1 = 999, MyProperty2 = "foobar" };
+
+            var r = Convert(x);
+            r.MyProperty1.Is(999);
+            r.MyProperty2.Is("foobar");
         }
     }
 }

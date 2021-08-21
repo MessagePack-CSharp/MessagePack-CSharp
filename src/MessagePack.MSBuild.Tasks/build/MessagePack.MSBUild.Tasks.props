@@ -1,9 +1,0 @@
-﻿<Project TreatAsLocalProperty="_MessagePackGeneratorTaskFolder;_MessagePackGeneratorTaskAssembly">
-
-  <PropertyGroup>
-    <_MessagePackGeneratorTaskFolder>netstandard2.0</_MessagePackGeneratorTaskFolder>
-    <_MessagePackGeneratorTaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(_MessagePackGeneratorTaskFolder)\MessagePack.MSBuild.Tasks.dll</_MessagePackGeneratorTaskAssembly>
-  </PropertyGroup>
-
-  <UsingTask TaskName="MessagePack.MSBuild.Tasks.MessagePackGenerator" AssemblyFile="$(_MessagePackGeneratorTaskAssembly)" />
-</Project>

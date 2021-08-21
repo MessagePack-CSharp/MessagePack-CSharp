@@ -75,6 +75,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSecurity.cs">
       <Link>Code\MessagePackSecurity.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MonoProtection.cs">
+      <Link>Code\MonoProtection.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\HashCode.cs">
       <Link>Code\HashCode.cs</Link>
     </Compile>
@@ -101,6 +104,9 @@
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SequenceReaderExtensions.cs">
       <Link>Code\SequenceReaderExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs">
+      <Link>Code\SafeBitConverter.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackCode.cs">
       <Link>Code\MessagePackCode.cs</Link>

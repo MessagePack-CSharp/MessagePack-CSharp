@@ -142,9 +142,6 @@ namespace MessagePack.Internal
 
         private class AutomataNode : IComparable<AutomataNode>
         {
-            private static readonly AutomataNode[] EmptyNodes = new AutomataNode[0];
-            private static readonly ulong[] EmptyKeys = new ulong[0];
-
 #pragma warning disable SA1401 // Fields should be private
             internal ulong Key;
             internal int Value;
@@ -164,8 +161,8 @@ namespace MessagePack.Internal
             {
                 this.Key = key;
                 this.Value = -1;
-                this.nexts = EmptyNodes;
-                this.nextKeys = EmptyKeys;
+                this.nexts = Array.Empty<AutomataNode>();
+                this.nextKeys = Array.Empty<ulong>();
                 this.count = 0;
                 this.OriginalKey = null;
             }
@@ -398,7 +395,7 @@ namespace MessagePack.Internal
                     // if(key < mid)
                     il.EmitLdloc(key);
                     il.EmitULong(mid);
-                    il.Emit(OpCodes.Bge, gotoRight);
+                    il.Emit(OpCodes.Bge_Un, gotoRight);
                     EmitSearchNextCore(il, bytesSpan, key, onFound, onNotFound, l, l.Length);
 
                     // else
@@ -427,7 +424,7 @@ namespace MessagePack.Internal
             {
                 if (span.Length >= 8)
                 {
-                    key = MemoryMarshal.Cast<byte, ulong>(span)[0];
+                    key = SafeBitConverter.ToUInt64(span);
                     span = span.Slice(8);
                 }
                 else
@@ -443,7 +440,7 @@ namespace MessagePack.Internal
 
                         case 2:
                             {
-                                key = MemoryMarshal.Cast<byte, ushort>(span)[0];
+                                key = SafeBitConverter.ToUInt16(span);
                                 span = span.Slice(2);
                                 break;
                             }
@@ -451,7 +448,7 @@ namespace MessagePack.Internal
                         case 3:
                             {
                                 var a = span[0];
-                                var b = MemoryMarshal.Cast<byte, ushort>(span.Slice(1))[0];
+                                var b = SafeBitConverter.ToUInt16(span.Slice(1));
                                 key = a | (ulong)b << 8;
                                 span = span.Slice(3);
                                 break;
@@ -459,7 +456,7 @@ namespace MessagePack.Internal
 
                         case 4:
                             {
-                                key = MemoryMarshal.Cast<byte, uint>(span)[0];
+                                key = SafeBitConverter.ToUInt32(span);
                                 span = span.Slice(4);
                                 break;
                             }
@@ -467,7 +464,7 @@ namespace MessagePack.Internal
                         case 5:
                             {
                                 var a = span[0];
-                                var b = MemoryMarshal.Cast<byte, uint>(span.Slice(1))[0];
+                                var b = SafeBitConverter.ToUInt32(span.Slice(1));
                                 key = a | (ulong)b << 8;
                                 span = span.Slice(5);
                                 break;
@@ -475,8 +472,8 @@ namespace MessagePack.Internal
 
                         case 6:
                             {
-                                ulong a = MemoryMarshal.Cast<byte, ushort>(span)[0];
-                                ulong b = MemoryMarshal.Cast<byte, uint>(span.Slice(2))[0];
+                                ulong a = SafeBitConverter.ToUInt16(span);
+                                ulong b = SafeBitConverter.ToUInt32(span.Slice(2));
                                 key = a | (b << 16);
                                 span = span.Slice(6);
                                 break;
@@ -485,8 +482,8 @@ namespace MessagePack.Internal
                         case 7:
                             {
                                 var a = span[0];
-                                var b = MemoryMarshal.Cast<byte, ushort>(span.Slice(1))[0];
-                                var c = MemoryMarshal.Cast<byte, uint>(span.Slice(3))[0];
+                                var b = SafeBitConverter.ToUInt16(span.Slice(1));
+                                var c = SafeBitConverter.ToUInt32(span.Slice(3));
                                 key = a | (ulong)b << 8 | (ulong)c << 24;
                                 span = span.Slice(7);
                                 break;

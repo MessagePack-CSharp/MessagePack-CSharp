@@ -2,6 +2,7 @@
     "name": "MessagePack.Tests",
     "references": [
         "MessagePack",
+        "MessagePack.Annotations",
         "RuntimeUnitTestToolkit"
     ],
     "optionalUnityReferences": [

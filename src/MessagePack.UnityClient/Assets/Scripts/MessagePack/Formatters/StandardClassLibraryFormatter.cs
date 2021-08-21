@@ -15,7 +15,10 @@ namespace MessagePack.Formatters
 {
     // NET40 -> BigInteger, Complex, Tuple
 
-    // byte[] is special. represents bin type.
+    /// <summary>
+    /// Serializes a <see cref="byte"/> array as a bin type.
+    /// Deserializes a bin type or an array of byte-sized integers into a <see cref="byte"/> array.
+    /// </summary>
     public sealed class ByteArrayFormatter : IMessagePackFormatter<byte[]>
     {
         public static readonly ByteArrayFormatter Instance = new ByteArrayFormatter();
@@ -31,7 +34,35 @@ namespace MessagePack.Formatters
 
         public byte[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            return reader.ReadBytes()?.ToArray();
+            if (reader.NextMessagePackType == MessagePackType.Array)
+            {
+                int len = reader.ReadArrayHeader();
+                if (len == 0)
+                {
+                    return Array.Empty<byte>();
+                }
+
+                byte[] array = new byte[len];
+                options.Security.DepthStep(ref reader);
+                try
+                {
+                    for (int i = 0; i < len; i++)
+                    {
+                        reader.CancellationToken.ThrowIfCancellationRequested();
+                        array[i] = reader.ReadByte();
+                    }
+                }
+                finally
+                {
+                    reader.Depth--;
+                }
+
+                return array;
+            }
+            else
+            {
+                return reader.ReadBytes()?.ToArray();
+            }
         }
     }
 
@@ -84,17 +115,20 @@ namespace MessagePack.Formatters
             {
                 return null;
             }
-            else
-            {
-                var len = reader.ReadArrayHeader();
-                var array = new String[len];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    array[i] = reader.ReadString();
-                }
 
-                return array;
+            var len = reader.ReadArrayHeader();
+            if (len == 0)
+            {
+                return Array.Empty<String>();
             }
+
+            var array = new String[len];
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = reader.ReadString();
+            }
+
+            return array;
         }
     }
 
@@ -297,7 +331,7 @@ namespace MessagePack.Formatters
             }
             else
             {
-                writer.Write(value.ToString());
+                writer.Write(value.OriginalString);
             }
         }
 
@@ -473,7 +507,7 @@ namespace MessagePack.Formatters
 
         public void Serialize(ref MessagePackWriter writer, System.Numerics.BigInteger value, MessagePackSerializerOptions options)
         {
-#if NETCOREAPP2_1
+#if NETCOREAPP
             if (!writer.OldSpec)
             {
                 // try to get bin8 buffer.
@@ -501,7 +535,7 @@ namespace MessagePack.Formatters
         public System.Numerics.BigInteger Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             ReadOnlySequence<byte> bytes = reader.ReadBytes().Value;
-#if NETCOREAPP2_1
+#if NETCOREAPP
             if (bytes.IsSingleSegment)
             {
                 return new System.Numerics.BigInteger(bytes.First.Span);
@@ -596,4 +630,64 @@ namespace MessagePack.Formatters
             }
         }
     }
+
+    /// <summary>
+    /// Serializes any instance of <see cref="Type"/> by its <see cref="Type.AssemblyQualifiedName"/> value.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="Type"/> class itself or a derived type.</typeparam>
+    public sealed class TypeFormatter<T> : IMessagePackFormatter<T>
+        where T : Type
+    {
+        public static readonly IMessagePackFormatter<T> Instance = new TypeFormatter<T>();
+
+        private TypeFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+            }
+            else
+            {
+                writer.Write(value.AssemblyQualifiedName);
+            }
+        }
+
+        public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            return (T)Type.GetType(reader.ReadString(), throwOnError: true);
+        }
+    }
+
+#if NET5_0_OR_GREATER
+
+    public sealed class HalfFormatter : IMessagePackFormatter<Half>
+    {
+        public static readonly IMessagePackFormatter<Half> Instance = new HalfFormatter();
+
+        private HalfFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Half value, MessagePackSerializerOptions options)
+        {
+            writer.Write((float)value);
+        }
+
+        public Half Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return (Half)reader.ReadSingle();
+        }
+    }
+
+#endif
+
 }

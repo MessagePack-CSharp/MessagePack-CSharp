@@ -6,6 +6,7 @@
 using System;
 using System.Runtime.Serialization;
 using MessagePack;
+using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using Xunit;
 using Xunit.Abstractions;
@@ -20,11 +21,20 @@ public class MessagePackSerializerTypelessTests
     }
 
     [Fact]
-    public void SerializationOfBuiltInType()
+    public void SerializationOfString()
     {
         byte[] msgpack = MessagePackSerializer.Typeless.Serialize("hi");
         this.logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack));
         Assert.Equal("hi", MessagePackSerializer.Typeless.Deserialize(msgpack));
+    }
+
+    [Fact]
+    public void SerializationOfSystemType()
+    {
+        Type type = typeof(string);
+        byte[] msgpack = MessagePackSerializer.Typeless.Serialize(type);
+        this.logger.WriteLine(MessagePackSerializer.ConvertToJson(msgpack));
+        Assert.Equal(type, MessagePackSerializer.Typeless.Deserialize(msgpack));
     }
 
     [Fact]
@@ -66,6 +76,19 @@ public class MessagePackSerializerTypelessTests
         Assert.DoesNotContain(ThisAssembly.AssemblyVersion, json);
     }
 
+    [Fact]
+    public void SerializeInterface()
+    {
+        var v = new Holder() { T1 = new TypelessInterface { X = 999 }, T2 = new TypelessNonAbstract { X = 19, Y = 9999 } };
+        var bin = MessagePackSerializer.Typeless.Serialize(v);
+        var v2 = MessagePackSerializer.Typeless.Deserialize(bin).IsInstanceOf<Holder>();
+
+        v2.T1.IsInstanceOf<TypelessInterface>().X.Is(999);
+        var t2 = v2.T2.IsInstanceOf<TypelessNonAbstract>();
+        t2.X.Is(19);
+        t2.Y.Is(9999);
+    }
+
     [Theory]
     [InlineData((sbyte)1)]
     [InlineData((byte)1)]
@@ -80,6 +103,14 @@ public class MessagePackSerializerTypelessTests
         object roundTripValue = MessagePackSerializer.Typeless.Deserialize(MessagePackSerializer.Typeless.Serialize(boxedValue));
         Assert.Equal(boxedValue, roundTripValue);
         Assert.IsType(boxedValue.GetType(), roundTripValue);
+    }
+
+    [Fact]
+    public void TypelessFormatterAsAttribute()
+    {
+        byte[] msgpack = MessagePackSerializer.Serialize(new ClassWithTypelessField { Value = "hi" }, MessagePackSerializerOptions.Standard);
+        var deserialized = MessagePackSerializer.Deserialize<ClassWithTypelessField>(msgpack, MessagePackSerializerOptions.Standard);
+        Assert.Equal("hi", deserialized.Value);
     }
 
     public class MyObject
@@ -115,6 +146,41 @@ public class MessagePackSerializerTypelessTests
         }
 
         protected override MessagePackSerializerOptions Clone() => new MyTypelessOptions(this);
+    }
+
+    public class Holder
+    {
+        public ITypelessInterface T1 { get; set; }
+
+        public TypelessAbstract T2 { get; set; }
+    }
+
+    public interface ITypelessInterface
+    {
+        int X { get; }
+    }
+
+    public class TypelessInterface : ITypelessInterface
+    {
+        public int X { get; set; }
+    }
+
+    public abstract class TypelessAbstract
+    {
+        public int X { get; set; }
+    }
+
+    public class TypelessNonAbstract : TypelessAbstract
+    {
+        public int Y { get; set; }
+    }
+
+    [MessagePackObject]
+    public class ClassWithTypelessField
+    {
+        [Key("Value")]
+        [MessagePackFormatter(typeof(TypelessFormatter))]
+        public object Value;
     }
 }
 

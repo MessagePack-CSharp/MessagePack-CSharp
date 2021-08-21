@@ -16,6 +16,15 @@ namespace MessagePack.Tests
     {
         private readonly ITestOutputHelper logger;
 
+#if UNITY_2018_3_OR_NEWER
+
+        public ContractlessStandardResolverTest()
+        {
+            this.logger = new NullTestOutputHelper();
+        }
+
+#endif
+
         public ContractlessStandardResolverTest(ITestOutputHelper logger)
         {
             this.logger = logger;
@@ -31,6 +40,16 @@ namespace MessagePack.Tests
             public string Name { get; set; }
 
             public object[] /*Address*/ Addresses { get; set; }
+        }
+
+        public class DefaultValueStringKeyClassWithoutExplicitConstructor
+        {
+            public const int Prop1Constant = 11;
+            public const int Prop2Constant = 45;
+
+            public int Prop1 { get; set; } = Prop1Constant;
+
+            public int Prop2 { get; set; } = Prop2Constant;
         }
 
         public class V1
@@ -137,6 +156,18 @@ namespace MessagePack.Tests
             public new string Y;
         }
 
+        public class ObjectWithStaticConstructor
+        {
+            public string StringValue { get; set; }
+
+            public static readonly string Empty;
+
+            static ObjectWithStaticConstructor()
+            {
+                Empty = string.Empty;
+            }
+        }
+
         [Fact]
         public void SimpleTest()
         {
@@ -156,11 +187,23 @@ namespace MessagePack.Tests
 
             Person p2 = MessagePackSerializer.Deserialize<Person>(result, Resolvers.ContractlessStandardResolver.Options);
             p2.Name.Is("John");
-            var addresses = p2.Addresses as IList;
-            var d1 = addresses[0] as IDictionary;
-            var d2 = addresses[1] as IDictionary;
-            (d1["Street"] as string).Is("St.");
-            (d2["Street"] as string).Is("Ave.");
+            var addresses = (IList)p2.Addresses;
+            var d1 = (IDictionary)addresses[0];
+            var d2 = (IDictionary)addresses[1];
+            ((string)d1["Street"]).Is("St.");
+            ((string)d2["Street"]).Is("Ave.");
+        }
+
+        [Fact]
+        public void DefaultValueStringKeyClassWithoutExplicitConstructorTest()
+        {
+            var dictionary = new Dictionary<string, int>();
+
+            var result = MessagePackSerializer.Serialize(dictionary, Resolvers.ContractlessStandardResolver.Options);
+
+            var instance = MessagePackSerializer.Deserialize<DefaultValueStringKeyClassWithoutExplicitConstructor>(result, Resolvers.ContractlessStandardResolver.Options);
+            instance.Prop1.Is(DefaultValueStringKeyClassWithoutExplicitConstructor.Prop1Constant);
+            instance.Prop2.Is(DefaultValueStringKeyClassWithoutExplicitConstructor.Prop2Constant);
         }
 
         [Fact]
@@ -302,6 +345,16 @@ namespace MessagePack.Tests
             byte[] sr1 = MessagePackSerializer.Serialize(obj, ContractlessStandardResolver.Options);
             var obj2 = (Dictionary<object, object>)MessagePackSerializer.Deserialize<object>(sr1, ContractlessStandardResolver.Options);
             MessagePackSerializer.Serialize(obj2["nestedProp"], ContractlessStandardResolver.Options);
+        }
+
+        [Fact]
+        public void DeserializeWithStaticConstructor()
+        {
+            var options = ContractlessStandardResolverAllowPrivate.Options;
+            var original = new ObjectWithStaticConstructor { StringValue = "test" };
+
+            byte[] copyBin = MessagePackSerializer.Serialize(original, options);
+            var clone = MessagePackSerializer.Deserialize<ObjectWithStaticConstructor>(copyBin, options);
         }
     }
 }

@@ -1244,8 +1244,6 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void WriteString_PostEncoding(byte* pBuffer, int estimatedOffset, int byteCount)
         {
-            int bufferLength = estimatedOffset + byteCount;
-
             // move body and write prefix
             if (byteCount <= MessagePackRange.MaxFixStringLength)
             {
@@ -1295,6 +1293,8 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
         {
+#pragma warning disable 0162
+
             if (Utilities.IsMono)
             {
                 // mono does not guarantee overlapped memcpy so for Unity and NETSTANDARD use slow path.
@@ -1317,6 +1317,8 @@ namespace MessagePack
             {
                 Buffer.MemoryCopy(source, destination, destinationSizeInBytes, sourceBytesToCopy);
             }
+
+#pragma warning restore 0162
         }
     }
 }
