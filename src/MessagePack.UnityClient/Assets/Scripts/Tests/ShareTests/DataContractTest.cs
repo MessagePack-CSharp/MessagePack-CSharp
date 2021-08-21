@@ -3,10 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Resolvers;
 using Xunit;
 
 namespace MessagePack.Tests
@@ -133,6 +135,73 @@ namespace MessagePack.Tests
             mc2.IgnoredField.Is(0);
 
             MessagePackSerializer.ConvertToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
+        }
+
+        [DataContract]
+        public class Master : IEquatable<Master>
+        {
+            [DataMember]
+            public int A { get; set; }
+
+            [DataMember]
+            internal Detail InternalComplexProperty { get; set; }
+
+            [DataMember]
+            internal Detail InternalComplexField;
+
+            public bool Equals(Master other)
+            {
+                return other != null
+                    && this.A == other.A
+                    && EqualityComparer<Detail>.Default.Equals(this.InternalComplexProperty, other.InternalComplexProperty)
+                    && EqualityComparer<Detail>.Default.Equals(this.InternalComplexField, other.InternalComplexField);
+            }
+        }
+
+        public class Detail : IEquatable<Detail>
+        {
+            public int B1 { get; set; }
+
+            internal int B2 { get; set; }
+
+            public bool Equals(Detail other) => other != null && this.B1 == other.B1 && this.B2 == other.B2;
+        }
+
+        [Fact]
+        public void DataContractSerializerCompatibility()
+        {
+            var master = new Master
+            {
+                A = 1,
+                InternalComplexProperty = new Detail
+                {
+                    B1 = 2,
+                    B2 = 3,
+                },
+                InternalComplexField = new Detail
+                {
+                    B1 = 4,
+                    B2 = 5,
+                },
+            };
+
+            var dcsValue = DataContractSerializerRoundTrip(master);
+
+            var option = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(
+                DynamicObjectResolverAllowPrivate.Instance,
+                ContractlessStandardResolver.Instance));
+            var mpValue = MessagePackSerializer.Deserialize<Master>(MessagePackSerializer.Serialize(master, option), option);
+
+            Assert.Equal(dcsValue, mpValue);
+        }
+
+        private static T DataContractSerializerRoundTrip<T>(T value)
+        {
+            var ms = new MemoryStream();
+            var dcs = new DataContractSerializer(typeof(T));
+            dcs.WriteObject(ms, value);
+            ms.Position = 0;
+            return (T)dcs.ReadObject(ms);
         }
     }
 
