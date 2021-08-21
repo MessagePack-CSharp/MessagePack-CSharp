@@ -44,7 +44,7 @@ namespace MessagePackCompiler.Generator
 
         private static void Assign(StringBuilder buffer, in MemberInfoTuple member, bool canOverwrite, string indent, string tab, int tabCount)
         {
-            if (member.Info.IsWritable)
+            if (member.Info.IsWritable || member.IsConstructorParameter)
             {
                 if (canOverwrite)
                 {
