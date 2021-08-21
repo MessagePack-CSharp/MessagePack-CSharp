@@ -247,7 +247,7 @@ namespace MessagePack.Tests
             var before = new ClassWithPrivateReadonlyDictionary(Guid.NewGuid());
             before.GetBody()["name"] = "my name";
             DataContractSerializer dcs = new DataContractSerializer(typeof(ClassWithPrivateReadonlyDictionary));
-            using var ms = new MemoryStream();
+            var ms = new MemoryStream();
             dcs.WriteObject(ms, before);
             ms.Position = 0;
             var after = (ClassWithPrivateReadonlyDictionary)dcs.ReadObject(ms);
