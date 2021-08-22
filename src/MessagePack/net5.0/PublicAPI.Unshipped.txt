@@ -9,6 +9,7 @@ MessagePack.Formatters.InterfaceReadOnlySetFormatter<T>.InterfaceReadOnlySetForm
 MessagePack.Formatters.StringInterningFormatter
 MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> string
 MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> void
 MessagePack.MessagePackReader.MessagePackReader() -> void
 MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
 MessagePack.MessagePackSerializerOptions.WithPool(MessagePack.SequencePool pool) -> MessagePack.MessagePackSerializerOptions
@@ -24,7 +25,6 @@ MessagePack.TinyJsonException.TinyJsonException(System.Runtime.Serialization.Ser
 static MessagePack.Nil.operator !=(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static MessagePack.Nil.operator ==(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static readonly MessagePack.Formatters.HalfFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Half>
-static readonly MessagePack.Formatters.StringInterningFormatter.Instance -> MessagePack.Formatters.StringInterningFormatter
 virtual MessagePack.MessagePackStreamReader.Dispose(bool disposing) -> void
 MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>
 MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>.GenericEnumerableFormatter() -> void

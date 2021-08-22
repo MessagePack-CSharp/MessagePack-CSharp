@@ -11,12 +11,6 @@ namespace MessagePack.Formatters
     /// </summary>
     public sealed class StringInterningFormatter : IMessagePackFormatter<string>
     {
-        public static readonly StringInterningFormatter Instance = new StringInterningFormatter();
-
-        private StringInterningFormatter()
-        {
-        }
-
         /// <inheritdoc/>
         public string Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
