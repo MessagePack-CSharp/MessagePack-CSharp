@@ -122,6 +122,11 @@ namespace Xunit
         {
             NUnit.Framework.Assert.AreSame(expected, actual);
         }
+
+        public static void NotSame(object expected, object actual)
+        {
+            NUnit.Framework.Assert.AreNotSame(expected, actual);
+        }
     }
 
     [Serializable]
