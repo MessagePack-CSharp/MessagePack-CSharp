@@ -699,7 +699,7 @@ Benchmarks comparing MessagePack For C# to other serializers were run on `Window
 * Avoid string key decoding for lookup maps (string key and use automata based name lookup with inlined IL code generation, see: [AutomataDictionary](https://github.com/neuecc/MessagePack-CSharp/blob/bcedbce3fd98cb294210d6b4a22bdc4c75ccd916/src/MessagePack/Internal/AutomataDictionary.cs)
 * To encode string keys, use pre-generated member name bytes and fixed sized byte array copies in IL, see: [UnsafeMemory.cs](https://github.com/neuecc/MessagePack-CSharp/blob/f17ddc5d107d3a2f66f60398b214ef87919ff892/src/MessagePack/Internal/UnsafeMemory.cs)
 
-Before creating this library, I implemented a fast fast serializer with [ZeroFormatter#Performance](https://github.com/neuecc/ZeroFormatter#performance). This is a further evolved implementation. MessagePack for C# is always fast and optimized for all types (primitive, small struct, large object, any collections).
+Before creating this library, I implemented a fast serializer with [ZeroFormatter#Performance](https://github.com/neuecc/ZeroFormatter#performance). This is a further evolved implementation. MessagePack for C# is always fast and optimized for all types (primitive, small struct, large object, any collections).
 
 ### <a name="deserialize-performance"></a>Deserialization Performance for different options
 
