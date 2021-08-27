@@ -6,10 +6,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePackCompiler.CodeAnalysis
 {
@@ -92,7 +94,7 @@ namespace MessagePackCompiler.CodeAnalysis
         private readonly bool isForceUseMap;
         private readonly ReferenceSymbols typeReferences;
         private readonly INamedTypeSymbol[] targetTypes;
-        private readonly HashSet<string> embeddedTypes = new(new[]
+        public static readonly HashSet<string> embeddedTypes = new(new[]
         {
             "short",
             "int",
@@ -163,7 +165,7 @@ namespace MessagePackCompiler.CodeAnalysis
             "System.Reactive.Unit",
         });
 
-        private readonly Dictionary<string, string> knownGenericTypes = new()
+        public static readonly Dictionary<string, string> knownGenericTypes = new()
         {
 #pragma warning disable SA1509 // Opening braces should not be preceded by blank line
             { "System.Collections.Generic.List<>", "global::MessagePack.Formatters.ListFormatter<TREPLACE>" },
@@ -259,7 +261,31 @@ namespace MessagePackCompiler.CodeAnalysis
             this.isForceUseMap = isForceUseMap;
             this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
 
-            targetTypes = compilation.GetNamedTypeSymbols()
+            var hubMethods = compilation.GetNamedTypeSymbols()
+                   .Where(i => i.Interfaces.Any(StarborneTypeChecker.IsSignalRClass))
+                   .SelectMany(i => i.GetAllMembers().OfType<IMethodSymbol>())
+                   .Where(StarborneTypeChecker.IsMessagePackMethod);
+
+#pragma warning disable RS1024 // Compare symbols correctly
+            var types = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+#pragma warning restore RS1024 // Compare symbols correctly
+            foreach (var methodSymbol in hubMethods)
+            {
+                if (methodSymbol.ReturnType is INamedTypeSymbol returnType)
+                {
+                    types.Add(returnType);
+                }
+
+                foreach (var para in methodSymbol.Parameters)
+                {
+                    if (para.Type is INamedTypeSymbol paraType)
+                    {
+                        types.Add(paraType);
+                    }
+                }
+            }
+
+            types.UnionWith(compilation.GetNamedTypeSymbols()
                 .Where(x =>
                 {
                     if (x.DeclaredAccessibility == Accessibility.Public)
@@ -278,8 +304,9 @@ namespace MessagePackCompiler.CodeAnalysis
                        ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
                     || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
                     || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))
-                    || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute))))
-                .ToArray();
+                    || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))));
+
+            targetTypes = types.ToArray();
         }
 
         private void ResetWorkspace()
@@ -317,7 +344,7 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             var typeSymbolString = typeSymbol.ToString() ?? throw new InvalidOperationException();
-            if (this.embeddedTypes.Contains(typeSymbolString))
+            if (embeddedTypes.Contains(typeSymbolString))
             {
                 return;
             }
@@ -478,7 +505,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 var firstTypeArgument = type.TypeArguments[0];
                 this.CollectCore(firstTypeArgument);
 
-                if (this.embeddedTypes.Contains(firstTypeArgument.ToString()!))
+                if (embeddedTypes.Contains(firstTypeArgument.ToString()!))
                 {
                     return;
                 }
@@ -489,7 +516,7 @@ namespace MessagePackCompiler.CodeAnalysis
             }
 
             // collection
-            if (this.knownGenericTypes.TryGetValue(genericTypeString, out var formatter))
+            if (knownGenericTypes.TryGetValue(genericTypeString, out var formatter))
             {
                 foreach (ITypeSymbol item in type.TypeArguments)
                 {
@@ -508,13 +535,13 @@ namespace MessagePackCompiler.CodeAnalysis
                     return;
                 }
 
-                formatter = this.knownGenericTypes["System.Linq.IGrouping<,>"];
+                formatter = knownGenericTypes["System.Linq.IGrouping<,>"];
                 f = formatter.Replace("TREPLACE", typeArgs);
 
                 var groupingInfo = new GenericSerializationInfo("global::System.Linq.IGrouping<" + typeArgs + ">", f, isOpenGenericType);
                 this.collectedGenericInfo.Add(groupingInfo);
 
-                formatter = this.knownGenericTypes["System.Collections.Generic.IEnumerable<>"];
+                formatter = knownGenericTypes["System.Collections.Generic.IEnumerable<>"];
                 typeArgs = type.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 f = formatter.Replace("TREPLACE", typeArgs);
 

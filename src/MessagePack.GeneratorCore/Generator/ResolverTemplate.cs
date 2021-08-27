@@ -40,28 +40,36 @@ namespace MessagePackCompiler.Generator
 
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    using System;\r\n\r\n    public class ");
+            this.Write("\r\n{\r\n    using System;\r\n" +
+                "\r\n    public delegate void TypeLessSerilizeFunc(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options);"+
+                "\r\n    public delegate object TypeLessDeserilizeFunc(ref MessagePackReader reader, Type type, MessagePackSerializerOptions options);\r\n" +
+                "\r\n    public class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static readonly " +
-                    "global::MessagePack.IFormatterResolver Instance = new ");
+                    $"{this.ToStringHelper.ToStringWithCulture(ResolverName)} Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write("();\r\n\r\n        private ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(@"()
-        {
-        }
+            this.Write(@$"()
+        {{
+        }}
+
+		public bool TryGetSerializerFunc(Type type, out TypeLessSerilizeFunc serilizeFunc)
+			=> {this.ToStringHelper.ToStringWithCulture(ResolverName)}GetFormatterHelper.SerializeFuncs.TryGetValue(type, out serilizeFunc);
+		public bool TryGetDeserializerFunc(Type type, out TypeLessDeserilizeFunc deserilizeFunc)
+			=> {this.ToStringHelper.ToStringWithCulture(ResolverName)}GetFormatterHelper.DeserializeFuncs.TryGetValue(type, out deserilizeFunc);
 
         public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-        {
+        {{
             return FormatterCache<T>.Formatter;
-        }
+        }}
 
         private static class FormatterCache<T>
-        {
+        {{
             internal static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
-            {
+            {{
                 var f = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(@"GetFormatterHelper.GetFormatter(typeof(T));
@@ -76,7 +84,26 @@ namespace ");
     internal static class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write("GetFormatterHelper\r\n    {\r\n        private static readonly global::System.Collect" +
-                    "ions.Generic.Dictionary<Type, int> lookup;\r\n\r\n        static ");
+                    "ions.Generic.Dictionary<Type, int> lookup;\r\n" +
+                    @"
+        internal static readonly global::System.Collections.Generic.Dictionary<Type, TypeLessSerilizeFunc> SerializeFuncs = new System.Collections.Generic.Dictionary<Type, TypeLessSerilizeFunc>();
+        internal static readonly global::System.Collections.Generic.Dictionary<Type, TypeLessDeserilizeFunc> DeserializeFuncs = new System.Collections.Generic.Dictionary<Type, TypeLessDeserilizeFunc>();
+
+        private static global::MessagePack.Formatters.IMessagePackFormatter<T> SetFormatter<T>(global::MessagePack.Formatters.IMessagePackFormatter<T> formatter)
+        {
+            SerializeFuncs[typeof(T)] = Serailze;
+            DeserializeFuncs[typeof(T)] = Deserailze;
+
+            void Serailze(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options)
+                => formatter.Serialize(ref writer, (T)obj, options);
+            object Deserailze(ref MessagePackReader reader, Type obj, MessagePackSerializerOptions options)
+                => formatter.Deserialize(ref reader, options);
+
+            return formatter;
+        }
+
+" +
+                    "        static ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write("GetFormatterHelper()\r\n        {\r\n            lookup = new global::System.Collecti" +
                     "ons.Generic.Dictionary<Type, int>(");
@@ -106,9 +133,9 @@ namespace ");
  for(var i = 0; i < RegisterInfos.Length; i++) { var x = RegisterInfos[i]; 
             this.Write("                case ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(": return new ");
+            this.Write(": return SetFormatter(new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName));
-            this.Write("();\r\n");
+            this.Write("());\r\n");
  } 
             this.Write(@"                default: return null;
             }
