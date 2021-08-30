@@ -13,7 +13,7 @@ namespace MessagePackCompiler.Generator
     using System.Text;
     using System.Collections.Generic;
     using System;
-    
+
     /// <summary>
     /// Class to produce the template output
     /// </summary>
@@ -41,7 +41,7 @@ namespace MessagePackCompiler.Generator
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
             this.Write("\r\n{\r\n    using System;\r\n" +
-                "\r\n    public delegate void TypeLessSerilizeFunc(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options);"+
+                "\r\n    public delegate void TypeLessSerilizeFunc(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options);" +
                 "\r\n    public delegate object TypeLessDeserilizeFunc(ref MessagePackReader reader, Type type, MessagePackSerializerOptions options);\r\n" +
                 "\r\n    public class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
@@ -70,26 +70,25 @@ namespace ");
 
             static FormatterCache()
             {{
-                var f = ");
+                if (");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(@"GetFormatterHelper.GetFormatter(typeof(T));
-                if (f != null)
-                {
-                    Formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
-                }
+            this.Write(@"GetFormatterHelper.Lookup.TryGetValue(typeof(T), out var formatter))
+				{
+					Formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)formatter;
+				}
             }
         }
     }
 
     internal static class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("GetFormatterHelper\r\n    {\r\n        private static readonly global::System.Collect" +
-                    "ions.Generic.Dictionary<Type, int> lookup;\r\n" +
+            this.Write("GetFormatterHelper\r\n    {\r\n        " +
                     @"
+        internal static readonly global::System.Collections.Generic.IReadOnlyDictionary<Type, global::MessagePack.Formatters.IMessagePackFormatter> Lookup;
         internal static readonly global::System.Collections.Generic.Dictionary<Type, TypeLessSerilizeFunc> SerializeFuncs = new System.Collections.Generic.Dictionary<Type, TypeLessSerilizeFunc>();
         internal static readonly global::System.Collections.Generic.Dictionary<Type, TypeLessDeserilizeFunc> DeserializeFuncs = new System.Collections.Generic.Dictionary<Type, TypeLessDeserilizeFunc>();
 
-        private static global::MessagePack.Formatters.IMessagePackFormatter<T> SetFormatter<T>(global::MessagePack.Formatters.IMessagePackFormatter<T> formatter)
+        private static global::MessagePack.Formatters.IMessagePackFormatter SetFormatter<T>(global::MessagePack.Formatters.IMessagePackFormatter<T> formatter)
         {
             SerializeFuncs[typeof(T)] = Serailze;
             DeserializeFuncs[typeof(T)] = Deserailze;
@@ -105,40 +104,20 @@ namespace ");
 " +
                     "        static ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("GetFormatterHelper()\r\n        {\r\n            lookup = new global::System.Collecti" +
-                    "ons.Generic.Dictionary<Type, int>(");
+            this.Write("GetFormatterHelper()\r\n        {\r\n            Lookup = new global::System.Collecti" +
+                    "ons.Generic.Dictionary<Type, global::MessagePack.Formatters.IMessagePackFormatter>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(RegisterInfos.Length));
             this.Write(")\r\n            {\r\n");
- for(var i = 0; i < RegisterInfos.Length; i++) { var x = RegisterInfos[i]; 
-            this.Write("                { typeof(");
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
-            this.Write("), ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(" },\r\n");
- } 
+            for (var i = 0; i < RegisterInfos.Length; i++)
+            {
+                var x = RegisterInfos[i];
+                this.Write("                [typeof(");
+                this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
+                this.Write(")] = SetFormatter(new ");
+                this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName : (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName));
+                this.Write("()),\r\n");
+            }
             this.Write(@"            };
-        }
-
-        internal static object GetFormatter(Type t)
-        {
-            int key;
-            if (!lookup.TryGetValue(t, out key))
-            {
-                return null;
-            }
-
-            switch (key)
-            {
-");
- for(var i = 0; i < RegisterInfos.Length; i++) { var x = RegisterInfos[i]; 
-            this.Write("                case ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(": return SetFormatter(new ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName));
-            this.Write("());\r\n");
- } 
-            this.Write(@"                default: return null;
-            }
         }
     }
 }
@@ -254,7 +233,7 @@ namespace ");
             }
             // If we're starting off, or if the previous text ended with a newline,
             // we have to append the current indent first.
-            if (((this.GenerationEnvironment.Length == 0) 
+            if (((this.GenerationEnvironment.Length == 0)
                         || this.endsWithNewline))
             {
                 this.GenerationEnvironment.Append(this.currentIndentField);
@@ -372,7 +351,7 @@ namespace ");
         /// </summary>
         public class ToStringInstanceHelper
         {
-            private System.IFormatProvider formatProviderField  = global::System.Globalization.CultureInfo.InvariantCulture;
+            private System.IFormatProvider formatProviderField = global::System.Globalization.CultureInfo.InvariantCulture;
             /// <summary>
             /// Gets or sets format provider to be used by ToStringWithCulture method.
             /// </summary>
@@ -380,13 +359,13 @@ namespace ");
             {
                 get
                 {
-                    return this.formatProviderField ;
+                    return this.formatProviderField;
                 }
                 set
                 {
                     if ((value != null))
                     {
-                        this.formatProviderField  = value;
+                        this.formatProviderField = value;
                     }
                 }
             }
