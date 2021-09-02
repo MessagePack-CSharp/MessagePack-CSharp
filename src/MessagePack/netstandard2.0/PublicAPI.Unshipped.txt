@@ -1,6 +1,10 @@
 MessagePack.ExtensionHeader.ExtensionHeader() -> void
 MessagePack.ExtensionResult.ExtensionResult() -> void
 MessagePack.FormatterNotRegisteredException.FormatterNotRegisteredException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
+MessagePack.Formatters.StringInterningFormatter
+MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> string
+MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> void
 MessagePack.MessagePackReader.MessagePackReader() -> void
 MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
 MessagePack.MessagePackSerializerOptions.WithPool(MessagePack.SequencePool pool) -> MessagePack.MessagePackSerializerOptions

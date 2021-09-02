@@ -6,6 +6,10 @@ MessagePack.Formatters.HalfFormatter.Deserialize(ref MessagePack.MessagePackRead
 MessagePack.Formatters.HalfFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Half value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.InterfaceReadOnlySetFormatter<T>
 MessagePack.Formatters.InterfaceReadOnlySetFormatter<T>.InterfaceReadOnlySetFormatter() -> void
+MessagePack.Formatters.StringInterningFormatter
+MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> string
+MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> void
 MessagePack.MessagePackReader.MessagePackReader() -> void
 MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
 MessagePack.MessagePackSerializerOptions.WithPool(MessagePack.SequencePool pool) -> MessagePack.MessagePackSerializerOptions
