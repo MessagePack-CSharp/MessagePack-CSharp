@@ -10,13 +10,20 @@ using System.Text;
 using System.Threading.Tasks;
 using MessagePack.Resolvers;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
 #if !ENABLE_IL2CPP
-
     public class DataContractTest
     {
+        private readonly ITestOutputHelper logger;
+
+        public DataContractTest(ITestOutputHelper logger)
+        {
+            this.logger = logger;
+        }
+
         [DataContract]
         public class MyClass
         {
@@ -65,6 +72,23 @@ namespace MessagePack.Tests
 
             [IgnoreDataMember]
             public int IgnoredField;
+        }
+
+        [DataContract]
+        public class ClassWithPrivateReadonlyDictionary
+        {
+            [DataMember(Name = "Key", Order = 0, EmitDefaultValue = false)]
+            private readonly Guid? key;
+
+            [DataMember(Name = "Body", Order = 1, EmitDefaultValue = false)]
+            private readonly Dictionary<string, object> body = new Dictionary<string, object>();
+
+            public ClassWithPrivateReadonlyDictionary(Guid? key)
+            {
+                this.key = key;
+            }
+
+            internal Dictionary<string, object> GetBody() => this.body;
         }
 
         [Fact]
@@ -202,6 +226,32 @@ namespace MessagePack.Tests
             dcs.WriteObject(ms, value);
             ms.Position = 0;
             return (T)dcs.ReadObject(ms);
+        }
+
+        [Fact]
+        public void DeserializeTypeWithPrivateReadonlyDictionary()
+        {
+            var before = new ClassWithPrivateReadonlyDictionary(Guid.NewGuid());
+            before.GetBody()["name"] = "my name";
+            byte[] bytes = MessagePackSerializer.Serialize(before, StandardResolverAllowPrivate.Options);
+            string json = MessagePackSerializer.ConvertToJson(bytes); // just for check that json has _body' values.
+            this.logger.WriteLine(json);
+
+            var after = MessagePackSerializer.Deserialize<ClassWithPrivateReadonlyDictionary>(bytes, StandardResolverAllowPrivate.Options);
+            Assert.Equal("my name", after.GetBody()["name"]);
+        }
+
+        [Fact]
+        public void DeserializeTypeWithPrivateReadonlyDictionary_DCS()
+        {
+            var before = new ClassWithPrivateReadonlyDictionary(Guid.NewGuid());
+            before.GetBody()["name"] = "my name";
+            DataContractSerializer dcs = new DataContractSerializer(typeof(ClassWithPrivateReadonlyDictionary));
+            var ms = new MemoryStream();
+            dcs.WriteObject(ms, before);
+            ms.Position = 0;
+            var after = (ClassWithPrivateReadonlyDictionary)dcs.ReadObject(ms);
+            Assert.Equal("my name", after.GetBody()["name"]);
         }
     }
 

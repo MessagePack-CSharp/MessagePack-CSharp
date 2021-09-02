@@ -953,7 +953,7 @@ namespace MessagePack.Internal
         {
             foreach (var item in infoList)
             {
-                if (item.MemberInfo == null || item.IsInitializedLocalVariable == null)
+                if (item.MemberInfo == null || item.IsInitializedLocalVariable == null || item.MemberInfo.IsWrittenByConstructor)
                 {
                     continue;
                 }
@@ -991,6 +991,11 @@ namespace MessagePack.Internal
             for (var key = 0; key <= maxKey; key++)
             {
                 if (!intKeyMap.TryGetValue(key, out var item))
+                {
+                    continue;
+                }
+
+                if (item.MemberInfo.IsWrittenByConstructor)
                 {
                     continue;
                 }
@@ -1786,7 +1791,7 @@ namespace MessagePack.Internal
                         {
                             FieldInfo = field,
                             IsReadable = allowPrivate || field.IsPublic,
-                            IsWritable = (allowPrivate || field.IsPublic) && !field.IsInitOnly,
+                            IsWritable = allowPrivate || (field.IsPublic && !field.IsInitOnly),
                         };
                         break;
                     default:
@@ -2066,7 +2071,14 @@ namespace MessagePack.Internal
             }
 
             var shouldUseFormatterResolver = false;
-            var membersArray = members.Where(m => m.IsExplicitContract || constructorParameters.Any(p => p.MemberInfo.Equals(m)) || m.IsWritable).ToArray();
+
+            // Mark each member that will be set by way of the constructor.
+            foreach (var item in constructorParameters)
+            {
+                item.MemberInfo.IsWrittenByConstructor = true;
+            }
+
+            var membersArray = members.Where(m => m.IsExplicitContract || m.IsWrittenByConstructor || m.IsWritable).ToArray();
             foreach (var member in membersArray)
             {
                 if (IsOptimizeTargetType(member.Type))
@@ -2218,6 +2230,8 @@ namespace MessagePack.Internal
             }
 
             public bool IsWritable { get; set; }
+
+            public bool IsWrittenByConstructor { get; set; }
 
             /// <summary>
             /// Gets a value indicating whether the property can only be set by an object initializer, a constructor, or another `init` member.
