@@ -1,4 +1,7 @@
 steps:
+- bash: env
+  displayName: Environment block
+
 - powershell: Write-Host "##vso[task.setvariable variable=unity_package_version;]$((& (./azure-pipelines/Get-nbgv.ps1) get-version -f json | ConvertFrom-Json).NuGetPackageVersion)"
   displayName: Get unity package version
 
