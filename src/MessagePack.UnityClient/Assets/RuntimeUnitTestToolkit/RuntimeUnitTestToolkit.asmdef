@@ -1,10 +1,10 @@
 {
     "name": "RuntimeUnitTestToolkit",
     "references": [
+        "UnityEngine.UI"
     ],
     "optionalUnityReferences": [
-        "TestAssemblies",
-        "UnityEngine.UI"
+        "TestAssemblies"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
