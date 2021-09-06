@@ -3,7 +3,8 @@
     "references": [
     ],
     "optionalUnityReferences": [
-        "TestAssemblies"
+        "TestAssemblies",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
