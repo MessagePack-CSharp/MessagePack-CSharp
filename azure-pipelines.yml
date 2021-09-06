@@ -5,6 +5,7 @@ trigger:
     - develop
     - 'v?.*'
     - 'validate/*'
+    - unityonly
   paths:
     exclude: ["doc", "*.md"]
 
