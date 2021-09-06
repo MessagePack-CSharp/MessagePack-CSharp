@@ -3,10 +3,10 @@
     "references": [
         "MessagePack",
         "MessagePack.Annotations",
-        "RuntimeUnitTestToolkit"
+        "RuntimeUnitTestToolkit",
+        "UnityEngine.UI"
     ],
     "optionalUnityReferences": [
-        "UnityEngine.UI",
         "TestAssemblies"
     ],
     "includePlatforms": [],
