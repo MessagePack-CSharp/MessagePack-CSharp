@@ -1,12 +1,12 @@
 {
     "name": "MessagePack.Tests",
     "references": [
-        "Unity.InputSystem",
         "MessagePack",
         "MessagePack.Annotations",
         "RuntimeUnitTestToolkit"
     ],
     "optionalUnityReferences": [
+        "Unity.InputSystem",
         "TestAssemblies"
     ],
     "includePlatforms": [],
