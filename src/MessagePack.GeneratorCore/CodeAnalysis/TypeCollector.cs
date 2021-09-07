@@ -425,21 +425,15 @@ namespace MessagePackCompiler.CodeAnalysis
         private void CollectGenericUnion(INamedTypeSymbol type)
         {
             var unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments);
-            using var enumerator = unionAttrs.GetEnumerator();
-            if (!enumerator.MoveNext())
-            {
-                return;
-            }
 
-            do
+            //collect subtypes
+            foreach (var unionAttr in unionAttrs)
             {
-                var x = enumerator.Current;
-                if (x[1] is { Value: INamedTypeSymbol unionType } && alreadyCollected.Contains(unionType) == false)
+                if (unionAttr[1].Value is ITypeSymbol subType)
                 {
-                    CollectCore(unionType);
+                    CollectCore(subType);
                 }
             }
-            while (enumerator.MoveNext());
         }
 
         private void CollectArray(IArrayTypeSymbol array)
