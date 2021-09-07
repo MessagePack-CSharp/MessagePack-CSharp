@@ -410,6 +410,16 @@ namespace MessagePackCompiler.CodeAnalysis
             var info = new UnionSerializationInfo(type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(), type.Name, type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), unionAttrs.Select(UnionSubTypeInfoSelector).OrderBy(x => x.Key).ToArray());
 
             this.collectedUnionInfo.Add(info);
+
+            //collect subtypes
+            //needed for a union type, defined outside the target project.
+            foreach (var unionAttr in unionAttrs)
+            {
+                if (unionAttr[1].Value is ITypeSymbol subType)
+                {
+                    CollectCore(subType);
+                }
+            }
         }
 
         private void CollectGenericUnion(INamedTypeSymbol type)
