@@ -627,6 +627,13 @@ namespace MessagePack.Internal
                 MessagePackFormatterAttribute attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
+                    // Verify that the specified formatter implements the required interface.
+                    // Doing this now provides a more helpful error message than if we let the CLR throw an EntryPointNotFoundException later.
+                    if (!attr.FormatterType.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMessagePackFormatter<>) && i.GenericTypeArguments[0].IsEquivalentTo(item.Type)))
+                    {
+                        throw new MessagePackSerializationException($"{info.Type.FullName}.{item.Name} is declared as type {item.Type.FullName}, but the prescribed {attr.FormatterType.FullName} does not implement IMessagePackFormatter<{item.Type.Name}>.");
+                    }
+
                     FieldBuilder f = builder.DefineField(item.Name + "_formatter", attr.FormatterType, FieldAttributes.Private | FieldAttributes.InitOnly);
 
                     // If no args were provided and the formatter implements the singleton pattern, fetch the formatter from the field.
