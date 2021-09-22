@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using MessagePack.Formatters;
 using MessagePack.Internal;
+using MessagePack.Resolvers;
 
 #pragma warning disable SA1403 // File may only contain a single namespace
 
@@ -110,7 +111,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
+                Formatter = (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo.AsType());
             }
         }
     }
@@ -495,7 +496,7 @@ namespace MessagePack.Internal
                 MessagePackFormatterAttribute attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
-                    var formatter = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
+                    IMessagePackFormatter formatter = ResolverUtilities.ActivateFormatter(attr.FormatterType, attr.Arguments);
                     serializeCustomFormatters.Add(formatter);
                 }
                 else
@@ -510,7 +511,7 @@ namespace MessagePack.Internal
                 MessagePackFormatterAttribute attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
-                    var formatter = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
+                    IMessagePackFormatter formatter = ResolverUtilities.ActivateFormatter(attr.FormatterType, attr.Arguments);
                     deserializeCustomFormatters.Add(formatter);
                 }
                 else
@@ -628,36 +629,46 @@ namespace MessagePack.Internal
                 {
                     FieldBuilder f = builder.DefineField(item.Name + "_formatter", attr.FormatterType, FieldAttributes.Private | FieldAttributes.InitOnly);
 
-                    var bindingFlags = (int)(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                    LocalBuilder attrVar = il.DeclareLocal(typeof(MessagePackFormatterAttribute));
-
-                    il.Emit(OpCodes.Ldtoken, info.Type);
-                    il.EmitCall(EmitInfo.GetTypeFromHandle);
-                    il.Emit(OpCodes.Ldstr, item.Name);
-                    il.EmitLdc_I4(bindingFlags);
-                    if (item.IsProperty)
+                    // If no args were provided and the formatter implements the singleton pattern, fetch the formatter from the field.
+                    if ((attr.Arguments == null || attr.Arguments.Length == 0) && ResolverUtilities.FetchSingletonField(attr.FormatterType) is FieldInfo singletonField)
                     {
-                        il.EmitCall(EmitInfo.TypeGetProperty);
+                        il.EmitLoadThis();
+                        il.EmitLdsfld(singletonField);
                     }
                     else
                     {
-                        il.EmitCall(EmitInfo.TypeGetField);
+                        var bindingFlags = (int)(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                        LocalBuilder attrVar = il.DeclareLocal(typeof(MessagePackFormatterAttribute));
+
+                        il.Emit(OpCodes.Ldtoken, info.Type);
+                        il.EmitCall(EmitInfo.GetTypeFromHandle);
+                        il.Emit(OpCodes.Ldstr, item.Name);
+                        il.EmitLdc_I4(bindingFlags);
+                        if (item.IsProperty)
+                        {
+                            il.EmitCall(EmitInfo.TypeGetProperty);
+                        }
+                        else
+                        {
+                            il.EmitCall(EmitInfo.TypeGetField);
+                        }
+
+                        il.EmitTrue();
+                        il.EmitCall(EmitInfo.GetCustomAttributeMessagePackFormatterAttribute);
+                        il.EmitStloc(attrVar);
+
+                        il.EmitLoadThis();
+
+                        il.EmitLdloc(attrVar);
+                        il.EmitCall(EmitInfo.MessagePackFormatterAttr.FormatterType);
+                        il.EmitLdloc(attrVar);
+                        il.EmitCall(EmitInfo.MessagePackFormatterAttr.Arguments);
+                        il.EmitCall(EmitInfo.ActivatorCreateInstance);
+
+                        il.Emit(OpCodes.Castclass, attr.FormatterType);
                     }
 
-                    il.EmitTrue();
-                    il.EmitCall(EmitInfo.GetCustomAttributeMessagePackFormatterAttribute);
-                    il.EmitStloc(attrVar);
-
-                    il.EmitLoadThis();
-
-                    il.EmitLdloc(attrVar);
-                    il.EmitCall(EmitInfo.MessagePackFormatterAttr.FormatterType);
-                    il.EmitLdloc(attrVar);
-                    il.EmitCall(EmitInfo.MessagePackFormatterAttr.Arguments);
-                    il.EmitCall(EmitInfo.ActivatorCreateInstance);
-
-                    il.Emit(OpCodes.Castclass, attr.FormatterType);
                     il.Emit(OpCodes.Stfld, f);
 
                     dict.Add(item, f);
