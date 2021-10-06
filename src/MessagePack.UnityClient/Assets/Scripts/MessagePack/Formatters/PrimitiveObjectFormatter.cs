@@ -269,9 +269,16 @@ namespace MessagePack.Formatters
                     return reader.ReadBytes()?.ToArray();
                 case MessagePackType.Extension:
                     ExtensionHeader ext = reader.ReadExtensionFormatHeader();
-                    if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
+                    switch (ext.TypeCode)
                     {
-                        return reader.ReadDateTime(ext);
+                        case ReservedMessagePackExtensionTypeCode.DateTime:
+                            return reader.ReadDateTime(ext);
+                        case 13:
+                            var obj = MessagePackSerializer.Deserialize<object>(reader.ReadRaw());
+                            var dateTimeVar = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(obj));
+                            return dateTimeVar;
+                        default:
+                            break;
                     }
 
                     throw new MessagePackSerializationException("Invalid primitive bytes.");
