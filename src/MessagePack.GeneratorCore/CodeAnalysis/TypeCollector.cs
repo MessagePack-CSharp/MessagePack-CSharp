@@ -195,7 +195,7 @@ namespace MessagePackCompiler.CodeAnalysis
             { "System.Collections.Generic.IReadOnlyDictionary<,>", "global::MessagePack.Formatters.InterfaceReadOnlyDictionaryFormatter<TREPLACE>" },
             { "System.Collections.Concurrent.ConcurrentDictionary<,>", "global::MessagePack.Formatters.ConcurrentDictionaryFormatter<TREPLACE>" },
             { "System.Lazy<>", "global::MessagePack.Formatters.LazyFormatter<TREPLACE>" },
-            { "System.Threading.Tasks<>", "global::MessagePack.Formatters.TaskValueFormatter<TREPLACE>" },
+            { "System.Threading.Tasks.Task<>", "global::MessagePack.Formatters.TaskValueFormatter<TREPLACE>" },
 
             { "System.Tuple<>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
             { "System.Tuple<,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
