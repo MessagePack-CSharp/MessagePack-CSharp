@@ -195,7 +195,6 @@ namespace MessagePackCompiler.CodeAnalysis
             { "System.Collections.Generic.IReadOnlyDictionary<,>", "global::MessagePack.Formatters.InterfaceReadOnlyDictionaryFormatter<TREPLACE>" },
             { "System.Collections.Concurrent.ConcurrentDictionary<,>", "global::MessagePack.Formatters.ConcurrentDictionaryFormatter<TREPLACE>" },
             { "System.Lazy<>", "global::MessagePack.Formatters.LazyFormatter<TREPLACE>" },
-            { "System.Threading.Tasks.Task<>", "global::MessagePack.Formatters.TaskValueFormatter<TREPLACE>" },
 
             { "System.Tuple<>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
             { "System.Tuple<,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
@@ -262,9 +261,10 @@ namespace MessagePackCompiler.CodeAnalysis
             this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
 
             var hubMethods = compilation.GetNamedTypeSymbols()
-                   .Where(i => i.Interfaces.Any(StarborneTypeChecker.IsSignalRClass))
+                   .Where(StarborneTypeChecker.IsSignalRClass)
                    .SelectMany(i => i.GetAllMembers().OfType<IMethodSymbol>())
-                   .Where(StarborneTypeChecker.IsMessagePackMethod);
+                   .Where(StarborneTypeChecker.IsMessagePackMethod)
+                   .Where(method => method.DeclaredAccessibility == Accessibility.Public);
 
 #pragma warning disable RS1024 // Compare symbols correctly
             var types = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
@@ -273,16 +273,41 @@ namespace MessagePackCompiler.CodeAnalysis
             {
                 if (methodSymbol.ReturnType is INamedTypeSymbol returnType)
                 {
-                    types.Add(returnType);
+                    AddType(types, returnType);
                 }
 
                 foreach (var para in methodSymbol.Parameters)
                 {
                     if (para.Type is INamedTypeSymbol paraType)
                     {
-                        types.Add(paraType);
+                        AddType(types, paraType);
                     }
                 }
+            }
+
+            static void AddType(HashSet<INamedTypeSymbol> types, INamedTypeSymbol type)
+            {
+                var typeString = type.ToDisplayString();
+
+                if (typeString.Contains("System.Exception"))
+                {
+                    return;
+                }
+
+                if (typeString.StartsWith("System.Threading.Tasks.Task<")
+                    || typeString.StartsWith("System.Collections.Generic.IAsyncEnumerable<"))
+                {
+                    if (type.TypeArguments[0] is INamedTypeSymbol nestedType)
+                    {
+                        type = nestedType;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
+                types.Add((INamedTypeSymbol)type.WithNullableAnnotation(NullableAnnotation.NotAnnotated));
             }
 
             types.UnionWith(compilation.GetNamedTypeSymbols()
@@ -307,6 +332,7 @@ namespace MessagePackCompiler.CodeAnalysis
                     || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))));
 
             targetTypes = types.ToArray();
+
         }
 
         private void ResetWorkspace()
@@ -610,6 +636,11 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private ObjectSerializationInfo GetObjectInfo(INamedTypeSymbol type)
         {
+            if (type.TypeKind == TypeKind.Class)
+            {
+                type = (INamedTypeSymbol)type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+            }
+
             var isClass = !type.IsValueType;
             var isOpenGenericType = type.IsGenericType;
 

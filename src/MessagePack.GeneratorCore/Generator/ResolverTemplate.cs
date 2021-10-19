@@ -40,12 +40,18 @@ namespace MessagePackCompiler.Generator
 
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    using System;\r\n" +
-                "\r\n    public delegate void TypeLessSerilizeFunc(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options);" +
-                "\r\n    public delegate object TypeLessDeserilizeFunc(ref MessagePackReader reader, Type type, MessagePackSerializerOptions options);\r\n" +
+            this.Write("\r\n{" +
+                "\r\n    using System;" +
+                "\r\n    using MessagePack;" +
+                "\r\n    using System.Collections.Generic;" +
+                "\r\n    using System.Collections.Immutable;" +
+                "\r\n" +
+                "\r\n    // Place these two delegate into the project somewhere." +
+                "\r\n    // public delegate void TypeLessSerilizeFunc(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options);" +
+                "\r\n    //public delegate object TypeLessDeserilizeFunc(ref MessagePackReader reader, Type type, MessagePackSerializerOptions options);\r\n" +
                 "\r\n    public class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static readonly " +
+            this.Write(" : global::MessagePack.IFormatterResolver, IStarborneMessagePackResolver\r\n    {\r\n        public static readonly " +
                     $"{this.ToStringHelper.ToStringWithCulture(ResolverName)} Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write("();\r\n\r\n        private ");
