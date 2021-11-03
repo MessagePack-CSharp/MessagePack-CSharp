@@ -33,7 +33,9 @@ stages:
   - job: Unity
     pool:
       name: CustomAgents
-      demands: UNITYHUB_EDITORS_FOLDER_LOCATION
+      demands:
+      - UNITYHUB_EDITORS_FOLDER_LOCATION
+      - UNITYVERSION -equals 2019.1
     steps:
     - checkout: self
       clean: true
