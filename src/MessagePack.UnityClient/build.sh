@@ -27,7 +27,6 @@ $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -quit \
     -nographics \
     -silent-crashes \
-    -noUpm \
     -buildTarget standalone \
     -projectPath ${SCRIPT_DIR} \
     -executeMethod PackageExporter.Export \
