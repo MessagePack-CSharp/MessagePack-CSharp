@@ -208,6 +208,22 @@ $windowsDesktopRuntimeVersions | Sort-Object -Unique |% {
     }
 }
 
+$aspnetRuntimeSwitches = $switches + '-Runtime','aspnetcore'
+
+$runtimeVersions | Sort-Object -Unique |% {
+    if ($PSCmdlet.ShouldProcess(".NET Core ASP.NET runtime $_", "Install")) {
+        $anythingInstalled = $true
+        Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ $aspnetRuntimeSwitches"
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error ".NET SDK installation failure: $LASTEXITCODE"
+            exit $LASTEXITCODE
+        }
+    } else {
+        Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ $aspnetRuntimeSwitches -DryRun"
+    }
+}
+
 if ($PSCmdlet.ShouldProcess("Set DOTNET environment variables to discover these installed runtimes?")) {
     & "$PSScriptRoot/Set-EnvVars.ps1" -Variables $envVars -PrependPath $DotNetInstallDir | Out-Null
 }
