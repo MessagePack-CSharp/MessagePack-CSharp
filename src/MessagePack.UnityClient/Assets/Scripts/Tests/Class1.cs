@@ -1149,6 +1149,13 @@ public class SimpleModel
     }
 }
 
+[MessagePackObject]
+public class MessagePackFormatterFieldUser
+{
+    [Key(0), MessagePackFormatter(typeof(NativeDateTimeFormatter))]
+    public DateTime Timestamp { get; set; }
+}
+
 namespace PerfBenchmarkDotNet
 {
     [MessagePackObject(true)]
