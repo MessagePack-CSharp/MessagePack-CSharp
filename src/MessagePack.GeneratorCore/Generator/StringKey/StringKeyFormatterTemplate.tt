@@ -102,7 +102,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
         if (canOverwrite) { #>
             var ____result = new <#= objInfo.GetConstructorString() #>;
 <# } else {
-            foreach (var member in objInfo.Members.Where(x => x.IsWritable)) { #>
+            foreach (var member in objInfo.Members.Where(x => x.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { #>
 <# if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { #>
             var __<#= member.Name #>__IsInitialized = false;
 <# } #>

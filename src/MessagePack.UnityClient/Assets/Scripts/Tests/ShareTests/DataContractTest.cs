@@ -3,18 +3,27 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Resolvers;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
 #if !ENABLE_IL2CPP
-
     public class DataContractTest
     {
+        private readonly ITestOutputHelper logger;
+
+        public DataContractTest(ITestOutputHelper logger)
+        {
+            this.logger = logger;
+        }
+
         [DataContract]
         public class MyClass
         {
@@ -63,6 +72,23 @@ namespace MessagePack.Tests
 
             [IgnoreDataMember]
             public int IgnoredField;
+        }
+
+        [DataContract]
+        public class ClassWithPrivateReadonlyDictionary
+        {
+            [DataMember(Name = "Key", Order = 0, EmitDefaultValue = false)]
+            private readonly Guid? key;
+
+            [DataMember(Name = "Body", Order = 1, EmitDefaultValue = false)]
+            private readonly Dictionary<string, object> body = new Dictionary<string, object>();
+
+            public ClassWithPrivateReadonlyDictionary(Guid? key)
+            {
+                this.key = key;
+            }
+
+            internal Dictionary<string, object> GetBody() => this.body;
         }
 
         [Fact]
@@ -133,6 +159,99 @@ namespace MessagePack.Tests
             mc2.IgnoredField.Is(0);
 
             MessagePackSerializer.ConvertToJson(bin).Is(@"{""AttributedProperty"":1,""AttributedField"":4}");
+        }
+
+        [DataContract]
+        public class Master : IEquatable<Master>
+        {
+            [DataMember]
+            public int A { get; set; }
+
+            [DataMember]
+            internal Detail InternalComplexProperty { get; set; }
+
+            [DataMember]
+            internal Detail InternalComplexField;
+
+            public bool Equals(Master other)
+            {
+                return other != null
+                    && this.A == other.A
+                    && EqualityComparer<Detail>.Default.Equals(this.InternalComplexProperty, other.InternalComplexProperty)
+                    && EqualityComparer<Detail>.Default.Equals(this.InternalComplexField, other.InternalComplexField);
+            }
+        }
+
+        public class Detail : IEquatable<Detail>
+        {
+            public int B1 { get; set; }
+
+            internal int B2 { get; set; }
+
+            public bool Equals(Detail other) => other != null && this.B1 == other.B1 && this.B2 == other.B2;
+        }
+
+        [Fact]
+        public void DataContractSerializerCompatibility()
+        {
+            var master = new Master
+            {
+                A = 1,
+                InternalComplexProperty = new Detail
+                {
+                    B1 = 2,
+                    B2 = 3,
+                },
+                InternalComplexField = new Detail
+                {
+                    B1 = 4,
+                    B2 = 5,
+                },
+            };
+
+            var dcsValue = DataContractSerializerRoundTrip(master);
+
+            var option = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(
+                DynamicObjectResolverAllowPrivate.Instance,
+                ContractlessStandardResolver.Instance));
+            var mpValue = MessagePackSerializer.Deserialize<Master>(MessagePackSerializer.Serialize(master, option), option);
+
+            Assert.Equal(dcsValue, mpValue);
+        }
+
+        private static T DataContractSerializerRoundTrip<T>(T value)
+        {
+            var ms = new MemoryStream();
+            var dcs = new DataContractSerializer(typeof(T));
+            dcs.WriteObject(ms, value);
+            ms.Position = 0;
+            return (T)dcs.ReadObject(ms);
+        }
+
+        [Fact]
+        public void DeserializeTypeWithPrivateReadonlyDictionary()
+        {
+            var before = new ClassWithPrivateReadonlyDictionary(Guid.NewGuid());
+            before.GetBody()["name"] = "my name";
+            byte[] bytes = MessagePackSerializer.Serialize(before, StandardResolverAllowPrivate.Options);
+            string json = MessagePackSerializer.ConvertToJson(bytes); // just for check that json has _body' values.
+            this.logger.WriteLine(json);
+
+            var after = MessagePackSerializer.Deserialize<ClassWithPrivateReadonlyDictionary>(bytes, StandardResolverAllowPrivate.Options);
+            Assert.Equal("my name", after.GetBody()["name"]);
+        }
+
+        [Fact]
+        public void DeserializeTypeWithPrivateReadonlyDictionary_DCS()
+        {
+            var before = new ClassWithPrivateReadonlyDictionary(Guid.NewGuid());
+            before.GetBody()["name"] = "my name";
+            DataContractSerializer dcs = new DataContractSerializer(typeof(ClassWithPrivateReadonlyDictionary));
+            var ms = new MemoryStream();
+            dcs.WriteObject(ms, before);
+            ms.Position = 0;
+            var after = (ClassWithPrivateReadonlyDictionary)dcs.ReadObject(ms);
+            Assert.Equal("my name", after.GetBody()["name"]);
         }
     }
 

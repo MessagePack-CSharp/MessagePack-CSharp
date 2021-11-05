@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netcoreapp2.1;netcoreapp3.1;net5.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netcoreapp3.1;net5.0</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <DefineConstants Condition=" '$(TargetFramework)' != 'netstandard2.0' ">$(DefineConstants);SPAN_BUILTIN</DefineConstants>
@@ -36,7 +36,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.2" PrivateAssets="all" />
     <PackageReference Include="Microsoft.NET.StringTools" Version="1.0.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netcoreapp2.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.0.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.6.0" />

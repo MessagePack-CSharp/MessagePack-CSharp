@@ -255,6 +255,30 @@ namespace MessagePack.Tests
             }
         }
 
+        /// <summary>
+        /// This constructor tests the case where there are missing int keys, to ensure that
+        /// the correct ctor is still found using index numbers of the keys, not their values.
+        /// </summary>
+        [MessagePackObject]
+        public class TestConstructor10
+        {
+            [Key(0)]
+            public int X { get; }
+
+            [Key(2)]
+            public int Y { get; }
+
+            [Key(5)]
+            public int Z { get; }
+
+            public TestConstructor10(int x, int y, int z)
+            {
+                X = x;
+                Y = y;
+                Z = z;
+            }
+        }
+
         [Fact]
         public void StringKey()
         {
@@ -349,6 +373,18 @@ namespace MessagePack.Tests
             r.X.Is(7);
             r.Y.Is(8);
             r.Z.Is(9);
+        }
+
+        [Fact]
+        public void MatchedClassCtorFoundWithMissingIntKeys()
+        {
+            var ctor = new TestConstructor10(10, 11, 12);
+            var bin = MessagePackSerializer.Serialize(ctor);
+            var r = MessagePackSerializer.Deserialize<TestConstructor10>(bin);
+
+            r.X.Is(10);
+            r.Y.Is(11);
+            r.Z.Is(12);
         }
     }
 }
