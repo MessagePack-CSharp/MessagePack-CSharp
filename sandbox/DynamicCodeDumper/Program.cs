@@ -44,6 +44,7 @@ namespace DynamicCodeDumper
                 ////DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTarget>();
                 ////DynamicObjectResolver.Instance.GetFormatter<LongestString>();
                 IMessagePackFormatter<MyClass> f = DynamicObjectResolverAllowPrivate.Instance.GetFormatter<MyClass>();
+                ////IMessagePackFormatter<MessagePackFormatterFieldUser> f = DynamicObjectResolver.Instance.GetFormatter<MessagePackFormatterFieldUser>();
                 ////DynamicObjectResolver.Instance.GetFormatter<StringKeySerializerTargetBinary>();
                 ////DynamicObjectResolver.Instance.GetFormatter<Callback1>();
                 ////DynamicObjectResolver.Instance.GetFormatter<Callback1_2>();

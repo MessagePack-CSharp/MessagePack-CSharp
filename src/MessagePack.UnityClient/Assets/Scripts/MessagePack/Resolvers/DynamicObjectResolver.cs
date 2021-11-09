@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using MessagePack.Formatters;
 using MessagePack.Internal;
+using MessagePack.Resolvers;
 
 #pragma warning disable SA1403 // File may only contain a single namespace
 
@@ -110,7 +111,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterTypeInfo.AsType());
+                Formatter = (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterTypeInfo.AsType());
             }
         }
     }
@@ -495,7 +496,7 @@ namespace MessagePack.Internal
                 MessagePackFormatterAttribute attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
-                    var formatter = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
+                    IMessagePackFormatter formatter = ResolverUtilities.ActivateFormatter(attr.FormatterType, attr.Arguments);
                     serializeCustomFormatters.Add(formatter);
                 }
                 else
@@ -510,7 +511,7 @@ namespace MessagePack.Internal
                 MessagePackFormatterAttribute attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
-                    var formatter = Activator.CreateInstance(attr.FormatterType, attr.Arguments);
+                    IMessagePackFormatter formatter = ResolverUtilities.ActivateFormatter(attr.FormatterType, attr.Arguments);
                     deserializeCustomFormatters.Add(formatter);
                 }
                 else
@@ -626,38 +627,55 @@ namespace MessagePack.Internal
                 MessagePackFormatterAttribute attr = item.GetMessagePackFormatterAttribute();
                 if (attr != null)
                 {
+                    // Verify that the specified formatter implements the required interface.
+                    // Doing this now provides a more helpful error message than if we let the CLR throw an EntryPointNotFoundException later.
+                    if (!attr.FormatterType.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMessagePackFormatter<>) && i.GenericTypeArguments[0].IsEquivalentTo(item.Type)))
+                    {
+                        throw new MessagePackSerializationException($"{info.Type.FullName}.{item.Name} is declared as type {item.Type.FullName}, but the prescribed {attr.FormatterType.FullName} does not implement IMessagePackFormatter<{item.Type.Name}>.");
+                    }
+
                     FieldBuilder f = builder.DefineField(item.Name + "_formatter", attr.FormatterType, FieldAttributes.Private | FieldAttributes.InitOnly);
 
-                    var bindingFlags = (int)(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                    LocalBuilder attrVar = il.DeclareLocal(typeof(MessagePackFormatterAttribute));
-
-                    il.Emit(OpCodes.Ldtoken, info.Type);
-                    il.EmitCall(EmitInfo.GetTypeFromHandle);
-                    il.Emit(OpCodes.Ldstr, item.Name);
-                    il.EmitLdc_I4(bindingFlags);
-                    if (item.IsProperty)
+                    // If no args were provided and the formatter implements the singleton pattern, fetch the formatter from the field.
+                    if ((attr.Arguments == null || attr.Arguments.Length == 0) && ResolverUtilities.FetchSingletonField(attr.FormatterType) is FieldInfo singletonField)
                     {
-                        il.EmitCall(EmitInfo.TypeGetProperty);
+                        il.EmitLoadThis();
+                        il.EmitLdsfld(singletonField);
                     }
                     else
                     {
-                        il.EmitCall(EmitInfo.TypeGetField);
+                        var bindingFlags = (int)(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                        LocalBuilder attrVar = il.DeclareLocal(typeof(MessagePackFormatterAttribute));
+
+                        il.Emit(OpCodes.Ldtoken, info.Type);
+                        il.EmitCall(EmitInfo.GetTypeFromHandle);
+                        il.Emit(OpCodes.Ldstr, item.Name);
+                        il.EmitLdc_I4(bindingFlags);
+                        if (item.IsProperty)
+                        {
+                            il.EmitCall(EmitInfo.TypeGetProperty);
+                        }
+                        else
+                        {
+                            il.EmitCall(EmitInfo.TypeGetField);
+                        }
+
+                        il.EmitTrue();
+                        il.EmitCall(EmitInfo.GetCustomAttributeMessagePackFormatterAttribute);
+                        il.EmitStloc(attrVar);
+
+                        il.EmitLoadThis();
+
+                        il.EmitLdloc(attrVar);
+                        il.EmitCall(EmitInfo.MessagePackFormatterAttr.FormatterType);
+                        il.EmitLdloc(attrVar);
+                        il.EmitCall(EmitInfo.MessagePackFormatterAttr.Arguments);
+                        il.EmitCall(EmitInfo.ActivatorCreateInstance);
+
+                        il.Emit(OpCodes.Castclass, attr.FormatterType);
                     }
 
-                    il.EmitTrue();
-                    il.EmitCall(EmitInfo.GetCustomAttributeMessagePackFormatterAttribute);
-                    il.EmitStloc(attrVar);
-
-                    il.EmitLoadThis();
-
-                    il.EmitLdloc(attrVar);
-                    il.EmitCall(EmitInfo.MessagePackFormatterAttr.FormatterType);
-                    il.EmitLdloc(attrVar);
-                    il.EmitCall(EmitInfo.MessagePackFormatterAttr.Arguments);
-                    il.EmitCall(EmitInfo.ActivatorCreateInstance);
-
-                    il.Emit(OpCodes.Castclass, attr.FormatterType);
                     il.Emit(OpCodes.Stfld, f);
 
                     dict.Add(item, f);
@@ -953,7 +971,7 @@ namespace MessagePack.Internal
         {
             foreach (var item in infoList)
             {
-                if (item.MemberInfo == null || item.IsInitializedLocalVariable == null)
+                if (item.MemberInfo == null || item.IsInitializedLocalVariable == null || item.MemberInfo.IsWrittenByConstructor)
                 {
                     continue;
                 }
@@ -991,6 +1009,11 @@ namespace MessagePack.Internal
             for (var key = 0; key <= maxKey; key++)
             {
                 if (!intKeyMap.TryGetValue(key, out var item))
+                {
+                    continue;
+                }
+
+                if (item.MemberInfo.IsWrittenByConstructor)
                 {
                     continue;
                 }
@@ -1711,94 +1734,121 @@ namespace MessagePack.Internal
             var intMembers = new Dictionary<int, EmittableMember>();
             var stringMembers = new Dictionary<string, EmittableMember>();
 
-            if (forceStringKey || contractless || (contractAttr != null && contractAttr.KeyAsPropertyName))
+            // When returning false, it means should ignoring this member.
+            bool AddEmittableMemberOrIgnore(bool isIntKeyMode, EmittableMember member, bool checkConflicting)
+            {
+                if (checkConflicting)
+                {
+                    if (isIntKeyMode ? intMembers.TryGetValue(member.IntKey, out var conflictingMember) : stringMembers.TryGetValue(member.StringKey, out conflictingMember))
+                    {
+                        // Quietly skip duplicate if this is an override property.
+                        if (member.PropertyInfo != null && ((conflictingMember.PropertyInfo.SetMethod?.IsVirtual ?? false) || (conflictingMember.PropertyInfo.GetMethod?.IsVirtual ?? false)))
+                        {
+                            return false;
+                        }
+
+                        var memberInfo = (MemberInfo)member.PropertyInfo ?? member.FieldInfo;
+                        throw new MessagePackDynamicObjectResolverException($"key is duplicated, all members key must be unique. type:{type.FullName} member:{memberInfo.Name}");
+                    }
+                }
+
+                if (isIntKeyMode)
+                {
+                    intMembers.Add(member.IntKey, member);
+                }
+                else
+                {
+                    stringMembers.Add(member.StringKey, member);
+                }
+
+                return true;
+            }
+
+            EmittableMember CreateEmittableMember(MemberInfo m)
+            {
+                if (m.IsDefined(typeof(IgnoreMemberAttribute), true) || m.IsDefined(typeof(IgnoreDataMemberAttribute), true))
+                {
+                    return null;
+                }
+
+                EmittableMember result;
+                switch (m)
+                {
+                    case PropertyInfo property:
+                        if (property.IsIndexer())
+                        {
+                            return null;
+                        }
+
+                        if (isClassRecord && property.Name == "EqualityContract")
+                        {
+                            return null;
+                        }
+
+                        var getMethod = property.GetGetMethod(true);
+                        var setMethod = property.GetSetMethod(true);
+                        result = new EmittableMember(dynamicMethod)
+                        {
+                            PropertyInfo = property,
+                            IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
+                            IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
+                        };
+                        break;
+                    case FieldInfo field:
+                        if (field.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null)
+                        {
+                            return null;
+                        }
+
+                        if (field.IsStatic)
+                        {
+                            return null;
+                        }
+
+                        result = new EmittableMember(dynamicMethod)
+                        {
+                            FieldInfo = field,
+                            IsReadable = allowPrivate || field.IsPublic,
+                            IsWritable = allowPrivate || (field.IsPublic && !field.IsInitOnly),
+                        };
+                        break;
+                    default:
+                        throw new MessagePackSerializationException("unexpected member type");
+                }
+
+                return result.IsReadable || result.IsWritable ? result : null;
+            }
+
+            // Determine whether to ignore MessagePackObjectAttribute or DataContract.
+            if (forceStringKey || contractless || (contractAttr?.KeyAsPropertyName == true))
             {
                 // All public members are serialize target except [Ignore] member.
                 isIntKey = !(forceStringKey || (contractAttr != null && contractAttr.KeyAsPropertyName));
-
                 var hiddenIntKey = 0;
 
                 // Group the properties and fields by name to qualify members of the same name
                 // (declared with the 'new' keyword) with the declaring type.
-                IEnumerable<IGrouping<string, MemberInfo>> membersByName = type.GetRuntimeProperties()
-                    .Concat(type.GetRuntimeFields().Cast<MemberInfo>())
+                var membersByName = type.GetRuntimeProperties().Concat(type.GetRuntimeFields().Cast<MemberInfo>())
                     .OrderBy(m => m.DeclaringType, OrderBaseTypesBeforeDerivedTypes.Instance)
                     .GroupBy(m => m.Name);
                 foreach (var memberGroup in membersByName)
                 {
-                    bool firstMemberByName = true;
-                    foreach (MemberInfo item in memberGroup)
+                    var first = true;
+                    foreach (var member in memberGroup.Select(CreateEmittableMember).Where(n => n != null))
                     {
-                        if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
+                        var memberInfo = (MemberInfo)member.PropertyInfo ?? member.FieldInfo;
+                        if (first)
                         {
-                            continue;
-                        }
-
-                        if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
-                        {
-                            continue;
-                        }
-
-                        EmittableMember member;
-                        if (item is PropertyInfo property)
-                        {
-                            if (property.IsIndexer())
-                            {
-                                continue;
-                            }
-
-                            MethodInfo getMethod = property.GetGetMethod(true);
-                            MethodInfo setMethod = property.GetSetMethod(true);
-
-                            member = new EmittableMember(dynamicMethod)
-                            {
-                                PropertyInfo = property,
-                                IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
-                                IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
-                                StringKey = firstMemberByName ? item.Name : $"{item.DeclaringType.FullName}.{item.Name}",
-                            };
-                        }
-                        else if (item is FieldInfo field)
-                        {
-                            if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null)
-                            {
-                                continue;
-                            }
-
-                            if (field.IsStatic)
-                            {
-                                continue;
-                            }
-
-                            member = new EmittableMember(dynamicMethod)
-                            {
-                                FieldInfo = field,
-                                IsReadable = allowPrivate || field.IsPublic,
-                                IsWritable = (allowPrivate || field.IsPublic) && !field.IsInitOnly,
-                                StringKey = firstMemberByName ? item.Name : $"{item.DeclaringType.FullName}.{item.Name}",
-                            };
+                            first = false;
+                            member.StringKey = memberInfo.Name;
                         }
                         else
                         {
-                            throw new MessagePackSerializationException("unexpected member type");
-                        }
-
-                        if (!member.IsReadable && !member.IsWritable)
-                        {
-                            continue;
+                            member.StringKey = $"{memberInfo.DeclaringType.FullName}.{memberInfo.Name}";
                         }
 
                         member.IntKey = hiddenIntKey++;
-                        if (isIntKey)
-                        {
-                            intMembers.Add(member.IntKey, member);
-                        }
-                        else
-                        {
-                            stringMembers.Add(member.StringKey, member);
-                        }
-
-                        firstMemberByName = false;
+                        AddEmittableMemberOrIgnore(isIntKey, member, false);
                     }
                 }
             }
@@ -1808,246 +1858,65 @@ namespace MessagePack.Internal
                 var searchFirst = true;
                 var hiddenIntKey = 0;
 
-                foreach (PropertyInfo item in GetAllProperties(type))
+                var memberInfos = GetAllProperties(type).Cast<MemberInfo>().Concat(GetAllFields(type));
+                foreach (var member in memberInfos.Select(CreateEmittableMember).Where(n => n != null))
                 {
-                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
-
-                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
-
-                    if (isClassRecord && item.Name == "EqualityContract")
-                    {
-                        // This is a special compiler-generated property that the user cannot add
-                        // [IgnoreMember] to, nor do we want to serialize it.
-                        continue;
-                    }
-
-                    if (item.IsIndexer())
-                    {
-                        continue;
-                    }
-
-                    MethodInfo getMethod = item.GetGetMethod(true);
-                    MethodInfo setMethod = item.GetSetMethod(true);
-
-                    var member = new EmittableMember(dynamicMethod)
-                    {
-                        PropertyInfo = item,
-                        IsReadable = (getMethod != null) && (allowPrivate || getMethod.IsPublic) && !getMethod.IsStatic,
-                        IsWritable = (setMethod != null) && (allowPrivate || setMethod.IsPublic) && !setMethod.IsStatic,
-                    };
-                    if (!member.IsReadable && !member.IsWritable)
-                    {
-                        continue;
-                    }
+                    var memberInfo = (MemberInfo)member.PropertyInfo ?? member.FieldInfo;
 
                     KeyAttribute key;
                     if (contractAttr != null)
                     {
-                        // MessagePackObjectAttribute
-                        key = item.GetCustomAttribute<KeyAttribute>(true);
-                        if (key == null)
-                        {
-                            throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
-                        }
-
-                        member.IsExplicitContract = true;
+                        // MessagePackObjectAttribute. KeyAttribute must be marked, and IntKey or StringKey must be set.
+                        key = memberInfo.GetCustomAttribute<KeyAttribute>(true) ??
+                            throw new MessagePackDynamicObjectResolverException($"all public members must mark KeyAttribute or IgnoreMemberAttribute. type:{type.FullName} member:{memberInfo.Name}");
                         if (key.IntKey == null && key.StringKey == null)
                         {
-                            throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
+                            throw new MessagePackDynamicObjectResolverException($"both IntKey and StringKey are null. type: {type.FullName} member:{memberInfo.Name}");
                         }
                     }
                     else
                     {
-                        // DataContractAttribute
-                        DataMemberAttribute pseudokey = item.GetCustomAttribute<DataMemberAttribute>(true);
+                        // DataContractAttribute. Try to use the DataMemberAttribute to fake KeyAttribute.
+                        // This member has no DataMemberAttribute nor IgnoreMemberAttribute.
+                        // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
+                        var pseudokey = memberInfo.GetCustomAttribute<DataMemberAttribute>(true);
                         if (pseudokey == null)
                         {
-                            // This member has no DataMemberAttribute nor IgnoreMemberAttribute.
-                            // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
                             continue;
                         }
 
-                        member.IsExplicitContract = true;
-
-                        // use Order first
-                        if (pseudokey.Order != -1)
-                        {
-                            key = new KeyAttribute(pseudokey.Order);
-                        }
-                        else if (pseudokey.Name != null)
-                        {
-                            key = new KeyAttribute(pseudokey.Name);
-                        }
-                        else
-                        {
-                            key = new KeyAttribute(item.Name); // use property name
-                        }
+                        key =
+                            pseudokey.Order != -1 ? new KeyAttribute(pseudokey.Order) :
+                            pseudokey.Name != null ? new KeyAttribute(pseudokey.Name) :
+                            new KeyAttribute(memberInfo.Name);
                     }
 
+                    member.IsExplicitContract = true;
+
+                    // Cannot assign StringKey and IntKey at the same time.
                     if (searchFirst)
                     {
                         searchFirst = false;
                         isIntKey = key.IntKey != null;
                     }
-                    else
+                    else if ((isIntKey && key.IntKey == null) || (!isIntKey && key.StringKey == null))
                     {
-                        if ((isIntKey && key.IntKey == null) || (!isIntKey && key.StringKey == null))
-                        {
-                            throw new MessagePackDynamicObjectResolverException("all members key type must be same." + " type: " + type.FullName + " member:" + item.Name);
-                        }
+                        throw new MessagePackDynamicObjectResolverException($"all members key type must be same. type: {type.FullName} member:{memberInfo.Name}");
                     }
 
                     if (isIntKey)
                     {
                         member.IntKey = key.IntKey.Value;
-                        if (intMembers.TryGetValue(member.IntKey, out EmittableMember conflictingMember))
-                        {
-                            // Quietly skip duplicate if this is an override property.
-                            if ((conflictingMember.PropertyInfo.SetMethod?.IsVirtual ?? false) || (conflictingMember.PropertyInfo.GetMethod?.IsVirtual ?? false))
-                            {
-                                continue;
-                            }
-
-                            throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
-                        }
-
-                        intMembers.Add(member.IntKey, member);
                     }
                     else
                     {
                         member.StringKey = key.StringKey;
-                        if (stringMembers.TryGetValue(member.StringKey, out EmittableMember conflictingMember))
-                        {
-                            // Quietly skip duplicate if this is an override property.
-                            if ((conflictingMember.PropertyInfo.SetMethod?.IsVirtual ?? false) || (conflictingMember.PropertyInfo.GetMethod?.IsVirtual ?? false))
-                            {
-                                continue;
-                            }
-
-                            throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
-                        }
-
                         member.IntKey = hiddenIntKey++;
-                        stringMembers.Add(member.StringKey, member);
                     }
-                }
 
-                foreach (FieldInfo item in GetAllFields(type))
-                {
-                    if (item.GetCustomAttribute<IgnoreMemberAttribute>(true) != null)
+                    if (!AddEmittableMemberOrIgnore(isIntKey, member, true))
                     {
                         continue;
-                    }
-
-                    if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null)
-                    {
-                        continue;
-                    }
-
-                    if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null)
-                    {
-                        continue;
-                    }
-
-                    if (item.IsStatic)
-                    {
-                        continue;
-                    }
-
-                    var member = new EmittableMember(dynamicMethod)
-                    {
-                        FieldInfo = item,
-                        IsReadable = allowPrivate || item.IsPublic,
-                        IsWritable = (allowPrivate || item.IsPublic) && !item.IsInitOnly,
-                    };
-                    if (!member.IsReadable && !member.IsWritable)
-                    {
-                        continue;
-                    }
-
-                    KeyAttribute key;
-                    if (contractAttr != null)
-                    {
-                        // MessagePackObjectAttribute
-                        key = item.GetCustomAttribute<KeyAttribute>(true);
-                        if (key == null)
-                        {
-                            throw new MessagePackDynamicObjectResolverException("all public members must mark KeyAttribute or IgnoreMemberAttribute." + " type: " + type.FullName + " member:" + item.Name);
-                        }
-
-                        member.IsExplicitContract = true;
-                        if (key.IntKey == null && key.StringKey == null)
-                        {
-                            throw new MessagePackDynamicObjectResolverException("both IntKey and StringKey are null." + " type: " + type.FullName + " member:" + item.Name);
-                        }
-                    }
-                    else
-                    {
-                        // DataContractAttribute
-                        DataMemberAttribute pseudokey = item.GetCustomAttribute<DataMemberAttribute>(true);
-                        if (pseudokey == null)
-                        {
-                            // This member has no DataMemberAttribute nor IgnoreMemberAttribute.
-                            // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
-                            continue;
-                        }
-
-                        member.IsExplicitContract = true;
-
-                        // use Order first
-                        if (pseudokey.Order != -1)
-                        {
-                            key = new KeyAttribute(pseudokey.Order);
-                        }
-                        else if (pseudokey.Name != null)
-                        {
-                            key = new KeyAttribute(pseudokey.Name);
-                        }
-                        else
-                        {
-                            key = new KeyAttribute(item.Name); // use property name
-                        }
-                    }
-
-                    if (searchFirst)
-                    {
-                        searchFirst = false;
-                        isIntKey = key.IntKey != null;
-                    }
-                    else
-                    {
-                        if ((isIntKey && key.IntKey == null) || (!isIntKey && key.StringKey == null))
-                        {
-                            throw new MessagePackDynamicObjectResolverException("all members key type must be same." + " type: " + type.FullName + " member:" + item.Name);
-                        }
-                    }
-
-                    if (isIntKey)
-                    {
-                        member.IntKey = key.IntKey.Value;
-                        if (intMembers.ContainsKey(member.IntKey))
-                        {
-                            throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
-                        }
-
-                        intMembers.Add(member.IntKey, member);
-                    }
-                    else
-                    {
-                        member.StringKey = key.StringKey;
-                        if (stringMembers.ContainsKey(member.StringKey))
-                        {
-                            throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
-                        }
-
-                        member.IntKey = hiddenIntKey++;
-                        stringMembers.Add(member.StringKey, member);
                     }
                 }
             }
@@ -2220,7 +2089,14 @@ namespace MessagePack.Internal
             }
 
             var shouldUseFormatterResolver = false;
-            var membersArray = members.Where(m => m.IsExplicitContract || constructorParameters.Any(p => p.MemberInfo.Equals(m)) || m.IsWritable).ToArray();
+
+            // Mark each member that will be set by way of the constructor.
+            foreach (var item in constructorParameters)
+            {
+                item.MemberInfo.IsWrittenByConstructor = true;
+            }
+
+            var membersArray = members.Where(m => m.IsExplicitContract || m.IsWrittenByConstructor || m.IsWritable).ToArray();
             foreach (var member in membersArray)
             {
                 if (IsOptimizeTargetType(member.Type))
@@ -2372,6 +2248,8 @@ namespace MessagePack.Internal
             }
 
             public bool IsWritable { get; set; }
+
+            public bool IsWrittenByConstructor { get; set; }
 
             /// <summary>
             /// Gets a value indicating whether the property can only be set by an object initializer, a constructor, or another `init` member.

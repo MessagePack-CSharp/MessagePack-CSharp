@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Threading.Tasks;
 using MessagePack.Formatters;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Nerdbank.Streams;
 
 namespace MessagePack.Generator.Tests
 {
@@ -23,6 +25,11 @@ namespace MessagePack.Generator.Tests
         private readonly string targetCsprojFileName = "TempTargetProject.csproj";
         private readonly string referencedCsprojFileName = "TempReferencedProject.csproj";
         private readonly bool cleanOnDisposing;
+
+        /// <summary>
+        /// Gets the identifier of the workarea.
+        /// </summary>
+        public Guid WorkareaId { get; }
 
         /// <summary>
         /// Gets Generator target csproj file path.
@@ -47,8 +54,9 @@ namespace MessagePack.Generator.Tests
 
         private TemporaryProjectWorkarea(bool cleanOnDisposing)
         {
+            WorkareaId = Guid.NewGuid();
             this.cleanOnDisposing = cleanOnDisposing;
-            this.tempDirPath = Path.Combine(Path.GetTempPath(), $"MessagePack.Generator.Tests-{Guid.NewGuid()}");
+            this.tempDirPath = Path.Combine(Path.GetTempPath(), $"MessagePack.Generator.Tests-{WorkareaId}");
 
             TargetProjectDirectory = Path.Combine(tempDirPath, "TargetProject");
             ReferencedProjectDirectory = Path.Combine(tempDirPath, "ReferencedProject");
@@ -57,6 +65,7 @@ namespace MessagePack.Generator.Tests
             Directory.CreateDirectory(TargetProjectDirectory);
             Directory.CreateDirectory(ReferencedProjectDirectory);
             Directory.CreateDirectory(OutputDirectory);
+            Directory.CreateDirectory(Path.Combine(OutputDirectory, "bin"));
 
             var solutionRootDir = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../../../.."));
             var messagePackProjectDir = Path.Combine(solutionRootDir, "src/MessagePack/MessagePack.csproj");
@@ -149,7 +158,7 @@ namespace MessagePack.Generator.Tests
                 .AddReferences(MetadataReference.CreateFromFile(typeof(IMessagePackFormatter<>).Assembly.Location))
                 .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-            return new OutputCompilation(compilation);
+            return new OutputCompilation(this, compilation);
         }
 
         public void Dispose()
@@ -163,10 +172,13 @@ namespace MessagePack.Generator.Tests
 
     public class OutputCompilation
     {
+        private readonly TemporaryProjectWorkarea workarea;
+
         public Compilation Compilation { get; }
 
-        public OutputCompilation(Compilation compilation)
+        public OutputCompilation(TemporaryProjectWorkarea workarea, Compilation compilation)
         {
+            this.workarea = workarea;
             this.Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
         }
 
@@ -202,6 +214,27 @@ namespace MessagePack.Generator.Tests
                     .Where(x => x is QualifiedNameSyntax || x is IdentifierNameSyntax || x is GenericNameSyntax || x is PredefinedTypeSyntax)
                     .Select(x => x.ToString()))
                 .ToArray();
+        }
+
+        /// <summary>
+        /// Load the generated assembly and execute the code in that context.
+        /// </summary>
+        public void ExecuteWithGeneratedAssembly(Action<AssemblyLoadContext, Assembly> action)
+        {
+            var memoryStream = new MemoryStream();
+            Compilation.Emit(memoryStream);
+            memoryStream.Position = 0;
+
+            var assemblyLoadContext = new AssemblyLoadContext($"TempProject-{workarea.WorkareaId}", isCollectible: true);
+            try
+            {
+                Assembly assembly = assemblyLoadContext.LoadFromStream(memoryStream);
+                action(assemblyLoadContext, assembly);
+            }
+            finally
+            {
+                assemblyLoadContext.Unload();
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 {
     "name": "MessagePack.Tests",
+    "rootNamespace": "",
     "references": [
         "MessagePack",
         "MessagePack.Annotations",
@@ -12,12 +13,13 @@
     "allowUnsafeCode": true,
     "overrideReferences": true,
     "precompiledReferences": [
-        "nunit.framework.dll",
-        "System.Buffers.dll",
-        "MsgPack.dll",
         "System.Memory.dll",
+        "System.Buffers.dll",
+        "System.Threading.Tasks.Extensions.dll",
         "System.Runtime.CompilerServices.Unsafe.dll",
-        "System.Threading.Tasks.Extensions.dll"
+        "System.Runtime.Extensions.dll",
+        "nunit.framework.dll",
+        "MsgPack.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
