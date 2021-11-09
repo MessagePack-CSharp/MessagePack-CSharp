@@ -35,7 +35,7 @@ stages:
       name: CustomAgents
       demands:
       - UNITYHUB_EDITORS_FOLDER_LOCATION
-      - UNITYVERSION -equals 2019.1
+      - UNITYVERSION -equals 2020.3
     steps:
     - checkout: self
       clean: true
