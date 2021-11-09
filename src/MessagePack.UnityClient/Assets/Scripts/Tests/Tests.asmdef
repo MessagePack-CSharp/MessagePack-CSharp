@@ -1,19 +1,30 @@
 {
     "name": "MessagePack.Tests",
+    "rootNamespace": "",
     "references": [
         "MessagePack",
         "MessagePack.Annotations",
-        "RuntimeUnitTestToolkit"
-    ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
+        "RuntimeUnitTestToolkit",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": []
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "System.Memory.dll",
+        "System.Buffers.dll",
+        "System.Threading.Tasks.Extensions.dll",
+        "System.Runtime.CompilerServices.Unsafe.dll",
+        "System.Runtime.Extensions.dll",
+        "nunit.framework.dll",
+        "MsgPack.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
