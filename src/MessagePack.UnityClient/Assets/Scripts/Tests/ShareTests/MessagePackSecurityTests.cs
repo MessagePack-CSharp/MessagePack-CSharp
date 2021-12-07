@@ -86,7 +86,6 @@ public class MessagePackSecurityTests
 #endif
         Assert.Equal(eq.GetHashCode(float.NaN), eq.GetHashCode(-float.NaN));
         Assert.Equal(eq.GetHashCode(nan1), eq.GetHashCode(nan2));
-        
         // Try various other clearly different numbers
         Assert.NotEqual(eq.GetHashCode(1.0f), eq.GetHashCode(-1.0f));
         Assert.NotEqual(eq.GetHashCode(1.0f), eq.GetHashCode(2.0f));
