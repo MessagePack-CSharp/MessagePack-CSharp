@@ -84,8 +84,9 @@ public class MessagePackSecurityTests
 #if NETCOREAPP // .NET Framework had a bug where these would not be equal
         Assert.Equal(nan1.GetHashCode(), nan2.GetHashCode());
 #endif
-        Assert.Equal(eq.GetHashCode(float.NaN), eq.GetHashCode(-float.NaN));
         Assert.Equal(eq.GetHashCode(nan1), eq.GetHashCode(nan2));
+        Assert.Equal(eq.GetHashCode(float.NaN), eq.GetHashCode(-float.NaN));
+
         // Try various other clearly different numbers
         Assert.NotEqual(eq.GetHashCode(1.0f), eq.GetHashCode(-1.0f));
         Assert.NotEqual(eq.GetHashCode(1.0f), eq.GetHashCode(2.0f));
