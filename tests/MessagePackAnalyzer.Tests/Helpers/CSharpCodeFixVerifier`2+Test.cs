@@ -26,7 +26,7 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
 
             this.SolutionTransforms.Add((solution, projectId) =>
             {
-                var parseOptions = (CSharpParseOptions)solution.GetProject(projectId).ParseOptions;
+                var parseOptions = (solution.GetProject(projectId)!.ParseOptions as CSharpParseOptions)!;
                 solution = solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(LanguageVersion.CSharp7_3));
 
                 return solution;
