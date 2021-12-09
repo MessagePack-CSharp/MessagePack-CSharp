@@ -11,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
 
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
 
     <PackageReference Include="Nerdbank.Streams" Version="2.4.48" />
 
