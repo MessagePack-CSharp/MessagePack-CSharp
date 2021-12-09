@@ -36,8 +36,8 @@ namespace MessagePackAnalyzer
             context.EnableConcurrentExecution();
             context.RegisterCompilationStartAction(compilationStartContext =>
             {
-                ITypeSymbol? messagePackSerializationOptionsTypeSymbol = compilationStartContext.Compilation.GetTypeByMetadataName("MessagePack.MessagePackSerializerOptions");
-                if (messagePackSerializationOptionsTypeSymbol is not null)
+                ITypeSymbol messagePackSerializationOptionsTypeSymbol = compilationStartContext.Compilation.GetTypeByMetadataName("MessagePack.MessagePackSerializerOptions");
+                if (messagePackSerializationOptionsTypeSymbol is object)
                 {
                     compilationStartContext.RegisterOperationAction(c => this.AnalyzeMemberReference(c, messagePackSerializationOptionsTypeSymbol), OperationKind.PropertyReference, OperationKind.FieldReference);
                 }
@@ -76,7 +76,7 @@ namespace MessagePackAnalyzer
         {
             var memberReferenceOperation = (IMemberReferenceOperation)ctxt.Operation;
             var referencedMember = memberReferenceOperation.Member;
-            if (SymbolEqualityComparer.Default.Equals(memberReferenceOperation.Type, messagePackSerializationOptionsTypeSymbol) && referencedMember.IsStatic && referencedMember.DeclaredAccessibility > Accessibility.Private && !IsLessWritableThanReadable(referencedMember))
+            if (Equals(memberReferenceOperation.Type, messagePackSerializationOptionsTypeSymbol) && referencedMember.IsStatic && referencedMember.DeclaredAccessibility > Accessibility.Private && !IsLessWritableThanReadable(referencedMember))
             {
                 // The caller is passing in a value from a mutable static that is as writable as it is readable (a dangerous habit).
                 // TODO: fix ID, message, etc. to describe the problem.

@@ -26,7 +26,7 @@ public static partial class VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix>
 
             this.SolutionTransforms.Add((solution, projectId) =>
             {
-                var parseOptions = (solution.GetProject(projectId)!.ParseOptions as VisualBasicParseOptions)!;
+                var parseOptions = (VisualBasicParseOptions)solution.GetProject(projectId).ParseOptions;
                 solution = solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(LanguageVersion.VisualBasic15_5));
 
                 return solution;
