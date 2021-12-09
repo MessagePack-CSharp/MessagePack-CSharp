@@ -23,7 +23,7 @@ namespace MessagePackAnalyzer
             {
                 SemanticModel semModel = compilation.GetSemanticModel(syntaxTree);
 
-                foreach (ISymbol item in syntaxTree.GetRoot()
+                foreach (ISymbol? item in syntaxTree.GetRoot()
                     .DescendantNodes()
                     .Select(x => semModel.GetDeclaredSymbol(x))
                     .Where(x => x != null))
@@ -39,7 +39,7 @@ namespace MessagePackAnalyzer
 
         public static IEnumerable<INamedTypeSymbol> EnumerateBaseType(this ITypeSymbol symbol)
         {
-            INamedTypeSymbol t = symbol.BaseType;
+            INamedTypeSymbol? t = symbol.BaseType;
             while (t != null)
             {
                 yield return t;
@@ -50,14 +50,14 @@ namespace MessagePackAnalyzer
         public static AttributeData FindAttribute(this IEnumerable<AttributeData> attributeDataList, string typeName)
         {
             return attributeDataList
-                .Where(x => x.AttributeClass.ToDisplayString() == typeName)
+                .Where(x => x.AttributeClass?.ToDisplayString() == typeName)
                 .FirstOrDefault();
         }
 
         public static AttributeData FindAttributeShortName(this IEnumerable<AttributeData> attributeDataList, string typeName)
         {
             return attributeDataList
-                .Where(x => x.AttributeClass.Name == typeName)
+                .Where(x => x.AttributeClass?.Name == typeName)
                 .FirstOrDefault();
         }
 
@@ -71,7 +71,7 @@ namespace MessagePackAnalyzer
                     return data;
                 }
 
-                property = property.OverriddenProperty;
+                property = property.OverriddenProperty!;
             }
             while (property != null);
 
@@ -129,7 +129,7 @@ namespace MessagePackAnalyzer
                     yield return item;
                 }
 
-                t = t.BaseType;
+                t = t.BaseType!;
             }
         }
 
