@@ -18,7 +18,6 @@ namespace MessagePack
     [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Each overload has sufficiently unique required parameters.")]
     public static partial class MessagePackSerializer
     {
-        private const int LZ4NotCompressionSizeInLz4BlockType = 64;
         private const int MaxHintSize = 1024 * 1024;
 
         /// <summary>
@@ -85,7 +84,7 @@ namespace MessagePack
                         MessagePackWriter scratchWriter = writer.Clone(scratch);
                         options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
                         scratchWriter.Flush();
-                        ToLZ4BinaryCore(scratch, ref writer, options.Compression);
+                        ToLZ4BinaryCore(scratch, ref writer, options.Compression, options.CompressionMinLength);
                     }
                 }
                 else
@@ -555,11 +554,11 @@ namespace MessagePack
             return false;
         }
 
-        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer, MessagePackCompression compression)
+        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer, MessagePackCompression compression, int minCompressionSize)
         {
             if (compression == MessagePackCompression.Lz4Block)
             {
-                if (msgpackUncompressedData.Length < LZ4NotCompressionSizeInLz4BlockType)
+                if (msgpackUncompressedData.Length < minCompressionSize)
                 {
                     writer.WriteRaw(msgpackUncompressedData);
                     return;

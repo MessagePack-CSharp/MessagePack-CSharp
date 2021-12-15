@@ -41,6 +41,7 @@ namespace MessagePack
         protected internal MessagePackSerializerOptions(IFormatterResolver resolver)
         {
             this.Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
+            this.CompressionMinLength = 64;
         }
 
         /// <summary>
@@ -57,6 +58,7 @@ namespace MessagePack
 
             this.Resolver = copyFrom.Resolver;
             this.Compression = copyFrom.Compression;
+            this.CompressionMinLength = copyFrom.CompressionMinLength;
             this.OldSpec = copyFrom.OldSpec;
             this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
@@ -80,6 +82,14 @@ namespace MessagePack
         /// and serialization may not compress if msgpack sequences are short enough that compression would not likely be advantageous.
         /// </remarks>
         public MessagePackCompression Compression { get; private set; }
+
+        /// <summary>
+        /// Gets the min sequence length allowed for compression.
+        /// </summary>
+        /// <remarks>
+        /// Sequences with length less then this value will skip block compression.
+        /// </remarks>
+        public int CompressionMinLength { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether to serialize with <see cref="MessagePackWriter.OldSpec"/> set to some value
@@ -191,6 +201,23 @@ namespace MessagePack
 
             var result = this.Clone();
             result.Compression = compression;
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="CompressionMinLength"/> property set to a new value.
+        /// </summary>
+        /// <param name="compressionMinLength">The new value for the <see cref="CompressionMinLength"/> property.</param>
+        /// <returns>The new instance; or the original if the value is unchanged.</returns>
+        public MessagePackSerializerOptions WithCompressionMinLength(int compressionMinLength)
+        {
+            if (this.CompressionMinLength == compressionMinLength)
+            {
+                return this;
+            }
+
+            var result = this.Clone();
+            result.CompressionMinLength = compressionMinLength;
             return result;
         }
 
