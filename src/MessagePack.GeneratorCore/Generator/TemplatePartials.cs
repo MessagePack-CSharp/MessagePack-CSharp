@@ -16,6 +16,13 @@ namespace MessagePackCompiler.Generator
         public string Namespace { get; }
 
         public ObjectSerializationInfo[] ObjectSerializationInfos { get; }
+
+        public string TransformText()
+        {
+            System.Text.StringBuilder builder = new();
+            TransformAppend(builder);
+            return builder.ToString();
+        }
     }
 
     public partial class StringKeyFormatterTemplate : IFormatterTemplate
@@ -29,6 +36,13 @@ namespace MessagePackCompiler.Generator
         public string Namespace { get; }
 
         public ObjectSerializationInfo[] ObjectSerializationInfos { get; }
+
+        public string TransformText()
+        {
+            System.Text.StringBuilder builder = new();
+            TransformAppend(builder);
+            return builder.ToString();
+        }
     }
 
     public partial class ResolverTemplate
@@ -48,6 +62,13 @@ namespace MessagePackCompiler.Generator
         public string ResolverName { get; }
 
         public IResolverRegisterInfo[] RegisterInfos { get; }
+
+        public string TransformText()
+        {
+            System.Text.StringBuilder builder = new();
+            TransformAppend(builder);
+            return builder.ToString();
+        }
     }
 
     public partial class EnumTemplate
@@ -61,6 +82,13 @@ namespace MessagePackCompiler.Generator
         public string Namespace { get; }
 
         public EnumSerializationInfo[] EnumSerializationInfos { get; }
+
+        public string TransformText()
+        {
+            System.Text.StringBuilder builder = new();
+            TransformAppend(builder);
+            return builder.ToString();
+        }
     }
 
     public partial class UnionTemplate
@@ -74,5 +102,12 @@ namespace MessagePackCompiler.Generator
         public string Namespace { get; }
 
         public UnionSerializationInfo[] UnionSerializationInfos { get; }
+
+        public string TransformText()
+        {
+            System.Text.StringBuilder builder = new();
+            TransformAppend(builder);
+            return builder.ToString();
+        }
     }
 }
