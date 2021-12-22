@@ -19,8 +19,6 @@
 namespace <#= Namespace #>
 {
     using System;
-    using System.Buffers;
-    using MessagePack;
 
     public class <#= ResolverName #> : global::MessagePack.IFormatterResolver
     {
