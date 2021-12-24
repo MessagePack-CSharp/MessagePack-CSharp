@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -47,6 +48,12 @@ namespace MessagePack.Internal
         public static MethodInfo GetSetMethod(this PropertyInfo propInfo)
         {
             return propInfo.SetMethod;
+        }
+
+        public static bool HasPrivateCtorForSerialization(this TypeInfo type)
+        {
+            var markedCtor = type.DeclaredConstructors.SingleOrDefault(x => x.GetCustomAttribute<SerializationConstructorAttribute>(false) != null);
+            return markedCtor?.Attributes.HasFlag(MethodAttributes.Private) ?? false;
         }
     }
 }

@@ -22,9 +22,9 @@ namespace MessagePack
 
         internal delegate void GetWriterBytesAction<TArg>(ref MessagePackWriter writer, TArg argument);
 
-        internal static byte[] GetWriterBytes<TArg>(TArg arg, GetWriterBytesAction<TArg> action)
+        internal static byte[] GetWriterBytes<TArg>(TArg arg, GetWriterBytesAction<TArg> action, SequencePool pool)
         {
-            using (var sequenceRental = SequencePool.Shared.Rent())
+            using (var sequenceRental = pool.Rent())
             {
                 var writer = new MessagePackWriter(sequenceRental.Value);
                 action(ref writer, arg);

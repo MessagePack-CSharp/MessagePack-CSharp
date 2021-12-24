@@ -174,6 +174,25 @@ namespace MessagePack.Formatters
         }
     }
 
+    public sealed class GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, TDictionary>
+        where TDictionary : IReadOnlyDictionary<TKey, TValue>
+    {
+        protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
+        {
+            collection.Add(key, value);
+        }
+
+        protected override Dictionary<TKey, TValue> Create(int count, MessagePackSerializerOptions options)
+        {
+            return new Dictionary<TKey, TValue>(count, options.Security.GetEqualityComparer<TKey>());
+        }
+
+        protected override TDictionary Complete(Dictionary<TKey, TValue> intermediateCollection)
+        {
+            return (TDictionary)Activator.CreateInstance(typeof(TDictionary), intermediateCollection);
+        }
+    }
+
     public sealed class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)

@@ -294,11 +294,14 @@ namespace MessagePack.Tests
             }
         }
 
-        [Fact]
-        public void UriTest_Absolute()
+        [Theory]
+        [InlineData("http://google.com/")]
+        [InlineData("http://google.com:80/")]
+        [InlineData("https://example.com:443/")]
+        public void UriTest_Absolute(string url)
         {
-            var absolute = new Uri("http://google.com/");
-            this.Convert(absolute).ToString().Is("http://google.com/");
+            var absolute = new Uri(url);
+            this.Convert(absolute).OriginalString.Is(url);
         }
 
         [SkippableFact]
@@ -309,5 +312,16 @@ namespace MessagePack.Tests
             var relative = new Uri("/me/", UriKind.Relative);
             this.Convert(relative).ToString().Is("/me/");
         }
+
+#if NET5_0_OR_GREATER
+
+        [Fact]
+        public void HalfTest()
+        {
+            Convert((Half)1.34f).Is((Half)1.34f);
+            Convert((Half)0).Is((Half)0);
+        }
+
+#endif
     }
 }

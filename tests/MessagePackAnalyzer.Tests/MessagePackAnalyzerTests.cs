@@ -2,8 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Testing;
 using Xunit;
-using VerifyCS = CSharpCodeFixVerifier<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider>;
+using VerifyCS =
+    CSharpCodeFixVerifier<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider>;
 
 public class MessagePackAnalyzerTests
 {
@@ -21,6 +24,54 @@ public class Foo
 ";
 
         await VerifyCS.VerifyAnalyzerWithoutMessagePackReferenceAsync(input);
+    }
+
+    [Fact]
+    public async Task MessageFormatterAttribute()
+    {
+        string input = Preamble + @"using MessagePack.Formatters;
+
+public class FooFormatter : IMessagePackFormatter<Foo> {
+	public void Serialize(ref MessagePackWriter writer, Foo value, MessagePackSerializerOptions options) {}
+	public Foo Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => default;
+}
+
+
+[MessagePackFormatter(typeof(FooFormatter))]
+public struct Foo
+{
+}
+
+[MessagePackObject]
+public class SomeClass {
+    [Key(0)]
+    public Foo SomeFoo { get; set; }
+}
+";
+
+        await VerifyCS.VerifyAnalyzerAsync(input);
+    }
+
+    [Fact]
+    public async Task InvalidMessageFormatterType()
+    {
+        string input = Preamble + @"using MessagePack.Formatters;
+
+public class InvalidMessageFormatter { }
+
+[{|MsgPack006:MessagePackFormatter(typeof(InvalidMessageFormatter))|}]
+public struct Foo
+{
+}
+
+[MessagePackObject]
+public class SomeClass {
+    [Key(0)]
+    public Foo SomeFoo { get; set; }
+}
+";
+
+        await VerifyCS.VerifyAnalyzerAsync(input);
     }
 
     [Fact]
@@ -106,12 +157,13 @@ public class Bar
     {
         var inputs = new string[]
         {
-                @"
+            @"
 public class Foo
 {
     public int {|MsgPack004:Member1|} { get; set; }
 }
-", @"using MessagePack;
+",
+            @"using MessagePack;
 
 [MessagePackObject]
 public class Bar : Foo
@@ -122,13 +174,14 @@ public class Bar : Foo
         };
         var outputs = new string[]
         {
-                @"
+            @"
 public class Foo
 {
     [MessagePack.Key(1)]
     public int Member1 { get; set; }
 }
-", @"using MessagePack;
+",
+            @"using MessagePack;
 
 [MessagePackObject]
 public class Bar : Foo

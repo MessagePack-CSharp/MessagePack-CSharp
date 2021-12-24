@@ -87,6 +87,19 @@ namespace Xunit
             NUnit.Framework.Assert.IsNull(expected);
         }
 
+        public static void Empty(System.Collections.IEnumerable enumerable)
+        {
+            Assert.False(enumerable.GetEnumerator().MoveNext());
+        }
+
+        public static void All<T>(IEnumerable<T> collection, Action<T> predicate)
+        {
+            foreach (T item in collection)
+            {
+                predicate(item);
+            }
+        }
+
         public static T IsType<T>(object o)
         {
             NUnit.Framework.Assert.AreEqual(typeof(T), o.GetType());
@@ -143,16 +156,5 @@ namespace Xunit.Abstractions
     {
         void WriteLine(String message);
         void WriteLine(String format, params Object[] args);
-    }
-
-    public class NullTestOutputHelper : ITestOutputHelper
-    {
-        public void WriteLine(string message)
-        {
-        }
-
-        public void WriteLine(string format, params object[] args)
-        {
-        }
     }
 }

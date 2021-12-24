@@ -5,7 +5,7 @@
 [![Releases](https://img.shields.io/github/release/neuecc/MessagePack-CSharp.svg)][Releases]
 
 [![Join the chat at https://gitter.im/MessagePack-CSharp/Lobby](https://badges.gitter.im/MessagePack-CSharp/Lobby.svg)](https://gitter.im/MessagePack-CSharp/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2)
+[![Build Status](https://dev.azure.com/ils0086/MessagePack-CSharp/_apis/build/status/MessagePack-CSharp-CI?branchName=master)](https://dev.azure.com/ils0086/MessagePack-CSharp/_build/latest?definitionId=2&branchName=master)
 
 The extremely fast [MessagePack](http://msgpack.org/) serializer for C#.
 It is 10x faster than [MsgPack-Cli](https://github.com/msgpack/msgpack-cli) and outperforms other C# serializers. MessagePack for C# also ships with built-in support for LZ4 compression - an extremely fast compression algorithm. Performance is important, particularly in applications like games, distributed computing, microservices, or data caches.
@@ -44,6 +44,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
     - [Be careful when copying buffers](#be-careful-when-copying-buffers)
     - [Choosing compression](#choosing-compression)
 - [Extensions](#extensions)
+- [Experimental Features](#experimental-features)
 - [High-Level API (`MessagePackSerializer`)](#high-level-api-messagepackserializer)
     - [Multiple MessagePack structures on a single `Stream`](#multiple-messagepack-structures-on-a-single-stream)
 - [Low-Level API (`IMessagePackFormatter<T>`)](#low-level-api-imessagepackformattert)
@@ -183,7 +184,7 @@ These types can serialize by default:
 * Primitives (`int`, `string`, etc...), `Enum`s, `Nullable<>`, `Lazy<>`
 * `TimeSpan`,  `DateTime`, `DateTimeOffset`
 * `Guid`, `Uri`, `Version`, `StringBuilder`
-* `BigInteger`, `Complex`
+* `BigInteger`, `Complex`, `Half`
 * `Array[]`, `Array[,]`, `Array[,,]`, `Array[,,,]`, `ArraySegment<>`, `BitArray`
 * `KeyValuePair<,>`, `Tuple<,...>`, `ValueTuple<,...>`
 * `ArrayList`, `Hashtable`
@@ -402,6 +403,36 @@ public struct Point
     }
 }
 ```
+
+### C# 9 `record` types
+
+C# 9.0 record with primary constructor is similar immutable object, also supports serialize/deserialize.
+
+```csharp
+// use key as property name
+[MessagePackObject(true)]public record Point(int X, int Y);
+
+// use property: to set KeyAttribute
+[MessagePackObject] public record Point([property:Key(0)] int X, [property: Key(1)] int Y);
+
+// Or use explicit properties
+[MessagePackObject]
+public record Person
+{
+    [Key(0)]
+    public string FirstName { get; init; }
+
+    [Key(1)]
+    public string LastName { get; init; }
+}
+```
+
+### C# 9 `init` property setter limitations
+
+When using `init` property setters in _generic_ classes, [a CLR bug](https://github.com/neuecc/MessagePack-CSharp/issues/1134) prevents our most efficient code generation from invoking the property setter.
+As a result, you should avoid using `init` on property setters in generic classes when using the public-only `DynamicObjectResolver`/`StandardResolver`.
+
+When using the `DynamicObjectResolverAllowPrivate`/`StandardResolverAllowPrivate` resolver the bug does not apply and you may use `init` without restriction.
 
 ## Serialization Callback
 
@@ -983,6 +1014,16 @@ You can make your own extension serializers or integrate with frameworks. Let's 
 * [WebApiContrib.Core.Formatter.MessagePack](https://github.com/WebApiContrib/WebAPIContrib.Core#formatters) - supports ASP.NET Core MVC ([details in blog post](https://www.strathweb.com/2017/06/using-messagepack-with-asp-net-core-mvc/))
 * [MessagePack.MediaTypeFormatter](https://github.com/sketch7/MessagePack.MediaTypeFormatter) - MessagePack MediaTypeFormatter
 
+## Experimental Features
+
+MessagePack for C# has experimental features which provides you with very performant formatters. There is an official package.
+
+```ps1
+Install-Package MessagePack.Experimental
+```
+
+For detailed information, see: [Experimental.md](src/MessagePack.Experimental/Experimental.md)
+
 # API
 
 ## High-Level API (`MessagePackSerializer`)
@@ -1322,7 +1363,7 @@ internal static class SampleCustomResolverGetFormatterHelper
         }
 
         // If target type is generics, use MakeGenericType.
-        if (t.IsGenericParameter && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
+        if (t.IsGeneric && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
         {
             return Activator.CreateInstance(typeof(ValueTupleFormatter<,>).MakeGenericType(t.GenericTypeArguments));
         }
@@ -1437,7 +1478,9 @@ MessagePack for C# already used some MessagePack extension type codes, be carefu
 
 Unity lowest supported version is `2018.3`, API Compatibility Level supports both `.NET 4.x` and `.NET Standard 2.0`.
 
-You can install the `unitypackage` from the [releases][Releases] page. If your build targets PC, you can use it as is, but if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
+You can install the `unitypackage` from the [releases][Releases] page.
+If your build targets .NET Framework 4.x and runs on mono, you can use it as is.
+But if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
 
 MessagePack for C# includes some additional `System.*.dll` libraries that originally provides in NuGet. They are located under `Plugins`. If other packages use these libraries (e.g. Unity Collections package using `System.Runtime.CompilerServices.Unsafe.dll`), to avoid conflicts, please delete the DLL under `Plugins`.
 
@@ -1483,7 +1526,8 @@ If you want to share a class between Unity and a server, you can use `SharedProj
 By default, MessagePack for C# serializes custom objects by [generating IL](https://msdn.microsoft.com/en-us/library/system.reflection.emit.ilgenerator.aspx) on the fly at runtime to create custom, highly tuned formatters for each type. This code generation has a minor upfront performance cost.
 Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
 
-> Note: When Unity targets the PC it allows dynamic code generation, so AOT is not required.
+> Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
+For all other Unity targets, AOT is required.
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
 
@@ -1505,7 +1549,7 @@ Check in your `.config\dotnet-tools.json` file. On another machine you can "rest
 Once you have the tool installed, simply invoke using `dotnet mpc` within your repo:
 
 ```
-dotnet mpc -h
+dotnet mpc --help
 ```
 
 Alternatively, you can download mpc from the [releases][Releases] page, that includes platform native binaries (that don't require a separate dotnet runtime).
@@ -1514,7 +1558,7 @@ Alternatively, you can download mpc from the [releases][Releases] page, that inc
 Usage: mpc [options...]
 
 Options:
-  -i, -input <String>                                Input path of analyze csproj or directory, if input multiple csproj split with ','. (Required)
+  -i, -input <String>                                Input path to MSBuild project file or the directory containing Unity source files. (Required)
   -o, -output <String>                               Output file path(.cs) or directory(multiple generate file). (Required)
   -c, -conditionalSymbol <String>                    Conditional compiler symbols, split with ','. (Default: null)
   -r, -resolverName <String>                         Set resolver name. (Default: GeneratedResolver)

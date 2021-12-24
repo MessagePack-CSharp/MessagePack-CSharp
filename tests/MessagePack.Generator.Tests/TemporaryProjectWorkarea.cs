@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Threading.Tasks;
 using MessagePack.Formatters;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Nerdbank.Streams;
 
 namespace MessagePack.Generator.Tests
 {
@@ -20,12 +22,28 @@ namespace MessagePack.Generator.Tests
     public class TemporaryProjectWorkarea : IDisposable
     {
         private readonly string tempDirPath;
-        private readonly string csprojFileName = "TempProject.csproj";
+        private readonly string targetCsprojFileName = "TempTargetProject.csproj";
+        private readonly string referencedCsprojFileName = "TempReferencedProject.csproj";
         private readonly bool cleanOnDisposing;
 
-        public string CsProjectPath { get; }
+        /// <summary>
+        /// Gets the identifier of the workarea.
+        /// </summary>
+        public Guid WorkareaId { get; }
 
-        public string ProjectDirectory { get; }
+        /// <summary>
+        /// Gets Generator target csproj file path.
+        /// </summary>
+        public string TargetCsProjectPath { get; }
+
+        /// <summary>
+        /// Gets csproj file path Referenced from TargetProject.
+        /// </summary>
+        public string ReferencedCsProjectPath { get; }
+
+        public string TargetProjectDirectory { get; }
+
+        public string ReferencedProjectDirectory { get; }
 
         public string OutputDirectory { get; }
 
@@ -36,20 +54,38 @@ namespace MessagePack.Generator.Tests
 
         private TemporaryProjectWorkarea(bool cleanOnDisposing)
         {
+            WorkareaId = Guid.NewGuid();
             this.cleanOnDisposing = cleanOnDisposing;
-            this.tempDirPath = Path.Combine(Path.GetTempPath(), $"MessagePack.Generator.Tests-{Guid.NewGuid()}");
+            this.tempDirPath = Path.Combine(Path.GetTempPath(), $"MessagePack.Generator.Tests-{WorkareaId}");
 
-            ProjectDirectory = Path.Combine(tempDirPath, "Project");
+            TargetProjectDirectory = Path.Combine(tempDirPath, "TargetProject");
+            ReferencedProjectDirectory = Path.Combine(tempDirPath, "ReferencedProject");
             OutputDirectory = Path.Combine(tempDirPath, "Output");
 
-            Directory.CreateDirectory(ProjectDirectory);
+            Directory.CreateDirectory(TargetProjectDirectory);
+            Directory.CreateDirectory(ReferencedProjectDirectory);
             Directory.CreateDirectory(OutputDirectory);
+            Directory.CreateDirectory(Path.Combine(OutputDirectory, "bin"));
 
             var solutionRootDir = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../../../.."));
             var messagePackProjectDir = Path.Combine(solutionRootDir, "src/MessagePack/MessagePack.csproj");
             var annotationsProjectDir = Path.Combine(solutionRootDir, "src/MessagePack.Annotations/MessagePack.Annotations.csproj");
 
-            CsProjectPath = Path.Combine(ProjectDirectory, csprojFileName);
+            ReferencedCsProjectPath = Path.Combine(ReferencedProjectDirectory, referencedCsprojFileName);
+            var referencedCsprojContents = @"
+<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include=""" + annotationsProjectDir + @""" />
+  </ItemGroup>
+</Project>
+";
+            AddFileToReferencedProject(referencedCsprojFileName, referencedCsprojContents);
+
+            TargetCsProjectPath = Path.Combine(TargetProjectDirectory, targetCsprojFileName);
             var csprojContents = @"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -59,25 +95,36 @@ namespace MessagePack.Generator.Tests
   <ItemGroup>
     <ProjectReference Include=""" + messagePackProjectDir + @""" />
     <ProjectReference Include=""" + annotationsProjectDir + @""" />
+    <ProjectReference Include=""" + ReferencedCsProjectPath + @""" />
   </ItemGroup>
 </Project>
 ";
-            AddFileToProject(csprojFileName, csprojContents);
+            AddFileToTargetProject(targetCsprojFileName, csprojContents);
         }
 
-        public void AddFileToProject(string fileName, string contents)
+        /// <summary>
+        /// Add file to Generator target project.
+        /// </summary>
+        public void AddFileToTargetProject(string fileName, string contents)
         {
-            File.WriteAllText(Path.Combine(ProjectDirectory, fileName), contents.Trim());
+            File.WriteAllText(Path.Combine(TargetProjectDirectory, fileName), contents.Trim());
+        }
+
+        /// <summary>
+        /// Add file to project, referenced by Generator target project.
+        /// </summary>
+        public void AddFileToReferencedProject(string fileName, string contents)
+        {
+            File.WriteAllText(Path.Combine(ReferencedProjectDirectory, fileName), contents.Trim());
         }
 
         public OutputCompilation GetOutputCompilation()
         {
             var refAsmDir = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
-            var compilation = CSharpCompilation.Create(Guid.NewGuid().ToString())
+            var referenceCompilation = CSharpCompilation.Create(Guid.NewGuid().ToString())
                 .AddSyntaxTrees(
-                    Directory.EnumerateFiles(ProjectDirectory, "*.cs", SearchOption.AllDirectories)
-                        .Concat(Directory.EnumerateFiles(OutputDirectory, "*.cs", SearchOption.AllDirectories))
+                    Directory.EnumerateFiles(ReferencedProjectDirectory, "*.cs", SearchOption.AllDirectories)
                         .Select(x => CSharpSyntaxTree.ParseText(File.ReadAllText(x), CSharpParseOptions.Default, x)))
                 .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Private.CoreLib.dll")))
                 .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Runtime.Extensions.dll")))
@@ -92,7 +139,26 @@ namespace MessagePack.Generator.Tests
                 .AddReferences(MetadataReference.CreateFromFile(typeof(IMessagePackFormatter<>).Assembly.Location))
                 .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-            return new OutputCompilation(compilation);
+            var compilation = CSharpCompilation.Create(Guid.NewGuid().ToString())
+                .AddSyntaxTrees(
+                    Directory.EnumerateFiles(TargetProjectDirectory, "*.cs", SearchOption.AllDirectories)
+                        .Concat(Directory.EnumerateFiles(OutputDirectory, "*.cs", SearchOption.AllDirectories))
+                        .Select(x => CSharpSyntaxTree.ParseText(File.ReadAllText(x), CSharpParseOptions.Default, x)))
+                .AddReferences(referenceCompilation.ToMetadataReference())
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Private.CoreLib.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Runtime.Extensions.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Collections.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Linq.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Console.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Runtime.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "System.Memory.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(Path.Combine(refAsmDir, "netstandard.dll")))
+                .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
+                .AddReferences(MetadataReference.CreateFromFile(typeof(MessagePack.MessagePackObjectAttribute).Assembly.Location))
+                .AddReferences(MetadataReference.CreateFromFile(typeof(IMessagePackFormatter<>).Assembly.Location))
+                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+            return new OutputCompilation(this, compilation);
         }
 
         public void Dispose()
@@ -106,10 +172,13 @@ namespace MessagePack.Generator.Tests
 
     public class OutputCompilation
     {
+        private readonly TemporaryProjectWorkarea workarea;
+
         public Compilation Compilation { get; }
 
-        public OutputCompilation(Compilation compilation)
+        public OutputCompilation(TemporaryProjectWorkarea workarea, Compilation compilation)
         {
+            this.workarea = workarea;
             this.Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
         }
 
@@ -145,6 +214,27 @@ namespace MessagePack.Generator.Tests
                     .Where(x => x is QualifiedNameSyntax || x is IdentifierNameSyntax || x is GenericNameSyntax || x is PredefinedTypeSyntax)
                     .Select(x => x.ToString()))
                 .ToArray();
+        }
+
+        /// <summary>
+        /// Load the generated assembly and execute the code in that context.
+        /// </summary>
+        public void ExecuteWithGeneratedAssembly(Action<AssemblyLoadContext, Assembly> action)
+        {
+            var memoryStream = new MemoryStream();
+            Compilation.Emit(memoryStream);
+            memoryStream.Position = 0;
+
+            var assemblyLoadContext = new AssemblyLoadContext($"TempProject-{workarea.WorkareaId}", isCollectible: true);
+            try
+            {
+                Assembly assembly = assemblyLoadContext.LoadFromStream(memoryStream);
+                action(assemblyLoadContext, assembly);
+            }
+            finally
+            {
+                assemblyLoadContext.Unload();
+            }
         }
     }
 }

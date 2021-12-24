@@ -21,8 +21,6 @@ namespace MessagePack.Tests
 {
     public class MessagePackSerializerTest
     {
-#if !ENABLE_IL2CPP
-
         [Fact]
         public void NonGeneric()
         {
@@ -33,21 +31,25 @@ namespace MessagePack.Tests
             var writer = new MessagePackWriter(writerBytes);
 
             var data1 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data)) as FirstSimpleData;
-            var data2 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data, StandardResolver.Options)) as FirstSimpleData;
+            var data2 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data, MessagePackSerializer.DefaultOptions)) as FirstSimpleData;
 
             MessagePackSerializer.Serialize(t, ms, data);
             ms.Position = 0;
             var data3 = MessagePackSerializer.Deserialize(t, ms) as FirstSimpleData;
 
             ms = new MemoryStream();
-            MessagePackSerializer.Serialize(t, ms, data, StandardResolver.Options);
+            MessagePackSerializer.Serialize(t, ms, data, MessagePackSerializer.DefaultOptions);
             ms.Position = 0;
-            var data4 = MessagePackSerializer.Deserialize(t, ms, StandardResolver.Options) as FirstSimpleData;
+            var data4 = MessagePackSerializer.Deserialize(t, ms, MessagePackSerializer.DefaultOptions) as FirstSimpleData;
 
-            MessagePackSerializer.Serialize(t, ref writer, data, StandardResolver.Options);
+#if ENABLE_IL2CPP
+            var data5 = data4;
+#else
+            MessagePackSerializer.Serialize(t, ref writer, data, MessagePackSerializer.DefaultOptions);
             writer.Flush();
             var reader = new MessagePackReader(writerBytes.AsReadOnlySequence);
-            var data5 = MessagePackSerializer.Deserialize(t, ref reader, StandardResolver.Options) as FirstSimpleData;
+            var data5 = MessagePackSerializer.Deserialize(t, ref reader, MessagePackSerializer.DefaultOptions) as FirstSimpleData;
+#endif
 
             new[] { data1.Prop1, data2.Prop1, data3.Prop1, data4.Prop1, data5.Prop1 }.Distinct().Is(data.Prop1);
             new[] { data1.Prop2, data2.Prop2, data3.Prop2, data4.Prop2, data5.Prop2 }.Distinct().Is(data.Prop2);
@@ -63,26 +65,24 @@ namespace MessagePack.Tests
             var writerBytes = new Sequence<byte>();
 
             var data1 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data)) as FirstSimpleData;
-            var data2 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data, StandardResolver.Options)) as FirstSimpleData;
+            var data2 = MessagePackSerializer.Deserialize(t, MessagePackSerializer.Serialize(t, data, MessagePackSerializer.DefaultOptions)) as FirstSimpleData;
 
             MessagePackSerializer.Serialize(t, ms, data);
             ms.Position = 0;
             var data3 = MessagePackSerializer.Deserialize(t, ms) as FirstSimpleData;
 
             ms = new MemoryStream();
-            MessagePackSerializer.Serialize(t, ms, data, StandardResolver.Options);
+            MessagePackSerializer.Serialize(t, ms, data, MessagePackSerializer.DefaultOptions);
             ms.Position = 0;
-            var data4 = MessagePackSerializer.Deserialize(t, ms, StandardResolver.Options) as FirstSimpleData;
+            var data4 = MessagePackSerializer.Deserialize(t, ms, MessagePackSerializer.DefaultOptions) as FirstSimpleData;
 
-            MessagePackSerializer.Serialize(t, writerBytes, data, StandardResolver.Options);
-            var data5 = MessagePackSerializer.Deserialize(t, writerBytes.AsReadOnlySequence, StandardResolver.Options) as FirstSimpleData;
+            MessagePackSerializer.Serialize(t, writerBytes, data, MessagePackSerializer.DefaultOptions);
+            var data5 = MessagePackSerializer.Deserialize(t, writerBytes.AsReadOnlySequence, MessagePackSerializer.DefaultOptions) as FirstSimpleData;
 
             new[] { data1.Prop1, data2.Prop1, data3.Prop1, data4.Prop1, data5.Prop1 }.Distinct().Is(data.Prop1);
             new[] { data1.Prop2, data2.Prop2, data3.Prop2, data4.Prop2, data5.Prop2 }.Distinct().Is(data.Prop2);
             new[] { data1.Prop3, data2.Prop3, data3.Prop3, data4.Prop3, data5.Prop3 }.Distinct().Is(data.Prop3);
         }
-
-#endif
 
 #if !UNITY_2018_3_OR_NEWER
 
@@ -241,6 +241,8 @@ namespace MessagePack.Tests
             }
         }
 
+#if !ENABLE_IL2CPP
+
         [Fact]
         public void StackDepthCheck_DynamicObjectResolver()
         {
@@ -268,6 +270,8 @@ namespace MessagePack.Tests
             var ex = Assert.Throws<MessagePackSerializationException>(() => MessagePackSerializer.Deserialize<RecursiveObjectGraph>(msgpack, options));
             Assert.IsType<InsufficientExecutionStackException>(ex.InnerException);
         }
+
+#endif
 
         private delegate void WriterHelper(ref MessagePackWriter writer);
 
