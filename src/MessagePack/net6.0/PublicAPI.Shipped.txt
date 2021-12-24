@@ -566,9 +566,7 @@ MessagePack.MessagePackSerializerOptions.WithResolver(MessagePack.IFormatterReso
 MessagePack.MessagePackStreamReader
 MessagePack.MessagePackStreamReader.Dispose() -> void
 MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream) -> void
-MessagePack.MessagePackStreamReader.ReadArrayHeaderAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 MessagePack.MessagePackStreamReader.ReadAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Buffers.ReadOnlySequence<byte>?>
-MessagePack.MessagePackStreamReader.ReadMapHeaderAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 MessagePack.MessagePackStreamReader.RemainingBytes.get -> System.Buffers.ReadOnlySequence<byte>
 MessagePack.MessagePackType
 MessagePack.MessagePackType.Array = 7 -> MessagePack.MessagePackType
@@ -1017,7 +1015,9 @@ MessagePack.MessagePackSerializerOptions.Security.get -> MessagePack.MessagePack
 MessagePack.MessagePackSerializerOptions.WithSecurity(MessagePack.MessagePackSecurity security) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackStreamReader.DiscardBufferedData() -> void
 MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, bool leaveOpen) -> void
+MessagePack.MessagePackStreamReader.ReadArrayHeaderAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 MessagePack.MessagePackStreamReader.ReadArrayAsync(System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<System.Buffers.ReadOnlySequence<byte>>
+MessagePack.MessagePackStreamReader.ReadMapHeaderAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 MessagePack.MessagePackWriter.WriteBinHeader(int length) -> void
 MessagePack.MessagePackWriter.WriteStringHeader(int byteCount) -> void
 static readonly MessagePack.MessagePackSecurity.TrustedData -> MessagePack.MessagePackSecurity
