@@ -132,6 +132,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Resolvers\DynamicUnionResolver.cs">
       <Link>Code\DynamicUnionResolver.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Resolvers\ResolverUtilities.cs">
+      <Link>Code\ResolverUtilities.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\StringEncoding.cs">
       <Link>Code\StringEncoding.cs</Link>
     </Compile>

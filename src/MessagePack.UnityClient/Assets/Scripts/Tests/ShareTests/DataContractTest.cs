@@ -191,6 +191,8 @@ namespace MessagePack.Tests
             public bool Equals(Detail other) => other != null && this.B1 == other.B1 && this.B2 == other.B2;
         }
 
+#if !UNITY_2018_3_OR_NEWER
+
         [Fact]
         public void DataContractSerializerCompatibility()
         {
@@ -218,6 +220,8 @@ namespace MessagePack.Tests
 
             Assert.Equal(dcsValue, mpValue);
         }
+
+#endif
 
         private static T DataContractSerializerRoundTrip<T>(T value)
         {
