@@ -334,8 +334,8 @@ namespace MessagePack
                     value = float.NaN;
                 }
 
-                long l = *(long*)&value;
-                return HashCode.Combine((int)(l >> 32), unchecked((int)l));
+                int l = *(int*)&value;
+                return l;
             }
         }
 

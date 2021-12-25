@@ -1,10 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Linq; // require UNITY_2018_3_OR_NEWER
+using System.Linq;
 using System.Reflection;
 using MessagePack.Formatters;
+using MessagePack.Internal;
 
 namespace MessagePack.Resolvers
 {
@@ -49,14 +49,7 @@ namespace MessagePack.Resolvers
                     formatterType = formatterType.MakeGenericType(typeof(T).GetGenericArguments());
                 }
 
-                if (attr.Arguments == null)
-                {
-                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterType);
-                }
-                else
-                {
-                    Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(formatterType, attr.Arguments);
-                }
+                Formatter = (IMessagePackFormatter<T>)ResolverUtilities.ActivateFormatter(formatterType, attr.Arguments);
             }
         }
     }

@@ -4,6 +4,7 @@
 extern alias newmsgpack;
 extern alias oldmsgpack;
 
+using System;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using Nerdbank.Streams;
@@ -12,7 +13,7 @@ namespace PerfBenchmarkDotNet
 {
     [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
     [CategoriesColumn]
-    public class MessagePackWriterBenchmark
+    public sealed class MessagePackWriterBenchmark : IDisposable
     {
         private const int RepsOverArray = 300 * 1024;
         private readonly Sequence<byte> sequence = new Sequence<byte>();
@@ -147,6 +148,11 @@ namespace PerfBenchmarkDotNet
 
                 offset = 0;
             }
+        }
+
+        public void Dispose()
+        {
+            this.sequence.Dispose();
         }
     }
 }

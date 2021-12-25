@@ -19,7 +19,7 @@ stages:
   jobs:
   - job: Windows
     pool:
-      vmImage: windows-2019
+      vmImage: windows-2022
     steps:
     - checkout: self
       clean: true
@@ -33,7 +33,9 @@ stages:
   - job: Unity
     pool:
       name: CustomAgents
-      demands: UNITYHUB_EDITORS_FOLDER_LOCATION
+      demands:
+      - UNITYHUB_EDITORS_FOLDER_LOCATION
+      - UNITYVERSION -equals 2019.1
     steps:
     - checkout: self
       clean: true
@@ -42,7 +44,7 @@ stages:
 
   - job: Linux
     pool:
-      vmImage: Ubuntu 16.04
+      vmImage: ubuntu-20.04
     steps:
     - checkout: self
       clean: true
@@ -51,7 +53,7 @@ stages:
 
   - job: macOS
     pool:
-      vmImage: macOS-10.15
+      vmImage: macOS-11
     steps:
     - checkout: self
       clean: true
@@ -62,7 +64,7 @@ stages:
 # It also helps exercise mpc so bugs don't go unnoticed.
   - job: codegen_diff
     pool:
-      vmImage: ubuntu-latest
+      vmImage: ubuntu-20.04
     steps:
     - checkout: self
       clean: true
@@ -82,7 +84,7 @@ stages:
   jobs:
   - job: push
     pool:
-      vmImage: ubuntu-latest
+      vmImage: ubuntu-20.04
     steps:
     - download: current
       artifact: nuget

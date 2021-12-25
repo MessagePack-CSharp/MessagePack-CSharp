@@ -92,6 +92,14 @@ namespace Xunit
             Assert.False(enumerable.GetEnumerator().MoveNext());
         }
 
+        public static void All<T>(IEnumerable<T> collection, Action<T> predicate)
+        {
+            foreach (T item in collection)
+            {
+                predicate(item);
+            }
+        }
+
         public static T IsType<T>(object o)
         {
             NUnit.Framework.Assert.AreEqual(typeof(T), o.GetType());
@@ -121,6 +129,11 @@ namespace Xunit
         public static void Same(object expected, object actual)
         {
             NUnit.Framework.Assert.AreSame(expected, actual);
+        }
+
+        public static void NotSame(object expected, object actual)
+        {
+            NUnit.Framework.Assert.AreNotSame(expected, actual);
         }
     }
 
