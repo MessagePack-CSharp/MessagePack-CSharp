@@ -1,6 +1,11 @@
 MessagePack.ExtensionHeader.ExtensionHeader() -> void
 MessagePack.ExtensionResult.ExtensionResult() -> void
 MessagePack.FormatterNotRegisteredException.FormatterNotRegisteredException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
+MessagePack.Formatters.HalfFormatter
+MessagePack.Formatters.HalfFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.Half
+MessagePack.Formatters.HalfFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.Half value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.InterfaceReadOnlySetFormatter<T>
+MessagePack.Formatters.InterfaceReadOnlySetFormatter<T>.InterfaceReadOnlySetFormatter() -> void
 MessagePack.Formatters.StringInterningFormatter
 MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> string
 MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string value, MessagePack.MessagePackSerializerOptions options) -> void
@@ -17,6 +22,7 @@ MessagePack.SequencePool.SequencePool(int maxSize, System.Buffers.ArrayPool<byte
 MessagePack.TinyJsonException.TinyJsonException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
 static MessagePack.Nil.operator !=(MessagePack.Nil left, MessagePack.Nil right) -> bool
 static MessagePack.Nil.operator ==(MessagePack.Nil left, MessagePack.Nil right) -> bool
+static readonly MessagePack.Formatters.HalfFormatter.Instance -> MessagePack.Formatters.IMessagePackFormatter<System.Half>
 virtual MessagePack.MessagePackStreamReader.Dispose(bool disposing) -> void
 MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>
 MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>.GenericEnumerableFormatter() -> void

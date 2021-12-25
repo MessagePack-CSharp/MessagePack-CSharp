@@ -1,4 +1,4 @@
-﻿MessagePack.ExtensionHeader
+MessagePack.ExtensionHeader
 MessagePack.ExtensionHeader.ExtensionHeader(sbyte typeCode, int length) -> void
 MessagePack.ExtensionHeader.ExtensionHeader(sbyte typeCode, uint length) -> void
 MessagePack.ExtensionHeader.Length.get -> uint
