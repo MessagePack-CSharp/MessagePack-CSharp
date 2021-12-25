@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using MessagePack;
 using MessagePack.Resolvers;
 using Xunit;
@@ -34,6 +35,16 @@ public class MessagePackSerializerOptionsTests
     {
         Assert.Equal(MessagePackCompression.None, MessagePackSerializerOptions.Standard.Compression);
         Assert.Equal(MessagePackCompression.Lz4Block, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block).Compression);
+    }
+
+    [Fact]
+    public void CompressionMinLength()
+    {
+        Assert.Equal(64, MessagePackSerializerOptions.Standard.CompressionMinLength);
+        Assert.Throws<ArgumentOutOfRangeException>(() => MessagePackSerializerOptions.Standard.WithCompressionMinLength(0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => MessagePackSerializerOptions.Standard.WithCompressionMinLength(-1));
+        MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard.WithCompressionMinLength(128);
+        Assert.Equal(128, options.CompressionMinLength);
     }
 
     [Fact]

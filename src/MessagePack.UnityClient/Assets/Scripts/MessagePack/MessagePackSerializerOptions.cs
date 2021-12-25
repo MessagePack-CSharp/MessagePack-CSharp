@@ -41,7 +41,6 @@ namespace MessagePack
         protected internal MessagePackSerializerOptions(IFormatterResolver resolver)
         {
             this.Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-            this.CompressionMinLength = 64;
         }
 
         /// <summary>
@@ -84,12 +83,14 @@ namespace MessagePack
         public MessagePackCompression Compression { get; private set; }
 
         /// <summary>
-        /// Gets the min sequence length allowed for compression.
+        /// Gets the length a serialized msgpack result must equal or exceed before <see cref="Compression"/> is applied.
         /// </summary>
+        /// <value>The default value is 64.</value>
         /// <remarks>
-        /// Sequences with length less then this value will skip block compression.
+        /// When compression is <em>not</em> applied due to a short serialized result, deserialization will still succeed
+        /// even if <see cref="Compression"/> is set to something other than <see cref="MessagePackCompression.None"/>.
         /// </remarks>
-        public int CompressionMinLength { get; private set; }
+        public int CompressionMinLength { get; private set; } = 64;
 
         /// <summary>
         /// Gets a value indicating whether to serialize with <see cref="MessagePackWriter.OldSpec"/> set to some value
@@ -207,13 +208,18 @@ namespace MessagePack
         /// <summary>
         /// Gets a copy of these options with the <see cref="CompressionMinLength"/> property set to a new value.
         /// </summary>
-        /// <param name="compressionMinLength">The new value for the <see cref="CompressionMinLength"/> property.</param>
+        /// <param name="compressionMinLength">The new value for the <see cref="CompressionMinLength"/> property. Must be a positive integer.</param>
         /// <returns>The new instance; or the original if the value is unchanged.</returns>
         public MessagePackSerializerOptions WithCompressionMinLength(int compressionMinLength)
         {
             if (this.CompressionMinLength == compressionMinLength)
             {
                 return this;
+            }
+
+            if (compressionMinLength <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(compressionMinLength));
             }
 
             var result = this.Clone();

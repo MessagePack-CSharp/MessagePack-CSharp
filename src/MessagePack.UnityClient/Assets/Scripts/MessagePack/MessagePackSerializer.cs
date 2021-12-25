@@ -556,14 +556,14 @@ namespace MessagePack
 
         private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer, MessagePackCompression compression, int minCompressionSize)
         {
+            if (msgpackUncompressedData.Length < minCompressionSize)
+            {
+                writer.WriteRaw(msgpackUncompressedData);
+                return;
+            }
+
             if (compression == MessagePackCompression.Lz4Block)
             {
-                if (msgpackUncompressedData.Length < minCompressionSize)
-                {
-                    writer.WriteRaw(msgpackUncompressedData);
-                    return;
-                }
-
                 var maxCompressedLength = LZ4Codec.MaximumOutputLength((int)msgpackUncompressedData.Length);
                 var lz4Span = ArrayPool<byte>.Shared.Rent(maxCompressedLength);
                 try
