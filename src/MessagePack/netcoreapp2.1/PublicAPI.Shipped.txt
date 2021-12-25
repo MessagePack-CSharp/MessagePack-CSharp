@@ -1,4 +1,4 @@
-﻿MessagePack.ExtensionHeader
+MessagePack.ExtensionHeader
 MessagePack.ExtensionHeader.ExtensionHeader(sbyte typeCode, int length) -> void
 MessagePack.ExtensionHeader.ExtensionHeader(sbyte typeCode, uint length) -> void
 MessagePack.ExtensionHeader.Length.get -> uint
@@ -1152,3 +1152,23 @@ static readonly MessagePack.ImmutableCollection.ImmutableCollectionResolver.Inst
 static readonly MessagePack.Resolvers.ExpandoObjectResolver.Instance -> MessagePack.IFormatterResolver
 static readonly MessagePack.Resolvers.ExpandoObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
 virtual MessagePack.Formatters.PrimitiveObjectFormatter.DeserializeMap(ref MessagePack.MessagePackReader reader, int length, MessagePack.MessagePackSerializerOptions options) -> object
+MessagePack.ExtensionHeader.ExtensionHeader() -> void
+MessagePack.ExtensionResult.ExtensionResult() -> void
+MessagePack.FormatterNotRegisteredException.FormatterNotRegisteredException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
+MessagePack.MessagePackReader.MessagePackReader() -> void
+MessagePack.MessagePackSerializerOptions.SequencePool.get -> MessagePack.SequencePool
+MessagePack.MessagePackSerializerOptions.WithPool(MessagePack.SequencePool pool) -> MessagePack.MessagePackSerializerOptions
+MessagePack.MessagePackStreamReader.MessagePackStreamReader(System.IO.Stream stream, bool leaveOpen, MessagePack.SequencePool sequencePool) -> void
+MessagePack.MessagePackWriter.MessagePackWriter() -> void
+MessagePack.SequencePool
+MessagePack.SequencePool.SequencePool() -> void
+MessagePack.SequencePool.SequencePool(int maxSize) -> void
+MessagePack.SequencePool.SequencePool(int maxSize, System.Buffers.ArrayPool<byte> arrayPool) -> void
+MessagePack.TinyJsonException.TinyJsonException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) -> void
+static MessagePack.Nil.operator !=(MessagePack.Nil left, MessagePack.Nil right) -> bool
+static MessagePack.Nil.operator ==(MessagePack.Nil left, MessagePack.Nil right) -> bool
+virtual MessagePack.MessagePackStreamReader.Dispose(bool disposing) -> void
+MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>
+MessagePack.Formatters.GenericEnumerableFormatter<TElement, TCollection>.GenericEnumerableFormatter() -> void
+MessagePack.Formatters.GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary>
+MessagePack.Formatters.GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary>.GenericReadOnlyDictionaryFormatter() -> void
