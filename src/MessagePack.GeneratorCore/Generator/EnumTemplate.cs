@@ -34,27 +34,27 @@ namespace MessagePackCompiler.Generator
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    using System;\r\n    using System.Buffers;\r\n    using MessagePack;\r\n");
+            this.Write("\r\n{\r\n");
  foreach(var info in EnumSerializationInfos) { 
             this.Write("\r\n    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
             this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
-            this.Write(">\r\n    {\r\n        public void Serialize(ref MessagePackWriter writer, ");
+            this.Write(">\r\n    {\r\n        public void Serialize(ref global::MessagePack.MessagePackWriter" +
+                    " writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n   " +
-                    "         writer.Write((");
+                    "         writer.Write((global::System.");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
             this.Write(")value);\r\n        }\r\n\r\n        public ");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
-            this.Write(" Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSeriali" +
-                    "zerOptions options)\r\n        {\r\n            return (");
+            this.Write(" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePac" +
+                    "k.MessagePackSerializerOptions options)\r\n        {\r\n            return (");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             this.Write(")reader.Read");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
@@ -67,7 +67,6 @@ namespace ");
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 ");

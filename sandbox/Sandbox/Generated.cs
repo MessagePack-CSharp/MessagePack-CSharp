@@ -7,14 +7,11 @@
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Resolvers
 {
-    using System;
-
     public class GeneratedResolver : global::MessagePack.IFormatterResolver
     {
         public static readonly global::MessagePack.IFormatterResolver Instance = new GeneratedResolver();
@@ -45,11 +42,11 @@ namespace MessagePack.Resolvers
 
     internal static class GeneratedResolverGetFormatterHelper
     {
-        private static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
+        private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(72)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(72)
             {
                 { typeof(global::GlobalMyEnum[,]), 0 },
                 { typeof(global::GlobalMyEnum[]), 1 },
@@ -126,7 +123,7 @@ namespace MessagePack.Resolvers
             };
         }
 
-        internal static object GetFormatter(Type t)
+        internal static object GetFormatter(global::System.Type t)
         {
             int key;
             if (!lookup.TryGetValue(t, out key))
@@ -220,7 +217,6 @@ namespace MessagePack.Resolvers
 #pragma warning restore 612
 
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1649 // File name should match first type name
 
 
@@ -233,24 +229,20 @@ namespace MessagePack.Resolvers
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
-    using System;
-    using System.Buffers;
-    using MessagePack;
 
     public sealed class GlobalMyEnumFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::GlobalMyEnum>
     {
-        public void Serialize(ref MessagePackWriter writer, global::GlobalMyEnum value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GlobalMyEnum value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.Write((Int32)value);
+            writer.Write((global::System.Int32)value);
         }
 
-        public global::GlobalMyEnum Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::GlobalMyEnum Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             return (global::GlobalMyEnum)reader.ReadInt32();
         }
@@ -262,7 +254,6 @@ namespace MessagePack.Formatters
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 
@@ -275,24 +266,20 @@ namespace MessagePack.Formatters
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters.SharedData
 {
-    using System;
-    using System.Buffers;
-    using MessagePack;
 
     public sealed class ByteEnumFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.ByteEnum>
     {
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.ByteEnum value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.ByteEnum value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.Write((Byte)value);
+            writer.Write((global::System.Byte)value);
         }
 
-        public global::SharedData.ByteEnum Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.ByteEnum Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             return (global::SharedData.ByteEnum)reader.ReadByte();
         }
@@ -304,7 +291,6 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 
@@ -318,31 +304,25 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
-    using System;
-    using System.Buffers;
-    using System.Collections.Generic;
-    using MessagePack;
-
     public sealed class IMessageBodyFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::IMessageBody>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IMessageBodyFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(3, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(3, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::TextMessageBody).TypeHandle, new KeyValuePair<int, int>(10, 0) },
-                { typeof(global::StampMessageBody).TypeHandle, new KeyValuePair<int, int>(14, 1) },
-                { typeof(global::QuestMessageBody).TypeHandle, new KeyValuePair<int, int>(25, 2) },
+                { typeof(global::TextMessageBody).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(10, 0) },
+                { typeof(global::StampMessageBody).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(14, 1) },
+                { typeof(global::QuestMessageBody).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(25, 2) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(3)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(3)
             {
                 { 10, 0 },
                 { 14, 1 },
@@ -350,9 +330,9 @@ namespace MessagePack.Formatters
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::IMessageBody value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::IMessageBody value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -378,7 +358,7 @@ namespace MessagePack.Formatters
             writer.WriteNil();
         }
 
-        public global::IMessageBody Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::IMessageBody Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -387,7 +367,7 @@ namespace MessagePack.Formatters
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::IMessageBody");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::IMessageBody");
             }
 
             options.Security.DepthStep(ref reader);
@@ -428,7 +408,6 @@ namespace MessagePack.Formatters
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 
@@ -441,37 +420,31 @@ namespace MessagePack.Formatters
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters.SharedData
 {
-    using System;
-    using System.Buffers;
-    using System.Collections.Generic;
-    using MessagePack;
-
     public sealed class IIVersioningUnionFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IIVersioningUnion>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IIVersioningUnionFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(1, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(1, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(1)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(1)
             {
                 { 0, 0 },
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.IIVersioningUnion value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IIVersioningUnion value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -491,7 +464,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.IIVersioningUnion Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.IIVersioningUnion Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -500,7 +473,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IIVersioningUnion");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IIVersioningUnion");
             }
 
             options.Security.DepthStep(ref reader);
@@ -529,19 +502,19 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class IUnionCheckerFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionChecker>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IUnionCheckerFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-                { typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
-                { typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(2, 2) },
-                { typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(3, 3) },
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.MySubUnion2).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(1, 1) },
+                { typeof(global::SharedData.MySubUnion3).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(2, 2) },
+                { typeof(global::SharedData.MySubUnion4).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(3, 3) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(4)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(4)
             {
                 { 0, 0 },
                 { 1, 1 },
@@ -550,9 +523,9 @@ namespace MessagePack.Formatters.SharedData
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.IUnionChecker value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IUnionChecker value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -581,7 +554,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.IUnionChecker Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.IUnionChecker Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -590,7 +563,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker");
             }
 
             options.Security.DepthStep(ref reader);
@@ -628,19 +601,19 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class IUnionChecker2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionChecker2>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IUnionChecker2Formatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(31, 0) },
-                { typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(42, 1) },
-                { typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(63, 2) },
-                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(120, 3) },
+                { typeof(global::SharedData.MySubUnion2).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(31, 0) },
+                { typeof(global::SharedData.MySubUnion3).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(42, 1) },
+                { typeof(global::SharedData.MySubUnion4).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(63, 2) },
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(120, 3) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(4)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(4)
             {
                 { 31, 0 },
                 { 42, 1 },
@@ -649,9 +622,9 @@ namespace MessagePack.Formatters.SharedData
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.IUnionChecker2 value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IUnionChecker2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -680,7 +653,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.IUnionChecker2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.IUnionChecker2 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -689,7 +662,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker2");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker2");
             }
 
             options.Security.DepthStep(ref reader);
@@ -727,26 +700,26 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class IUnionSampleFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionSample>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IUnionSampleFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.FooClass).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-                { typeof(global::SharedData.BarClass).TypeHandle, new KeyValuePair<int, int>(100, 1) },
+                { typeof(global::SharedData.FooClass).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.BarClass).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(100, 1) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(2)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(2)
             {
                 { 0, 0 },
                 { 100, 1 },
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.IUnionSample value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IUnionSample value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -769,7 +742,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.IUnionSample Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.IUnionSample Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -778,7 +751,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionSample");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionSample");
             }
 
             options.Security.DepthStep(ref reader);
@@ -810,26 +783,26 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class RootUnionTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.RootUnionType>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public RootUnionTypeFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.SubUnionType1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-                { typeof(global::SharedData.SubUnionType2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
+                { typeof(global::SharedData.SubUnionType1).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.SubUnionType2).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(1, 1) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(2)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(2)
             {
                 { 0, 0 },
                 { 1, 1 },
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.RootUnionType value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.RootUnionType value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -852,7 +825,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.RootUnionType Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.RootUnionType Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -861,7 +834,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.RootUnionType");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.RootUnionType");
             }
 
             options.Security.DepthStep(ref reader);
@@ -899,7 +872,6 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 

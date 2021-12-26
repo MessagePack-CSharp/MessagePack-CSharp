@@ -34,13 +34,12 @@ namespace MessagePackCompiler.Generator
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    using System;\r\n\r\n    public class ");
+            this.Write("\r\n{\r\n    public class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static readonly " +
                     "global::MessagePack.IFormatterResolver Instance = new ");
@@ -76,10 +75,10 @@ namespace ");
     internal static class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write("GetFormatterHelper\r\n    {\r\n        private static readonly global::System.Collect" +
-                    "ions.Generic.Dictionary<Type, int> lookup;\r\n\r\n        static ");
+                    "ions.Generic.Dictionary<global::System.Type, int> lookup;\r\n\r\n        static ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write("GetFormatterHelper()\r\n        {\r\n            lookup = new global::System.Collecti" +
-                    "ons.Generic.Dictionary<Type, int>(");
+                    "ons.Generic.Dictionary<global::System.Type, int>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(RegisterInfos.Length));
             this.Write(")\r\n            {\r\n");
  for(var i = 0; i < RegisterInfos.Length; i++) { var x = RegisterInfos[i]; 
@@ -92,7 +91,7 @@ namespace ");
             this.Write(@"            };
         }
 
-        internal static object GetFormatter(Type t)
+        internal static object GetFormatter(global::System.Type t)
         {
             int key;
             if (!lookup.TryGetValue(t, out key))
@@ -122,7 +121,6 @@ namespace ");
 #pragma warning restore 612
 
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1649 // File name should match first type name
 ");
             return this.GenerationEnvironment.ToString();

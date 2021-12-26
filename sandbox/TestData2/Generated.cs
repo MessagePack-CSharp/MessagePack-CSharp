@@ -7,14 +7,11 @@
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Resolvers
 {
-    using System;
-
     public class GeneratedResolver : global::MessagePack.IFormatterResolver
     {
         public static readonly global::MessagePack.IFormatterResolver Instance = new GeneratedResolver();
@@ -45,11 +42,11 @@ namespace MessagePack.Resolvers
 
     internal static class GeneratedResolverGetFormatterHelper
     {
-        private static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
+        private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(14)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(14)
             {
                 { typeof(global::System.Collections.Generic.List<global::TestData2.A>), 0 },
                 { typeof(global::System.Collections.Generic.List<global::TestData2.B>), 1 },
@@ -68,7 +65,7 @@ namespace MessagePack.Resolvers
             };
         }
 
-        internal static object GetFormatter(Type t)
+        internal static object GetFormatter(global::System.Type t)
         {
             int key;
             if (!lookup.TryGetValue(t, out key))
@@ -104,7 +101,6 @@ namespace MessagePack.Resolvers
 #pragma warning restore 612
 
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1649 // File name should match first type name
 
 
@@ -117,24 +113,20 @@ namespace MessagePack.Resolvers
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters.TestData2
 {
-    using System;
-    using System.Buffers;
-    using MessagePack;
 
     public sealed class Nest1_IdFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest1.Id>
     {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest1.Id value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Nest1.Id value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.Write((Int32)value);
+            writer.Write((global::System.Int32)value);
         }
 
-        public global::TestData2.Nest1.Id Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::TestData2.Nest1.Id Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             return (global::TestData2.Nest1.Id)reader.ReadInt32();
         }
@@ -142,12 +134,12 @@ namespace MessagePack.Formatters.TestData2
 
     public sealed class Nest2_IdFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest2.Id>
     {
-        public void Serialize(ref MessagePackWriter writer, global::TestData2.Nest2.Id value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Nest2.Id value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.Write((Int32)value);
+            writer.Write((global::System.Int32)value);
         }
 
-        public global::TestData2.Nest2.Id Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::TestData2.Nest2.Id Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             return (global::TestData2.Nest2.Id)reader.ReadInt32();
         }
@@ -159,7 +151,6 @@ namespace MessagePack.Formatters.TestData2
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 
