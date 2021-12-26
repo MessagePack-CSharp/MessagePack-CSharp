@@ -520,6 +520,7 @@ MessagePack.MessagePackReader.ReadArrayHeader() -> int
 MessagePack.MessagePackReader.ReadBoolean() -> bool
 MessagePack.MessagePackReader.ReadByte() -> byte
 MessagePack.MessagePackReader.ReadBytes() -> System.Buffers.ReadOnlySequence<byte>?
+MessagePack.MessagePackReader.ReadByteArray() -> byte[]
 MessagePack.MessagePackReader.ReadChar() -> char
 MessagePack.MessagePackReader.ReadDateTime() -> System.DateTime
 MessagePack.MessagePackReader.ReadDouble() -> double
