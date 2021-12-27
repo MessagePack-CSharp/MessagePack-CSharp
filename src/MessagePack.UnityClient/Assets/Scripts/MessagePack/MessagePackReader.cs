@@ -681,33 +681,6 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Reads a span of bytes, whose length is determined by a header of one of these types:
-        /// <see cref="MessagePackCode.Bin8"/>,
-        /// <see cref="MessagePackCode.Bin16"/>,
-        /// <see cref="MessagePackCode.Bin32"/>,
-        /// or to support OldSpec compatibility:
-        /// <see cref="MessagePackCode.Str16"/>,
-        /// <see cref="MessagePackCode.Str32"/>,
-        /// or something between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
-        /// </summary>
-        /// <returns>
-        /// An array of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
-        /// </returns>
-        public byte[] ReadByteArray()
-        {
-            if (this.TryReadNil())
-            {
-                return null;
-            }
-
-            int length = this.GetBytesLength();
-            ThrowInsufficientBufferUnless(this.reader.Remaining >= length);
-            ReadOnlySequence<byte> result = this.reader.Sequence.Slice(this.reader.Position, length);
-            this.reader.Advance(length);
-            return result.ToArray();
-        }
-
-        /// <summary>
         /// Reads a string of bytes, whose length is determined by a header of one of these types:
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
