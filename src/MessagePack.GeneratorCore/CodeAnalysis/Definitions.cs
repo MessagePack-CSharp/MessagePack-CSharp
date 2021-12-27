@@ -184,7 +184,7 @@ namespace MessagePackCompiler.CodeAnalysis
             {
                 if (this.Type == "byte[]")
                 {
-                    return $"reader.ReadByteArray()";
+                    return "global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes())";
                 }
                 else
                 {
