@@ -3140,7 +3140,7 @@ namespace MessagePack.Formatters.SharedData
                         ____result.Prop6 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 6:
-                        ____result.BytesSpecial = reader.ReadByteArray();
+                        ____result.BytesSpecial = global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes());
                         break;
                     default:
                         reader.Skip();
@@ -3186,7 +3186,7 @@ namespace MessagePack.Formatters.SharedData
                         ____result.Y = reader.ReadInt32();
                         break;
                     case 2:
-                        ____result.BytesSpecial = reader.ReadByteArray();
+                        ____result.BytesSpecial = global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes());
                         break;
                     default:
                         reader.Skip();
