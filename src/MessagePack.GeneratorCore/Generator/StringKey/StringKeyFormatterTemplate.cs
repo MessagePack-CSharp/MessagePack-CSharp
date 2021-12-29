@@ -35,7 +35,6 @@ namespace MessagePackCompiler.Generator
 #pragma warning disable 168
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -43,7 +42,7 @@ namespace MessagePackCompiler.Generator
 
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    using global::System.Buffers;\r\n    using global::MessagePack;\r\n");
+            this.Write("\r\n{\r\n");
  var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
 foreach (var objInfo in ObjectSerializationInfos) {
     list.Clear();
@@ -53,7 +52,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
     }
 
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members); 
-            this.Write("\r\n    public sealed class ");
+            this.Write("    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FormatterNameWithoutNameSpace));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(objInfo.FullName));
@@ -191,9 +190,21 @@ foreach (var objInfo in ObjectSerializationInfos) {
  if (objInfo.Members.Length != 0) { 
             this.Write("            reader.Depth--;\r\n");
  } 
-            this.Write("            return ____result;\r\n        }\r\n    }\r\n");
+            this.Write("            return ____result;\r\n        }\r\n    }\r\n\r\n");
  } 
-            this.Write("}\r\n");
+            this.Write(@"}
+
+#pragma warning restore 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
+
+#pragma warning restore SA1129 // Do not use default value type constructor
+#pragma warning restore SA1309 // Field names should not begin with underscore
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
+#pragma warning restore SA1403 // File may only contain a single namespace
+#pragma warning restore SA1649 // File name should match first type name
+");
             return this.GenerationEnvironment.ToString();
         }
     }

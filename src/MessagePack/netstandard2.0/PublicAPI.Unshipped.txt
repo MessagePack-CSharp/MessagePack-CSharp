@@ -1,0 +1,4 @@
+MessagePack.Formatters.StringInterningFormatter
+MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> string
+MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string value, MessagePack.MessagePackSerializerOptions options) -> void
+MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> void
