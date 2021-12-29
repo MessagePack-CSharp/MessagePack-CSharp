@@ -150,7 +150,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
  } else {
             foreach (var member in objInfo.Members.Where(x => x.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { 
             this.Write("\n");
- if (!objInfo.HasInitOnlySetter && objInfo.ConstructorParameters.All(p => !p.Equals(member))) { 
+ if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { 
             this.Write("\n            var __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__IsInitialized = false;\n");

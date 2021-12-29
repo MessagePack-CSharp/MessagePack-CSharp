@@ -103,7 +103,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
             var ____result = new <#= objInfo.GetConstructorString() #>;
 <# } else {
             foreach (var member in objInfo.Members.Where(x => x.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { #>
-<# if (!objInfo.HasInitOnlySetter && objInfo.ConstructorParameters.All(p => !p.Equals(member))) { #>
+<# if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { #>
             var __<#= member.Name #>__IsInitialized = false;
 <# } #>
             var __<#= member.Name #>__ = default(<#= member.Type #>);
