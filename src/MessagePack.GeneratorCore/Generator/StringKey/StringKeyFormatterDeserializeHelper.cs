@@ -31,6 +31,11 @@ namespace MessagePackCompiler.Generator
 
         private static bool IsConstructorParameter(ObjectSerializationInfo objectSerializationInfo, MemberSerializationInfo member)
         {
+            if (objectSerializationInfo.HasInitOnlySetter)
+            {
+                return true;
+            }
+
             foreach (var parameter in objectSerializationInfo.ConstructorParameters)
             {
                 if (parameter.Equals(member))

@@ -592,6 +592,7 @@ namespace MessagePackCompiler.CodeAnalysis
             var isIntKey = true;
             var intMembers = new Dictionary<int, MemberSerializationInfo>();
             var stringMembers = new Dictionary<string, MemberSerializationInfo>();
+            var hasInitOnlySetter = false;
 
             if (this.isForceUseMap || (contractAttr.ConstructorArguments[0] is { Value: bool firstConstructorArgument } && firstConstructorArgument))
             {
@@ -617,6 +618,11 @@ namespace MessagePackCompiler.CodeAnalysis
                     var customFormatterAttr = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0].Value as INamedTypeSymbol;
                     var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                     stringMembers.Add(member.StringKey, member);
+
+                    if (!hasInitOnlySetter && (item.SetMethod?.IsInitOnly ?? false))
+                    {
+                        hasInitOnlySetter = true;
+                    }
 
                     this.CollectCore(item.Type); // recursive collect
                 }
@@ -718,6 +724,11 @@ namespace MessagePackCompiler.CodeAnalysis
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         stringMembers.Add(member.StringKey, member);
+                    }
+
+                    if (!hasInitOnlySetter && (item.SetMethod?.IsInitOnly ?? false))
+                    {
+                        hasInitOnlySetter = true;
                     }
 
                     this.CollectCore(item.Type); // recursive collect
@@ -921,7 +932,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 needsCastOnAfter = !type.GetMembers("OnAfterDeserialize").Any();
             }
 
-            var info = new ObjectSerializationInfo(isClass, isOpenGenericType, isOpenGenericType ? type.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(), constructorParameters.ToArray(), isIntKey, isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(), isOpenGenericType ? GetGenericFormatterClassName(type) : GetMinimallyQualifiedClassName(type), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(), hasSerializationConstructor, needsCastOnAfter, needsCastOnBefore);
+            var info = new ObjectSerializationInfo(isClass, isOpenGenericType, isOpenGenericType ? type.TypeParameters.Select(ToGenericTypeParameterInfo).ToArray() : Array.Empty<GenericTypeParameterInfo>(), constructorParameters.ToArray(), isIntKey, isIntKey ? intMembers.Values.ToArray() : stringMembers.Values.ToArray(), isOpenGenericType ? GetGenericFormatterClassName(type) : GetMinimallyQualifiedClassName(type), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(), hasSerializationConstructor, needsCastOnAfter, needsCastOnBefore, hasInitOnlySetter);
 
             return info;
         }

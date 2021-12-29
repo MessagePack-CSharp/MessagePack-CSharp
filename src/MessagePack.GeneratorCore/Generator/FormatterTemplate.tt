@@ -90,7 +90,7 @@ namespace <#= Namespace #>
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
 <# } #>
             var length = reader.ReadArrayHeader();
-<# var canOverwrite = objInfo.ConstructorParameters.Length == 0;
+<# var canOverwrite = objInfo.ConstructorParameters.Length == 0 && !objInfo.HasInitOnlySetter;
  if (canOverwrite) { #>
             var ____result = new <#= objInfo.GetConstructorString()  #>;
 <# } else { foreach (var member in objInfo.Members) { #>
@@ -123,7 +123,15 @@ namespace <#= Namespace #>
                 }
             }
 
-<# if (!canOverwrite) { #>
+<# if (objInfo.HasInitOnlySetter) { #>
+            var ____result = new <#= objInfo.GetConstructorString() #> {
+<#   for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+     var member = objInfo.GetMember(memberIndex);
+     if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; } #>
+                <#= member.Name #> = __<#= member.Name #>__,
+<#   } #>
+            };
+<# } else if (!canOverwrite && !objInfo.HasInitOnlySetter) { #>
             var ____result = new <#= objInfo.GetConstructorString()  #>;
 <# bool memberAssignExists = false;
   for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {

@@ -160,5 +160,81 @@ namespace TempProject
                 serialized.Should().BeEquivalentTo(seq.AsReadOnlySequence.ToArray());
             });
         }
+
+        [Fact]
+        public async Task PropertiesGetterInitOnlySetter()
+        {
+            using var tempWorkarea = TemporaryProjectWorkarea.Create();
+            var contents = @"
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+#if !NET5_0_OR_GREATER
+
+#pragma warning disable CA1812
+
+namespace System.Runtime.CompilerServices
+{
+    /// <summary>
+    /// Used by C# 9 for property <c>init</c> accessors.
+    /// </summary>
+    internal sealed class IsExternalInit
+    {
+    }
+}
+
+#endif
+
+namespace TempProject
+{
+    [MessagePackObject]
+    public record MyMessagePackObject
+    {
+        [Key(0)]
+        public int A { get; init; }
+        [Key(1)]
+        public string B { get; init; }
+    }
+}
+            ";
+            tempWorkarea.AddFileToTargetProject("MyMessagePackObject.cs", contents);
+
+            var compiler = new MessagePackCompiler.CodeGenerator(testOutputHelper.WriteLine, CancellationToken.None);
+            await compiler.GenerateFileAsync(
+                tempWorkarea.GetOutputCompilation().Compilation,
+                tempWorkarea.OutputDirectory,
+                "TempProjectResolver",
+                "TempProject.Generated",
+                false,
+                string.Empty,
+                Array.Empty<string>());
+
+            var compilation = tempWorkarea.GetOutputCompilation();
+            compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
+
+            // Run tests with the generated resolver/formatter assembly.
+            compilation.ExecuteWithGeneratedAssembly((ctx, assembly) =>
+            {
+                var mpoType = assembly.GetType("TempProject.MyMessagePackObject");
+                var options = MessagePackSerializerOptions.Standard
+                    .WithResolver(CompositeResolver.Create(
+                        StandardResolver.Instance,
+                        TestUtilities.GetResolverInstance(assembly, "TempProject.Generated.Resolvers.TempProjectResolver")));
+
+                // Build `[-1, "foobar"]`
+                var seq = new Sequence<byte>();
+                var writer = new MessagePackWriter(seq);
+                writer.WriteArrayHeader(2);
+                writer.Write(-1);
+                writer.Write("foobar");
+                writer.Flush();
+
+                // Verify deserialization
+                dynamic result = MessagePackSerializer.Deserialize(mpoType, seq, options);
+                ((int)result.A).Should().Be(-1); // from ctor
+                ((string)result.B).Should().Be("foobar"); // default value
+            });
+        }
     }
 }

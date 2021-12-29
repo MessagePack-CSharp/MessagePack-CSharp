@@ -52,6 +52,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public bool NeedsCastOnAfter { get; }
 
+        public bool HasInitOnlySetter { get; }
+
         public string FormatterName => this.Namespace == null ? FormatterNameWithoutNameSpace : this.Namespace + "." + FormatterNameWithoutNameSpace;
 
         public string FormatterNameWithoutNameSpace => this.Name + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(", ", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
@@ -90,7 +92,7 @@ namespace MessagePackCompiler.CodeAnalysis
             return $"{this.FullName}({args})";
         }
 
-        public ObjectSerializationInfo(bool isClass, bool isOpenGenericType, GenericTypeParameterInfo[] genericTypeParameterInfos, MemberSerializationInfo[] constructorParameters, bool isIntKey, MemberSerializationInfo[] members, string name, string fullName, string? @namespace, bool hasSerializationConstructor, bool needsCastOnAfter, bool needsCastOnBefore)
+        public ObjectSerializationInfo(bool isClass, bool isOpenGenericType, GenericTypeParameterInfo[] genericTypeParameterInfos, MemberSerializationInfo[] constructorParameters, bool isIntKey, MemberSerializationInfo[] members, string name, string fullName, string? @namespace, bool hasSerializationConstructor, bool needsCastOnAfter, bool needsCastOnBefore, bool hasInitOnlySetter)
         {
             IsClass = isClass;
             IsOpenGenericType = isOpenGenericType;
@@ -104,6 +106,7 @@ namespace MessagePackCompiler.CodeAnalysis
             HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor;
             NeedsCastOnAfter = needsCastOnAfter;
             NeedsCastOnBefore = needsCastOnBefore;
+            HasInitOnlySetter = hasInitOnlySetter;
         }
     }
 

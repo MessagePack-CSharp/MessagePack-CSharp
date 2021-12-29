@@ -98,12 +98,12 @@ foreach (var objInfo in ObjectSerializationInfos) {
             var formatterResolver = options.Resolver;
 <# } #>
             var length = reader.ReadMapHeader();
-<# var canOverwrite = objInfo.ConstructorParameters.Length == 0;
+<# var canOverwrite = objInfo.ConstructorParameters.Length == 0 && !objInfo.HasInitOnlySetter;
         if (canOverwrite) { #>
             var ____result = new <#= objInfo.GetConstructorString() #>;
 <# } else {
             foreach (var member in objInfo.Members.Where(x => x.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { #>
-<# if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { #>
+<# if (!objInfo.HasInitOnlySetter && objInfo.ConstructorParameters.All(p => !p.Equals(member))) { #>
             var __<#= member.Name #>__IsInitialized = false;
 <# } #>
             var __<#= member.Name #>__ = default(<#= member.Type #>);
@@ -123,7 +123,15 @@ foreach (var objInfo in ObjectSerializationInfos) {
                 }
             }
 
-<# if (!canOverwrite) { #>
+<# if (objInfo.HasInitOnlySetter) { #>
+            var ____result = new <#= objInfo.GetConstructorString() #> {
+<#   for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+         var member = objInfo.GetMember(memberIndex);
+         if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; } #>
+                <#= member.Name #> = __<#= member.Name #>__,
+<#   } #>
+            };
+<# } else if (!canOverwrite) { #>
             var ____result = new <#= objInfo.GetConstructorString() #>;
 <# foreach (var member in objInfo.Members.Where(x => x.IsWritable && !objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { #>
             if (__<#= member.Name #>__IsInitialized)
