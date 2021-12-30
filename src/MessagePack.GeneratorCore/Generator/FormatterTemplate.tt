@@ -24,143 +24,143 @@ namespace <#= Namespace #>
     using global::System.Buffers;
     using global::MessagePack;
 <# foreach (var objInfo in ObjectSerializationInfos) {
-    bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);#>
-
+     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);#>
     public sealed class <#= objInfo.FormatterNameWithoutNameSpace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
-<# foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
+<#   foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
-<# } #>
+<#   } #>
     {
-<# foreach (var item in objInfo.Members) { #>
-<# if (item.CustomFormatterTypeName != null) { #>
+<#   foreach (var item in objInfo.Members) {
+       if (item.CustomFormatterTypeName != null) { #>
         private readonly <#= item.CustomFormatterTypeName #> __<#= item.Name #>CustomFormatter__ = new <#= item.CustomFormatterTypeName #>();
-<# } #>
-<# } #>
+<#     }
+     } #>
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
-<# if (objInfo.IsClass) { #>
+<#   if (objInfo.IsClass) { #>
             if (value == null)
             {
                 writer.WriteNil();
                 return;
             }
 
-<# }
+<#   }
 
-  if (isFormatterResolverNecessary) { #>
+     if (isFormatterResolverNecessary) { #>
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
-<# }
+<#   }
 
- if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
-  if (objInfo.NeedsCastOnBefore) { #>
+     if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
+       if (objInfo.NeedsCastOnBefore) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
-<# } else { #>
+<#     } else { #>
             value.OnBeforeSerialize();
-<# } #>
-<# } #>
+<#     }
+     } #>
             writer.WriteArrayHeader(<#= objInfo.MaxKey + 1 #>);
-<# for (var i = 0; i <= objInfo.MaxKey; i++) {
-  var member = objInfo.GetMember(i);
-  if (member == null) { #>
+<#   for (var i = 0; i <= objInfo.MaxKey; i++) {
+       var member = objInfo.GetMember(i);
+       if (member == null) { #>
             writer.WriteNil();
-<# } else { #>
+<#     } else { #>
             <#= member.GetSerializeMethodString() #>;
-<# } #>
-<# } #>
+<#     }
+     } #>
         }
 
         public <#= objInfo.FullName #> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
-<# if (objInfo.IsClass) { #>
+<#   if (objInfo.IsClass) { #>
                 return null;
-<# } else { #>
+<#   } else { #>
                 throw new global::System.InvalidOperationException("typecode is null, struct not supported");
-<# } #>
+<#   } #>
             }
 
-<# if (objInfo.MaxKey == -1 && !objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+<#   if (objInfo.MaxKey == -1 && !objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
             reader.Skip();
             return new <#= objInfo.GetConstructorString()  #>;
-<# } else { #>
+<#   } else { #>
             options.Security.DepthStep(ref reader);
-<# if (isFormatterResolverNecessary) { #>
+<#     if (isFormatterResolverNecessary) { #>
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
-<# } #>
+<#     } #>
             var length = reader.ReadArrayHeader();
-<# var canOverwrite = objInfo.ConstructorParameters.Length == 0 && !objInfo.HasInitOnlySetter;
- if (canOverwrite) { #>
+<#     var canOverwrite = objInfo.ConstructorParameters.Length == 0 && !objInfo.HasInitOnlySetter;
+       if (canOverwrite) { #>
             var ____result = new <#= objInfo.GetConstructorString()  #>;
-<# } else { foreach (var member in objInfo.Members) { #>
+<#     } else {
+         foreach (var member in objInfo.Members) { #>
             var __<#= member.Name #>__ = default(<#= member.Type #>);
-<# } #>
-<# } #>
+<#       }
+       } #>
 
             for (int i = 0; i < length; i++)
             {
                 switch (i)
                 {
-<# for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
-  var member = objInfo.GetMember(memberIndex);
-  if (member == null) { continue; } #>
+<#     for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+         var member = objInfo.GetMember(memberIndex);
+         if (member == null) { continue; } #>
                     case <#= member.IntKey #>:
-<# if (canOverwrite) {
-  if (member.IsWritable) { #>
+<#       if (canOverwrite) {
+           if (member.IsWritable) { #>
                         ____result.<#= member.Name #> = <#= member.GetDeserializeMethodString() #>;
-<# } else { #>
+<#         } else { #>
                         <#= member.GetDeserializeMethodString() #>;
-<# } #>
-<# } else {#>
+<#         }
+         } else {#>
                         __<#= member.Name #>__ = <#= member.GetDeserializeMethodString() #>;
-<# } #>
+<#       } #>
                         break;
-<# } #>
+<#     } #>
                     default:
                         reader.Skip();
                         break;
                 }
             }
 
-<# if (objInfo.HasInitOnlySetter) { #>
+<#     if (objInfo.HasInitOnlySetter) { #>
             var ____result = new <#= objInfo.GetConstructorString() #> {
-<#   for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
-     var member = objInfo.GetMember(memberIndex);
-     if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; } #>
+<#       for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+           var member = objInfo.GetMember(memberIndex);
+           if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; } #>
                 <#= member.Name #> = __<#= member.Name #>__,
-<#   } #>
+<#       } #>
             };
-<# } else if (!canOverwrite && !objInfo.HasInitOnlySetter) { #>
+<#     } else if (!canOverwrite && !objInfo.HasInitOnlySetter) { #>
             var ____result = new <#= objInfo.GetConstructorString()  #>;
-<# bool memberAssignExists = false;
-  for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
-  var member = objInfo.GetMember(memberIndex);
-  if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
-  memberAssignExists = true;#>
+<#       bool memberAssignExists = false;
+         for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
+           var member = objInfo.GetMember(memberIndex);
+           if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+           memberAssignExists = true;#>
             if (length <= <#= memberIndex #>)
             {
                 goto MEMBER_ASSIGNMENT_END;
             }
 
             ____result.<#= member.Name #> = __<#= member.Name #>__;
-<# } #>
-<# if (memberAssignExists) { #>
+<#       }
+         if (memberAssignExists) { #>
 
         MEMBER_ASSIGNMENT_END:
-<# }
- }
+<#       }
+       }
 
- if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
-  if (objInfo.NeedsCastOnAfter) { #>
+       if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
+         if (objInfo.NeedsCastOnAfter) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
-<# } else { #>
+<#       } else { #>
             ____result.OnAfterDeserialize();
-<# } #>
-<# } #>
+<#       }
+       } #>
             reader.Depth--;
             return ____result;
-<# } #>
+<#   } #>
         }
     }
 <# } #>
