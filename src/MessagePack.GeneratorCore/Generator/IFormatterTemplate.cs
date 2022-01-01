@@ -5,12 +5,15 @@ using MessagePackCompiler.CodeAnalysis;
 
 namespace MessagePackCompiler.Generator
 {
-    public interface IFormatterTemplate
+    public interface IFormatterTemplate : ITemplate
     {
         string Namespace { get; }
 
         ObjectSerializationInfo[] ObjectSerializationInfos { get; }
+    }
 
-        string TransformText();
+    public interface ITemplate
+    {
+        void TransformAppend(ref Cysharp.Text.Utf8ValueStringBuilder builder);
     }
 }

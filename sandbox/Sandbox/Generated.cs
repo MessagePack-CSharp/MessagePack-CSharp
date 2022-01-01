@@ -1451,7 +1451,6 @@ namespace MessagePack.Formatters
 
                         reader.Skip();
                         continue;
-
                 }
             }
 
@@ -1557,7 +1556,6 @@ namespace MessagePack.Formatters
 
                         reader.Skip();
                         continue;
-
                 }
             }
 
@@ -1702,9 +1700,7 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
                                         ____result.MyProperty9 = reader.ReadInt32();
                                         continue;
                                 }
-
                         }
-
                 }
             }
 
@@ -3866,7 +3862,6 @@ namespace MessagePack.Formatters.SharedData
 
                         __X__ = reader.ReadInt32();
                         continue;
-
                 }
             }
 
@@ -3915,7 +3910,6 @@ namespace MessagePack.Formatters.SharedData
 
                         __X__ = reader.ReadInt32();
                         continue;
-
                 }
             }
 
@@ -3982,7 +3976,6 @@ namespace MessagePack.Formatters.SharedData
                                 __Prop2__ = reader.ReadInt32();
                                 continue;
                         }
-
                 }
             }
 
@@ -4050,7 +4043,6 @@ namespace MessagePack.Formatters.SharedData
                                 ____result.Prop2 = reader.ReadInt32();
                                 continue;
                         }
-
                 }
             }
 
@@ -4109,7 +4101,6 @@ namespace MessagePack.Formatters.SharedData
                                 __Prop2__ = reader.ReadInt32();
                                 continue;
                         }
-
                 }
             }
 
@@ -4206,7 +4197,6 @@ namespace MessagePack.Formatters.SharedData
 
                         ____result.Comparer = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         continue;
-
                 }
             }
 
@@ -4265,7 +4255,6 @@ namespace MessagePack.Formatters.SharedData
 
                         ____result.Comparer = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         continue;
-
                 }
             }
 
@@ -4317,7 +4306,6 @@ namespace MessagePack.Formatters.SharedData
 
                         ____result.MyProperty = reader.ReadInt32();
                         continue;
-
                 }
             }
 
@@ -4388,7 +4376,6 @@ namespace MessagePack.Formatters.SharedData
                                 ____result.Prop3 = reader.ReadInt32();
                                 continue;
                         }
-
                 }
             }
 
@@ -4446,7 +4433,6 @@ namespace MessagePack.Formatters.SharedData
                                 ____result.Y = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[]>(formatterResolver).Deserialize(ref reader, options);
                                 continue;
                         }
-
                 }
             }
 

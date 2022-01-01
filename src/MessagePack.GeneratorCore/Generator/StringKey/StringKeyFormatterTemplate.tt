@@ -30,7 +30,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
     }
 
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members); #>
-    public sealed class <#= objInfo.FormatterNameWithoutNameSpace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+    public sealed class <# objInfo.AppendFormatterNameWithoutNameSpace(ref builder); #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
 <# foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) {#>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# }#>
@@ -39,7 +39,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
         var member = list[i].Item1;
         var binary = list[i].Item2; #>
         // <#= member.StringKey #>
-        private static global::System.ReadOnlySpan<byte> GetSpan_<#= member.Name #>() => <#= EmbedStringHelper.ToByteArrayString(binary) #>;
+        private static global::System.ReadOnlySpan<byte> GetSpan_<#= member.Name #>() => <# EmbedStringHelper.ToByteArrayString(ref builder, binary); #>;
 <# } #>
 <# if (list.Count != 0) { #>
 
@@ -70,7 +70,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
 <# foreach (var memberAndBinary in list) {
         var member = memberAndBinary.Item1; #>
             writer.WriteRaw(GetSpan_<#= member.Name #>());
-            <#= member.GetSerializeMethodString() #>;
+            <# member.AppendSerializeMethod(ref builder); #>;
 <# } #>
         }
 
@@ -87,7 +87,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
 
 <# if (objInfo.Members.Length == 0) { #>
             reader.Skip();
-            var ____result = new <#= objInfo.GetConstructorString() #>;
+            var ____result = new <# objInfo.AppendConstructor(ref builder); #>;
 <# } else { #>
             options.Security.DepthStep(ref reader);
 <# if (isFormatterResolverNecessary) { #>
@@ -96,7 +96,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
             var length = reader.ReadMapHeader();
 <# var canOverwrite = objInfo.ConstructorParameters.Length == 0;
         if (canOverwrite) { #>
-            var ____result = new <#= objInfo.GetConstructorString() #>;
+            var ____result = new <# objInfo.AppendConstructor(ref builder); #>;
 <# } else {
             foreach (var member in objInfo.Members.Where(x => x.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { #>
 <# if (objInfo.ConstructorParameters.All(p => !p.Equals(member))) { #>
@@ -115,12 +115,12 @@ foreach (var objInfo in ObjectSerializationInfos) {
                     FAIL:
                       reader.Skip();
                       continue;
-<#= StringKeyFormatterDeserializeHelper.Classify(objInfo, "                    ", canOverwrite) #>
+<# StringKeyFormatterDeserializeHelper.Classify(ref builder, objInfo, 5, canOverwrite); #>
                 }
             }
 
 <# if (!canOverwrite) { #>
-            var ____result = new <#= objInfo.GetConstructorString() #>;
+            var ____result = new <# objInfo.AppendConstructor(ref builder); #>;
 <# foreach (var member in objInfo.Members.Where(x => x.IsWritable && !objInfo.ConstructorParameters.Any(p => p.Equals(x)))) { #>
             if (__<#= member.Name #>__IsInitialized)
             {

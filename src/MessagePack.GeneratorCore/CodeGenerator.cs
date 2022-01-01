@@ -5,19 +5,18 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cysharp.Text;
 using MessagePackCompiler.CodeAnalysis;
 using MessagePackCompiler.Generator;
 using Microsoft.CodeAnalysis;
+using StringLiteral;
 
 namespace MessagePackCompiler
 {
-    public class CodeGenerator
+    public partial class CodeGenerator
     {
-        private static readonly Encoding NoBomUtf8 = new UTF8Encoding(false);
-
         private readonly Action<string> logger;
 
         public CodeGenerator(Action<string> logger, CancellationToken cancellationToken)
@@ -46,53 +45,91 @@ namespace MessagePackCompiler
            string[]? externalIgnoreTypeNames)
         {
             var namespaceDot = string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace + ".";
-            var multipleOutputSymbols = multipleIfDirectiveOutputSymbols?.Split(',') ?? Array.Empty<string>();
+            var multipleOutputSymbols = multipleIfDirectiveOutputSymbols?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
 
             var sw = Stopwatch.StartNew();
 
-            foreach (var multiOutputSymbol in multipleOutputSymbols.Length == 0 ? new[] { string.Empty } : multipleOutputSymbols)
+            logger("Project Compilation Start:" + compilation.AssemblyName);
+
+            var collector = new TypeCollector(compilation, true, useMapMode, externalIgnoreTypeNames, Console.WriteLine);
+
+            logger("Project Compilation Complete:" + sw.Elapsed.ToString());
+
+            sw.Restart();
+            logger("Method Collect Start");
+
+            var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
+
+            logger("Method Collect Complete:" + sw.Elapsed.ToString());
+
+            logger("Output Generation Start");
+            sw.Restart();
+            var isSingleFileOutput = Path.GetExtension(output) == ".cs";
+            if (isSingleFileOutput)
             {
-                logger("Project Compilation Start:" + compilation.AssemblyName);
-
-                var collector = new TypeCollector(compilation, true, useMapMode, externalIgnoreTypeNames, Console.WriteLine);
-
-                logger("Project Compilation Complete:" + sw.Elapsed.ToString());
-
-                sw.Restart();
-                logger("Method Collect Start");
-
-                var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
-
-                logger("Method Collect Complete:" + sw.Elapsed.ToString());
-
-                logger("Output Generation Start");
-                sw.Restart();
-
-                if (Path.GetExtension(output) == ".cs")
+                var builder = ZString.CreateUtf8StringBuilder();
+                try
                 {
-                    // SingleFile Output
-                    var fullGeneratedProgramText = GenerateSingleFileSync(resolverName, namespaceDot, objectInfo, enumInfo, unionInfo, genericInfo);
-                    if (multiOutputSymbol == string.Empty)
+                    if (multipleOutputSymbols.Length == 0)
                     {
-                        await OutputAsync(output, fullGeneratedProgramText);
+                        GenerateSingleFileSync(ref builder, resolverName, namespaceDot, objectInfo, enumInfo, unionInfo, genericInfo);
+                        using var stream = new FileStream(PreparePath(output), FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 4096, true);
+                        await builder.WriteToAsync(stream).ConfigureAwait(false);
                     }
                     else
                     {
-                        var fname = Path.GetFileNameWithoutExtension(output) + "." + MultiSymbolToSafeFilePath(multiOutputSymbol) + ".cs";
-                        var text = $"#if {multiOutputSymbol}" + Environment.NewLine + fullGeneratedProgramText + Environment.NewLine + "#endif";
-                        await OutputAsync(Path.Combine(Path.GetDirectoryName(output) ?? string.Empty, fname), text);
+                        var innerBuilder = ZString.CreateUtf8StringBuilder();
+                        try
+                        {
+                            GenerateSingleFileSync(ref builder, resolverName, namespaceDot, objectInfo, enumInfo, unionInfo, genericInfo);
+                            foreach (var multiOutputSymbol in multipleOutputSymbols)
+                            {
+                                var fname = Path.GetFileNameWithoutExtension(output) + "." + MultiSymbolToSafeFilePath(multiOutputSymbol) + ".cs";
+                                fname = PreparePath(Path.Combine(Path.GetDirectoryName(output) ?? string.Empty, fname));
+                                using var stream = new FileStream(PreparePath(fname), FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 4096, true);
+                                innerBuilder.Clear();
+                                static void Append(ref Utf8ValueStringBuilder builder, ReadOnlySpan<byte> span)
+                                {
+                                    span.CopyTo(builder.GetSpan(span.Length));
+                                    builder.Advance(span.Length);
+                                }
+
+                                Append(ref builder, GetSharpIf());
+                                innerBuilder.AppendLine(multiOutputSymbol);
+                                await innerBuilder.WriteToAsync(stream).ConfigureAwait(false);
+                                await builder.WriteToAsync(stream).ConfigureAwait(false);
+                                innerBuilder.Clear();
+                                innerBuilder.AppendLine();
+                                Append(ref builder, GetSharpEndIf());
+                                await innerBuilder.WriteToAsync(stream).ConfigureAwait(false);
+                            }
+                        }
+                        finally
+                        {
+                            innerBuilder.Dispose();
+                        }
                     }
+                }
+                finally
+                {
+                    builder.Dispose();
+                }
+            }
+            else
+            {
+                if (multipleOutputSymbols.Length == 0)
+                {
+                    await GenerateMultipleFileAsync(output, resolverName, namespaceDot, objectInfo, enumInfo, unionInfo, genericInfo);
                 }
                 else
                 {
-                    // Multiple File output
-                    await GenerateMultipleFileAsync(output, resolverName, objectInfo, enumInfo, unionInfo, namespaceDot, multiOutputSymbol, genericInfo);
+                    await GenerateMultipleFileAsync(output, resolverName, namespaceDot, multipleOutputSymbols, objectInfo, enumInfo, unionInfo, genericInfo);
                 }
+            }
 
-                if (objectInfo.Length == 0 && enumInfo.Length == 0 && genericInfo.Length == 0 && unionInfo.Length == 0)
-                {
-                    logger("Generated result is empty, unexpected result?");
-                }
+            if (objectInfo.Length == 0 && enumInfo.Length == 0 && genericInfo.Length == 0 && unionInfo.Length == 0)
+            {
+                logger("Generated result is empty, unexpected result?");
             }
 
             logger("Output Generation Complete:" + sw.Elapsed.ToString());
@@ -143,33 +180,102 @@ namespace MessagePackCompiler
 
             var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
 
-            var sb = new StringBuilder();
-            sb.AppendLine(resolverTemplate.TransformText());
+            var sb = ZString.CreateUtf8StringBuilder();
+            resolverTemplate.TransformAppend(ref sb);
+            sb.AppendLine();
             sb.AppendLine();
             foreach (var item in enumFormatterTemplates)
             {
-                var text = item.TransformText();
-                sb.AppendLine(text);
+                item.TransformAppend(ref sb);
+                sb.AppendLine();
             }
 
             sb.AppendLine();
             foreach (var item in unionFormatterTemplates)
             {
-                var text = item.TransformText();
-                sb.AppendLine(text);
+                item.TransformAppend(ref sb);
+                sb.AppendLine();
             }
 
             sb.AppendLine();
             foreach (var item in objectFormatterTemplates)
             {
-                var text = item.TransformText();
-                sb.AppendLine(text);
+                item.TransformAppend(ref sb);
+                sb.AppendLine();
             }
 
-            return sb.ToString();
+            var answer = sb.ToString();
+            sb.Dispose();
+            return answer;
         }
 
-        private Task GenerateMultipleFileAsync(string output, string resolverName, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, string namespaceDot, string multioutSymbol, GenericSerializationInfo[] genericInfo)
+        [Utf8("#if ")]
+        private static partial ReadOnlySpan<byte> GetSharpIf();
+
+        [Utf8("#endif")]
+        private static partial ReadOnlySpan<byte> GetSharpEndIf();
+
+        public static void GenerateSingleFileSync(ref Utf8ValueStringBuilder builder, string resolverName, string namespaceDot, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, GenericSerializationInfo[] genericInfo)
+        {
+            var objectFormatterTemplates = objectInfo
+                .GroupBy(x => (x.Namespace, x.IsStringKey))
+                .Select(x =>
+                {
+                    var (nameSpace, isStringKey) = x.Key;
+                    var objectSerializationInfos = x.ToArray();
+                    var ns = namespaceDot + "Formatters" + (nameSpace is null ? string.Empty : "." + nameSpace);
+                    var template = isStringKey ? new StringKeyFormatterTemplate(ns, objectSerializationInfos) : (IFormatterTemplate)new FormatterTemplate(ns, objectSerializationInfos);
+                    return template;
+                })
+                .ToArray();
+
+            string GetNamespace<T>(IGrouping<string?, T> x)
+            {
+                if (x.Key == null)
+                {
+                    return namespaceDot + "Formatters";
+                }
+
+                return namespaceDot + "Formatters." + x.Key;
+            }
+
+            var enumFormatterTemplates = enumInfo
+                .GroupBy(x => x.Namespace)
+                .Select(x => new EnumTemplate(GetNamespace(x), x.ToArray()))
+                .ToArray();
+
+            var unionFormatterTemplates = unionInfo
+                .GroupBy(x => x.Namespace)
+                .Select(x => new UnionTemplate(GetNamespace(x), x.ToArray()))
+                .ToArray();
+
+            var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
+
+            resolverTemplate.TransformAppend(ref builder);
+            builder.AppendLine();
+            builder.AppendLine();
+            foreach (var item in enumFormatterTemplates)
+            {
+                item.TransformAppend(ref builder);
+                builder.AppendLine();
+            }
+
+            builder.AppendLine();
+            foreach (var item in unionFormatterTemplates)
+            {
+                item.TransformAppend(ref builder);
+                builder.AppendLine();
+            }
+
+            builder.AppendLine();
+            foreach (var item in objectFormatterTemplates)
+            {
+                item.TransformAppend(ref builder);
+                builder.AppendLine();
+            }
+        }
+
+        private Task GenerateMultipleFileAsync(string output, string resolverName, string namespaceDot, string[] multioutSymbols, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, GenericSerializationInfo[] genericInfo)
         {
             string GetNamespace(INamespaceInfo x)
             {
@@ -187,43 +293,110 @@ namespace MessagePackCompiler
             {
                 var ns = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
                 var template = x.IsStringKey ? new StringKeyFormatterTemplate(ns, new[] { x }) : (IFormatterTemplate)new FormatterTemplate(ns, new[] { x });
-                var text = template.TransformText();
-                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbols, template);
             }
 
             foreach (var x in enumInfo)
             {
                 var template = new EnumTemplate(GetNamespace(x), new[] { x });
-                var text = template.TransformText();
-                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbols, template);
             }
 
             foreach (var x in unionInfo)
             {
                 var template = new UnionTemplate(GetNamespace(x), new[] { x });
-                var text = template.TransformText();
-                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbol, text);
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", multioutSymbols, template);
             }
 
             var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
-            waitingTasks[waitingIndex] = OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText());
+            waitingTasks[waitingIndex] = OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbols, resolverTemplate);
             return Task.WhenAll(waitingTasks);
         }
 
-        private Task OutputToDirAsync(string dir, string ns, string name, string multipleOutSymbol, string text)
+        private Task GenerateMultipleFileAsync(string output, string resolverName, string namespaceDot, ObjectSerializationInfo[] objectInfo, EnumSerializationInfo[] enumInfo, UnionSerializationInfo[] unionInfo, GenericSerializationInfo[] genericInfo)
         {
-            if (multipleOutSymbol == string.Empty)
+            string GetNamespace(INamespaceInfo x)
             {
-                return OutputAsync(Path.Combine(dir, $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text);
+                if (x.Namespace == null)
+                {
+                    return namespaceDot + "Formatters";
+                }
+
+                return namespaceDot + "Formatters." + x.Namespace;
             }
-            else
+
+            var waitingTasks = new Task[objectInfo.Length + enumInfo.Length + unionInfo.Length + 1];
+            var waitingIndex = 0;
+            foreach (var x in objectInfo)
             {
-                text = $"#if {multipleOutSymbol}" + Environment.NewLine + text + Environment.NewLine + "#endif";
-                return OutputAsync(Path.Combine(dir, MultiSymbolToSafeFilePath(multipleOutSymbol), $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text);
+                var ns = namespaceDot + "Formatters" + (x.Namespace is null ? string.Empty : "." + x.Namespace);
+                var template = x.IsStringKey ? new StringKeyFormatterTemplate(ns, new[] { x }) : (IFormatterTemplate)new FormatterTemplate(ns, new[] { x });
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", template);
+            }
+
+            foreach (var x in enumInfo)
+            {
+                var template = new EnumTemplate(GetNamespace(x), new[] { x });
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", template);
+            }
+
+            foreach (var x in unionInfo)
+            {
+                var template = new UnionTemplate(GetNamespace(x), new[] { x });
+                waitingTasks[waitingIndex++] = OutputToDirAsync(output, template.Namespace, x.Name + "Formatter", template);
+            }
+
+            var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
+            waitingTasks[waitingIndex] = OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, resolverTemplate);
+            return Task.WhenAll(waitingTasks);
+        }
+
+        private async Task OutputToDirAsync(string dir, string ns, string name, ITemplate template)
+        {
+            var builder = ZString.CreateUtf8StringBuilder();
+            try
+            {
+                template.TransformAppend(ref builder);
+                var path = PreparePath(Path.Combine(dir, $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"));
+                using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 4096, true);
+                await builder.WriteToAsync(stream).ConfigureAwait(false);
+            }
+            finally
+            {
+                builder.Dispose();
             }
         }
 
-        private Task OutputAsync(string path, string text)
+        private async Task OutputToDirAsync(string dir, string ns, string name, string[] multipleOutSymbols, ITemplate template)
+        {
+            var builder = ZString.CreateUtf8StringBuilder();
+            var innerBuilder = ZString.CreateUtf8StringBuilder();
+            try
+            {
+                template.TransformAppend(ref builder);
+                foreach (var multipleOutSymbol in multipleOutSymbols)
+                {
+                    var path = PreparePath(Path.Combine(dir, MultiSymbolToSafeFilePath(multipleOutSymbol), $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"));
+                    using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 4096, true);
+                    innerBuilder.Clear();
+                    innerBuilder.Append("#if ");
+                    innerBuilder.AppendLine(multipleOutSymbol);
+                    await innerBuilder.WriteToAsync(stream).ConfigureAwait(false);
+                    await builder.WriteToAsync(stream).ConfigureAwait(false);
+                    innerBuilder.Clear();
+                    innerBuilder.AppendLine();
+                    innerBuilder.Append("#endif");
+                    await innerBuilder.WriteToAsync(stream).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                innerBuilder.Dispose();
+                builder.Dispose();
+            }
+        }
+
+        private string PreparePath(string path)
         {
             path = path.Replace("global::", string.Empty);
 
@@ -236,8 +409,7 @@ namespace MessagePackCompiler
                 fi.Directory.Create();
             }
 
-            File.WriteAllText(path, NormalizeNewLines(text), NoBomUtf8);
-            return Task.CompletedTask;
+            return path;
         }
 
         private static string MultiSymbolToSafeFilePath(string symbol)

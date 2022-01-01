@@ -237,7 +237,6 @@ namespace MessagePack.Formatters.TestData2
 
                         ____result.bs = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.B>>(formatterResolver).Deserialize(ref reader, options);
                         continue;
-
                 }
             }
 
@@ -310,7 +309,6 @@ namespace MessagePack.Formatters.TestData2
                                 ____result.a = reader.ReadInt32();
                                 continue;
                         }
-
                 }
             }
 
@@ -374,7 +372,6 @@ namespace MessagePack.Formatters.TestData2
                                 ____result.a = reader.ReadInt32();
                                 continue;
                         }
-
                 }
             }
 
@@ -437,7 +434,6 @@ namespace MessagePack.Formatters.TestData2
 
                         ____result.ClassId = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.Nest1.IdType>(formatterResolver).Deserialize(ref reader, options);
                         continue;
-
                 }
             }
 
@@ -526,7 +522,6 @@ namespace MessagePack.Formatters.TestData2
 
                         ____result.ClassId = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.Nest2.IdType>(formatterResolver).Deserialize(ref reader, options);
                         continue;
-
                 }
             }
 
@@ -620,9 +615,7 @@ namespace MessagePack.Formatters.TestData2
                                         ____result.MyProperty2 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                                         continue;
                                 }
-
                         }
-
                 }
             }
 
@@ -690,9 +683,7 @@ namespace MessagePack.Formatters.TestData2
                                         ____result.MyProperty2 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                                         continue;
                                 }
-
                         }
-
                 }
             }
 
@@ -746,7 +737,6 @@ namespace MessagePack.Formatters.TestData2
 
                         __SomeProperty__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         continue;
-
                 }
             }
 

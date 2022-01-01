@@ -3,30 +3,61 @@
 
 using System;
 using System.Text;
+using Cysharp.Text;
+using StringLiteral;
 
 namespace MessagePackCompiler.Generator
 {
-    public static class EmbedStringHelper
+    public static partial class EmbedStringHelper
     {
         public static readonly Encoding Utf8 = new UTF8Encoding(false);
 
-        public static string ToByteArrayString(byte[] binary)
+        [Utf8("new byte[")]
+        private static partial ReadOnlySpan<byte> GetUtf8New();
+
+        [Utf8(" + ")]
+        private static partial ReadOnlySpan<byte> GetUtf8Add();
+
+        [Utf8("] { ")]
+        private static partial ReadOnlySpan<byte> GetUtf8Open();
+
+        [Utf8(", ")]
+        private static partial ReadOnlySpan<byte> GetUtf8Comma();
+
+        [Utf8(" }")]
+        private static partial ReadOnlySpan<byte> GetUtf8Close();
+
+        private static void AppendLiteral(ref this Utf8ValueStringBuilder builder, ReadOnlySpan<byte> span)
+        {
+            var dest = builder.GetSpan(span.Length);
+            span.CopyTo(dest);
+            builder.Advance(span.Length);
+        }
+
+        public static void ToByteArrayString(ref Utf8ValueStringBuilder builder, byte[] binary)
         {
             var headerLength = GetHeaderLength(binary.Length);
             Span<byte> header = stackalloc byte[headerLength];
             EmbedHeader(binary.Length, header);
-            var buffer = new StringBuilder().Append("new byte[").Append(headerLength).Append(" + ").Append(binary.Length).Append("] { ").Append(header[0]);
+            builder.AppendLiteral(GetUtf8New());
+            builder.Append(headerLength);
+            builder.AppendLiteral(GetUtf8Add());
+            builder.Append(binary.Length);
+            builder.AppendLiteral(GetUtf8Open());
+            builder.Append(header[0]);
             foreach (var b in header.Slice(1))
             {
-                buffer.Append(", ").Append(b);
+                builder.AppendLiteral(GetUtf8Comma());
+                builder.Append(b);
             }
 
             foreach (var b in binary)
             {
-                buffer.Append(", ").Append(b);
+                builder.AppendLiteral(GetUtf8Comma());
+                builder.Append(b);
             }
 
-            return buffer.Append(" }").ToString();
+            builder.AppendLiteral(GetUtf8Close());
         }
 
         public static int GetHeaderLength(int byteCount)

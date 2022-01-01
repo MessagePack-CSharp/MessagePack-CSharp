@@ -22,7 +22,7 @@ namespace <#= Namespace #>
 {
 <# foreach (var objInfo in ObjectSerializationInfos) {
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);#>
-    public sealed class <#= objInfo.FormatterNameWithoutNameSpace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
+    public sealed class <# objInfo.AppendFormatterNameWithoutNameSpace(ref builder); #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
 <# foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# } #>
@@ -61,7 +61,7 @@ namespace <#= Namespace #>
   if (member == null) { #>
             writer.WriteNil();
 <# } else { #>
-            <#= member.GetSerializeMethodString() #>;
+            <# member.AppendSerializeMethod(ref builder); #>;
 <# } #>
 <# } #>
         }
@@ -79,7 +79,7 @@ namespace <#= Namespace #>
 
 <# if (objInfo.MaxKey == -1 && !objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
             reader.Skip();
-            return new <#= objInfo.GetConstructorString()  #>;
+            return new <# objInfo.AppendConstructor(ref builder);  #>;
 <# } else { #>
             options.Security.DepthStep(ref reader);
 <# if (isFormatterResolverNecessary) { #>
@@ -88,7 +88,7 @@ namespace <#= Namespace #>
             var length = reader.ReadArrayHeader();
 <# var canOverwrite = objInfo.ConstructorParameters.Length == 0;
  if (canOverwrite) { #>
-            var ____result = new <#= objInfo.GetConstructorString()  #>;
+            var ____result = new <# objInfo.AppendConstructor(ref builder); #>;
 <# } else { foreach (var member in objInfo.Members) { #>
             var __<#= member.Name #>__ = default(<#= member.Type #>);
 <# } #>
@@ -104,12 +104,12 @@ namespace <#= Namespace #>
                     case <#= member.IntKey #>:
 <# if (canOverwrite) {
   if (member.IsWritable) { #>
-                        ____result.<#= member.Name #> = <#= member.GetDeserializeMethodString() #>;
+                        ____result.<#= member.Name #> = <# member.AppendDeserializeMethod(ref builder); #>;
 <# } else { #>
-                        <#= member.GetDeserializeMethodString() #>;
+                        <# member.AppendDeserializeMethod(ref builder); #>;
 <# } #>
 <# } else {#>
-                        __<#= member.Name #>__ = <#= member.GetDeserializeMethodString() #>;
+                        __<#= member.Name #>__ = <# member.AppendDeserializeMethod(ref builder); #>;
 <# } #>
                         break;
 <# } #>
@@ -120,7 +120,7 @@ namespace <#= Namespace #>
             }
 
 <# if (!canOverwrite) { #>
-            var ____result = new <#= objInfo.GetConstructorString()  #>;
+            var ____result = new <# objInfo.AppendConstructor(ref builder); #>;
 <# bool memberAssignExists = false;
   for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
   var member = objInfo.GetMember(memberIndex);

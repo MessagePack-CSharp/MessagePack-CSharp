@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Text;
+using StringLiteral;
 
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -21,7 +23,7 @@ namespace MessagePackCompiler.CodeAnalysis
         string FormatterName { get; }
     }
 
-    public class ObjectSerializationInfo : IResolverRegisterInfo, INamespaceInfo
+    public partial class ObjectSerializationInfo : IResolverRegisterInfo, INamespaceInfo
     {
         public string Name { get; }
 
@@ -55,6 +57,32 @@ namespace MessagePackCompiler.CodeAnalysis
         public string FormatterName => this.Namespace == null ? FormatterNameWithoutNameSpace : this.Namespace + "." + FormatterNameWithoutNameSpace;
 
         public string FormatterNameWithoutNameSpace => this.Name + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(", ", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
+
+        [Utf8("Formatter")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralFormatter();
+
+        private static void Append(ref Utf8ValueStringBuilder builder, ReadOnlySpan<byte> span)
+        {
+            var destination = builder.GetSpan(span.Length);
+            span.CopyTo(destination);
+            builder.Advance(span.Length);
+        }
+
+        public void AppendFormatterNameWithoutNameSpace(ref Utf8ValueStringBuilder builder)
+        {
+            builder.Append(Name);
+            Append(ref builder, GetUtf8ConstLiteralFormatter());
+            if (!IsOpenGenericType)
+            {
+                return;
+            }
+
+            builder.GetSpan(1)[0] = (byte)'<';
+            builder.Advance(1);
+            builder.AppendJoin(", ", GenericTypeParameters.Select(x => x.Name));
+            builder.GetSpan(1)[0] = (byte)'>';
+            builder.Advance(1);
+        }
 
         public int WriteCount
         {
@@ -90,6 +118,35 @@ namespace MessagePackCompiler.CodeAnalysis
             return $"{this.FullName}({args})";
         }
 
+        [Utf8(", __")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralCommaSpaceUnderscoreUnderscore();
+
+        [Utf8("__")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralUnderscoreUnderscore();
+
+        public void AppendConstructor(ref Utf8ValueStringBuilder builder)
+        {
+            builder.Append(FullName);
+            builder.GetSpan(1)[0] = (byte)'(';
+            builder.Advance(1);
+            if (ConstructorParameters.Length > 0)
+            {
+                Append(ref builder, GetUtf8ConstLiteralUnderscoreUnderscore());
+                builder.Append(ConstructorParameters[0].Name);
+                Append(ref builder, GetUtf8ConstLiteralUnderscoreUnderscore());
+
+                for (int i = 1; i < ConstructorParameters.Length; i++)
+                {
+                    Append(ref builder, GetUtf8ConstLiteralCommaSpaceUnderscoreUnderscore());
+                    builder.Append(ConstructorParameters[i].Name);
+                    Append(ref builder, GetUtf8ConstLiteralUnderscoreUnderscore());
+                }
+            }
+
+            builder.GetSpan(1)[0] = (byte)')';
+            builder.Advance(1);
+        }
+
         public ObjectSerializationInfo(bool isClass, bool isOpenGenericType, GenericTypeParameterInfo[] genericTypeParameterInfos, MemberSerializationInfo[] constructorParameters, bool isIntKey, MemberSerializationInfo[] members, string name, string fullName, string? @namespace, bool hasSerializationConstructor, bool needsCastOnAfter, bool needsCastOnBefore)
         {
             IsClass = isClass;
@@ -123,7 +180,7 @@ namespace MessagePackCompiler.CodeAnalysis
         }
     }
 
-    public class MemberSerializationInfo
+    public partial class MemberSerializationInfo
     {
         public bool IsProperty { get; }
 
@@ -143,7 +200,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         public string? CustomFormatterTypeName { get; }
 
-        private readonly HashSet<string> primitiveTypes = new(Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
+        private static readonly HashSet<string> PrimitiveTypes = new(Generator.ShouldUseFormatterResolverHelper.PrimitiveTypes);
 
         public MemberSerializationInfo(bool isProperty, bool isWritable, bool isReadable, int intKey, string stringKey, string name, string type, string shortTypeName, string? customFormatterTypeName)
         {
@@ -158,42 +215,96 @@ namespace MessagePackCompiler.CodeAnalysis
             CustomFormatterTypeName = customFormatterTypeName;
         }
 
-        public string GetSerializeMethodString()
+        [Utf8("this.__")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralThis();
+
+        [Utf8("CustomFormatter__.Serialize(ref writer, value.")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralCustomFormatterSerialize();
+
+        [Utf8(", options)")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralOptions();
+
+        [Utf8("writer.Write(value.")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralWriterWrite();
+
+        [Utf8("global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralFormatterWithVerify();
+
+        [Utf8(">(formatterResolver).Serialize(ref writer, value.")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralFormatterSerialize();
+
+        [Utf8("CustomFormatter__.Deserialize(ref reader, options)")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralCustomFormatterDeserialize();
+
+        [Utf8("global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes())")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralByteArrayDeserialize();
+
+        [Utf8("reader.Read")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralReaderRead();
+
+        [Utf8("()")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralParenPair();
+
+        [Utf8(">(formatterResolver).Deserialize(ref reader, options)")]
+        private static partial ReadOnlySpan<byte> GetUtf8ConstLiteralFormatterDeserialize();
+
+        private static void Append(ref Utf8ValueStringBuilder builder, ReadOnlySpan<byte> span)
+        {
+            var destination = builder.GetSpan(span.Length);
+            span.CopyTo(destination);
+            builder.Advance(span.Length);
+        }
+
+        public void AppendSerializeMethod(ref Utf8ValueStringBuilder builder)
         {
             if (CustomFormatterTypeName != null)
             {
-                return $"this.__{this.Name}CustomFormatter__.Serialize(ref writer, value.{this.Name}, options)";
+                Append(ref builder, GetUtf8ConstLiteralThis());
+                builder.Append(Name);
+                Append(ref builder, GetUtf8ConstLiteralCustomFormatterSerialize());
+                builder.Append(Name);
+                Append(ref builder, GetUtf8ConstLiteralOptions());
             }
-            else if (this.primitiveTypes.Contains(this.Type))
+            else if (PrimitiveTypes.Contains(Type))
             {
-                return "writer.Write(value." + this.Name + ")";
+                Append(ref builder, GetUtf8ConstLiteralWriterWrite());
+                builder.Append(Name);
+                builder.GetSpan(1)[0] = (byte)')';
+                builder.Advance(1);
             }
             else
             {
-                return $"global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Serialize(ref writer, value.{this.Name}, options)";
+                Append(ref builder, GetUtf8ConstLiteralFormatterWithVerify());
+                builder.Append(Type);
+                Append(ref builder, GetUtf8ConstLiteralFormatterSerialize());
+                builder.Append(Name);
+                Append(ref builder, GetUtf8ConstLiteralOptions());
             }
         }
 
-        public string GetDeserializeMethodString()
+        public void AppendDeserializeMethod(ref Utf8ValueStringBuilder builder)
         {
             if (CustomFormatterTypeName != null)
             {
-                return $"this.__{this.Name}CustomFormatter__.Deserialize(ref reader, options)";
+                Append(ref builder, GetUtf8ConstLiteralThis());
+                builder.Append(Name);
+                Append(ref builder, GetUtf8ConstLiteralCustomFormatterDeserialize());
             }
-            else if (this.primitiveTypes.Contains(this.Type))
+            else if (Type == "byte[]")
             {
-                if (this.Type == "byte[]")
-                {
-                    return "global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes())";
-                }
-                else
-                {
-                    return $"reader.Read{this.ShortTypeName!.Replace("[]", "s")}()";
-                }
+                Append(ref builder, GetUtf8ConstLiteralByteArrayDeserialize());
+            }
+            else if (PrimitiveTypes.Contains(Type))
+            {
+                Append(ref builder, GetUtf8ConstLiteralReaderRead());
+                builder.Append(ShortTypeName);
+                Append(ref builder, GetUtf8ConstLiteralParenPair());
             }
             else
             {
-                return $"global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Deserialize(ref reader, options)";
+                Append(ref builder, GetUtf8ConstLiteralFormatterWithVerify());
+                builder.Append(Type);
+                Append(ref builder, GetUtf8ConstLiteralFormatterDeserialize());
             }
         }
     }

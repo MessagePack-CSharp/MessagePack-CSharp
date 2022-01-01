@@ -31,7 +31,7 @@ namespace MessagePackCompiler.Generator
         public ObjectSerializationInfo[] ObjectSerializationInfos { get; }
     }
 
-    public partial class ResolverTemplate
+    public partial class ResolverTemplate : ITemplate
     {
         public ResolverTemplate(string @namespace, string formatterNamespace, string resolverName, IResolverRegisterInfo[] registerInfos)
         {
@@ -50,7 +50,7 @@ namespace MessagePackCompiler.Generator
         public IResolverRegisterInfo[] RegisterInfos { get; }
     }
 
-    public partial class EnumTemplate
+    public partial class EnumTemplate : ITemplate
     {
         public EnumTemplate(string @namespace, EnumSerializationInfo[] enumSerializationInfos)
         {
@@ -63,7 +63,7 @@ namespace MessagePackCompiler.Generator
         public EnumSerializationInfo[] EnumSerializationInfos { get; }
     }
 
-    public partial class UnionTemplate
+    public partial class UnionTemplate : ITemplate
     {
         public UnionTemplate(string @namespace, UnionSerializationInfo[] unionSerializationInfos)
         {
