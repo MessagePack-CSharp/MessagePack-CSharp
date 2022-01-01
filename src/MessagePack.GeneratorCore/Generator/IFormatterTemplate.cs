@@ -7,13 +7,13 @@ namespace MessagePackCompiler.Generator
 {
     public interface IFormatterTemplate : ITemplate
     {
-        string Namespace { get; }
-
         ObjectSerializationInfo[] ObjectSerializationInfos { get; }
     }
 
     public interface ITemplate
     {
+        string Namespace { get; }
+
         void TransformAppend(ref Cysharp.Text.Utf8ValueStringBuilder builder);
     }
 }

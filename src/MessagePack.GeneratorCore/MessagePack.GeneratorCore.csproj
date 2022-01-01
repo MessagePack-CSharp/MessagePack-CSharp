@@ -7,6 +7,7 @@
     <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
     <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,5 +30,32 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="CodeGeneratorTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CodeGeneratorTemplate.tt</DependentUpon>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="CodeGeneratorTemplate.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CodeGeneratorTemplate.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="CodeGeneratorTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CodeGeneratorTemplate.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
 </Project>
