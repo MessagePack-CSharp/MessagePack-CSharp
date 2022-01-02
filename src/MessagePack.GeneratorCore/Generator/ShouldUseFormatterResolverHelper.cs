@@ -4,45 +4,44 @@
 using System;
 using MessagePackCompiler.CodeAnalysis;
 
-namespace MessagePackCompiler.Generator
+namespace MessagePackCompiler.Generator;
+
+public static class ShouldUseFormatterResolverHelper
 {
-    public static class ShouldUseFormatterResolverHelper
+    /// <devremarks>
+    /// Keep this list in sync with DynamicObjectTypeBuilder.IsOptimizeTargetType.
+    /// </devremarks>
+    internal static readonly string[] PrimitiveTypes =
     {
-        /// <devremarks>
-        /// Keep this list in sync with DynamicObjectTypeBuilder.IsOptimizeTargetType.
-        /// </devremarks>
-        internal static readonly string[] PrimitiveTypes =
-        {
-            "short",
-            "int",
-            "long",
-            "ushort",
-            "uint",
-            "ulong",
-            "float",
-            "double",
-            "bool",
-            "byte",
-            "sbyte",
-            "char",
-            "byte[]",
+        "short",
+        "int",
+        "long",
+        "ushort",
+        "uint",
+        "ulong",
+        "float",
+        "double",
+        "bool",
+        "byte",
+        "sbyte",
+        "char",
+        "byte[]",
 
-            // Do not include types that resolvers are allowed to modify.
-            ////"global::System.DateTime",  // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
-            ////"string", // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
-        };
+        // Do not include types that resolvers are allowed to modify.
+        ////"global::System.DateTime",  // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
+        ////"string", // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
+    };
 
-        public static bool ShouldUseFormatterResolver(MemberSerializationInfo[] infos)
+    public static bool ShouldUseFormatterResolver(MemberSerializationInfo[] infos)
+    {
+        foreach (var memberSerializationInfo in infos)
         {
-            foreach (var memberSerializationInfo in infos)
+            if (memberSerializationInfo.CustomFormatterTypeName == null && Array.IndexOf(PrimitiveTypes, memberSerializationInfo.Type) == -1)
             {
-                if (memberSerializationInfo.CustomFormatterTypeName == null && Array.IndexOf(PrimitiveTypes, memberSerializationInfo.Type) == -1)
-                {
-                    return true;
-                }
+                return true;
             }
-
-            return false;
         }
+
+        return false;
     }
 }

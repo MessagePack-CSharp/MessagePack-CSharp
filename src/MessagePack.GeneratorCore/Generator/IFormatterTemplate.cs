@@ -3,17 +3,16 @@
 
 using MessagePackCompiler.CodeAnalysis;
 
-namespace MessagePackCompiler.Generator
+namespace MessagePackCompiler.Generator;
+
+public interface IFormatterTemplate : ITemplate
 {
-    public interface IFormatterTemplate : ITemplate
-    {
-        ObjectSerializationInfo[] ObjectSerializationInfos { get; }
-    }
+    ObjectSerializationInfo[] ObjectSerializationInfos { get; }
+}
 
-    public interface ITemplate
-    {
-        string Namespace { get; }
+public interface ITemplate
+{
+    string Namespace { get; }
 
-        void TransformAppend(ref Cysharp.Text.Utf8ValueStringBuilder builder);
-    }
+    void TransformAppend(ref Cysharp.Text.Utf8ValueStringBuilder builder);
 }
