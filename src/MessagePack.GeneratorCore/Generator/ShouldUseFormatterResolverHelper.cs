@@ -4,44 +4,45 @@
 using System;
 using MessagePackCompiler.CodeAnalysis;
 
-namespace MessagePackCompiler.Generator;
-
-public static class ShouldUseFormatterResolverHelper
+namespace MessagePackCompiler.Generator
 {
-    /// <devremarks>
-    /// Keep this list in sync with DynamicObjectTypeBuilder.IsOptimizeTargetType.
-    /// </devremarks>
-    internal static readonly string[] PrimitiveTypes =
+    public static class ShouldUseFormatterResolverHelper
     {
-        "short",
-        "int",
-        "long",
-        "ushort",
-        "uint",
-        "ulong",
-        "float",
-        "double",
-        "bool",
-        "byte",
-        "sbyte",
-        "char",
-        "byte[]",
-
-        // Do not include types that resolvers are allowed to modify.
-        ////"global::System.DateTime",  // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
-        ////"string", // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
-    };
-
-    public static bool ShouldUseFormatterResolver(MemberSerializationInfo[] infos)
-    {
-        foreach (var memberSerializationInfo in infos)
+        /// <devremarks>
+        /// Keep this list in sync with DynamicObjectTypeBuilder.IsOptimizeTargetType.
+        /// </devremarks>
+        internal static readonly string[] PrimitiveTypes =
         {
-            if (memberSerializationInfo.CustomFormatterTypeName == null && Array.IndexOf(PrimitiveTypes, memberSerializationInfo.Type) == -1)
-            {
-                return true;
-            }
-        }
+            "short",
+            "int",
+            "long",
+            "ushort",
+            "uint",
+            "ulong",
+            "float",
+            "double",
+            "bool",
+            "byte",
+            "sbyte",
+            "char",
+            "byte[]",
 
-        return false;
+            // Do not include types that resolvers are allowed to modify.
+            ////"global::System.DateTime",  // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
+            ////"string", // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
+        };
+
+        public static bool ShouldUseFormatterResolver(MemberSerializationInfo[] infos)
+        {
+            foreach (var memberSerializationInfo in infos)
+            {
+                if (memberSerializationInfo.CustomFormatterTypeName == null && Array.IndexOf(PrimitiveTypes, memberSerializationInfo.Type) == -1)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }
