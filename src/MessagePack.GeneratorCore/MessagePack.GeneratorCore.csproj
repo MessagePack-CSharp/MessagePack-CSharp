@@ -12,9 +12,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.0.1" />
-    <PackageReference Include="StringLiteralGenerator" Version="2.0.0" />
+    <PackageReference Include="StringLiteralGenerator" Version="2.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="ZString" Version="2.4.3" />
-    <PackageReference Include="RuntimeT4Generator" Version="0.1.2">
+    <PackageReference Include="RuntimeT4Generator" Version="0.1.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

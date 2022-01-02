@@ -291,8 +291,8 @@ namespace MessagePackCompiler
         {
             path = path.Replace("global::", string.Empty);
 
-            const string prefix = "[Out]";
-            logger(prefix + path);
+            const string Prefix = "[Out]";
+            logger(Prefix + path);
 
             var fi = new FileInfo(path);
             if (fi.Directory != null && !fi.Directory.Exists)

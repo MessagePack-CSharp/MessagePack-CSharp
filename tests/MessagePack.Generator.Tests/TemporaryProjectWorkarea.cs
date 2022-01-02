@@ -19,7 +19,7 @@ namespace MessagePack.Generator.Tests
     /// <summary>
     /// Provides a temporary work area for unit testing.
     /// </summary>
-    public class TemporaryProjectWorkarea : IDisposable
+    public sealed class TemporaryProjectWorkarea : IDisposable
     {
         private readonly string tempDirPath;
         private readonly string targetCsprojFileName = "TempTargetProject.csproj";
