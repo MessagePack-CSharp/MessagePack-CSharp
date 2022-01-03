@@ -6,7 +6,7 @@ using MessagePackCompiler.CodeAnalysis;
 
 namespace MessagePackCompiler.Generator
 {
-    public partial class FormatterTemplate : IFormatterTemplate
+    public partial struct FormatterTemplate : IFormatterTemplate
     {
         public FormatterTemplate(string @namespace, ObjectSerializationInfo[] objectSerializationInfos, CancellationToken cancellationToken)
         {
@@ -22,7 +22,7 @@ namespace MessagePackCompiler.Generator
         public CancellationToken CancellationToken { get; }
     }
 
-    public partial class StringKeyFormatterTemplate : IFormatterTemplate
+    public partial struct StringKeyFormatterTemplate : IFormatterTemplate
     {
         public StringKeyFormatterTemplate(string @namespace, ObjectSerializationInfo[] objectSerializationInfos, CancellationToken cancellationToken)
         {
@@ -38,7 +38,7 @@ namespace MessagePackCompiler.Generator
         public CancellationToken CancellationToken { get; }
     }
 
-    public partial class ResolverTemplate : ITemplate
+    public partial struct ResolverTemplate : ITemplate
     {
         public ResolverTemplate(string @namespace, string formatterNamespace, string resolverName, IResolverRegisterInfo[] registerInfos, CancellationToken cancellationToken)
         {
@@ -60,7 +60,7 @@ namespace MessagePackCompiler.Generator
         public CancellationToken CancellationToken { get; }
     }
 
-    public partial class EnumTemplate : ITemplate
+    public partial struct EnumTemplate : ITemplate
     {
         public EnumTemplate(string @namespace, EnumSerializationInfo[] enumSerializationInfos, CancellationToken cancellationToken)
         {
@@ -76,7 +76,7 @@ namespace MessagePackCompiler.Generator
         public CancellationToken CancellationToken { get; }
     }
 
-    public partial class UnionTemplate : ITemplate
+    public partial struct UnionTemplate : ITemplate
     {
         public UnionTemplate(string @namespace, UnionSerializationInfo[] unionSerializationInfos, CancellationToken cancellationToken)
         {

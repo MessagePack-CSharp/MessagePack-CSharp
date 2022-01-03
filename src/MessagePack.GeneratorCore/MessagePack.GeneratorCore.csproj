@@ -17,18 +17,18 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="ZString" Version="2.4.3" />
-    <PackageReference Include="RuntimeT4Generator" Version="0.1.3">
+    <PackageReference Include="RuntimeT4Generator" Version="0.2.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="Generator\ResolverTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" />
-    <AdditionalFiles Include="Generator\EnumTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" />
-    <AdditionalFiles Include="Generator\UnionTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" />
-    <AdditionalFiles Include="Generator\FormatterTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" />
-    <AdditionalFiles Include="Generator\StringKey\StringKeyFormatterTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" />
+    <AdditionalFiles Include="Generator\ResolverTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\EnumTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\UnionTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\FormatterTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\StringKey\StringKeyFormatterTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
   </ItemGroup>
 
   <ItemGroup>
