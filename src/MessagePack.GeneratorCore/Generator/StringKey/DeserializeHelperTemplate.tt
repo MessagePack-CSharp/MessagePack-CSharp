@@ -1,0 +1,11 @@
+<#@ import namespace="System" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="MessagePackCompiler.CodeAnalysis" #>
+<#foreach (var memberInfoTuples in MemberInfoTupleGroupCollection) {
+    var binaryLength = memberInfoTuples.Key;
+    var keyLength = binaryLength >> 3;
+    keyLength += keyLength << 3 == binaryLength ? 0 : 1;#>
+case <#= binaryLength #>:
+<# new DeserializeHelperRecursiveTemplate(1, keyLength, memberInfoTuples, CanOverwrite, CancellationToken).TransformAppend(builder, indent + 4); #>
+<#} #>

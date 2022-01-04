@@ -1,0 +1,70 @@
+<#@ import namespace="System" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="MessagePackCompiler.CodeAnalysis" #>
+<#if (Members.Length == 1) {
+    var member = Members[0];
+    var binary = member.Binary.AsSpan((TabCount - 1) << 3);
+    switch (binary.Length)
+    {
+        case 1:#>
+if (stringKey[0] != <#= binary[0] #>) { goto FAIL; }
+<#
+            break;
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:#>
+if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != <#= member.Key[TabCount - 1] #>UL) { goto FAIL; }
+<#
+            break;
+        default:#>
+if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_<#= member.Info.Name #>().Slice(<#= EmbedStringHelper.GetHeaderLength(member.Binary.Length) #><# if (TabCount != 1) { #> + <#= (TabCount << 3) - 8 #><# } #>))) { goto FAIL; }
+<#
+            break;
+    }#>
+
+<#    if (member.Info.IsWritable || member.IsConstructorParameter) {
+          if (CanOverwrite) {#>
+____result.<#= member.Info.Name #> = <# member.Info.AppendDeserializeMethod(builder); #>;
+<#        } else if (member.IsConstructorParameter) {#>
+__<#= member.Info.Name #>__ = <# member.Info.AppendDeserializeMethod(builder); #>;
+<#        } else {#>
+__<#= member.Info.Name #>__IsInitialized = true;
+__<#= member.Info.Name #>__ = <# member.Info.AppendDeserializeMethod(builder); #>;
+<#        }#>
+<#    } else {#>
+reader.Skip();
+<#    }#>
+continue;
+<#    return;
+}#>
+switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+{
+    default: goto FAIL;
+<#var tabCountSub1 = TabCount - 1;
+foreach (var grouping in Members.GroupBy(member => member.Key[tabCountSub1])) {#>
+    case <#= grouping.Key #>UL:
+<#    if (TabCount == KeyLength) {
+          var member = grouping.Single();#>
+<#        if (member.Info.IsWritable || member.IsConstructorParameter) {
+              if (CanOverwrite) {#>
+        ____result.<#= member.Info.Name #> = <# member.Info.AppendDeserializeMethod(builder); #>;
+<#            } else if (member.IsConstructorParameter) {#>
+        __<#= member.Info.Name #>__ = <# member.Info.AppendDeserializeMethod(builder); #>;
+<#            } else {#>
+        __<#= member.Info.Name #>__IsInitialized = true;
+        __<#= member.Info.Name #>__ = <# member.Info.AppendDeserializeMethod(builder); #>;
+<#            }#>
+<#        } else {#>
+        reader.Skip();
+<#        }#>
+        continue;
+<#        continue;
+    }
+    new DeserializeHelperRecursiveTemplate(TabCount + 1, KeyLength, grouping, CanOverwrite, CancellationToken).TransformAppend(builder, indent + 8);
+}#>
+}

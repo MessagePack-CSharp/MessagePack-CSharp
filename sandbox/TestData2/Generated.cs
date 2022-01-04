@@ -174,11 +174,11 @@ namespace MessagePack.Formatters.TestData2
     public sealed class AFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.A>
     {
         // a
-        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 0xA1, 0x61 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 161, 97 };
         // bs
-        private static global::System.ReadOnlySpan<byte> GetSpan_bs() => new byte[1 + 2] { 0xA2, 0x62, 0x73 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_bs() => new byte[1 + 2] { 162, 98, 115 };
         // c
-        private static global::System.ReadOnlySpan<byte> GetSpan_c() => new byte[1 + 1] { 0xA1, 0x63 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_c() => new byte[1 + 1] { 161, 99 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.A value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -246,11 +246,11 @@ namespace MessagePack.Formatters.TestData2
     public sealed class BFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.B>
     {
         // ass
-        private static global::System.ReadOnlySpan<byte> GetSpan_ass() => new byte[1 + 3] { 0xA3, 0x61, 0x73, 0x73 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_ass() => new byte[1 + 3] { 163, 97, 115, 115 };
         // c
-        private static global::System.ReadOnlySpan<byte> GetSpan_c() => new byte[1 + 1] { 0xA1, 0x63 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_c() => new byte[1 + 1] { 161, 99 };
         // a
-        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 0xA1, 0x61 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 161, 97 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.B value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -318,9 +318,9 @@ namespace MessagePack.Formatters.TestData2
     public sealed class CFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.C>
     {
         // b
-        private static global::System.ReadOnlySpan<byte> GetSpan_b() => new byte[1 + 1] { 0xA1, 0x62 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_b() => new byte[1 + 1] { 161, 98 };
         // a
-        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 0xA1, 0x61 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 161, 97 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.C value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -381,9 +381,9 @@ namespace MessagePack.Formatters.TestData2
     public sealed class Nest1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest1>
     {
         // EnumId
-        private static global::System.ReadOnlySpan<byte> GetSpan_EnumId() => new byte[1 + 6] { 0xA6, 0x45, 0x6E, 0x75, 0x6D, 0x49, 0x64 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_EnumId() => new byte[1 + 6] { 166, 69, 110, 117, 109, 73, 100 };
         // ClassId
-        private static global::System.ReadOnlySpan<byte> GetSpan_ClassId() => new byte[1 + 7] { 0xA7, 0x43, 0x6C, 0x61, 0x73, 0x73, 0x49, 0x64 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_ClassId() => new byte[1 + 7] { 167, 67, 108, 97, 115, 115, 73, 100 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Nest1 value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -469,9 +469,9 @@ namespace MessagePack.Formatters.TestData2
     public sealed class Nest2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Nest2>
     {
         // EnumId
-        private static global::System.ReadOnlySpan<byte> GetSpan_EnumId() => new byte[1 + 6] { 0xA6, 0x45, 0x6E, 0x75, 0x6D, 0x49, 0x64 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_EnumId() => new byte[1 + 6] { 166, 69, 110, 117, 109, 73, 100 };
         // ClassId
-        private static global::System.ReadOnlySpan<byte> GetSpan_ClassId() => new byte[1 + 7] { 0xA7, 0x43, 0x6C, 0x61, 0x73, 0x73, 0x49, 0x64 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_ClassId() => new byte[1 + 7] { 167, 67, 108, 97, 115, 115, 73, 100 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Nest2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -557,9 +557,9 @@ namespace MessagePack.Formatters.TestData2
     public sealed class PropNameCheck1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck1>
     {
         // MyProperty1
-        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty1() => new byte[1 + 11] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x31 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty1() => new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 };
         // MyProperty2
-        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty2() => new byte[1 + 11] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x32 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty2() => new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.PropNameCheck1 value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -625,9 +625,9 @@ namespace MessagePack.Formatters.TestData2
     public sealed class PropNameCheck2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.PropNameCheck2>
     {
         // MyProperty1
-        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty1() => new byte[1 + 11] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x31 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty1() => new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 49 };
         // MyProperty2
-        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty2() => new byte[1 + 11] { 0xAB, 0x4D, 0x79, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79, 0x32 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_MyProperty2() => new byte[1 + 11] { 171, 77, 121, 80, 114, 111, 112, 101, 114, 116, 121, 50 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.PropNameCheck2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -693,7 +693,7 @@ namespace MessagePack.Formatters.TestData2
     public sealed class RecordFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.Record>
     {
         // SomeProperty
-        private static global::System.ReadOnlySpan<byte> GetSpan_SomeProperty() => new byte[1 + 12] { 0xAC, 0x53, 0x6F, 0x6D, 0x65, 0x50, 0x72, 0x6F, 0x70, 0x65, 0x72, 0x74, 0x79 };
+        private static global::System.ReadOnlySpan<byte> GetSpan_SomeProperty() => new byte[1 + 12] { 172, 83, 111, 109, 101, 80, 114, 111, 112, 101, 114, 116, 121 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.Record value, global::MessagePack.MessagePackSerializerOptions options)
         {

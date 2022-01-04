@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <RootNamespace>MessagePackCompiler</RootNamespace>
@@ -7,58 +8,28 @@
     <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
     <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.0.1" />
-    <PackageReference Include="StringLiteralGenerator" Version="2.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="ZString" Version="2.4.3" />
-    <PackageReference Include="RuntimeT4Generator" Version="0.2.0">
+    <PackageReference Include="RuntimeT4Generator" Version="0.3.6">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="Generator\ResolverTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\EnumTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\UnionTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\FormatterTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\StringKey\StringKeyFormatterTemplate.tt" RuntimeT4Generator="Utf8" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\ResolverTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\EnumTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\UnionTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\FormatterTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\StringKey\StringKeyFormatterTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
+    <AdditionalFiles Include="Generator\StringKey\DeserializeHelperTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" RuntimeT4Generator_IndentParameterName="indent" />
+    <AdditionalFiles Include="Generator\StringKey\DeserializeHelperRecursiveTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" RuntimeT4Generator_IndentParameterName="indent" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="CodeGeneratorTemplate.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>CodeGeneratorTemplate.tt</DependentUpon>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="CodeGeneratorTemplate.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>CodeGeneratorTemplate.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="CodeGeneratorTemplate.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>CodeGeneratorTemplate.tt</DependentUpon>
-    </Compile>
-  </ItemGroup>
 </Project>
