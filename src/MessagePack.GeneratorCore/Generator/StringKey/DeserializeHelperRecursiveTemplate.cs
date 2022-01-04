@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using MessagePackCompiler.CodeAnalysis;
 
 namespace MessagePackCompiler.Generator;
 

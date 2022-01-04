@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using MessagePack.Internal;
 using MessagePackCompiler.CodeAnalysis;
 
@@ -52,5 +54,33 @@ internal readonly struct MemberInfoTuple : IComparable<MemberInfoTuple>
         }
 
         return 0;
+    }
+}
+
+internal static class MemberInfoTupleHelper
+{
+    public static IEnumerable<IGrouping<int, MemberInfoTuple>> SelectMany(this ObjectSerializationInfo info)
+    {
+        return info.Members.Select(member =>
+        {
+            var value = false;
+            foreach (var parameter in info.ConstructorParameters)
+            {
+                if (parameter.Equals(member))
+                {
+                    value = true;
+                    break;
+                }
+            }
+
+            return new MemberInfoTuple(member, value);
+        }).GroupBy(member => member.Binary.Length);
+    }
+
+    public static void Deconstruct(this IGrouping<int, MemberInfoTuple> group, out int binaryLength, out int keyLength)
+    {
+        binaryLength = group.Key;
+        keyLength = binaryLength >> 3;
+        keyLength += keyLength << 3 != binaryLength ? 1 : 0;
     }
 }

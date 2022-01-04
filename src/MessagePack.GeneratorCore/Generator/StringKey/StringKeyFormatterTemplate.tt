@@ -113,23 +113,7 @@ foreach (var objInfo in ObjectSerializationInfos) {
                     FAIL:
                       reader.Skip();
                       continue;
-<#foreach (var memberInfoTuples in objInfo.Members.Select(member =>
-    {
-        var value = false;
-        foreach (var parameter in objInfo.ConstructorParameters)
-        {
-            if (parameter.Equals(member))
-            {
-                value = true;
-                break;
-            }
-        }
-
-        return new MemberInfoTuple(member, value);
-    }).GroupBy(member => member.Binary.Length)) {
-var binaryLength = memberInfoTuples.Key;
-var keyLength = binaryLength >> 3;
-keyLength += keyLength << 3 == binaryLength ? 0 : 1;#>
+<#foreach (var memberInfoTuples in objInfo.SelectMany()) { var (binaryLength, keyLength) = memberInfoTuples; #>
                     case <#= binaryLength #>:
 <# new DeserializeHelperRecursiveTemplate(1, keyLength, memberInfoTuples, canOverwrite, CancellationToken).TransformAppend(builder, 24); #>
 <#} #>
