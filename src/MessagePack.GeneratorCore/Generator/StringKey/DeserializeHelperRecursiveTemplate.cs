@@ -29,32 +29,3 @@ internal partial struct DeserializeHelperRecursiveTemplate
 
     public CancellationToken CancellationToken { get; }
 }
-
-internal partial struct DeserializeHelperTemplate
-{
-    public DeserializeHelperTemplate(ObjectSerializationInfo info, bool canOverwrite, CancellationToken cancellationToken)
-    {
-        CanOverwrite = canOverwrite;
-        CancellationToken = cancellationToken;
-        MemberInfoTupleGroupCollection = info.Members.Select(member =>
-        {
-            var value = false;
-            foreach (var parameter in info.ConstructorParameters)
-            {
-                if (parameter.Equals(member))
-                {
-                    value = true;
-                    break;
-                }
-            }
-
-            return new MemberInfoTuple(member, value);
-        }).GroupBy(member => member.Binary.Length);
-    }
-
-    public IEnumerable<IGrouping<int, MemberInfoTuple>> MemberInfoTupleGroupCollection { get; }
-
-    public bool CanOverwrite { get; }
-
-    public CancellationToken CancellationToken { get; }
-}

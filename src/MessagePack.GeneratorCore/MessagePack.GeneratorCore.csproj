@@ -24,7 +24,6 @@
     <AdditionalFiles Include="Generator\UnionTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
     <AdditionalFiles Include="Generator\FormatterTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
     <AdditionalFiles Include="Generator\StringKey\StringKeyFormatterTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\StringKey\DeserializeHelperTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" RuntimeT4Generator_IndentParameterName="indent" />
     <AdditionalFiles Include="Generator\StringKey\DeserializeHelperRecursiveTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" RuntimeT4Generator_IndentParameterName="indent" />
   </ItemGroup>
 
