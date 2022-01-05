@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace MessagePackCompiler.Generator;
 
+[IndentT4("Generator/StringKey")]
 internal partial struct DeserializeHelperRecursiveTemplate
 {
     public DeserializeHelperRecursiveTemplate(int tabCount, int keyLength, IEnumerable<MemberInfoTuple> memberCollection, bool canOverwrite, CancellationToken cancellationToken)

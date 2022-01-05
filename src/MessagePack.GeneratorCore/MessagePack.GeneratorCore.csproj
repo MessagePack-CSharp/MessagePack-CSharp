@@ -12,23 +12,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.0.1" />
-    <PackageReference Include="RuntimeT4Generator" Version="0.3.6">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="Generator\ResolverTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\EnumTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\UnionTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\FormatterTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\StringKey\StringKeyFormatterTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" />
-    <AdditionalFiles Include="Generator\StringKey\DeserializeHelperRecursiveTemplate.tt" RuntimeT4Generator="StringBuilder" RuntimeT4Generator_Namespace="MessagePackCompiler.Generator" RuntimeT4Generator_Modifier="partial struct" RuntimeT4Generator_IndentParameterName="indent" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\MessagePack\MessagePack.csproj" />
+    <ProjectReference Include="..\MessagePack.Generator.T4\MessagePack.Generator.T4.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <CompilerVisibleProperty Include="ProjectDir" />
   </ItemGroup>
 
 </Project>
