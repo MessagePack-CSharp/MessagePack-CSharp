@@ -90,12 +90,12 @@ internal sealed class IndentT4Attribute : global::System.Attribute
 
             if (index < 0)
             {
-                AppendLiteral(builder, text, indent, token);
+                AppendLiteral(builder, text, indent);
                 text = ReadOnlySpan<char>.Empty;
             }
             else
             {
-                AppendLiteral(builder, text.Slice(0, index), indent, token);
+                AppendLiteral(builder, text.Slice(0, index), indent);
                 text = text.Slice(index);
             }
         }
@@ -123,16 +123,13 @@ internal sealed class IndentT4Attribute : global::System.Attribute
         var shouldIndent = true;
         while (!text.IsEmpty)
         {
-            if (text[0] == '<' && text.Length > 1 && text[1] == '#')
+            var codeIndex = text.IndexOf("<#".AsSpan(), StringComparison.Ordinal);
+            var crlfIndex = text.IndexOfAny('\r', '\n');
+            if (codeIndex == 0)
             {
                 if (text.Length > 2 && text[2] == '=')
                 {
-                    if (shouldIndent)
-                    {
-                        PreIndent(builder, indent);
-                        shouldIndent = false;
-                    }
-
+                    PreIndent(builder, indent, ref shouldIndent);
                     text = AppendValue(builder, text.Slice(3).TrimStart(), indent, token);
                 }
                 else
@@ -143,88 +140,59 @@ internal sealed class IndentT4Attribute : global::System.Attribute
                         shouldIndent = true;
                     }
                 }
-
-                continue;
             }
-
-            var index = text.IndexOf("<#".AsSpan(), StringComparison.Ordinal);
-            var anotherIndex = text.IndexOfAny('\r', '\n');
-            if (anotherIndex < 0)
+            else if (codeIndex < 0)
             {
-                if (index == 0)
+                if (crlfIndex == 0)
                 {
-                    continue;
+                    AppendLine(builder, indent);
+                    shouldIndent = true;
+                    text = GotoNextLine(text);
                 }
-
-                if (shouldIndent)
+                else if (crlfIndex < 0)
                 {
-                    PreIndent(builder, indent);
-                    shouldIndent = false;
-                }
-
-                AppendLiteral(builder, text.Slice(0, index), indent, token);
-                text = text.Slice(index);
-                continue;
-            }
-
-            if (anotherIndex < index)
-            {
-                if (text[anotherIndex] == '\r' && anotherIndex + 1 < text.Length && text[anotherIndex + 1] == '\n')
-                {
-                    if (anotherIndex == 0)
-                    {
-                        AppendLine(builder, indent);
-                    }
-                    else
-                    {
-                        if (shouldIndent)
-                        {
-                            PreIndent(builder, indent);
-                        }
-
-                        AppendLineLiteral(builder, text.Slice(0, anotherIndex), indent, token);
-                    }
-
-                    text = text.Slice(anotherIndex + 2);
+                    PreIndent(builder, indent, ref shouldIndent);
+                    AppendLiteral(builder, text, indent);
+                    text = default;
                 }
                 else
                 {
-                    if (anotherIndex != 0)
-                    {
-                        if (shouldIndent)
-                        {
-                            PreIndent(builder, indent);
-                        }
-
-                        AppendLineLiteral(builder, text.Slice(0, anotherIndex), indent, token);
-                    }
-                    else
-                    {
-                        AppendLine(builder, indent);
-                    }
-
-                    text = text.Slice(anotherIndex + 1);
+                    PreIndent(builder, indent, ref shouldIndent);
+                    AppendLineLiteral(builder, text.Slice(0, crlfIndex), indent);
+                    shouldIndent = true;
+                    text = GotoNextLine(text.Slice(crlfIndex));
                 }
-
-                shouldIndent = true;
-                continue;
-            }
-
-            if (shouldIndent)
-            {
-                PreIndent(builder, indent);
-                shouldIndent = false;
-            }
-
-            if (index < 0)
-            {
-                AppendLiteral(builder, text, indent, token);
-                text = ReadOnlySpan<char>.Empty;
             }
             else
             {
-                AppendLiteral(builder, text.Slice(0, index), indent, token);
-                text = text.Slice(index);
+                if (crlfIndex == 0)
+                {
+                    AppendLine(builder, indent);
+                    shouldIndent = true;
+                    text = GotoNextLine(text);
+                }
+                else if (crlfIndex < 0)
+                {
+                    PreIndent(builder, indent, ref shouldIndent);
+                    AppendLiteral(builder, text.Slice(0, codeIndex), indent);
+                    text = text.Slice(codeIndex);
+                }
+                else
+                {
+                    if (codeIndex < crlfIndex)
+                    {
+                        PreIndent(builder, indent, ref shouldIndent);
+                        AppendLiteral(builder, text.Slice(0, codeIndex), indent);
+                        text = text.Slice(codeIndex);
+                    }
+                    else
+                    {
+                        PreIndent(builder, indent, ref shouldIndent);
+                        AppendLineLiteral(builder, text.Slice(0, crlfIndex), indent);
+                        shouldIndent = true;
+                        text = GotoNextLine(text.Slice(crlfIndex));
+                    }
+                }
             }
         }
 
@@ -233,13 +201,27 @@ internal sealed class IndentT4Attribute : global::System.Attribute
         context.AddSource(source.HintName, code);
     }
 
-    private static void AppendLiteral(StringBuilder builder, ReadOnlySpan<char> text, int indent, CancellationToken token)
+    private static ReadOnlySpan<char> GotoNextLine(ReadOnlySpan<char> text)
+    {
+        if (text[0] == '\n')
+        {
+            return text.Slice(1);
+        }
+
+        if (text.Length < 2 || text[0] != '\r' || text[1] != '\n')
+        {
+            return default;
+        }
+
+        return text.Slice(2);
+    }
+
+    private static void AppendLiteral(StringBuilder builder, ReadOnlySpan<char> text, int indent)
     {
         builder.Append(' ', indent);
         builder.Append("builder.Append(@\"");
         foreach (var c in text)
         {
-            token.ThrowIfCancellationRequested();
             if (c == '"')
             {
                 builder.Append('"', 2);
@@ -253,13 +235,12 @@ internal sealed class IndentT4Attribute : global::System.Attribute
         builder.AppendLine("\");");
     }
 
-    private static void AppendLineLiteral(StringBuilder builder, ReadOnlySpan<char> text, int indent, CancellationToken token)
+    private static void AppendLineLiteral(StringBuilder builder, ReadOnlySpan<char> text, int indent)
     {
         builder.Append(' ', indent);
         builder.Append("builder.AppendLine(@\"");
         foreach (var c in text)
         {
-            token.ThrowIfCancellationRequested();
             if (c == '"')
             {
                 builder.Append('"', 2);
@@ -279,9 +260,15 @@ internal sealed class IndentT4Attribute : global::System.Attribute
         builder.Append("builder.AppendLine();");
     }
 
-    private static void PreIndent(StringBuilder builder, int indent)
+    private static void PreIndent(StringBuilder builder, int indent, ref bool shouldIndent)
     {
+        if (!shouldIndent)
+        {
+            return;
+        }
+
         builder.Append(' ', indent).AppendLine("if (indent > 0) builder.Append(' ', indent);");
+        shouldIndent = false;
     }
 
     private static ReadOnlySpan<char> AppendCode(StringBuilder builder, ReadOnlySpan<char> text, out bool crlf, CancellationToken token)
