@@ -1169,15 +1169,18 @@ public class MySpecialObjectFormatter<T> : IMessagePackFormatter<MySpecialObject
         int count = reader.ReadArrayHeader();
         for (int i = 0; i < count; i++)
         {
-            case 0:
-                fullName = reader.ReadString();
-                break;
-            case 1:
-                age = reader.ReadInt32();
-                break;
-            default:
-                reader.Skip();
-                break;
+            switch (i)
+            {
+                case 0:
+                    fullName = reader.ReadString();
+                    break;
+                case 1:
+                    age = reader.ReadInt32();
+                    break;
+                default:
+                    reader.Skip();
+                    break;
+            }
         }
 
         reader.Depth--;
