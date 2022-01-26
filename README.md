@@ -1088,7 +1088,7 @@ Here is an example of such a custom formatter implementation. Note its use of th
 
 ```csharp
 /// <summary>Serializes a <see cref="FileInfo" /> by its full path as a string.</summary>
-public class FileInfoFormatter<T> : IMessagePackFormatter<FileInfo>
+public class FileInfoFormatter : IMessagePackFormatter<FileInfo>
 {
     public void Serialize(
       ref MessagePackWriter writer, FileInfo value, MessagePackSerializerOptions options)
@@ -1131,7 +1131,7 @@ you must precede it with a map or array header. You must read the entire map/arr
 For example:
 
 ```csharp
-public class MySpecialObjectFormatter<T> : IMessagePackFormatter<MySpecialObject>
+public class MySpecialObjectFormatter : IMessagePackFormatter<MySpecialObject>
 {
     public void Serialize(
       ref MessagePackWriter writer, MySpecialObject value, MessagePackSerializerOptions options)
@@ -1363,12 +1363,6 @@ internal static class SampleCustomResolverGetFormatterHelper
         if (formatterMap.TryGetValue(t, out formatter))
         {
             return formatter;
-        }
-
-        // If target type is generics, use MakeGenericType.
-        if (t.IsGeneric && t.GetGenericTypeDefinition() == typeof(ValueTuple<,>))
-        {
-            return Activator.CreateInstance(typeof(ValueTupleFormatter<,>).MakeGenericType(t.GenericTypeArguments));
         }
 
         // If type can not get, must return null for fallback mechanism.
