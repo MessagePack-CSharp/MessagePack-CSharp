@@ -273,7 +273,7 @@ namespace MessagePackCompiler
 
             AppendDir(dir);
 
-            if (string.IsNullOrWhiteSpace(multipleOutSymbol))
+            if (!string.IsNullOrWhiteSpace(multipleOutSymbol))
             {
                 text = $"#if {multipleOutSymbol}" + Environment.NewLine + text + Environment.NewLine + "#endif";
                 AppendDir(MultiSymbolToSafeFilePath(multipleOutSymbol));
