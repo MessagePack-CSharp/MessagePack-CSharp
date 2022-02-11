@@ -80,8 +80,8 @@ namespace MessagePack.Resolvers
                 case 2: return new MessagePack.Formatters.TestData2.Nest1_IdFormatter();
                 case 3: return new MessagePack.Formatters.TestData2.Nest2_IdFormatter();
                 case 4: return new MessagePack.Formatters.TestData2.AFormatter();
-                case 5: return new MessagePack.Formatters.TestData2.B?Formatter();
-                case 6: return new MessagePack.Formatters.TestData2.C?Formatter();
+                case 5: return new MessagePack.Formatters.TestData2.BFormatter();
+                case 6: return new MessagePack.Formatters.TestData2.CFormatter();
                 case 7: return new MessagePack.Formatters.TestData2.Nest1Formatter();
                 case 8: return new MessagePack.Formatters.TestData2.Nest1_IdTypeFormatter();
                 case 9: return new MessagePack.Formatters.TestData2.Nest2Formatter();
@@ -246,7 +246,7 @@ namespace MessagePack.Formatters.TestData2
         }
     }
 
-    public sealed class B?Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.B>
+    public sealed class BFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.B>
     {
         // ass
         private static global::System.ReadOnlySpan<byte> GetSpan_ass() => new byte[1 + 3] { 163, 97, 115, 115 };
@@ -319,7 +319,7 @@ namespace MessagePack.Formatters.TestData2
         }
     }
 
-    public sealed class C?Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.C>
+    public sealed class CFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.C>
     {
         // b
         private static global::System.ReadOnlySpan<byte> GetSpan_b() => new byte[1 + 1] { 161, 98 };
