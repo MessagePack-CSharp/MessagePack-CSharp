@@ -971,10 +971,11 @@ namespace MessagePackCompiler.CodeAnalysis
         {
             var name = type.ContainingType is object ? GetMinimallyQualifiedClassName(type.ContainingType) + "_" : string.Empty;
             name += type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-            name = name.Replace(".", "_");
-            name = name.Replace("<", "_");
-            name = name.Replace(">", "_");
+            name = name.Replace('.', '_');
+            name = name.Replace('<', '_');
+            name = name.Replace('>', '_');
             name = Regex.Replace(name, @"\[([,])*\]", match => $"Array{match.Length - 1}");
+            name = name.Replace("?", string.Empty);
             return name;
         }
 
