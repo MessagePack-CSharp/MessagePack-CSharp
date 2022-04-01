@@ -221,6 +221,7 @@ namespace MessagePack
                 {
                     // public static void Serialize<T>(ref MessagePackWriter writer, T obj, MessagePackSerializerOptions options)
                     MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type[] { typeof(MessagePackWriter).MakeByRefType(), null, typeof(MessagePackSerializerOptions) });
+                    MethodInfo serialize = GetMethod(nameof(SerializeSemiGeneric), type, new Type[] { typeof(MessagePackWriter).MakeByRefType(), typeof(Object), typeof(MessagePackSerializerOptions) });
 #if ENABLE_IL2CPP
                     this.Serialize_MessagePackWriter_T_Options = (ref MessagePackWriter x, object y, MessagePackSerializerOptions z) => ThrowRefStructNotSupported();
 #else
@@ -237,12 +238,14 @@ namespace MessagePack
                     MessagePackWriterSerialize lambda = Expression.Lambda<MessagePackWriterSerialize>(body, param1, param2, param3).Compile(PreferInterpretation);
 
                     this.Serialize_MessagePackWriter_T_Options = lambda;
+                    this.Serialize_MessagePackWriter_T_Options = (MessagePackWriterSerialize)serialize.CreateDelegate(typeof(MessagePackWriterSerialize));
 #endif
                 }
 
                 {
                     // public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options)
                     MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
+                    MethodInfo deserialize = GetMethod(nameof(DeserializeSemiGeneric), type, new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
 #if ENABLE_IL2CPP
                     this.Deserialize_MessagePackReader_Options = (ref MessagePackReader reader, MessagePackSerializerOptions options) => { ThrowRefStructNotSupported(); return null; };
 #else
@@ -252,6 +255,7 @@ namespace MessagePack
                     MessagePackReaderDeserialize lambda = Expression.Lambda<MessagePackReaderDeserialize>(body, param1, param2).Compile();
 
                     this.Deserialize_MessagePackReader_Options = lambda;
+                    this.Deserialize_MessagePackReader_Options = (MessagePackReaderDeserialize)deserialize.CreateDelegate(typeof(MessagePackReaderDeserialize));
 #endif
                 }
 

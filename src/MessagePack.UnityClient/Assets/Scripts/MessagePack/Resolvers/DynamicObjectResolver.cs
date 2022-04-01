@@ -1264,6 +1264,9 @@ namespace MessagePack.Internal
                     il.Emit(OpCodes.Br, readNext);
                 }
 
+#if NET_STANDARD_2_0
+                throw new NotImplementedException("NET_STANDARD_2_0 directive was used");
+#else
                 if (canOverwrite)
                 {
                     automata.EmitMatch(il, buffer, longKey, OnFoundAssignDirect, OnNotFound);
@@ -1272,6 +1275,7 @@ namespace MessagePack.Internal
                 {
                     automata.EmitMatch(il, buffer, longKey, OnFoundAssignLocalVariable, OnNotFound);
                 }
+#endif
 
                 il.MarkLabel(readNext);
                 reader.EmitLdarg();

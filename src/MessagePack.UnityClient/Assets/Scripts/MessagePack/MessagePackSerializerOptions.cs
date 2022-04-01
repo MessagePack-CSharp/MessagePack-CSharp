@@ -29,6 +29,11 @@ namespace MessagePack
         };
 
 #if !DYNAMICCODEDUMPER
+#if DYNAMICCODEDUMPER
+        static readonly MessagePackSerializerOptions _standard = new MessagePackSerializerOptions(Resolvers.BuiltinResolver.Instance);
+
+        public static MessagePackSerializerOptions Standard => _standard;
+#else
         /// <summary>
         /// Gets a good default set of options that uses the <see cref="Resolvers.StandardResolver"/> and no compression.
         /// </summary>
