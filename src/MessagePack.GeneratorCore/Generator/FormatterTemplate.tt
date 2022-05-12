@@ -13,7 +13,6 @@
 #pragma warning disable 168
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -21,11 +20,8 @@
 
 namespace <#= Namespace #>
 {
-    using global::System.Buffers;
-    using global::MessagePack;
 <# foreach (var objInfo in ObjectSerializationInfos) {
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);#>
-
     public sealed class <#= objInfo.FormatterNameWithoutNameSpace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
 <# foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
@@ -155,8 +151,8 @@ namespace <#= Namespace #>
 <# } #>
         }
     }
-<# } #>
-}
+
+<# } #>}
 
 #pragma warning restore 168
 #pragma warning restore 414
@@ -164,7 +160,6 @@ namespace <#= Namespace #>
 #pragma warning restore 612
 
 #pragma warning restore SA1129 // Do not use default value type constructor
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1309 // Field names should not begin with underscore
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
 #pragma warning restore SA1403 // File may only contain a single namespace

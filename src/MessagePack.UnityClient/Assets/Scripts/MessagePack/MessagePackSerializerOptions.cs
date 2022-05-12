@@ -38,7 +38,7 @@ namespace MessagePack
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackSerializerOptions"/> class.
         /// </summary>
-        protected internal MessagePackSerializerOptions(IFormatterResolver resolver)
+        public MessagePackSerializerOptions(IFormatterResolver resolver)
         {
             this.Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
         }

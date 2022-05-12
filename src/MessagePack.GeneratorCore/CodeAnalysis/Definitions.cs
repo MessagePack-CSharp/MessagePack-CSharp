@@ -170,7 +170,7 @@ namespace MessagePackCompiler.CodeAnalysis
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{this.Type}>().Serialize(ref writer, value.{this.Name}, options)";
+                return $"global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Serialize(ref writer, value.{this.Name}, options)";
             }
         }
 
@@ -182,12 +182,18 @@ namespace MessagePackCompiler.CodeAnalysis
             }
             else if (this.primitiveTypes.Contains(this.Type))
             {
-                string suffix = this.Type == "byte[]" ? "?.ToArray()" : string.Empty;
-                return $"reader.Read{this.ShortTypeName!.Replace("[]", "s")}()" + suffix;
+                if (this.Type == "byte[]")
+                {
+                    return "global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes())";
+                }
+                else
+                {
+                    return $"reader.Read{this.ShortTypeName!.Replace("[]", "s")}()";
+                }
             }
             else
             {
-                return $"formatterResolver.GetFormatterWithVerify<{this.Type}>().Deserialize(ref reader, options)";
+                return $"global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Deserialize(ref reader, options)";
             }
         }
     }

@@ -19,6 +19,7 @@ namespace MessagePack
     public static partial class MessagePackSerializer
     {
         private const int MaxHintSize = 1024 * 1024;
+        private static MessagePackSerializerOptions defaultOptions;
 
         /// <summary>
         /// Gets or sets the default set of options to use when not explicitly specified for a method call.
@@ -32,7 +33,20 @@ namespace MessagePack
         /// If you are an app author, realize that setting this property impacts the entire application so it should only be
         /// set once, and before any use of <see cref="MessagePackSerializer"/> occurs.
         /// </remarks>
-        public static MessagePackSerializerOptions DefaultOptions { get; set; } = MessagePackSerializerOptions.Standard;
+        public static MessagePackSerializerOptions DefaultOptions
+        {
+            get
+            {
+                if (defaultOptions is null)
+                {
+                    defaultOptions = MessagePackSerializerOptions.Standard;
+                }
+
+                return defaultOptions;
+            }
+
+            set => defaultOptions = value;
+        }
 
         /// <summary>
         /// A thread-local, recyclable array that may be used for short bursts of code.

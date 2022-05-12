@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,8 @@ namespace MessagePackCompiler
 {
     public class CodeGenerator
     {
+        private static readonly HashSet<char> InvalidFileCharSet = new(Path.GetInvalidFileNameChars());
+
         private static readonly Encoding NoBomUtf8 = new UTF8Encoding(false);
 
         private readonly Action<string> logger;
@@ -212,15 +215,76 @@ namespace MessagePackCompiler
 
         private Task OutputToDirAsync(string dir, string ns, string name, string multipleOutSymbol, string text)
         {
-            if (multipleOutSymbol == string.Empty)
+            var builder = new StringBuilder();
+            void AppendDir(string dir)
             {
-                return OutputAsync(Path.Combine(dir, $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text);
+                if (dir.Length != 0)
+                {
+                    builder.Append(dir);
+                    if (dir[dir.Length - 1] != Path.DirectorySeparatorChar && dir[dir.Length - 1] != Path.AltDirectorySeparatorChar)
+                    {
+                        builder.Append(Path.DirectorySeparatorChar);
+                    }
+                }
             }
-            else
+
+            void AppendChar(char c)
+            {
+                if (c == '.' || InvalidFileCharSet.Contains(c))
+                {
+                    builder.Append('_');
+                }
+                else
+                {
+                    builder.Append(c);
+                }
+            }
+
+            void Append(string text)
+            {
+                var span = text.AsSpan();
+                while (!span.IsEmpty)
+                {
+                    var index = span.IndexOf("global::".AsSpan());
+                    if (index == -1)
+                    {
+                        foreach (var c in span)
+                        {
+                            AppendChar(c);
+                        }
+
+                        break;
+                    }
+
+                    if (index == 0)
+                    {
+                        span = span.Slice("global::".Length);
+                        continue;
+                    }
+
+                    foreach (var c in span.Slice(0, index))
+                    {
+                        AppendChar(c);
+                    }
+
+                    span = span.Slice(index + "global::".Length);
+                }
+            }
+
+            AppendDir(dir);
+
+            if (!string.IsNullOrWhiteSpace(multipleOutSymbol))
             {
                 text = $"#if {multipleOutSymbol}" + Environment.NewLine + text + Environment.NewLine + "#endif";
-                return OutputAsync(Path.Combine(dir, MultiSymbolToSafeFilePath(multipleOutSymbol), $"{ns}_{name}".Replace(".", "_").Replace("global::", string.Empty) + ".cs"), text);
+                AppendDir(MultiSymbolToSafeFilePath(multipleOutSymbol));
             }
+
+            Append(ns);
+            builder.Append('_');
+            Append(name);
+            builder.Append(".cs");
+
+            return OutputAsync(builder.ToString(), text);
         }
 
         private Task OutputAsync(string path, string text)

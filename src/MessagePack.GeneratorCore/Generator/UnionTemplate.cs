@@ -34,38 +34,41 @@ namespace MessagePackCompiler.Generator
 #pragma warning disable 414
 #pragma warning disable 168
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    using System;\r\n    using System.Buffers;\r\n    using System.Collections.G" +
-                    "eneric;\r\n    using MessagePack;\r\n\r\n");
+            this.Write("\r\n{\r\n");
  foreach(var info in UnionSerializationInfos) { 
             this.Write("    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
             this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
-            this.Write(">\r\n    {\r\n        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int" +
-                    ", int>> typeToKeyAndJumpMap;\r\n        private readonly Dictionary<int, int> keyT" +
-                    "oJumpMap;\r\n\r\n        public ");
+            this.Write(@">
+    {
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
+
+        public ");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
-            this.Write("Formatter()\r\n        {\r\n            this.typeToKeyAndJumpMap = new Dictionary<Run" +
-                    "timeTypeHandle, KeyValuePair<int, int>>(");
+            this.Write("Formatter()\r\n        {\r\n            this.typeToKeyAndJumpMap = new global::System" +
+                    ".Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System" +
+                    ".Collections.Generic.KeyValuePair<int, int>>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.SubTypes.Length));
             this.Write(", global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)\r\n      " +
                     "      {\r\n");
  for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
             this.Write("                { typeof(");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
-            this.Write(").TypeHandle, new KeyValuePair<int, int>(");
+            this.Write(").TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Key));
             this.Write(", ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(") },\r\n");
  } 
-            this.Write("            };\r\n            this.keyToJumpMap = new Dictionary<int, int>(");
+            this.Write("            };\r\n            this.keyToJumpMap = new global::System.Collections.Ge" +
+                    "neric.Dictionary<int, int>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.SubTypes.Length));
             this.Write(")\r\n            {\r\n");
  for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
@@ -75,12 +78,12 @@ namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(" },\r\n");
  } 
-            this.Write("            };\r\n        }\r\n\r\n        public void Serialize(ref MessagePackWriter " +
-                    "writer, ");
+            this.Write("            };\r\n        }\r\n\r\n        public void Serialize(ref global::MessagePac" +
+                    "k.MessagePackWriter writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             this.Write(@" value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -101,7 +104,7 @@ namespace ");
                     "\r\n                return;\r\n            }\r\n\r\n            writer.WriteNil();\r\n    " +
                     "    }\r\n\r\n        public ");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
-            this.Write(@" Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+            this.Write(@" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -110,7 +113,7 @@ namespace ");
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException(""Invalid Union data was detected. Type:");
+                throw new global::System.InvalidOperationException(""Invalid Union data was detected. Type:");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
             this.Write("\");\r\n            }\r\n\r\n            options.Security.DepthStep(ref reader);\r\n      " +
                     "      var key = reader.ReadInt32();\r\n\r\n            if (!this.keyToJumpMap.TryGet" +
@@ -139,7 +142,6 @@ namespace ");
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 ");
