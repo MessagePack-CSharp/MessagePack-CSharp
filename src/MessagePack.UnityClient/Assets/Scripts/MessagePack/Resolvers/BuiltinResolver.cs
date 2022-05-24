@@ -64,9 +64,13 @@ namespace MessagePack.Internal
             { typeof(byte), ByteFormatter.Instance },
             { typeof(sbyte), SByteFormatter.Instance },
             { typeof(DateTime), DateTimeFormatter.Instance },
+#if NET6_0_OR_GREATER
+            { typeof(DateOnly), DateOnlyFormatter.Instance },
+            { typeof(TimeOnly), TimeOnlyFormatter.Instance },
+#endif
             { typeof(char), CharFormatter.Instance },
 
-            // Nulllable Primitive
+            // Nullable Primitive
             { typeof(Int16?), NullableInt16Formatter.Instance },
             { typeof(Int32?), NullableInt32Formatter.Instance },
             { typeof(Int64?), NullableInt64Formatter.Instance },

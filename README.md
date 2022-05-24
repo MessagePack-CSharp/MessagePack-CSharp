@@ -1499,24 +1499,36 @@ var resolver = MessagePack.Resolvers.CompositeResolver.Create(
 
 ## Reserved Extension Types
 
-MessagePack for C# already used some MessagePack extension type codes, be careful to use same ext code.
+MessagePack for C# already used some MessagePack extension type codes, be careful to avoid using the same ext code for other purposes.
+
+Range | Reserved for
+--|--
+\[-128, -1\] | Reserved by the msgpack spec for predefined types
+\[30, 120) | Reserved for this library's use to support common types in .NET
+
+This leaves the following ranges for your use:
+
+- \[0, 30)
+- \[120, 127]
+
+Within the *reserved* ranges, this library defines or implements extensions that use these type codes:
 
 | Code | Type | Use by |
-| ---  | ---  | --- |
-| -1 | DateTime | MessagePack-spec reserved for timestamp |
-| 30 | Vector2[] | for Unity, UnsafeBlitFormatter |
-| 31 | Vector3[] | for Unity, UnsafeBlitFormatter |
-| 32 | Vector4[] | for Unity, UnsafeBlitFormatter |
-| 33 | Quaternion[] | for Unity, UnsafeBlitFormatter |
-| 34 | Color[] | for Unity, UnsafeBlitFormatter |
-| 35 | Bounds[] | for Unity, UnsafeBlitFormatter |
-| 36 | Rect[] | for Unity, UnsafeBlitFormatter |
-| 37 | Int[] | for Unity, UnsafeBlitFormatter |
-| 38 | Float[] | for Unity, UnsafeBlitFormatter |
-| 39 | Double[] | for Unity, UnsafeBlitFormatter |
-| 98 | All | MessagePackCompression.Lz4BlockArray |
-| 99 | All | MessagePackCompression.Lz4Block |
-| 100 | object | TypelessFormatter |
+| ---- | ---- | --- |
+| -1   | DateTime | MessagePack-spec reserved for timestamp |
+| 30   | Vector2[] | for Unity, UnsafeBlitFormatter |
+| 31   | Vector3[] | for Unity, UnsafeBlitFormatter |
+| 32   | Vector4[] | for Unity, UnsafeBlitFormatter |
+| 33   | Quaternion[] | for Unity, UnsafeBlitFormatter |
+| 34   | Color[] | for Unity, UnsafeBlitFormatter |
+| 35   | Bounds[] | for Unity, UnsafeBlitFormatter |
+| 36   | Rect[] | for Unity, UnsafeBlitFormatter |
+| 37   | Int[] | for Unity, UnsafeBlitFormatter |
+| 38   | Float[] | for Unity, UnsafeBlitFormatter |
+| 39   | Double[] | for Unity, UnsafeBlitFormatter |
+| 98   | All | MessagePackCompression.Lz4BlockArray |
+| 99   | All | MessagePackCompression.Lz4Block |
+| 100  | object | TypelessFormatter |
 
 ## Unity support
 

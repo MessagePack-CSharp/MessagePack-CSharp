@@ -1,6 +1,14 @@
+MessagePack.Formatters.DateOnlyFormatter
+MessagePack.Formatters.DateOnlyFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.DateOnly
+MessagePack.Formatters.DateOnlyFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.DateOnly value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.StringInterningFormatter
 MessagePack.Formatters.StringInterningFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> string
 MessagePack.Formatters.StringInterningFormatter.Serialize(ref MessagePack.MessagePackWriter writer, string value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.Formatters.StringInterningFormatter.StringInterningFormatter() -> void
+MessagePack.Formatters.TimeOnlyFormatter
+MessagePack.Formatters.TimeOnlyFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions options) -> System.TimeOnly
+MessagePack.Formatters.TimeOnlyFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.TimeOnly value, MessagePack.MessagePackSerializerOptions options) -> void
 MessagePack.MessagePackSerializerOptions.CompressionMinLength.get -> int
 MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressionMinLength) -> MessagePack.MessagePackSerializerOptions
+static readonly MessagePack.Formatters.DateOnlyFormatter.Instance -> MessagePack.Formatters.DateOnlyFormatter
+static readonly MessagePack.Formatters.TimeOnlyFormatter.Instance -> MessagePack.Formatters.TimeOnlyFormatter

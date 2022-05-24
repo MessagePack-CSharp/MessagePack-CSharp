@@ -143,7 +143,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Nerdbank.Streams" Version="2.4.48" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.8.57" />
     <PackageReference Include="Microsoft.NET.StringTools" Version="1.0.0" />
   </ItemGroup>
 </Project>
