@@ -33,7 +33,7 @@ namespace MessagePack.Tests
 #endif
 
         /// <summary>
-        /// Verifies that <see cref="MessagePackWriter.WriteRaw(ReadOnlySpan{byte})"/>
+        /// Verifies that <c>MessagePackWriter.WriteRaw(ReadOnlySpan{byte})</c>
         /// accepts a span that came from stackalloc.
         /// </summary>
         [Fact]
