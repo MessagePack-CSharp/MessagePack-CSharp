@@ -70,4 +70,50 @@ namespace MessagePack.Formatters
             return array;
         }
     }
+
+#if NET6_0_OR_GREATER
+    /// <summary>
+    /// Serializes a <see cref="DateOnly"/> value as an ordinary <see cref="int"/> using the <see cref="DateOnly.DayNumber"/>.
+    /// </summary>
+    public sealed class DateOnlyFormatter : IMessagePackFormatter<DateOnly>
+    {
+        public static readonly DateOnlyFormatter Instance = new DateOnlyFormatter();
+
+        private DateOnlyFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, DateOnly value, MessagePackSerializerOptions options)
+        {
+            writer.Write(value.DayNumber);
+        }
+
+        public DateOnly Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return DateOnly.FromDayNumber(reader.ReadInt32());
+        }
+    }
+
+    /// <summary>
+    /// Serializes a <see cref="TimeOnly"/> value as an extension, recording either seconds or ticks depending on the resolution required.
+    /// </summary>
+    public sealed class TimeOnlyFormatter : IMessagePackFormatter<TimeOnly>
+    {
+        public static readonly TimeOnlyFormatter Instance = new TimeOnlyFormatter();
+
+        private TimeOnlyFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, TimeOnly value, MessagePackSerializerOptions options)
+        {
+            writer.Write(value.Ticks);
+        }
+
+        public TimeOnly Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            return new TimeOnly(reader.ReadInt64());
+        }
+    }
+#endif
 }
