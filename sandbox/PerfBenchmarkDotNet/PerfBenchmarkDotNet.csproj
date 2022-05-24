@@ -19,7 +19,7 @@
     <PackageReference Include="Jil" version="2.15.4" />
     <PackageReference Include="MessagePack" version="1.4.3" />
     <PackageReference Include="MsgPack.Cli" version="0.9.0-rc1" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.4.48" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.8.57" />
     <PackageReference Include="Newtonsoft.Json" version="10.0.3" />
     <PackageReference Include="protobuf-net" version="2.3.2" />
     <PackageReference Include="RandomFixtureKit" Version="1.0.0" />

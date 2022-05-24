@@ -27,7 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MsgPack.Cli" version="0.9.0-beta2" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.4.48" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.8.57" />
     <PackageReference Include="ReactiveProperty" version="4.2.2" />
     <PackageReference Include="xunit" version="2.4.1" />
     <PackageReference Include="xunit.runner.console" Version="2.4.1" />

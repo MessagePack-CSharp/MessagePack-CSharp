@@ -27,7 +27,11 @@ namespace Nerdbank.Streams
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
     internal class Sequence<T> : IBufferWriter<T>, IDisposable
     {
-        private static readonly int DefaultLengthFromArrayPool = 1 + (4095 / Marshal.SizeOf<T>());
+        private const int MaximumAutoGrowSize = 32 * 1024;
+
+        private static readonly int DefaultLengthFromArrayPool = 1 + (4095 / Unsafe.SizeOf<T>());
+
+        private static readonly ReadOnlySequence<T> Empty = new ReadOnlySequence<T>(SequenceSegment.Empty, 0, SequenceSegment.Empty, 0);
 
         private readonly Stack<SequenceSegment> segmentPool = new Stack<SequenceSegment>();
 
@@ -87,8 +91,20 @@ namespace Nerdbank.Streams
         /// The <see cref="MemoryPool{T}"/> in use may itself have a minimum array length as well,
         /// in which case the higher of the two minimums dictate the minimum array size that will be allocated.
         /// </para>
+        /// <para>
+        /// If <see cref="AutoIncreaseMinimumSpanLength"/> is <c>true</c>, this value may be automatically increased as the length of a sequence grows.
+        /// </para>
         /// </remarks>
         public int MinimumSpanLength { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the <see cref="MinimumSpanLength"/> should be
+        /// intelligently increased as the length of the sequence grows.
+        /// </summary>
+        /// <remarks>
+        /// This can help prevent long sequences made up of many very small arrays.
+        /// </remarks>
+        public bool AutoIncreaseMinimumSpanLength { get; set; } = true;
 
         /// <summary>
         /// Gets this sequence expressed as a <see cref="ReadOnlySequence{T}"/>.
@@ -112,9 +128,9 @@ namespace Nerdbank.Streams
         /// <param name="sequence">The sequence to convert.</param>
         public static implicit operator ReadOnlySequence<T>(Sequence<T> sequence)
         {
-            return sequence.first != null
+            return sequence.first != null && sequence.last != null
                 ? new ReadOnlySequence<T>(sequence.first, sequence.first.Start, sequence.last, sequence.last.End)
-                : ReadOnlySequence<T>.Empty;
+                : Empty;
         }
 
         /// <summary>
@@ -128,10 +144,22 @@ namespace Nerdbank.Streams
         public void AdvanceTo(SequencePosition position)
         {
             var firstSegment = (SequenceSegment)position.GetObject();
+            if (firstSegment == null)
+            {
+                // Emulate PipeReader behavior which is to just return for default(SequencePosition)
+                return;
+            }
+
+            if (ReferenceEquals(firstSegment, SequenceSegment.Empty) && this.Length == 0)
+            {
+                // We were called with our own empty buffer segment.
+                return;
+            }
+
             int firstIndex = position.GetInteger();
 
             // Before making any mutations, confirm that the block specified belongs to this sequence.
-            var current = this.first;
+            Sequence<T>.SequenceSegment current = this.first;
             while (current != firstSegment && current != null)
             {
                 current = current.Next;
@@ -151,12 +179,7 @@ namespace Nerdbank.Streams
 
             firstSegment.AdvanceTo(firstIndex);
 
-            if (firstSegment.Length == 0)
-            {
-                firstSegment = this.RecycleAndGetNext(firstSegment);
-            }
-
-            this.first = firstSegment;
+            this.first = firstSegment.Length == 0 ? this.RecycleAndGetNext(firstSegment) : firstSegment;
 
             if (this.first == null)
             {
@@ -174,6 +197,7 @@ namespace Nerdbank.Streams
             SequenceSegment last = this.last;
             Verify.Operation(last != null, "Cannot advance before acquiring memory.");
             last.Advance(count);
+            this.ConsiderMinimumSizeIncrease();
         }
 
         /// <summary>
@@ -191,6 +215,24 @@ namespace Nerdbank.Streams
         public Span<T> GetSpan(int sizeHint) => this.GetSegment(sizeHint).RemainingSpan;
 
         /// <summary>
+        /// Adds an existing memory location to this sequence without copying.
+        /// </summary>
+        /// <param name="memory">The memory to add.</param>
+        /// <remarks>
+        /// This *may* leave significant slack space in a previously allocated block if calls to <see cref="Append(ReadOnlyMemory{T})"/>
+        /// follow calls to <see cref="GetMemory(int)"/> or <see cref="GetSpan(int)"/>.
+        /// </remarks>
+        public void Append(ReadOnlyMemory<T> memory)
+        {
+            if (memory.Length > 0)
+            {
+                Sequence<T>.SequenceSegment segment = this.segmentPool.Count > 0 ? this.segmentPool.Pop() : new SequenceSegment();
+                segment.AssignForeign(memory);
+                this.Append(segment);
+            }
+        }
+
+        /// <summary>
         /// Clears the entire sequence, recycles associated memory into pools,
         /// and resets this instance for reuse.
         /// This invalidates any <see cref="ReadOnlySequence{T}"/> previously produced by this instance.
@@ -204,7 +246,7 @@ namespace Nerdbank.Streams
         /// </summary>
         public void Reset()
         {
-            var current = this.first;
+            Sequence<T>.SequenceSegment current = this.first;
             while (current != null)
             {
                 current = this.RecycleAndGetNext(current);
@@ -236,7 +278,7 @@ namespace Nerdbank.Streams
 
             if (minBufferSize.HasValue)
             {
-                var segment = this.segmentPool.Count > 0 ? this.segmentPool.Pop() : new SequenceSegment();
+                Sequence<T>.SequenceSegment segment = this.segmentPool.Count > 0 ? this.segmentPool.Pop() : new SequenceSegment();
                 if (this.arrayPool != null)
                 {
                     segment.Assign(this.arrayPool.Rent(minBufferSize.Value == -1 ? DefaultLengthFromArrayPool : minBufferSize.Value));
@@ -268,7 +310,7 @@ namespace Nerdbank.Streams
                 else
                 {
                     // The last block is completely unused. Replace it instead of appending to it.
-                    var current = this.first;
+                    Sequence<T>.SequenceSegment current = this.first;
                     if (this.first != this.last)
                     {
                         while (current.Next != this.last)
@@ -291,24 +333,40 @@ namespace Nerdbank.Streams
 
         private SequenceSegment RecycleAndGetNext(SequenceSegment segment)
         {
-            var recycledSegment = segment;
-            segment = segment.Next;
+            Sequence<T>.SequenceSegment recycledSegment = segment;
+            Sequence<T>.SequenceSegment nextSegment = segment.Next;
             recycledSegment.ResetMemory(this.arrayPool);
             this.segmentPool.Push(recycledSegment);
-            return segment;
+            return nextSegment;
+        }
+
+        private void ConsiderMinimumSizeIncrease()
+        {
+            if (this.AutoIncreaseMinimumSpanLength && this.MinimumSpanLength < MaximumAutoGrowSize)
+            {
+                int autoSize = Math.Min(MaximumAutoGrowSize, (int)Math.Min(int.MaxValue, this.Length / 2));
+                if (this.MinimumSpanLength < autoSize)
+                {
+                    this.MinimumSpanLength = autoSize;
+                }
+            }
         }
 
         private class SequenceSegment : ReadOnlySequenceSegment<T>
         {
+            internal static readonly SequenceSegment Empty = new SequenceSegment();
+
             /// <summary>
             /// A value indicating whether the element may contain references (and thus must be cleared).
             /// </summary>
             private static readonly bool MayContainReferences = !typeof(T).GetTypeInfo().IsPrimitive;
 
+#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
             /// <summary>
             /// Gets the backing array, when using an <see cref="ArrayPool{T}"/> instead of a <see cref="MemoryPool{T}"/>.
             /// </summary>
             private T[] array;
+#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
 
             /// <summary>
             /// Gets the position within <see cref="ReadOnlySequenceSegment{T}.Memory"/> where the data starts.
@@ -363,6 +421,11 @@ namespace Nerdbank.Streams
             }
 
             /// <summary>
+            /// Gets a value indicating whether this segment refers to memory that came from outside and that we cannot write to nor recycle.
+            /// </summary>
+            internal bool IsForeignMemory => this.array == null && this.MemoryOwner == null;
+
+            /// <summary>
             /// Assigns this (recyclable) segment a new area in memory.
             /// </summary>
             /// <param name="memoryOwner">The memory and a means to recycle it.</param>
@@ -383,11 +446,21 @@ namespace Nerdbank.Streams
             }
 
             /// <summary>
+            /// Assigns this (recyclable) segment a new area in memory.
+            /// </summary>
+            /// <param name="memory">A memory block obtained from outside, that we do not own and should not recycle.</param>
+            internal void AssignForeign(ReadOnlyMemory<T> memory)
+            {
+                this.Memory = memory;
+                this.End = memory.Length;
+            }
+
+            /// <summary>
             /// Clears all fields in preparation to recycle this instance.
             /// </summary>
             internal void ResetMemory(ArrayPool<T> arrayPool)
             {
-                this.ClearReferences(this.Start, this.End);
+                this.ClearReferences(this.Start, this.End - this.Start);
                 this.Memory = default;
                 this.Next = null;
                 this.RunningIndex = 0;
@@ -411,14 +484,17 @@ namespace Nerdbank.Streams
             /// <param name="segment">The next segment in the linked list.</param>
             internal void SetNext(SequenceSegment segment)
             {
-                Debug.Assert(segment != null, "Null not allowed.");
                 this.Next = segment;
                 segment.RunningIndex = this.RunningIndex + this.Start + this.Length;
 
-                // When setting Memory, we start with index 0 instead of this.Start because
-                // the first segment has an explicit index set anyway,
-                // and we don't want to double-count it here.
-                this.Memory = this.AvailableMemory.Slice(0, this.Start + this.Length);
+                // Trim any slack on this segment.
+                if (!this.IsForeignMemory)
+                {
+                    // When setting Memory, we start with index 0 instead of this.Start because
+                    // the first segment has an explicit index set anyway,
+                    // and we don't want to double-count it here.
+                    this.Memory = this.AvailableMemory.Slice(0, this.Start + this.Length);
+                }
             }
 
             /// <summary>
