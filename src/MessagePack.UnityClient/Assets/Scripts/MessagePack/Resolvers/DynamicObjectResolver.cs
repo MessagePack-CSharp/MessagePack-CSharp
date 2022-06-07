@@ -1786,7 +1786,19 @@ namespace MessagePack.Internal
                         }
 
                         var getMethod = property.GetGetMethod(true);
+                        if (getMethod == null)
+                        {
+                            //check if property from base class has private GetMethod
+                            getMethod = property.DeclaringType.GetProperty(property.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).GetGetMethod(true);
+                        }
+
                         var setMethod = property.GetSetMethod(true);
+                        if (setMethod == null)
+                        {
+                            //check if property from base class has private SetMethod
+                            setMethod = property.DeclaringType.GetProperty(property.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).GetSetMethod(true);
+                        }
+
                         result = new EmittableMember(dynamicMethod)
                         {
                             PropertyInfo = property,
@@ -2337,7 +2349,14 @@ namespace MessagePack.Internal
             {
                 if (this.IsProperty)
                 {
-                    il.EmitCall(this.PropertyInfo.GetGetMethod(true));
+                    var getMethod = this.PropertyInfo.GetGetMethod(true);
+                    if (getMethod == null)
+                    {
+                        //check if property from base class has private GetMethod
+                        getMethod = this.PropertyInfo.DeclaringType.GetProperty(this.PropertyInfo.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).GetGetMethod(true);
+                    }
+
+                    il.EmitCall(getMethod);
                 }
                 else
                 {
@@ -2349,7 +2368,14 @@ namespace MessagePack.Internal
             {
                 if (this.IsProperty)
                 {
-                    il.EmitCall(this.PropertyInfo.GetSetMethod(true));
+                    var setMethod = this.PropertyInfo.GetSetMethod(true);
+                    if (setMethod == null)
+                    {
+                        //check if property from base class has private SetMethod
+                        setMethod = this.PropertyInfo.DeclaringType.GetProperty(this.PropertyInfo.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance).GetSetMethod(true);
+                    }
+
+                    il.EmitCall(setMethod);
                 }
                 else
                 {

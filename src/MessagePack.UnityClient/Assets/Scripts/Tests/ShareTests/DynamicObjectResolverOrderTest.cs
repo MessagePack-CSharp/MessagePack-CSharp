@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using MessagePack.Resolvers;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -82,6 +83,24 @@ namespace MessagePack.Tests
             Assert.Equal(c.Year, c2.Year);
             Assert.Equal(c.Memo, c2.Memo);
         }
+
+        [Fact]
+        public void PrivateSetterOrGetterInBaseClasses()
+        {
+            var value = new ChildWithKeyAsPropertyName("Parent", 101)
+            {
+                ChildPrivateGet = "SetSet",
+            };
+
+            MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard
+                            .WithResolver(StandardResolverAllowPrivate.Instance);
+            var data = MessagePackSerializer.Serialize(value, options);
+            var result = MessagePackSerializer.Deserialize<ChildWithKeyAsPropertyName>(data, options);
+
+            Assert.Equal("Parent", result.ParentProp);
+            Assert.Equal(101, result.ChildProp);
+            Assert.Equal("SetSet", result.ChildPrivateGetAccessor);
+        }
 #endif
 
         [MessagePack.MessagePackObject(keyAsPropertyName: true)]
@@ -134,6 +153,46 @@ namespace MessagePack.Tests
 
             [Key(3)]
             internal string Memo { get; set; }
+        }
+
+        [MessagePackObject(true)]
+        internal class ChildWithKeyAsPropertyName : ParentWithKeyAsPropertyName
+        {
+            [SerializationConstructor]
+            private ChildWithKeyAsPropertyName()
+                : base()
+            {
+            }
+
+            public ChildWithKeyAsPropertyName(string parentProp, long childProp)
+                : base(childProp)
+            {
+                ParentProp = parentProp;
+            }
+
+            public string ParentProp { get; private set; }
+        }
+
+        [MessagePackObject(true)]
+        internal class ParentWithKeyAsPropertyName
+        {
+            [SerializationConstructor]
+            private protected ParentWithKeyAsPropertyName()
+            {
+            }
+
+            public ParentWithKeyAsPropertyName(long childProp)
+            {
+                ChildProp = childProp;
+            }
+
+            [Key(0)]
+            public long ChildProp { get; private set; }
+
+            public string ChildPrivateGet { private get; set; }
+
+            [IgnoreMember]
+            public string ChildPrivateGetAccessor => ChildPrivateGet;
         }
     }
 }
