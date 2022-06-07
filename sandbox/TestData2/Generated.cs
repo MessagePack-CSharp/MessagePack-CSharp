@@ -6,6 +6,7 @@
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
@@ -116,6 +117,7 @@ namespace MessagePack.Resolvers
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -173,6 +175,7 @@ namespace MessagePack.Formatters.TestData2
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1129 // Do not use default value type constructor
 #pragma warning disable SA1200 // Using directives should be placed correctly
