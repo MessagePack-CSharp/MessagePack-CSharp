@@ -58,6 +58,7 @@ namespace MessagePack
             this.Resolver = copyFrom.Resolver;
             this.Compression = copyFrom.Compression;
             this.CompressionMinLength = copyFrom.CompressionMinLength;
+            this.SuggestedContiguousMemorySize = copyFrom.SuggestedContiguousMemorySize;
             this.OldSpec = copyFrom.OldSpec;
             this.OmitAssemblyVersion = copyFrom.OmitAssemblyVersion;
             this.AllowAssemblyVersionMismatch = copyFrom.AllowAssemblyVersionMismatch;
@@ -91,6 +92,16 @@ namespace MessagePack
         /// even if <see cref="Compression"/> is set to something other than <see cref="MessagePackCompression.None"/>.
         /// </remarks>
         public int CompressionMinLength { get; private set; } = 64;
+
+        /// <summary>
+        /// Gets the size of contiguous memory blocks in bytes that may be allocated for buffering purposes.
+        /// </summary>
+        /// <value>The default value is 1MB.</value>
+        /// <remarks>
+        /// Larger values may perform a bit faster, but may result in adding a runtime perf tax due to using the
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/large-object-heap">Large Object Heap</see>.
+        /// </remarks>
+        public int SuggestedContiguousMemorySize { get; private set; } = 1024 * 1024;
 
         /// <summary>
         /// Gets a value indicating whether to serialize with <see cref="MessagePackWriter.OldSpec"/> set to some value
@@ -224,6 +235,28 @@ namespace MessagePack
 
             var result = this.Clone();
             result.CompressionMinLength = compressionMinLength;
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a copy of these options with the <see cref="SuggestedContiguousMemorySize"/> property set to a new value.
+        /// </summary>
+        /// <param name="suggestedContiguousMemorySize">The new value for the <see cref="SuggestedContiguousMemorySize"/> property. Must be at least 256.</param>
+        /// <returns>The new instance; or the original if the value is unchanged.</returns>
+        public MessagePackSerializerOptions WithSuggestedContiguousMemorySize(int suggestedContiguousMemorySize)
+        {
+            if (this.SuggestedContiguousMemorySize == suggestedContiguousMemorySize)
+            {
+                return this;
+            }
+
+            if (suggestedContiguousMemorySize < 256)
+            {
+                throw new ArgumentOutOfRangeException(nameof(suggestedContiguousMemorySize), "This should be at least 256");
+            }
+
+            var result = this.Clone();
+            result.SuggestedContiguousMemorySize = suggestedContiguousMemorySize;
             return result;
         }
 
