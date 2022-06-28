@@ -220,41 +220,20 @@ namespace MessagePack
 
                 {
                     // public static void Serialize<T>(ref MessagePackWriter writer, T obj, MessagePackSerializerOptions options)
-                    MethodInfo serialize = GetMethod(nameof(Serialize), type, new Type[] { typeof(MessagePackWriter).MakeByRefType(), null, typeof(MessagePackSerializerOptions) });
                     MethodInfo serialize = GetMethod(nameof(SerializeSemiGeneric), type, new Type[] { typeof(MessagePackWriter).MakeByRefType(), typeof(Object), typeof(MessagePackSerializerOptions) });
 #if ENABLE_IL2CPP
                     this.Serialize_MessagePackWriter_T_Options = (ref MessagePackWriter x, object y, MessagePackSerializerOptions z) => ThrowRefStructNotSupported();
 #else
-                    ParameterExpression param1 = Expression.Parameter(typeof(MessagePackWriter).MakeByRefType(), "writer");
-                    ParameterExpression param2 = Expression.Parameter(typeof(object), "obj");
-                    ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
-
-                    MethodCallExpression body = Expression.Call(
-                        null,
-                        serialize,
-                        param1,
-                        ti.IsValueType ? Expression.Unbox(param2, type) : Expression.Convert(param2, type),
-                        param3);
-                    MessagePackWriterSerialize lambda = Expression.Lambda<MessagePackWriterSerialize>(body, param1, param2, param3).Compile(PreferInterpretation);
-
-                    this.Serialize_MessagePackWriter_T_Options = lambda;
                     this.Serialize_MessagePackWriter_T_Options = (MessagePackWriterSerialize)serialize.CreateDelegate(typeof(MessagePackWriterSerialize));
 #endif
                 }
 
                 {
                     // public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options)
-                    MethodInfo deserialize = GetMethod(nameof(Deserialize), type, new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
                     MethodInfo deserialize = GetMethod(nameof(DeserializeSemiGeneric), type, new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
 #if ENABLE_IL2CPP
                     this.Deserialize_MessagePackReader_Options = (ref MessagePackReader reader, MessagePackSerializerOptions options) => { ThrowRefStructNotSupported(); return null; };
 #else
-                    ParameterExpression param1 = Expression.Parameter(typeof(MessagePackReader).MakeByRefType(), "reader");
-                    ParameterExpression param2 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
-                    UnaryExpression body = Expression.Convert(Expression.Call(null, deserialize, param1, param2), typeof(object));
-                    MessagePackReaderDeserialize lambda = Expression.Lambda<MessagePackReaderDeserialize>(body, param1, param2).Compile();
-
-                    this.Deserialize_MessagePackReader_Options = lambda;
                     this.Deserialize_MessagePackReader_Options = (MessagePackReaderDeserialize)deserialize.CreateDelegate(typeof(MessagePackReaderDeserialize));
 #endif
                 }

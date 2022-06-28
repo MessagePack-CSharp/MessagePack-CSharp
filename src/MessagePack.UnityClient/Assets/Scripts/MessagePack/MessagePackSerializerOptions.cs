@@ -28,7 +28,6 @@ namespace MessagePack
             "System.Management.IWbemClassObjectFreeThreaded",
         };
 
-#if !DYNAMICCODEDUMPER
 #if DYNAMICCODEDUMPER
         static readonly MessagePackSerializerOptions _standard = new MessagePackSerializerOptions(Resolvers.BuiltinResolver.Instance);
 
