@@ -21,4 +21,5 @@ fi
 cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Buffers.dll ${SCRIPT_DIR}/Assets/Plugins/System.Buffers.dll
 cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Memory.dll ${SCRIPT_DIR}/Assets/Plugins/System.Memory.dll
 cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Runtime.CompilerServices.Unsafe.dll ${SCRIPT_DIR}/Assets/Plugins/System.Runtime.CompilerServices.Unsafe.dll
+cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/Microsoft.NET.StringTools.dll ${SCRIPT_DIR}/Assets/Plugins/Microsoft.NET.StringTools.dll
 cp ${SCRIPT_DIR}/../../bin/MessagePack/${BUILDCONFIGURATION}/netstandard2.0/publish/System.Threading.Tasks.Extensions.dll ${SCRIPT_DIR}/Assets/Plugins/System.Threading.Tasks.Extensions.dll

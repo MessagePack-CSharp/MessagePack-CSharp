@@ -10,6 +10,7 @@ using System.Threading;
 using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
+using MessagePackWriterCref = MessagePack.MessagePackWriter;
 
 namespace MessagePack.Tests
 {
@@ -33,7 +34,7 @@ namespace MessagePack.Tests
 #endif
 
         /// <summary>
-        /// Verifies that <see cref="MessagePackWriter.WriteRaw(ReadOnlySpan{byte})"/>
+        /// Verifies that <see cref="MessagePackWriterCref.WriteRaw(ReadOnlySpan{byte})"/>
         /// accepts a span that came from stackalloc.
         /// </summary>
         [Fact]

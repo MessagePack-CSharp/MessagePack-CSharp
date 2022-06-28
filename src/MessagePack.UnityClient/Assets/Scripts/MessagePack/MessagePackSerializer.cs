@@ -18,8 +18,7 @@ namespace MessagePack
     [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Each overload has sufficiently unique required parameters.")]
     public static partial class MessagePackSerializer
     {
-        private const int LZ4NotCompressionSizeInLz4BlockType = 64;
-        private const int MaxHintSize = 1024 * 1024;
+        private static MessagePackSerializerOptions defaultOptions;
 
         /// <summary>
         /// Gets or sets the default set of options to use when not explicitly specified for a method call.
@@ -33,7 +32,20 @@ namespace MessagePack
         /// If you are an app author, realize that setting this property impacts the entire application so it should only be
         /// set once, and before any use of <see cref="MessagePackSerializer"/> occurs.
         /// </remarks>
-        public static MessagePackSerializerOptions DefaultOptions { get; set; } = MessagePackSerializerOptions.Standard;
+        public static MessagePackSerializerOptions DefaultOptions
+        {
+            get
+            {
+                if (defaultOptions is null)
+                {
+                    defaultOptions = MessagePackSerializerOptions.Standard;
+                }
+
+                return defaultOptions;
+            }
+
+            set => defaultOptions = value;
+        }
 
         /// <summary>
         /// A thread-local, recyclable array that may be used for short bursts of code.
@@ -92,7 +104,7 @@ namespace MessagePack
                         MessagePackWriter scratchWriter = writer.Clone(scratch);
                         options.Resolver.GetFormatterWithVerify<T>().Serialize(ref scratchWriter, value, options);
                         scratchWriter.Flush();
-                        ToLZ4BinaryCore(scratch, ref writer, options.Compression);
+                        ToLZ4BinaryCore(scratch, ref writer, options.Compression, options.CompressionMinLength);
                     }
                 }
                 else
@@ -348,7 +360,7 @@ namespace MessagePack
                     do
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        Span<byte> span = sequence.GetSpan(stream.CanSeek ? (int)Math.Min(MaxHintSize, stream.Length - stream.Position) : 0);
+                        Span<byte> span = sequence.GetSpan(stream.CanSeek ? (int)Math.Min(options.SuggestedContiguousMemorySize, stream.Length - stream.Position) : 0);
                         bytesRead = stream.Read(span);
                         sequence.Advance(bytesRead);
                     }
@@ -396,7 +408,7 @@ namespace MessagePack
                     int bytesRead;
                     do
                     {
-                        Memory<byte> memory = sequence.GetMemory(stream.CanSeek ? (int)Math.Min(MaxHintSize, stream.Length - stream.Position) : 0);
+                        Memory<byte> memory = sequence.GetMemory(stream.CanSeek ? (int)Math.Min(options.SuggestedContiguousMemorySize, stream.Length - stream.Position) : 0);
                         bytesRead = await stream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
                         sequence.Advance(bytesRead);
                     }
@@ -567,16 +579,16 @@ namespace MessagePack
             return false;
         }
 
-        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer, MessagePackCompression compression)
+        private static void ToLZ4BinaryCore(in ReadOnlySequence<byte> msgpackUncompressedData, ref MessagePackWriter writer, MessagePackCompression compression, int minCompressionSize)
         {
+            if (msgpackUncompressedData.Length < minCompressionSize)
+            {
+                writer.WriteRaw(msgpackUncompressedData);
+                return;
+            }
+
             if (compression == MessagePackCompression.Lz4Block)
             {
-                if (msgpackUncompressedData.Length < LZ4NotCompressionSizeInLz4BlockType)
-                {
-                    writer.WriteRaw(msgpackUncompressedData);
-                    return;
-                }
-
                 var maxCompressedLength = LZ4Codec.MaximumOutputLength((int)msgpackUncompressedData.Length);
                 var lz4Span = ArrayPool<byte>.Shared.Rent(maxCompressedLength);
                 try

@@ -11,33 +11,28 @@
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace <#= Namespace #>
 {
-    using System;
-    using System.Buffers;
-    using System.Collections.Generic;
-    using MessagePack;
-
 <# foreach(var info in UnionSerializationInfos) { #>
     public sealed class <#= info.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= info.FullName #>>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public <#= info.Name #>Formatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(<#= info.SubTypes.Length #>, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(<#= info.SubTypes.Length #>, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
-                { typeof(<#= item.Type #>).TypeHandle, new KeyValuePair<int, int>(<#= item.Key #>, <#= i #>) },
+                { typeof(<#= item.Type #>).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(<#= item.Key #>, <#= i #>) },
 <# } #>
             };
-            this.keyToJumpMap = new Dictionary<int, int>(<#= info.SubTypes.Length #>)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(<#= info.SubTypes.Length #>)
             {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
                 { <#= item.Key #>, <#= i #> },
@@ -45,9 +40,9 @@ namespace <#= Namespace #>
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -69,7 +64,7 @@ namespace <#= Namespace #>
             writer.WriteNil();
         }
 
-        public <#= info.FullName #> Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public <#= info.FullName #> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -78,7 +73,7 @@ namespace <#= Namespace #>
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:<#= info.FullName #>");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:<#= info.FullName #>");
             }
 
             options.Security.DepthStep(ref reader);
@@ -116,6 +111,5 @@ namespace <#= Namespace #>
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name

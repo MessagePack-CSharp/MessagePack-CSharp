@@ -34,6 +34,7 @@ MessagePack has a compact binary size and a full set of general purpose expressi
 - [Security](#security)
 - [Performance](#performance)
     - [Deserialization Performance for different options](#deserialization-performance-for-different-options)
+    - [String interning](#string-interning)
 - [LZ4 Compression](#lz4-compression)
     - [Attributions](#attributions)
 - [Comparison with protobuf, JSON, ZeroFormatter](#comparison-with-protobuf-json-zeroformatter)
@@ -699,7 +700,7 @@ Benchmarks comparing MessagePack For C# to other serializers were run on `Window
 * Avoid string key decoding for lookup maps (string key and use automata based name lookup with inlined IL code generation, see: [AutomataDictionary](https://github.com/neuecc/MessagePack-CSharp/blob/bcedbce3fd98cb294210d6b4a22bdc4c75ccd916/src/MessagePack/Internal/AutomataDictionary.cs)
 * To encode string keys, use pre-generated member name bytes and fixed sized byte array copies in IL, see: [UnsafeMemory.cs](https://github.com/neuecc/MessagePack-CSharp/blob/f17ddc5d107d3a2f66f60398b214ef87919ff892/src/MessagePack/Internal/UnsafeMemory.cs)
 
-Before creating this library, I implemented a fast fast serializer with [ZeroFormatter#Performance](https://github.com/neuecc/ZeroFormatter#performance). This is a further evolved implementation. MessagePack for C# is always fast and optimized for all types (primitive, small struct, large object, any collections).
+Before creating this library, I implemented a fast serializer with [ZeroFormatter#Performance](https://github.com/neuecc/ZeroFormatter#performance). This is a further evolved implementation. MessagePack for C# is always fast and optimized for all types (primitive, small struct, large object, any collections).
 
 ### <a name="deserialize-performance"></a>Deserialization Performance for different options
 
@@ -757,6 +758,49 @@ Extra note, this is serialization benchmark result.
  |     JilStreamWriter |   778.78 ns |    NA |   9.26 | 1.4448 |    6066 B |
 
  Of course, `IntKey` is fastest but `StringKey` also performs reasonably well.
+
+### <a name="string-interning"></a>String interning
+
+The msgpack format does not provide for reusing strings in the data stream.
+This naturally leads the deserializer to create a new `string` object for every string encountered,
+even if it is equal to another string previously encountered.
+
+When deserializing data that may contain the same strings repeatedly it can be worthwhile
+to have the deserializer take a little extra time to check whether it has seen a given string before
+and reuse it if it has.
+
+To enable string interning on *all* string values, use a resolver that specifies `StringInterningFormatter`
+before any of the standard ones, like this:
+
+```cs
+var options = MessagePackSerializerOptions.Standard.WithResolver(
+    CompositeResolver.Create(
+        new IMessagePackFormatter[] { new StringInterningFormatter() },
+        new IFormatterResolver[] { StandardResolver.Instance }));
+
+MessagePackSerializer.Deserialize<ClassOfStrings>(data, options);
+```
+
+If you know which fields of a particular type are likely to contain duplicate strings,
+you can apply the string interning formatter to just those fields so the deserializer only pays
+for the interned string check where it matters most.
+Note that this technique requires a `[MessagePackObject]` or `[DataContract]` class.
+
+```cs
+[MessagePackObject]
+public class ClassOfStrings
+{
+    [Key(0)]
+    [MessagePackFormatter(typeof(StringInterningFormatter))]
+    public string InternedString { get; set; }
+
+    [Key(1)]
+    public string OrdinaryString { get; set; }
+}
+```
+
+If you are writing your own formatter for some type that contains strings,
+you can call on the `StringInterningFormatter` directly from your formatter as well for the strings.
 
 ## LZ4 Compression
 
@@ -1452,24 +1496,36 @@ var resolver = MessagePack.Resolvers.CompositeResolver.Create(
 
 ## Reserved Extension Types
 
-MessagePack for C# already used some MessagePack extension type codes, be careful to use same ext code.
+MessagePack for C# already used some MessagePack extension type codes, be careful to avoid using the same ext code for other purposes.
+
+Range | Reserved for
+--|--
+\[-128, -1\] | Reserved by the msgpack spec for predefined types
+\[30, 120) | Reserved for this library's use to support common types in .NET
+
+This leaves the following ranges for your use:
+
+- \[0, 30)
+- \[120, 127]
+
+Within the *reserved* ranges, this library defines or implements extensions that use these type codes:
 
 | Code | Type | Use by |
-| ---  | ---  | --- |
-| -1 | DateTime | MessagePack-spec reserved for timestamp |
-| 30 | Vector2[] | for Unity, UnsafeBlitFormatter |
-| 31 | Vector3[] | for Unity, UnsafeBlitFormatter |
-| 32 | Vector4[] | for Unity, UnsafeBlitFormatter |
-| 33 | Quaternion[] | for Unity, UnsafeBlitFormatter |
-| 34 | Color[] | for Unity, UnsafeBlitFormatter |
-| 35 | Bounds[] | for Unity, UnsafeBlitFormatter |
-| 36 | Rect[] | for Unity, UnsafeBlitFormatter |
-| 37 | Int[] | for Unity, UnsafeBlitFormatter |
-| 38 | Float[] | for Unity, UnsafeBlitFormatter |
-| 39 | Double[] | for Unity, UnsafeBlitFormatter |
-| 98 | All | MessagePackCompression.Lz4BlockArray |
-| 99 | All | MessagePackCompression.Lz4Block |
-| 100 | object | TypelessFormatter |
+| ---- | ---- | --- |
+| -1   | DateTime | MessagePack-spec reserved for timestamp |
+| 30   | Vector2[] | for Unity, UnsafeBlitFormatter |
+| 31   | Vector3[] | for Unity, UnsafeBlitFormatter |
+| 32   | Vector4[] | for Unity, UnsafeBlitFormatter |
+| 33   | Quaternion[] | for Unity, UnsafeBlitFormatter |
+| 34   | Color[] | for Unity, UnsafeBlitFormatter |
+| 35   | Bounds[] | for Unity, UnsafeBlitFormatter |
+| 36   | Rect[] | for Unity, UnsafeBlitFormatter |
+| 37   | Int[] | for Unity, UnsafeBlitFormatter |
+| 38   | Float[] | for Unity, UnsafeBlitFormatter |
+| 39   | Double[] | for Unity, UnsafeBlitFormatter |
+| 98   | All | MessagePackCompression.Lz4BlockArray |
+| 99   | All | MessagePackCompression.Lz4Block |
+| 100  | object | TypelessFormatter |
 
 ## Unity support
 

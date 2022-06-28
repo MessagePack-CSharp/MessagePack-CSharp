@@ -13,6 +13,7 @@
         "System.Buffers.dll",
         "System.Threading.Tasks.Extensions.dll",
         "System.Runtime.CompilerServices.Unsafe.dll",
+        "Microsoft.NET.StringTools.dll",
         "System.Runtime.Extensions.dll"
     ],
     "autoReferenced": true,

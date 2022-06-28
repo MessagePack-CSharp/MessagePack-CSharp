@@ -11,17 +11,13 @@
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace <#= Namespace #>
 {
-    using System;
-    using System.Buffers;
-    using MessagePack;
-
     public class <#= ResolverName #> : global::MessagePack.IFormatterResolver
     {
         public static readonly global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();
@@ -52,11 +48,11 @@ namespace <#= Namespace #>
 
     internal static class <#= ResolverName #>GetFormatterHelper
     {
-        private static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
+        private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
         static <#= ResolverName #>GetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(<#= RegisterInfos.Length #>)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= RegisterInfos.Length #>)
             {
 <# for(var i = 0; i < RegisterInfos.Length; i++) { var x = RegisterInfos[i]; #>
                 { typeof(<#= x.FullName #>), <#= i #> },
@@ -64,7 +60,7 @@ namespace <#= Namespace #>
             };
         }
 
-        internal static object GetFormatter(Type t)
+        internal static object GetFormatter(global::System.Type t)
         {
             int key;
             if (!lookup.TryGetValue(t, out key))
@@ -75,7 +71,7 @@ namespace <#= Namespace #>
             switch (key)
             {
 <# for(var i = 0; i < RegisterInfos.Length; i++) { var x = RegisterInfos[i]; #>
-                case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName#>();
+                case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName: (!string.IsNullOrEmpty(FormatterNamespace) ? FormatterNamespace + "." : FormatterNamespace) + x.FormatterName #>();
 <# } #>
                 default: return null;
             }
@@ -89,5 +85,4 @@ namespace <#= Namespace #>
 #pragma warning restore 612
 
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1649 // File name should match first type name

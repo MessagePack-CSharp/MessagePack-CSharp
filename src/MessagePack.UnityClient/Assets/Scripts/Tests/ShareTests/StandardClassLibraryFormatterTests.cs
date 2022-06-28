@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Linq;
+using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -76,6 +76,61 @@ namespace MessagePack.Tests
             var input = new byte[] { 0xDD, 0, 0, 0, 3, 1, 2, 3 };
             byte[] byte_array = MessagePackSerializer.Deserialize<byte[]>(input);
             Assert.Equal(new byte[] { 1, 2, 3 }, byte_array);
+        }
+
+#if NET6_0_OR_GREATER
+        [Fact]
+        public void DateOnly()
+        {
+            var value = new DateOnly(2012, 3, 5);
+            this.AssertRoundtrip(value);
+            this.AssertRoundtrip<DateOnly?>(value);
+            this.AssertRoundtrip(new[] { value });
+        }
+
+        [Fact]
+        public void TimeOnly()
+        {
+            TimeOnly lowRes = new TimeOnly(5, 4, 3);
+            this.AssertRoundtrip(lowRes);
+            this.AssertRoundtrip<TimeOnly?>(lowRes);
+            this.AssertRoundtrip(new[] { lowRes });
+
+            TimeOnly mediumRes = new TimeOnly(5, 4, 3, 2);
+            this.AssertRoundtrip(mediumRes);
+            this.AssertRoundtrip<TimeOnly?>(mediumRes);
+            this.AssertRoundtrip(new[] { mediumRes });
+
+            TimeOnly highRes = new TimeOnly(lowRes.Ticks + 1);
+            this.AssertRoundtrip(highRes);
+            this.AssertRoundtrip(System.TimeOnly.MaxValue);
+        }
+#endif
+
+        private void AssertRoundtrip<T>(T value)
+        {
+            Assert.Equal(value, this.Roundtrip(value, breakupBuffer: false));
+            Assert.Equal(value, this.Roundtrip(value, breakupBuffer: true));
+        }
+
+        private T Roundtrip<T>(T value, bool breakupBuffer = false)
+        {
+            byte[] msgpack = MessagePackSerializer.Serialize(value, MessagePackSerializerOptions.Standard);
+            this.logger.WriteLine("{0} 0x{1}", value, TestUtilities.ToHex(msgpack));
+
+            if (breakupBuffer)
+            {
+                using (Sequence<byte> seq = new Sequence<byte>())
+                {
+                    seq.Append(msgpack.AsMemory(0, msgpack.Length - 1));
+                    seq.Append(msgpack.AsMemory(msgpack.Length - 1, 1));
+                    return MessagePackSerializer.Deserialize<T>(seq, MessagePackSerializerOptions.Standard);
+                }
+            }
+            else
+            {
+                return MessagePackSerializer.Deserialize<T>(msgpack, MessagePackSerializerOptions.Standard);
+            }
         }
     }
 }

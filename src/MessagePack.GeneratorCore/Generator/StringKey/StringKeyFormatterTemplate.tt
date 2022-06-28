@@ -12,9 +12,9 @@
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -22,8 +22,6 @@
 
 namespace <#= Namespace #>
 {
-    using global::System.Buffers;
-    using global::MessagePack;
 <# var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
 foreach (var objInfo in ObjectSerializationInfos) {
     list.Clear();
@@ -33,7 +31,6 @@ foreach (var objInfo in ObjectSerializationInfos) {
     }
 
     bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members); #>
-
     public sealed class <#= objInfo.FormatterNameWithoutNameSpace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
 <# foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) {#>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
@@ -147,5 +144,16 @@ foreach (var objInfo in ObjectSerializationInfos) {
             return ____result;
         }
     }
-<# } #>
-}
+
+<# } #>}
+
+#pragma warning restore 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
+
+#pragma warning restore SA1129 // Do not use default value type constructor
+#pragma warning restore SA1309 // Field names should not begin with underscore
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
+#pragma warning restore SA1403 // File may only contain a single namespace
+#pragma warning restore SA1649 // File name should match first type name

@@ -6,15 +6,13 @@
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Resolvers
 {
-    using System;
-
     public class GeneratedResolver : global::MessagePack.IFormatterResolver
     {
         public static readonly global::MessagePack.IFormatterResolver Instance = new GeneratedResolver();
@@ -45,11 +43,11 @@ namespace MessagePack.Resolvers
 
     internal static class GeneratedResolverGetFormatterHelper
     {
-        private static readonly global::System.Collections.Generic.Dictionary<Type, int> lookup;
+        private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(72)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(72)
             {
                 { typeof(global::GlobalMyEnum[,]), 0 },
                 { typeof(global::GlobalMyEnum[]), 1 },
@@ -126,7 +124,7 @@ namespace MessagePack.Resolvers
             };
         }
 
-        internal static object GetFormatter(Type t)
+        internal static object GetFormatter(global::System.Type t)
         {
             int key;
             if (!lookup.TryGetValue(t, out key))
@@ -220,7 +218,6 @@ namespace MessagePack.Resolvers
 #pragma warning restore 612
 
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1649 // File name should match first type name
 
 
@@ -232,25 +229,22 @@ namespace MessagePack.Resolvers
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
-    using System;
-    using System.Buffers;
-    using MessagePack;
 
     public sealed class GlobalMyEnumFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::GlobalMyEnum>
     {
-        public void Serialize(ref MessagePackWriter writer, global::GlobalMyEnum value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GlobalMyEnum value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.Write((Int32)value);
+            writer.Write((global::System.Int32)value);
         }
 
-        public global::GlobalMyEnum Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::GlobalMyEnum Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             return (global::GlobalMyEnum)reader.ReadInt32();
         }
@@ -262,7 +256,6 @@ namespace MessagePack.Formatters
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 
@@ -274,25 +267,22 @@ namespace MessagePack.Formatters
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters.SharedData
 {
-    using System;
-    using System.Buffers;
-    using MessagePack;
 
     public sealed class ByteEnumFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.ByteEnum>
     {
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.ByteEnum value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.ByteEnum value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            writer.Write((Byte)value);
+            writer.Write((global::System.Byte)value);
         }
 
-        public global::SharedData.ByteEnum Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.ByteEnum Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             return (global::SharedData.ByteEnum)reader.ReadByte();
         }
@@ -304,7 +294,6 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 
@@ -317,32 +306,27 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
-    using System;
-    using System.Buffers;
-    using System.Collections.Generic;
-    using MessagePack;
-
     public sealed class IMessageBodyFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::IMessageBody>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IMessageBodyFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(3, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(3, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::TextMessageBody).TypeHandle, new KeyValuePair<int, int>(10, 0) },
-                { typeof(global::StampMessageBody).TypeHandle, new KeyValuePair<int, int>(14, 1) },
-                { typeof(global::QuestMessageBody).TypeHandle, new KeyValuePair<int, int>(25, 2) },
+                { typeof(global::TextMessageBody).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(10, 0) },
+                { typeof(global::StampMessageBody).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(14, 1) },
+                { typeof(global::QuestMessageBody).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(25, 2) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(3)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(3)
             {
                 { 10, 0 },
                 { 14, 1 },
@@ -350,9 +334,9 @@ namespace MessagePack.Formatters
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::IMessageBody value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::IMessageBody value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -378,7 +362,7 @@ namespace MessagePack.Formatters
             writer.WriteNil();
         }
 
-        public global::IMessageBody Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::IMessageBody Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -387,7 +371,7 @@ namespace MessagePack.Formatters
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::IMessageBody");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::IMessageBody");
             }
 
             options.Security.DepthStep(ref reader);
@@ -428,7 +412,6 @@ namespace MessagePack.Formatters
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 
@@ -440,38 +423,33 @@ namespace MessagePack.Formatters
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters.SharedData
 {
-    using System;
-    using System.Buffers;
-    using System.Collections.Generic;
-    using MessagePack;
-
     public sealed class IIVersioningUnionFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IIVersioningUnion>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IIVersioningUnionFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(1, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(1, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(1)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(1)
             {
                 { 0, 0 },
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.IIVersioningUnion value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IIVersioningUnion value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -491,7 +469,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.IIVersioningUnion Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.IIVersioningUnion Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -500,7 +478,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IIVersioningUnion");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IIVersioningUnion");
             }
 
             options.Security.DepthStep(ref reader);
@@ -529,19 +507,19 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class IUnionCheckerFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionChecker>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IUnionCheckerFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-                { typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
-                { typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(2, 2) },
-                { typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(3, 3) },
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.MySubUnion2).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(1, 1) },
+                { typeof(global::SharedData.MySubUnion3).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(2, 2) },
+                { typeof(global::SharedData.MySubUnion4).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(3, 3) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(4)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(4)
             {
                 { 0, 0 },
                 { 1, 1 },
@@ -550,9 +528,9 @@ namespace MessagePack.Formatters.SharedData
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.IUnionChecker value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IUnionChecker value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -581,7 +559,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.IUnionChecker Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.IUnionChecker Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -590,7 +568,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker");
             }
 
             options.Security.DepthStep(ref reader);
@@ -628,19 +606,19 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class IUnionChecker2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionChecker2>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IUnionChecker2Formatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(4, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.MySubUnion2).TypeHandle, new KeyValuePair<int, int>(31, 0) },
-                { typeof(global::SharedData.MySubUnion3).TypeHandle, new KeyValuePair<int, int>(42, 1) },
-                { typeof(global::SharedData.MySubUnion4).TypeHandle, new KeyValuePair<int, int>(63, 2) },
-                { typeof(global::SharedData.MySubUnion1).TypeHandle, new KeyValuePair<int, int>(120, 3) },
+                { typeof(global::SharedData.MySubUnion2).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(31, 0) },
+                { typeof(global::SharedData.MySubUnion3).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(42, 1) },
+                { typeof(global::SharedData.MySubUnion4).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(63, 2) },
+                { typeof(global::SharedData.MySubUnion1).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(120, 3) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(4)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(4)
             {
                 { 31, 0 },
                 { 42, 1 },
@@ -649,9 +627,9 @@ namespace MessagePack.Formatters.SharedData
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.IUnionChecker2 value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IUnionChecker2 value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -680,7 +658,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.IUnionChecker2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.IUnionChecker2 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -689,7 +667,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker2");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionChecker2");
             }
 
             options.Security.DepthStep(ref reader);
@@ -727,26 +705,26 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class IUnionSampleFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.IUnionSample>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public IUnionSampleFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.FooClass).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-                { typeof(global::SharedData.BarClass).TypeHandle, new KeyValuePair<int, int>(100, 1) },
+                { typeof(global::SharedData.FooClass).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.BarClass).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(100, 1) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(2)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(2)
             {
                 { 0, 0 },
                 { 100, 1 },
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.IUnionSample value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.IUnionSample value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -769,7 +747,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.IUnionSample Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.IUnionSample Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -778,7 +756,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionSample");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.IUnionSample");
             }
 
             options.Security.DepthStep(ref reader);
@@ -810,26 +788,26 @@ namespace MessagePack.Formatters.SharedData
 
     public sealed class RootUnionTypeFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.RootUnionType>
     {
-        private readonly Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>> typeToKeyAndJumpMap;
-        private readonly Dictionary<int, int> keyToJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
+        private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public RootUnionTypeFormatter()
         {
-            this.typeToKeyAndJumpMap = new Dictionary<RuntimeTypeHandle, KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::SharedData.SubUnionType1).TypeHandle, new KeyValuePair<int, int>(0, 0) },
-                { typeof(global::SharedData.SubUnionType2).TypeHandle, new KeyValuePair<int, int>(1, 1) },
+                { typeof(global::SharedData.SubUnionType1).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
+                { typeof(global::SharedData.SubUnionType2).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(1, 1) },
             };
-            this.keyToJumpMap = new Dictionary<int, int>(2)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(2)
             {
                 { 0, 0 },
                 { 1, 1 },
             };
         }
 
-        public void Serialize(ref MessagePackWriter writer, global::SharedData.RootUnionType value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::SharedData.RootUnionType value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            KeyValuePair<int, int> keyValuePair;
+            global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
             {
                 writer.WriteArrayHeader(2);
@@ -852,7 +830,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteNil();
         }
 
-        public global::SharedData.RootUnionType Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::SharedData.RootUnionType Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -861,7 +839,7 @@ namespace MessagePack.Formatters.SharedData
 
             if (reader.ReadArrayHeader() != 2)
             {
-                throw new InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.RootUnionType");
+                throw new global::System.InvalidOperationException("Invalid Union data was detected. Type:global::SharedData.RootUnionType");
             }
 
             options.Security.DepthStep(ref reader);
@@ -899,7 +877,6 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning restore 618
 #pragma warning restore 612
 
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
 #pragma warning restore SA1649 // File name should match first type name
 
@@ -912,9 +889,9 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -922,9 +899,6 @@ namespace MessagePack.Formatters.SharedData
 
 namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
 {
-    using global::System.Buffers;
-    using global::MessagePack;
-
     public sealed class TnonodsfarnoiuAtatqagaFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad.TnonodsfarnoiuAtatqaga>
     {
 
@@ -968,6 +942,7 @@ namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
             return ____result;
         }
     }
+
 }
 
 #pragma warning restore 168
@@ -976,7 +951,6 @@ namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
 #pragma warning restore 612
 
 #pragma warning restore SA1129 // Do not use default value type constructor
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1309 // Field names should not begin with underscore
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
 #pragma warning restore SA1403 // File may only contain a single namespace
@@ -990,9 +964,9 @@ namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -1000,9 +974,6 @@ namespace MessagePack.Formatters.Abcdefg.Efcdigjl.Ateatatea.Hgfagfafgad
 
 namespace MessagePack.Formatters
 {
-    using global::System.Buffers;
-    using global::MessagePack;
-
     public sealed class ArrayTestTestFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ArrayTestTest>
     {
 
@@ -1016,13 +987,13 @@ namespace MessagePack.Formatters
 
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(7);
-            formatterResolver.GetFormatterWithVerify<int[]>().Serialize(ref writer, value.MyProperty0, options);
-            formatterResolver.GetFormatterWithVerify<int[,]>().Serialize(ref writer, value.MyProperty1, options);
-            formatterResolver.GetFormatterWithVerify<global::GlobalMyEnum[,]>().Serialize(ref writer, value.MyProperty2, options);
-            formatterResolver.GetFormatterWithVerify<int[,,]>().Serialize(ref writer, value.MyProperty3, options);
-            formatterResolver.GetFormatterWithVerify<int[,,,]>().Serialize(ref writer, value.MyProperty4, options);
-            formatterResolver.GetFormatterWithVerify<global::GlobalMyEnum[]>().Serialize(ref writer, value.MyProperty5, options);
-            formatterResolver.GetFormatterWithVerify<global::QuestMessageBody[]>().Serialize(ref writer, value.MyProperty6, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[]>(formatterResolver).Serialize(ref writer, value.MyProperty0, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,]>(formatterResolver).Serialize(ref writer, value.MyProperty1, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GlobalMyEnum[,]>(formatterResolver).Serialize(ref writer, value.MyProperty2, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,,]>(formatterResolver).Serialize(ref writer, value.MyProperty3, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,,,]>(formatterResolver).Serialize(ref writer, value.MyProperty4, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GlobalMyEnum[]>(formatterResolver).Serialize(ref writer, value.MyProperty5, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::QuestMessageBody[]>(formatterResolver).Serialize(ref writer, value.MyProperty6, options);
         }
 
         public global::ArrayTestTest Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -1042,25 +1013,25 @@ namespace MessagePack.Formatters
                 switch (i)
                 {
                     case 0:
-                        ____result.MyProperty0 = formatterResolver.GetFormatterWithVerify<int[]>().Deserialize(ref reader, options);
+                        ____result.MyProperty0 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[]>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
-                        ____result.MyProperty1 = formatterResolver.GetFormatterWithVerify<int[,]>().Deserialize(ref reader, options);
+                        ____result.MyProperty1 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,]>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 2:
-                        ____result.MyProperty2 = formatterResolver.GetFormatterWithVerify<global::GlobalMyEnum[,]>().Deserialize(ref reader, options);
+                        ____result.MyProperty2 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GlobalMyEnum[,]>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 3:
-                        ____result.MyProperty3 = formatterResolver.GetFormatterWithVerify<int[,,]>().Deserialize(ref reader, options);
+                        ____result.MyProperty3 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,,]>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 4:
-                        ____result.MyProperty4 = formatterResolver.GetFormatterWithVerify<int[,,,]>().Deserialize(ref reader, options);
+                        ____result.MyProperty4 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,,,]>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 5:
-                        ____result.MyProperty5 = formatterResolver.GetFormatterWithVerify<global::GlobalMyEnum[]>().Deserialize(ref reader, options);
+                        ____result.MyProperty5 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GlobalMyEnum[]>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 6:
-                        ____result.MyProperty6 = formatterResolver.GetFormatterWithVerify<global::QuestMessageBody[]>().Deserialize(ref reader, options);
+                        ____result.MyProperty6 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::QuestMessageBody[]>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -1132,8 +1103,8 @@ namespace MessagePack.Formatters
             writer.WriteArrayHeader(4);
             writer.Write(value.UserId);
             writer.Write(value.RoomId);
-            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.PostTime, options);
-            formatterResolver.GetFormatterWithVerify<global::IMessageBody>().Serialize(ref writer, value.Body, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.DateTime>(formatterResolver).Serialize(ref writer, value.PostTime, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::IMessageBody>(formatterResolver).Serialize(ref writer, value.Body, options);
         }
 
         public global::Message Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -1159,10 +1130,10 @@ namespace MessagePack.Formatters
                         ____result.RoomId = reader.ReadInt32();
                         break;
                     case 2:
-                        ____result.PostTime = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, options);
+                        ____result.PostTime = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.DateTime>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 3:
-                        ____result.Body = formatterResolver.GetFormatterWithVerify<global::IMessageBody>().Deserialize(ref reader, options);
+                        ____result.Body = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::IMessageBody>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -1234,7 +1205,7 @@ namespace MessagePack.Formatters
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             writer.Write(value.QuestId);
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Text, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Text, options);
         }
 
         public global::QuestMessageBody Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -1257,7 +1228,7 @@ namespace MessagePack.Formatters
                         ____result.QuestId = reader.ReadInt32();
                         break;
                     case 1:
-                        ____result.Text = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Text = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -1327,7 +1298,7 @@ namespace MessagePack.Formatters
 
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(1);
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Text, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Text, options);
         }
 
         public global::TextMessageBody Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -1347,7 +1318,7 @@ namespace MessagePack.Formatters
                 switch (i)
                 {
                     case 0:
-                        ____result.Text = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Text = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -1359,6 +1330,7 @@ namespace MessagePack.Formatters
             return ____result;
         }
     }
+
 }
 
 #pragma warning restore 168
@@ -1367,7 +1339,6 @@ namespace MessagePack.Formatters
 #pragma warning restore 612
 
 #pragma warning restore SA1129 // Do not use default value type constructor
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1309 // Field names should not begin with underscore
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
 #pragma warning restore SA1403 // File may only contain a single namespace
@@ -1381,9 +1352,9 @@ namespace MessagePack.Formatters
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -1391,9 +1362,6 @@ namespace MessagePack.Formatters
 
 namespace MessagePack.Formatters
 {
-    using global::System.Buffers;
-    using global::MessagePack;
-
     public sealed class ComplexModelFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ComplexModel>
     {
         // AdditionalProperty
@@ -1420,17 +1388,17 @@ namespace MessagePack.Formatters
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(6);
             writer.WriteRaw(GetSpan_AdditionalProperty());
-            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>().Serialize(ref writer, value.AdditionalProperty, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.IDictionary<string, string>>(formatterResolver).Serialize(ref writer, value.AdditionalProperty, options);
             writer.WriteRaw(GetSpan_CreatedOn());
-            formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Serialize(ref writer, value.CreatedOn, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.DateTimeOffset>(formatterResolver).Serialize(ref writer, value.CreatedOn, options);
             writer.WriteRaw(GetSpan_Id());
-            formatterResolver.GetFormatterWithVerify<global::System.Guid>().Serialize(ref writer, value.Id, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Guid>(formatterResolver).Serialize(ref writer, value.Id, options);
             writer.WriteRaw(GetSpan_Name());
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Name, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Name, options);
             writer.WriteRaw(GetSpan_UpdatedOn());
-            formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Serialize(ref writer, value.UpdatedOn, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.DateTimeOffset>(formatterResolver).Serialize(ref writer, value.UpdatedOn, options);
             writer.WriteRaw(GetSpan_SimpleModels());
-            formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>().Serialize(ref writer, value.SimpleModels, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.IList<global::SimpleModel>>(formatterResolver).Serialize(ref writer, value.SimpleModels, options);
         }
 
         public global::ComplexModel Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -1466,25 +1434,25 @@ namespace MessagePack.Formatters
                             case 5720808977192022595UL:
                                 if (stringKey[0] != 110) { goto FAIL; }
 
-                                ____result.CreatedOn = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(ref reader, options);
+                                ____result.CreatedOn = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.DateTimeOffset>(formatterResolver).Deserialize(ref reader, options);
                                 continue;
 
                             case 5720808977191956565UL:
                                 if (stringKey[0] != 110) { goto FAIL; }
 
-                                ____result.UpdatedOn = formatterResolver.GetFormatterWithVerify<global::System.DateTimeOffset>().Deserialize(ref reader, options);
+                                ____result.UpdatedOn = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.DateTimeOffset>(formatterResolver).Deserialize(ref reader, options);
                                 continue;
 
                         }
                     case 2:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 25673UL) { goto FAIL; }
 
-                        ____result.Id = formatterResolver.GetFormatterWithVerify<global::System.Guid>().Deserialize(ref reader, options);
+                        ____result.Id = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Guid>(formatterResolver).Deserialize(ref reader, options);
                         continue;
                     case 4:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
 
-                        ____result.Name = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Name = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         continue;
                     case 12:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_SimpleModels().Slice(1))) { goto FAIL; }
@@ -1528,13 +1496,13 @@ namespace MessagePack.Formatters
             writer.WriteRaw(GetSpan_Id());
             writer.Write(value.Id);
             writer.WriteRaw(GetSpan_Name());
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Name, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Name, options);
             writer.WriteRaw(GetSpan_CreatedOn());
-            formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Serialize(ref writer, value.CreatedOn, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.DateTime>(formatterResolver).Serialize(ref writer, value.CreatedOn, options);
             writer.WriteRaw(GetSpan_Precision());
             writer.Write(value.Precision);
             writer.WriteRaw(GetSpan_Money());
-            formatterResolver.GetFormatterWithVerify<decimal>().Serialize(ref writer, value.Money, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<decimal>(formatterResolver).Serialize(ref writer, value.Money, options);
             writer.WriteRaw(GetSpan_Amount());
             writer.Write(value.Amount);
         }
@@ -1568,7 +1536,7 @@ namespace MessagePack.Formatters
                     case 4:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
 
-                        ____result.Name = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Name = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         continue;
                     case 9:
                         switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
@@ -1577,7 +1545,7 @@ namespace MessagePack.Formatters
                             case 5720808977192022595UL:
                                 if (stringKey[0] != 110) { goto FAIL; }
 
-                                ____result.CreatedOn = formatterResolver.GetFormatterWithVerify<global::System.DateTime>().Deserialize(ref reader, options);
+                                ____result.CreatedOn = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.DateTime>(formatterResolver).Deserialize(ref reader, options);
                                 continue;
 
                             case 8028074707240972880UL:
@@ -1590,7 +1558,7 @@ namespace MessagePack.Formatters
                     case 5:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 521392779085UL) { goto FAIL; }
 
-                        ____result.Money = formatterResolver.GetFormatterWithVerify<decimal>().Deserialize(ref reader, options);
+                        ____result.Money = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<decimal>(formatterResolver).Deserialize(ref reader, options);
                         continue;
                     case 6:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 128017765461313UL) { goto FAIL; }
@@ -1605,7 +1573,19 @@ namespace MessagePack.Formatters
             return ____result;
         }
     }
+
 }
+
+#pragma warning restore 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
+
+#pragma warning restore SA1129 // Do not use default value type constructor
+#pragma warning restore SA1309 // Field names should not begin with underscore
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
+#pragma warning restore SA1403 // File may only contain a single namespace
+#pragma warning restore SA1649 // File name should match first type name
 
 // <auto-generated>
 // THIS (.cs) FILE IS GENERATED BY MPC(MessagePack-CSharp). DO NOT CHANGE IT.
@@ -1615,9 +1595,9 @@ namespace MessagePack.Formatters
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -1625,9 +1605,6 @@ namespace MessagePack.Formatters
 
 namespace MessagePack.Formatters.PerfBenchmarkDotNet
 {
-    using global::System.Buffers;
-    using global::MessagePack;
-
     public sealed class StringKeySerializerTargetFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::PerfBenchmarkDotNet.StringKeySerializerTarget>
     {
         // MyProperty1
@@ -1744,7 +1721,19 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
             return ____result;
         }
     }
+
 }
+
+#pragma warning restore 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
+
+#pragma warning restore SA1129 // Do not use default value type constructor
+#pragma warning restore SA1309 // Field names should not begin with underscore
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
+#pragma warning restore SA1403 // File may only contain a single namespace
+#pragma warning restore SA1649 // File name should match first type name
 
 // <auto-generated>
 // THIS (.cs) FILE IS GENERATED BY MPC(MessagePack-CSharp). DO NOT CHANGE IT.
@@ -1754,9 +1743,9 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -1764,9 +1753,6 @@ namespace MessagePack.Formatters.PerfBenchmarkDotNet
 
 namespace MessagePack.Formatters.SharedData
 {
-    using global::System.Buffers;
-    using global::MessagePack;
-
     public sealed class ArrayOptimizeClassFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.ArrayOptimizeClass>
     {
 
@@ -1884,7 +1870,7 @@ namespace MessagePack.Formatters.SharedData
 
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(1);
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.OPQ, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.OPQ, options);
         }
 
         public global::SharedData.BarClass Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -1904,7 +1890,7 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        ____result.OPQ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.OPQ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -2026,8 +2012,8 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteArrayHeader(4);
             writer.Write(value.Prop1);
             writer.Write(value.Prop2);
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Prop3, options);
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Prop4, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Prop3, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Prop4, options);
         }
 
         public global::SharedData.DefaultValueIntKeyClassWithExplicitConstructor Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -2056,10 +2042,10 @@ namespace MessagePack.Formatters.SharedData
                         __Prop2__ = reader.ReadInt32();
                         break;
                     case 2:
-                        __Prop3__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        __Prop3__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 3:
-                        __Prop4__ = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        __Prop4__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -2200,15 +2186,15 @@ namespace MessagePack.Formatters.SharedData
         {
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(9);
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.Item1, options);
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Item2, options);
-            formatterResolver.GetFormatterWithVerify<T3>().Serialize(ref writer, value.Item3, options);
-            formatterResolver.GetFormatterWithVerify<T4>().Serialize(ref writer, value.Item4, options);
-            formatterResolver.GetFormatterWithVerify<T5>().Serialize(ref writer, value.Item5, options);
-            formatterResolver.GetFormatterWithVerify<T6>().Serialize(ref writer, value.Item6, options);
-            formatterResolver.GetFormatterWithVerify<T7>().Serialize(ref writer, value.Item7, options);
-            formatterResolver.GetFormatterWithVerify<T8>().Serialize(ref writer, value.Item8, options);
-            formatterResolver.GetFormatterWithVerify<T9>().Serialize(ref writer, value.Item9, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.Item1, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.Item2, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T3>(formatterResolver).Serialize(ref writer, value.Item3, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T4>(formatterResolver).Serialize(ref writer, value.Item4, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T5>(formatterResolver).Serialize(ref writer, value.Item5, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T6>(formatterResolver).Serialize(ref writer, value.Item6, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T7>(formatterResolver).Serialize(ref writer, value.Item7, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T8>(formatterResolver).Serialize(ref writer, value.Item8, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T9>(formatterResolver).Serialize(ref writer, value.Item9, options);
         }
 
         public global::SharedData.DynamicArgumentTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -2236,31 +2222,31 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        __Item1__ = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        __Item1__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
-                        __Item2__ = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        __Item2__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 2:
-                        __Item3__ = formatterResolver.GetFormatterWithVerify<T3>().Deserialize(ref reader, options);
+                        __Item3__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T3>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 3:
-                        __Item4__ = formatterResolver.GetFormatterWithVerify<T4>().Deserialize(ref reader, options);
+                        __Item4__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T4>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 4:
-                        __Item5__ = formatterResolver.GetFormatterWithVerify<T5>().Deserialize(ref reader, options);
+                        __Item5__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T5>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 5:
-                        __Item6__ = formatterResolver.GetFormatterWithVerify<T6>().Deserialize(ref reader, options);
+                        __Item6__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T6>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 6:
-                        __Item7__ = formatterResolver.GetFormatterWithVerify<T7>().Deserialize(ref reader, options);
+                        __Item7__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T7>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 7:
-                        __Item8__ = formatterResolver.GetFormatterWithVerify<T8>().Deserialize(ref reader, options);
+                        __Item8__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T8>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 8:
-                        __Item9__ = formatterResolver.GetFormatterWithVerify<T9>().Deserialize(ref reader, options);
+                        __Item9__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T9>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -2360,7 +2346,7 @@ namespace MessagePack.Formatters.SharedData
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(3);
             writer.Write(value.Prop1);
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Prop2, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Prop2, options);
             writer.Write(value.Prop3);
         }
 
@@ -2384,7 +2370,7 @@ namespace MessagePack.Formatters.SharedData
                         ____result.Prop1 = reader.ReadInt32();
                         break;
                     case 1:
-                        ____result.Prop2 = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Prop2 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 2:
                         ____result.Prop3 = reader.ReadInt32();
@@ -2457,8 +2443,8 @@ namespace MessagePack.Formatters.SharedData
 
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.MyProperty1, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.MyProperty0, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.MyProperty1, options);
         }
 
         public global::SharedData.GenericClass<T1, T2> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -2478,10 +2464,10 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        ____result.MyProperty0 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        ____result.MyProperty0 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
-                        ____result.MyProperty1 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        ____result.MyProperty1 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -2509,8 +2495,8 @@ namespace MessagePack.Formatters.SharedData
 
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Comparer, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.MyProperty0, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.Comparer, options);
         }
 
         public global::SharedData.GenericConstrainedClassIntKey<T1, T2> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -2530,10 +2516,10 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        ____result.MyProperty0 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        ____result.MyProperty0 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
-                        ____result.Comparer = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        ____result.Comparer = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -2555,8 +2541,8 @@ namespace MessagePack.Formatters.SharedData
         {
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Comparer, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.MyProperty0, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.Comparer, options);
         }
 
         public global::SharedData.GenericConstrainedStructIntKey<T1, T2> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -2576,10 +2562,10 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        ____result.MyProperty0 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        ____result.MyProperty0 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
-                        ____result.Comparer = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        ____result.Comparer = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -2599,8 +2585,8 @@ namespace MessagePack.Formatters.SharedData
         {
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.MyProperty1, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.MyProperty0, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.MyProperty1, options);
         }
 
         public global::SharedData.GenericStruct<T1, T2> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -2620,10 +2606,10 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        ____result.MyProperty0 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        ____result.MyProperty0 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
-                        ____result.MyProperty1 = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        ____result.MyProperty1 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -2649,7 +2635,7 @@ namespace MessagePack.Formatters.SharedData
 
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
-            formatterResolver.GetFormatterWithVerify<global::SharedData.Version0>().Serialize(ref writer, value.MyProperty1, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.Version0>(formatterResolver).Serialize(ref writer, value.MyProperty1, options);
             writer.Write(value.After);
         }
 
@@ -2670,7 +2656,7 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        ____result.MyProperty1 = formatterResolver.GetFormatterWithVerify<global::SharedData.Version0>().Deserialize(ref reader, options);
+                        ____result.MyProperty1 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.Version0>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
                         ____result.After = reader.ReadInt32();
@@ -2699,7 +2685,7 @@ namespace MessagePack.Formatters.SharedData
 
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
-            formatterResolver.GetFormatterWithVerify<global::SharedData.Version1>().Serialize(ref writer, value.MyProperty1, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.Version1>(formatterResolver).Serialize(ref writer, value.MyProperty1, options);
             writer.Write(value.After);
         }
 
@@ -2720,7 +2706,7 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        ____result.MyProperty1 = formatterResolver.GetFormatterWithVerify<global::SharedData.Version1>().Deserialize(ref reader, options);
+                        ____result.MyProperty1 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.Version1>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
                         ____result.After = reader.ReadInt32();
@@ -2749,7 +2735,7 @@ namespace MessagePack.Formatters.SharedData
 
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
-            formatterResolver.GetFormatterWithVerify<global::SharedData.Version2>().Serialize(ref writer, value.MyProperty1, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.Version2>(formatterResolver).Serialize(ref writer, value.MyProperty1, options);
             writer.Write(value.After);
         }
 
@@ -2770,7 +2756,7 @@ namespace MessagePack.Formatters.SharedData
                 switch (i)
                 {
                     case 0:
-                        ____result.MyProperty1 = formatterResolver.GetFormatterWithVerify<global::SharedData.Version2>().Deserialize(ref reader, options);
+                        ____result.MyProperty1 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.Version2>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 1:
                         ____result.After = reader.ReadInt32();
@@ -3121,11 +3107,11 @@ namespace MessagePack.Formatters.SharedData
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(7);
             writer.Write(value.Prop1);
-            formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref writer, value.Prop2, options);
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Prop3, options);
-            formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStringKeyData>().Serialize(ref writer, value.Prop4, options);
-            formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructIntKeyData>().Serialize(ref writer, value.Prop5, options);
-            formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>().Serialize(ref writer, value.Prop6, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.ByteEnum>(formatterResolver).Serialize(ref writer, value.Prop2, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Prop3, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SimpleStringKeyData>(formatterResolver).Serialize(ref writer, value.Prop4, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SimpleStructIntKeyData>(formatterResolver).Serialize(ref writer, value.Prop5, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>(formatterResolver).Serialize(ref writer, value.Prop6, options);
             writer.Write(value.BytesSpecial);
         }
 
@@ -3149,22 +3135,22 @@ namespace MessagePack.Formatters.SharedData
                         ____result.Prop1 = reader.ReadInt32();
                         break;
                     case 1:
-                        ____result.Prop2 = formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Deserialize(ref reader, options);
+                        ____result.Prop2 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.ByteEnum>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 2:
-                        ____result.Prop3 = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Prop3 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 3:
-                        ____result.Prop4 = formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStringKeyData>().Deserialize(ref reader, options);
+                        ____result.Prop4 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SimpleStringKeyData>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 4:
-                        ____result.Prop5 = formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructIntKeyData>().Deserialize(ref reader, options);
+                        ____result.Prop5 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SimpleStructIntKeyData>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 5:
-                        ____result.Prop6 = formatterResolver.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>().Deserialize(ref reader, options);
+                        ____result.Prop6 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SimpleStructStringKeyData>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 6:
-                        ____result.BytesSpecial = reader.ReadBytes()?.ToArray();
+                        ____result.BytesSpecial = global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes());
                         break;
                     default:
                         reader.Skip();
@@ -3210,7 +3196,7 @@ namespace MessagePack.Formatters.SharedData
                         ____result.Y = reader.ReadInt32();
                         break;
                     case 2:
-                        ____result.BytesSpecial = reader.ReadBytes()?.ToArray();
+                        ____result.BytesSpecial = global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes());
                         break;
                     default:
                         reader.Skip();
@@ -3681,7 +3667,7 @@ namespace MessagePack.Formatters.SharedData
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(3);
             writer.Write(value.MyProperty);
-            formatterResolver.GetFormatterWithVerify<global::SharedData.MyClass>().Serialize(ref writer, value.UnknownBlock, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MyClass>(formatterResolver).Serialize(ref writer, value.UnknownBlock, options);
             writer.Write(value.MyProperty2);
         }
 
@@ -3705,7 +3691,7 @@ namespace MessagePack.Formatters.SharedData
                         ____result.MyProperty = reader.ReadInt32();
                         break;
                     case 1:
-                        ____result.UnknownBlock = formatterResolver.GetFormatterWithVerify<global::SharedData.MyClass>().Deserialize(ref reader, options);
+                        ____result.UnknownBlock = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MyClass>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 2:
                         ____result.MyProperty2 = reader.ReadInt32();
@@ -3786,7 +3772,7 @@ namespace MessagePack.Formatters.SharedData
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(2);
             writer.Write(value.Data1);
-            formatterResolver.GetFormatterWithVerify<string>().Serialize(ref writer, value.Data2, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Data2, options);
         }
 
         public global::SharedData.WithIndexer Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -3809,7 +3795,7 @@ namespace MessagePack.Formatters.SharedData
                         ____result.Data1 = reader.ReadInt32();
                         break;
                     case 1:
-                        ____result.Data2 = formatterResolver.GetFormatterWithVerify<string>().Deserialize(ref reader, options);
+                        ____result.Data2 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -3821,6 +3807,7 @@ namespace MessagePack.Formatters.SharedData
             return ____result;
         }
     }
+
 }
 
 #pragma warning restore 168
@@ -3829,7 +3816,6 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning restore 612
 
 #pragma warning restore SA1129 // Do not use default value type constructor
-#pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1309 // Field names should not begin with underscore
 #pragma warning restore SA1312 // Variable names should begin with lower-case letter
 #pragma warning restore SA1403 // File may only contain a single namespace
@@ -3843,9 +3829,9 @@ namespace MessagePack.Formatters.SharedData
 #pragma warning disable 612
 #pragma warning disable 414
 #pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
 
 #pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1309 // Field names should not begin with underscore
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1403 // File may only contain a single namespace
@@ -3853,9 +3839,6 @@ namespace MessagePack.Formatters.SharedData
 
 namespace MessagePack.Formatters.SharedData
 {
-    using global::System.Buffers;
-    using global::MessagePack;
-
     public sealed class Callback2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::SharedData.Callback2>
     {
         // X
@@ -4198,9 +4181,9 @@ namespace MessagePack.Formatters.SharedData
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_MyProperty0());
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.MyProperty0, options);
             writer.WriteRaw(GetSpan_Comparer());
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Comparer, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.Comparer, options);
         }
 
         public global::SharedData.GenericConstrainedClassStringKey<T1, T2> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -4227,12 +4210,12 @@ namespace MessagePack.Formatters.SharedData
                     case 11:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_MyProperty0().Slice(1))) { goto FAIL; }
 
-                        ____result.MyProperty0 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        ____result.MyProperty0 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
                         continue;
                     case 8:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 8243120455795175235UL) { goto FAIL; }
 
-                        ____result.Comparer = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        ____result.Comparer = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         continue;
 
                 }
@@ -4257,9 +4240,9 @@ namespace MessagePack.Formatters.SharedData
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_MyProperty0());
-            formatterResolver.GetFormatterWithVerify<T1>().Serialize(ref writer, value.MyProperty0, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Serialize(ref writer, value.MyProperty0, options);
             writer.WriteRaw(GetSpan_Comparer());
-            formatterResolver.GetFormatterWithVerify<T2>().Serialize(ref writer, value.Comparer, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Serialize(ref writer, value.Comparer, options);
         }
 
         public global::SharedData.GenericConstrainedStructStringKey<T1, T2> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -4286,12 +4269,12 @@ namespace MessagePack.Formatters.SharedData
                     case 11:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_MyProperty0().Slice(1))) { goto FAIL; }
 
-                        ____result.MyProperty0 = formatterResolver.GetFormatterWithVerify<T1>().Deserialize(ref reader, options);
+                        ____result.MyProperty0 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T1>(formatterResolver).Deserialize(ref reader, options);
                         continue;
                     case 8:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 8243120455795175235UL) { goto FAIL; }
 
-                        ____result.Comparer = formatterResolver.GetFormatterWithVerify<T2>().Deserialize(ref reader, options);
+                        ____result.Comparer = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T2>(formatterResolver).Deserialize(ref reader, options);
                         continue;
 
                 }
@@ -4376,7 +4359,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteRaw(GetSpan_Prop1());
             writer.Write(value.Prop1);
             writer.WriteRaw(GetSpan_Prop2());
-            formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Serialize(ref writer, value.Prop2, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.ByteEnum>(formatterResolver).Serialize(ref writer, value.Prop2, options);
             writer.WriteRaw(GetSpan_Prop3());
             writer.Write(value.Prop3);
         }
@@ -4410,7 +4393,7 @@ namespace MessagePack.Formatters.SharedData
                                 ____result.Prop1 = reader.ReadInt32();
                                 continue;
                             case 216634716752UL:
-                                ____result.Prop2 = formatterResolver.GetFormatterWithVerify<global::SharedData.ByteEnum>().Deserialize(ref reader, options);
+                                ____result.Prop2 = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.ByteEnum>(formatterResolver).Deserialize(ref reader, options);
                                 continue;
                             case 220929684048UL:
                                 ____result.Prop3 = reader.ReadInt32();
@@ -4439,7 +4422,7 @@ namespace MessagePack.Formatters.SharedData
             writer.WriteRaw(GetSpan_X());
             writer.Write(value.X);
             writer.WriteRaw(GetSpan_Y());
-            formatterResolver.GetFormatterWithVerify<int[]>().Serialize(ref writer, value.Y, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[]>(formatterResolver).Serialize(ref writer, value.Y, options);
         }
 
         public global::SharedData.SimpleStructStringKeyData Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -4471,7 +4454,7 @@ namespace MessagePack.Formatters.SharedData
                                 ____result.X = reader.ReadInt32();
                                 continue;
                             case 383015019883UL:
-                                ____result.Y = formatterResolver.GetFormatterWithVerify<int[]>().Deserialize(ref reader, options);
+                                ____result.Y = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[]>(formatterResolver).Deserialize(ref reader, options);
                                 continue;
                         }
 
@@ -4482,5 +4465,17 @@ namespace MessagePack.Formatters.SharedData
             return ____result;
         }
     }
+
 }
+
+#pragma warning restore 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
+
+#pragma warning restore SA1129 // Do not use default value type constructor
+#pragma warning restore SA1309 // Field names should not begin with underscore
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
+#pragma warning restore SA1403 // File may only contain a single namespace
+#pragma warning restore SA1649 // File name should match first type name
 
