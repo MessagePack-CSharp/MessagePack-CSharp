@@ -1,7 +1,7 @@
 {
     "name": "com.neuecc.messagepack",
     "displayName": "MessagePack",
-    "version": "2.4.25",
+    "version": "2.4.35",
     "unity": "2018.4",
     "description": "Extremely Fast MessagePack Serializer for C#.",
     "keywords": [
