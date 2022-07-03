@@ -273,7 +273,7 @@ namespace MessagePack
 
         internal static Object DeserializeSemiGeneric<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
         {
-            return DeserializeSemiGeneric<T>(ref reader, options);
+            return Deserialize<T>(ref reader, options);
         }
 
         /// <summary>
