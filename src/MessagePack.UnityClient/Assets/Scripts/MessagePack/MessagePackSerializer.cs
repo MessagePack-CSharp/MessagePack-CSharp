@@ -71,13 +71,6 @@ namespace MessagePack
             fastWriter.Flush();
         }
 
-        /// <summary>
-        /// Serializes a given value with the specified buffer writer.
-        /// </summary>
-        /// <param name="writer">The buffer writer to serialize with.</param>
-        /// <param name="value">The value to serialize.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
-        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
         internal static void SerializeSemiGeneric<T>(ref MessagePackWriter writer, Object valueObject, MessagePackSerializerOptions options = null)
         {
             T value = (T)valueObject;
@@ -85,6 +78,13 @@ namespace MessagePack
             Serialize(ref writer, value, options);
         }
 
+        /// <summary>
+        /// Serializes a given value with the specified buffer writer.
+        /// </summary>
+        /// <param name="writer">The buffer writer to serialize with.</param>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
         public static void Serialize<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options = null)
         {
             options = options ?? DefaultOptions;
@@ -240,11 +240,6 @@ namespace MessagePack
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
         {
-            return (T)DeserializeSemiGeneric<T>(ref reader, options);
-        }
-
-        internal static Object DeserializeSemiGeneric<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
-        {
             options = options ?? DefaultOptions;
 
             try
@@ -274,6 +269,11 @@ namespace MessagePack
             {
                 throw new MessagePackSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
             }
+        }
+
+        internal static Object DeserializeSemiGeneric<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
+        {
+            return DeserializeSemiGeneric<T>(ref reader, options);
         }
 
         /// <summary>
