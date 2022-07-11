@@ -252,12 +252,15 @@ namespace MessagePackCompiler.CodeAnalysis
         private readonly List<GenericSerializationInfo> collectedGenericInfo = new();
         private readonly List<UnionSerializationInfo> collectedUnionInfo = new();
 
+        private readonly Compilation compilation;
+
         public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, Action<string> logger)
         {
             this.typeReferences = new ReferenceSymbols(compilation, logger);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
             this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
+            this.compilation = compilation;
 
             targetTypes = compilation.GetNamedTypeSymbols()
                 .Where(x =>
@@ -329,7 +332,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
             if (typeSymbol is IArrayTypeSymbol arrayTypeSymbol)
             {
-                this.CollectArray(arrayTypeSymbol);
+                this.CollectArray((IArrayTypeSymbol)ToTupleUnderlyingType(arrayTypeSymbol));
                 return;
             }
 
@@ -357,13 +360,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
             if (type.IsGenericType)
             {
-                this.CollectGeneric(type);
-                return;
-            }
-
-            if (type.TupleUnderlyingType != null)
-            {
-                CollectGeneric(type.TupleUnderlyingType);
+                this.CollectGeneric((INamedTypeSymbol)ToTupleUnderlyingType(type));
                 return;
             }
 
@@ -457,6 +454,21 @@ namespace MessagePackCompiler.CodeAnalysis
 
             var info = new GenericSerializationInfo(fullName, formatterName, elemType is ITypeParameterSymbol);
             this.collectedGenericInfo.Add(info);
+        }
+
+        private ITypeSymbol ToTupleUnderlyingType(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol is IArrayTypeSymbol array)
+            {
+                return compilation.CreateArrayTypeSymbol(ToTupleUnderlyingType(array.ElementType), array.Rank);
+            }
+
+            if (typeSymbol is INamedTypeSymbol namedType && namedType.IsGenericType)
+            {
+                return namedType.ConstructedFrom.Construct(namedType.TypeArguments.Select(ToTupleUnderlyingType).ToArray());
+            }
+
+            return typeSymbol;
         }
 
         private void CollectGeneric(INamedTypeSymbol type)
