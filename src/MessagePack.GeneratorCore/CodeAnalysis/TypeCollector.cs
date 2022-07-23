@@ -720,7 +720,12 @@ namespace MessagePackCompiler.CodeAnalysis
                         stringMembers.Add(member.StringKey, member);
                     }
 
-                    this.CollectCore(item.Type); // recursive collect
+                    var messagePackFormatter = item.GetAttributes().FirstOrDefault(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackFormatterAttribute))?.ConstructorArguments[0];
+
+                    if (messagePackFormatter == null)
+                    {
+                        this.CollectCore(item.Type); // recursive collect
+                    }
                 }
 
                 foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
