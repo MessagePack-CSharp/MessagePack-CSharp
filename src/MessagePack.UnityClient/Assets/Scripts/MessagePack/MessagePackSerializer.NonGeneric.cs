@@ -82,6 +82,22 @@ namespace MessagePack
             return GetOrAdd(type).Deserialize_ReadOnlySequence_Options_CancellationToken.Invoke(bytes, options, cancellationToken);
         }
 
+        /// <summary>
+        /// Helper method used by reflection.
+        /// </summary>
+        private static void SerializeSemiGeneric<T>(ref MessagePackWriter writer, object valueObject, MessagePackSerializerOptions options = null)
+        {
+            Serialize(ref writer, (T)valueObject, options);
+        }
+
+        /// <summary>
+        /// Helper method used by reflection.
+        /// </summary>
+        private static object DeserializeSemiGeneric<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
+        {
+            return Deserialize<T>(ref reader, options);
+        }
+
         private static async ValueTask<object> DeserializeObjectAsync<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken) => await DeserializeAsync<T>(stream, options, cancellationToken).ConfigureAwait(false);
 
         private static CompiledMethods GetOrAdd(Type type)
@@ -219,8 +235,8 @@ namespace MessagePack
                 }
 
                 {
-                    // public static void Serialize<T>(ref MessagePackWriter writer, T obj, MessagePackSerializerOptions options)
-                    MethodInfo serialize = GetMethod(nameof(SerializeSemiGeneric), type, new Type[] { typeof(MessagePackWriter).MakeByRefType(), typeof(Object), typeof(MessagePackSerializerOptions) });
+                    // private static void SerializeSemiGeneric<T>(ref MessagePackWriter writer, object obj, MessagePackSerializerOptions options)
+                    MethodInfo serialize = GetMethod(nameof(SerializeSemiGeneric), type, new Type[] { typeof(MessagePackWriter).MakeByRefType(), typeof(object), typeof(MessagePackSerializerOptions) });
 #if ENABLE_IL2CPP
                     this.Serialize_MessagePackWriter_T_Options = (ref MessagePackWriter x, object y, MessagePackSerializerOptions z) => ThrowRefStructNotSupported();
 #else
@@ -229,7 +245,7 @@ namespace MessagePack
                 }
 
                 {
-                    // public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options)
+                    // private static object DeserializeSemiGeneric<T>(ref MessagePackReader reader, MessagePackSerializerOptions options)
                     MethodInfo deserialize = GetMethod(nameof(DeserializeSemiGeneric), type, new Type[] { typeof(MessagePackReader).MakeByRefType(), typeof(MessagePackSerializerOptions) });
 #if ENABLE_IL2CPP
                     this.Deserialize_MessagePackReader_Options = (ref MessagePackReader reader, MessagePackSerializerOptions options) => { ThrowRefStructNotSupported(); return null; };

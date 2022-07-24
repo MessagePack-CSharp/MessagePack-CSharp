@@ -71,13 +71,6 @@ namespace MessagePack
             fastWriter.Flush();
         }
 
-        internal static void SerializeSemiGeneric<T>(ref MessagePackWriter writer, Object valueObject, MessagePackSerializerOptions options = null)
-        {
-            T value = (T)valueObject;
-
-            Serialize(ref writer, value, options);
-        }
-
         /// <summary>
         /// Serializes a given value with the specified buffer writer.
         /// </summary>
@@ -269,11 +262,6 @@ namespace MessagePack
             {
                 throw new MessagePackSerializationException($"Failed to deserialize {typeof(T).FullName} value.", ex);
             }
-        }
-
-        internal static Object DeserializeSemiGeneric<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
-        {
-            return Deserialize<T>(ref reader, options);
         }
 
         /// <summary>
