@@ -68,7 +68,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
         }
     }
 }

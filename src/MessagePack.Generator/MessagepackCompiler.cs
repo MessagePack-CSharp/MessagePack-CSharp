@@ -46,7 +46,8 @@ namespace MessagePack.Generator
             [Option("n", "Set namespace root name.")] string @namespace = "MessagePack",
             [Option("m", "Force use map mode serialization.")] bool useMapMode = false,
             [Option("ms", "Generate #if-- files by symbols, split with ','.")] string? multipleIfDirectiveOutputSymbols = null,
-            [Option("ei", "Ignore type names.")] string[]? externalIgnoreTypeNames = null)
+            [Option("ei", "Ignore type names.")] string[]? externalIgnoreTypeNames = null,
+            [Option("me", "Generate formatters for types from metadata (e.g. used dlls)")] bool includeTypesFromMetadata = false)
         {
             Workspace? workspace = null;
             try
@@ -70,7 +71,8 @@ namespace MessagePack.Generator
                         @namespace,
                         useMapMode,
                         multipleIfDirectiveOutputSymbols,
-                        externalIgnoreTypeNames).ConfigureAwait(false);
+                        externalIgnoreTypeNames,
+                        includeTypesFromMetadata).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

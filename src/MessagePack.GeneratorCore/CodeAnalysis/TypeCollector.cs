@@ -243,6 +243,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly HashSet<string> externalIgnoreTypeNames;
 
+        private readonly bool includeTypesFromMetadata;
+
         // visitor workspace:
 #pragma warning disable RS1024 // Compare symbols correctly (https://github.com/dotnet/roslyn-analyzers/issues/5246)
         private readonly HashSet<ITypeSymbol> alreadyCollected = new(SymbolEqualityComparer.Default);
@@ -252,12 +254,13 @@ namespace MessagePackCompiler.CodeAnalysis
         private readonly List<GenericSerializationInfo> collectedGenericInfo = new();
         private readonly List<UnionSerializationInfo> collectedUnionInfo = new();
 
-        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, Action<string> logger)
+        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, bool includeTypesFromMetadata, Action<string> logger)
         {
             this.typeReferences = new ReferenceSymbols(compilation, logger);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
             this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
+            this.includeTypesFromMetadata = includeTypesFromMetadata;
 
             targetTypes = compilation.GetNamedTypeSymbols()
                 .Where(x =>
@@ -367,7 +370,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
-            if (type.Locations[0].IsInMetadata)
+            if (type.Locations[0].IsInMetadata && !includeTypesFromMetadata)
             {
                 return;
             }
