@@ -63,7 +63,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -110,7 +111,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -158,7 +160,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -223,7 +226,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -307,7 +311,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -375,7 +380,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -444,7 +450,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -513,7 +520,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -568,7 +576,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -617,7 +626,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -674,7 +684,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -732,7 +743,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -791,7 +803,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -865,7 +878,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();
@@ -939,7 +953,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Where(x => x.WarningLevel == 0).Should().BeEmpty();

@@ -55,7 +55,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -120,7 +121,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -180,7 +182,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -240,7 +243,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -297,7 +301,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -363,7 +368,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -437,7 +443,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -506,7 +513,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -571,7 +579,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -637,7 +646,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -706,7 +716,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -773,7 +784,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
@@ -835,7 +847,8 @@ namespace TempProject
                 "TempProject.Generated",
                 false,
                 string.Empty,
-                Array.Empty<string>());
+                Array.Empty<string>(),
+                false);
 
             var compilation = tempWorkarea.GetOutputCompilation();
             compilation.Compilation.GetDiagnostics().Should().NotContain(x => x.Severity == DiagnosticSeverity.Error);
