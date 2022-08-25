@@ -432,7 +432,7 @@ namespace MessagePack
                         }
                         else
                         {
-                            writer.Write("{\"$type\":\"" + typeNameTokenBuilder.ToString() + "}");
+                            writer.Write("{\"$type\":" + typeNameTokenBuilder.ToString() + "}");
                         }
                     }
 #endif
