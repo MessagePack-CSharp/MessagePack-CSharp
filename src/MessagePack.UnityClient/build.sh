@@ -8,7 +8,7 @@ done
 
 SCRIPT_DIR=$(dirname "$(realpath $0)")
 
-if ! [[ -e "${SCRIPT_DIR}/Assets/Plugins/System.Memory.dll" ]] ; then
+if ! [[ -e "${SCRIPT_DIR}/Assets/Plugins/System.Runtime.CompilerServices.Unsafe.dll" ]] ; then
    ${SCRIPT_DIR}/copy_assets.sh
 fi
 
