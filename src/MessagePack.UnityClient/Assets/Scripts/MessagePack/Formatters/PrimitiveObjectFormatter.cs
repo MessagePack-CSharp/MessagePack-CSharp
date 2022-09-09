@@ -4,7 +4,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Net.Security;
+using System.Globalization;
 using System.Reflection;
 
 namespace MessagePack.Formatters
@@ -202,9 +202,7 @@ namespace MessagePack.Formatters
 
         public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            MessagePackType type = reader.NextMessagePackType;
-            IFormatterResolver resolver = options.Resolver;
-            switch (type)
+            switch (reader.NextMessagePackType)
             {
                 case MessagePackType.Integer:
                     var code = reader.NextCode;
@@ -249,7 +247,7 @@ namespace MessagePack.Formatters
                         return reader.ReadUInt64();
                     }
 
-                    throw new MessagePackSerializationException("Invalid primitive bytes.");
+                    throw new MessagePackSerializationException(string.Format(CultureInfo.CurrentCulture, "Unrecognized primitive code 0x{0:x2} for integer type.", code));
                 case MessagePackType.Boolean:
                     return reader.ReadBoolean();
                 case MessagePackType.Float:
@@ -269,12 +267,12 @@ namespace MessagePack.Formatters
                     return reader.ReadBytes()?.ToArray();
                 case MessagePackType.Extension:
                     ExtensionHeader ext = reader.ReadExtensionFormatHeader();
-                    if (ext.TypeCode == ReservedMessagePackExtensionTypeCode.DateTime)
+                    switch (ext.TypeCode)
                     {
-                        return reader.ReadDateTime(ext);
+                        case ReservedMessagePackExtensionTypeCode.DateTime: return reader.ReadDateTime(ext);
+                        default: throw new MessagePackSerializationException(string.Format(CultureInfo.CurrentCulture, "Extension type code 0x{0:x2} is not supported by the {1}.", ext.TypeCode, nameof(PrimitiveObjectFormatter)));
                     }
 
-                    throw new MessagePackSerializationException("Invalid primitive bytes.");
                 case MessagePackType.Array:
                     {
                         var length = reader.ReadArrayHeader();
@@ -283,7 +281,7 @@ namespace MessagePack.Formatters
                             return Array.Empty<object>();
                         }
 
-                        IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
+                        IMessagePackFormatter<object> objectFormatter = options.Resolver.GetFormatter<object>();
                         var array = new object[length];
                         options.Security.DepthStep(ref reader);
                         try
@@ -320,7 +318,7 @@ namespace MessagePack.Formatters
                     reader.ReadNil();
                     return null;
                 default:
-                    throw new MessagePackSerializationException("Invalid primitive bytes.");
+                    throw new MessagePackSerializationException(string.Format(CultureInfo.CurrentCulture, "Unrecognized code: 0x{0:X2}.", reader.NextCode));
             }
         }
 
