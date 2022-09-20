@@ -18,9 +18,9 @@ jobs:
         days-before-close: 5
         stale-issue-message: 'This issue is stale because it has been open 90 days with no activity. Remove stale label or comment or this will be closed in 5 days.'
         stale-issue-label: 'no-issue-activity'
-        exempt-issue-label: 'awaiting-approval'
+        exempt-issue-labels: awaiting-approval
         stale-pr-message: 'This pull request is stale because it has been open 90 days with no activity. Remove stale label or comment or this will be closed in 5 days.'
         stale-pr-label: 'no-pr-activity'
-        exempt-pr-label: 'awaiting-approval'
+        exempt-pr-labels: awaiting-approval
         close-issue-reason: not_planned
         
