@@ -44,34 +44,19 @@ namespace MessagePack.AspNetCoreMvcFormatter
                 return writer.FlushAsync().AsTask();
 #endif
             }
-
-            if (context.ObjectType == null || context.ObjectType == typeof(object))
-            {
-#if NETSTANDARD2_0
-                return MessagePackSerializer.SerializeAsync(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
-#else
-                var writer = context.HttpContext.Response.BodyWriter;
-                if (writer == null)
-                {
-                    return MessagePackSerializer.SerializeAsync(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
-                }
-
-                MessagePackSerializer.Serialize(context.Object.GetType(), writer, context.Object, this.options, context.HttpContext.RequestAborted);
-                return writer.FlushAsync().AsTask();
-#endif
-            }
             else
             {
+                var objectType = context.ObjectType == null || context.ObjectType == typeof(object) ? context.Object.GetType() : context.ObjectType;
 #if NETSTANDARD2_0
-                return MessagePackSerializer.SerializeAsync(context.ObjectType, context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
+                return MessagePackSerializer.SerializeAsync(objectType, context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
 #else
                 var writer = context.HttpContext.Response.BodyWriter;
                 if (writer == null)
                 {
-                    return MessagePackSerializer.SerializeAsync(context.ObjectType, context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
+                    return MessagePackSerializer.SerializeAsync(objectType, context.HttpContext.Response.Body, context.Object, this.options, context.HttpContext.RequestAborted);
                 }
 
-                MessagePackSerializer.Serialize(context.ObjectType, writer, context.Object, this.options, context.HttpContext.RequestAborted);
+                MessagePackSerializer.Serialize(objectType, writer, context.Object, this.options, context.HttpContext.RequestAborted);
                 return writer.FlushAsync().AsTask();
 #endif
             }
