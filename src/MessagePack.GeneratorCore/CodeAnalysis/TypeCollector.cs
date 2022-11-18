@@ -463,12 +463,19 @@ namespace MessagePackCompiler.CodeAnalysis
                 return compilation.CreateArrayTypeSymbol(ToTupleUnderlyingType(array.ElementType), array.Rank);
             }
 
-            if (typeSymbol is INamedTypeSymbol namedType && namedType.IsGenericType)
+            if (typeSymbol is not INamedTypeSymbol namedType || !namedType.IsGenericType)
             {
-                return namedType.ConstructedFrom.Construct(namedType.TypeArguments.Select(ToTupleUnderlyingType).ToArray());
+                return typeSymbol;
             }
 
-            return typeSymbol;
+            namedType = namedType.TupleUnderlyingType ?? namedType;
+            var newTypeArguments = namedType.TypeArguments.Select(ToTupleUnderlyingType).ToArray();
+            if (!namedType.TypeArguments.SequenceEqual(newTypeArguments))
+            {
+                return namedType.ConstructedFrom.Construct(newTypeArguments);
+            }
+
+            return namedType;
         }
 
         private void CollectGeneric(INamedTypeSymbol type)
