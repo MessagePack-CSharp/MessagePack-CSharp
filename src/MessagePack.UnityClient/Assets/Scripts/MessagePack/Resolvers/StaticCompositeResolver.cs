@@ -8,7 +8,7 @@ using MessagePack.Formatters;
 namespace MessagePack.Resolvers
 {
     /// <summary>
-    /// Singleton version of CompositeResolver, which be able to register a collection of formatters and resolvers to a single instance.
+    /// Singleton version of <see cref="CompositeResolver"/>, which can register a collection of formatters and resolvers to a single instance.
     /// </summary>
     public class StaticCompositeResolver : IFormatterResolver
     {
@@ -40,7 +40,7 @@ namespace MessagePack.Resolvers
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
 
-            if (this.formatters is null)
+            if (formatters is null)
             {
                 throw new ArgumentNullException(nameof(formatters));
             }
