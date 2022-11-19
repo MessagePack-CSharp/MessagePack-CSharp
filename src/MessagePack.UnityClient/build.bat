@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-IF NOT EXIST "%~dp0Assets/Microsoft.VisualStudio.Threading.dll" CALL "%~dp0copy_assets.bat"
+IF NOT EXIST "%~dp0Assets/Plugins/System.Runtime.CompilerServices.Unsafe.dll" CALL "%~dp0copy_assets.bat"
 
 IF "%Build_ArtifactStagingDirectory%"=="" (
     SET LogDirectory=%~dp0..\..\bin\build_logs
