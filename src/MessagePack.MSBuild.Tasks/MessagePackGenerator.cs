@@ -28,7 +28,7 @@ namespace MessagePack.MSBuild.Tasks
         public ITaskItem[] Compile { get; set; } = null!;
 
         [Required]
-        public string IntermediateOutputPath { get; set; } = null!;
+        public string GeneratedOutputPath { get; set; } = null!;
 
         [Required]
         public ITaskItem[] ReferencePath { get; set; } = null!;
@@ -44,9 +44,6 @@ namespace MessagePack.MSBuild.Tasks
 
         public string[]? ExternalIgnoreTypeNames { get; set; }
 
-        [Output]
-        public string? GeneratedOutputPath { get; set; }
-
         internal CancellationToken CancellationToken => this.cts.Token;
 
         public void Cancel() => this.cts.Cancel();
@@ -58,8 +55,6 @@ namespace MessagePack.MSBuild.Tasks
                 this.Log.LogError($"{nameof(ResolverName)} task parameter must not be set to an empty value.");
                 return false;
             }
-
-            this.GeneratedOutputPath = Path.Combine(this.IntermediateOutputPath, GeneratedFileName);
 
             try
             {
