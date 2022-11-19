@@ -20,8 +20,6 @@ namespace MessagePack.MSBuild.Tasks
 {
     public class MessagePackGenerator : Microsoft.Build.Utilities.Task, ICancelableTask
     {
-        private const string GeneratedFileName = "mpc_generated.cs";
-
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
         [Required]
