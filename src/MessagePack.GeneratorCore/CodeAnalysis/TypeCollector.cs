@@ -483,7 +483,7 @@ namespace MessagePackCompiler.CodeAnalysis
             INamedTypeSymbol genericType = type.ConstructUnboundGenericType();
             var genericTypeString = genericType.ToDisplayString();
             var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            var isOpenGenericType = type.TypeArguments.Any(x => x is ITypeParameterSymbol);
+            var isOpenGenericType = IsOpenGenericTypeRecursively(type);
 
             // special case
             if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
@@ -1044,6 +1044,11 @@ namespace MessagePackCompiler.CodeAnalysis
             while (symbol != null);
 
             return true;
+        }
+
+        private bool IsOpenGenericTypeRecursively(INamedTypeSymbol type)
+        {
+            return type.IsGenericType && type.TypeArguments.Any(x => x is ITypeParameterSymbol || (x is INamedTypeSymbol symbol && IsOpenGenericTypeRecursively(symbol)));
         }
     }
 }
