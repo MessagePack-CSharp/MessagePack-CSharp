@@ -28,6 +28,7 @@ $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -buildTarget standalone \
     -projectPath ${SCRIPT_DIR} \
     -executeMethod PackageExporter.Export \
+    /headless \
     -logfile ${LOGFILE}
 
 UnityExitCode=$?
