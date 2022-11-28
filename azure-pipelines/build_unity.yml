@@ -10,6 +10,8 @@ steps:
 
 - script: src/MessagePack.UnityClient/build.sh -l $(Build.ArtifactStagingDirectory)/build_logs/unitypackage.log
   displayName: 🎮 Build Unity package
+  env:
+    DISPLAY: ':99.0'
 
 - task: PublishBuildArtifacts@1
   inputs:
