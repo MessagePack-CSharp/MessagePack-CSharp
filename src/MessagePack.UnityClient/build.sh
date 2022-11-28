@@ -28,4 +28,12 @@ $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -buildTarget standalone \
     -projectPath ${SCRIPT_DIR} \
     -executeMethod PackageExporter.Export \
-    -logfile /dev/stdout
+    -logfile ${LOGFILE}
+
+UnityExitCode=$?
+
+echo Log follows...
+
+cat ${LOGFILE}
+
+exit $UnityExitCode
