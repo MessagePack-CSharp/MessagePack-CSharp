@@ -25,9 +25,6 @@ echo Writing log to ${LOGFILE}
 $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -batchmode \
     -quit \
-    -nographics \
-    -silent-crashes \
-    -noUpm \
     -buildTarget standalone \
     -projectPath ${SCRIPT_DIR} \
     -executeMethod PackageExporter.Export \
