@@ -1,22 +1,22 @@
 steps:
 - powershell: Write-Host "##vso[task.setvariable variable=unity_package_version;]$((& (./azure-pipelines/Get-nbgv.ps1) get-version -f json | ConvertFrom-Json).NuGetPackageVersion)"
-  displayName: Get unity package version
+  displayName: 🔢 Get unity package version
 
 - bash: /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
   displayName: 🖥️ activate screen emulation
 
 - script: dotnet publish src/MessagePack -c $(BuildConfiguration) -f netstandard2.0
-  displayName: Build MessagePack
+  displayName: 🔨 Build MessagePack
 
 - script: src/MessagePack.UnityClient/build.sh -l $(Build.ArtifactStagingDirectory)/build_logs/unitypackage.log
-  displayName: Build Unity package
+  displayName: 🎮 Build Unity package
 
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: $(Build.ArtifactStagingDirectory)/build_logs
     ArtifactName: build_logs
     ArtifactType: Container
-  displayName: Publish build_logs artifacts
+  displayName: 📢 Publish build_logs artifacts
   condition: succeededOrFailed()
 
 - task: CopyFiles@1
@@ -25,7 +25,7 @@ steps:
       bin/*.unitypackage
     TargetFolder: $(Build.ArtifactStagingDirectory)/unity
     flattenFolders: true
-  displayName: Collecting deployables
+  displayName: ⚙️ Collecting deployables
   condition: succeededOrFailed()
 
 - task: PublishBuildArtifacts@1
@@ -33,5 +33,5 @@ steps:
     PathtoPublish: $(Build.ArtifactStagingDirectory)/unity
     ArtifactName: unity
     ArtifactType: Container
-  displayName: Publish deployables artifacts
+  displayName: 📢 Publish deployables artifacts
   condition: succeededOrFailed()
