@@ -15,8 +15,8 @@
     <PackageReference Include="coverlet.collector" Version="1.2.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="1.1.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.CodeFix.Testing.XUnit" Version="1.1.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" version="2.10.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" version="2.10.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" version="4.4.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" version="4.4.0" />
   </ItemGroup>
 
   <ItemGroup>
