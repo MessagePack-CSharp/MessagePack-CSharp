@@ -61,7 +61,7 @@ namespace MessagePack
         /// This can mitigate some denial of service attacks when deserializing untrusted code.
         /// </summary>
         /// <value>
-        /// The value is <c>false</c> for <see cref="TrustedData"/> and <c>true</c> for <see cref="UntrustedData"/>.
+        /// The value is <see langword="false"/> for <see cref="TrustedData"/> and <see langword="true"/> for <see cref="UntrustedData"/>.
         /// </value>
         public bool HashCollisionResistant { get; private set; }
 

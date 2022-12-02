@@ -68,8 +68,8 @@ namespace MessagePack
         /// <summary>
         /// Gets the resolver to use for complex types.
         /// </summary>
-        /// <value>An instance of <see cref="IFormatterResolver"/>. Never <c>null</c>.</value>
-        /// <exception cref="ArgumentNullException">Thrown if an attempt is made to set this property to <c>null</c>.</exception>
+        /// <value>An instance of <see cref="IFormatterResolver"/>. Never <see langword="null"/>.</value>
+        /// <exception cref="ArgumentNullException">Thrown if an attempt is made to set this property to <see langword="null"/>.</exception>
         public IFormatterResolver Resolver { get; private set; }
 
         /// <summary>
@@ -109,13 +109,13 @@ namespace MessagePack
         /// <summary>
         /// Gets a value indicating whether serialization should omit assembly version, culture and public key token metadata when using the typeless formatter.
         /// </summary>
-        /// <value>The default value is <c>false</c>.</value>
+        /// <value>The default value is <see langword="false"/>.</value>
         public bool OmitAssemblyVersion { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether deserialization may instantiate types from an assembly with a different version if a matching version cannot be found.
         /// </summary>
-        /// <value>The default value is <c>false</c>.</value>
+        /// <value>The default value is <see langword="false"/>.</value>
         public bool AllowAssemblyVersionMismatch { get; private set; }
 
         /// <summary>
@@ -136,7 +136,7 @@ namespace MessagePack
         /// Gets a type given a string representation of the type.
         /// </summary>
         /// <param name="typeName">The name of the type to load. This is typically the <see cref="Type.AssemblyQualifiedName"/> but may use the assembly's simple name.</param>
-        /// <returns>The loaded type or <c>null</c> if no matching type could be found.</returns>
+        /// <returns>The loaded type or <see langword="null"/> if no matching type could be found.</returns>
         public virtual Type LoadType(string typeName)
         {
             Type result = Type.GetType(typeName, false);

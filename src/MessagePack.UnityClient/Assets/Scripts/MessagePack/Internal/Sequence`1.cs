@@ -92,7 +92,7 @@ namespace Nerdbank.Streams
         /// in which case the higher of the two minimums dictate the minimum array size that will be allocated.
         /// </para>
         /// <para>
-        /// If <see cref="AutoIncreaseMinimumSpanLength"/> is <c>true</c>, this value may be automatically increased as the length of a sequence grows.
+        /// If <see cref="AutoIncreaseMinimumSpanLength"/> is <see langword="true"/>, this value may be automatically increased as the length of a sequence grows.
         /// </para>
         /// </remarks>
         public int MinimumSpanLength { get; set; } = 0;
@@ -391,7 +391,7 @@ namespace Nerdbank.Streams
 
             /// <summary>
             /// Gets the tracker for the underlying array for this segment, which can be used to recycle the array when we're disposed of.
-            /// Will be <c>null</c> if using an array pool, in which case the memory is held by <see cref="array"/>.
+            /// Will be <see langword="null"/> if using an array pool, in which case the memory is held by <see cref="array"/>.
             /// </summary>
             internal IMemoryOwner<T> MemoryOwner { get; private set; }
 
@@ -568,7 +568,7 @@ namespace Nerdbank.Streams
         /// <param name="value">The value of the argument.</param>
         /// <param name="parameterName">The name of the parameter to include in any thrown exception.</param>
         /// <returns>The value of the parameter.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <see langword="null"/>.</exception>
         [DebuggerStepThrough]
         public static T NotNull<T>(T value, string parameterName)
             where T : class // ensures value-types aren't passed to a null checking method

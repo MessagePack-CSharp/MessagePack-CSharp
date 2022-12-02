@@ -59,7 +59,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
         public static void Serialize<T>(IBufferWriter<byte> writer, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
@@ -77,7 +77,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="writer">The buffer writer to serialize with.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
         public static void Serialize<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options = null)
         {
@@ -120,7 +120,7 @@ namespace MessagePack
         /// Serializes a given value with the specified buffer writer.
         /// </summary>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
@@ -146,7 +146,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="stream">The stream to serialize to.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
         public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
@@ -178,7 +178,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="stream">The stream to serialize to.</param>
         /// <param name="value">The value to serialize.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A task that completes with the result of the async serialization operation.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
@@ -211,7 +211,7 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="byteSequence">The sequence to deserialize from.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
@@ -229,7 +229,7 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="reader">The reader to deserialize from.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
         public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
@@ -270,7 +270,7 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="buffer">The buffer to deserialize from.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
@@ -299,7 +299,7 @@ namespace MessagePack
         /// </summary>
         /// <typeparam name="T">The type of value to deserialize.</typeparam>
         /// <param name="buffer">The memory to deserialize from.</param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="bytesRead">The number of bytes read.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
@@ -324,7 +324,7 @@ namespace MessagePack
         /// The entire stream will be read, and the first msgpack token deserialized will be returned.
         /// If <see cref="Stream.CanSeek"/> is true on the stream, its position will be set to just after the last deserialized byte.
         /// </param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
@@ -373,7 +373,7 @@ namespace MessagePack
         /// The entire stream will be read, and the first msgpack token deserialized will be returned.
         /// If <see cref="Stream.CanSeek"/> is true on the stream, its position will be set to just after the last deserialized byte.
         /// </param>
-        /// <param name="options">The options. Use <c>null</c> to use default options.</param>
+        /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>

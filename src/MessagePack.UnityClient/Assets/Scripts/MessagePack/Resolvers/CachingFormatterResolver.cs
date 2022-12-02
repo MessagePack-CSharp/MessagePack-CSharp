@@ -32,7 +32,7 @@ namespace MessagePack.Resolvers
         /// Looks up a formatter for a type that has not been previously cached.
         /// </summary>
         /// <typeparam name="T">The type to be formatted.</typeparam>
-        /// <returns>The formatter to use, or <c>null</c> if none found.</returns>
+        /// <returns>The formatter to use, or <see langword="null"/> if none found.</returns>
         protected abstract IMessagePackFormatter<T> GetFormatterCore<T>();
     }
 }
