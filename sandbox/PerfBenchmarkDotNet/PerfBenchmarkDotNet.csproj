@@ -15,7 +15,7 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" version="0.11.4" />
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.11.4" />
-    <PackageReference Include="Hyperion" version="0.9.6" />
+    <PackageReference Include="Hyperion" version="0.9.11" />
     <PackageReference Include="Jil" version="2.15.4" />
     <PackageReference Include="MessagePack" version="1.4.3" />
     <PackageReference Include="MsgPack.Cli" version="0.9.0-rc1" />
