@@ -1,7 +1,7 @@
 {
   "sdk": {
     "version": "6.0.300",
-    "rollForward": "patch",
+    "rollForward": "feature",
     "allowPrerelease": false
   }
 }
