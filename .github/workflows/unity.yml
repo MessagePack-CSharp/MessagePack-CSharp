@@ -24,6 +24,10 @@ jobs:
         global-json-file: global.json
     - name: copy assets
       run: src/MessagePack.UnityClient/copy_assets.sh
+    - uses: actions/cache@v2
+      with:
+        path: src/MessagePack.UnityClient
+        key: MessagePack-ubuntu
     - name: build
       uses: game-ci/unity-builder@v2
       env:
