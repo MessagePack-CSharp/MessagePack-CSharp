@@ -62,7 +62,7 @@ stages:
     - bash: |
           git add -u . # compare after applying git EOL normalization
           git diff --cached --exit-code --stat \
-          || (echo "##[error] found changed files after build. please 'azure-pipelines/codegen.ps1'" \
+          || (echo "##[error] found changed files after build. Please run 'sandbox/codegen.ps1'" \
                   "and check in all changes" \
               && git diff --cached \
               && exit 1)
