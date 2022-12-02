@@ -106,7 +106,7 @@ namespace MessagePackAnalyzer
             { "Reactive.Bindings.ReactiveCollection<>", "global::MessagePack.ReactivePropertyExtension.ReactiveCollectionFormatter<TREPLACE>" },
         };
 
-        private HashSet<ITypeSymbol> alreadyCollected = new HashSet<ITypeSymbol>();
+        private HashSet<ITypeSymbol> alreadyCollected = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
 
         public DiagnosticsReportContext ReportContext { get; set; }
 
@@ -183,29 +183,28 @@ namespace MessagePackAnalyzer
         {
             var isClass = !type.IsValueType;
 
-            AttributeData formatterAttr = type.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.FormatterAttribute));
-            if (formatterAttr != null)
+            AttributeData? formatterAttr = type.GetAttributes().FirstOrDefault(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.FormatterAttribute));
+            if (formatterAttr is not null && formatterAttr.ConstructorArguments[0].Value is ITypeSymbol formatterType)
             {
                 // Validate that the typed formatter is actually of `IMessagePackFormatter`
-                var formatterType = (ITypeSymbol)formatterAttr.ConstructorArguments[0].Value;
-                var isMessagePackFormatter = formatterType.AllInterfaces.Any(x => x.Equals(this.typeReferences.MessagePackFormatter));
+                bool isMessagePackFormatter = formatterType.AllInterfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, this.typeReferences.MessagePackFormatter)) is true;
                 if (!isMessagePackFormatter)
                 {
-                    var location = formatterAttr.ApplicationSyntaxReference.SyntaxTree.GetLocation(formatterAttr.ApplicationSyntaxReference.Span);
-                    var typeInfo = ImmutableDictionary.Create<string, string>().Add("type", formatterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    var location = formatterAttr.ApplicationSyntaxReference?.SyntaxTree.GetLocation(formatterAttr.ApplicationSyntaxReference.Span);
+                    var typeInfo = ImmutableDictionary.Create<string, string?>().Add("type", formatterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                     this.ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.MessageFormatterMustBeMessagePackFormatter, location, typeInfo));
                 }
 
                 return;
             }
 
-            AttributeData contractAttr = type.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.MessagePackObjectAttribute));
+            AttributeData? contractAttr = type.GetAttributes().FirstOrDefault(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.MessagePackObjectAttribute));
             if (contractAttr == null)
             {
                 Location location = callerSymbol != null ? callerSymbol.Locations[0] : type.Locations[0];
                 var targetName = callerSymbol != null ? callerSymbol.ContainingType.Name + "." + callerSymbol.Name : type.Name;
 
-                ImmutableDictionary<string, string> typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                ImmutableDictionary<string, string?> typeInfo = ImmutableDictionary.Create<string, string?>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                 this.ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.TypeMustBeMessagePackObject, location, typeInfo, targetName));
                 return;
             }
@@ -214,14 +213,14 @@ namespace MessagePackAnalyzer
             var intMembers = new HashSet<int>();
             var stringMembers = new HashSet<string>();
 
-            if ((bool)contractAttr.ConstructorArguments[0].Value)
+            if (contractAttr.ConstructorArguments[0].Value is true)
             {
                 // Opt-out: All public members are serialize target except [Ignore] member.
                 isIntKey = false;
 
                 foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
+                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
                     {
                         continue;
                     }
@@ -240,7 +239,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
+                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
                     {
                         continue;
                     }
@@ -269,7 +268,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
+                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
                     {
                         continue;
                     }
@@ -282,10 +281,10 @@ namespace MessagePackAnalyzer
                         continue;
                     }
 
-                    TypedConstant? key = item.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
+                    TypedConstant? key = item.GetAttributes().FirstOrDefault(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                     if (key == null)
                     {
-                        ImmutableDictionary<string, string> typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        ImmutableDictionary<string, string?> typeInfo = ImmutableDictionary.Create<string, string?>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         this.ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.PublicMemberNeedsKey, item.Locations[0], typeInfo, type.Name, item.Name));
                         continue;
                     }
@@ -338,7 +337,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
+                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
                     {
                         continue;
                     }
@@ -356,10 +355,10 @@ namespace MessagePackAnalyzer
                         continue;
                     }
 
-                    TypedConstant? key = item.GetAttributes().FirstOrDefault(x => Equals(x.AttributeClass, this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
+                    TypedConstant? key = item.GetAttributes().FirstOrDefault(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.KeyAttribute))?.ConstructorArguments[0];
                     if (key == null)
                     {
-                        ImmutableDictionary<string, string> typeInfo = ImmutableDictionary.Create<string, string>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        ImmutableDictionary<string, string?> typeInfo = ImmutableDictionary.Create<string, string?>().Add("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                         this.ReportContext.Add(Diagnostic.Create(MessagePackAnalyzer.PublicMemberNeedsKey, item.Locations[0], typeInfo, type.Name, item.Name));
                         continue;
                     }

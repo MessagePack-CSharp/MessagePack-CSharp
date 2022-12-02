@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net472;net5.0</TargetFrameworks>
+    <TargetFrameworks>net472;net7.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
@@ -13,17 +13,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" version="0.11.4" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.11.4" />
-    <PackageReference Include="Hyperion" version="0.9.6" />
-    <PackageReference Include="Jil" version="2.15.4" />
+    <PackageReference Include="BenchmarkDotNet" version="0.13.2" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.2" />
+    <PackageReference Include="Hyperion" version="0.12.2" />
+    <PackageReference Include="Jil" version="2.17.0" />
     <PackageReference Include="MessagePack" version="1.4.3" />
     <PackageReference Include="MsgPack.Cli" version="0.9.0-rc1" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.8.57" />
-    <PackageReference Include="Newtonsoft.Json" version="10.0.3" />
-    <PackageReference Include="protobuf-net" version="2.3.2" />
-    <PackageReference Include="RandomFixtureKit" Version="1.0.0" />
-    <PackageReference Include="Sigil" version="4.7.0" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.9.112" />
+    <PackageReference Include="Newtonsoft.Json" version="13.0.2" />
+    <PackageReference Include="protobuf-net" version="3.1.25" />
+    <PackageReference Include="RandomFixtureKit" Version="1.0.1" />
+    <PackageReference Include="Sigil" version="5.0.0" />
     <PackageReference Include="ZeroFormatter" version="1.6.4" />
   </ItemGroup>
   <ItemGroup>

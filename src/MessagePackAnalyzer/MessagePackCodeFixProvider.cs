@@ -42,11 +42,11 @@ namespace MessagePackAnalyzer
                 return;
             }
 
-            SemanticModel model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
+            SemanticModel? model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
 
             var typeInfo = context.Diagnostics[0]?.Properties.GetValueOrDefault("type", null);
-            INamedTypeSymbol? namedSymbol = (typeInfo != null)
-                ? model.Compilation.GetTypeByMetadataName(typeInfo.Replace("global::", string.Empty))
+            INamedTypeSymbol? namedSymbol = typeInfo is not null
+                ? model?.Compilation.GetTypeByMetadataName(typeInfo.Replace("global::", string.Empty))
                 : null;
 
             if (namedSymbol is null)
@@ -91,13 +91,13 @@ namespace MessagePackAnalyzer
                     {
                         targetType = (property != null)
                             ? (model.GetDeclaredSymbol(property) as IPropertySymbol)?.Type
-                            : (model.GetDeclaredSymbol(field) as IFieldSymbol)?.Type;
+                            : (model.GetDeclaredSymbol(field!) as IFieldSymbol)?.Type;
                     }
                     else
                     {
                         targetType = (property != null)
                             ? (model.GetDeclaredSymbol(property) as IPropertySymbol)?.ContainingType
-                            : (model.GetDeclaredSymbol(field) as IFieldSymbol)?.ContainingType;
+                            : (model.GetDeclaredSymbol(field!) as IFieldSymbol)?.ContainingType;
                     }
                 }
 

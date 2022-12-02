@@ -2,18 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.VisualBasic;
 using Microsoft.CodeAnalysis.VisualBasic.Testing;
+using Xunit;
 
 public static partial class VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix>
 {
@@ -26,7 +24,8 @@ public static partial class VisualBasicCodeFixVerifier<TAnalyzer, TCodeFix>
 
             this.SolutionTransforms.Add((solution, projectId) =>
             {
-                var parseOptions = (VisualBasicParseOptions)solution.GetProject(projectId).ParseOptions;
+                var parseOptions = (VisualBasicParseOptions?)solution.GetProject(projectId)?.ParseOptions;
+                Assert.NotNull(parseOptions);
                 solution = solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(LanguageVersion.VisualBasic15_5));
 
                 return solution;
