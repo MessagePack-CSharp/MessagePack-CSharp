@@ -167,3 +167,5 @@ csharp_new_line_before_members_in_anonymous_types = true
 
 # Blocks are allowed
 csharp_prefer_braces = true:silent
+
+dotnet_diagnostic.RS0041.severity = suggestion
