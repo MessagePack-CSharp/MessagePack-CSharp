@@ -60,7 +60,7 @@ namespace MessagePackAnalyzer
             id: InvalidMessagePackObjectId,
             title: "MessagePackObject validation",
             category: Category,
-            messageFormat: "Invalid MessagePackObject definition. {0}", // details
+            messageFormat: "Invalid MessagePackObject definition: {0}", // details
             description: "Invalid MessagePackObject definition.",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
