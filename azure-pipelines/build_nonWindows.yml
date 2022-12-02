@@ -37,5 +37,5 @@ steps:
   inputs:
     command: test
     projects: tests/MessagePack.Generator.Tests/MessagePack.Generator.Tests.csproj
-    arguments: --no-build -c $(BuildConfiguration) -f netcoreapp3.1 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
-    testRunTitle: netcoreapp3.1-$(Agent.JobName)-Generator
+    arguments: --no-build -c $(BuildConfiguration) -f net7.0 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
+    testRunTitle: net7.0-$(Agent.JobName)-Generator
