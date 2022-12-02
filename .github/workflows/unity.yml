@@ -22,7 +22,7 @@ jobs:
     - name: build
       uses: game-ci/unity-builder@v2
       env:
-        UNITY_LICENSE: ${{ secrets[UNITY_LICENSE_2021] }}
+        UNITY_LICENSE: ${{ secrets['UNITY_LICENSE_2021'] }}
       with:
         projectPath: src/MessagePack.UnityClient
         unityVersion: 2021.3.11.f1
