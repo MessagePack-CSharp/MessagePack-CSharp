@@ -17,6 +17,9 @@ jobs:
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-dotnet@v3
+      with:
+        global-json-file: global.json
     - name: copy assets
       run: src/MessagePack.UnityClient/copy_assets.sh
     - name: build
