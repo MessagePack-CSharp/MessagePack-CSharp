@@ -13,8 +13,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" version="0.12.1" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.12.1" />
+    <PackageReference Include="BenchmarkDotNet" version="0.13.2" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.2" />
     <PackageReference Include="Hyperion" version="0.9.11" />
     <PackageReference Include="Jil" version="2.17.0" />
     <PackageReference Include="MessagePack" version="1.4.3" />

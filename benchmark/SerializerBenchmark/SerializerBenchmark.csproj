@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
     <PackageReference Include="Ceras" Version="4.1.7" />
     <PackageReference Include="FsPickler" Version="5.2.2" />
     <PackageReference Include="Hyperion" Version="0.9.11" />
