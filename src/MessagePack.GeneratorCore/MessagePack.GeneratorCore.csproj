@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.0.1" />
-    <PackageReference Include="System.CodeDom" Version="6.0.0" />
+    <PackageReference Include="System.CodeDom" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
