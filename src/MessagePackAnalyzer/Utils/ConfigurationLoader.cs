@@ -21,7 +21,7 @@ namespace MessagePackAnalyzer
                 try
                 {
                     var l = new List<string>();
-                    var raw = config.GetText().ToString();
+                    var raw = config.GetText()?.ToString() ?? string.Empty;
                     using (var sr = new StringReader(raw))
                     using (var tr = new TinyJsonReader(sr))
                     {
