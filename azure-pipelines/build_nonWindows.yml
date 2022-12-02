@@ -14,14 +14,6 @@ steps:
     testRunTitle: netcoreapp3.1-$(Agent.JobName)
 
 - task: DotNetCoreCLI@2
-  displayName: Run MessagePack.Tests (net5.0)
-  inputs:
-    command: test
-    projects: tests/MessagePack.Tests/MessagePack.Tests.csproj
-    arguments: --no-build -c $(BuildConfiguration) -f net5.0 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
-    testRunTitle: net5.0-$(Agent.JobName)
-
-- task: DotNetCoreCLI@2
   displayName: Run MessagePack.Tests (net6.0)
   inputs:
     command: test
