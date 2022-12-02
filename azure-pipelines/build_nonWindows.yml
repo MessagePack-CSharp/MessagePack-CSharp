@@ -21,7 +21,7 @@ steps:
     arguments: --no-build -c $(BuildConfiguration) -f net6.0 -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     testRunTitle: net6.0-$(Agent.JobName)
 
-- bash: mono ~/.nuget/packages/xunit.runner.console/2.4.1/tools/net472/xunit.console.exe bin/MessagePack.Tests/$(BuildConfiguration)/net472/MessagePack.Tests.dll -html $(BUILD.ARTIFACTSTAGINGDIRECTORY)/build_logs/mono_testrun.html
+- bash: mono ~/.nuget/packages/xunit.runner.console/2.4.2/tools/net472/xunit.console.exe bin/MessagePack.Tests/$(BuildConfiguration)/net472/MessagePack.Tests.dll -html $(BUILD.ARTIFACTSTAGINGDIRECTORY)/build_logs/mono_testrun.html
   displayName: Run MessagePack.Tests (mono)
 
 - task: DotNetCoreCLI@2
