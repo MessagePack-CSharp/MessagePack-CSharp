@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - uses: actions/setup-dotnet@v3
       with:
         global-json-file: global.json
