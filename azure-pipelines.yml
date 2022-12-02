@@ -30,18 +30,6 @@ stages:
 
     - template: azure-pipelines/build.yml
 
-  - job: Unity
-    pool:
-      name: CustomAgents
-      demands:
-      - UNITYHUB_EDITORS_FOLDER_LOCATION
-      - UNITYVERSION -equals 2019.1
-    steps:
-    - checkout: self
-      clean: true
-    - template: azure-pipelines/install-dependencies.yml
-    - template: azure-pipelines/build_unity.yml
-
   - job: Linux
     pool:
       vmImage: ubuntu-20.04

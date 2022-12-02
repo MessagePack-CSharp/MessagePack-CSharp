@@ -13,7 +13,7 @@ IF NOT EXIST "%LogDirectory%" MD "%LogDirectory%"
 ECHO Log files will be created under "%LogDirectory%"
 
 echo on
-start "Unity PACKAGE" /wait "c:\Program Files\unity\editor\Unity.exe" -batchmode -quit -nographics -silent-crashes -noUpm -buildTarget standalone -projectPath "%~dp0\" -executeMethod PackageExport.Export -logfile "%LogDirectory%\unity_package.log"
+start "Unity PACKAGE" /wait "c:\Program Files\unity\editor\Unity.exe" -batchmode -quit -nographics -buildTarget standalone -projectPath "%~dp0\" -executeMethod PackageExport.Export -logfile "%LogDirectory%\unity_package.log"
 @IF ERRORLEVEL 1 (
     ECHO Package build FAILED
     exit /b %ERRORLEVEL%
