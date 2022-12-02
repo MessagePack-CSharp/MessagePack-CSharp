@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard1.3</TargetFramework>
-    <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
-    
+
     <IsPackable>true</IsPackable>
     <Description>Analyzer of MessagePack for C#, verify rule for [MessagePackObject] and code fix for [Key].</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Analyzer</PackageTags>

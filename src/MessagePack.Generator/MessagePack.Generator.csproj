@@ -4,7 +4,6 @@
     <AssemblyName>mpc</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
-    <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>

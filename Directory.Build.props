@@ -6,7 +6,7 @@
     <PackageOutputPath>$(MSBuildThisFileDirectory)bin\Packages\$(Configuration)\NuGet\</PackageOutputPath>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>10</LangVersion>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)MessagePack.ruleset</CodeAnalysisRuleSet>
 
