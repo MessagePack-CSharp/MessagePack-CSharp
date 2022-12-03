@@ -18,18 +18,18 @@ namespace MessagePack.ReactivePropertyExtension
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            internal static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)ReactivePropertyResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)ReactivePropertyResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -45,7 +45,7 @@ namespace MessagePack.ReactivePropertyExtension
               { typeof(ReactivePropertySlim<>), typeof(ReactivePropertySlimFormatter<>) },
         };
 
-        internal static object GetFormatter(Type t)
+        internal static object? GetFormatter(Type t)
         {
             if (t == typeof(Unit))
             {
@@ -71,7 +71,7 @@ namespace MessagePack.ReactivePropertyExtension
             return null;
         }
 
-        private static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
+        private static object? CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);
         }

@@ -6,7 +6,6 @@
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\opensource.snk</AssemblyOriginatorKeyFile>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
