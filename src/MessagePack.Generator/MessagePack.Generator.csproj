@@ -4,7 +4,6 @@
     <AssemblyName>mpc</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-    <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>mpc</ToolCommandName>

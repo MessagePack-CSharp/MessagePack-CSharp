@@ -109,9 +109,9 @@ namespace MessagePack.ReactivePropertyExtension
     }
 
     // [Mode, SchedulerId, Value] : length should be three.
-    public class ReactivePropertyFormatter<T> : IMessagePackFormatter<ReactiveProperty<T>>
+    public class ReactivePropertyFormatter<T> : IMessagePackFormatter<ReactiveProperty<T>?>
     {
-        public void Serialize(ref MessagePackWriter writer, ReactiveProperty<T> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, ReactiveProperty<T>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -127,7 +127,7 @@ namespace MessagePack.ReactivePropertyExtension
             }
         }
 
-        public ReactiveProperty<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public ReactiveProperty<T>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -332,9 +332,9 @@ namespace MessagePack.ReactivePropertyExtension
     }
 
     // [Mode, Value]
-    public class ReactivePropertySlimFormatter<T> : IMessagePackFormatter<ReactivePropertySlim<T>>
+    public class ReactivePropertySlimFormatter<T> : IMessagePackFormatter<ReactivePropertySlim<T>?>
     {
-        public void Serialize(ref MessagePackWriter writer, ReactivePropertySlim<T> value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, ReactivePropertySlim<T>? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -349,7 +349,7 @@ namespace MessagePack.ReactivePropertyExtension
             }
         }
 
-        public ReactivePropertySlim<T> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public ReactivePropertySlim<T>? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

@@ -199,12 +199,12 @@ namespace UnityEngine
     public sealed class AnimationCurve
     {
         [Key(0)]
-        public Keyframe[] keys;
+        public Keyframe[]? keys;
 
         [IgnoreMember]
         public int length
         {
-            get { return this.keys.Length; }
+            get { return this.keys?.Length ?? 0; }
         }
 
         [Key(1)]
@@ -298,10 +298,10 @@ namespace UnityEngine
     public sealed class Gradient
     {
         [Key(0)]
-        public GradientColorKey[] colorKeys;
+        public GradientColorKey[]? colorKeys;
 
         [Key(1)]
-        public GradientAlphaKey[] alphaKeys;
+        public GradientAlphaKey[]? alphaKeys;
 
         [Key(2)]
         public GradientMode mode;
