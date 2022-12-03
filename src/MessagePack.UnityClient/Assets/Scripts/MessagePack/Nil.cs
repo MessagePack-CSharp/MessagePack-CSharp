@@ -20,7 +20,7 @@ namespace MessagePack
 
         public static bool operator !=(Nil left, Nil right) => false;
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Nil;
         }

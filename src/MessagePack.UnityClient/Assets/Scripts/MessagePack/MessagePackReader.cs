@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -145,7 +146,7 @@ namespace MessagePack
         /// <summary>
         /// Advances the reader to the next MessagePack primitive to be read.
         /// </summary>
-        /// <returns><c>true</c> if the entire structure beginning at the current <see cref="Position"/> is found in the <see cref="Sequence"/>; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if the entire structure beginning at the current <see cref="Position"/> is found in the <see cref="Sequence"/>; <see langword="false"/> otherwise.</returns>
         /// <remarks>
         /// The entire primitive is skipped, including content of maps or arrays, or any other type with payloads.
         /// To get the raw MessagePack sequence that was skipped, use <see cref="ReadRaw()"/> instead.
@@ -246,7 +247,7 @@ namespace MessagePack
         /// <summary>
         /// Reads nil if it is the next token.
         /// </summary>
-        /// <returns><c>true</c> if the next token was nil; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if the next token was nil; <see langword="false"/> otherwise.</returns>
         /// <exception cref="EndOfStreamException">Thrown if the end of the sequence provided to the constructor is reached before the expected end of the data.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryReadNil()
@@ -324,10 +325,10 @@ namespace MessagePack
         /// if there is sufficient buffer to read it.
         /// </summary>
         /// <param name="count">Receives the number of elements in the array if the entire array header could be read.</param>
-        /// <returns><c>true</c> if there was sufficient buffer and an array header was found; <c>false</c> if the buffer incompletely describes an array header.</returns>
+        /// <returns><see langword="true"/> if there was sufficient buffer and an array header was found; <see langword="false"/> if the buffer incompletely describes an array header.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown if a code other than an array header is encountered.</exception>
         /// <remarks>
-        /// When this method returns <c>false</c> the position of the reader is left in an undefined position.
+        /// When this method returns <see langword="false"/> the position of the reader is left in an undefined position.
         /// The caller is expected to recreate the reader (presumably with a longer sequence to read from) before continuing.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -402,10 +403,10 @@ namespace MessagePack
         /// if there is sufficient buffer to read it.
         /// </summary>
         /// <param name="count">Receives the number of key=value pairs in the map if the entire map header can be read.</param>
-        /// <returns><c>true</c> if there was sufficient buffer and a map header was found; <c>false</c> if the buffer incompletely describes an map header.</returns>
+        /// <returns><see langword="true"/> if there was sufficient buffer and a map header was found; <see langword="false"/> if the buffer incompletely describes an map header.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown if a code other than an map header is encountered.</exception>
         /// <remarks>
-        /// When this method returns <c>false</c> the position of the reader is left in an undefined position.
+        /// When this method returns <see langword="false"/> the position of the reader is left in an undefined position.
         /// The caller is expected to recreate the reader (presumably with a longer sequence to read from) before continuing.
         /// </remarks>
         public bool TryReadMapHeader(out int count)
@@ -663,7 +664,7 @@ namespace MessagePack
         /// or something between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
         /// <returns>
-        /// A sequence of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
+        /// A sequence of bytes, or <see langword="null"/> if the read token is <see cref="MessagePackCode.Nil"/>.
         /// The data is a slice from the original sequence passed to this reader's constructor.
         /// </returns>
         public ReadOnlySequence<byte>? ReadBytes()
@@ -688,7 +689,7 @@ namespace MessagePack
         /// or a code between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
         /// <returns>
-        /// The sequence of bytes, or <c>null</c> if the read token is <see cref="MessagePackCode.Nil"/>.
+        /// The sequence of bytes, or <see langword="null"/> if the read token is <see cref="MessagePackCode.Nil"/>.
         /// The data is a slice from the original sequence passed to this reader's constructor.
         /// </returns>
         public ReadOnlySequence<byte>? ReadStringSequence()
@@ -714,12 +715,12 @@ namespace MessagePack
         /// </summary>
         /// <param name="span">Receives the span to the string.</param>
         /// <returns>
-        /// <c>true</c> if the string is contiguous in memory such that it could be set as a single span.
-        /// <c>false</c> if the read token is <see cref="MessagePackCode.Nil"/> or the string is not in a contiguous span.
+        /// <see langword="true"/> if the string is contiguous in memory such that it could be set as a single span.
+        /// <see langword="false"/> if the read token is <see cref="MessagePackCode.Nil"/> or the string is not in a contiguous span.
         /// </returns>
         /// <remarks>
-        /// Callers should generally be prepared for a <c>false</c> result and failover to calling <see cref="ReadStringSequence"/>
-        /// which can represent a <c>null</c> result and handle strings that are not contiguous in memory.
+        /// Callers should generally be prepared for a <see langword="false"/> result and failover to calling <see cref="ReadStringSequence"/>
+        /// which can represent a <see langword="null"/> result and handle strings that are not contiguous in memory.
         /// </remarks>
         public bool TryReadStringSpan(out ReadOnlySpan<byte> span)
         {
@@ -754,9 +755,9 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Str32"/>,
         /// or a code between <see cref="MessagePackCode.MinFixStr"/> and <see cref="MessagePackCode.MaxFixStr"/>.
         /// </summary>
-        /// <returns>A string, or <c>null</c> if the current msgpack token is <see cref="MessagePackCode.Nil"/>.</returns>
+        /// <returns>A string, or <see langword="null"/> if the current msgpack token is <see cref="MessagePackCode.Nil"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string ReadString()
+        public string? ReadString()
         {
             if (this.TryReadNil())
             {
@@ -824,7 +825,7 @@ namespace MessagePack
         /// <returns>The number of key=value pairs in the map.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown if a code other than an extension format header is encountered.</exception>
         /// <remarks>
-        /// When this method returns <c>false</c> the position of the reader is left in an undefined position.
+        /// When this method returns <see langword="false"/> the position of the reader is left in an undefined position.
         /// The caller is expected to recreate the reader (presumably with a longer sequence to read from) before continuing.
         /// </remarks>
         public bool TryReadExtensionFormatHeader(out ExtensionHeader extensionHeader)
@@ -937,6 +938,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="code">The code that was encountered.</param>
         /// <returns>Nothing. This method always throws.</returns>
+        [DoesNotReturn]
         private static Exception ThrowInvalidCode(byte code)
         {
             throw new MessagePackSerializationException(string.Format("Unexpected msgpack code {0} ({1}) encountered.", code, MessagePackCode.ToFormatName(code)));
@@ -946,7 +948,7 @@ namespace MessagePack
         /// Throws <see cref="EndOfStreamException"/> if a condition is false.
         /// </summary>
         /// <param name="condition">A boolean value.</param>
-        /// <exception cref="EndOfStreamException">Thrown if <paramref name="condition"/> is <c>false</c>.</exception>
+        /// <exception cref="EndOfStreamException">Thrown if <paramref name="condition"/> is <see langword="false"/>.</exception>
         private static void ThrowInsufficientBufferUnless(bool condition)
         {
             if (!condition)
@@ -1016,7 +1018,7 @@ namespace MessagePack
         /// Gets the length of the next string.
         /// </summary>
         /// <param name="length">Receives the length of the next string, if there were enough bytes to read it.</param>
-        /// <returns><c>true</c> if there were enough bytes to read the length of the next string; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if there were enough bytes to read the length of the next string; <see langword="false"/> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryGetStringLengthInBytes(out int length)
         {

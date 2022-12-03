@@ -21,7 +21,7 @@ namespace MessagePack.Internal
     /// This code is used by dynamically generated code as well as AOT generated code,
     /// and thus must be public for the "C# generated and compiled into saved assembly" scenario.
     /// </remarks>
-    public class AutomataDictionary : IEnumerable<KeyValuePair<string, int>>
+    public class AutomataDictionary : IEnumerable<KeyValuePair<string?, int>>
     {
         private readonly AutomataNode root;
 
@@ -54,7 +54,7 @@ namespace MessagePack.Internal
 
         public bool TryGetValue(ReadOnlySpan<byte> bytes, out int value)
         {
-            AutomataNode node = this.root;
+            AutomataNode? node = this.root;
 
             while (bytes.Length > 0 && node != null)
             {
@@ -108,21 +108,21 @@ namespace MessagePack.Internal
             return this.GetEnumerator();
         }
 
-        public IEnumerator<KeyValuePair<string, int>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string?, int>> GetEnumerator()
         {
             return YieldCore(this.root.YieldChildren()).GetEnumerator();
         }
 
-        private static IEnumerable<KeyValuePair<string, int>> YieldCore(IEnumerable<AutomataNode> nexts)
+        private static IEnumerable<KeyValuePair<string?, int>> YieldCore(IEnumerable<AutomataNode> nexts)
         {
             foreach (AutomataNode item in nexts)
             {
                 if (item.Value != -1)
                 {
-                    yield return new KeyValuePair<string, int>(item.OriginalKey, item.Value);
+                    yield return new KeyValuePair<string?, int>(item.OriginalKey, item.Value);
                 }
 
-                foreach (KeyValuePair<string, int> x in YieldCore(item.YieldChildren()))
+                foreach (KeyValuePair<string?, int> x in YieldCore(item.YieldChildren()))
                 {
                     yield return x;
                 }
@@ -133,7 +133,7 @@ namespace MessagePack.Internal
 
 #if !NET_STANDARD_2_0
 
-        public void EmitMatch(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
+        public void EmitMatch(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string?, int>> onFound, Action onNotFound)
         {
             this.root.EmitSearchNext(il, bytesSpan, key, onFound, onNotFound);
         }
@@ -145,7 +145,7 @@ namespace MessagePack.Internal
 #pragma warning disable SA1401 // Fields should be private
             internal ulong Key;
             internal int Value;
-            internal string OriginalKey;
+            internal string? OriginalKey;
 #pragma warning restore SA1401 // Fields should be private
 
             private AutomataNode[] nexts;
@@ -201,7 +201,7 @@ namespace MessagePack.Internal
                 return v;
             }
 
-            public AutomataNode SearchNext(ref ReadOnlySpan<byte> value)
+            public AutomataNode? SearchNext(ref ReadOnlySpan<byte> value)
             {
                 var key = AutomataKeyGen.GetKey(ref value);
                 if (this.count < 4)
@@ -269,9 +269,9 @@ namespace MessagePack.Internal
                 return ~lo;
             }
 
-            public int CompareTo(AutomataNode other)
+            public int CompareTo(AutomataNode? other)
             {
-                return this.Key.CompareTo(other.Key);
+                return this.Key.CompareTo(other?.Key);
             }
 
             public IEnumerable<AutomataNode> YieldChildren()
@@ -285,7 +285,7 @@ namespace MessagePack.Internal
 #if !NET_STANDARD_2_0
 
             // SearchNext(ref ReadOnlySpan<byte> bytes)
-            public void EmitSearchNext(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound)
+            public void EmitSearchNext(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string?, int>> onFound, Action onNotFound)
             {
                 // key = AutomataKeyGen.GetKey(ref bytesSpan);
                 il.EmitLdloca(bytesSpan);
@@ -296,7 +296,7 @@ namespace MessagePack.Internal
                 EmitSearchNextCore(il, bytesSpan, key, onFound, onNotFound, this.nexts, this.count);
             }
 
-            private static void EmitSearchNextCore(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string, int>> onFound, Action onNotFound, AutomataNode[] nexts, int count)
+            private static void EmitSearchNextCore(ILGenerator il, LocalBuilder bytesSpan, LocalBuilder key, Action<KeyValuePair<string?, int>> onFound, Action onNotFound, AutomataNode[] nexts, int count)
             {
                 if (count < 4)
                 {
@@ -309,7 +309,7 @@ namespace MessagePack.Internal
                     {
                               // bytesSpan.Length
                         il.EmitLdloca(bytesSpan);
-                        il.EmitCall(typeof(ReadOnlySpan<byte>).GetRuntimeProperty(nameof(ReadOnlySpan<byte>.Length)).GetMethod);
+                        il.EmitCall(typeof(ReadOnlySpan<byte>).GetRuntimeProperty(nameof(ReadOnlySpan<byte>.Length))!.GetMethod!);
                         if (childrenExists.Length != 0 && valueExists.Length == 0)
                         {
                             il.Emit(OpCodes.Brfalse, gotoNotFound); // if(bytesSpan.Length == 0)
@@ -335,7 +335,7 @@ namespace MessagePack.Internal
                             il.Emit(OpCodes.Bne_Un, notFoundLabel);
 
                             // found
-                            onFound(new KeyValuePair<string, int>(valueExists[i].OriginalKey, valueExists[i].Value));
+                            onFound(new KeyValuePair<string?, int>(valueExists[i].OriginalKey, valueExists[i].Value));
 
                             // notfound
                             il.MarkLabel(notFoundLabel);
@@ -414,7 +414,7 @@ namespace MessagePack.Internal
     /// </remarks>
     public static class AutomataKeyGen
     {
-        public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod(nameof(GetKey), new[] { typeof(ReadOnlySpan<byte>).MakeByRefType() });
+        public static readonly MethodInfo GetKeyMethod = typeof(AutomataKeyGen).GetRuntimeMethod(nameof(GetKey), new[] { typeof(ReadOnlySpan<byte>).MakeByRefType() }) ?? throw new Exception("Unable to find our own APIs.");
 
         public static ulong GetKey(ref ReadOnlySpan<byte> span)
         {

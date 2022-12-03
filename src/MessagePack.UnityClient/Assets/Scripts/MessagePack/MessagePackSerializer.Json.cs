@@ -19,7 +19,7 @@ namespace MessagePack
         /// Serialize an object to JSON string.
         /// </summary>
         /// <exception cref="MessagePackSerializationException">Thrown if an error occurs during serialization.</exception>
-        public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static void SerializeToJson<T>(TextWriter textWriter, T obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             options = options ?? DefaultOptions;
 
@@ -43,7 +43,7 @@ namespace MessagePack
         /// Serialize an object to JSON string.
         /// </summary>
         /// <exception cref="MessagePackSerializationException">Thrown if an error occurs during serialization.</exception>
-        public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static string SerializeToJson<T>(T obj, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             var writer = new StringWriter();
             SerializeToJson(writer, obj, options, cancellationToken);
@@ -54,13 +54,13 @@ namespace MessagePack
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
         /// <exception cref="MessagePackSerializationException">Thrown if an error occurs while reading the messagepack data or writing out the JSON.</exception>
-        public static string ConvertToJson(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default) => ConvertToJson(new ReadOnlySequence<byte>(bytes), options, cancellationToken);
+        public static string ConvertToJson(ReadOnlyMemory<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default) => ConvertToJson(new ReadOnlySequence<byte>(bytes), options, cancellationToken);
 
         /// <summary>
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
         /// <exception cref="MessagePackSerializationException">Thrown if an error occurs while reading the messagepack data or writing out the JSON.</exception>
-        public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static string ConvertToJson(in ReadOnlySequence<byte> bytes, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             var jsonWriter = new StringWriter();
             var reader = new MessagePackReader(bytes)
@@ -75,7 +75,7 @@ namespace MessagePack
         /// Convert a message-pack binary to a JSON string.
         /// </summary>
         /// <exception cref="MessagePackSerializationException">Thrown if an error occurs while reading the messagepack data or writing out the JSON.</exception>
-        public static void ConvertToJson(ref MessagePackReader reader, TextWriter jsonWriter, MessagePackSerializerOptions options = null)
+        public static void ConvertToJson(ref MessagePackReader reader, TextWriter jsonWriter, MessagePackSerializerOptions? options = null)
         {
             if (reader.End)
             {
@@ -122,7 +122,7 @@ namespace MessagePack
         /// <summary>
         /// Translates the given JSON to MessagePack.
         /// </summary>
-        public static void ConvertFromJson(string str, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
+        public static void ConvertFromJson(string str, ref MessagePackWriter writer, MessagePackSerializerOptions? options = null)
         {
             using (var sr = new StringReader(str))
             {
@@ -133,7 +133,7 @@ namespace MessagePack
         /// <summary>
         /// Translates the given JSON to MessagePack.
         /// </summary>
-        public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static byte[] ConvertFromJson(string str, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             options = options ?? DefaultOptions;
 
@@ -156,7 +156,7 @@ namespace MessagePack
         /// <summary>
         /// Translates the given JSON to MessagePack.
         /// </summary>
-        public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions options = null)
+        public static void ConvertFromJson(TextReader reader, ref MessagePackWriter writer, MessagePackSerializerOptions? options = null)
         {
             options = options ?? DefaultOptions;
 
@@ -241,7 +241,7 @@ namespace MessagePack
                         }
                         else if (v == ValueType.Decimal)
                         {
-                            DecimalFormatter.Instance.Serialize(ref writer, jr.DecimalValue, null);
+                            DecimalFormatter.Instance.Serialize(ref writer, jr.DecimalValue, options);
                         }
 
                         count++;
@@ -301,11 +301,11 @@ namespace MessagePack
 
                     break;
                 case MessagePackType.String:
-                    WriteJsonString(reader.ReadString(), writer);
+                    WriteJsonString(reader.ReadString()!, writer);
                     break;
                 case MessagePackType.Binary:
                     ArraySegment<byte> segment = ByteArraySegmentFormatter.Instance.Deserialize(ref reader, options);
-                    writer.Write("\"" + Convert.ToBase64String(segment.Array, segment.Offset, segment.Count) + "\"");
+                    writer.Write("\"" + Convert.ToBase64String(segment.Array ?? Array.Empty<byte>(), segment.Offset, segment.Count) + "\"");
                     break;
                 case MessagePackType.Array:
                     {

@@ -6,15 +6,15 @@ using System.Dynamic;
 
 namespace MessagePack.Formatters
 {
-    public class ExpandoObjectFormatter : IMessagePackFormatter<ExpandoObject>
+    public class ExpandoObjectFormatter : IMessagePackFormatter<ExpandoObject?>
     {
-        public static readonly IMessagePackFormatter<ExpandoObject> Instance = new ExpandoObjectFormatter();
+        public static readonly IMessagePackFormatter<ExpandoObject?> Instance = new ExpandoObjectFormatter();
 
         private ExpandoObjectFormatter()
         {
         }
 
-        public ExpandoObject Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public ExpandoObject? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -28,7 +28,7 @@ namespace MessagePack.Formatters
                 IFormatterResolver resolver = options.Resolver;
                 IMessagePackFormatter<string> keyFormatter = resolver.GetFormatterWithVerify<string>();
                 IMessagePackFormatter<object> valueFormatter = resolver.GetFormatterWithVerify<object>();
-                IDictionary<string, object> dictionary = result;
+                IDictionary<string, object?> dictionary = result;
 
                 options.Security.DepthStep(ref reader);
                 try
@@ -49,11 +49,17 @@ namespace MessagePack.Formatters
             return result;
         }
 
-        public void Serialize(ref MessagePackWriter writer, ExpandoObject value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, ExpandoObject? value, MessagePackSerializerOptions options)
         {
-            var dict = (IDictionary<string, object>)value;
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var dict = (IDictionary<string, object?>)value;
             var keyFormatter = options.Resolver.GetFormatterWithVerify<string>();
-            var valueFormatter = options.Resolver.GetFormatterWithVerify<object>();
+            var valueFormatter = options.Resolver.GetFormatterWithVerify<object?>();
 
             writer.WriteMapHeader(dict.Count);
             foreach (var item in dict)

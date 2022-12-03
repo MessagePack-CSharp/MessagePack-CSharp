@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <NoWarn>$(NoWarn);CS0649</NoWarn>
+    <Nullable>enable</Nullable>
     <RootNamespace>MessagePack</RootNamespace>
 
     <IsPackable>true</IsPackable>

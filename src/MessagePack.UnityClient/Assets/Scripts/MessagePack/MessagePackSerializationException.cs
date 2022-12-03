@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MessagePack
 {
@@ -27,7 +28,7 @@ namespace MessagePack
         /// Initializes a new instance of the <see cref="MessagePackSerializationException"/> class.
         /// </summary>
         /// <param name="message">The exception message.</param>
-        public MessagePackSerializationException(string message)
+        public MessagePackSerializationException(string? message)
             : base(message)
         {
         }
@@ -37,7 +38,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="message">The exception message.</param>
         /// <param name="inner">The inner exception.</param>
-        public MessagePackSerializationException(string message, Exception inner)
+        public MessagePackSerializationException(string? message, Exception? inner)
             : base(message, inner)
         {
         }
@@ -53,5 +54,8 @@ namespace MessagePack
             : base(info, context)
         {
         }
+
+        [DoesNotReturn]
+        internal static Exception ThrowUnexpectedNilWhileDeserializing<T>() => throw new MessagePackSerializationException("Unexpected nil encountered while deserializing " + typeof(T).FullName);
     }
 }

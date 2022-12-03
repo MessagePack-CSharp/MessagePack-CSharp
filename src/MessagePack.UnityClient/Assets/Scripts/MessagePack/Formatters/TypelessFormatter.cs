@@ -3,6 +3,8 @@
 
 #if !UNITY_2018_3_OR_NEWER
 
+#nullable disable
+
 using System;
 using System.Buffers;
 using System.Collections;

@@ -22,21 +22,21 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
 #if UNITY_2018_3_OR_NEWER && !NETFX_CORE
-                var attr = (MessagePackFormatterAttribute)typeof(T).GetCustomAttributes(typeof(MessagePackFormatterAttribute), true).FirstOrDefault();
+                MessagePackFormatterAttribute? attr = (MessagePackFormatterAttribute?)typeof(T).GetCustomAttributes(typeof(MessagePackFormatterAttribute), true).FirstOrDefault();
 #else
-                MessagePackFormatterAttribute attr = typeof(T).GetTypeInfo().GetCustomAttribute<MessagePackFormatterAttribute>();
+                MessagePackFormatterAttribute? attr = typeof(T).GetTypeInfo().GetCustomAttribute<MessagePackFormatterAttribute>();
 #endif
                 if (attr == null)
                 {

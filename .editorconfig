@@ -1,4 +1,4 @@
-﻿# EditorConfig is awesome:http://EditorConfig.org
+# EditorConfig is awesome:http://EditorConfig.org
 
 # top-most EditorConfig file
 root = true
@@ -6,8 +6,6 @@ root = true
 # Don't use tabs for indentation.
 [*]
 indent_style = space
-insert_final_newline = true
-trim_trailing_whitespace = true
 
 # (Please don't specify an indent_size here; that has too many unintended consequences.)
 
@@ -18,18 +16,21 @@ indent_style = space
 # Code files
 [*.{cs,csx,vb,vbx,h,cpp,idl}]
 indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
 
 # Xml project files
-[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj,msbuildproj}]
 indent_size = 2
 
 # Xml config files
-[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct}]
+[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct,runsettings}]
 indent_size = 2
 
 # JSON files
 [*.json]
 indent_size = 2
+indent_style = space
 
 # Dotnet code style settings:
 [*.{cs,vb}]
@@ -167,3 +168,23 @@ csharp_new_line_before_members_in_anonymous_types = true
 
 # Blocks are allowed
 csharp_prefer_braces = true:silent
+
+dotnet_diagnostic.RS0041.severity = suggestion
+
+# SA1130: Use lambda syntax
+dotnet_diagnostic.SA1130.severity = silent
+
+# IDE1006: Naming Styles - StyleCop handles these for us
+dotnet_diagnostic.IDE1006.severity = none
+
+dotnet_diagnostic.DOC100.severity = silent
+dotnet_diagnostic.DOC104.severity = warning
+dotnet_diagnostic.DOC105.severity = warning
+dotnet_diagnostic.DOC106.severity = warning
+dotnet_diagnostic.DOC107.severity = warning
+dotnet_diagnostic.DOC108.severity = warning
+dotnet_diagnostic.DOC200.severity = warning
+dotnet_diagnostic.DOC202.severity = warning
+
+[*.sln]
+indent_style = tab

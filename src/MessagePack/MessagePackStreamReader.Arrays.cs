@@ -45,12 +45,12 @@ namespace MessagePack
         /// </summary>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>
-        /// A task whose result is the next whole data structure from the stream, or <c>null</c> if the stream ends.
+        /// A task whose result is the next whole data structure from the stream, or <see langword="null"/> if the stream ends.
         /// The returned sequence is valid until this <see cref="MessagePackStreamReader"/> is disposed or
         /// until this method is called again, whichever comes first.
         /// </returns>
         /// <remarks>
-        /// When <c>null</c> is the result of the returned task,
+        /// When <see langword="null"/> is the result of the returned task,
         /// any extra bytes read (between the last complete message and the end of the stream) will be available via the <see cref="RemainingBytes"/> property.
         /// </remarks>
         public async IAsyncEnumerable<ReadOnlySequence<byte>> ReadArrayAsync([EnumeratorCancellation] CancellationToken cancellationToken)
@@ -85,7 +85,7 @@ namespace MessagePack
         /// Reads an array header from <see cref="ReadData"/> if there are enough bytes to do so.
         /// </summary>
         /// <param name="length">Receives the length of the array, if its header could be read.</param>
-        /// <returns><c>true</c> if the array header was found and complete; <c>false</c> if there were insufficient bytes to read the header.</returns>
+        /// <returns><see langword="true"/> if the array header was found and complete; <see langword="false"/> if there were insufficient bytes to read the header.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown if the next msgpack structure is not an array header.</exception>
         private bool TryReadArrayHeader(out int length)
         {

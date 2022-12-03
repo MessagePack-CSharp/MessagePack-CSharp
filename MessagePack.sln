@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29108.181
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33201.384
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}"
 EndProject
@@ -44,6 +44,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestData2", "sandbox\TestDa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{301F812B-8AEE-4DC2-8009-4510F02294AD}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		azure-pipelines.yml = azure-pipelines.yml
 		azure-pipelines\build.yml = azure-pipelines\build.yml
 		Directory.Build.props = Directory.Build.props

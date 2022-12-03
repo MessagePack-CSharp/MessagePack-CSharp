@@ -99,7 +99,7 @@ namespace MessagePack.Internal
         /// </summary>
         /// <param name="sequence">The sequence.</param>
         /// <returns>The byte array or <see langword="null" /> .</returns>
-        public static byte[] GetArrayFromNullableSequence(in ReadOnlySequence<byte>? sequence) => sequence?.ToArray();
+        public static byte[]? GetArrayFromNullableSequence(in ReadOnlySequence<byte>? sequence) => sequence?.ToArray();
 
         private static ReadOnlySpan<byte> GetSpanFromSequence(in ReadOnlySequence<byte>? sequence)
         {

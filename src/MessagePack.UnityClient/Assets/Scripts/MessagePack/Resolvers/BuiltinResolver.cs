@@ -27,19 +27,19 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
                 // Reduce IL2CPP code generate size(don't write long code in <T>)
-                Formatter = (IMessagePackFormatter<T>)BuiltinResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)BuiltinResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -161,17 +161,16 @@ namespace MessagePack.Internal
 #endif
         };
 
-        internal static object GetFormatter(Type t)
+        internal static object? GetFormatter(Type t)
         {
-            object formatter;
-            if (FormatterMap.TryGetValue(t, out formatter))
+            if (FormatterMap.TryGetValue(t, out object? formatter))
             {
                 return formatter;
             }
 
             if (typeof(Type).IsAssignableFrom(t))
             {
-                return typeof(TypeFormatter<>).MakeGenericType(t).GetField(nameof(TypeFormatter<Type>.Instance)).GetValue(null);
+                return typeof(TypeFormatter<>).MakeGenericType(t).GetField(nameof(TypeFormatter<Type>.Instance))!.GetValue(null);
             }
 
             return null;
