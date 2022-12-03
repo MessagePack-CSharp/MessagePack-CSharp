@@ -66,7 +66,7 @@ namespace MessagePack.Resolvers
                     return;
                 }
 
-                Formatter = (IMessagePackFormatter<T>)(object)new EnumAsStringFormatter<T>();
+                Formatter = (IMessagePackFormatter<T>)Activator.CreateInstance(typeof(EnumAsStringFormatter<>).MakeGenericType(typeof(T)))!;
             }
         }
     }

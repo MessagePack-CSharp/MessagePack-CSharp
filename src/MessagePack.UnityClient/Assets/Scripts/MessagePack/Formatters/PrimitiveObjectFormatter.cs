@@ -175,10 +175,8 @@ namespace MessagePack.Formatters
                 {
                     // check IDictionary first
                     writer.WriteMapHeader(d.Count);
-                    System.Collections.IDictionaryEnumerator enumerator = d.GetEnumerator();
-                    while (enumerator.MoveNext())
+                    foreach (System.Collections.DictionaryEntry item in d.GetEntryEnumerator())
                     {
-                        System.Collections.DictionaryEntry item = enumerator.Entry;
                         this.Serialize(ref writer, item.Key, options);
                         this.Serialize(ref writer, item.Value, options);
                     }

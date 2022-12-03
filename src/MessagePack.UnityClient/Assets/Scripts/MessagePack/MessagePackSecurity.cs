@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#nullable disable
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -147,7 +145,7 @@ namespace MessagePack
         /// <returns>A hash collision resistant equality comparer.</returns>
         protected virtual IEqualityComparer<T> GetHashCollisionResistantEqualityComparer<T>()
         {
-            IEqualityComparer<T> result = null;
+            IEqualityComparer<T>? result = null;
             if (typeof(T).GetTypeInfo().IsEnum)
             {
                 Type underlyingType = typeof(T).GetTypeInfo().GetEnumUnderlyingType();
@@ -242,9 +240,9 @@ namespace MessagePack
         {
             internal static readonly CollisionResistantHasher<T> Instance = new CollisionResistantHasher<T>();
 
-            public bool Equals(T x, T y) => EqualityComparer<T>.Default.Equals(x, y);
+            public bool Equals(T? x, T? y) => EqualityComparer<T?>.Default.Equals(x, y);
 
-            bool IEqualityComparer.Equals(object x, object y) => ((IEqualityComparer)EqualityComparer<T>.Default).Equals(x, y);
+            bool IEqualityComparer.Equals(object? x, object? y) => ((IEqualityComparer)EqualityComparer<T>.Default).Equals(x, y);
 
             public int GetHashCode(object obj) => this.GetHashCode((T)obj);
 
@@ -266,9 +264,9 @@ namespace MessagePack
                 this.security = security ?? throw new ArgumentNullException(nameof(security));
             }
 
-            bool IEqualityComparer<object>.Equals(object x, object y) => EqualityComparer<object>.Default.Equals(x, y);
+            bool IEqualityComparer<object>.Equals(object? x, object? y) => EqualityComparer<object?>.Default.Equals(x, y);
 
-            bool IEqualityComparer.Equals(object x, object y) => ((IEqualityComparer)EqualityComparer<object>.Default).Equals(x, y);
+            bool IEqualityComparer.Equals(object? x, object? y) => ((IEqualityComparer)EqualityComparer<object>.Default).Equals(x, y);
 
             public int GetHashCode(object value)
             {
@@ -286,15 +284,16 @@ namespace MessagePack
                     return value.GetHashCode();
                 }
 
-                if (!equalityComparerCache.TryGetValue(valueType, out IEqualityComparer equalityComparer))
+                if (!equalityComparerCache.TryGetValue(valueType, out IEqualityComparer? equalityComparer))
                 {
                     try
                     {
-                        equalityComparer = (IEqualityComparer)GetHashCollisionResistantEqualityComparerOpenGenericMethod.Value.MakeGenericMethod(valueType).Invoke(this.security, Array.Empty<object>());
+                        equalityComparer = (IEqualityComparer)GetHashCollisionResistantEqualityComparerOpenGenericMethod.Value.MakeGenericMethod(valueType).Invoke(this.security, Array.Empty<object>())!;
                     }
-                    catch (TargetInvocationException ex)
+                    catch (TargetInvocationException ex) when (ex.InnerException is not null)
                     {
                         ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+                        throw null!; // not reachable
                     }
 
                     equalityComparerCache.TryAdd(valueType, equalityComparer);
