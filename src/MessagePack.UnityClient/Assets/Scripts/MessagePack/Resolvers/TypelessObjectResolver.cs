@@ -35,12 +35,12 @@ namespace MessagePack.Resolvers
         /// <inheritdoc />
         public IMessagePackFormatter<T>? GetFormatter<T>()
         {
-            return Cache<T>.Formatter;
+            return Cache<T>.Formatter!;
         }
 
         private static class Cache<T>
         {
-            public static readonly IMessagePackFormatter<T>? Formatter;
+            public static readonly IMessagePackFormatter<T?>? Formatter;
 
             static Cache()
             {
@@ -51,13 +51,13 @@ namespace MessagePack.Resolvers
 
                 if (typeof(T) == typeof(object))
                 {
-                    Formatter = (IMessagePackFormatter<T>)TypelessFormatter.Instance;
+                    Formatter = (IMessagePackFormatter<T?>)TypelessFormatter.Instance;
                 }
                 else
                 {
                     foreach (var item in Resolvers)
                     {
-                        var f = item.GetFormatter<T>();
+                        var f = item.GetFormatter<T?>();
                         if (f != null)
                         {
                             Formatter = f;
