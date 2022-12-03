@@ -656,7 +656,7 @@ MessagePack.Resolvers.DynamicObjectResolver
 MessagePack.Resolvers.DynamicObjectResolverAllowPrivate
 ~MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
 MessagePack.Resolvers.DynamicUnionResolver
-~MessagePack.Resolvers.DynamicUnionResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.Resolvers.DynamicUnionResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.NativeDateTimeResolver
 MessagePack.Resolvers.NativeDateTimeResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.NativeDecimalResolver
@@ -972,8 +972,8 @@ static readonly MessagePack.Resolvers.DynamicGenericResolver.Instance -> Message
 ~static readonly MessagePack.Resolvers.DynamicObjectResolver.Instance -> MessagePack.Resolvers.DynamicObjectResolver
 ~static readonly MessagePack.Resolvers.DynamicObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
 ~static readonly MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.Instance -> MessagePack.Resolvers.DynamicObjectResolverAllowPrivate
-~static readonly MessagePack.Resolvers.DynamicUnionResolver.Instance -> MessagePack.Resolvers.DynamicUnionResolver
-~static readonly MessagePack.Resolvers.DynamicUnionResolver.Options -> MessagePack.MessagePackSerializerOptions
+static readonly MessagePack.Resolvers.DynamicUnionResolver.Instance -> MessagePack.Resolvers.DynamicUnionResolver!
+static readonly MessagePack.Resolvers.DynamicUnionResolver.Options -> MessagePack.MessagePackSerializerOptions!
 static readonly MessagePack.Resolvers.NativeDateTimeResolver.Instance -> MessagePack.Resolvers.NativeDateTimeResolver!
 static readonly MessagePack.Resolvers.NativeDateTimeResolver.Options -> MessagePack.MessagePackSerializerOptions!
 static readonly MessagePack.Resolvers.NativeDecimalResolver.Instance -> MessagePack.Resolvers.NativeDecimalResolver!
