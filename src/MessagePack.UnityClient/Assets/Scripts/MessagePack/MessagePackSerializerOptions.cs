@@ -137,9 +137,9 @@ namespace MessagePack
         /// </summary>
         /// <param name="typeName">The name of the type to load. This is typically the <see cref="Type.AssemblyQualifiedName"/> but may use the assembly's simple name.</param>
         /// <returns>The loaded type or <see langword="null"/> if no matching type could be found.</returns>
-        public virtual Type LoadType(string typeName)
+        public virtual Type? LoadType(string typeName)
         {
-            Type result = Type.GetType(typeName, false);
+            Type? result = Type.GetType(typeName, false);
             if (result == null && this.AllowAssemblyVersionMismatch)
             {
                 string shortenedName = AssemblyNameVersionSelectorRegex.Replace(typeName, string.Empty);
@@ -165,9 +165,9 @@ namespace MessagePack
         /// </remarks>
         public virtual void ThrowIfDeserializingTypeIsDisallowed(Type type)
         {
-            if (DisallowedTypes.Contains(type.FullName))
+            if (type.FullName is string fullName && DisallowedTypes.Contains(fullName))
             {
-                throw new MessagePackSerializationException("Deserialization attempted to create the type " + type.FullName + " which is not allowed.");
+                throw new MessagePackSerializationException($"Deserialization attempted to create the type {fullName} which is not allowed.");
             }
         }
 

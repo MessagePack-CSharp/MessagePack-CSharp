@@ -10,17 +10,17 @@
 /* THIS (.cs) FILE IS GENERATED. DO NOT CHANGE IT.
  * CHANGE THE .tt FILE INSTEAD. */
 
-using System;
+ using System;
 using System.Buffers;
 
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
-{<# for(var i = 1; i <= 8; i++) { 
+{<# for(var i = 1; i <= 8; i++) {
     Func<int, string> toT = x => "T" + ((x == 8) ? "Rest" : x.ToString());
     Func<int, string> toItem = x => ((x == 8) ? "Rest" : "Item" + x);
-    var ts = string.Join(", ", Enumerable.Range(1, i).Select(x => toT(x))); 
-    var t = "ValueTuple<" + ts + ">"; 
+    var ts = string.Join(", ", Enumerable.Range(1, i).Select(x => toT(x)));
+    var t = "ValueTuple<" + ts + ">";
 #>
 
     public sealed class ValueTupleFormatter<<#= ts #>> : IMessagePackFormatter<<#= t #>><#= (t.Contains("TRest") ? @"
@@ -40,7 +40,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<<#= t #>>();
             }
             else
             {

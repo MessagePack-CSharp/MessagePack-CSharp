@@ -12,9 +12,9 @@ namespace MessagePack.Formatters
     /// for which another resolver can provide a formatter for the runtime type.
     /// Its deserialization is limited to forwarding all calls to the <see cref="PrimitiveObjectFormatter"/>.
     /// </summary>
-    public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object>
+    public sealed class DynamicObjectTypeFallbackFormatter : IMessagePackFormatter<object?>
     {
-        public static readonly IMessagePackFormatter<object> Instance = new DynamicObjectTypeFallbackFormatter();
+        public static readonly IMessagePackFormatter<object?> Instance = new DynamicObjectTypeFallbackFormatter();
 
         private delegate void SerializeMethod(object dynamicFormatter, ref MessagePackWriter writer, object value, MessagePackSerializerOptions options);
 
@@ -24,7 +24,7 @@ namespace MessagePack.Formatters
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -52,7 +52,7 @@ namespace MessagePack.Formatters
             }
 
             object formatter = options.Resolver.GetFormatterDynamicWithVerify(type);
-            if (!SerializerDelegates.TryGetValue(type, out SerializeMethod serializerDelegate))
+            if (!SerializerDelegates.TryGetValue(type, out SerializeMethod? serializerDelegate))
             {
                 lock (SerializerDelegates)
                 {
@@ -64,7 +64,7 @@ namespace MessagePack.Formatters
                         ParameterExpression param2 = Expression.Parameter(typeof(object), "value");
                         ParameterExpression param3 = Expression.Parameter(typeof(MessagePackSerializerOptions), "options");
 
-                        MethodInfo serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) });
+                        MethodInfo serializeMethodInfo = formatterType.GetRuntimeMethod("Serialize", new[] { typeof(MessagePackWriter).MakeByRefType(), type, typeof(MessagePackSerializerOptions) })!;
 
                         MethodCallExpression body = Expression.Call(
                             Expression.Convert(param0, formatterType),
@@ -83,7 +83,7 @@ namespace MessagePack.Formatters
             serializerDelegate(formatter, ref writer, value, options);
         }
 
-        public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             return PrimitiveObjectFormatter.Instance.Deserialize(ref reader, options);
         }

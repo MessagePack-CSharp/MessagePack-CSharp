@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace MessagePack
     public static partial class MessagePackSerializer
     {
         private const int MaxHintSize = 1024 * 1024;
-        private static MessagePackSerializerOptions defaultOptions;
+        private static MessagePackSerializerOptions? defaultOptions;
 
         /// <summary>
         /// Gets or sets the default set of options to use when not explicitly specified for a method call.
@@ -35,16 +36,7 @@ namespace MessagePack
         /// </remarks>
         public static MessagePackSerializerOptions DefaultOptions
         {
-            get
-            {
-                if (defaultOptions is null)
-                {
-                    defaultOptions = MessagePackSerializerOptions.Standard;
-                }
-
-                return defaultOptions;
-            }
-
+            get => defaultOptions ??= MessagePackSerializerOptions.Standard;
             set => defaultOptions = value;
         }
 
@@ -52,7 +44,7 @@ namespace MessagePack
         /// A thread-local, recyclable array that may be used for short bursts of code.
         /// </summary>
         [ThreadStatic]
-        private static byte[] scratchArray;
+        private static byte[]? scratchArray;
 
         /// <summary>
         /// Serializes a given value with the specified buffer writer.
@@ -62,7 +54,7 @@ namespace MessagePack
         /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(IBufferWriter<byte> writer, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static void Serialize<T>(IBufferWriter<byte> writer, T value, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             var fastWriter = new MessagePackWriter(writer)
             {
@@ -79,7 +71,7 @@ namespace MessagePack
         /// <param name="value">The value to serialize.</param>
         /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options = null)
+        public static void Serialize<T>(ref MessagePackWriter writer, T value, MessagePackSerializerOptions? options = null)
         {
             options = options ?? DefaultOptions;
             bool originalOldSpecValue = writer.OldSpec;
@@ -124,9 +116,9 @@ namespace MessagePack
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A byte array with the serialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static byte[] Serialize<T>(T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static byte[] Serialize<T>(T value, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
-            byte[] array = scratchArray;
+            byte[]? array = scratchArray;
             if (array == null)
             {
                 scratchArray = array = new byte[65536];
@@ -149,7 +141,7 @@ namespace MessagePack
         /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static void Serialize<T>(Stream stream, T value, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             options = options ?? DefaultOptions;
             cancellationToken.ThrowIfCancellationRequested();
@@ -182,7 +174,7 @@ namespace MessagePack
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A task that completes with the result of the async serialization operation.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during serialization.</exception>
-        public static async Task SerializeAsync<T>(Stream stream, T value, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static async Task SerializeAsync<T>(Stream stream, T value, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             options = options ?? DefaultOptions;
             cancellationToken.ThrowIfCancellationRequested();
@@ -215,7 +207,7 @@ namespace MessagePack
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static T Deserialize<T>(in ReadOnlySequence<byte> byteSequence, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             var reader = new MessagePackReader(byteSequence)
             {
@@ -232,7 +224,7 @@ namespace MessagePack
         /// <param name="options">The options. Use <see langword="null"/> to use default options.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions options = null)
+        public static T Deserialize<T>(ref MessagePackReader reader, MessagePackSerializerOptions? options = null)
         {
             options = options ?? DefaultOptions;
 
@@ -274,7 +266,7 @@ namespace MessagePack
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             var reader = new MessagePackReader(buffer)
             {
@@ -304,7 +296,7 @@ namespace MessagePack
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The deserialized value.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown when any error occurs during deserialization.</exception>
-        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options, out int bytesRead, CancellationToken cancellationToken = default)
+        public static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions? options, out int bytesRead, CancellationToken cancellationToken = default)
         {
             var reader = new MessagePackReader(buffer)
             {
@@ -331,13 +323,13 @@ namespace MessagePack
         /// <remarks>
         /// If multiple top-level msgpack data structures are expected on the stream, use <see cref="MessagePackStreamReader"/> instead.
         /// </remarks>
-        public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static T Deserialize<T>(Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
             options = options ?? DefaultOptions;
 
-            if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T result))
+            if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T? result))
             {
-                return result;
+                return result!;
             }
 
             using (var sequenceRental = options.SequencePool.Rent())
@@ -380,13 +372,13 @@ namespace MessagePack
         /// <remarks>
         /// If multiple top-level msgpack data structures are expected on the stream, use <see cref="MessagePackStreamReader"/> instead.
         /// </remarks>
-        public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions options = null, CancellationToken cancellationToken = default)
+        public static async ValueTask<T> DeserializeAsync<T>(Stream stream, MessagePackSerializerOptions? options = null, CancellationToken cancellationToken = default)
         {
-            options = options ?? DefaultOptions;
+            options ??= DefaultOptions;
 
-            if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T result))
+            if (TryDeserializeFromMemoryStream(stream, options, cancellationToken, out T? result))
             {
-                return result;
+                return result!;
             }
 
             using (var sequenceRental = options.SequencePool.Rent())
@@ -417,7 +409,7 @@ namespace MessagePack
         private static readonly LZ4Transform LZ4CodecEncode = LZ4Codec.Encode;
         private static readonly LZ4Transform LZ4CodecDecode = LZ4Codec.Decode;
 
-        private static bool TryDeserializeFromMemoryStream<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken, out T result)
+        private static bool TryDeserializeFromMemoryStream<T>(Stream stream, MessagePackSerializerOptions options, CancellationToken cancellationToken, [MaybeNullWhen(false)] out T result)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (stream is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> streamBuffer))
@@ -433,7 +425,7 @@ namespace MessagePack
             return false;
         }
 
-        private static T DeserializeFromSequenceAndRewindStreamIfPossible<T>(Stream streamToRewind, MessagePackSerializerOptions options, ReadOnlySequence<byte> sequence, CancellationToken cancellationToken)
+        private static T DeserializeFromSequenceAndRewindStreamIfPossible<T>(Stream streamToRewind, MessagePackSerializerOptions? options, ReadOnlySequence<byte> sequence, CancellationToken cancellationToken)
         {
             if (streamToRewind is null)
             {
@@ -466,7 +458,7 @@ namespace MessagePack
         private static int LZ4Operation(in ReadOnlySequence<byte> input, Span<byte> output, LZ4Transform lz4Operation)
         {
             ReadOnlySpan<byte> inputSpan;
-            byte[] rentedInputArray = null;
+            byte[]? rentedInputArray = null;
             if (input.IsSingleSegment)
             {
                 inputSpan = input.First.Span;
@@ -547,9 +539,9 @@ namespace MessagePack
                                 for (int i = 0; i < sequenceCount; i++)
                                 {
                                     var uncompressedLength = uncompressedLengths[i];
-                                    var lz4Block = reader.ReadBytes();
+                                    ReadOnlySequence<byte> lz4Block = reader.ReadBytes() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ReadOnlySequence<byte>>();
                                     Span<byte> uncompressedSpan = writer.GetSpan(uncompressedLength).Slice(0, uncompressedLength);
-                                    var actualUncompressedLength = LZ4Operation(lz4Block.Value, uncompressedSpan, LZ4CodecDecode);
+                                    var actualUncompressedLength = LZ4Operation(lz4Block, uncompressedSpan, LZ4CodecDecode);
                                     Debug.Assert(actualUncompressedLength == uncompressedLength, "Unexpected length of uncompressed data.");
                                     writer.Advance(actualUncompressedLength);
                                 }

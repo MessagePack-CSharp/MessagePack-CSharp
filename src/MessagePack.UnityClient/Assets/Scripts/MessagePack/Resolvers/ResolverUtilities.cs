@@ -9,7 +9,7 @@ namespace MessagePack.Internal
 {
     internal static class ResolverUtilities
     {
-        internal static IMessagePackFormatter ActivateFormatter(Type formatterType, object[] args = null)
+        internal static IMessagePackFormatter ActivateFormatter(Type formatterType, object?[]? args = null)
         {
             if (args == null || args.Length == 0)
             {
@@ -19,7 +19,7 @@ namespace MessagePack.Internal
                 }
                 else if (FetchSingletonField(formatterType) is FieldInfo instance)
                 {
-                    return (IMessagePackFormatter)instance.GetValue(null);
+                    return (IMessagePackFormatter)(instance.GetValue(null) ?? throw new InvalidOperationException($"{instance.ReflectedType?.FullName}.{instance.Name} return null."));
                 }
                 else
                 {
@@ -28,11 +28,11 @@ namespace MessagePack.Internal
             }
             else
             {
-                return (IMessagePackFormatter)Activator.CreateInstance(formatterType, args);
+                return (IMessagePackFormatter)Activator.CreateInstance(formatterType, args)!;
             }
         }
 
-        internal static FieldInfo FetchSingletonField(Type formatterType)
+        internal static FieldInfo? FetchSingletonField(Type formatterType)
         {
             if (formatterType.GetField("Instance", BindingFlags.Static | BindingFlags.Public) is FieldInfo fieldInfo && fieldInfo.IsInitOnly)
             {

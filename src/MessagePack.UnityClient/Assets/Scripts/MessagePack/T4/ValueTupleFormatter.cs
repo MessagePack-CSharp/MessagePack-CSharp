@@ -25,7 +25,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ValueTuple<T1>>();
             }
             else
             {
@@ -66,7 +66,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ValueTuple<T1, T2>>();
             }
             else
             {
@@ -109,7 +109,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ValueTuple<T1, T2, T3>>();
             }
             else
             {
@@ -154,7 +154,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ValueTuple<T1, T2, T3, T4>>();
             }
             else
             {
@@ -201,7 +201,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ValueTuple<T1, T2, T3, T4, T5>>();
             }
             else
             {
@@ -250,7 +250,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ValueTuple<T1, T2, T3, T4, T5, T6>>();
             }
             else
             {
@@ -301,7 +301,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ValueTuple<T1, T2, T3, T4, T5, T6, T7>>();
             }
             else
             {
@@ -355,7 +355,7 @@ namespace MessagePack.Formatters
         {
             if (reader.IsNil)
             {
-                throw new MessagePackSerializationException("Data is Nil, ValueTuple can not be null.");
+                throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<ValueTuple<T1, T2, T3, T4, T5, T6, T7, TRest>>();
             }
             else
             {

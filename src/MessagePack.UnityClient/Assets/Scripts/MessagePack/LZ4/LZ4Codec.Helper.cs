@@ -40,13 +40,13 @@ namespace MessagePack.LZ4
         internal static class HashTablePool
         {
             [ThreadStatic]
-            private static ushort[] ushortPool;
+            private static ushort[]? ushortPool;
 
             [ThreadStatic]
-            private static uint[] uintPool;
+            private static uint[]? uintPool;
 
             [ThreadStatic]
-            private static int[] intPool;
+            private static int[]? intPool;
 
             public static ushort[] GetUShortHashTablePool()
             {
