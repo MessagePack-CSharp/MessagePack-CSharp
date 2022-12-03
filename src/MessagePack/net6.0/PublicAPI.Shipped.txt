@@ -641,10 +641,10 @@ MessagePack.Resolvers.ContractlessStandardResolver.GetFormatter<T>() -> MessageP
 MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate
 MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.DynamicContractlessObjectResolver
-~MessagePack.Resolvers.DynamicContractlessObjectResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.Resolvers.DynamicContractlessObjectResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate
 MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate.DynamicContractlessObjectResolverAllowPrivate() -> void
-~MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.DynamicEnumAsStringResolver
 MessagePack.Resolvers.DynamicEnumAsStringResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.DynamicEnumResolver
@@ -652,9 +652,9 @@ MessagePack.Resolvers.DynamicEnumResolver.GetFormatter<T>() -> MessagePack.Forma
 MessagePack.Resolvers.DynamicGenericResolver
 MessagePack.Resolvers.DynamicGenericResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.DynamicObjectResolver
-~MessagePack.Resolvers.DynamicObjectResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.Resolvers.DynamicObjectResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.DynamicObjectResolverAllowPrivate
-~MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>
+MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.DynamicUnionResolver
 MessagePack.Resolvers.DynamicUnionResolver.GetFormatter<T>() -> MessagePack.Formatters.IMessagePackFormatter<T>?
 MessagePack.Resolvers.NativeDateTimeResolver
@@ -963,15 +963,15 @@ static readonly MessagePack.Resolvers.ContractlessStandardResolver.Instance -> M
 static readonly MessagePack.Resolvers.ContractlessStandardResolver.Options -> MessagePack.MessagePackSerializerOptions!
 static readonly MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Instance -> MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate!
 static readonly MessagePack.Resolvers.ContractlessStandardResolverAllowPrivate.Options -> MessagePack.MessagePackSerializerOptions!
-~static readonly MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance -> MessagePack.Resolvers.DynamicContractlessObjectResolver
-~static readonly MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate.Instance -> MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate
+static readonly MessagePack.Resolvers.DynamicContractlessObjectResolver.Instance -> MessagePack.Resolvers.DynamicContractlessObjectResolver!
+static readonly MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate.Instance -> MessagePack.Resolvers.DynamicContractlessObjectResolverAllowPrivate!
 static readonly MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance -> MessagePack.Resolvers.DynamicEnumAsStringResolver!
 static readonly MessagePack.Resolvers.DynamicEnumAsStringResolver.Options -> MessagePack.MessagePackSerializerOptions!
 static readonly MessagePack.Resolvers.DynamicEnumResolver.Instance -> MessagePack.Resolvers.DynamicEnumResolver!
 static readonly MessagePack.Resolvers.DynamicGenericResolver.Instance -> MessagePack.Resolvers.DynamicGenericResolver!
-~static readonly MessagePack.Resolvers.DynamicObjectResolver.Instance -> MessagePack.Resolvers.DynamicObjectResolver
-~static readonly MessagePack.Resolvers.DynamicObjectResolver.Options -> MessagePack.MessagePackSerializerOptions
-~static readonly MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.Instance -> MessagePack.Resolvers.DynamicObjectResolverAllowPrivate
+static readonly MessagePack.Resolvers.DynamicObjectResolver.Instance -> MessagePack.Resolvers.DynamicObjectResolver!
+static readonly MessagePack.Resolvers.DynamicObjectResolver.Options -> MessagePack.MessagePackSerializerOptions!
+static readonly MessagePack.Resolvers.DynamicObjectResolverAllowPrivate.Instance -> MessagePack.Resolvers.DynamicObjectResolverAllowPrivate!
 static readonly MessagePack.Resolvers.DynamicUnionResolver.Instance -> MessagePack.Resolvers.DynamicUnionResolver!
 static readonly MessagePack.Resolvers.DynamicUnionResolver.Options -> MessagePack.MessagePackSerializerOptions!
 static readonly MessagePack.Resolvers.NativeDateTimeResolver.Instance -> MessagePack.Resolvers.NativeDateTimeResolver!
