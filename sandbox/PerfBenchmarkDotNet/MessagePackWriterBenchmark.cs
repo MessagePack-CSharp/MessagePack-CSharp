@@ -13,7 +13,7 @@ namespace PerfBenchmarkDotNet
 {
     [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
     [CategoriesColumn]
-    public sealed class MessagePackWriterBenchmark : IDisposable
+    public class MessagePackWriterBenchmark : IDisposable
     {
         private const int RepsOverArray = 300 * 1024;
         private readonly Sequence<byte> sequence = new Sequence<byte>();
@@ -152,7 +152,16 @@ namespace PerfBenchmarkDotNet
 
         public void Dispose()
         {
-            this.sequence.Dispose();
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.sequence.Dispose();
+            }
         }
     }
 }

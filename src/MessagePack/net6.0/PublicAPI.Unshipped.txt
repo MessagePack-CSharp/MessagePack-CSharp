@@ -9,6 +9,8 @@ MessagePack.Formatters.TimeOnlyFormatter
 MessagePack.Formatters.TimeOnlyFormatter.Deserialize(ref MessagePack.MessagePackReader reader, MessagePack.MessagePackSerializerOptions! options) -> System.TimeOnly
 MessagePack.Formatters.TimeOnlyFormatter.Serialize(ref MessagePack.MessagePackWriter writer, System.TimeOnly value, MessagePack.MessagePackSerializerOptions! options) -> void
 MessagePack.MessagePackSerializerOptions.CompressionMinLength.get -> int
+MessagePack.MessagePackSerializerOptions.SuggestedContiguousMemorySize.get -> int
 MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressionMinLength) -> MessagePack.MessagePackSerializerOptions!
+MessagePack.MessagePackSerializerOptions.WithSuggestedContiguousMemorySize(int suggestedContiguousMemorySize) -> MessagePack.MessagePackSerializerOptions!
 static readonly MessagePack.Formatters.DateOnlyFormatter.Instance -> MessagePack.Formatters.DateOnlyFormatter!
 static readonly MessagePack.Formatters.TimeOnlyFormatter.Instance -> MessagePack.Formatters.TimeOnlyFormatter!

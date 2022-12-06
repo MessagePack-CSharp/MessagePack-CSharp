@@ -31,7 +31,7 @@ namespace MessagePack.Formatters
 
                     Span<char> chars = stackalloc char[bytes.Length];
                     int charLength;
-#if SPAN_BUILTIN
+#if SPAN_BUILTIN || UNITY_2021_2_OR_NEWER
                     charLength = StringEncoding.UTF8.GetChars(bytes, chars);
 #else
                     unsafe

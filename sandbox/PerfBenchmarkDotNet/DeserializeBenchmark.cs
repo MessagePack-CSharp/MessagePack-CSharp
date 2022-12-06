@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 extern alias newmsgpack;
@@ -58,6 +58,12 @@ namespace PerfBenchmarkDotNet
         public IntKeySerializerTarget IntKey()
         {
             return newmsgpack.MessagePack.MessagePackSerializer.Deserialize<IntKeySerializerTarget>(intObj);
+        }
+
+        [Benchmark]
+        public IntKeySerializerTarget IntKey_NonGeneric()
+        {
+            return (IntKeySerializerTarget)newmsgpack.MessagePack.MessagePackSerializer.Deserialize(typeof(IntKeySerializerTarget), intObj);
         }
 
         [Benchmark]

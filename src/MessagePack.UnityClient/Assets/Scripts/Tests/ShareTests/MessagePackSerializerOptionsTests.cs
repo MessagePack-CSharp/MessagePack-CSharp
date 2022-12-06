@@ -14,7 +14,8 @@ public class MessagePackSerializerOptionsTests
         .WithOmitAssemblyVersion(true)
         .WithResolver(BuiltinResolver.Instance)
         .WithOldSpec(false)
-        .WithSecurity(MySecurityOptions.Instance);
+        .WithSecurity(MySecurityOptions.Instance)
+        .WithSuggestedContiguousMemorySize(64 * 1024);
 
     [Fact]
     public void AllowAssemblyVersionMismatch()
@@ -48,6 +49,16 @@ public class MessagePackSerializerOptionsTests
     }
 
     [Fact]
+    public void SuggestedContiguousMemorySize()
+    {
+        Assert.Equal(1024 * 1024, MessagePackSerializerOptions.Standard.SuggestedContiguousMemorySize);
+        Assert.Throws<ArgumentOutOfRangeException>(() => MessagePackSerializerOptions.Standard.WithSuggestedContiguousMemorySize(0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => MessagePackSerializerOptions.Standard.WithSuggestedContiguousMemorySize(4));
+        MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard.WithSuggestedContiguousMemorySize(512);
+        Assert.Equal(512, options.SuggestedContiguousMemorySize);
+    }
+
+    [Fact]
     public void OldSpec()
     {
         Assert.Null(MessagePackSerializerOptions.Standard.OldSpec);
@@ -74,6 +85,7 @@ public class MessagePackSerializerOptionsTests
         var mutated = NonDefaultOptions.WithOldSpec(true);
         Assert.True(mutated.OldSpec.Value);
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
+        Assert.Equal(NonDefaultOptions.SuggestedContiguousMemorySize, mutated.SuggestedContiguousMemorySize);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
         Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
@@ -93,11 +105,25 @@ public class MessagePackSerializerOptionsTests
     }
 
     [Fact]
+    public void WithSuggestedContiguousMemorySize_PreservesOtherProperties()
+    {
+        var mutated = NonDefaultOptions.WithSuggestedContiguousMemorySize(612);
+        Assert.Equal(612, mutated.SuggestedContiguousMemorySize);
+        Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
+        Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
+        Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
+        Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
+        Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
+        Assert.Same(MySecurityOptions.Instance, mutated.Security);
+    }
+
+    [Fact]
     public void WithAllowAssemblyVersionMismatch_PreservesOtherProperties()
     {
         var mutated = NonDefaultOptions.WithAllowAssemblyVersionMismatch(false);
         Assert.False(mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
+        Assert.Equal(NonDefaultOptions.SuggestedContiguousMemorySize, mutated.SuggestedContiguousMemorySize);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
         Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
@@ -110,6 +136,7 @@ public class MessagePackSerializerOptionsTests
         var mutated = NonDefaultOptions.WithOmitAssemblyVersion(false);
         Assert.False(mutated.OmitAssemblyVersion);
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
+        Assert.Equal(NonDefaultOptions.SuggestedContiguousMemorySize, mutated.SuggestedContiguousMemorySize);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
@@ -122,6 +149,7 @@ public class MessagePackSerializerOptionsTests
         var mutated = NonDefaultOptions.WithResolver(ContractlessStandardResolver.Instance);
         Assert.Same(ContractlessStandardResolver.Instance, mutated.Resolver);
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
+        Assert.Equal(NonDefaultOptions.SuggestedContiguousMemorySize, mutated.SuggestedContiguousMemorySize);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
@@ -135,6 +163,7 @@ public class MessagePackSerializerOptionsTests
         Assert.Same(MessagePackSecurity.TrustedData, mutated.Security);
         Assert.Same(NonDefaultOptions.Resolver, mutated.Resolver);
         Assert.Equal(NonDefaultOptions.Compression, mutated.Compression);
+        Assert.Equal(NonDefaultOptions.SuggestedContiguousMemorySize, mutated.SuggestedContiguousMemorySize);
         Assert.Equal(NonDefaultOptions.OldSpec, mutated.OldSpec);
         Assert.Equal(NonDefaultOptions.AllowAssemblyVersionMismatch, mutated.AllowAssemblyVersionMismatch);
         Assert.Equal(NonDefaultOptions.OmitAssemblyVersion, mutated.OmitAssemblyVersion);
