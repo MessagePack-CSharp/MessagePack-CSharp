@@ -1696,17 +1696,3 @@ The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and i
 ## How to build
 
 See our [contributor's guide](CONTRIBUTING.md).
-
-## Author Info
-
-Yoshifumi Kawai (a.k.a. neuecc) is a software developer in Japan.
-He is the Director/CTO at Grani, Inc.
-Grani is a mobile game developer company in Japan and well known for using C#.
-He is awarding Microsoft MVP for Visual C# since 2011.
-He is known as the creator of [UniRx](https://github.com/neuecc/UniRx/) (Reactive Extensions for Unity)
-
-* Blog: [https://medium.com/@neuecc](https://medium.com/@neuecc) (English)
-* Blog: [http://neue.cc/](http://neue.cc/) (Japanese)
-* Twitter: [https://twitter.com/neuecc](https://twitter.com/neuecc) (Japanese)
-
-[Releases]: https://github.com/neuecc/MessagePack-CSharp/releases
