@@ -41,6 +41,6 @@
       <SpecificVersion>false</SpecificVersion>
     </Reference>
     <Reference Include="OdinSerializer.dll" /> <!-- Odin is not available on NuGet -->
-  </ItemGroup> 
+  </ItemGroup>
 
 </Project>

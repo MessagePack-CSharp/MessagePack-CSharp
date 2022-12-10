@@ -1,21 +1,28 @@
 ﻿<Project>
+  <PropertyGroup>
+    <GeneratedMessagePackFile Condition="'$(GeneratedMessagePackFile)'==''">$(IntermediateOutputPath)mpc_generated.cs</GeneratedMessagePackFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(GeneratedMessagePackFile)" />
+    <FileWrites Include="$(GeneratedMessagePackFile)" />
+  </ItemGroup>
+
   <UsingTask TaskName="MessagePackGenerator" AssemblyFile="MessagePack.MSBuild.Tasks.dll" />
 
   <Target Name="GenerateMessagePackResolver"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="ResolveReferences">
+          DependsOnTargets="ResolveReferences"
+          Inputs="@(Compile)"
+          Outputs="$(GeneratedMessagePackFile)">
 
     <MessagePackGenerator
       Compile="@(Compile)"
-      IntermediateOutputPath="$(IntermediateOutputPath)"
+      GeneratedOutputPath="$(GeneratedMessagePackFile)"
       ReferencePath="@(ReferencePath)"
       DefineConstants="$(DefineConstants)"
       Namespace="$(MessagePackGeneratedResolverNamespace)"
       ResolverName="$(MessagePackGeneratedResolverName)"
       UseMapMode="$(MessagePackGeneratedUsesMapMode)"
-      >
-      <Output TaskParameter="GeneratedOutputPath" ItemName="Compile" />
-      <Output TaskParameter="GeneratedOutputPath" ItemName="FileWrites" />
-    </MessagePackGenerator>
+      />
   </Target>
 </Project>
