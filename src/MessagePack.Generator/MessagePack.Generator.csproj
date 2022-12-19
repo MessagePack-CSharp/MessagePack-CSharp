@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>mpc</AssemblyName>
-    <OutputType>Exe</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>11</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -20,11 +18,16 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" />
     <PackageReference Include="System.CodeDom" Version="6.0.0" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\MessagePack.GeneratorCore\**\*.cs" LinkBase="GeneratorCore" />
     <None Include="..\MessagePack.GeneratorCore\**\*.tt" LinkBase="GeneratorCore" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataDictionary.cs" LinkBase="MessagePack\Internal" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" LinkBase="MessagePack\Internal" />
   </ItemGroup>
 
   <ItemGroup>
