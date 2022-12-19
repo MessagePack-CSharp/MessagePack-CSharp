@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using MessagePack.Formatters;
 
@@ -15,6 +16,7 @@ namespace MessagePack.Resolvers
         public static readonly StaticCompositeResolver Instance = new StaticCompositeResolver();
 
         private bool freezed;
+        private ConcurrentBag<IMessagePackFormatter> generatedFormatters = new ConcurrentBag<IMessagePackFormatter>();
         private IReadOnlyList<IMessagePackFormatter> formatters;
         private IReadOnlyList<IFormatterResolver> resolvers;
 
@@ -108,6 +110,16 @@ namespace MessagePack.Resolvers
             this.resolvers = resolvers;
         }
 
+        public void AddGeneratedFormatter(IMessagePackFormatter formatter)
+        {
+            if (this.freezed)
+            {
+                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
+            }
+
+            this.generatedFormatters.Add(formatter);
+        }
+
         /// <summary>
         /// Gets an <see cref="IMessagePackFormatter{T}"/> instance that can serialize or deserialize some type <typeparamref name="T"/>.
         /// </summary>
@@ -125,6 +137,15 @@ namespace MessagePack.Resolvers
             static Cache()
             {
                 Instance.freezed = true;
+                foreach (var item in Instance.generatedFormatters)
+                {
+                    if (item is IMessagePackFormatter<T> f)
+                    {
+                        Formatter = f;
+                        return;
+                    }
+                }
+
                 foreach (var item in Instance.formatters)
                 {
                     if (item is IMessagePackFormatter<T> f)

@@ -78,14 +78,11 @@ public partial class MessagepackGenerator
             .Select(x => new UnionTemplate(GetNamespace(x), x.ToArray()))
             .ToArray();
 
-        var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
-
         var sb = new StringBuilder();
-        sb.AppendLine(resolverTemplate.TransformText());
-        sb.AppendLine();
         foreach (var item in enumFormatterTemplates)
         {
             var text = item.TransformText();
+            ResolverText(sb, item.Namespace, item.EnumSerializationInfos.Select(x => x.Name));
             sb.AppendLine(text);
         }
 
@@ -93,6 +90,7 @@ public partial class MessagepackGenerator
         foreach (var item in unionFormatterTemplates)
         {
             var text = item.TransformText();
+            ResolverText(sb, item.Namespace, item.UnionSerializationInfos.Select(x => x.Name));
             sb.AppendLine(text);
         }
 
@@ -100,9 +98,44 @@ public partial class MessagepackGenerator
         foreach (var item in objectFormatterTemplates)
         {
             var text = item.TransformText();
+            ResolverText(sb, item.Namespace, item.ObjectSerializationInfos.Select(x => x.Name));
             sb.AppendLine(text);
         }
 
         return sb.ToString();
+    }
+
+    private static void ResolverText(StringBuilder sb, string ns, IEnumerable<string> names)
+    {
+        var begin = $$"""
+using System.Runtime.CompilerServices;
+
+namespace {{ns}}
+{
+    partial class FormatterRegister
+    {
+""";
+
+        var end = $$"""
+    }
+}
+""";
+
+        sb.AppendLine(begin);
+
+        foreach (var item in names)
+        {
+            var code = $$"""
+
+        [ModuleInitializer]
+        internal static void {{item}}FormatterRegister()
+        {
+            MessagePack.Resolvers.StaticCompositeResolver.Instance.AddGeneratedFormatter(new global::{{ns}}.{{item}}Formatter());
+        }
+""";
+            sb.AppendLine(code);
+        }
+
+        sb.AppendLine(end);
     }
 }
