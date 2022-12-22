@@ -109,6 +109,7 @@ public partial class MessagepackGenerator
     {
         var begin = $$"""
 using System.Runtime.CompilerServices;
+using MessagePack;
 
 namespace {{ns}}
 {
