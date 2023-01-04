@@ -862,7 +862,7 @@ namespace MessagePackCompiler.CodeAnalysis
                                     }
                                     else
                                     {
-                                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterIndex:" + ctorParamIndex + " paramterType:" + item.Type.Name);
+                                        throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterIndex:" + ctorParamIndex + " parameterType:" + item.Type.Name);
                                     }
                                 }
                             }
@@ -901,7 +901,7 @@ namespace MessagePackCompiler.CodeAnalysis
                             {
                                 if (ctorEnumerator == null)
                                 {
-                                    throw new MessagePackGeneratorResolveFailedException("duplicate matched constructor parameter name:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
+                                    throw new MessagePackGeneratorResolveFailedException("duplicate matched constructor parameter name:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name + " parameterType:" + item.Type.Name);
                                 }
 
                                 ctor = null;
@@ -917,7 +917,7 @@ namespace MessagePackCompiler.CodeAnalysis
                             {
                                 if (ctorEnumerator == null)
                                 {
-                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name + " paramterType:" + item.Type.Name);
+                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name + " parameterType:" + item.Type.Name);
                                 }
 
                                 ctor = null;

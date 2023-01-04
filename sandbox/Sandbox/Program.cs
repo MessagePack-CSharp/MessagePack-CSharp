@@ -206,7 +206,7 @@ namespace Sandbox
         [Key(1)]
         public readonly int Y;
 
-        // can't find matched constructor parameter, parameterType mismatch. type:Point parameterIndex:0 paramterType:ValueTuple`2
+        // can't find matched constructor parameter, parameterType mismatch. type:Point parameterIndex:0 parameterType:ValueTuple`2
         public Point((int, int) p)
         {
             this.X = p.Item1;
