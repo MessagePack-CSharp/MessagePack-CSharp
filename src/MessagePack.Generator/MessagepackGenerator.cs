@@ -10,6 +10,7 @@ namespace MessagePack.Generator;
 public partial class MessagepackGenerator : IIncrementalGenerator
 {
     public const string MessagePackObjectAttributeFullName = "MessagePack.MessagePackObjectAttribute";
+    public const string MessagePackUnionAttributeFullName = "MessagePack.UnionAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -17,16 +18,26 @@ public partial class MessagepackGenerator : IIncrementalGenerator
             MessagePackObjectAttributeFullName,
             predicate: static (node, _) => node is TypeDeclarationSyntax,
             transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
+        Register(typeDeclarations);
 
-        var source = typeDeclarations
-            .Combine(context.CompilationProvider)
-            .WithComparer(Comparer.Instance);
+        var typeDeclarations2 = context.SyntaxProvider.ForAttributeWithMetadataName(
+            MessagePackUnionAttributeFullName,
+            predicate: static (node, _) => node is InterfaceDeclarationSyntax,
+            transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
+        Register(typeDeclarations2);
 
-        context.RegisterSourceOutput(source, static (context, source) =>
+        void Register(IncrementalValuesProvider<TypeDeclarationSyntax> typeDeclarations)
         {
-            var (typeDeclaration, compilation) = source;
-            Generate(typeDeclaration, compilation, new GeneratorContext(context));
-        });
+            var source = typeDeclarations
+                .Combine(context.CompilationProvider)
+                .WithComparer(Comparer.Instance);
+
+            context.RegisterSourceOutput(source, static (context, source) =>
+            {
+                var (typeDeclaration, compilation) = source;
+                Generate(typeDeclaration, compilation, new GeneratorContext(context));
+            });
+        }
     }
 
     private class Comparer : IEqualityComparer<(TypeDeclarationSyntax, Compilation)>

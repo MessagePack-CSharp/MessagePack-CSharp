@@ -97,17 +97,19 @@ public partial class MessagepackGenerator
         }
 
         sb.AppendLine();
-        foreach (var item in unionFormatterTemplates)
-        {
-            var text = item.TransformText();
-            sb.AppendLine(text);
-        }
-
-        sb.AppendLine();
         foreach (var item in objectFormatterTemplates)
         {
             var text = item.TransformText();
             sb.AppendLine(text);
+            return sb.ToString();
+        }
+
+        sb.AppendLine();
+        foreach (var item in unionFormatterTemplates)
+        {
+            var text = item.TransformText();
+            sb.AppendLine(text);
+            return sb.ToString();
         }
 
         return sb.ToString();
@@ -139,7 +141,7 @@ namespace {{ns}}
         foreach (var item in registerInfos)
         {
             var code = $$"""
-            MessagePack.Resolvers.StaticCompositeResolver.Instance.AddGeneratedFormatter(new global::Formatters.{{item.FormatterName}}());
+            MessagePack.Resolvers.StaticCompositeResolver.Instance.AddGeneratedFormatter(new {{(item.FormatterName.StartsWith("global::") ? item.FormatterName : "global::Formatters." + item.FormatterName)}}());
 """;
             sb.AppendLine(code);
         }
