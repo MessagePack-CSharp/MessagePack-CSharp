@@ -241,6 +241,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly bool disallowInternal;
 
+        private readonly bool excludeArrayElement;
+
         private readonly HashSet<string> externalIgnoreTypeNames;
 
         // visitor workspace:
@@ -292,6 +294,7 @@ namespace MessagePackCompiler.CodeAnalysis
             this.isForceUseMap = isForceUseMap;
             this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
             this.compilation = compilation;
+            this.excludeArrayElement = true;
 
             targetTypes = new[] { targetType }
                 .Where(x =>
@@ -463,7 +466,10 @@ namespace MessagePackCompiler.CodeAnalysis
         private void CollectArray(IArrayTypeSymbol array)
         {
             ITypeSymbol elemType = array.ElementType;
-            this.CollectCore(elemType);
+            if (!excludeArrayElement)
+            {
+                this.CollectCore(elemType);
+            }
 
             var fullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var elementTypeDisplayName = elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);

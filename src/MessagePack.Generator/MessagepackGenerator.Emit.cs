@@ -30,7 +30,7 @@ public partial class MessagepackGenerator
 
         var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
 
-        var code = GenerateFormatterSync(string.Empty, string.Empty, objectInfo, enumInfo, unionInfo, genericInfo);
+        var code = GenerateFormatterSync(fullType.Replace(".", "_"), string.Empty, objectInfo, enumInfo, unionInfo, genericInfo);
 
         context.AddSource($"{fullType}.MessagePackFormatter.g.cs", code);
     }
@@ -68,6 +68,18 @@ public partial class MessagepackGenerator
             return namespaceDot + "Formatters." + x.Key;
         }
 
+        var sb = new StringBuilder();
+        ResolverText(
+            sb,
+            namespaceDot + "Resolvers",
+            resolverName,
+            genericInfo
+                .Where(x => !x.IsOpenGenericType)
+                .Cast<IResolverRegisterInfo>()
+                .Concat(enumInfo)
+                .Concat(unionInfo)
+                .Concat(objectInfo.Where(x => !x.IsOpenGenericType)));
+
         var enumFormatterTemplates = enumInfo
             .GroupBy(x => x.Namespace)
             .Select(x => new EnumTemplate(GetNamespace(x), x.ToArray()))
@@ -78,11 +90,9 @@ public partial class MessagepackGenerator
             .Select(x => new UnionTemplate(GetNamespace(x), x.ToArray()))
             .ToArray();
 
-        var sb = new StringBuilder();
         foreach (var item in enumFormatterTemplates)
         {
             var text = item.TransformText();
-            ResolverText(sb, item.Namespace, item.EnumSerializationInfos.Select(x => x.Name));
             sb.AppendLine(text);
         }
 
@@ -90,7 +100,6 @@ public partial class MessagepackGenerator
         foreach (var item in unionFormatterTemplates)
         {
             var text = item.TransformText();
-            ResolverText(sb, item.Namespace, item.UnionSerializationInfos.Select(x => x.Name));
             sb.AppendLine(text);
         }
 
@@ -98,14 +107,13 @@ public partial class MessagepackGenerator
         foreach (var item in objectFormatterTemplates)
         {
             var text = item.TransformText();
-            ResolverText(sb, item.Namespace, item.ObjectSerializationInfos.Select(x => x.Name));
             sb.AppendLine(text);
         }
 
         return sb.ToString();
     }
 
-    private static void ResolverText(StringBuilder sb, string ns, IEnumerable<string> names)
+    private static void ResolverText(StringBuilder sb, string ns, string resolverName, IEnumerable<IResolverRegisterInfo> registerInfos)
     {
         var begin = $$"""
 using System.Runtime.CompilerServices;
@@ -115,24 +123,23 @@ namespace {{ns}}
 {
     partial class FormatterRegister
     {
+        [ModuleInitializer]
+        internal static void {{resolverName}}FormatterRegister()
+        {
 """;
 
         var end = $$"""
+        }
     }
 }
 """;
 
         sb.AppendLine(begin);
 
-        foreach (var item in names)
+        foreach (var item in registerInfos)
         {
             var code = $$"""
-
-        [ModuleInitializer]
-        internal static void {{item}}FormatterRegister()
-        {
-            MessagePack.Resolvers.StaticCompositeResolver.Instance.AddGeneratedFormatter(new global::{{ns}}.{{item}}Formatter());
-        }
+            MessagePack.Resolvers.StaticCompositeResolver.Instance.AddGeneratedFormatter(new global::Formatters.{{item.FormatterName}}());
 """;
             sb.AppendLine(code);
         }
