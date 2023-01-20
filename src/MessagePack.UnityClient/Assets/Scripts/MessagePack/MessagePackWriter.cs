@@ -1290,6 +1290,91 @@ namespace MessagePack
             }
         }
 
+        /// <summary>
+        /// Get the encoded byte length of the given integer.
+        /// </summary>
+        /// <param name="value">The integer to encode.</param>
+        /// <returns>Encoded length, either 1, 2, 3, 5 or 9 bytes.</returns>
+        public static int IntegerEncodedLength(long value)
+        {
+            if (value >= 0)
+            {
+                if (value <= MessagePackRange.MaxFixPositiveInt)
+                {
+                    // positive fixint
+                    return 1;
+                }
+                else if (value <= Byte.MaxValue)
+                {
+                    // uint8
+                    return 2;
+                }
+                else if (value <= UInt16.MaxValue)
+                {
+                    // uint16
+                    return 3;
+                }
+                else if (value <= UInt32.MaxValue)
+                {
+                    // uint32
+                    return 5;
+                }
+                else
+                {
+                    // uint64
+                    return 9;
+                }
+            }
+            else
+            {
+                if (value >= MessagePackRange.MaxFixNegativeInt)
+                {
+                    // negative fixint
+                    return 1;
+                }
+                else if (value >= SByte.MinValue)
+                {
+                    // int8
+                    return 2;
+                }
+                else if (value >= Int16.MinValue)
+                {
+                    // int16
+                    return 3;
+                }
+                else if (value >= Int32.MinValue)
+                {
+                    // int32
+                    return 5;
+                }
+                else
+                {
+                    // int64
+                    return 9;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get the encoded length of the given value.
+        /// <para>
+        /// Also see <see cref="IntegerEncodedLength(long)"/>.
+        /// </para>
+        /// </summary>
+        /// <param name="value">The integer to encode.</param>
+        /// <returns>The encoded length of this value, either 1, 2, 3, 5 or 9 bytes.</returns>
+        public static int IntegerEncodedLength(ulong value)
+        {
+            if (value > Int64.MaxValue)
+            {
+                return 9;
+            }
+            else
+            {
+                return IntegerEncodedLength((long)value);
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
         {
