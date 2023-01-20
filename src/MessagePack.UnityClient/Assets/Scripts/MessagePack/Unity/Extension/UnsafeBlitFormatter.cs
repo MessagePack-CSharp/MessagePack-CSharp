@@ -41,7 +41,6 @@ namespace MessagePack.Unity.Extension
             writer.WriteRaw(MemoryMarshal.Cast<T, byte>(value));
         }
 
-
         public T[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
