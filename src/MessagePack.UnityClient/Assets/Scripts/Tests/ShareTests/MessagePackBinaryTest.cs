@@ -83,6 +83,8 @@ namespace MessagePack.Tests
         {
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
+            MessagePackWriter.IntegerEncodedLength(target).Is(length);
+
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
             writer.Write(target);
@@ -145,6 +147,8 @@ namespace MessagePack.Tests
         public void SByteTest(sbyte target, int length)
         {
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
+
+            MessagePackWriter.IntegerEncodedLength(target).Is(length);
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -242,6 +246,8 @@ namespace MessagePack.Tests
         {
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
+            MessagePackWriter.IntegerEncodedLength(target).Is(length);
+
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
             writer.Write(target);
@@ -283,6 +289,8 @@ namespace MessagePack.Tests
         public void Int32Test(int target, int length)
         {
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
+
+            MessagePackWriter.IntegerEncodedLength(target).Is(length);
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -344,6 +352,8 @@ namespace MessagePack.Tests
         public void Int64Test(long target, int length)
         {
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
+
+            MessagePackWriter.IntegerEncodedLength(target).Is(length);
 
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
@@ -479,6 +489,8 @@ namespace MessagePack.Tests
         {
             var target = Convert.ToUInt16(targetArg);
 
+            MessagePackWriter.IntegerEncodedLength(target).Is(length);
+
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
             var sequence = new Sequence<byte>();
@@ -512,6 +524,8 @@ namespace MessagePack.Tests
         public void UInt32Test(object targetArg, int length)
         {
             var target = Convert.ToUInt32(targetArg);
+
+            MessagePackWriter.IntegerEncodedLength(target).Is(length);
 
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
@@ -550,6 +564,8 @@ namespace MessagePack.Tests
         public void UInt64Test(object targetArg, int length)
         {
             var target = Convert.ToUInt64(targetArg);
+
+            MessagePackWriter.IntegerEncodedLength(target).Is(length);
 
             (MemoryStream stream, MsgPack.Packer packer) = this.CreateReferencePacker();
 
