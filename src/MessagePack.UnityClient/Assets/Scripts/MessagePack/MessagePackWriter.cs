@@ -1327,7 +1327,7 @@ namespace MessagePack
             }
             else
             {
-                if (value >= MessagePackRange.MaxFixNegativeInt)
+                if (value >= MessagePackRange.MinFixNegativeInt)
                 {
                     // negative fixint
                     return 1;
