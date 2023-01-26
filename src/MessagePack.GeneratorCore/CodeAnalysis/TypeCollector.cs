@@ -319,7 +319,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
-            var typeSymbolString = typeSymbol.ToString() ?? throw new InvalidOperationException();
+            var typeSymbolString = typeSymbol.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToString() ?? throw new InvalidOperationException();
             if (this.embeddedTypes.Contains(typeSymbolString))
             {
                 return;
