@@ -8,5 +8,9 @@
     <!-- ignore compilation temp files and unity generated .meta files -->
     <None Remove="**/bin/**;**/obj/**;**/*.meta" />
   </ItemGroup>
-  <Import Project="..\Directory.Build.targets" Condition="Exists('..\Directory.Build.targets')" />
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove($(MSBuildThisFile), $(MSBuildThisFileDirectory)..))" />
 </Project>

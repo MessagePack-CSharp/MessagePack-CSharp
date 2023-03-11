@@ -2,18 +2,21 @@
 # It "snaps" the values of these variables where we can compute them during the build,
 # and otherwise captures the scripts to run later during an Azure Pipelines environment release.
 
-$RepoRoot = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\..")
-$ArtifactBasePath = "$RepoRoot\obj\_artifacts"
-$VariablesArtifactPath = "$ArtifactBasePath\variables"
+$RepoRoot = [System.IO.Path]::GetFullPath("$PSScriptRoot/../..")
+$ArtifactBasePath = "$RepoRoot/obj/_artifacts"
+$VariablesArtifactPath = Join-Path $ArtifactBasePath variables
 if (-not (Test-Path $VariablesArtifactPath)) { New-Item -ItemType Directory -Path $VariablesArtifactPath | Out-Null }
 
 # Copy variables, either by value if the value is calculable now, or by script
-Get-ChildItem -Path "$PSScriptRoot\..\variables" |% {
+Get-ChildItem "$PSScriptRoot/../variables" |% {
     $value = $null
     if (-not $_.BaseName.StartsWith('_')) { # Skip trying to interpret special scripts
         # First check the environment variables in case the variable was set in a queued build
-        if (Test-Path env:$($_.BaseName)) {
-            $value = Get-Content "env:$($_.BaseName)"
+        # Always use all caps for env var access because Azure Pipelines converts variables to upper-case for env vars,
+        # and on non-Windows env vars are case sensitive.
+        $envVarName = $_.BaseName.ToUpper()
+        if (Test-Path env:$envVarName) {
+            $value = Get-Content "env:$envVarName"
         }
 
         # If that didn't give us anything, try executing the script right now from its original position
@@ -32,7 +35,7 @@ Get-ChildItem -Path "$PSScriptRoot\..\variables" |% {
         $value = Get-Content -Path $_.FullName
     }
 
-    Set-Content -Path "$VariablesArtifactPath\$($_.Name)" -Value $value
+    Set-Content -Path "$VariablesArtifactPath/$($_.Name)" -Value $value
 }
 
 @{
