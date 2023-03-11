@@ -332,10 +332,10 @@ namespace MessagePack.Formatters.TestData2
 
     public sealed class CFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.C>
     {
-        // a
-        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 161, 97 };
         // b
         private static global::System.ReadOnlySpan<byte> GetSpan_b() => new byte[1 + 1] { 161, 98 };
+        // a
+        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 161, 97 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.C value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -347,10 +347,10 @@ namespace MessagePack.Formatters.TestData2
 
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            writer.WriteRaw(GetSpan_a());
-            writer.Write(value.a);
             writer.WriteRaw(GetSpan_b());
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.B>(formatterResolver).Serialize(ref writer, value.b, options);
+            writer.WriteRaw(GetSpan_a());
+            writer.Write(value.a);
         }
 
         public global::TestData2.C Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -378,11 +378,11 @@ namespace MessagePack.Formatters.TestData2
                         switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
                         {
                             default: goto FAIL;
-                            case 97UL:
-                                ____result.a = reader.ReadInt32();
-                                continue;
                             case 98UL:
                                 ____result.b = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.B>(formatterResolver).Deserialize(ref reader, options);
+                                continue;
+                            case 97UL:
+                                ____result.a = reader.ReadInt32();
                                 continue;
                         }
 
