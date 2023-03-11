@@ -66,6 +66,17 @@ foreach (var objInfo in ObjectSerializationInfos) {
             this.Write("\r\n");
  }
             this.Write("    {\r\n");
+ foreach (var item in objInfo.Members) { 
+ if (item.CustomFormatterTypeName != null) { 
+            this.Write("        private readonly ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatterTypeName));
+            this.Write(" __");
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.Name));
+            this.Write("CustomFormatter__ = new ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatterTypeName));
+            this.Write("();\r\n");
+ } 
+ } 
  for (var i = 0; i < list.Count; i++) {
         var member = list[i].Item1;
         var binary = list[i].Item2; 
