@@ -82,7 +82,7 @@ namespace MessagePack.Unity.Editor
 
             if (!isInstalledMpc)
             {
-                GUILayout.Label("MessagePack CodeGen does not instaled.");
+                GUILayout.Label("MessagePack CodeGen is not installed.");
                 EditorGUI.BeginDisabledGroup(installingMpc);
 
                 if (GUILayout.Button("Install MessagePack CodeGen."))
