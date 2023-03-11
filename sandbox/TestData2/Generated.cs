@@ -255,12 +255,12 @@ namespace MessagePack.Formatters.TestData2
 
     public sealed class BFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.B>
     {
-        // a
-        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 161, 97 };
         // ass
         private static global::System.ReadOnlySpan<byte> GetSpan_ass() => new byte[1 + 3] { 163, 97, 115, 115 };
         // c
         private static global::System.ReadOnlySpan<byte> GetSpan_c() => new byte[1 + 1] { 161, 99 };
+        // a
+        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 161, 97 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.B value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -272,12 +272,12 @@ namespace MessagePack.Formatters.TestData2
 
             var formatterResolver = options.Resolver;
             writer.WriteMapHeader(3);
-            writer.WriteRaw(GetSpan_a());
-            writer.Write(value.a);
             writer.WriteRaw(GetSpan_ass());
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>(formatterResolver).Serialize(ref writer, value.ass, options);
             writer.WriteRaw(GetSpan_c());
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.C>(formatterResolver).Serialize(ref writer, value.c, options);
+            writer.WriteRaw(GetSpan_a());
+            writer.Write(value.a);
         }
 
         public global::TestData2.B Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -301,22 +301,22 @@ namespace MessagePack.Formatters.TestData2
                     FAIL:
                       reader.Skip();
                       continue;
-                    case 1:
-                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
-                        {
-                            default: goto FAIL;
-                            case 97UL:
-                                ____result.a = reader.ReadInt32();
-                                continue;
-                            case 99UL:
-                                ____result.c = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.C>(formatterResolver).Deserialize(ref reader, options);
-                                continue;
-                        }
                     case 3:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7566177UL) { goto FAIL; }
 
                         ____result.ass = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.A>>(formatterResolver).Deserialize(ref reader, options);
                         continue;
+                    case 1:
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                        {
+                            default: goto FAIL;
+                            case 99UL:
+                                ____result.c = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.C>(formatterResolver).Deserialize(ref reader, options);
+                                continue;
+                            case 97UL:
+                                ____result.a = reader.ReadInt32();
+                                continue;
+                        }
 
                 }
             }
