@@ -37,6 +37,8 @@ If ($IncludeX86 -and ($IsMacOS -or $IsLinux)) {
     $IncludeX86 = $false
 }
 
+$IncludeAspNetCore = $true
+
 $arch = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture
 if (!$arch) { # Windows Powershell leaves this blank
     $arch = 'x64'
@@ -46,6 +48,7 @@ if (!$arch) { # Windows Powershell leaves this blank
 # Search for all .NET Core runtime versions referenced from MSBuild projects and arrange to install them.
 $runtimeVersions = @()
 $windowsDesktopRuntimeVersions = @()
+$aspnetRuntimeVersions = @()
 Get-ChildItem "$PSScriptRoot\..\src\*.*proj","$PSScriptRoot\..\tests\*.*proj","$PSScriptRoot\..\Directory.Build.props" -Recurse |% {
     $projXml = [xml](Get-Content -Path $_)
     $pg = $projXml.Project.PropertyGroup
@@ -61,6 +64,7 @@ Get-ChildItem "$PSScriptRoot\..\src\*.*proj","$PSScriptRoot\..\tests\*.*proj","$
     $targetFrameworks |? { $_ -match 'net(?:coreapp)?(\d+\.\d+)' } |% {
         $v = $Matches[1]
         $runtimeVersions += $v
+        $aspnetRuntimeVersions += $v
         if ($v -ge '3.0' -and -not ($IsMacOS -or $IsLinux)) {
             $windowsDesktopRuntimeVersions += $v
         }
@@ -70,10 +74,15 @@ Get-ChildItem "$PSScriptRoot\..\src\*.*proj","$PSScriptRoot\..\tests\*.*proj","$
 	$targetFrameworks |? { $_ -match 'net(\d+\.\d+)' } |% {
         $v = $Matches[1]
         $runtimeVersions += $v
+        $aspnetRuntimeVersions += $v
         if (-not ($IsMacOS -or $IsLinux)) {
             $windowsDesktopRuntimeVersions += $v
         }
 	}
+}
+
+if (!$IncludeAspNetCore) {
+    $aspnetRuntimeVersions = @()
 }
 
 Function Get-FileFromWeb([Uri]$Uri, $OutDir) {
@@ -138,10 +147,10 @@ Function Get-InstallerExe(
     }
 }
 
-Function Install-DotNet($Version, $Architecture, [ValidateSet('Sdk','Runtime','WindowsDesktop')][string]$sku = 'Sdk') {
-    Write-Host "Downloading .NET Core $sku $Version..."
+Function Install-DotNet($Version, $Architecture, [ValidateSet('Sdk','Runtime','WindowsDesktop','AspNetCore')][string]$sku = 'Sdk') {
+    Write-Host "Downloading .NET $sku $Version..."
     $Installer = Get-InstallerExe -Version $Version -Architecture $Architecture -sku $sku
-    Write-Host "Installing .NET Core $sku $Version..."
+    Write-Host "Installing .NET $sku $Version..."
     cmd /c start /wait $Installer /install /passive /norestart
     if ($LASTEXITCODE -eq 3010) {
         Write-Verbose "Restart required"
@@ -195,6 +204,17 @@ if ($InstallLocality -eq 'machine') {
             }
         }
 
+        $aspnetRuntimeVersions | Sort-Object | Get-Unique |% {
+            if ($PSCmdlet.ShouldProcess(".NET Windows Desktop $_", "Install")) {
+                Install-DotNet -Version $_ -sku AspNetCore -Architecture $arch
+                $restartRequired = $restartRequired -or ($LASTEXITCODE -eq 3010)
+
+                if ($IncludeX86) {
+                    Install-DotNet -Version $_ -sku AspNetCore -Architecture x86
+                    $restartRequired = $restartRequired -or ($LASTEXITCODE -eq 3010)
+                }
+            }
+        }
         if ($restartRequired) {
             Write-Host -ForegroundColor Yellow "System restart required"
             Exit 3010
@@ -233,10 +253,10 @@ if ($IncludeX86) {
 }
 
 if ($IsMacOS -or $IsLinux) {
-    $DownloadUri = "https://raw.githubusercontent.com/dotnet/install-scripts/781752509a890ca7520f1182e8bae71f9a53d754/src/dotnet-install.sh"
+    $DownloadUri = "https://raw.githubusercontent.com/dotnet/install-scripts/0b09de9bc136cacb5f849a6957ebd4062173c148/src/dotnet-install.sh"
     $DotNetInstallScriptPath = "$DotNetInstallScriptRoot/dotnet-install.sh"
 } else {
-    $DownloadUri = "https://raw.githubusercontent.com/dotnet/install-scripts/781752509a890ca7520f1182e8bae71f9a53d754/src/dotnet-install.ps1"
+    $DownloadUri = "https://raw.githubusercontent.com/dotnet/install-scripts/0b09de9bc136cacb5f849a6957ebd4062173c148/src/dotnet-install.ps1"
     $DotNetInstallScriptPath = "$DotNetInstallScriptRoot/dotnet-install.ps1"
 }
 
@@ -284,7 +304,7 @@ if ($IncludeX86) {
 $dotnetRuntimeSwitches = $switches + '-Runtime','dotnet'
 
 $runtimeVersions | Sort-Object -Unique |% {
-    if ($PSCmdlet.ShouldProcess(".NET Core $Arch runtime $_", "Install")) {
+    if ($PSCmdlet.ShouldProcess(".NET $Arch runtime $_", "Install")) {
         $anythingInstalled = $true
         Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ -Architecture $arch -InstallDir $DotNetInstallDir $dotnetRuntimeSwitches"
 
@@ -297,7 +317,7 @@ $runtimeVersions | Sort-Object -Unique |% {
     }
 
     if ($IncludeX86) {
-        if ($PSCmdlet.ShouldProcess(".NET Core x86 runtime $_", "Install")) {
+        if ($PSCmdlet.ShouldProcess(".NET x86 runtime $_", "Install")) {
             $anythingInstalled = $true
             Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ -Architecture x86 -InstallDir $DotNetX86InstallDir $dotnetRuntimeSwitches"
 
@@ -314,7 +334,7 @@ $runtimeVersions | Sort-Object -Unique |% {
 $windowsDesktopRuntimeSwitches = $switches + '-Runtime','windowsdesktop'
 
 $windowsDesktopRuntimeVersions | Sort-Object -Unique |% {
-    if ($PSCmdlet.ShouldProcess(".NET Core WindowsDesktop $arch runtime $_", "Install")) {
+    if ($PSCmdlet.ShouldProcess(".NET WindowsDesktop $arch runtime $_", "Install")) {
         $anythingInstalled = $true
         Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ -Architecture $arch -InstallDir $DotNetInstallDir $windowsDesktopRuntimeSwitches"
 
@@ -327,7 +347,7 @@ $windowsDesktopRuntimeVersions | Sort-Object -Unique |% {
     }
 
     if ($IncludeX86) {
-        if ($PSCmdlet.ShouldProcess(".NET Core WindowsDesktop x86 runtime $_", "Install")) {
+        if ($PSCmdlet.ShouldProcess(".NET WindowsDesktop x86 runtime $_", "Install")) {
             $anythingInstalled = $true
             Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ -Architecture x86 -InstallDir $DotNetX86InstallDir $windowsDesktopRuntimeSwitches"
 
@@ -341,10 +361,40 @@ $windowsDesktopRuntimeVersions | Sort-Object -Unique |% {
     }
 }
 
+$aspnetRuntimeSwitches = $switches + '-Runtime','aspnetcore'
+
+$aspnetRuntimeVersions | Sort-Object -Unique |% {
+    if ($PSCmdlet.ShouldProcess(".NET ASP.NET Core $arch runtime $_", "Install")) {
+        $anythingInstalled = $true
+        Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ -Architecture $arch -InstallDir $DotNetInstallDir $aspnetRuntimeSwitches"
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error ".NET SDK installation failure: $LASTEXITCODE"
+            exit $LASTEXITCODE
+        }
+    } else {
+        Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ -Architecture $arch -InstallDir $DotNetInstallDir $aspnetRuntimeSwitches -DryRun"
+    }
+
+    if ($IncludeX86) {
+        if ($PSCmdlet.ShouldProcess(".NET ASP.NET Core x86 runtime $_", "Install")) {
+            $anythingInstalled = $true
+            Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ -Architecture x86 -InstallDir $DotNetX86InstallDir $aspnetRuntimeSwitches"
+
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error ".NET SDK installation failure: $LASTEXITCODE"
+                exit $LASTEXITCODE
+            }
+        } else {
+            Invoke-Expression -Command "$DotNetInstallScriptPathExpression -Channel $_ -Architecture x86 -InstallDir $DotNetX86InstallDir $aspnetRuntimeSwitches -DryRun"
+        }
+    }
+}
+
 if ($PSCmdlet.ShouldProcess("Set DOTNET environment variables to discover these installed runtimes?")) {
     & "$PSScriptRoot/Set-EnvVars.ps1" -Variables $envVars -PrependPath $DotNetInstallDir | Out-Null
 }
 
 if ($anythingInstalled -and ($InstallLocality -ne 'machine') -and !$env:TF_BUILD -and !$env:GITHUB_ACTIONS) {
-    Write-Warning ".NET Core runtimes or SDKs were installed to a non-machine location. Perform your builds or open Visual Studio from this same environment in order for tools to discover the location of these dependencies."
+    Write-Warning ".NET runtimes or SDKs were installed to a non-machine location. Perform your builds or open Visual Studio from this same environment in order for tools to discover the location of these dependencies."
 }
