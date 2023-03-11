@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using MessagePack.Formatters;
 using MessagePack.Internal;
 
+#pragma warning disable SA1402 // File may only contain a single type
+
 namespace MessagePack.Resolvers
 {
 #if !UNITY_2018_3_OR_NEWER

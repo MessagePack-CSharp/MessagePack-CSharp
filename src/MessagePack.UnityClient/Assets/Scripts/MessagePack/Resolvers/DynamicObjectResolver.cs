@@ -16,6 +16,7 @@ using System.Threading;
 using MessagePack.Formatters;
 using MessagePack.Internal;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1403 // File may only contain a single namespace
 
 namespace MessagePack.Resolvers
@@ -1738,7 +1739,7 @@ namespace MessagePack.Internal
             {
                 if (checkConflicting)
                 {
-                    if (isIntKeyMode ? intMembers.TryGetValue(member.IntKey, out var conflictingMember) : stringMembers.TryGetValue(member.StringKey, out conflictingMember))
+                    if (isIntKeyMode ? intMembers.TryGetValue(member.IntKey, out var conflictingMember) : stringMembers.TryGetValue(member.StringKey!, out conflictingMember))
                     {
                         // Quietly skip duplicate if this is an override property.
                         if (member.PropertyInfo != null && ((conflictingMember.PropertyInfo?.SetMethod?.IsVirtual ?? false) || (conflictingMember.PropertyInfo?.GetMethod?.IsVirtual ?? false)))
@@ -1747,7 +1748,7 @@ namespace MessagePack.Internal
                         }
 
                         var memberInfo = (MemberInfo?)member.PropertyInfo ?? member.FieldInfo;
-                        throw new MessagePackDynamicObjectResolverException($"key is duplicated, all members key must be unique. type:{type.FullName} member:{memberInfo.Name}");
+                        throw new MessagePackDynamicObjectResolverException($"key is duplicated, all members key must be unique. type:{type.FullName} member:{memberInfo?.Name}");
                     }
                 }
 
@@ -1757,7 +1758,7 @@ namespace MessagePack.Internal
                 }
                 else
                 {
-                    stringMembers.Add(member.StringKey, member);
+                    stringMembers.Add(member.StringKey!, member);
                 }
 
                 return true;

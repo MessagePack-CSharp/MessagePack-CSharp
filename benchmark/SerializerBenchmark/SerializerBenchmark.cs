@@ -11,6 +11,7 @@ using BenchmarkDotNet.Attributes;
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 #pragma warning disable SA1306 // Field names should begin with lower-case letter
 #pragma warning disable SA1401 // Fields should be private
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace Benchmark
@@ -29,8 +30,8 @@ namespace Benchmark
             new MessagePackLz4_v1(),
             new MessagePackLz4_v2(),
             new MsgPack_v2_opt(),
-            //new MsgPack_v2_string(),
-            //new MsgPack_v2_str_lz4(),
+            ////new MsgPack_v2_string(),
+            ////new MsgPack_v2_str_lz4(),
             new ProtobufNetSerializer(),
             new JsonNetSerializer(),
             new BsonNetSerializer(),
@@ -1135,6 +1136,7 @@ namespace Benchmark
 
         // models
         protected static readonly Benchmark.Models.Answer AnswerInput = ExpressionTreeFixture.Create<Benchmark.Models.Answer>();
+
         // not same data so does not gurantee correctly.
         protected static readonly Benchmark.Models.Answer2 Answer2Input = ExpressionTreeFixture.Create<Benchmark.Models.Answer2>();
 

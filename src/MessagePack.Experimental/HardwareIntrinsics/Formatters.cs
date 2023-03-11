@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
@@ -36,6 +37,7 @@ namespace MessagePack.Formatters
                 {
                     const int ShiftCount = 4;
                     const int Stride = 1 << ShiftCount;
+
                     // We enter the SIMD mode when there are more than the Stride after alignment adjustment.
                     if (inputLength < Stride << 1)
                     {
@@ -148,6 +150,7 @@ namespace MessagePack.Formatters
                     {
                         // Make InputIterator Aligned
                         var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign16(inputIterator);
+
                         // When offset is times of 2, you can adjust memory address.
                         if ((offset & 1) == 0)
                         {
@@ -275,6 +278,7 @@ namespace MessagePack.Formatters
                     {
                         // Make InputIterator Aligned
                         var offset = UnsafeMemoryAlignmentUtility.CalculateDifferenceAlign16(inputIterator);
+
                         // When offset is times of 4, you can adjust memory address.
                         if ((offset & 3) == 0)
                         {
@@ -412,6 +416,7 @@ namespace MessagePack.Formatters
                         {
                             // new float[] { 1.0, -2.0, 3.5, } is byte[12] { 00, 00, 80, 3f, 00, 00, 00, c0, 00, 00, 60, 40 } in binary expression;
                             var current = Sse2.LoadVector128((byte*)inputIterator);
+
                             // Output binary should be byte[15] { ca, 3f, 80, 00, 00, ca, c0, 00, 00, 00, ca, 40, 60, 00, 00 };
                             Sse2.Store(outputIterator, Sse2.Or(Ssse3.Shuffle(current, vectorShuffle), vectorConstant));
                         }
@@ -477,8 +482,10 @@ namespace MessagePack.Formatters
                         {
                             // Fetch 4 doubles.
                             var current = Avx.LoadVector256((byte*)inputIterator);
+
                             // Reorder Little Endian bytes to Big Endian.
                             var answer = Avx2.Shuffle(current, vectorShuffle).AsUInt64();
+
                             // Write 4 Big-Endian doubles.
                             *outputIterator++ = MessagePackCode.Float64;
                             *(ulong*)outputIterator = answer.GetElement(0);
@@ -595,6 +602,7 @@ namespace MessagePack.Formatters
 
                             // A value of false for the type bool is 0 for the sbyte representation.
                             var isTrue = Avx2.CompareEqual(current, Vector256<sbyte>.Zero);
+
                             // A value of true in the SIMD context is -1 for the sbyte representation.
                             // True is 0xc3 as MessagePackCode and false is 0xc2.
                             // Reinterpreted as sbyte values, they are -61 and -62, respectively.
@@ -633,6 +641,7 @@ namespace MessagePack.Formatters
 
                             // A value of false for the type bool is 0 for the sbyte representation.
                             var isTrue = Sse2.CompareEqual(current, Vector128<sbyte>.Zero);
+
                             // A value of true in the SIMD context is -1 for the sbyte representation.
                             // True is 0xc3 as MessagePackCode and false is 0xc2.
                             // Reinterpreted as sbyte values, they are -61 and -62, respectively.

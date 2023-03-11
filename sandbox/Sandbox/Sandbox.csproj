@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
-    <PackageReference Include="MsgPack.Cli" Version="0.7.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    <PackageReference Include="protobuf-net" Version="3.1.25" />
-    <PackageReference Include="ZeroFormatter" Version="1.6.4" />
+    <PackageReference Include="Microsoft.NETCore.Portable.Compatibility" />
+    <PackageReference Include="MsgPack.Cli" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="protobuf-net" />
+    <PackageReference Include="ZeroFormatter" />
   </ItemGroup>
 
   <ItemGroup>

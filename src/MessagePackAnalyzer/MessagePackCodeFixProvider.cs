@@ -148,7 +148,7 @@ namespace MessagePackAnalyzer
                 .Select(x => x.ConstructorArguments[0])
                 .Where(x => !x.IsNull)
                 .Where(x => x.Value is int)
-                .Select(x => (int)x.Value)
+                .Select(x => (int)x.Value!)
                 .DefaultIfEmpty(-1) // if empty, start from zero.
                 .Max() + 1;
 

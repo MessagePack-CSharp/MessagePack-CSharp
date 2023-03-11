@@ -7,6 +7,8 @@ using System.Collections.Immutable;
 using System.Reflection;
 using MessagePack.Formatters;
 
+#pragma warning disable SA1402 // File may only contain a single type
+
 namespace MessagePack.ImmutableCollection
 {
     public class ImmutableCollectionResolver : IFormatterResolver

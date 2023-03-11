@@ -209,7 +209,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ClassUnionWithStringSubType()
         {
-            //var a = new RootUnionTypeWithStringSubType() { MyProperty = 10 };
+            ////var a = new RootUnionTypeWithStringSubType() { MyProperty = 10 };
             var b = new UnionWithStrings.SubUnionType1WithStringSubType() { MyProperty = 11, MyProperty1 = 100 };
             var c = new UnionWithStrings.SubUnionType2WithStringSubType() { MyProperty = 12, MyProperty2 = 200 };
 
@@ -455,10 +455,10 @@ namespace UnionWithStrings
     }
 
     [Union(0, "UnionWithStrings.MySubUnion1WithStringSubType, MessagePack.Tests")]
-    //[Union(1, "UnionWithStrings.MySubUnion2WithStringSubType, MessagePack.Tests")]
-    //[Union(2, "UnionWithStrings.MySubUnion3WithStringSubType, MessagePack.Tests")]
-    //[Union(3, "UnionWithStrings.MySubUnion4WithStringSubType, MessagePack.Tests")]
-    //[Union(4, "UnionWithStrings.VersioningUnionWithStringSubType, MessagePack.Tests")]
+    ////[Union(1, "UnionWithStrings.MySubUnion2WithStringSubType, MessagePack.Tests")]
+    ////[Union(2, "UnionWithStrings.MySubUnion3WithStringSubType, MessagePack.Tests")]
+    ////[Union(3, "UnionWithStrings.MySubUnion4WithStringSubType, MessagePack.Tests")]
+    ////[Union(4, "UnionWithStrings.VersioningUnionWithStringSubType, MessagePack.Tests")]
     public interface IIVersioningUnionWithStringSubType
     {
     }

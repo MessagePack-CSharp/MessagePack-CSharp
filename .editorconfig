@@ -186,5 +186,53 @@ dotnet_diagnostic.DOC108.severity = warning
 dotnet_diagnostic.DOC200.severity = warning
 dotnet_diagnostic.DOC202.severity = warning
 
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = suggestion
+
+# SA1101: Prefix local calls with this
+dotnet_diagnostic.SA1101.severity = suggestion
+
+# SA120x: Element ordering
+dotnet_diagnostic.SA1201.severity = silent
+dotnet_diagnostic.SA1202.severity = silent
+dotnet_diagnostic.SA1204.severity = silent
+dotnet_diagnostic.SA1214.severity = silent
+
+# SA1121: Use built-in type alias
+dotnet_diagnostic.SA1121.severity = suggestion
+
+# SA1124: Do not use regions
+dotnet_diagnostic.SA1124.severity = suggestion
+
+# SA1133: Each attribute should be placed in its own set of square brackets
+dotnet_diagnostic.SA1133.severity = silent
+
+# SA1134: Each attribute should be placed on its own line of code
+dotnet_diagnostic.SA1134.severity = silent
+
+# SA1139: Use literal syntax instead of casting
+dotnet_diagnostic.SA1139.severity = suggestion
+
+# SA1600: Elements should be documented
+dotnet_diagnostic.SA1600.severity = silent
+
+# SA1601: Partial elements should be documented
+dotnet_diagnostic.SA1601.severity = silent
+
+# SA1602: Enumeration items should be documented
+dotnet_diagnostic.SA1602.severity = silent
+
+# SA1601: Element documentation should have summary
+dotnet_diagnostic.SA1604.severity = suggestion
+
+# SA1615: The documentation for parameter is missing
+dotnet_diagnostic.SA1611.severity = suggestion
+
+# SA1615: Element return value should be documented
+dotnet_diagnostic.SA1615.severity = suggestion
+
+# SA1618: Document type parameters
+dotnet_diagnostic.SA1618.severity = suggestion
+
 [*.sln]
 indent_style = tab

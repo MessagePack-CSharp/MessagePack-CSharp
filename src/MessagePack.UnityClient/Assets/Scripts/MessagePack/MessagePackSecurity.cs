@@ -166,6 +166,7 @@ namespace MessagePack
                 // We also have to specially handle some 32-bit types (e.g. float) where multiple in-memory representations should hash to the same value.
                 // Any type supported by the PrimitiveObjectFormatter should be added here if supporting it as a key in a collection makes sense.
                 result =
+
                     // 32-bits or smaller:
                     typeof(T) == typeof(bool) ? CollisionResistantHasher<T>.Instance :
                     typeof(T) == typeof(char) ? CollisionResistantHasher<T>.Instance :

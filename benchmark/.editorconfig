@@ -1,0 +1,2 @@
+# SA1300: Element should begin with an uppercase letter
+dotnet_diagnostic.SA1300.severity = silent

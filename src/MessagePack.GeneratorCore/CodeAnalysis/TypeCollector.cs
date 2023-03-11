@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 using System;
@@ -883,6 +884,7 @@ namespace MessagePackCompiler.CodeAnalysis
                         {
                             IEnumerable<KeyValuePair<string, MemberSerializationInfo>> hasKey = constructorLookupDictionary[item.Name];
                             using var enumerator = hasKey.GetEnumerator();
+
                             // hasKey.Count() == 0
                             if (!enumerator.MoveNext())
                             {
@@ -896,6 +898,7 @@ namespace MessagePackCompiler.CodeAnalysis
                             }
 
                             var first = enumerator.Current.Value;
+
                             // hasKey.Count() != 1
                             if (enumerator.MoveNext())
                             {
