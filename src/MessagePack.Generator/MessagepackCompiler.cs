@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
@@ -90,6 +91,12 @@ namespace MessagePack.Generator
             {
                 var logger = new ConsoleLogger(Microsoft.Build.Framework.LoggerVerbosity.Quiet);
                 var project = await workspace.OpenProjectAsync(projectPath, logger, null, cancellationToken);
+                if (workspace.Diagnostics.Any(x => x.Kind is WorkspaceDiagnosticKind.Failure))
+                {
+                    throw new InvalidOperationException("One or more errors occured while opening the project:" + Environment.NewLine +
+                        string.Join(Environment.NewLine, workspace.Diagnostics.Select(x => $"========================================{Environment.NewLine}{x.Message}{Environment.NewLine}========================================")));
+                }
+
                 var compilation = await project.GetCompilationAsync(cancellationToken);
                 if (compilation is null)
                 {
