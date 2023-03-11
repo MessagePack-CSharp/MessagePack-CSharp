@@ -57,7 +57,7 @@ jobs:
   steps:
   - checkout: self
     clean: true
-  - template: azure-pipelines/install-dependencies.yml
+  - template: install-dependencies.yml
   - pwsh: sandbox/codegen.ps1
     displayName: Regenerate checked-in code
   - bash: |

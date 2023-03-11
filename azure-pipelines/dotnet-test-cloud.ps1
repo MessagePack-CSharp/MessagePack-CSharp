@@ -57,7 +57,7 @@ if ($x86) {
     --logger trx `
 
 $unknownCounter = 0
-Get-ChildItem -Recurse -Path $RepoRoot\test\*.trx |% {
+Get-ChildItem -Recurse -Path $RepoRoot\tests\*.trx |% {
   Copy-Item $_ -Destination $ArtifactStagingFolder/test_logs/
 
   if ($PublishResults) {
