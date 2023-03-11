@@ -344,13 +344,13 @@ namespace MessagePack.Formatters
                 switch (keyValuePair.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatterWithVerify<global::TextMessageBody>().Serialize(ref writer, (global::TextMessageBody)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TextMessageBody>(options.Resolver).Serialize(ref writer, (global::TextMessageBody)value, options);
                         break;
                     case 1:
-                        options.Resolver.GetFormatterWithVerify<global::StampMessageBody>().Serialize(ref writer, (global::StampMessageBody)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::StampMessageBody>(options.Resolver).Serialize(ref writer, (global::StampMessageBody)value, options);
                         break;
                     case 2:
-                        options.Resolver.GetFormatterWithVerify<global::QuestMessageBody>().Serialize(ref writer, (global::QuestMessageBody)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::QuestMessageBody>(options.Resolver).Serialize(ref writer, (global::QuestMessageBody)value, options);
                         break;
                     default:
                         break;
@@ -386,13 +386,13 @@ namespace MessagePack.Formatters
             switch (key)
             {
                 case 0:
-                    result = (global::IMessageBody)options.Resolver.GetFormatterWithVerify<global::TextMessageBody>().Deserialize(ref reader, options);
+                    result = (global::IMessageBody)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TextMessageBody>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 1:
-                    result = (global::IMessageBody)options.Resolver.GetFormatterWithVerify<global::StampMessageBody>().Deserialize(ref reader, options);
+                    result = (global::IMessageBody)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::StampMessageBody>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 2:
-                    result = (global::IMessageBody)options.Resolver.GetFormatterWithVerify<global::QuestMessageBody>().Deserialize(ref reader, options);
+                    result = (global::IMessageBody)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::QuestMessageBody>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 default:
                     reader.Skip();
@@ -457,7 +457,7 @@ namespace MessagePack.Formatters.SharedData
                 switch (keyValuePair.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref writer, (global::SharedData.MySubUnion1)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion1>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion1)value, options);
                         break;
                     default:
                         break;
@@ -493,7 +493,7 @@ namespace MessagePack.Formatters.SharedData
             switch (key)
             {
                 case 0:
-                    result = (global::SharedData.IIVersioningUnion)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IIVersioningUnion)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion1>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 default:
                     reader.Skip();
@@ -538,16 +538,16 @@ namespace MessagePack.Formatters.SharedData
                 switch (keyValuePair.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref writer, (global::SharedData.MySubUnion1)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion1>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion1)value, options);
                         break;
                     case 1:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Serialize(ref writer, (global::SharedData.MySubUnion2)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion2>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion2)value, options);
                         break;
                     case 2:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Serialize(ref writer, (global::SharedData.MySubUnion3)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion3>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion3)value, options);
                         break;
                     case 3:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Serialize(ref writer, (global::SharedData.MySubUnion4)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion4>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion4)value, options);
                         break;
                     default:
                         break;
@@ -583,16 +583,16 @@ namespace MessagePack.Formatters.SharedData
             switch (key)
             {
                 case 0:
-                    result = (global::SharedData.IUnionChecker)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionChecker)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion1>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 1:
-                    result = (global::SharedData.IUnionChecker)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionChecker)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion2>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 2:
-                    result = (global::SharedData.IUnionChecker)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionChecker)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion3>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 3:
-                    result = (global::SharedData.IUnionChecker)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionChecker)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion4>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 default:
                     reader.Skip();
@@ -637,16 +637,16 @@ namespace MessagePack.Formatters.SharedData
                 switch (keyValuePair.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Serialize(ref writer, (global::SharedData.MySubUnion2)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion2>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion2)value, options);
                         break;
                     case 1:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Serialize(ref writer, (global::SharedData.MySubUnion3)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion3>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion3)value, options);
                         break;
                     case 2:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Serialize(ref writer, (global::SharedData.MySubUnion4)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion4>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion4)value, options);
                         break;
                     case 3:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Serialize(ref writer, (global::SharedData.MySubUnion1)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion1>(options.Resolver).Serialize(ref writer, (global::SharedData.MySubUnion1)value, options);
                         break;
                     default:
                         break;
@@ -682,16 +682,16 @@ namespace MessagePack.Formatters.SharedData
             switch (key)
             {
                 case 0:
-                    result = (global::SharedData.IUnionChecker2)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion2>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionChecker2)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion2>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 1:
-                    result = (global::SharedData.IUnionChecker2)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion3>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionChecker2)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion3>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 2:
-                    result = (global::SharedData.IUnionChecker2)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion4>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionChecker2)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion4>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 3:
-                    result = (global::SharedData.IUnionChecker2)options.Resolver.GetFormatterWithVerify<global::SharedData.MySubUnion1>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionChecker2)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.MySubUnion1>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 default:
                     reader.Skip();
@@ -732,10 +732,10 @@ namespace MessagePack.Formatters.SharedData
                 switch (keyValuePair.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.FooClass>().Serialize(ref writer, (global::SharedData.FooClass)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.FooClass>(options.Resolver).Serialize(ref writer, (global::SharedData.FooClass)value, options);
                         break;
                     case 1:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.BarClass>().Serialize(ref writer, (global::SharedData.BarClass)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.BarClass>(options.Resolver).Serialize(ref writer, (global::SharedData.BarClass)value, options);
                         break;
                     default:
                         break;
@@ -771,10 +771,10 @@ namespace MessagePack.Formatters.SharedData
             switch (key)
             {
                 case 0:
-                    result = (global::SharedData.IUnionSample)options.Resolver.GetFormatterWithVerify<global::SharedData.FooClass>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionSample)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.FooClass>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 1:
-                    result = (global::SharedData.IUnionSample)options.Resolver.GetFormatterWithVerify<global::SharedData.BarClass>().Deserialize(ref reader, options);
+                    result = (global::SharedData.IUnionSample)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.BarClass>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 default:
                     reader.Skip();
@@ -815,10 +815,10 @@ namespace MessagePack.Formatters.SharedData
                 switch (keyValuePair.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.SubUnionType1>().Serialize(ref writer, (global::SharedData.SubUnionType1)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SubUnionType1>(options.Resolver).Serialize(ref writer, (global::SharedData.SubUnionType1)value, options);
                         break;
                     case 1:
-                        options.Resolver.GetFormatterWithVerify<global::SharedData.SubUnionType2>().Serialize(ref writer, (global::SharedData.SubUnionType2)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SubUnionType2>(options.Resolver).Serialize(ref writer, (global::SharedData.SubUnionType2)value, options);
                         break;
                     default:
                         break;
@@ -854,10 +854,10 @@ namespace MessagePack.Formatters.SharedData
             switch (key)
             {
                 case 0:
-                    result = (global::SharedData.RootUnionType)options.Resolver.GetFormatterWithVerify<global::SharedData.SubUnionType1>().Deserialize(ref reader, options);
+                    result = (global::SharedData.RootUnionType)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SubUnionType1>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 case 1:
-                    result = (global::SharedData.RootUnionType)options.Resolver.GetFormatterWithVerify<global::SharedData.SubUnionType2>().Deserialize(ref reader, options);
+                    result = (global::SharedData.RootUnionType)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::SharedData.SubUnionType2>(options.Resolver).Deserialize(ref reader, options);
                     break;
                 default:
                     reader.Skip();
