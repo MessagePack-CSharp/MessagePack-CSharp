@@ -8,10 +8,7 @@
 
 @pushd %~dp0
 
-echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Buffers.dll" ".\Assets\Plugins\System.Buffers.dll" /Y /I
-echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Memory.dll" ".\Assets\Plugins\System.Memory.dll" /Y /I
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Runtime.CompilerServices.Unsafe.dll" ".\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll" /Y /I
 echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\Microsoft.NET.StringTools.dll" ".\Assets\Plugins\Microsoft.NET.StringTools.dll" /Y /I
-echo F | xcopy "..\..\bin\MessagePack\release\netstandard2.0\publish\System.Threading.Tasks.Extensions.dll" ".\Assets\Plugins\System.Threading.Tasks.Extensions.dll" /Y /I
 
 @popd

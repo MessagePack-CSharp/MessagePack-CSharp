@@ -95,9 +95,10 @@ namespace ");
  for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; 
             this.Write("                    case ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(":\r\n                        options.Resolver.GetFormatterWithVerify<");
+            this.Write(":\r\n                        global::MessagePack.FormatterResolverExtensions.GetFor" +
+                    "matterWithVerify<");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
-            this.Write(">().Serialize(ref writer, (");
+            this.Write(">(options.Resolver).Serialize(ref writer, (");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
             this.Write(")value, options);\r\n                        break;\r\n");
  } 
@@ -127,9 +128,10 @@ namespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(":\r\n                    result = (");
             this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
-            this.Write(")options.Resolver.GetFormatterWithVerify<");
+            this.Write(")global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
-            this.Write(">().Deserialize(ref reader, options);\r\n                    break;\r\n");
+            this.Write(">(options.Resolver).Deserialize(ref reader, options);\r\n                    break;" +
+                    "\r\n");
  } 
             this.Write("                default:\r\n                    reader.Skip();\r\n                   " +
                     " break;\r\n            }\r\n\r\n            reader.Depth--;\r\n            return result" +

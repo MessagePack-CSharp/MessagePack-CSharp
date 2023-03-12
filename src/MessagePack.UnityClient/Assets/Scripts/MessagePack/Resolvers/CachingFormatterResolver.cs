@@ -14,25 +14,25 @@ namespace MessagePack.Resolvers
         /// <summary>
         /// The cache of types to their formatters.
         /// </summary>
-        private readonly ThreadsafeTypeKeyHashTable<IMessagePackFormatter> formatters = new ThreadsafeTypeKeyHashTable<IMessagePackFormatter>();
+        private readonly ThreadsafeTypeKeyHashTable<IMessagePackFormatter?> formatters = new();
 
         /// <inheritdoc />
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
-            if (!this.formatters.TryGetValue(typeof(T), out IMessagePackFormatter formatter))
+            if (!this.formatters.TryGetValue(typeof(T), out IMessagePackFormatter? formatter))
             {
                 formatter = this.GetFormatterCore<T>();
                 this.formatters.TryAdd(typeof(T), formatter);
             }
 
-            return (IMessagePackFormatter<T>)formatter;
+            return (IMessagePackFormatter<T>?)formatter;
         }
 
         /// <summary>
         /// Looks up a formatter for a type that has not been previously cached.
         /// </summary>
         /// <typeparam name="T">The type to be formatted.</typeparam>
-        /// <returns>The formatter to use, or <c>null</c> if none found.</returns>
-        protected abstract IMessagePackFormatter<T> GetFormatterCore<T>();
+        /// <returns>The formatter to use, or <see langword="null"/> if none found.</returns>
+        protected abstract IMessagePackFormatter<T>? GetFormatterCore<T>();
     }
 }

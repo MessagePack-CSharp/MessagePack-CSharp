@@ -1,29 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <LangVersion>latest</LangVersion>
-
-    <IsPackable>false</IsPackable>
-    <CodeAnalysisRuleSet>..\MessagePack.Tests\MessagePack.Tests.ruleset</CodeAnalysisRuleSet>
+    <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" Version="5.10.3" />
-
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
-
-    <PackageReference Include="Nerdbank.Streams" Version="2.8.57" />
-
-    <PackageReference Include="xunit" Version="2.4.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
-    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Nerdbank.Streams" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.GeneratorCore\MessagePack.GeneratorCore.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
 </Project>

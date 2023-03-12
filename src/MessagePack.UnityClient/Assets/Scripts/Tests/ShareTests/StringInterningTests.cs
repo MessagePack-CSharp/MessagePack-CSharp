@@ -65,14 +65,16 @@ namespace MessagePack.Tests
         [Fact]
         public void StringMemberInterning()
         {
-            ClassOfStrings before = new ClassOfStrings { InternedString = "abc", OrdinaryString = "def" };
+            ClassOfStrings before = new ClassOfStrings { InternedString = "abc", OrdinaryString = "def", ObjectString = "obj" };
             ClassOfStrings after1 = MessagePackSerializer.Deserialize<ClassOfStrings>(MessagePackSerializer.Serialize(before, MessagePackSerializerOptions.Standard), MessagePackSerializerOptions.Standard);
             ClassOfStrings after2 = MessagePackSerializer.Deserialize<ClassOfStrings>(MessagePackSerializer.Serialize(before, MessagePackSerializerOptions.Standard), MessagePackSerializerOptions.Standard);
             Assert.Equal(after1.InternedString, after2.InternedString);
             Assert.Equal(after1.OrdinaryString, after2.OrdinaryString);
+            Assert.Equal(after1.ObjectString, after2.ObjectString);
 
             Assert.Same(after1.InternedString, after2.InternedString);
             Assert.NotSame(after1.OrdinaryString, after2.OrdinaryString);
+            Assert.NotSame(after1.ObjectString, after2.ObjectString);
         }
 
         [Fact]
@@ -83,14 +85,16 @@ namespace MessagePack.Tests
                     new IMessagePackFormatter[] { new StringInterningFormatter() },
                     new IFormatterResolver[] { StandardResolver.Instance }));
 
-            ClassOfStrings before = new ClassOfStrings { InternedString = "abc", OrdinaryString = "def" };
+            ClassOfStrings before = new ClassOfStrings { InternedString = "abc", OrdinaryString = "def", ObjectString = "obj" };
             ClassOfStrings after1 = MessagePackSerializer.Deserialize<ClassOfStrings>(MessagePackSerializer.Serialize(before, options), options);
             ClassOfStrings after2 = MessagePackSerializer.Deserialize<ClassOfStrings>(MessagePackSerializer.Serialize(before, options), options);
             Assert.Equal(after1.InternedString, after2.InternedString);
             Assert.Equal(after1.OrdinaryString, after2.OrdinaryString);
+            Assert.Equal(after1.ObjectString, after2.ObjectString);
 
             Assert.Same(after1.InternedString, after2.InternedString);
             Assert.Same(after1.OrdinaryString, after2.OrdinaryString);
+            Assert.Same(after1.ObjectString, after2.ObjectString);
         }
 
         [MessagePackObject]
@@ -102,6 +106,9 @@ namespace MessagePack.Tests
 
             [Key(1)]
             public string OrdinaryString { get; set; }
+
+            [Key(2)]
+            public object ObjectString { get; set; }
         }
     }
 }

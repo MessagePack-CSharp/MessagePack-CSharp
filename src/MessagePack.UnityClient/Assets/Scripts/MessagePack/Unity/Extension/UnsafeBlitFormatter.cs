@@ -17,14 +17,14 @@ namespace MessagePack.Unity.Extension
     // use ext instead of ArrayFormatter to extremely boost up performance.
     // Layout: [extHeader, byteSize(integer), isLittleEndian(bool), bytes()]
     // Used Ext:30~36
-    public abstract class UnsafeBlitFormatterBase<T> : IMessagePackFormatter<T[]>
+    public abstract class UnsafeBlitFormatterBase<T> : IMessagePackFormatter<T[]?>
         where T : struct
     {
         protected abstract sbyte TypeCode { get; }
 
         protected void CopyDeserializeUnsafe(ReadOnlySpan<byte> src, Span<T> dest) => src.CopyTo(MemoryMarshal.Cast<T, byte>(dest));
 
-        public void Serialize(ref MessagePackWriter writer, T[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, T[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -33,14 +33,15 @@ namespace MessagePack.Unity.Extension
             }
 
             var byteLen = value.Length * Marshal.SizeOf<T>();
+            var realLen = MessagePackWriter.GetEncodedLength(byteLen) + byteLen + 1;
 
-            writer.WriteExtensionFormatHeader(new ExtensionHeader(this.TypeCode, byteLen));
+            writer.WriteExtensionFormatHeader(new ExtensionHeader(this.TypeCode, realLen));
             writer.Write(byteLen); // write original header(not array header)
             writer.Write(BitConverter.IsLittleEndian);
             writer.WriteRaw(MemoryMarshal.Cast<T, byte>(value));
         }
 
-        public T[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public T[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

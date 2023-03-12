@@ -60,7 +60,7 @@ namespace MessagePackAnalyzer
             id: InvalidMessagePackObjectId,
             title: "MessagePackObject validation",
             category: Category,
-            messageFormat: "Invalid MessagePackObject definition. {0}", // details
+            messageFormat: "Invalid MessagePackObject definition: {0}", // details
             description: "Invalid MessagePackObject definition.",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
@@ -95,9 +95,9 @@ namespace MessagePackAnalyzer
             }
 
             if (
-               ((declaredSymbol.TypeKind == TypeKind.Interface) && declaredSymbol.GetAttributes().Any(x2 => Equals(x2.AttributeClass, typeReferences.UnionAttribute)))
-            || ((declaredSymbol.TypeKind == TypeKind.Class) && declaredSymbol.GetAttributes().Any(x2 => Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute)))
-            || ((declaredSymbol.TypeKind == TypeKind.Struct) && declaredSymbol.GetAttributes().Any(x2 => Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute))))
+               ((declaredSymbol.TypeKind == TypeKind.Interface) && declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.UnionAttribute)))
+            || ((declaredSymbol.TypeKind == TypeKind.Class) && declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute)))
+            || ((declaredSymbol.TypeKind == TypeKind.Struct) && declaredSymbol.GetAttributes().Any(x2 => SymbolEqualityComparer.Default.Equals(x2.AttributeClass, typeReferences.MessagePackObjectAttribute))))
             {
                 var reportContext = new DiagnosticsReportContext(context);
                 var collector = new TypeCollector(reportContext, typeReferences);

@@ -1,4 +1,4 @@
-﻿# EditorConfig is awesome:http://EditorConfig.org
+# EditorConfig is awesome:http://EditorConfig.org
 
 # top-most EditorConfig file
 root = true
@@ -6,8 +6,6 @@ root = true
 # Don't use tabs for indentation.
 [*]
 indent_style = space
-insert_final_newline = true
-trim_trailing_whitespace = true
 
 # (Please don't specify an indent_size here; that has too many unintended consequences.)
 
@@ -18,18 +16,21 @@ indent_style = space
 # Code files
 [*.{cs,csx,vb,vbx,h,cpp,idl}]
 indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
 
-# Xml project files
-[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
+# MSBuild project files
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj,msbuildproj,props,targets}]
 indent_size = 2
 
 # Xml config files
-[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct}]
+[*.{ruleset,config,nuspec,resx,vsixmanifest,vsct,runsettings}]
 indent_size = 2
 
 # JSON files
 [*.json]
 indent_size = 2
+indent_style = space
 
 # Dotnet code style settings:
 [*.{cs,vb}]
@@ -167,3 +168,71 @@ csharp_new_line_before_members_in_anonymous_types = true
 
 # Blocks are allowed
 csharp_prefer_braces = true:silent
+
+dotnet_diagnostic.RS0041.severity = suggestion
+
+# SA1130: Use lambda syntax
+dotnet_diagnostic.SA1130.severity = silent
+
+# IDE1006: Naming Styles - StyleCop handles these for us
+dotnet_diagnostic.IDE1006.severity = none
+
+dotnet_diagnostic.DOC100.severity = silent
+dotnet_diagnostic.DOC104.severity = warning
+dotnet_diagnostic.DOC105.severity = warning
+dotnet_diagnostic.DOC106.severity = warning
+dotnet_diagnostic.DOC107.severity = warning
+dotnet_diagnostic.DOC108.severity = warning
+dotnet_diagnostic.DOC200.severity = warning
+dotnet_diagnostic.DOC202.severity = warning
+
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = suggestion
+
+# SA1101: Prefix local calls with this
+dotnet_diagnostic.SA1101.severity = suggestion
+
+# SA120x: Element ordering
+dotnet_diagnostic.SA1201.severity = silent
+dotnet_diagnostic.SA1202.severity = silent
+dotnet_diagnostic.SA1204.severity = silent
+dotnet_diagnostic.SA1214.severity = silent
+
+# SA1121: Use built-in type alias
+dotnet_diagnostic.SA1121.severity = suggestion
+
+# SA1124: Do not use regions
+dotnet_diagnostic.SA1124.severity = suggestion
+
+# SA1133: Each attribute should be placed in its own set of square brackets
+dotnet_diagnostic.SA1133.severity = silent
+
+# SA1134: Each attribute should be placed on its own line of code
+dotnet_diagnostic.SA1134.severity = silent
+
+# SA1139: Use literal syntax instead of casting
+dotnet_diagnostic.SA1139.severity = suggestion
+
+# SA1600: Elements should be documented
+dotnet_diagnostic.SA1600.severity = silent
+
+# SA1601: Partial elements should be documented
+dotnet_diagnostic.SA1601.severity = silent
+
+# SA1602: Enumeration items should be documented
+dotnet_diagnostic.SA1602.severity = silent
+
+# SA1601: Element documentation should have summary
+dotnet_diagnostic.SA1604.severity = suggestion
+
+# SA1615: The documentation for parameter is missing
+dotnet_diagnostic.SA1611.severity = suggestion
+
+# SA1615: Element return value should be documented
+dotnet_diagnostic.SA1615.severity = suggestion
+
+# SA1618: Document type parameters
+dotnet_diagnostic.SA1618.severity = suggestion
+
+[*.sln]
+indent_style = tab

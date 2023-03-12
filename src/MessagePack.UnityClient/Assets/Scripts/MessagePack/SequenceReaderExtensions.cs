@@ -114,7 +114,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="reader">The reader to read from.</param>
         /// <param name="value">Receives the value read.</param>
-        /// <returns><c>true</c> if there was another byte in the sequence; <c>false</c> otherwise.</returns>
+        /// <returns><see langword="true"/> if there was another byte in the sequence; <see langword="false"/> otherwise.</returns>
         public static bool TryRead(ref this SequenceReader<byte> reader, out sbyte value)
         {
             if (TryRead(ref reader, out byte byteValue))

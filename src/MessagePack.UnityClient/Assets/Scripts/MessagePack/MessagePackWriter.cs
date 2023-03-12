@@ -714,10 +714,10 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Bin8"/>,
         /// <see cref="MessagePackCode.Bin16"/>,
         /// <see cref="MessagePackCode.Bin32"/>,
-        /// or <see cref="MessagePackCode.Nil"/> if <paramref name="src"/> is <c>null</c>.
+        /// or <see cref="MessagePackCode.Nil"/> if <paramref name="src"/> is <see langword="null"/>.
         /// </summary>
-        /// <param name="src">The array of bytes to write. May be <c>null</c>.</param>
-        public void Write(byte[] src)
+        /// <param name="src">The array of bytes to write. May be <see langword="null"/>.</param>
+        public void Write(byte[]? src)
         {
             if (src == null)
             {
@@ -737,7 +737,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         /// <remarks>
-        /// When <see cref="OldSpec"/> is <c>true</c>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
         /// </remarks>
         public void Write(ReadOnlySpan<byte> src)
         {
@@ -756,7 +756,7 @@ namespace MessagePack
         /// </summary>
         /// <param name="src">The span of bytes to write.</param>
         /// <remarks>
-        /// When <see cref="OldSpec"/> is <c>true</c>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
         /// </remarks>
         public void Write(in ReadOnlySequence<byte> src)
         {
@@ -781,7 +781,7 @@ namespace MessagePack
         /// Alternatively a single call to <see cref="Write(ReadOnlySpan{byte})"/> or <see cref="Write(in ReadOnlySequence{byte})"/> will take care of the header and content in one call.
         /// </para>
         /// <para>
-        /// When <see cref="OldSpec"/> is <c>true</c>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
+        /// When <see cref="OldSpec"/> is <see langword="true"/>, the msgpack code used is <see cref="MessagePackCode.Str8"/>, <see cref="MessagePackCode.Str16"/> or <see cref="MessagePackCode.Str32"/> instead.
         /// </para>
         /// </remarks>
         public void WriteBinHeader(int length)
@@ -912,11 +912,11 @@ namespace MessagePack
         /// <see cref="MessagePackCode.Str8"/>,
         /// <see cref="MessagePackCode.Str16"/>,
         /// <see cref="MessagePackCode.Str32"/>,
-        /// or <see cref="MessagePackCode.Nil"/> if the <paramref name="value"/> is <c>null</c>.
+        /// or <see cref="MessagePackCode.Nil"/> if the <paramref name="value"/> is <see langword="null"/>.
         /// </summary>
         /// <param name="value">The value to write. May be null.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Write(string value)
+        public unsafe void Write(string? value)
         {
             if (value == null)
             {
@@ -1288,6 +1288,48 @@ namespace MessagePack
                 WriteBigEndian((uint)byteCount, pBuffer + 1);
                 this.writer.Advance(byteCount + 5);
             }
+        }
+
+        /// <summary>
+        /// Get the number of bytes required to encode a value in msgpack.
+        /// </summary>
+        /// <param name="value">The value to encode.</param>
+        /// <returns>The byte length; One of 1, 2, 3, 5 or 9 bytes.</returns>
+        public static int GetEncodedLength(long value)
+        {
+            return value switch
+            {
+                >= 0 => value switch
+                {
+                    <= MessagePackRange.MaxFixPositiveInt => 1,
+                    <= byte.MaxValue => 2,
+                    <= ushort.MaxValue => 3,
+                    <= uint.MaxValue => 5,
+                    _ => 9,
+                },
+                _ => value switch
+                {
+                    >= MessagePackRange.MinFixNegativeInt => 1,
+                    >= sbyte.MinValue => 2,
+                    >= short.MinValue => 3,
+                    >= int.MinValue => 5,
+                    _ => 9,
+                },
+            };
+        }
+
+        /// <summary>
+        /// Get the number of bytes required to encode a value in msgpack.
+        /// </summary>
+        /// <param name="value">The value to encode.</param>
+        /// <returns>The byte length; One of 1, 2, 3, 5 or 9 bytes.</returns>
+        public static int GetEncodedLength(ulong value)
+        {
+            return value switch
+            {
+                > long.MaxValue => 9,
+                _ => GetEncodedLength((long)value),
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

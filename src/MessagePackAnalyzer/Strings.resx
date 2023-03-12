@@ -121,7 +121,7 @@
     <value>Without an explicit MessagePackSerializerOptions argument, a shared/static default will be assumed which any other code in the entire AppDomain or process can alter, causing malfunction in your invocation.</value>
   </data>
   <data name="MsgPack001_MessageFormat" xml:space="preserve">
-    <value>Supply a value for the MessagePackSerializerOptions argument.</value>
+    <value>Supply a value for the MessagePackSerializerOptions argument</value>
   </data>
   <data name="MsgPack001_Title" xml:space="preserve">
     <value>Avoid mutable default options</value>
@@ -130,7 +130,7 @@
     <value>Providing a static value for MessagePackSerializerOptions from a mutable member can lead to malfunction when that member is mutated by another party.</value>
   </data>
   <data name="MsgPack002_MessageFormat" xml:space="preserve">
-    <value>Avoid using a mutable static value for MessagePackSerializerOptions.</value>
+    <value>Avoid using a mutable static value for MessagePackSerializerOptions</value>
   </data>
   <data name="MsgPack002_Title" xml:space="preserve">
     <value>Avoid mutable static options</value>

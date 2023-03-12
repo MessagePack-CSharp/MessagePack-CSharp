@@ -34,7 +34,7 @@ jobs:
         UNITY_LICENSE: ${{ secrets.UNITY_LICENSE_2021 }}
       with:
         projectPath: src/MessagePack.UnityClient
-        unityVersion: 2019.1.10f1
+        unityVersion: 2021.3.11f1
         targetPlatform: StandaloneLinux64
         buildMethod: PackageExporter.Export
         customParameters: /headless /ScriptBackend mono

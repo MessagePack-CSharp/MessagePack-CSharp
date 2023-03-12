@@ -36,9 +36,9 @@ namespace MessagePack.Internal
 
         public TypeBuilder DefineType(string name, TypeAttributes attr) => this.moduleBuilder.DefineType(name, attr);
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr, Type parent) => this.moduleBuilder.DefineType(name, attr, parent);
+        public TypeBuilder DefineType(string name, TypeAttributes attr, Type? parent) => this.moduleBuilder.DefineType(name, attr, parent);
 
-        public TypeBuilder DefineType(string name, TypeAttributes attr, Type parent, Type[] interfaces) => this.moduleBuilder.DefineType(name, attr, parent, interfaces);
+        public TypeBuilder DefineType(string name, TypeAttributes attr, Type? parent, Type[]? interfaces) => this.moduleBuilder.DefineType(name, attr, parent, interfaces);
 
 #if NETFRAMEWORK
 

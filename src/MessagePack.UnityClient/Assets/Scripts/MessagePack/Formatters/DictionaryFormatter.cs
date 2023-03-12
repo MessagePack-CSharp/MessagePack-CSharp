@@ -7,16 +7,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reflection;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
 {
     // unfortunately, can't use IDictionary<KVP> because supports IReadOnlyDictionary.
-    public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary> : IMessagePackFormatter<TDictionary>
-        where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
+    public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TEnumerator, TDictionary> : IMessagePackFormatter<TDictionary?>
+        where TDictionary : class?, IEnumerable<KeyValuePair<TKey, TValue>>
         where TEnumerator : IEnumerator<KeyValuePair<TKey, TValue>>
     {
-        public void Serialize(ref MessagePackWriter writer, TDictionary value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, TDictionary? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -25,8 +26,8 @@ namespace MessagePack.Formatters
             else
             {
                 IFormatterResolver resolver = options.Resolver;
-                IMessagePackFormatter<TKey> keyFormatter = resolver.GetFormatterWithVerify<TKey>();
-                IMessagePackFormatter<TValue> valueFormatter = resolver.GetFormatterWithVerify<TValue>();
+                IMessagePackFormatter<TKey>? keyFormatter = resolver.GetFormatterWithVerify<TKey>();
+                IMessagePackFormatter<TValue>? valueFormatter = resolver.GetFormatterWithVerify<TValue>();
 
                 int count;
                 {
@@ -69,7 +70,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public TDictionary Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public TDictionary? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -78,8 +79,8 @@ namespace MessagePack.Formatters
             else
             {
                 IFormatterResolver resolver = options.Resolver;
-                IMessagePackFormatter<TKey> keyFormatter = resolver.GetFormatterWithVerify<TKey>();
-                IMessagePackFormatter<TValue> valueFormatter = resolver.GetFormatterWithVerify<TValue>();
+                IMessagePackFormatter<TKey>? keyFormatter = resolver.GetFormatterWithVerify<TKey>();
+                IMessagePackFormatter<TValue>? valueFormatter = resolver.GetFormatterWithVerify<TValue>();
 
                 var len = reader.ReadMapHeader();
 
@@ -120,7 +121,7 @@ namespace MessagePack.Formatters
     }
 
     public abstract class DictionaryFormatterBase<TKey, TValue, TIntermediate, TDictionary> : DictionaryFormatterBase<TKey, TValue, TIntermediate, IEnumerator<KeyValuePair<TKey, TValue>>, TDictionary>
-        where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
+        where TDictionary : class?, IEnumerable<KeyValuePair<TKey, TValue>>
     {
         protected override IEnumerator<KeyValuePair<TKey, TValue>> GetSourceEnumerator(TDictionary source)
         {
@@ -129,7 +130,8 @@ namespace MessagePack.Formatters
     }
 
     public abstract class DictionaryFormatterBase<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary, TDictionary>
-        where TDictionary : IDictionary<TKey, TValue>
+        where TDictionary : class?, IDictionary<TKey, TValue>
+        where TKey : notnull
     {
         protected override TDictionary Complete(TDictionary intermediateCollection)
         {
@@ -138,6 +140,7 @@ namespace MessagePack.Formatters
     }
 
     public sealed class DictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, Dictionary<TKey, TValue>.Enumerator, Dictionary<TKey, TValue>>
+        where TKey : notnull
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {
@@ -161,7 +164,8 @@ namespace MessagePack.Formatters
     }
 
     public sealed class GenericDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, TDictionary>
-        where TDictionary : IDictionary<TKey, TValue>, new()
+        where TDictionary : class?, IDictionary<TKey, TValue>, new()
+        where TKey : notnull
     {
         protected override void Add(TDictionary collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {
@@ -175,7 +179,8 @@ namespace MessagePack.Formatters
     }
 
     public sealed class GenericReadOnlyDictionaryFormatter<TKey, TValue, TDictionary> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, TDictionary>
-        where TDictionary : IReadOnlyDictionary<TKey, TValue>
+        where TDictionary : class?, IReadOnlyDictionary<TKey, TValue>
+        where TKey : notnull
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {
@@ -189,11 +194,12 @@ namespace MessagePack.Formatters
 
         protected override TDictionary Complete(Dictionary<TKey, TValue> intermediateCollection)
         {
-            return (TDictionary)Activator.CreateInstance(typeof(TDictionary), intermediateCollection);
+            return (TDictionary)(Activator.CreateInstance(typeof(TDictionary), intermediateCollection) ?? throw new InvalidOperationException("Unable to create dictionary instance."));
         }
     }
 
     public sealed class InterfaceDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IDictionary<TKey, TValue>>
+        where TKey : notnull
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {
@@ -212,6 +218,7 @@ namespace MessagePack.Formatters
     }
 
     public sealed class SortedListFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedList<TKey, TValue>>
+        where TKey : notnull
     {
         protected override void Add(SortedList<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {
@@ -225,6 +232,7 @@ namespace MessagePack.Formatters
     }
 
     public sealed class SortedDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, SortedDictionary<TKey, TValue>, SortedDictionary<TKey, TValue>.Enumerator, SortedDictionary<TKey, TValue>>
+        where TKey : notnull
     {
         protected override void Add(SortedDictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {
@@ -248,6 +256,7 @@ namespace MessagePack.Formatters
     }
 
     public sealed class ReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, ReadOnlyDictionary<TKey, TValue>>
+        where TKey : notnull
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {
@@ -266,6 +275,7 @@ namespace MessagePack.Formatters
     }
 
     public sealed class InterfaceReadOnlyDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, Dictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>>
+        where TKey : notnull
     {
         protected override void Add(Dictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {
@@ -284,6 +294,7 @@ namespace MessagePack.Formatters
     }
 
     public sealed class ConcurrentDictionaryFormatter<TKey, TValue> : DictionaryFormatterBase<TKey, TValue, System.Collections.Concurrent.ConcurrentDictionary<TKey, TValue>>
+        where TKey : notnull
     {
         protected override void Add(ConcurrentDictionary<TKey, TValue> collection, int index, TKey key, TValue value, MessagePackSerializerOptions options)
         {

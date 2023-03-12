@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 using System;
@@ -319,7 +320,7 @@ namespace MessagePackCompiler.CodeAnalysis
                 return;
             }
 
-            var typeSymbolString = typeSymbol.ToString() ?? throw new InvalidOperationException();
+            var typeSymbolString = typeSymbol.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToString() ?? throw new InvalidOperationException();
             if (this.embeddedTypes.Contains(typeSymbolString))
             {
                 return;
@@ -483,7 +484,7 @@ namespace MessagePackCompiler.CodeAnalysis
             INamedTypeSymbol genericType = type.ConstructUnboundGenericType();
             var genericTypeString = genericType.ToDisplayString();
             var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            var isOpenGenericType = type.TypeArguments.Any(x => x is ITypeParameterSymbol);
+            var isOpenGenericType = IsOpenGenericTypeRecursively(type);
 
             // special case
             if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
@@ -883,6 +884,7 @@ namespace MessagePackCompiler.CodeAnalysis
                         {
                             IEnumerable<KeyValuePair<string, MemberSerializationInfo>> hasKey = constructorLookupDictionary[item.Name];
                             using var enumerator = hasKey.GetEnumerator();
+
                             // hasKey.Count() == 0
                             if (!enumerator.MoveNext())
                             {
@@ -896,6 +898,7 @@ namespace MessagePackCompiler.CodeAnalysis
                             }
 
                             var first = enumerator.Current.Value;
+
                             // hasKey.Count() != 1
                             if (enumerator.MoveNext())
                             {
@@ -1044,6 +1047,11 @@ namespace MessagePackCompiler.CodeAnalysis
             while (symbol != null);
 
             return true;
+        }
+
+        private bool IsOpenGenericTypeRecursively(INamedTypeSymbol type)
+        {
+            return type.IsGenericType && type.TypeArguments.Any(x => x is ITypeParameterSymbol || (x is INamedTypeSymbol symbol && IsOpenGenericTypeRecursively(symbol)));
         }
     }
 }

@@ -82,6 +82,7 @@ namespace MessagePack.Tests
             new object[] { AsString.BarBaz, AsString.FooBarBaz, "BarBaz", "FooBarBaz" },
             new object[] { (AsString)10, (AsString)999, "10", "999" },
             new object[] { (AsStringWithEnumMember)10, (AsStringWithEnumMember)999, "10", "999" },
+
             // flags
             new object[] { AsStringFlag.Foo, null, "Foo", "null" },
             new object[] { AsStringFlag.Bar, AsStringFlag.Baz, "Bar", "Baz" },
