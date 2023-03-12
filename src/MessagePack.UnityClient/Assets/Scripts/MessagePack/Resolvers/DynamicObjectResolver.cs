@@ -1982,7 +1982,7 @@ namespace MessagePack.Internal
                                     }
                                     else
                                     {
-                                        throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, parameterType mismatch. type:" + type.FullName + " parameterIndex:" + ctorParamIndex + " paramterType:" + item.ParameterType.Name);
+                                        throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, parameterType mismatch. type:" + type.FullName + " parameterIndex:" + ctorParamIndex + " parameterType:" + item.ParameterType.Name);
                                     }
                                 }
                             }
@@ -2028,7 +2028,7 @@ namespace MessagePack.Internal
                                     }
                                     else
                                     {
-                                        throw new MessagePackDynamicObjectResolverException("duplicate matched constructor parameter name:" + type.FullName + " parameterName:" + item.Name + " paramterType:" + item.ParameterType.Name);
+                                        throw new MessagePackDynamicObjectResolverException("duplicate matched constructor parameter name:" + type.FullName + " parameterName:" + item.Name + " parameterType:" + item.ParameterType.Name);
                                     }
                                 }
 
@@ -2046,7 +2046,7 @@ namespace MessagePack.Internal
                                     }
                                     else
                                     {
-                                        throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, parameterType mismatch. type:" + type.FullName + " parameterName:" + item.Name + " paramterType:" + item.ParameterType.Name);
+                                        throw new MessagePackDynamicObjectResolverException("can't find matched constructor parameter, parameterType mismatch. type:" + type.FullName + " parameterName:" + item.Name + " parameterType:" + item.ParameterType.Name);
                                     }
                                 }
                             }

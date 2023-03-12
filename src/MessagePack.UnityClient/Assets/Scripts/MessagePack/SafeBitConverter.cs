@@ -13,15 +13,15 @@ namespace MessagePack
 #if UNITY_ANDROID
             if (BitConverter.IsLittleEndian)
             {
-                long i1 = value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24);
-                long i2 = value[4] | (value[5] << 8) | (value[6] << 16) | (value[7] << 24);
-                return i1 | (i2 << 32);
+                uint i1 = (uint)(value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24));
+                uint i2 = (uint)(value[4] | (value[5] << 8) | (value[6] << 16) | (value[7] << 24));
+                return i1 | ((long)i2 << 32);
             }
             else
             {
-                long i1 = (value[0] << 24) | (value[1] << 16) | (value[2] << 8) | value[3];
-                long i2 = (value[4] << 24) | (value[5] << 16) | (value[6] << 8) | value[7];
-                return i2 | (i1 << 32);
+                uint i1 = (uint)((value[0] << 24) | (value[1] << 16) | (value[2] << 8) | value[3]);
+                uint i2 = (uint)((value[4] << 24) | (value[5] << 16) | (value[6] << 8) | value[7]);
+                return i2 | ((long)i1 << 32);
             }
 #else
             return MemoryMarshal.Cast<byte, long>(value)[0];
