@@ -6,6 +6,7 @@ extern alias newmsgpack;
 #pragma warning disable SA1200 // Using directives should be placed correctly
 #pragma warning disable SA1306 // Field names should begin with lower-case letter
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
@@ -596,4 +597,3 @@ namespace GeneratedFormatter
 
 #pragma warning restore SA1200 // Using directives should be placed correctly
 #pragma warning restore SA1403 // File may only contain a single namespace
-

@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <!-- Workaround https://github.com/dotnet/wpf/issues/1718 -->
+    <EmbedUntrackedSources Condition=" '$(UseWPF)' == 'true' ">false</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Avoid compile error about missing namespace when combining ImplicitUsings with .NET Framework target frameworks. -->
+    <Using Remove="System.Net.Http" Condition="'$(TargetFrameworkIdentifier)'=='.NETFramework'" />
+  </ItemGroup>
+</Project>

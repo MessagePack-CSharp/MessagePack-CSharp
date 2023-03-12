@@ -15,10 +15,11 @@ using System.Text.RegularExpressions;
 using MessagePack.Internal;
 using Nerdbank.Streams;
 
-namespace MessagePack.Formatters
-{
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
+namespace MessagePack.Formatters
+{
     /// <summary>
     /// Force serialize object as typeless.
     /// </summary>
@@ -102,8 +103,8 @@ namespace MessagePack.Formatters
             typeof(Double?),
         };
 
-        //ForceSizePrimitiveObjectResolver.Instance,
-        //ContractlessStandardResolverAllowPrivate.Instance);
+        ////ForceSizePrimitiveObjectResolver.Instance,
+        ////ContractlessStandardResolverAllowPrivate.Instance);
 
         // mscorlib or System.Private.CoreLib
         private static readonly bool IsMscorlib = typeof(int).AssemblyQualifiedName!.Contains("mscorlib");

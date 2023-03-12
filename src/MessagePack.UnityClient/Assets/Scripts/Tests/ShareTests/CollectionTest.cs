@@ -212,6 +212,7 @@ namespace MessagePack.Tests
             IEnumerable a = xs;
             ICollection b = xs;
             IList c = xs;
+
             // in MessagePack v2.1, deserialized type is byte so can not use Cast<int>().
             this.Convert(a).Cast<object>().Select(x => System.Convert.ToInt32(x)).Is(xs);
             this.Convert(b).Cast<object>().Select(x => System.Convert.ToInt32(x)).Is(xs);
