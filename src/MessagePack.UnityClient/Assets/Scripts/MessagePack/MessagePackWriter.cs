@@ -1290,6 +1290,48 @@ namespace MessagePack
             }
         }
 
+        /// <summary>
+        /// Get the number of bytes required to encode a value in msgpack.
+        /// </summary>
+        /// <param name="value">The value to encode.</param>
+        /// <returns>The byte length; One of 1, 2, 3, 5 or 9 bytes.</returns>
+        public static int GetEncodedLength(long value)
+        {
+            return value switch
+            {
+                >= 0 => value switch
+                {
+                    <= MessagePackRange.MaxFixPositiveInt => 1,
+                    <= byte.MaxValue => 2,
+                    <= ushort.MaxValue => 3,
+                    <= uint.MaxValue => 5,
+                    _ => 9,
+                },
+                _ => value switch
+                {
+                    >= MessagePackRange.MinFixNegativeInt => 1,
+                    >= sbyte.MinValue => 2,
+                    >= short.MinValue => 3,
+                    >= int.MinValue => 5,
+                    _ => 9,
+                },
+            };
+        }
+
+        /// <summary>
+        /// Get the number of bytes required to encode a value in msgpack.
+        /// </summary>
+        /// <param name="value">The value to encode.</param>
+        /// <returns>The byte length; One of 1, 2, 3, 5 or 9 bytes.</returns>
+        public static int GetEncodedLength(ulong value)
+        {
+            return value switch
+            {
+                > long.MaxValue => 9,
+                _ => GetEncodedLength((long)value),
+            };
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
         {
