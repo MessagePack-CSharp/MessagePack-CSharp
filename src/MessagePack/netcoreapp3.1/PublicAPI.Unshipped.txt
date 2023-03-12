@@ -6,3 +6,5 @@ MessagePack.MessagePackSerializerOptions.CompressionMinLength.get -> int
 MessagePack.MessagePackSerializerOptions.SuggestedContiguousMemorySize.get -> int
 MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressionMinLength) -> MessagePack.MessagePackSerializerOptions
 MessagePack.MessagePackSerializerOptions.WithSuggestedContiguousMemorySize(int suggestedContiguousMemorySize) -> MessagePack.MessagePackSerializerOptions
+static MessagePack.MessagePackWriter.GetEncodedLength(long value) -> int
+static MessagePack.MessagePackWriter.GetEncodedLength(ulong value) -> int

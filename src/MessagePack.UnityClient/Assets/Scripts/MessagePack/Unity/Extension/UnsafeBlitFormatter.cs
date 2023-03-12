@@ -33,7 +33,7 @@ namespace MessagePack.Unity.Extension
             }
 
             var byteLen = value.Length * Marshal.SizeOf<T>();
-            var realLen = MessagePackWriter.IntegerEncodedLength(byteLen) + byteLen + 1;
+            var realLen = MessagePackWriter.GetEncodedLength(byteLen) + byteLen + 1;
 
             writer.WriteExtensionFormatHeader(new ExtensionHeader(this.TypeCode, realLen));
             writer.Write(byteLen); // write original header(not array header)

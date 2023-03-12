@@ -1291,11 +1291,11 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Get the encoded byte length of the given integer.
+        /// Get the number of bytes required to encode a value in msgpack.
         /// </summary>
-        /// <param name="value">The integer to encode.</param>
-        /// <returns>Encoded length, either 1, 2, 3, 5 or 9 bytes.</returns>
-        public static int IntegerEncodedLength(long value)
+        /// <param name="value">The value to encode.</param>
+        /// <returns>The byte length; One of 1, 2, 3, 5 or 9 bytes.</returns>
+        public static int GetEncodedLength(long value)
         {
             if (value >= 0)
             {
@@ -1356,14 +1356,11 @@ namespace MessagePack
         }
 
         /// <summary>
-        /// Get the encoded length of the given value.
-        /// <para>
-        /// Also see <see cref="IntegerEncodedLength(long)"/>.
-        /// </para>
+        /// Get the number of bytes required to encode a value in msgpack.
         /// </summary>
-        /// <param name="value">The integer to encode.</param>
-        /// <returns>The encoded length of this value, either 1, 2, 3, 5 or 9 bytes.</returns>
-        public static int IntegerEncodedLength(ulong value)
+        /// <param name="value">The value to encode.</param>
+        /// <returns>The byte length; One of 1, 2, 3, 5 or 9 bytes.</returns>
+        public static int GetEncodedLength(ulong value)
         {
             if (value > Int64.MaxValue)
             {
@@ -1371,7 +1368,7 @@ namespace MessagePack
             }
             else
             {
-                return IntegerEncodedLength((long)value);
+                return GetEncodedLength((long)value);
             }
         }
 

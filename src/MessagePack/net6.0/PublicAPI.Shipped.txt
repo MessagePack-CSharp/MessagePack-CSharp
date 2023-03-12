@@ -626,8 +626,6 @@ MessagePack.MessagePackWriter.WriteUInt16(ushort value) -> void
 MessagePack.MessagePackWriter.WriteUInt32(uint value) -> void
 MessagePack.MessagePackWriter.WriteUInt64(ulong value) -> void
 MessagePack.MessagePackWriter.WriteUInt8(byte value) -> void
-static MessagePack.MessagePackWriter.IntegerEncodedLength(long value) -> int
-static MessagePack.MessagePackWriter.IntegerEncodedLength(ulong value) -> int
 MessagePack.Nil
 MessagePack.Nil.Equals(MessagePack.Nil other) -> bool
 MessagePack.Nil.Nil() -> void
