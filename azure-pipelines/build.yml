@@ -59,7 +59,7 @@ jobs:
     clean: true
   - template: install-dependencies.yml
   - pwsh: sandbox/codegen.ps1
-    displayName: Regenerate checked-in code
+    displayName: 🏭 Regenerate checked-in code
   - bash: |
         git add -u . # compare after applying git EOL normalization
         git diff --cached --exit-code --stat \
@@ -67,7 +67,7 @@ jobs:
                 "and check in all changes" \
             && git diff --cached \
             && exit 1)
-    displayName: Check for uncommitted changes
+    displayName: 🔍 Check for uncommitted changes
 
 - job: WrapUp
   dependsOn:

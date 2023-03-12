@@ -8,7 +8,6 @@
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <LangVersion>9.0</LangVersion>
 
-    <IsPackable>true</IsPackable>
     <Title>MessagePack for C#</Title>
     <Description>Extremely Fast MessagePack(MsgPack) Serializer for C# (.NET Framework, .NET 6, Unity, Xamarin).</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>

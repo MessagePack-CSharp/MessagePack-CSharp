@@ -1,6 +1,6 @@
 <Project>
   <!-- Sign everything that we pack up. -->
-  <PropertyGroup Condition=" '$(IsPackable)' == 'true' ">
+  <PropertyGroup Condition=" '$(IsPackable)' != 'false' ">
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\opensource.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
