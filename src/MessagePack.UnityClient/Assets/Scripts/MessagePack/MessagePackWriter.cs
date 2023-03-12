@@ -1297,62 +1297,25 @@ namespace MessagePack
         /// <returns>The byte length; One of 1, 2, 3, 5 or 9 bytes.</returns>
         public static int GetEncodedLength(long value)
         {
-            if (value >= 0)
+            return value switch
             {
-                if (value <= MessagePackRange.MaxFixPositiveInt)
+                >= 0 => value switch
                 {
-                    // positive fixint
-                    return 1;
-                }
-                else if (value <= Byte.MaxValue)
+                    <= MessagePackRange.MaxFixPositiveInt => 1,
+                    <= byte.MaxValue => 2,
+                    <= ushort.MaxValue => 3,
+                    <= uint.MaxValue => 5,
+                    _ => 9,
+                },
+                _ => value switch
                 {
-                    // uint8
-                    return 2;
-                }
-                else if (value <= UInt16.MaxValue)
-                {
-                    // uint16
-                    return 3;
-                }
-                else if (value <= UInt32.MaxValue)
-                {
-                    // uint32
-                    return 5;
-                }
-                else
-                {
-                    // uint64
-                    return 9;
-                }
-            }
-            else
-            {
-                if (value >= MessagePackRange.MinFixNegativeInt)
-                {
-                    // negative fixint
-                    return 1;
-                }
-                else if (value >= SByte.MinValue)
-                {
-                    // int8
-                    return 2;
-                }
-                else if (value >= Int16.MinValue)
-                {
-                    // int16
-                    return 3;
-                }
-                else if (value >= Int32.MinValue)
-                {
-                    // int32
-                    return 5;
-                }
-                else
-                {
-                    // int64
-                    return 9;
-                }
-            }
+                    >= MessagePackRange.MinFixNegativeInt => 1,
+                    >= sbyte.MinValue => 2,
+                    >= short.MinValue => 3,
+                    >= int.MinValue => 5,
+                    _ => 9,
+                },
+            };
         }
 
         /// <summary>
@@ -1362,14 +1325,11 @@ namespace MessagePack
         /// <returns>The byte length; One of 1, 2, 3, 5 or 9 bytes.</returns>
         public static int GetEncodedLength(ulong value)
         {
-            if (value > Int64.MaxValue)
+            return value switch
             {
-                return 9;
-            }
-            else
-            {
-                return GetEncodedLength((long)value);
-            }
+                > long.MaxValue => 9,
+                _ => GetEncodedLength((long)value),
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
