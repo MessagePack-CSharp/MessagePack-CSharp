@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
-    <IsPackable>true</IsPackable>
     <Description>Analyzer of MessagePack for C#, verify rule for [MessagePackObject] and code fix for [Key].</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Analyzer</PackageTags>
     <IncludeBuildOutput>false</IncludeBuildOutput>

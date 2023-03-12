@@ -4,7 +4,6 @@
     <TargetFramework>net6.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-    <IsPackable>true</IsPackable>
     <Title>MessagePack for C#, Experimental Plugins</Title>
     <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Experimental implementations.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer</PackageTags>

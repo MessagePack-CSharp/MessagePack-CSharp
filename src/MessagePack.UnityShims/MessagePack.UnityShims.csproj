@@ -5,7 +5,6 @@
     <RootNamespace>MessagePack.Unity</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-    <IsPackable>true</IsPackable>
     <Title>MessagePack for C# Extension Support for Unity(add pseudo Vector type and fast Vectory[] extension formatter)</Title>
     <Description>Extremely Fast MessagePack Serializer for C#(.NET, .NET Core, Unity, Xamarin). Extension support for Unity.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity</PackageTags>
