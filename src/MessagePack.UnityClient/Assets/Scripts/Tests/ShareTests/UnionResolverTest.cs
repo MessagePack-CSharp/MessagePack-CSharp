@@ -109,23 +109,44 @@ namespace MessagePack.Tests
         }
 
         [Fact]
-        public void ClassUnion()
+        public void AbstractClassUnion()
         {
-            ////var a = new RootUnionType() { MyProperty = 10 };
             var b = new SubUnionType1() { MyProperty = 11, MyProperty1 = 100 };
             var c = new SubUnionType2() { MyProperty = 12, MyProperty2 = 200 };
 
-            //// var binA = MessagePackSerializer.Serialize<RootUnionType>(a);
             var binB = MessagePackSerializer.Serialize<RootUnionType>(b);
             var binC = MessagePackSerializer.Serialize<RootUnionType>(c);
 
-            var b2 = MessagePackSerializer.Deserialize<RootUnionType>(binB) as SubUnionType1;
-            var c2 = MessagePackSerializer.Deserialize<RootUnionType>(binC) as SubUnionType2;
+            var dB = (SubUnionType1)MessagePackSerializer.Deserialize<RootUnionType>(binB);
+            Assert.Equal(11, dB.MyProperty);
+            Assert.Equal(100, dB.MyProperty1);
 
-            b2.MyProperty.Is(11);
-            b2.MyProperty1.Is(100);
-            c2.MyProperty.Is(12);
-            c2.MyProperty2.Is(200);
+            var dC = (SubUnionType2)MessagePackSerializer.Deserialize<RootUnionType>(binC);
+            Assert.Equal(12, dC.MyProperty);
+            Assert.Equal(200, dC.MyProperty2);
+        }
+
+        [Fact(Skip = "Not implemented. See https://github.com/neuecc/MessagePack-CSharp/issues/1465")]
+        public void ConcreteClassUnion()
+        {
+            var a = new ConcreteClassUnion.RootUnionType() { MyProperty = 10 };
+            var b = new ConcreteClassUnion.SubUnionType1() { MyProperty = 11, MyProperty1 = 100 };
+            var c = new ConcreteClassUnion.SubUnionType2() { MyProperty = 12, MyProperty2 = 200 };
+
+            var binA = MessagePackSerializer.Serialize<ConcreteClassUnion.RootUnionType>(a);
+            var binB = MessagePackSerializer.Serialize<ConcreteClassUnion.RootUnionType>(b);
+            var binC = MessagePackSerializer.Serialize<ConcreteClassUnion.RootUnionType>(c);
+
+            var dA = MessagePackSerializer.Deserialize<ConcreteClassUnion.RootUnionType>(binA);
+            Assert.Equal(10, dA.MyProperty);
+
+            var dB = (ConcreteClassUnion.SubUnionType1)MessagePackSerializer.Deserialize<ConcreteClassUnion.RootUnionType>(binB);
+            Assert.Equal(11, dB.MyProperty);
+            Assert.Equal(100, dB.MyProperty1);
+
+            var dC = (ConcreteClassUnion.SubUnionType2)MessagePackSerializer.Deserialize<ConcreteClassUnion.RootUnionType>(binC);
+            Assert.Equal(12, dC.MyProperty);
+            Assert.Equal(200, dC.MyProperty2);
         }
 
         [Theory]
@@ -188,7 +209,7 @@ namespace MessagePack.Tests
         [Fact]
         public void ClassUnionWithStringSubType()
         {
-            //var a = new RootUnionTypeWithStringSubType() { MyProperty = 10 };
+            ////var a = new RootUnionTypeWithStringSubType() { MyProperty = 10 };
             var b = new UnionWithStrings.SubUnionType1WithStringSubType() { MyProperty = 11, MyProperty1 = 100 };
             var c = new UnionWithStrings.SubUnionType2WithStringSubType() { MyProperty = 12, MyProperty2 = 200 };
 
@@ -363,10 +384,38 @@ namespace ComplexdUnion
 
 namespace ClassUnion
 {
-    [Union(0, typeof(SubUnionType1))]
-    [Union(1, typeof(SubUnionType2))]
+    [Union(0, typeof(RootUnionType))]
+    [Union(1, typeof(SubUnionType1))]
+    [Union(2, typeof(SubUnionType2))]
     [MessagePackObject]
     public abstract class RootUnionType
+    {
+        [Key(0)]
+        public int MyProperty { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType1 : RootUnionType
+    {
+        [Key(1)]
+        public int MyProperty1 { get; set; }
+    }
+
+    [MessagePackObject]
+    public class SubUnionType2 : RootUnionType
+    {
+        [Key(1)]
+        public int MyProperty2 { get; set; }
+    }
+}
+
+namespace ConcreteClassUnion
+{
+    [Union(0, typeof(RootUnionType))]
+    [Union(1, typeof(SubUnionType1))]
+    [Union(2, typeof(SubUnionType2))]
+    [MessagePackObject]
+    public class RootUnionType
     {
         [Key(0)]
         public int MyProperty { get; set; }
@@ -406,10 +455,10 @@ namespace UnionWithStrings
     }
 
     [Union(0, "UnionWithStrings.MySubUnion1WithStringSubType, MessagePack.Tests")]
-    //[Union(1, "UnionWithStrings.MySubUnion2WithStringSubType, MessagePack.Tests")]
-    //[Union(2, "UnionWithStrings.MySubUnion3WithStringSubType, MessagePack.Tests")]
-    //[Union(3, "UnionWithStrings.MySubUnion4WithStringSubType, MessagePack.Tests")]
-    //[Union(4, "UnionWithStrings.VersioningUnionWithStringSubType, MessagePack.Tests")]
+    ////[Union(1, "UnionWithStrings.MySubUnion2WithStringSubType, MessagePack.Tests")]
+    ////[Union(2, "UnionWithStrings.MySubUnion3WithStringSubType, MessagePack.Tests")]
+    ////[Union(3, "UnionWithStrings.MySubUnion4WithStringSubType, MessagePack.Tests")]
+    ////[Union(4, "UnionWithStrings.VersioningUnionWithStringSubType, MessagePack.Tests")]
     public interface IIVersioningUnionWithStringSubType
     {
     }

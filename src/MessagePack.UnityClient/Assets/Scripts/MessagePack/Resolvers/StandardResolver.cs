@@ -6,6 +6,7 @@ using MessagePack.Formatters;
 using MessagePack.Internal;
 using MessagePack.Resolvers;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1403 // File may only contain a single namespace
 
 namespace MessagePack.Resolvers
@@ -42,14 +43,14 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -66,7 +67,7 @@ namespace MessagePack.Resolvers
                 {
                     foreach (IFormatterResolver item in Resolvers)
                     {
-                        IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                        IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                         if (f != null)
                         {
                             Formatter = f;
@@ -108,14 +109,14 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -132,7 +133,7 @@ namespace MessagePack.Resolvers
                 {
                     foreach (IFormatterResolver item in Resolvers)
                     {
-                        IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                        IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                         if (f != null)
                         {
                             Formatter = f;
@@ -173,14 +174,14 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -197,7 +198,7 @@ namespace MessagePack.Resolvers
                 {
                     foreach (IFormatterResolver item in Resolvers)
                     {
-                        IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                        IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                         if (f != null)
                         {
                             Formatter = f;
@@ -239,14 +240,14 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
@@ -263,7 +264,7 @@ namespace MessagePack.Resolvers
                 {
                     foreach (IFormatterResolver item in Resolvers)
                     {
-                        IMessagePackFormatter<T> f = item.GetFormatter<T>();
+                        IMessagePackFormatter<T>? f = item.GetFormatter<T>();
                         if (f != null)
                         {
                             Formatter = f;

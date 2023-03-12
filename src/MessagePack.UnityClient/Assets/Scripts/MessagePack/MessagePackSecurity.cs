@@ -61,7 +61,7 @@ namespace MessagePack
         /// This can mitigate some denial of service attacks when deserializing untrusted code.
         /// </summary>
         /// <value>
-        /// The value is <c>false</c> for <see cref="TrustedData"/> and <c>true</c> for <see cref="UntrustedData"/>.
+        /// The value is <see langword="false"/> for <see cref="TrustedData"/> and <see langword="true"/> for <see cref="UntrustedData"/>.
         /// </value>
         public bool HashCollisionResistant { get; private set; }
 
@@ -145,7 +145,7 @@ namespace MessagePack
         /// <returns>A hash collision resistant equality comparer.</returns>
         protected virtual IEqualityComparer<T> GetHashCollisionResistantEqualityComparer<T>()
         {
-            IEqualityComparer<T> result = null;
+            IEqualityComparer<T>? result = null;
             if (typeof(T).GetTypeInfo().IsEnum)
             {
                 Type underlyingType = typeof(T).GetTypeInfo().GetEnumUnderlyingType();
@@ -166,6 +166,7 @@ namespace MessagePack
                 // We also have to specially handle some 32-bit types (e.g. float) where multiple in-memory representations should hash to the same value.
                 // Any type supported by the PrimitiveObjectFormatter should be added here if supporting it as a key in a collection makes sense.
                 result =
+
                     // 32-bits or smaller:
                     typeof(T) == typeof(bool) ? CollisionResistantHasher<T>.Instance :
                     typeof(T) == typeof(char) ? CollisionResistantHasher<T>.Instance :
@@ -240,9 +241,9 @@ namespace MessagePack
         {
             internal static readonly CollisionResistantHasher<T> Instance = new CollisionResistantHasher<T>();
 
-            public bool Equals(T x, T y) => EqualityComparer<T>.Default.Equals(x, y);
+            public bool Equals(T? x, T? y) => EqualityComparer<T?>.Default.Equals(x, y);
 
-            bool IEqualityComparer.Equals(object x, object y) => ((IEqualityComparer)EqualityComparer<T>.Default).Equals(x, y);
+            bool IEqualityComparer.Equals(object? x, object? y) => ((IEqualityComparer)EqualityComparer<T>.Default).Equals(x, y);
 
             public int GetHashCode(object obj) => this.GetHashCode((T)obj);
 
@@ -264,9 +265,9 @@ namespace MessagePack
                 this.security = security ?? throw new ArgumentNullException(nameof(security));
             }
 
-            bool IEqualityComparer<object>.Equals(object x, object y) => EqualityComparer<object>.Default.Equals(x, y);
+            bool IEqualityComparer<object>.Equals(object? x, object? y) => EqualityComparer<object?>.Default.Equals(x, y);
 
-            bool IEqualityComparer.Equals(object x, object y) => ((IEqualityComparer)EqualityComparer<object>.Default).Equals(x, y);
+            bool IEqualityComparer.Equals(object? x, object? y) => ((IEqualityComparer)EqualityComparer<object>.Default).Equals(x, y);
 
             public int GetHashCode(object value)
             {
@@ -284,15 +285,16 @@ namespace MessagePack
                     return value.GetHashCode();
                 }
 
-                if (!equalityComparerCache.TryGetValue(valueType, out IEqualityComparer equalityComparer))
+                if (!equalityComparerCache.TryGetValue(valueType, out IEqualityComparer? equalityComparer))
                 {
                     try
                     {
-                        equalityComparer = (IEqualityComparer)GetHashCollisionResistantEqualityComparerOpenGenericMethod.Value.MakeGenericMethod(valueType).Invoke(this.security, Array.Empty<object>());
+                        equalityComparer = (IEqualityComparer)GetHashCollisionResistantEqualityComparerOpenGenericMethod.Value.MakeGenericMethod(valueType).Invoke(this.security, Array.Empty<object>())!;
                     }
-                    catch (TargetInvocationException ex)
+                    catch (TargetInvocationException ex) when (ex.InnerException is not null)
                     {
                         ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+                        throw null!; // not reachable
                     }
 
                     equalityComparerCache.TryAdd(valueType, equalityComparer);

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#pragma warning disable SA1402 // File may only contain a single type
+
 using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
@@ -16,18 +18,18 @@ namespace MessagePack.Unity
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)UnityResolveryResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)UnityResolveryResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -186,7 +188,7 @@ namespace MessagePack.Unity
 #endif
         };
 
-        internal static object GetFormatter(Type t)
+        internal static object? GetFormatter(Type t)
         {
             object formatter;
             if (FormatterMap.TryGetValue(t, out formatter))

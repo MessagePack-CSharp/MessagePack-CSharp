@@ -47,22 +47,28 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(14)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(20)
             {
-                { typeof(global::System.Collections.Generic.List<global::TestData2.A>), 0 },
-                { typeof(global::System.Collections.Generic.List<global::TestData2.B>), 1 },
-                { typeof(global::TestData2.Nest1.Id), 2 },
-                { typeof(global::TestData2.Nest2.Id), 3 },
-                { typeof(global::TestData2.A), 4 },
-                { typeof(global::TestData2.B), 5 },
-                { typeof(global::TestData2.C), 6 },
-                { typeof(global::TestData2.Nest1), 7 },
-                { typeof(global::TestData2.Nest1.IdType), 8 },
-                { typeof(global::TestData2.Nest2), 9 },
-                { typeof(global::TestData2.Nest2.IdType), 10 },
-                { typeof(global::TestData2.PropNameCheck1), 11 },
-                { typeof(global::TestData2.PropNameCheck2), 12 },
-                { typeof(global::TestData2.Record), 13 },
+                { typeof(global::System.Collections.Generic.List<byte[]>), 0 },
+                { typeof(global::System.Collections.Generic.List<global::TestData2.A>), 1 },
+                { typeof(global::System.Collections.Generic.List<global::TestData2.B>), 2 },
+                { typeof(global::System.Collections.Generic.List<global::TestData2.NestedGenericTestA<int>>), 3 },
+                { typeof(global::TestData2.NestedGenericTestA<int>), 4 },
+                { typeof(global::TestData2.NestedGenericTestB<int>), 5 },
+                { typeof(global::TestData2.Nest1.Id), 6 },
+                { typeof(global::TestData2.Nest2.Id), 7 },
+                { typeof(global::TestData2.A), 8 },
+                { typeof(global::TestData2.B), 9 },
+                { typeof(global::TestData2.C), 10 },
+                { typeof(global::TestData2.Nest1), 11 },
+                { typeof(global::TestData2.Nest1.IdType), 12 },
+                { typeof(global::TestData2.Nest2), 13 },
+                { typeof(global::TestData2.Nest2.IdType), 14 },
+                { typeof(global::TestData2.NestedGenericTestC), 15 },
+                { typeof(global::TestData2.NullableTest), 16 },
+                { typeof(global::TestData2.PropNameCheck1), 17 },
+                { typeof(global::TestData2.PropNameCheck2), 18 },
+                { typeof(global::TestData2.Record), 19 },
             };
         }
 
@@ -76,20 +82,26 @@ namespace MessagePack.Resolvers
 
             switch (key)
             {
-                case 0: return new global::MessagePack.Formatters.ListFormatter<global::TestData2.A>();
-                case 1: return new global::MessagePack.Formatters.ListFormatter<global::TestData2.B>();
-                case 2: return new MessagePack.Formatters.TestData2.Nest1_IdFormatter();
-                case 3: return new MessagePack.Formatters.TestData2.Nest2_IdFormatter();
-                case 4: return new MessagePack.Formatters.TestData2.AFormatter();
-                case 5: return new MessagePack.Formatters.TestData2.BFormatter();
-                case 6: return new MessagePack.Formatters.TestData2.CFormatter();
-                case 7: return new MessagePack.Formatters.TestData2.Nest1Formatter();
-                case 8: return new MessagePack.Formatters.TestData2.Nest1_IdTypeFormatter();
-                case 9: return new MessagePack.Formatters.TestData2.Nest2Formatter();
-                case 10: return new MessagePack.Formatters.TestData2.Nest2_IdTypeFormatter();
-                case 11: return new MessagePack.Formatters.TestData2.PropNameCheck1Formatter();
-                case 12: return new MessagePack.Formatters.TestData2.PropNameCheck2Formatter();
-                case 13: return new MessagePack.Formatters.TestData2.RecordFormatter();
+                case 0: return new global::MessagePack.Formatters.ListFormatter<byte[]>();
+                case 1: return new global::MessagePack.Formatters.ListFormatter<global::TestData2.A>();
+                case 2: return new global::MessagePack.Formatters.ListFormatter<global::TestData2.B>();
+                case 3: return new global::MessagePack.Formatters.ListFormatter<global::TestData2.NestedGenericTestA<int>>();
+                case 4: return new MessagePack.Formatters.TestData2.NestedGenericTestAFormatter<int>();
+                case 5: return new MessagePack.Formatters.TestData2.NestedGenericTestBFormatter<int>();
+                case 6: return new MessagePack.Formatters.TestData2.Nest1_IdFormatter();
+                case 7: return new MessagePack.Formatters.TestData2.Nest2_IdFormatter();
+                case 8: return new MessagePack.Formatters.TestData2.AFormatter();
+                case 9: return new MessagePack.Formatters.TestData2.BFormatter();
+                case 10: return new MessagePack.Formatters.TestData2.CFormatter();
+                case 11: return new MessagePack.Formatters.TestData2.Nest1Formatter();
+                case 12: return new MessagePack.Formatters.TestData2.Nest1_IdTypeFormatter();
+                case 13: return new MessagePack.Formatters.TestData2.Nest2Formatter();
+                case 14: return new MessagePack.Formatters.TestData2.Nest2_IdTypeFormatter();
+                case 15: return new MessagePack.Formatters.TestData2.NestedGenericTestCFormatter();
+                case 16: return new MessagePack.Formatters.TestData2.NullableTestFormatter();
+                case 17: return new MessagePack.Formatters.TestData2.PropNameCheck1Formatter();
+                case 18: return new MessagePack.Formatters.TestData2.PropNameCheck2Formatter();
+                case 19: return new MessagePack.Formatters.TestData2.RecordFormatter();
                 default: return null;
             }
         }
@@ -560,6 +572,232 @@ namespace MessagePack.Formatters.TestData2
 
             reader.Skip();
             var ____result = new global::TestData2.Nest2.IdType();
+            return ____result;
+        }
+    }
+
+    public sealed class NestedGenericTestAFormatter<T> : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.NestedGenericTestA<T>>
+    {
+        // Field
+        private static global::System.ReadOnlySpan<byte> GetSpan_Field() => new byte[1 + 5] { 165, 70, 105, 101, 108, 100 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.NestedGenericTestA<T> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(1);
+            writer.WriteRaw(GetSpan_Field());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T>(formatterResolver).Serialize(ref writer, value.Field, options);
+        }
+
+        public global::TestData2.NestedGenericTestA<T> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var ____result = new global::TestData2.NestedGenericTestA<T>();
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 5:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 431315315014UL) { goto FAIL; }
+
+                        ____result.Field = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<T>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class NestedGenericTestBFormatter<T> : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.NestedGenericTestB<T>>
+    {
+        // Field
+        private static global::System.ReadOnlySpan<byte> GetSpan_Field() => new byte[1 + 5] { 165, 70, 105, 101, 108, 100 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.NestedGenericTestB<T> value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(1);
+            writer.WriteRaw(GetSpan_Field());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.NestedGenericTestA<T>>>(formatterResolver).Serialize(ref writer, value.Field, options);
+        }
+
+        public global::TestData2.NestedGenericTestB<T> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var ____result = new global::TestData2.NestedGenericTestB<T>();
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 5:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 431315315014UL) { goto FAIL; }
+
+                        ____result.Field = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<global::TestData2.NestedGenericTestA<T>>>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class NestedGenericTestCFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.NestedGenericTestC>
+    {
+        // Field
+        private static global::System.ReadOnlySpan<byte> GetSpan_Field() => new byte[1 + 5] { 165, 70, 105, 101, 108, 100 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.NestedGenericTestC value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(1);
+            writer.WriteRaw(GetSpan_Field());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.NestedGenericTestB<int>>(formatterResolver).Serialize(ref writer, value.Field, options);
+        }
+
+        public global::TestData2.NestedGenericTestC Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var ____result = new global::TestData2.NestedGenericTestC();
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 5:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 431315315014UL) { goto FAIL; }
+
+                        ____result.Field = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::TestData2.NestedGenericTestB<int>>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class NullableTestFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::TestData2.NullableTest>
+    {
+        // a
+        private static global::System.ReadOnlySpan<byte> GetSpan_a() => new byte[1 + 1] { 161, 97 };
+        // b
+        private static global::System.ReadOnlySpan<byte> GetSpan_b() => new byte[1 + 1] { 161, 98 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::TestData2.NullableTest value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_a());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[]>(formatterResolver).Serialize(ref writer, value.a, options);
+            writer.WriteRaw(GetSpan_b());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<byte[]>>(formatterResolver).Serialize(ref writer, value.b, options);
+        }
+
+        public global::TestData2.NullableTest Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var ____result = new global::TestData2.NullableTest();
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 1:
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                        {
+                            default: goto FAIL;
+                            case 97UL:
+                                ____result.a = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[]>(formatterResolver).Deserialize(ref reader, options);
+                                continue;
+                            case 98UL:
+                                ____result.b = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.List<byte[]>>(formatterResolver).Deserialize(ref reader, options);
+                                continue;
+                        }
+
+                }
+            }
+
+            reader.Depth--;
             return ____result;
         }
     }

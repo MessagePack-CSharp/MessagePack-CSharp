@@ -12,6 +12,7 @@ using System.Text;
 /* TinyJson is handmade Json reader/writer library.
  * It no needs JSON.NET dependency. */
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePackAnalyzer

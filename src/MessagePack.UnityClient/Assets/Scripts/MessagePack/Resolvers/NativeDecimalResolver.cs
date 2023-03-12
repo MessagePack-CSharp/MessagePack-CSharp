@@ -17,12 +17,12 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
-        private static object GetFormatterHelper(Type t)
+        private static object? GetFormatterHelper(Type t)
         {
             if (t == typeof(Decimal))
             {
@@ -38,11 +38,11 @@ namespace MessagePack.Resolvers
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)GetFormatterHelper(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)GetFormatterHelper(typeof(T));
             }
         }
     }

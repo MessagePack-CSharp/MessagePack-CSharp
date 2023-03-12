@@ -6,8 +6,9 @@ using MessagePack;
 #pragma warning disable SA1307 // Field should begin with upper-case letter
 #pragma warning disable SA1300 // Field should begin with upper-case letter
 #pragma warning disable IDE1006 // Field should begin with upper-case letter
-#pragma warning disable SA1649 // type name matches file name
 #pragma warning disable SA1401 // Fields should be private (we need fields rather than auto-properties for .NET Native compilation to work).
+#pragma warning disable SA1402 // File may only contain a single type
+#pragma warning disable SA1649 // type name matches file name
 
 namespace UnityEngine
 {
@@ -199,12 +200,12 @@ namespace UnityEngine
     public sealed class AnimationCurve
     {
         [Key(0)]
-        public Keyframe[] keys;
+        public Keyframe[]? keys;
 
         [IgnoreMember]
         public int length
         {
-            get { return this.keys.Length; }
+            get { return this.keys?.Length ?? 0; }
         }
 
         [Key(1)]
@@ -298,10 +299,10 @@ namespace UnityEngine
     public sealed class Gradient
     {
         [Key(0)]
-        public GradientColorKey[] colorKeys;
+        public GradientColorKey[]? colorKeys;
 
         [Key(1)]
-        public GradientAlphaKey[] alphaKeys;
+        public GradientAlphaKey[]? alphaKeys;
 
         [Key(2)]
         public GradientMode mode;

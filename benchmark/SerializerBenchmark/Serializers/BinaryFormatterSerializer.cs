@@ -6,6 +6,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Benchmark.Serializers
 {
+#pragma warning disable SYSLIB0011 // Type or member is obsolete
+
     public class BinaryFormatterSerializer : SerializerBase
     {
         public override T Deserialize<T>(object input)

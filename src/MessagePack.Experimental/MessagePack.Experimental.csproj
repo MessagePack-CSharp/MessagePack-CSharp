@@ -1,11 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>8.0</LangVersion>
-    <Nullable>enable</Nullable>
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 
     <IsPackable>true</IsPackable>
     <Title>MessagePack for C#, Experimental Plugins</Title>

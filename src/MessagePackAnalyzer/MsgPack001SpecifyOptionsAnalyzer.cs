@@ -37,7 +37,7 @@ namespace MessagePackAnalyzer
             context.EnableConcurrentExecution();
             context.RegisterCompilationStartAction(compilationStartContext =>
             {
-                ITypeSymbol messagePackSerializationOptionsTypeSymbol = compilationStartContext.Compilation.GetTypeByMetadataName("MessagePack.MessagePackSerializerOptions");
+                ITypeSymbol? messagePackSerializationOptionsTypeSymbol = compilationStartContext.Compilation.GetTypeByMetadataName("MessagePack.MessagePackSerializerOptions");
                 if (messagePackSerializationOptionsTypeSymbol is object)
                 {
                     compilationStartContext.RegisterOperationAction(c => this.AnalyzeInvocation(c, messagePackSerializationOptionsTypeSymbol), OperationKind.Invocation);
@@ -50,9 +50,9 @@ namespace MessagePackAnalyzer
             var operation = (IInvocationOperation)ctxt.Operation;
 
             // Is this an invocation on a method defined in the MessagePack assembly?
-            if (Equals(operation.TargetMethod.ContainingAssembly, messagePackSerializationOptionsTypeSymbol.ContainingAssembly))
+            if (SymbolEqualityComparer.Default.Equals(operation.TargetMethod.ContainingAssembly, messagePackSerializationOptionsTypeSymbol.ContainingAssembly))
             {
-                var optionsArg = operation.Arguments.FirstOrDefault(arg => Equals(arg.Value?.Type, messagePackSerializationOptionsTypeSymbol));
+                var optionsArg = operation.Arguments.FirstOrDefault(arg => SymbolEqualityComparer.Default.Equals(arg.Value?.Type, messagePackSerializationOptionsTypeSymbol));
                 if (optionsArg is object && optionsArg.Value.IsImplicit)
                 {
                     // The caller is omitting a MessagePackSerializerOptions argument or setting it to null.

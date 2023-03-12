@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net472;netcoreapp3.1;net6.0</TargetFrameworks>
+    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(TargetFrameworks);net472</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>10</LangVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <NoWarn>$(NoWarn);CS1701</NoWarn>
-    <CodeAnalysisRuleSet>MessagePack.Tests.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\FarmHash.cs" Link="Link\FarmHash.cs" />
@@ -23,17 +23,17 @@
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.CSharp" Condition="'$(TargetFramework)'=='net472'" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MsgPack.Cli" version="0.9.0-beta2" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.8.57" />
-    <PackageReference Include="ReactiveProperty" version="4.2.2" />
-    <PackageReference Include="xunit" version="2.4.1" />
-    <PackageReference Include="xunit.runner.console" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.0" />
-    <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
+    <PackageReference Include="MsgPack.Cli" VersionOverride="0.9.0-beta2" />
+    <PackageReference Include="Nerdbank.Streams" />
+    <PackageReference Include="ReactiveProperty" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.console" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Xunit.SkippableFact" />
   </ItemGroup>
   <ItemGroup>
     <None Update="MessagePackReaderTests.ReadInt.tt">

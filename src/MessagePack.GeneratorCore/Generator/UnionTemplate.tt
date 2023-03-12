@@ -51,7 +51,7 @@ namespace <#= Namespace #>
                 {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
                     case <#= i #>:
-                        options.Resolver.GetFormatterWithVerify<<#= item.Type #>>().Serialize(ref writer, (<#= item.Type #>)value, options);
+                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<<#= item.Type #>>(options.Resolver).Serialize(ref writer, (<#= item.Type #>)value, options);
                         break;
 <# } #>
                     default:
@@ -89,7 +89,7 @@ namespace <#= Namespace #>
             {
 <# for(var i = 0; i < info.SubTypes.Length; i++) { var item = info.SubTypes[i]; #>
                 case <#= i #>:
-                    result = (<#= info.FullName #>)options.Resolver.GetFormatterWithVerify<<#= item.Type #>>().Deserialize(ref reader, options);
+                    result = (<#= info.FullName #>)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<<#= item.Type #>>(options.Resolver).Deserialize(ref reader, options);
                     break;
 <# } #>
                 default:

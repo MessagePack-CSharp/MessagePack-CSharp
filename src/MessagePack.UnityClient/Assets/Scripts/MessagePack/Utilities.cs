@@ -3,6 +3,8 @@
 
 using System;
 using System.Buffers;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace MessagePack
 {
@@ -42,6 +44,46 @@ namespace MessagePack
             }
 
             return memory;
+        }
+
+        /// <summary>
+        /// Gets an <see cref="IDictionary"/> enumerator that does not allocate for each entry,
+        /// and that doesn't produce the nullable ref annotation warning about unboxing a possibly null value.
+        /// </summary>
+        internal static NonGenericDictionaryEnumerable GetEntryEnumerator(this IDictionary dictionary) => new(dictionary);
+
+        internal struct NonGenericDictionaryEnumerable
+        {
+            private IDictionary dictionary;
+
+            internal NonGenericDictionaryEnumerable(IDictionary dictionary)
+            {
+                this.dictionary = dictionary;
+            }
+
+            public NonGenericDictionaryEnumerator GetEnumerator() => new(this.dictionary);
+        }
+
+        internal struct NonGenericDictionaryEnumerator : IEnumerator<System.Collections.DictionaryEntry>
+        {
+            private IDictionaryEnumerator enumerator;
+
+            internal NonGenericDictionaryEnumerator(IDictionary dictionary)
+            {
+                this.enumerator = dictionary.GetEnumerator();
+            }
+
+            public DictionaryEntry Current => this.enumerator.Entry;
+
+            object IEnumerator.Current => this.enumerator.Entry;
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext() => this.enumerator.MoveNext();
+
+            public void Reset() => this.enumerator.Reset();
         }
     }
 }

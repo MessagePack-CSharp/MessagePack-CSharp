@@ -8,7 +8,7 @@ done
 
 SCRIPT_DIR=$(dirname "$(realpath $0)")
 
-if ! [[ -e "${SCRIPT_DIR}/Assets/Plugins/System.Memory.dll" ]] ; then
+if ! [[ -e "${SCRIPT_DIR}/Assets/Plugins/System.Runtime.CompilerServices.Unsafe.dll" ]] ; then
    ${SCRIPT_DIR}/copy_assets.sh
 fi
 
@@ -26,11 +26,10 @@ $UNITYHUB_EDITORS_FOLDER_LOCATION/Unity \
     -batchmode \
     -quit \
     -nographics \
-    -silent-crashes \
-    -noUpm \
     -buildTarget standalone \
     -projectPath ${SCRIPT_DIR} \
     -executeMethod PackageExporter.Export \
+    /headless \
     -logfile ${LOGFILE}
 
 UnityExitCode=$?

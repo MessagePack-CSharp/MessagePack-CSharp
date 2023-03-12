@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <IsPackable>true</IsPackable>
     <Title>ASP.NET Core MVC Input/Output MessagePack formatter</Title>
     <Description>ASP.NET Core MVC Input/Output MessagePack formatter.</Description>
@@ -8,14 +8,14 @@
   </PropertyGroup>
 
   <Choose>
-    <When Condition="'$(TargetFramework)'=='netcoreapp3.1'">
+    <When Condition="'$(TargetFramework)'=='net6.0'">
       <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
       </ItemGroup>
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
       </ItemGroup>
     </Otherwise>
   </Choose>

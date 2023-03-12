@@ -23,13 +23,11 @@ namespace MessagePackAnalyzer
             {
                 SemanticModel semModel = compilation.GetSemanticModel(syntaxTree);
 
-                foreach (ISymbol item in syntaxTree.GetRoot()
+                foreach (ISymbol? item in syntaxTree.GetRoot()
                     .DescendantNodes()
-                    .Select(x => semModel.GetDeclaredSymbol(x))
-                    .Where(x => x != null))
+                    .Select(x => semModel.GetDeclaredSymbol(x)))
                 {
-                    var namedType = item as INamedTypeSymbol;
-                    if (namedType != null)
+                    if (item is INamedTypeSymbol namedType)
                     {
                         yield return namedType;
                     }
@@ -39,7 +37,7 @@ namespace MessagePackAnalyzer
 
         public static IEnumerable<INamedTypeSymbol> EnumerateBaseType(this ITypeSymbol symbol)
         {
-            INamedTypeSymbol t = symbol.BaseType;
+            INamedTypeSymbol? t = symbol.BaseType;
             while (t != null)
             {
                 yield return t;
@@ -50,30 +48,31 @@ namespace MessagePackAnalyzer
         public static AttributeData FindAttribute(this IEnumerable<AttributeData> attributeDataList, string typeName)
         {
             return attributeDataList
-                .Where(x => x.AttributeClass.ToDisplayString() == typeName)
+                .Where(x => x.AttributeClass?.ToDisplayString() == typeName)
                 .FirstOrDefault();
         }
 
         public static AttributeData FindAttributeShortName(this IEnumerable<AttributeData> attributeDataList, string typeName)
         {
             return attributeDataList
-                .Where(x => x.AttributeClass.Name == typeName)
+                .Where(x => x.AttributeClass?.Name == typeName)
                 .FirstOrDefault();
         }
 
         public static AttributeData? FindAttributeIncludeBasePropertyShortName(this IPropertySymbol property, string typeName)
         {
+            IPropertySymbol? loopingProperty = property;
             do
             {
-                AttributeData data = FindAttributeShortName(property.GetAttributes(), typeName);
+                AttributeData data = FindAttributeShortName(loopingProperty.GetAttributes(), typeName);
                 if (data != null)
                 {
                     return data;
                 }
 
-                property = property.OverriddenProperty;
+                loopingProperty = loopingProperty.OverriddenProperty;
             }
-            while (property != null);
+            while (loopingProperty != null);
 
             return null;
         }
@@ -121,7 +120,7 @@ namespace MessagePackAnalyzer
 
         public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol symbol)
         {
-            ITypeSymbol t = symbol;
+            ITypeSymbol? t = symbol;
             while (t != null)
             {
                 foreach (ISymbol item in t.GetMembers())

@@ -2,26 +2,26 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <AssemblyName>SerializerBenchmark</AssemblyName>
     <RootNamespace>Benchmark</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>SerializerBenchmark.ruleset</CodeAnalysisRuleSet>
+    <NoWarn>$(NoWarn);SA1300</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
-    <PackageReference Include="Ceras" Version="4.1.7" />
-    <PackageReference Include="FsPickler" Version="5.2.2" />
-    <PackageReference Include="Hyperion" Version="0.9.11" />
-    <PackageReference Include="Jil" Version="2.17.0" />
-    <PackageReference Include="MsgPack.Cli" Version="1.0.1" />
-    <PackageReference Include="protobuf-net" Version="2.4.4" />
-    <PackageReference Include="SpanJson" Version="3.0.1" />
-    <PackageReference Include="System.Text.Json" Version="4.6.0" />
-    <PackageReference Include="Utf8Json" Version="1.3.7" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Ceras" />
+    <PackageReference Include="FsPickler" />
+    <PackageReference Include="Hyperion" />
+    <PackageReference Include="Jil" />
+    <PackageReference Include="MsgPack.Cli" />
+    <PackageReference Include="protobuf-net" />
+    <PackageReference Include="SpanJson" />
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="Utf8Json" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Newtonsoft.Json.Bson" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,6 +41,6 @@
       <SpecificVersion>false</SpecificVersion>
     </Reference>
     <Reference Include="OdinSerializer.dll" /> <!-- Odin is not available on NuGet -->
-  </ItemGroup> 
+  </ItemGroup>
 
 </Project>

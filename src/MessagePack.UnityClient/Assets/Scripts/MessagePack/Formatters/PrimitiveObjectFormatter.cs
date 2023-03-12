@@ -9,9 +9,9 @@ using System.Reflection;
 
 namespace MessagePack.Formatters
 {
-    public class PrimitiveObjectFormatter : IMessagePackFormatter<object>
+    public class PrimitiveObjectFormatter : IMessagePackFormatter<object?>
     {
-        public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter();
+        public static readonly IMessagePackFormatter<object?> Instance = new PrimitiveObjectFormatter();
 
         private static readonly Dictionary<Type, int> TypeToJumpCode = new Dictionary<Type, int>()
         {
@@ -67,7 +67,7 @@ namespace MessagePack.Formatters
             return false;
         }
 
-        public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, object? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -171,12 +171,11 @@ namespace MessagePack.Formatters
                             break;
                     }
                 }
-                else if (value is System.Collections.IDictionary)
+                else if (value is System.Collections.IDictionary d)
                 {
                     // check IDictionary first
-                    var d = value as System.Collections.IDictionary;
                     writer.WriteMapHeader(d.Count);
-                    foreach (System.Collections.DictionaryEntry item in d)
+                    foreach (System.Collections.DictionaryEntry item in d.GetEntryEnumerator())
                     {
                         this.Serialize(ref writer, item.Key, options);
                         this.Serialize(ref writer, item.Value, options);
@@ -184,9 +183,8 @@ namespace MessagePack.Formatters
 
                     return;
                 }
-                else if (value is System.Collections.ICollection)
+                else if (value is System.Collections.ICollection c)
                 {
-                    var c = value as System.Collections.ICollection;
                     writer.WriteArrayHeader(c.Count);
                     foreach (var item in c)
                     {
@@ -200,7 +198,7 @@ namespace MessagePack.Formatters
             throw new MessagePackSerializationException("Not supported primitive object resolver. type:" + t.Name);
         }
 
-        public object Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public object? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             switch (reader.NextMessagePackType)
             {
@@ -261,7 +259,8 @@ namespace MessagePack.Formatters
                     }
 
                 case MessagePackType.String:
-                    return reader.ReadString();
+                    var stringFormatter = options.Resolver.GetFormatterWithVerify<string?>();
+                    return stringFormatter.Deserialize(ref reader, options);
                 case MessagePackType.Binary:
                     // We must copy the sequence returned by ReadBytes since the reader's sequence is only valid during deserialization.
                     return reader.ReadBytes()?.ToArray();
@@ -281,7 +280,7 @@ namespace MessagePack.Formatters
                             return Array.Empty<object>();
                         }
 
-                        IMessagePackFormatter<object> objectFormatter = options.Resolver.GetFormatter<object>();
+                        IMessagePackFormatter<object> objectFormatter = options.Resolver.GetFormatterWithVerify<object>();
                         var array = new object[length];
                         options.Security.DepthStep(ref reader);
                         try
@@ -324,7 +323,7 @@ namespace MessagePack.Formatters
 
         protected virtual object DeserializeMap(ref MessagePackReader reader, int length, MessagePackSerializerOptions options)
         {
-            IMessagePackFormatter<object> objectFormatter = options.Resolver.GetFormatter<object>();
+            IMessagePackFormatter<object> objectFormatter = options.Resolver.GetFormatterWithVerify<object>();
             var dictionary = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
             for (int i = 0; i < length; i++)
             {

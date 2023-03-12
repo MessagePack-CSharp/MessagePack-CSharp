@@ -393,6 +393,7 @@ namespace TempProject
             {
                 "global::MessagePack.Formatters.ListFormatter<global::TempProject.MyObject2>",
                 "global::MessagePack.Formatters.ArrayFormatter<global::TempProject.MyObject2>",
+
                 // "TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<string>", // MyGenericObjectFormatter<T> is not used as a property/field in the code. The generated resolver can ignore it.
                 "TempProject.Generated.Formatters.TempProject.MyObjectFormatter",
                 "TempProject.Generated.Formatters.TempProject.MyObject2Formatter",
@@ -626,6 +627,7 @@ namespace TempProject
 
             var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T>");
             formatterType.Should().NotBeNull();
+
             // IDisposable
             formatterType.TypeParameters[0].HasReferenceTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[0].HasValueTypeConstraint.Should().BeFalse();
@@ -684,15 +686,19 @@ namespace TempProject
             var displayFormat = SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
             var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(displayFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2, T3, T4>");
             formatterType.Should().NotBeNull();
+
             // MyClass?
             formatterType.TypeParameters[0].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.MyClass?");
             formatterType.TypeParameters[0].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.Annotated);
+
             // MyClass
             formatterType.TypeParameters[1].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.MyClass");
             formatterType.TypeParameters[1].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.None);
+
             // MyGenericClass<MyGenericClass<MyClass?>?>?
             formatterType.TypeParameters[2].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.MyGenericClass<global::TempProject.MyGenericClass<global::TempProject.MyClass?>?>?");
             formatterType.TypeParameters[2].ConstraintNullableAnnotations[0].Should().Be(NullableAnnotation.Annotated);
+
             // MyClass, IMyInterface?
             formatterType.TypeParameters[3].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.MyClass");
             formatterType.TypeParameters[3].ConstraintTypes.Should().Contain(x => x.ToDisplayString(displayFormat) == "global::TempProject.IMyInterface?");
@@ -741,6 +747,7 @@ namespace TempProject
 
             var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T>");
             formatterType.Should().NotBeNull();
+
             // struct
             formatterType.TypeParameters[0].HasReferenceTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[0].HasValueTypeConstraint.Should().BeTrue();
@@ -800,6 +807,7 @@ namespace TempProject
 
             var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2, T3, T4>");
             formatterType.Should().NotBeNull();
+
             // struct
             formatterType.TypeParameters[0].HasReferenceTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[0].HasValueTypeConstraint.Should().BeTrue();
@@ -807,6 +815,7 @@ namespace TempProject
             formatterType.TypeParameters[0].HasNotNullConstraint.Should().BeFalse();
             formatterType.TypeParameters[0].HasUnmanagedTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[0].ConstraintTypes.Should().BeEmpty();
+
             // IDisposable, new()
             formatterType.TypeParameters[1].HasReferenceTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[1].HasValueTypeConstraint.Should().BeFalse();
@@ -814,6 +823,7 @@ namespace TempProject
             formatterType.TypeParameters[1].HasNotNullConstraint.Should().BeFalse();
             formatterType.TypeParameters[1].HasUnmanagedTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[1].ConstraintTypes.Should().Contain(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::System.IDisposable");
+
             // notnull
             formatterType.TypeParameters[2].HasReferenceTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[2].HasValueTypeConstraint.Should().BeFalse();
@@ -821,6 +831,7 @@ namespace TempProject
             formatterType.TypeParameters[2].HasNotNullConstraint.Should().BeTrue();
             formatterType.TypeParameters[2].HasUnmanagedTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[2].ConstraintTypes.Should().BeEmpty();
+
             // unmanaged
             formatterType.TypeParameters[3].HasReferenceTypeConstraint.Should().BeFalse();
             formatterType.TypeParameters[3].HasValueTypeConstraint.Should().BeTrue(); // unmanaged constraint includes value-type constraint
@@ -874,10 +885,12 @@ namespace TempProject
 
             var formatterType = symbols.FirstOrDefault(x => x.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::TempProject.Generated.Formatters.TempProject.MyGenericObjectFormatter<T1, T2>");
             formatterType.Should().NotBeNull();
+
             // class?
             formatterType.TypeParameters[0].HasReferenceTypeConstraint.Should().BeTrue();
             formatterType.TypeParameters[0].ConstraintTypes.Should().BeEmpty();
             formatterType.TypeParameters[0].ReferenceTypeConstraintNullableAnnotation.Should().Be(NullableAnnotation.Annotated);
+
             // class
             formatterType.TypeParameters[1].HasReferenceTypeConstraint.Should().BeTrue();
             formatterType.TypeParameters[1].ConstraintTypes.Should().BeEmpty();

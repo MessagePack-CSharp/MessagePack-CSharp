@@ -3,6 +3,7 @@
 
 using System;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
@@ -27,11 +28,11 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class NativeDateTimeArrayFormatter : IMessagePackFormatter<DateTime[]>
+    public sealed class NativeDateTimeArrayFormatter : IMessagePackFormatter<DateTime[]?>
     {
         public static readonly NativeDateTimeArrayFormatter Instance = new NativeDateTimeArrayFormatter();
 
-        public void Serialize(ref MessagePackWriter writer, DateTime[] value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, DateTime[]? value, MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -47,7 +48,7 @@ namespace MessagePack.Formatters
             }
         }
 
-        public DateTime[] Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public DateTime[]? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

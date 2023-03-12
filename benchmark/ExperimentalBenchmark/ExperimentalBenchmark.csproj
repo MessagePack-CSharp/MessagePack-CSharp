@@ -2,16 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Benchmark</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);MSB3243</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.12.1" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
   </ItemGroup>
 
   <ItemGroup>

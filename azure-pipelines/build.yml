@@ -1,30 +1,93 @@
-steps:
-- task: DotNetCoreCLI@2
-  inputs:
-    command: build
-    arguments: --configuration $(BuildConfiguration) /t:build,pack /m /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/msbuild.binlog"
-  displayName: Build MessagePack.sln
+parameters:
+- name: windowsPool
+  type: object
+  default:
+    vmImage: windows-2022
+- name: includeMacOS
+- name: RunTests
+  type: boolean
+  default: true
 
-- task: DotNetCoreCLI@2
-  displayName: Run tests
-  inputs:
-    command: test
-    projects: tests/**/*.Tests.csproj
-    arguments: --configuration $(BuildConfiguration) --no-build -v n --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
-    testRunTitle: $(Agent.JobName)
+jobs:
+- job: Windows
+  pool: ${{ parameters.windowsPool }}
+  steps:
+  - checkout: self
+    fetchDepth: 0 # avoid shallow clone so nbgv can do its work.
+    clean: true
+  - template: install-dependencies.yml
 
-## The rest of these steps are for deployment and skipped for PR builds
+  - powershell: '& (./azure-pipelines/Get-nbgv.ps1) cloud -c'
+    displayName: ⚙ Set build number
 
-- task: PowerShell@2
-  inputs:
-    filePath: azure-pipelines/variables/_pipelines.ps1
-    failOnStderr: true
-  displayName: Update pipeline variables based on build outputs
+  - template: dotnet.yml
+    parameters:
+      RunTests: ${{ parameters.RunTests }}
+
+- job: Linux
+  pool:
+    vmImage: Ubuntu 20.04
+  steps:
+  - checkout: self
+    fetchDepth: 0 # avoid shallow clone so nbgv can do its work.
+    clean: true
+  - template: install-dependencies.yml
+  - template: dotnet.yml
+    parameters:
+      RunTests: ${{ parameters.RunTests }}
+
+- job: macOS
+  condition: ${{ parameters.includeMacOS }}
+  pool:
+    vmImage: macOS-12
+  steps:
+  - checkout: self
+    fetchDepth: 0 # avoid shallow clone so nbgv can do its work.
+    clean: true
+  - template: install-dependencies.yml
+  - template: dotnet.yml
+    parameters:
+      RunTests: ${{ parameters.RunTests }}
+
+# This job ensures that we're running mpc regularly on the generated code that we check in.
+# It also helps exercise mpc so bugs don't go unnoticed.
+- job: codegen_diff
+  pool:
+    vmImage: ubuntu-22.04
+  steps:
+  - checkout: self
+    clean: true
+  - template: install-dependencies.yml
+  - pwsh: sandbox/codegen.ps1
+    displayName: Regenerate checked-in code
+  - bash: |
+        git add -u . # compare after applying git EOL normalization
+        git diff --cached --exit-code --stat \
+        || (echo "##[error] found changed files after build. Please run 'sandbox/codegen.ps1'" \
+                "and check in all changes" \
+            && git diff --cached \
+            && exit 1)
+    displayName: Check for uncommitted changes
+
+- job: WrapUp
+  dependsOn:
+  - Windows
+  - Linux
+  - macOS
+  pool: ${{ parameters.windowsPool }} # Use Windows agent because PublishSymbols task requires it (https://github.com/microsoft/azure-pipelines-tasks/issues/13821).
   condition: succeededOrFailed()
-
-- task: PowerShell@2
-  inputs:
-    filePath: azure-pipelines/artifacts/_pipelines.ps1
-    # arguments: -ArtifactNameSuffix "-$(Agent.JobName)"
-  displayName: Publish artifacts
-  condition: succeededOrFailed()
+  steps:
+  - checkout: self
+    fetchDepth: 0 # avoid shallow clone so nbgv can do its work.
+    clean: true
+  - template: install-dependencies.yml
+    parameters:
+      initArgs: -NoRestore
+  - template: publish-symbols.yml
+    parameters:
+      includeMacOS: ${{ parameters.includeMacOS }}
+  - ${{ if parameters.RunTests }}:
+    - template: publish-codecoverage.yml
+      parameters:
+        includeMacOS: ${{ parameters.includeMacOS }}
+  - template: publish-deployables.yml

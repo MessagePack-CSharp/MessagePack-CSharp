@@ -17,7 +17,7 @@ namespace MessagePack.Formatters
         /// <summary>
         /// The delegate that will create the collection, if the typical (int count, IEqualityComparer{T} equalityComparer) constructor was found.
         /// </summary>
-        private static Func<int, TEqualityComparer, TCollection> collectionCreator;
+        private static Func<int, TEqualityComparer, TCollection>? collectionCreator;
 
         /// <summary>
         /// Initializes static members of the <see cref="CollectionHelpers{TCollection, TEqualityComparer}"/> class.

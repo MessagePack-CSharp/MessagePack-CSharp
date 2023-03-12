@@ -61,7 +61,7 @@ namespace MessagePack.Resolvers
 
         private class CachingResolver : IFormatterResolver
         {
-            private readonly ThreadsafeTypeKeyHashTable<IMessagePackFormatter> formattersCache = new ThreadsafeTypeKeyHashTable<IMessagePackFormatter>();
+            private readonly ThreadsafeTypeKeyHashTable<IMessagePackFormatter?> formattersCache = new();
             private readonly IMessagePackFormatter[] subFormatters;
             private readonly IFormatterResolver[] subResolvers;
 
@@ -74,9 +74,9 @@ namespace MessagePack.Resolvers
                 this.subResolvers = subResolvers ?? throw new ArgumentNullException(nameof(subResolvers));
             }
 
-            public IMessagePackFormatter<T> GetFormatter<T>()
+            public IMessagePackFormatter<T>? GetFormatter<T>()
             {
-                if (!this.formattersCache.TryGetValue(typeof(T), out IMessagePackFormatter formatter))
+                if (!this.formattersCache.TryGetValue(typeof(T), out IMessagePackFormatter? formatter))
                 {
                     foreach (var subFormatter in this.subFormatters)
                     {
@@ -101,7 +101,7 @@ CACHE:
                     this.formattersCache.TryAdd(typeof(T), formatter);
                 }
 
-                return (IMessagePackFormatter<T>)formatter;
+                return (IMessagePackFormatter<T>?)formatter;
             }
         }
     }

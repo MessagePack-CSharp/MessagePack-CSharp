@@ -10,12 +10,12 @@ namespace MessagePack.Formatters
 {
     // Note:This implementation is 'not' fastest, should more improve.
     public sealed class EnumAsStringFormatter<T> : IMessagePackFormatter<T>
+        where T : struct, Enum
     {
         private readonly IReadOnlyDictionary<string, T> nameValueMapping;
         private readonly IReadOnlyDictionary<T, string> valueNameMapping;
-        private readonly IReadOnlyDictionary<string, string> clrToSerializationName;
-        private readonly IReadOnlyDictionary<string, string> serializationToClrName;
-        private readonly bool enumMemberOverridesPresent;
+        private readonly IReadOnlyDictionary<string, string>? clrToSerializationName;
+        private readonly IReadOnlyDictionary<string, string>? serializationToClrName;
         private readonly bool isFlags;
 
         public EnumAsStringFormatter()
@@ -25,26 +25,25 @@ namespace MessagePack.Formatters
             var fields = typeof(T).GetFields(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static);
             var nameValueMapping = new Dictionary<string, T>(fields.Length);
             var valueNameMapping = new Dictionary<T, string>();
-            Dictionary<string, string> clrToSerializationName = null;
-            Dictionary<string, string> serializationToClrName = null;
+            Dictionary<string, string>? clrToSerializationName = null;
+            Dictionary<string, string>? serializationToClrName = null;
 
             foreach (FieldInfo enumValueMember in fields)
             {
                 string name = enumValueMember.Name;
-                T value = (T)enumValueMember.GetValue(null);
+                T value = (T)enumValueMember.GetValue(null)!;
 
                 // Consider the case where the serialized form of the enum value is overridden via an attribute.
                 var attribute = enumValueMember.GetCustomAttribute<EnumMemberAttribute>();
-                if (attribute?.IsValueSetExplicitly ?? false)
+                if (attribute is { IsValueSetExplicitly: true, Value: not null })
                 {
-                    clrToSerializationName = clrToSerializationName ?? new Dictionary<string, string>();
-                    serializationToClrName = serializationToClrName ?? new Dictionary<string, string>();
+                    clrToSerializationName ??= new();
+                    serializationToClrName ??= new();
 
                     clrToSerializationName.Add(name, attribute.Value);
                     serializationToClrName.Add(attribute.Value, name);
 
                     name = attribute.Value;
-                    this.enumMemberOverridesPresent = true;
                 }
 
                 nameValueMapping[name] = value;
@@ -60,7 +59,7 @@ namespace MessagePack.Formatters
         public void Serialize(ref MessagePackWriter writer, T value, MessagePackSerializerOptions options)
         {
             // Enum.ToString() is slow, so avoid it when we can.
-            if (!this.valueNameMapping.TryGetValue(value, out string valueString))
+            if (!this.valueNameMapping.TryGetValue(value, out string? valueString))
             {
                 // fallback for flags, values with no name, etc
                 valueString = this.GetSerializedNames(value.ToString());
@@ -71,7 +70,11 @@ namespace MessagePack.Formatters
 
         public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            string name = reader.ReadString();
+            string? name = reader.ReadString();
+            if (name is null)
+            {
+                MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<T>();
+            }
 
             // Avoid Enum.Parse when we can because it is too slow.
             if (!this.nameValueMapping.TryGetValue(name, out T value))
@@ -84,7 +87,7 @@ namespace MessagePack.Formatters
 
         private string GetClrNames(string serializedNames)
         {
-            if (this.enumMemberOverridesPresent && this.isFlags && serializedNames.IndexOf(", ", StringComparison.Ordinal) >= 0)
+            if (this.serializationToClrName is not null && this.isFlags && serializedNames.IndexOf(", ", StringComparison.Ordinal) >= 0)
             {
                 return Translate(serializedNames, this.serializationToClrName);
             }
@@ -95,7 +98,7 @@ namespace MessagePack.Formatters
 
         private string GetSerializedNames(string clrNames)
         {
-            if (this.enumMemberOverridesPresent && this.isFlags && clrNames.IndexOf(", ", StringComparison.Ordinal) >= 0)
+            if (this.clrToSerializationName is not null && this.isFlags && clrNames.IndexOf(", ", StringComparison.Ordinal) >= 0)
             {
                 return Translate(clrNames, this.clrToSerializationName);
             }
@@ -116,7 +119,7 @@ namespace MessagePack.Formatters
                     elements[i] = elements[i].Substring(1);
                 }
 
-                if (mapping.TryGetValue(elements[i], out string substituteValue))
+                if (mapping.TryGetValue(elements[i], out string? substituteValue))
                 {
                     elements[i] = substituteValue;
                 }

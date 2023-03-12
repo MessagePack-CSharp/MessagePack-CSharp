@@ -10,7 +10,6 @@
 
 namespace MessagePackAnalyzer {
     using System;
-    using System.Reflection;
     
     
     /// <summary>
@@ -20,7 +19,7 @@ namespace MessagePackAnalyzer {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -40,7 +39,7 @@ namespace MessagePackAnalyzer {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MessagePackAnalyzer.Strings", typeof(Strings).GetTypeInfo().Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MessagePackAnalyzer.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -71,7 +70,7 @@ namespace MessagePackAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Supply a value for the MessagePackSerializerOptions argument..
+        ///   Looks up a localized string similar to Supply a value for the MessagePackSerializerOptions argument.
         /// </summary>
         internal static string MsgPack001_MessageFormat {
             get {
@@ -98,7 +97,7 @@ namespace MessagePackAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Avoid using a mutable static value for MessagePackSerializerOptions..
+        ///   Looks up a localized string similar to Avoid using a mutable static value for MessagePackSerializerOptions.
         /// </summary>
         internal static string MsgPack002_MessageFormat {
             get {

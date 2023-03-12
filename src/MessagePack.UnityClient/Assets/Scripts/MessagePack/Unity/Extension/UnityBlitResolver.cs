@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#pragma warning disable SA1402 // File may only contain a single type
+
 using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
@@ -19,18 +21,18 @@ namespace MessagePack.Unity.Extension
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)UnityBlitResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)UnityBlitResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -46,18 +48,18 @@ namespace MessagePack.Unity.Extension
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            internal static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)UnityBlitWithPrimitiveResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)UnityBlitWithPrimitiveResolverGetFormatterHelper.GetFormatter(typeof(T));
                 if (Formatter == null)
                 {
                     Formatter = UnityBlitResolver.Instance.GetFormatter<T>();
@@ -79,7 +81,7 @@ namespace MessagePack.Unity.Extension
               { typeof(Rect[]), typeof(RectArrayBlitFormatter) },
         };
 
-        internal static object GetFormatter(Type t)
+        internal static object? GetFormatter(Type t)
         {
             Type formatterType;
             if (FormatterMap.TryGetValue(t, out formatterType))
@@ -100,7 +102,7 @@ namespace MessagePack.Unity.Extension
               { typeof(double[]), typeof(DoubleArrayBlitFormatter) },
         };
 
-        internal static object GetFormatter(Type t)
+        internal static object? GetFormatter(Type t)
         {
             Type formatterType;
             if (FormatterMap.TryGetValue(t, out formatterType))

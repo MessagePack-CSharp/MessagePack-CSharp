@@ -4,8 +4,10 @@ if (!$BuildConfiguration) {
     $BuildConfiguration = 'Debug'
 }
 
-$mpcArtifactPath = "$RepoRoot/bin/MessagePack.Generator/$BuildConfiguration/netcoreapp3.0"
+$PackagesRoot = "$RepoRoot/bin/Packages/$BuildConfiguration"
+
+if (!(Test-Path $PackagesRoot))  { return }
 
 @{
-    $mpcArtifactPath = (Get-ChildItem $mpcArtifactPath -Recurse);
+    "$PackagesRoot" = (Get-ChildItem $PackagesRoot -Recurse)
 }
