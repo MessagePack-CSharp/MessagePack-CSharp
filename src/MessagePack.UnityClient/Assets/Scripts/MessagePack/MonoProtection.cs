@@ -14,7 +14,7 @@ namespace MessagePack
         /// <summary>
         /// Gets a value indicating whether the mono runtime is executing this code.
         /// </summary>
-        internal static bool IsRunningOnMono => Type.GetType("Mono.Runtime") != null;
+        internal static bool IsRunningOnMono => Type.GetType("Mono.RuntimeStructs") != null;
 
         /// <summary>
         /// A lock that we enter on mono when generating dynamic types.
