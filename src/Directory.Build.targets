@@ -1,9 +1,4 @@
 <Project>
-  <!-- Sign everything that we pack up. -->
-  <PropertyGroup Condition=" '$(IsPackable)' != 'false' ">
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\opensource.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
   <ItemGroup>
     <!-- ignore compilation temp files and unity generated .meta files -->
     <None Remove="**/bin/**;**/obj/**;**/*.meta" />
