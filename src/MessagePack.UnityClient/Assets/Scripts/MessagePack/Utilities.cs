@@ -19,7 +19,7 @@ namespace MessagePack
 #if UNITY_2018_3_OR_NEWER
         internal const bool IsMono = true; // hard code since we haven't tested whether mono is detected on all unity platforms.
 #else
-        internal static readonly bool IsMono = Type.GetType("Mono.Runtime") is Type;
+        internal static readonly bool IsMono = Type.GetType("Mono.RuntimeStructs") is Type;
 #endif
 
         internal delegate void GetWriterBytesAction<TArg>(ref MessagePackWriter writer, TArg argument);

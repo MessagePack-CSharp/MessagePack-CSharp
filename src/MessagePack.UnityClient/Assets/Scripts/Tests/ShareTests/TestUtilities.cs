@@ -14,7 +14,7 @@ namespace MessagePack.Tests
         /// <summary>
         /// Gets a value indicating whether the mono runtime is executing this code.
         /// </summary>
-        internal static bool IsRunningOnMono => Type.GetType("Mono.Runtime") != null;
+        internal static bool IsRunningOnMono => Type.GetType("Mono.RuntimeStructs") != null;
 
         internal static string ToHex(byte[] buffer) => BitConverter.ToString(buffer).Replace("-", string.Empty).ToLowerInvariant();
     }
