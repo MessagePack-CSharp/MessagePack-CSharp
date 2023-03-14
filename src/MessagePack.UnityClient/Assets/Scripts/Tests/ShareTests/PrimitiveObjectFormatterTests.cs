@@ -31,6 +31,13 @@ namespace MessagePack.Tests
         }
 
         [Fact]
+        public void StringType()
+        {
+            byte[] msgpack = MessagePackSerializer.Serialize<object>("message", PrimitiveObjectResolver.Options);
+            string result = (string)MessagePackSerializer.Deserialize<object>(msgpack, PrimitiveObjectResolver.Options);
+        }
+
+        [Fact]
         public void IL2CPPHint()
         {
             CompressibleIntegersRetainTypeInfo<sbyte>(default);
