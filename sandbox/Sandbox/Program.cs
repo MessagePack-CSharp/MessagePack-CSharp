@@ -24,6 +24,7 @@ using ZeroFormatter;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace Sandbox
@@ -206,7 +207,7 @@ namespace Sandbox
         [Key(1)]
         public readonly int Y;
 
-        // can't find matched constructor parameter, parameterType mismatch. type:Point parameterIndex:0 paramterType:ValueTuple`2
+        // can't find matched constructor parameter, parameterType mismatch. type:Point parameterIndex:0 parameterType:ValueTuple`2
         public Point((int, int) p)
         {
             this.X = p.Item1;

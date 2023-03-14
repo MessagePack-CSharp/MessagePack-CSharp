@@ -41,7 +41,7 @@ namespace MessagePack
         /// Reads a map header from <see cref="ReadData"/> if there are enough bytes to do so.
         /// </summary>
         /// <param name="count">Receives the size of the map, if its header could be read.</param>
-        /// <returns><c>true</c> if the map header was found and complete; <c>false</c> if there were insufficient bytes to read the header.</returns>
+        /// <returns><see langword="true"/> if the map header was found and complete; <see langword="false"/> if there were insufficient bytes to read the header.</returns>
         /// <exception cref="MessagePackSerializationException">Thrown if the next msgpack structure is not a map header.</exception>
         private bool TryReadMapHeader(out int count)
         {

@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
 namespace MessagePack.Formatters
@@ -40,7 +41,8 @@ namespace MessagePack.Formatters
                 throw new InvalidOperationException("NativeGuidFormatter only allows on little endian env.");
             }
 
-            ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
+            ReadOnlySequence<byte> valueSequence = reader.ReadBytes() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<Guid>();
+
             if (valueSequence.Length != sizeof(Guid))
             {
                 throw new MessagePackSerializationException("Invalid Guid Size.");
@@ -85,7 +87,8 @@ namespace MessagePack.Formatters
                 throw new InvalidOperationException("NativeDecimalFormatter only allows on little endian env.");
             }
 
-            ReadOnlySequence<byte> valueSequence = reader.ReadBytes().Value;
+            ReadOnlySequence<byte> valueSequence = reader.ReadBytes() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<decimal>();
+
             if (valueSequence.Length != sizeof(decimal))
             {
                 throw new MessagePackSerializationException("Invalid decimal Size.");

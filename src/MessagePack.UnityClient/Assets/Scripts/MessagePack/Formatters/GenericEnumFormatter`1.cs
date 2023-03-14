@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace MessagePack.Formatters
 {
     public sealed class GenericEnumFormatter<T> : IMessagePackFormatter<T>
-        where T : Enum
+        where T : struct, Enum
     {
         private delegate void EnumSerialize(ref MessagePackWriter writer, ref T value);
 
@@ -55,7 +55,7 @@ namespace MessagePack.Formatters
                     deserializer = (ref MessagePackReader reader) => { var v = reader.ReadUInt64(); return Unsafe.As<UInt64, T>(ref v); };
                     break;
                 default:
-                    break;
+                    throw new NotSupportedException("Unsupported base type for generic type argument.");
 #pragma warning restore SA1107 // Avoid multiple statements on same line.
             }
         }

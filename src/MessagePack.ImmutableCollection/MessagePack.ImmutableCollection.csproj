@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
-    <IsPackable>true</IsPackable>
     <Title>MessagePack for C# Extension Support for ImmutableCollection</Title>
     <Description>Deprecated package to add System.Collections.Immutable support to MessagePack. This is now built into the main package.</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer</PackageTags>

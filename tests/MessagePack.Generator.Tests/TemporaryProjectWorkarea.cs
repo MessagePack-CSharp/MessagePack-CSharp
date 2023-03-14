@@ -163,9 +163,18 @@ namespace MessagePack.Generator.Tests
 
         public void Dispose()
         {
-            if (cleanOnDisposing)
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                Directory.Delete(tempDirPath, true);
+                if (cleanOnDisposing)
+                {
+                    Directory.Delete(tempDirPath, true);
+                }
             }
         }
     }

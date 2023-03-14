@@ -9,10 +9,10 @@ namespace MessagePack.Formatters
     /// <summary>
     /// A <see cref="string" /> formatter that interns strings on deserialization.
     /// </summary>
-    public sealed class StringInterningFormatter : IMessagePackFormatter<string>
+    public sealed class StringInterningFormatter : IMessagePackFormatter<string?>
     {
         /// <inheritdoc/>
-        public string Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public string? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -52,10 +52,10 @@ namespace MessagePack.Formatters
                 }
             }
 
-            return Strings.WeakIntern(reader.ReadString());
+            return reader.ReadString() is string s ? Strings.WeakIntern(s) : null;
         }
 
         /// <inheritdoc/>
-        public void Serialize(ref MessagePackWriter writer, string value, MessagePackSerializerOptions options) => writer.Write(value);
+        public void Serialize(ref MessagePackWriter writer, string? value, MessagePackSerializerOptions options) => writer.Write(value);
     }
 }

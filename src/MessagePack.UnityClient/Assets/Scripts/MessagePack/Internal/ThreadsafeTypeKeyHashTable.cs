@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 #pragma warning disable SA1649 // File name should match first type name
@@ -41,7 +43,7 @@ namespace MessagePack.Internal
             return this.TryAddInternal(key, valueFactory, out TValue _);
         }
 
-        private bool TryAddInternal(Type key, Func<Type, TValue> valueFactory, out TValue resultingValue)
+        private bool TryAddInternal(Type key, Func<Type, TValue> valueFactory, [MaybeNullWhen(false)] out TValue resultingValue)
         {
             lock (this.writerLock)
             {
@@ -53,10 +55,10 @@ namespace MessagePack.Internal
                     var nextBucket = new Entry[nextCapacity];
                     for (int i = 0; i < this.buckets.Length; i++)
                     {
-                        Entry e = this.buckets[i];
+                        Entry? e = this.buckets[i];
                         while (e != null)
                         {
-                            var newEntry = new Entry { Key = e.Key, Value = e.Value, Hash = e.Hash };
+                            var newEntry = new Entry(e.Key, e.Value, e.Hash);
                             this.AddToBuckets(nextBucket, key, newEntry, null, out resultingValue);
                             e = e.Next;
                         }
@@ -89,7 +91,7 @@ namespace MessagePack.Internal
             }
         }
 
-        private bool AddToBuckets(Entry[] buckets, Type newKey, Entry newEntryOrNull, Func<Type, TValue> valueFactory, out TValue resultingValue)
+        private bool AddToBuckets(Entry[] buckets, Type newKey, Entry? newEntryOrNull, Func<Type, TValue>? valueFactory, out TValue? resultingValue)
         {
             var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : newKey.GetHashCode();
             if (buckets[h & (buckets.Length - 1)] == null)
@@ -101,8 +103,13 @@ namespace MessagePack.Internal
                 }
                 else
                 {
+                    if (valueFactory is null)
+                    {
+                        throw new ArgumentNullException(nameof(valueFactory));
+                    }
+
                     resultingValue = valueFactory(newKey);
-                    VolatileWrite(ref buckets[h & (buckets.Length - 1)], new Entry { Key = newKey, Value = resultingValue, Hash = h });
+                    VolatileWrite(ref buckets[h & (buckets.Length - 1)], new Entry(newKey, resultingValue, h));
                 }
             }
             else
@@ -125,8 +132,13 @@ namespace MessagePack.Internal
                         }
                         else
                         {
+                            if (valueFactory is null)
+                            {
+                                throw new ArgumentNullException(nameof(valueFactory));
+                            }
+
                             resultingValue = valueFactory(newKey);
-                            VolatileWrite(ref searchLastEntry.Next, new Entry { Key = newKey, Value = resultingValue, Hash = h });
+                            VolatileWrite(ref searchLastEntry.Next, new Entry(newKey, resultingValue, h));
                         }
 
                         break;
@@ -140,11 +152,11 @@ namespace MessagePack.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(Type key, out TValue value)
+        public bool TryGetValue(Type key, [MaybeNullWhen(false)] out TValue value)
         {
             Entry[] table = this.buckets;
             var hash = key.GetHashCode();
-            Entry entry = table[hash & table.Length - 1];
+            Entry? entry = table[hash & table.Length - 1];
 
             while (entry != null)
             {
@@ -163,13 +175,16 @@ namespace MessagePack.Internal
 
         public TValue GetOrAdd(Type key, Func<Type, TValue> valueFactory)
         {
-            TValue v;
-            if (this.TryGetValue(key, out v))
+            if (this.TryGetValue(key, out TValue? v))
             {
                 return v;
             }
 
-            this.TryAddInternal(key, valueFactory, out v);
+            if (!this.TryAddInternal(key, valueFactory, out v))
+            {
+                throw new InvalidOperationException("Failed to get or add.");
+            }
+
             return v;
         }
 
@@ -190,10 +205,10 @@ namespace MessagePack.Internal
             return capacity;
         }
 
-        private static void VolatileWrite(ref Entry location, Entry value)
+        private static void VolatileWrite([NotNullIfNotNull("value")] ref Entry? location, Entry value)
         {
 #if !UNITY_2018_3_OR_NEWER
-            System.Threading.Volatile.Write(ref location, value);
+            System.Threading.Volatile.Write(ref location!, value);
 #elif UNITY_2018_3_OR_NEWER || NET_4_6
             System.Threading.Volatile.Write(ref location, value);
 #else
@@ -202,7 +217,7 @@ namespace MessagePack.Internal
 #endif
         }
 
-        private static void VolatileWrite(ref Entry[] location, Entry[] value)
+        private static void VolatileWrite([NotNullIfNotNull("value")] ref Entry[] location, Entry[] value)
         {
 #if !UNITY_2018_3_OR_NEWER
             System.Threading.Volatile.Write(ref location, value);
@@ -217,11 +232,21 @@ namespace MessagePack.Internal
         private class Entry
         {
 #pragma warning disable SA1401 // Fields should be private
-            internal Type Key;
-            internal TValue Value;
-            internal int Hash;
-            internal Entry Next;
+            internal Entry? Next;
 #pragma warning restore SA1401 // Fields should be private
+
+            internal Entry(Type key, TValue value, int hash)
+            {
+                this.Key = key;
+                this.Value = value;
+                this.Hash = hash;
+            }
+
+            internal Type Key { get; }
+
+            internal TValue Value { get; }
+
+            internal int Hash { get; }
 
             // debug only
             public override string ToString()

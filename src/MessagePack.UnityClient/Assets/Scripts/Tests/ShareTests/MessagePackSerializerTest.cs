@@ -399,5 +399,15 @@ namespace MessagePack.Tests
         {
             this.stream.Write(buffer, offset, count);
         }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.stream.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
     }
 }

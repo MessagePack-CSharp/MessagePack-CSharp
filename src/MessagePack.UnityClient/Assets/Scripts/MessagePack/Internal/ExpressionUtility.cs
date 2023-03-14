@@ -16,7 +16,7 @@ namespace MessagePack.Internal
                 throw new ArgumentNullException("expression");
             }
 
-            return (expression.Body as MethodCallExpression).Method;
+            return ((MethodCallExpression)expression.Body).Method;
         }
 
         /// <summary>
@@ -68,18 +68,18 @@ namespace MessagePack.Internal
                 throw new ArgumentNullException("source");
             }
 
-            var memberExpression = source.Body as MemberExpression;
+            var memberExpression = (MemberExpression)source.Body;
             return memberExpression.Member;
         }
 
         public static PropertyInfo GetPropertyInfo<T, TR>(Expression<Func<T, TR>> expression)
         {
-            return GetMemberInfoCore(expression) as PropertyInfo;
+            return (PropertyInfo)GetMemberInfoCore(expression);
         }
 
         public static FieldInfo GetFieldInfo<T, TR>(Expression<Func<T, TR>> expression)
         {
-            return GetMemberInfoCore(expression) as FieldInfo;
+            return (FieldInfo)GetMemberInfoCore(expression);
         }
     }
 }

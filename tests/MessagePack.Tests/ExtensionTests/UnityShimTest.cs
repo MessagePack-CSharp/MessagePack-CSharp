@@ -29,6 +29,20 @@ namespace MessagePack.Tests.ExtensionTests
             return MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, options), options);
         }
 
+        private void EnsureSpecCompatibility<T>(T[] data)
+        {
+            // ensure that the serialized array is compatible with MessagePack ext format
+            MessagePackSerializerOptions options = MessagePackSerializerOptions.Standard.WithResolver(new WithUnityBlitResolver());
+            var serialized = MessagePackSerializer.Serialize(data, options);
+            var reader = new MessagePackReader(serialized);
+
+            // If the format is not extension format, this method will throw:
+            reader.ReadExtensionFormat();
+
+            // If the format is correct, we should arrive exactly at the end of the stream.
+            Assert.True(reader.End);
+        }
+
         public static object[][] TestData = new object[][]
         {
             new object[] { BlitContainer<Vector2>.Create(Enumerable.Range(1, 123).Select(x => new Vector2(x, x))) },
@@ -71,6 +85,13 @@ namespace MessagePack.Tests.ExtensionTests
         public void StandardFormatterTest<T>(T data)
         {
             this.ConvertStandard(data).IsStructuralEqual(data);
+        }
+
+        [Theory]
+        [MemberData(nameof(TestData))]
+        public void EnsureSpecCompatibilityTest<T>(BlitContainer<T> data)
+        {
+            EnsureSpecCompatibility(data.Array);
         }
 
         public class WithUnityBlitResolver : IFormatterResolver

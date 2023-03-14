@@ -9,14 +9,14 @@ namespace MessagePack.AspNetCoreMvcFormatter
     public class MessagePackOutputFormatter : OutputFormatter
     {
         private const string ContentType = "application/x-msgpack";
-        private readonly MessagePackSerializerOptions options;
+        private readonly MessagePackSerializerOptions? options;
 
         public MessagePackOutputFormatter()
             : this(null)
         {
         }
 
-        public MessagePackOutputFormatter(MessagePackSerializerOptions options)
+        public MessagePackOutputFormatter(MessagePackSerializerOptions? options)
         {
             this.options = options;
 

@@ -112,15 +112,15 @@ namespace MessagePack.Resolvers
         /// Gets an <see cref="IMessagePackFormatter{T}"/> instance that can serialize or deserialize some type <typeparamref name="T"/>.
         /// </summary>
         /// <typeparam name="T">The type of value to be serialized or deserialized.</typeparam>
-        /// <returns>A formatter, if this resolver supplies one for type <typeparamref name="T"/>; otherwise <c>null</c>.</returns>
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        /// <returns>A formatter, if this resolver supplies one for type <typeparamref name="T"/>; otherwise <see langword="null"/>.</returns>
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return Cache<T>.Formatter;
         }
 
         private static class Cache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static Cache()
             {

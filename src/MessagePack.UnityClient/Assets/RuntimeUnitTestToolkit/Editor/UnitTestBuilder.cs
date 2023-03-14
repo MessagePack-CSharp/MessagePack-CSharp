@@ -4,6 +4,7 @@ using RuntimeUnitTestToolkit;
 using RuntimeUnitTestToolkit.Editor;
 using System;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -118,7 +119,7 @@ public static partial class UnitTestBuilder
 
         if (buildPath == null)
         {
-            buildPath = $"bin/UnitTest/{settings.BuildTarget}_{settings.ScriptBackend}/test" + (IsWindows(settings.BuildTarget) ? ".exe" : "");
+            buildPath = $"bin/UnitTest/{settings.BuildTarget}_{settings.ScriptBackend}/test" + GetExtensionForBuildTarget(settings.BuildTarget);
         }
 
         var originalScene = SceneManager.GetActiveScene().path;
@@ -397,7 +398,9 @@ public static partial class UnitTestBuilder
         }
         if (settings.Headless)
         {
+#pragma warning disable CS0618
             options |= BuildOptions.EnableHeadlessMode;
+#pragma warning restore CS0618
         }
 
         var targetGroup = ToBuildTargetGroup(settings.BuildTarget);
@@ -407,6 +410,9 @@ public static partial class UnitTestBuilder
             UnityEngine.Debug.Log("Modify ScriptBackend to " + settings.ScriptBackend);
             PlayerSettings.SetScriptingBackend(targetGroup, settings.ScriptBackend);
         }
+
+        // MemoryPack changed:
+        EditorUserBuildSettings.il2CppCodeGeneration = Il2CppCodeGeneration.OptimizeSpeed; //runtime
 
         var buildOptions = new BuildPlayerOptions
         {
@@ -457,20 +463,42 @@ public static partial class UnitTestBuilder
         }
     }
 
+    static string GetExtensionForBuildTarget(BuildTarget buildTarget)
+    {
+        switch (buildTarget)
+        {
+            case BuildTarget.StandaloneWindows:
+            case BuildTarget.StandaloneWindows64:
+            case BuildTarget.WSAPlayer:
+                return ".exe";
+            case BuildTarget.StandaloneOSX:                
+                return ".app";
+            case BuildTarget.Android:
+                return ".apk";
+            default:
+                return "";
+        }
+    }
+
     static BuildTargetGroup ToBuildTargetGroup(BuildTarget buildTarget)
     {
 #pragma warning disable CS0618
         switch (buildTarget)
         {
+#if UNITY_2017_3_OR_NEWER
             case BuildTarget.StandaloneOSX:
-            case (BuildTarget)3:
+#else
             case BuildTarget.StandaloneOSXIntel:
             case BuildTarget.StandaloneOSXIntel64:
+            case BuildTarget.StandaloneOSXUniversal:
+#endif // UNITY_2017_3_OR_NEWER
             case BuildTarget.StandaloneWindows:
             case BuildTarget.StandaloneWindows64:
-            case BuildTarget.StandaloneLinux:
             case BuildTarget.StandaloneLinux64:
+#if !UNITY_2019_2_OR_NEWER
+            case BuildTarget.StandaloneLinux:
             case BuildTarget.StandaloneLinuxUniversal:
+#endif // !UNITY_2019_2_OR_NEWER
                 return BuildTargetGroup.Standalone;
             case (BuildTarget)6:
             case (BuildTarget)7:

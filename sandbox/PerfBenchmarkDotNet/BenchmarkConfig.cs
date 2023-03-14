@@ -18,10 +18,10 @@ namespace PerfBenchmarkDotNet
     {
         public BenchmarkConfig()
         {
-            this.Add(MarkdownExporter.GitHub);
-            this.Add(MemoryDiagnoser.Default);
+            this.AddExporter(MarkdownExporter.GitHub);
+            this.AddDiagnoser(MemoryDiagnoser.Default);
 
-            this.Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1));
+            this.AddJob(Job.ShortRun.WithPlatform(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1));
 
             ////Add(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1),
             ////Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X86).WithWarmupCount(1).WithIterationCount(1));

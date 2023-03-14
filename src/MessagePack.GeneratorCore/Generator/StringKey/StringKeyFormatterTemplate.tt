@@ -36,6 +36,11 @@ foreach (var objInfo in ObjectSerializationInfos) {
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# }#>
     {
+<# foreach (var item in objInfo.Members) { #>
+<# if (item.CustomFormatterTypeName != null) { #>
+        private readonly <#= item.CustomFormatterTypeName #> __<#= item.Name #>CustomFormatter__ = new <#= item.CustomFormatterTypeName #>();
+<# } #>
+<# } #>
 <# for (var i = 0; i < list.Count; i++) {
         var member = list[i].Item1;
         var binary = list[i].Item2; #>

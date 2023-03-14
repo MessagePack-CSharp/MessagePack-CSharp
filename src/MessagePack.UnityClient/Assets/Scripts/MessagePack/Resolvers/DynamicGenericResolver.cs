@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using MessagePack.Formatters;
 using MessagePack.Internal;
 
+#pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1403 // File may only contain a single namespace
 
 namespace MessagePack.Resolvers
@@ -27,18 +28,18 @@ namespace MessagePack.Resolvers
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            public static readonly IMessagePackFormatter<T> Formatter;
+            public static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)DynamicGenericResolverGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)DynamicGenericResolverGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -83,7 +84,7 @@ namespace MessagePack.Internal
         };
 
         // Reduce IL2CPP code generate size(don't write long code in <T>)
-        internal static object GetFormatter(Type t)
+        internal static object? GetFormatter(Type t)
         {
             TypeInfo ti = t.GetTypeInfo();
 
@@ -98,19 +99,19 @@ namespace MessagePack.Internal
                         return ByteArrayFormatter.Instance;
                     }
 
-                    return Activator.CreateInstance(typeof(ArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                    return Activator.CreateInstance(typeof(ArrayFormatter<>).MakeGenericType(t.GetElementType()!));
                 }
                 else if (rank == 2)
                 {
-                    return Activator.CreateInstance(typeof(TwoDimensionalArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                    return Activator.CreateInstance(typeof(TwoDimensionalArrayFormatter<>).MakeGenericType(t.GetElementType()!));
                 }
                 else if (rank == 3)
                 {
-                    return Activator.CreateInstance(typeof(ThreeDimensionalArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                    return Activator.CreateInstance(typeof(ThreeDimensionalArrayFormatter<>).MakeGenericType(t.GetElementType()!));
                 }
                 else if (rank == 4)
                 {
-                    return Activator.CreateInstance(typeof(FourDimensionalArrayFormatter<>).MakeGenericType(t.GetElementType()));
+                    return Activator.CreateInstance(typeof(FourDimensionalArrayFormatter<>).MakeGenericType(t.GetElementType()!));
                 }
                 else
                 {
@@ -122,7 +123,7 @@ namespace MessagePack.Internal
                 Type genericType = ti.GetGenericTypeDefinition();
                 TypeInfo genericTypeInfo = genericType.GetTypeInfo();
                 var isNullable = genericTypeInfo.IsNullable();
-                Type nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
+                Type? nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
 
                 if (genericType == typeof(KeyValuePair<,>))
                 {
@@ -130,9 +131,9 @@ namespace MessagePack.Internal
                 }
 
                 // Tuple
-                else if (ti.FullName.StartsWith("System.Tuple"))
+                else if (ti.FullName?.StartsWith("System.Tuple") is true)
                 {
-                    Type tupleFormatterType = null;
+                    Type? tupleFormatterType = null;
                     switch (ti.GenericTypeArguments.Length)
                     {
                         case 1:
@@ -160,16 +161,16 @@ namespace MessagePack.Internal
                             tupleFormatterType = typeof(TupleFormatter<,,,,,,,>);
                             break;
                         default:
-                            break;
+                            throw new MessagePackSerializationException("Unsupported arity for Tuple generic type: " + ti.Name);
                     }
 
                     return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
                 }
 
                 // ValueTuple
-                else if (ti.FullName.StartsWith("System.ValueTuple"))
+                else if (ti.FullName?.StartsWith("System.ValueTuple") is true)
                 {
-                    Type tupleFormatterType = null;
+                    Type? tupleFormatterType = null;
                     switch (ti.GenericTypeArguments.Length)
                     {
                         case 1:
@@ -197,7 +198,7 @@ namespace MessagePack.Internal
                             tupleFormatterType = typeof(ValueTupleFormatter<,,,,,,,>);
                             break;
                         default:
-                            break;
+                            throw new MessagePackSerializationException("Unsupported arity for ValueTuple generic type: " + ti.Name);
                     }
 
                     return CreateInstance(tupleFormatterType, ti.GenericTypeArguments);
@@ -258,14 +259,13 @@ namespace MessagePack.Internal
                 // Standard Nullable
                 else if (isNullable)
                 {
-                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
+                    return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType! });
                 }
 
                 // Mapped formatter
                 else
                 {
-                    Type formatterType;
-                    if (FormatterMap.TryGetValue(genericType, out formatterType))
+                    if (FormatterMap.TryGetValue(genericType, out Type? formatterType))
                     {
                         return CreateInstance(formatterType, ti.GenericTypeArguments);
                     }
@@ -369,7 +369,7 @@ namespace MessagePack.Internal
             return null;
         }
 
-        private static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
+        private static object? CreateInstance(Type genericType, Type[] genericTypeArguments, params object?[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);
         }

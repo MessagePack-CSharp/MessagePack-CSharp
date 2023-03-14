@@ -7,6 +7,8 @@ using System.Collections.Immutable;
 using System.Reflection;
 using MessagePack.Formatters;
 
+#pragma warning disable SA1402 // File may only contain a single type
+
 namespace MessagePack.ImmutableCollection
 {
     public class ImmutableCollectionResolver : IFormatterResolver
@@ -17,18 +19,18 @@ namespace MessagePack.ImmutableCollection
         {
         }
 
-        public IMessagePackFormatter<T> GetFormatter<T>()
+        public IMessagePackFormatter<T>? GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            internal static readonly IMessagePackFormatter<T> Formatter;
+            internal static readonly IMessagePackFormatter<T>? Formatter;
 
             static FormatterCache()
             {
-                Formatter = (IMessagePackFormatter<T>)ImmutableCollectionGetFormatterHelper.GetFormatter(typeof(T));
+                Formatter = (IMessagePackFormatter<T>?)ImmutableCollectionGetFormatterHelper.GetFormatter(typeof(T));
             }
         }
     }
@@ -52,7 +54,7 @@ namespace MessagePack.ImmutableCollection
             { typeof(IImmutableStack<>), typeof(InterfaceImmutableStackFormatter<>) },
         };
 
-        internal static object GetFormatter(Type t)
+        internal static object? GetFormatter(Type t)
         {
             TypeInfo ti = t.GetTypeInfo();
 
@@ -61,14 +63,13 @@ namespace MessagePack.ImmutableCollection
                 Type genericType = ti.GetGenericTypeDefinition();
                 TypeInfo genericTypeInfo = genericType.GetTypeInfo();
                 var isNullable = genericTypeInfo.IsNullable();
-                Type nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
+                Type? nullableElementType = isNullable ? ti.GenericTypeArguments[0] : null;
 
-                Type formatterType;
-                if (FormatterMap.TryGetValue(genericType, out formatterType))
+                if (FormatterMap.TryGetValue(genericType, out Type? formatterType))
                 {
                     return CreateInstance(formatterType, ti.GenericTypeArguments);
                 }
-                else if (isNullable && nullableElementType.IsConstructedGenericType && nullableElementType.GetGenericTypeDefinition() == typeof(ImmutableArray<>))
+                else if (isNullable && nullableElementType?.IsConstructedGenericType is true && nullableElementType.GetGenericTypeDefinition() == typeof(ImmutableArray<>))
                 {
                     return CreateInstance(typeof(NullableFormatter<>), new[] { nullableElementType });
                 }
@@ -77,7 +78,7 @@ namespace MessagePack.ImmutableCollection
             return null;
         }
 
-        private static object CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
+        private static object? CreateInstance(Type genericType, Type[] genericTypeArguments, params object[] arguments)
         {
             return Activator.CreateInstance(genericType.MakeGenericType(genericTypeArguments), arguments);
         }

@@ -428,9 +428,9 @@ namespace MessagePack.Unity
         }
     }
 
-    public sealed class AnimationCurveFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.AnimationCurve>
+    public sealed class AnimationCurveFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.AnimationCurve?>
     {
-        public void Serialize(ref MessagePackWriter writer, global::UnityEngine.AnimationCurve value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, global::UnityEngine.AnimationCurve? value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -440,12 +440,12 @@ namespace MessagePack.Unity
 
             IFormatterResolver resolver = options.Resolver;
             writer.WriteArrayHeader(3);
-            resolver.GetFormatterWithVerify<global::UnityEngine.Keyframe[]>().Serialize(ref writer, value.keys, options);
+            resolver.GetFormatterWithVerify<global::UnityEngine.Keyframe[]?>().Serialize(ref writer, value.keys, options);
             resolver.GetFormatterWithVerify<global::UnityEngine.WrapMode>().Serialize(ref writer, value.postWrapMode, options);
             resolver.GetFormatterWithVerify<global::UnityEngine.WrapMode>().Serialize(ref writer, value.preWrapMode, options);
         }
 
-        public global::UnityEngine.AnimationCurve Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::UnityEngine.AnimationCurve? Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {
@@ -699,9 +699,9 @@ namespace MessagePack.Unity
         }
     }
 
-    public sealed class GradientFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.Gradient>
+    public sealed class GradientFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.Gradient?>
     {
-        public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Gradient value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Gradient? value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -711,12 +711,12 @@ namespace MessagePack.Unity
 
             IFormatterResolver resolver = options.Resolver;
             writer.WriteArrayHeader(3);
-            resolver.GetFormatterWithVerify<global::UnityEngine.GradientColorKey[]>().Serialize(ref writer, value.colorKeys, options);
-            resolver.GetFormatterWithVerify<global::UnityEngine.GradientAlphaKey[]>().Serialize(ref writer, value.alphaKeys, options);
+            resolver.GetFormatterWithVerify<global::UnityEngine.GradientColorKey[]?>().Serialize(ref writer, value.colorKeys, options);
+            resolver.GetFormatterWithVerify<global::UnityEngine.GradientAlphaKey[]?>().Serialize(ref writer, value.alphaKeys, options);
             resolver.GetFormatterWithVerify<global::UnityEngine.GradientMode>().Serialize(ref writer, value.mode, options);
         }
 
-        public global::UnityEngine.Gradient Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::UnityEngine.Gradient? Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {
@@ -811,9 +811,9 @@ namespace MessagePack.Unity
         }
     }
 
-    public sealed class RectOffsetFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.RectOffset>
+    public sealed class RectOffsetFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.RectOffset?>
     {
-        public void Serialize(ref MessagePackWriter writer, global::UnityEngine.RectOffset value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, global::UnityEngine.RectOffset? value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -828,7 +828,7 @@ namespace MessagePack.Unity
             writer.Write(value.bottom);
         }
 
-        public global::UnityEngine.RectOffset Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::UnityEngine.RectOffset? Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.IsNil)
             {
