@@ -180,7 +180,7 @@ namespace MessagePack.Internal
                 return v;
             }
 
-            if (!this.TryAddInternal(key, valueFactory, out v))
+            if (!this.TryAddInternal(key, valueFactory, out v) && !this.TryGetValue(key, out v))
             {
                 throw new InvalidOperationException("Failed to get or add.");
             }
