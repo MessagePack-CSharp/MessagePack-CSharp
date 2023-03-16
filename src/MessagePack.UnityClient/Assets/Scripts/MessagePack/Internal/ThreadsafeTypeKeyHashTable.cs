@@ -40,7 +40,7 @@ namespace MessagePack.Internal
 
         public bool TryAdd(Type key, Func<Type, TValue> valueFactory)
         {
-            return this.TryAddInternal(key, valueFactory, out TValue _);
+            return this.TryAddInternal(key, valueFactory, out TValue? _);
         }
 
         private bool TryAddInternal(Type key, Func<Type, TValue> valueFactory, [MaybeNullWhen(false)] out TValue resultingValue)
