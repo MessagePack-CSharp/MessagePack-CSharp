@@ -43,7 +43,7 @@ namespace MessagePack.Internal
             return this.TryAddInternal(key, valueFactory, out TValue? _);
         }
 
-        private bool TryAddInternal(Type key, Func<Type, TValue> valueFactory, [MaybeNullWhen(false)] out TValue resultingValue)
+        private bool TryAddInternal(Type key, Func<Type, TValue> valueFactory, out TValue resultingValue)
         {
             lock (this.writerLock)
             {
@@ -91,7 +91,7 @@ namespace MessagePack.Internal
             }
         }
 
-        private bool AddToBuckets(Entry[] buckets, Type newKey, Entry? newEntryOrNull, Func<Type, TValue>? valueFactory, out TValue? resultingValue)
+        private bool AddToBuckets(Entry[] buckets, Type newKey, Entry? newEntryOrNull, Func<Type, TValue>? valueFactory, out TValue resultingValue)
         {
             var h = (newEntryOrNull != null) ? newEntryOrNull.Hash : newKey.GetHashCode();
             if (buckets[h & (buckets.Length - 1)] == null)
@@ -180,11 +180,7 @@ namespace MessagePack.Internal
                 return v;
             }
 
-            if (!this.TryAddInternal(key, valueFactory, out v) && !this.TryGetValue(key, out v))
-            {
-                throw new InvalidOperationException("Failed to get or add.");
-            }
-
+            this.TryAddInternal(key, valueFactory, out v);
             return v;
         }
 
