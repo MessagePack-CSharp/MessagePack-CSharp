@@ -6,7 +6,9 @@
 
     <BenchmarkDotNetVersion>0.13.5</BenchmarkDotNetVersion>
 
-    <MicrosoftCodeAnalysisVersion>3.11.0</MicrosoftCodeAnalysisVersion>
+    <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
+    <!-- Mainly used for Unity, Unity 2021.3 has Roslyn 3.9.0(see: Editor\Data\DotNetSdkRoslyn\ -->
+    <MicrosoftCodeAnalysisVersion>3.9.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisVersion Condition="'$(IsTestProject)'=='true'">4.4.0</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -28,6 +30,7 @@
     <PackageVersion Include="Microsoft.Build" Version="16.5.0" ExcludeAssets="runtime" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.3.3" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="1.1.1" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.3" PrivateAssets="all" />
     <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic.CodeFix.Testing.XUnit" Version="1.1.1" />
@@ -48,7 +51,7 @@
     <PackageVersion Include="ReactiveProperty" Version="8.2.0" />
     <PackageVersion Include="Sigil" version="5.0.0" />
     <PackageVersion Include="SpanJson" Version="4.0.0" />
-    <PackageVersion Include="System.CodeDom" Version="7.0.0" />
+    <PackageVersion Include="System.CodeDom" Version="6.0.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <PackageVersion Include="System.Reflection.Emit" Version="4.7.0" />

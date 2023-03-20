@@ -1,0 +1,100 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>11</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DefineConstants>ROSLYN3</DefineConstants>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <AnalyzerLanguage>cs</AnalyzerLanguage>
+
+    <!-- NuGet Info -->
+    <PackageId>MessagePack.Generator</PackageId>
+    <Title>MessagePack Code Generator</Title>
+    <Description>MessagePack standalone code generator.</Description>
+    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="System.CodeDom" />
+    <PackageReference Include="System.Reflection.Emit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\MessagePack.GeneratorCore\**\*.tt" LinkBase="GeneratorCore" />
+  </ItemGroup>
+    
+  <ItemGroup>
+    <Compile Include="..\MessagePack.GeneratorCore\**\*.cs" LinkBase="GeneratorCore" />
+    <Compile Include="..\MessagePack.Generator\IGeneratorContext.cs" />
+    <Compile Include="..\MessagePack.Generator\MessagePackGenerator.Emit.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataDictionary.cs" LinkBase="MessagePack\Internal" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" LinkBase="MessagePack\Internal" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="..\MessagePack.GeneratorCore\Generator\EnumTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>EnumTemplate.tt</DependentUpon>
+    </Compile>
+    <Compile Update="..\MessagePack.GeneratorCore\Generator\FormatterTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>FormatterTemplate.tt</DependentUpon>
+    </Compile>
+    <Compile Update="..\MessagePack.GeneratorCore\Generator\ResolverTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResolverTemplate.tt</DependentUpon>
+    </Compile>
+    <Compile Update="..\MessagePack.GeneratorCore\Generator\StringKey\StringKeyFormatterTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>StringKeyFormatterTemplate.tt</DependentUpon>
+    </Compile>
+    <Compile Update="..\MessagePack.GeneratorCore\Generator\TemplatePartials.cs">
+      <DependentUpon>%(FileName).tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="..\MessagePack.GeneratorCore\Generator\UnionTemplate.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>UnionTemplate.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="..\MessagePack.GeneratorCore\Generator\EnumTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>EnumTemplate.cs</LastGenOutput>
+      <CustomToolNamespace>MessagePackCompiler.Generator</CustomToolNamespace>
+    </None>
+    <None Update="..\MessagePack.GeneratorCore\Generator\FormatterTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>FormatterTemplate.cs</LastGenOutput>
+      <CustomToolNamespace>MessagePackCompiler.Generator</CustomToolNamespace>
+    </None>
+    <None Update="..\MessagePack.GeneratorCore\Generator\ResolverTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>ResolverTemplate.cs</LastGenOutput>
+      <CustomToolNamespace>MessagePackCompiler.Generator</CustomToolNamespace>
+    </None>
+    <None Update="..\MessagePack.GeneratorCore\Generator\StringKey\StringKeyFormatterTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>StringKeyFormatterTemplate.cs</LastGenOutput>
+      <CustomToolNamespace>MessagePackCompiler.Generator</CustomToolNamespace>
+    </None>
+    <None Update="..\MessagePack.GeneratorCore\Generator\UnionTemplate.tt">
+      <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>UnionTemplate.cs</LastGenOutput>
+      <CustomToolNamespace>MessagePackCompiler.Generator</CustomToolNamespace>
+    </None>
+  </ItemGroup>
+
+</Project>

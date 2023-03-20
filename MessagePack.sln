@@ -93,6 +93,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Experimental.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.GeneratedCode.Tests", "tests\MessagePack.GeneratedCode.Tests\MessagePack.GeneratedCode.Tests.csproj", "{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Roslyn3", "src\MessagePack.Generator.Roslyn3\MessagePack.Generator.Roslyn3.csproj", "{45A72780-93EF-4CD1-9FCD-D56A42A3B966}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -207,6 +209,10 @@ Global
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45A72780-93EF-4CD1-9FCD-D56A42A3B966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45A72780-93EF-4CD1-9FCD-D56A42A3B966}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45A72780-93EF-4CD1-9FCD-D56A42A3B966}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45A72780-93EF-4CD1-9FCD-D56A42A3B966}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -239,6 +245,7 @@ Global
 		{AC2503A7-736D-4AE6-9355-CF35D9DF6139} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{8AB40D1C-1134-4D77-B39A-19AEDC729450} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
+		{45A72780-93EF-4CD1-9FCD-D56A42A3B966} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}

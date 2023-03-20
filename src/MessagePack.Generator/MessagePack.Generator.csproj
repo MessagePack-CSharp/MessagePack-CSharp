@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>mpc</AssemblyName>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>mpc</ToolCommandName>
-    <RollForward>Major</RollForward>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>11</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <AnalyzerLanguage>cs</AnalyzerLanguage>
 
     <!-- NuGet Info -->
     <PackageId>MessagePack.Generator</PackageId>
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MessagePack.GeneratorCore\MessagePack.GeneratorCore.csproj" />
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
 </Project>

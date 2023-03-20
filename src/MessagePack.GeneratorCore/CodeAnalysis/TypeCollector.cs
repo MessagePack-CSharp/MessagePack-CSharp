@@ -92,7 +92,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly bool isForceUseMap;
         private readonly ReferenceSymbols typeReferences;
-        private readonly INamedTypeSymbol[] targetTypes;
+        private readonly ITypeSymbol[] targetTypes;
         private readonly HashSet<string> embeddedTypes = new(new[]
         {
             "short",
@@ -242,6 +242,8 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly bool disallowInternal;
 
+        private readonly bool excludeArrayElement;
+
         private readonly HashSet<string> externalIgnoreTypeNames;
 
         // visitor workspace:
@@ -286,6 +288,38 @@ namespace MessagePackCompiler.CodeAnalysis
                 .ToArray();
         }
 
+        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, ITypeSymbol targetType)
+        {
+            this.typeReferences = new ReferenceSymbols(compilation, _ => { });
+            this.disallowInternal = disallowInternal;
+            this.isForceUseMap = isForceUseMap;
+            this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
+            this.compilation = compilation;
+            this.excludeArrayElement = true;
+
+            targetTypes = new[] { targetType }
+                .Where(x =>
+                {
+                    if (x.DeclaredAccessibility == Accessibility.Public)
+                    {
+                        return true;
+                    }
+
+                    if (!disallowInternal)
+                    {
+                        return x.DeclaredAccessibility == Accessibility.Friend;
+                    }
+
+                    return false;
+                })
+                .Where(x =>
+                       ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
+                    || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
+                    || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))
+                    || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute))))
+                .ToArray();
+        }
+
         private void ResetWorkspace()
         {
             this.alreadyCollected.Clear();
@@ -300,7 +334,7 @@ namespace MessagePackCompiler.CodeAnalysis
         {
             this.ResetWorkspace();
 
-            foreach (INamedTypeSymbol item in this.targetTypes)
+            foreach (var item in this.targetTypes)
             {
                 this.CollectCore(item);
             }
@@ -433,7 +467,10 @@ namespace MessagePackCompiler.CodeAnalysis
         private void CollectArray(IArrayTypeSymbol array)
         {
             ITypeSymbol elemType = array.ElementType;
-            this.CollectCore(elemType);
+            if (!excludeArrayElement)
+            {
+                this.CollectCore(elemType);
+            }
 
             var fullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var elementTypeDisplayName = elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
