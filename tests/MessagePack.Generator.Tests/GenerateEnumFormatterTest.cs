@@ -13,7 +13,7 @@ public class GenerateEnumFormatterTest
     [Fact]
     public async Task EnumFormatter()
     {
-        string contents = """
+        string testSource = """
 using System;
 using System.Collections.Generic;
 using MessagePack;
@@ -32,12 +32,6 @@ public enum MyEnum
     A, B, C
 }
 """;
-        await new VerifyCS.Test
-        {
-            TestState =
-            {
-                Sources = { contents },
-            },
-        }.AddGeneratedSources().RunAsync();
+        await VerifyCS.Test.RunDefaultAsync(testSource);
     }
 }

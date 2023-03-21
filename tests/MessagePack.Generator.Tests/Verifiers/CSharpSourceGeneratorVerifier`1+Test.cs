@@ -43,6 +43,8 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
 #if WRITE_EXPECTED
             TestBehaviors |= TestBehaviors.SkipGeneratedSourcesCheck;
 #endif
+
+            this.AddGeneratedSources(testMethod);
         }
 
         public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.Latest;
@@ -61,6 +63,41 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
 
                 this.TestState.AnalyzerConfigFiles.Add((filename, ConstructGlobalConfigString(value)));
             }
+        }
+
+        public static async Task RunDefaultAsync(string testSource, [CallerFilePath] string? testFile = null, [CallerMemberName] string? testMethod = null)
+        {
+            await new Test(testFile, testMethod)
+            {
+                TestState =
+                {
+                    Sources = { testSource },
+                },
+            }.RunAsync();
+        }
+
+        public Test AddGeneratedSources([CallerMemberName] string? testMethod = null)
+        {
+            var expectedPrefix = $"{ThisAssembly.AssemblyName}.Resources.{testMethod}.";
+            foreach (var resourceName in typeof(Test).Assembly.GetManifestResourceNames())
+            {
+                if (!resourceName.StartsWith(expectedPrefix))
+                {
+                    continue;
+                }
+
+                using var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
+                if (resourceStream is null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                using var reader = new StreamReader(resourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
+                var name = resourceName.Substring(expectedPrefix.Length);
+                this.TestState.GeneratedSources.Add((typeof(MessagePackGenerator), name, reader.ReadToEnd()));
+            }
+
+            return this;
         }
 
         protected override IEnumerable<Type> GetSourceGenerators()
@@ -109,30 +146,6 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             }
 
             return (compilation, diagnostics);
-        }
-
-        public Test AddGeneratedSources([CallerMemberName] string? testMethod = null)
-        {
-            var expectedPrefix = $"{ThisAssembly.AssemblyName}.Resources.{testMethod}.";
-            foreach (var resourceName in typeof(Test).Assembly.GetManifestResourceNames())
-            {
-                if (!resourceName.StartsWith(expectedPrefix))
-                {
-                    continue;
-                }
-
-                using var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
-                if (resourceStream is null)
-                {
-                    throw new InvalidOperationException();
-                }
-
-                using var reader = new StreamReader(resourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
-                var name = resourceName.Substring(expectedPrefix.Length);
-                this.TestState.GeneratedSources.Add((typeof(MessagePackGenerator), name, reader.ReadToEnd()));
-            }
-
-            return this;
         }
 
         [Conditional("WRITE_EXPECTED")]
