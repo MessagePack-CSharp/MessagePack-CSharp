@@ -23,12 +23,12 @@ public partial class MessagepackGenerator : ISourceGenerator
             return;
         }
 
-        var compiation = context.Compilation;
+        var compilation = context.Compilation;
         var generateContext = new GeneratorContext(context);
 
         foreach (var syntax in receiver.ClassDeclarations)
         {
-            Generate(syntax, compiation, generateContext);
+            Generate(syntax, compilation, generateContext);
         }
     }
 

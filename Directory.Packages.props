@@ -7,7 +7,6 @@
     <BenchmarkDotNetVersion>0.13.5</BenchmarkDotNetVersion>
 
     <!-- https://learn.microsoft.com/en-us/visualstudio/extensibility/roslyn-version-support?view=vs-2022 -->
-    <!-- Mainly used for Unity, Unity 2021.3 has Roslyn 3.8.0 (https://docs.unity3d.com/Manual/roslyn-analyzers.html) -->
     <MicrosoftCodeAnalysisVersion>4.3.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisVersion Condition="'$(IsTestProject)'=='true'">4.5.0</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
