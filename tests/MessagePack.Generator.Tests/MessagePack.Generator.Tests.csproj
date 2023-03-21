@@ -2,10 +2,23 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>true</ImplicitUsings>
+    <LangVersion>11</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="GenerateGenericsFormatterTest.cs" />
+    <Compile Remove="GenerateKeyedFormatterTest.cs" />
+    <Compile Remove="GenerateMessagePackFormatterAttrTest.cs" />
+    <Compile Remove="GenerateStringKeyedFormatterTest.cs" />
+    <Compile Remove="TemporaryProjectWorkarea.cs" />
+    <Compile Remove="TestUtilities.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Nerdbank.Streams" />
     <PackageReference Include="xunit" />

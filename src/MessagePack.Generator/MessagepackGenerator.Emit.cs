@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.Generator;
 
-public partial class MessagepackGenerator
+public partial class MessagePackGenerator
 {
     private static void Generate(TypeDeclarationSyntax syntax, Compilation compilation, IGeneratorContext context)
     {

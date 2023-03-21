@@ -7,10 +7,15 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MessagePack.Generator;
 
 [Generator(LanguageNames.CSharp)]
-public partial class MessagepackGenerator : IIncrementalGenerator
+public partial class MessagePackGenerator : IIncrementalGenerator, ISourceGenerator
 {
     public const string MessagePackObjectAttributeFullName = "MessagePack.MessagePackObjectAttribute";
     public const string MessagePackUnionAttributeFullName = "MessagePack.UnionAttribute";
+
+    public void Execute(GeneratorExecutionContext context)
+    {
+        throw new NotImplementedException();
+    }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -38,6 +43,11 @@ public partial class MessagepackGenerator : IIncrementalGenerator
                 Generate(typeDeclaration, compilation, new GeneratorContext(context));
             });
         }
+    }
+
+    public void Initialize(GeneratorInitializationContext context)
+    {
+        throw new NotImplementedException();
     }
 
     private class Comparer : IEqualityComparer<(TypeDeclarationSyntax, Compilation)>

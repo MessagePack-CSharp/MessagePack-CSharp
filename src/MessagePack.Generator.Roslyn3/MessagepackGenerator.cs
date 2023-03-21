@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MessagePack.Generator;
 
 [Generator(LanguageNames.CSharp)]
-public partial class MessagepackGenerator : ISourceGenerator
+public partial class MessagePackGenerator : ISourceGenerator
 {
     public const string MessagePackObjectAttributeFullName = "MessagePack.MessagePackObjectAttribute";
 
