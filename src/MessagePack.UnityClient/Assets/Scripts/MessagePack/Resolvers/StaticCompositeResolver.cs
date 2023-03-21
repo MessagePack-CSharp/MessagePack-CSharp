@@ -110,16 +110,6 @@ namespace MessagePack.Resolvers
             this.resolvers = resolvers;
         }
 
-        public void AddGeneratedFormatter(IMessagePackFormatter formatter)
-        {
-            if (this.frozen)
-            {
-                throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
-            }
-
-            this.generatedFormatters.Add(formatter);
-        }
-
         /// <summary>
         /// Gets an <see cref="IMessagePackFormatter{T}"/> instance that can serialize or deserialize some type <typeparamref name="T"/>.
         /// </summary>
