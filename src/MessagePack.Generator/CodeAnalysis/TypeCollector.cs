@@ -4,10 +4,7 @@
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
@@ -25,8 +22,6 @@ public class MessagePackGeneratorResolveFailedException : Exception
 internal class ReferenceSymbols
 {
 #pragma warning disable SA1401 // Fields should be private
-    internal readonly INamedTypeSymbol? Task;
-    internal readonly INamedTypeSymbol? TaskOfT;
     internal readonly INamedTypeSymbol MessagePackObjectAttribute;
     internal readonly INamedTypeSymbol UnionAttribute;
     internal readonly INamedTypeSymbol SerializationConstructorAttribute;
@@ -39,18 +34,6 @@ internal class ReferenceSymbols
 
     public ReferenceSymbols(Compilation compilation, Action<string> logger)
     {
-        TaskOfT = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task`1");
-        if (TaskOfT == null)
-        {
-            logger("failed to get metadata of System.Threading.Tasks.Task`1");
-        }
-
-        Task = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task");
-        if (Task == null)
-        {
-            logger("failed to get metadata of System.Threading.Tasks.Task");
-        }
-
         MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute")
             ?? throw new InvalidOperationException("failed to get metadata of MessagePack.MessagePackObjectAttribute");
 
