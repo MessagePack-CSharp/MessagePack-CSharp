@@ -203,7 +203,7 @@ public class CodeGenerator
         }
 
         var resolverTemplate = new ResolverTemplate(namespaceDot + "Resolvers", namespaceDot + "Formatters", resolverName, genericInfo.Where(x => !x.IsOpenGenericType).Cast<IResolverRegisterInfo>().Concat(enumInfo).Concat(unionInfo).Concat(objectInfo.Where(x => !x.IsOpenGenericType)).ToArray());
-        waitingTasks[waitingIndex] = OutputToDirAsync(output, resolverTemplate.Namespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText());
+        waitingTasks[waitingIndex] = OutputToDirAsync(output, resolverTemplate.ResolverNamespace, resolverTemplate.ResolverName, multioutSymbol, resolverTemplate.TransformText());
         return Task.WhenAll(waitingTasks);
     }
 

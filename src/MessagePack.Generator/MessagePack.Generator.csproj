@@ -7,6 +7,11 @@
     <Nullable>enable</Nullable>
     <AnalyzerLanguage>cs</AnalyzerLanguage>
 
+    <!-- Special properties for analyzer packages. -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
     <!-- NuGet Info -->
     <PackageId>MessagePack.Generator</PackageId>
     <Title>MessagePack Code Generator</Title>
@@ -15,8 +20,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="IsExternalInit" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="System.CodeDom" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="readme.txt" Pack="true" PackagePath="" />
+    <None Include="build\**">
+      <Pack>true</Pack>
+      <PackagePath>build\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

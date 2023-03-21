@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using MessagePack.Generator.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -23,12 +24,13 @@ public partial class MessagePackGenerator : ISourceGenerator
             return;
         }
 
-        var compilation = context.Compilation;
-        var generateContext = new GeneratorContext(context);
+        Compilation compilation = context.Compilation;
+        GeneratorContext generateContext = new(context);
+        AnalyzerOptions options = AnalyzerOptions.Parse(context.AnalyzerConfigOptions.GlobalOptions);
 
         foreach (var syntax in receiver.ClassDeclarations)
         {
-            Generate(syntax, compilation, generateContext);
+            Generate(syntax, options, compilation, generateContext);
         }
     }
 

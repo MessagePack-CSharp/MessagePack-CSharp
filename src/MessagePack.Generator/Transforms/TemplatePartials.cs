@@ -35,21 +35,21 @@ public partial class StringKeyFormatterTemplate : IFormatterTemplate
 
 public partial class ResolverTemplate
 {
-    public ResolverTemplate(string @namespace, string formatterNamespace, string resolverName, IResolverRegisterInfo[] registerInfos)
+    public ResolverTemplate(string resolverNamespace, string formatterNamespace, string resolverName, IReadOnlyList<IResolverRegisterInfo> registerInfos)
     {
-        Namespace = @namespace;
+        ResolverNamespace = resolverNamespace;
         FormatterNamespace = formatterNamespace;
         ResolverName = resolverName;
         RegisterInfos = registerInfos;
     }
 
-    public string Namespace { get; }
+    public string ResolverNamespace { get; }
 
     public string FormatterNamespace { get; }
 
     public string ResolverName { get; }
 
-    public IResolverRegisterInfo[] RegisterInfos { get; }
+    public IReadOnlyList<IResolverRegisterInfo> RegisterInfos { get; }
 }
 
 public partial class EnumTemplate

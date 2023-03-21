@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>true</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <LangVersion>11</LangVersion>
   </PropertyGroup>
 
@@ -15,6 +16,11 @@
     <Compile Remove="TestUtilities.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Resources\**\*.cs" />
+    <EmbeddedResource Include="Resources\**\*.cs" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" />
@@ -29,6 +35,10 @@
     <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj" />
     <ProjectReference Include="..\..\src\MessagePack.Generator\MessagePack.Generator.csproj" />
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
   </ItemGroup>
 
 </Project>

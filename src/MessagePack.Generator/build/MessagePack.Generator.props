@@ -1,0 +1,13 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MessagePackGeneratedResolverNamespace>MessagePack</MessagePackGeneratedResolverNamespace>
+    <MessagePackGeneratedResolverName>GeneratedResolver</MessagePackGeneratedResolverName>
+    <MessagePackGeneratedUsesMapMode>false</MessagePackGeneratedUsesMapMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="MessagePackGeneratedResolverNamespace" />
+    <CompilerVisibleProperty Include="MessagePackGeneratedResolverName" />
+    <CompilerVisibleProperty Include="MessagePackGeneratedUsesMapMode" />
+  </ItemGroup>
+</Project>

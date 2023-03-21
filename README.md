@@ -1582,55 +1582,13 @@ Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime 
 > Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
 For all other Unity targets, AOT is required.
 
-If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation. `mpc` (MessagePackCompiler) is the code generator of MessagePack for C#. mpc uses [Roslyn](https://github.com/dotnet/roslyn) to analyze source code.
-
-First of all, mpc requires [.NET Core 3 Runtime](https://dotnet.microsoft.com/download). The easiest way to acquire and run mpc is as a dotnet tool.
+If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation.
 
 ```
-dotnet tool install --global MessagePack.Generator
+dotnet add package MessagePack.Generator
 ```
 
-Installing it as a local tool allows you to include the tools and versions that you use in your source control system. Run these commands in the root of your repo:
-
-```
-dotnet new tool-manifest
-dotnet tool install MessagePack.Generator
-```
-
-Check in your `.config\dotnet-tools.json` file. On another machine you can "restore" your tool using the `dotnet tool restore` command.
-
-Once you have the tool installed, simply invoke using `dotnet mpc` within your repo:
-
-```
-dotnet mpc --help
-```
-
-Alternatively, you can download mpc from the [releases][Releases] page, that includes platform native binaries (that don't require a separate dotnet runtime).
-
-```
-Usage: mpc [options...]
-
-Options:
-  -i, -input <String>                                Input path to MSBuild project file or the directory containing Unity source files. (Required)
-  -o, -output <String>                               Output file path(.cs) or directory(multiple generate file). (Required)
-  -c, -conditionalSymbol <String>                    Conditional compiler symbols, split with ','. (Default: null)
-  -r, -resolverName <String>                         Set resolver name. (Default: GeneratedResolver)
-  -n, -namespace <String>                            Set namespace root name. (Default: MessagePack)
-  -m, -useMapMode <Boolean>                          Force use map mode serialization. (Default: False)
-  -ms, -multipleIfDirectiveOutputSymbols <String>    Generate #if-- files by symbols, split with ','. (Default: null)
-```
-
-`mpc` targets C# code with `[MessagePackObject]` or `[Union]` annotations.
-
-```cmd
-// Simple Sample:
-dotnet mpc -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs"
-
-// Use force map simulate DynamicContractlessObjectResolver
-dotnet mpc -i "..\src\Sandbox.Shared.csproj" -o "MessagePackGenerated.cs" -m
-```
-
-By default, `mpc` generates the resolver as `MessagePack.Resolvers.GeneratedResolver` and formatters as`MessagePack.Formatters.*`.
+The source generator generates the resolver as `MessagePack.Resolvers.GeneratedResolver` and formatters as`MessagePack.Formatters.*`.
 
 Here is the full sample code to register a generated resolver in Unity.
 

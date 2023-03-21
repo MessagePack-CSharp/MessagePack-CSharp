@@ -1,53 +1,46 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using MessagePack.Generator.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.Generator;
 
 [Generator(LanguageNames.CSharp)]
-public partial class MessagePackGenerator : IIncrementalGenerator, ISourceGenerator
+public partial class MessagePackGenerator : IIncrementalGenerator
 {
     public const string MessagePackObjectAttributeFullName = "MessagePack.MessagePackObjectAttribute";
     public const string MessagePackUnionAttributeFullName = "MessagePack.UnionAttribute";
 
-    public void Execute(GeneratorExecutionContext context)
-    {
-        throw new NotImplementedException();
-    }
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var typeDeclarations = context.SyntaxProvider.ForAttributeWithMetadataName(
+        IncrementalValueProvider<AnalyzerOptions> options = context.AnalyzerConfigOptionsProvider.Select((provider, ct) => AnalyzerOptions.Parse(provider.GlobalOptions));
+
+        var messagePackObjectTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             MessagePackObjectAttributeFullName,
             predicate: static (node, _) => node is TypeDeclarationSyntax,
             transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
-        Register(typeDeclarations);
+        Register(messagePackObjectTypes);
 
-        var typeDeclarations2 = context.SyntaxProvider.ForAttributeWithMetadataName(
+        var unionTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             MessagePackUnionAttributeFullName,
             predicate: static (node, _) => node is InterfaceDeclarationSyntax,
             transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
-        Register(typeDeclarations2);
+        Register(unionTypes);
 
         void Register(IncrementalValuesProvider<TypeDeclarationSyntax> typeDeclarations)
         {
             var source = typeDeclarations
                 .Combine(context.CompilationProvider)
-                .WithComparer(Comparer.Instance);
+                .Combine(options);
 
             context.RegisterSourceOutput(source, static (context, source) =>
             {
-                var (typeDeclaration, compilation) = source;
-                Generate(typeDeclaration, compilation, new GeneratorContext(context));
+                var ((typeDeclaration, compilation), options) = source;
+                Generate(typeDeclaration, options, compilation, new GeneratorContext(context));
             });
         }
-    }
-
-    public void Initialize(GeneratorInitializationContext context)
-    {
-        throw new NotImplementedException();
     }
 
     private class Comparer : IEqualityComparer<(TypeDeclarationSyntax, Compilation)>

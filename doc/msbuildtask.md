@@ -3,10 +3,10 @@
 Cold startup performance and AOT environments can benefit by pre-compiling the specialized code
 for serializing and deserializing your custom types.
 
-Install the `MessagePack.MSBuild.Tasks` NuGet package in your project:
- [![NuGet](https://img.shields.io/nuget/v/MessagePack.MSBuild.Tasks.svg)](https://www.nuget.org/packages/MessagePack.MSBuild.Tasks)
+Install the `MessagePack.Generator` NuGet package in your project:
+ [![NuGet](https://img.shields.io/nuget/v/MessagePack.Generator.svg)](https://www.nuget.org/packages/MessagePack.Generator)
 
-This package automatically gets the MessagePack Compiler (mpc) to run during the build to produce a source file in the intermediate directory and adds it to the compilation, consumable in the normal way:
+This package automatically gets the MessagePack source generator to run during the build to produce a source file in the intermediate directory and adds it to the compilation, consumable in the normal way:
 
 ```cs
 using System;

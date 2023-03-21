@@ -15,7 +15,7 @@ namespace MessagePack.Resolvers
     {
         public static readonly StaticCompositeResolver Instance = new StaticCompositeResolver();
 
-        private bool freezed;
+        private bool frozen;
         private ConcurrentBag<IMessagePackFormatter> generatedFormatters = new ConcurrentBag<IMessagePackFormatter>();
         private IReadOnlyList<IMessagePackFormatter> formatters;
         private IReadOnlyList<IFormatterResolver> resolvers;
@@ -37,7 +37,7 @@ namespace MessagePack.Resolvers
         /// </param>
         public void Register(params IMessagePackFormatter[] formatters)
         {
-            if (this.freezed)
+            if (this.frozen)
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
@@ -62,7 +62,7 @@ namespace MessagePack.Resolvers
         /// </param>
         public void Register(params IFormatterResolver[] resolvers)
         {
-            if (this.freezed)
+            if (this.frozen)
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
@@ -91,7 +91,7 @@ namespace MessagePack.Resolvers
         /// </param>
         public void Register(IReadOnlyList<IMessagePackFormatter> formatters, IReadOnlyList<IFormatterResolver> resolvers)
         {
-            if (this.freezed)
+            if (this.frozen)
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
@@ -112,7 +112,7 @@ namespace MessagePack.Resolvers
 
         public void AddGeneratedFormatter(IMessagePackFormatter formatter)
         {
-            if (this.freezed)
+            if (this.frozen)
             {
                 throw new InvalidOperationException("Register must call on startup(before use GetFormatter<T>).");
             }
@@ -136,7 +136,7 @@ namespace MessagePack.Resolvers
 
             static Cache()
             {
-                Instance.freezed = true;
+                Instance.frozen = true;
                 foreach (var item in Instance.generatedFormatters)
                 {
                     if (item is IMessagePackFormatter<T> f)
