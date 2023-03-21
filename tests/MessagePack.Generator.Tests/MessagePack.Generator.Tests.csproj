@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack.Annotations\MessagePack.Annotations.csproj" />
-    <ProjectReference Include="..\..\src\MessagePack.GeneratorCore\MessagePack.GeneratorCore.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Generator\MessagePack.Generator.csproj" />
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
