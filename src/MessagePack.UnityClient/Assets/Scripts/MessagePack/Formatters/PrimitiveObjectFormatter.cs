@@ -259,8 +259,8 @@ namespace MessagePack.Formatters
                     }
 
                 case MessagePackType.String:
-                    var stringFormatter = options.Resolver.GetFormatterWithVerify<string?>();
-                    return stringFormatter.Deserialize(ref reader, options);
+                    IMessagePackFormatter<string?>? stringFormatter = options.Resolver.GetFormatter<string?>();
+                    return stringFormatter is not null ? stringFormatter.Deserialize(ref reader, options) : reader.ReadString();
                 case MessagePackType.Binary:
                     // We must copy the sequence returned by ReadBytes since the reader's sequence is only valid during deserialization.
                     return reader.ReadBytes()?.ToArray();
