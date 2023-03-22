@@ -3,18 +3,7 @@
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-public class GenericTypeParameterInfo
+public record GenericTypeParameterInfo(string Name, string Constraints)
 {
-    public string Name { get; }
-
-    public string Constraints { get; }
-
-    public bool HasConstraints { get; }
-
-    public GenericTypeParameterInfo(string name, string constraints)
-    {
-        Name = name ?? throw new ArgumentNullException(nameof(name));
-        Constraints = constraints ?? throw new ArgumentNullException(nameof(name));
-        HasConstraints = constraints != string.Empty;
-    }
+    public bool HasConstraints => this.Constraints.Length > 0;
 }

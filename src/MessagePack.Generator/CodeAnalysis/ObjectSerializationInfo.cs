@@ -3,36 +3,24 @@
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-public class ObjectSerializationInfo : IResolverRegisterInfo
+public record ObjectSerializationInfo(
+    bool IsClass,
+    bool IsOpenGenericType,
+    GenericTypeParameterInfo[] GenericTypeParameters,
+    MemberSerializationInfo[] ConstructorParameters,
+    bool IsIntKey,
+    MemberSerializationInfo[] Members,
+    string Name,
+    string FullName,
+    string? Namespace,
+    bool HasIMessagePackSerializationCallbackReceiver,
+    bool NeedsCastOnAfter,
+    bool NeedsCastOnBefore) : IResolverRegisterInfo
 {
-    public string Name { get; }
-
-    public string FullName { get; }
-
-    public string? Namespace { get; }
-
-    public GenericTypeParameterInfo[] GenericTypeParameters { get; }
-
-    public bool IsOpenGenericType { get; }
-
-    public bool IsIntKey { get; }
-
     public bool IsStringKey
     {
         get { return !this.IsIntKey; }
     }
-
-    public bool IsClass { get; }
-
-    public MemberSerializationInfo[] ConstructorParameters { get; }
-
-    public MemberSerializationInfo[] Members { get; }
-
-    public bool HasIMessagePackSerializationCallbackReceiver { get; }
-
-    public bool NeedsCastOnBefore { get; }
-
-    public bool NeedsCastOnAfter { get; }
 
     public string FormatterName => this.Namespace == null ? FormatterNameWithoutNameSpace : this.Namespace + "." + FormatterNameWithoutNameSpace;
 
@@ -70,21 +58,5 @@ public class ObjectSerializationInfo : IResolverRegisterInfo
     {
         var args = string.Join(", ", this.ConstructorParameters.Select(x => "__" + x.Name + "__"));
         return $"{this.FullName}({args})";
-    }
-
-    public ObjectSerializationInfo(bool isClass, bool isOpenGenericType, GenericTypeParameterInfo[] genericTypeParameterInfos, MemberSerializationInfo[] constructorParameters, bool isIntKey, MemberSerializationInfo[] members, string name, string fullName, string? @namespace, bool hasSerializationConstructor, bool needsCastOnAfter, bool needsCastOnBefore)
-    {
-        IsClass = isClass;
-        IsOpenGenericType = isOpenGenericType;
-        GenericTypeParameters = genericTypeParameterInfos;
-        ConstructorParameters = constructorParameters;
-        IsIntKey = isIntKey;
-        Members = members;
-        Name = name;
-        FullName = fullName;
-        Namespace = @namespace;
-        HasIMessagePackSerializationCallbackReceiver = hasSerializationConstructor;
-        NeedsCastOnAfter = needsCastOnAfter;
-        NeedsCastOnBefore = needsCastOnBefore;
     }
 }

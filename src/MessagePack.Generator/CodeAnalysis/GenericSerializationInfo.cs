@@ -3,14 +3,8 @@
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-public class GenericSerializationInfo : IResolverRegisterInfo, IEquatable<GenericSerializationInfo>
+public sealed record GenericSerializationInfo(string FullName, string FormatterName, bool IsOpenGenericType) : IResolverRegisterInfo
 {
-    public string FullName { get; }
-
-    public string FormatterName { get; }
-
-    public bool IsOpenGenericType { get; }
-
     public bool Equals(GenericSerializationInfo? other)
     {
         return this.FullName.Equals(other?.FullName);
@@ -19,12 +13,5 @@ public class GenericSerializationInfo : IResolverRegisterInfo, IEquatable<Generi
     public override int GetHashCode()
     {
         return this.FullName.GetHashCode();
-    }
-
-    public GenericSerializationInfo(string fullName, string formatterName, bool isOpenGenericType)
-    {
-        FullName = fullName;
-        FormatterName = formatterName;
-        IsOpenGenericType = isOpenGenericType;
     }
 }

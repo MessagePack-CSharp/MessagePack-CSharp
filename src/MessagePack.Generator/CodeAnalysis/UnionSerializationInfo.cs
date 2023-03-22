@@ -3,23 +3,11 @@
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-public class UnionSerializationInfo : IResolverRegisterInfo
+public record UnionSerializationInfo(
+    string? Namespace,
+    string Name,
+    string FullName,
+    UnionSubTypeInfo[] SubTypes) : IResolverRegisterInfo
 {
-    public string? Namespace { get; }
-
-    public string Name { get; }
-
-    public string FullName { get; }
-
     public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
-
-    public UnionSubTypeInfo[] SubTypes { get; }
-
-    public UnionSerializationInfo(string? @namespace, string name, string fullName, UnionSubTypeInfo[] subTypes)
-    {
-        Namespace = @namespace;
-        Name = name;
-        FullName = fullName;
-        SubTypes = subTypes;
-    }
 }

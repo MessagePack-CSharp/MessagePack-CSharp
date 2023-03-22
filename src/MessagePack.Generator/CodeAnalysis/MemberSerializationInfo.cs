@@ -5,40 +5,18 @@ using MessagePack.Generator.Transforms;
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-public class MemberSerializationInfo
+public record MemberSerializationInfo(
+    bool IsProperty,
+    bool IsWritable,
+    bool IsReadable,
+    int IntKey,
+    string StringKey,
+    string Name,
+    string Type,
+    string ShortTypeName,
+    string? CustomFormatterTypeName)
 {
-    public bool IsProperty { get; }
-
-    public bool IsWritable { get; }
-
-    public bool IsReadable { get; }
-
-    public int IntKey { get; }
-
-    public string StringKey { get; }
-
-    public string Type { get; }
-
-    public string Name { get; }
-
-    public string ShortTypeName { get; }
-
-    public string? CustomFormatterTypeName { get; }
-
     private readonly HashSet<string> primitiveTypes = new(ShouldUseFormatterResolverHelper.PrimitiveTypes);
-
-    public MemberSerializationInfo(bool isProperty, bool isWritable, bool isReadable, int intKey, string stringKey, string name, string type, string shortTypeName, string? customFormatterTypeName)
-    {
-        IsProperty = isProperty;
-        IsWritable = isWritable;
-        IsReadable = isReadable;
-        IntKey = intKey;
-        StringKey = stringKey;
-        Type = type;
-        Name = name;
-        ShortTypeName = shortTypeName;
-        CustomFormatterTypeName = customFormatterTypeName;
-    }
 
     public string GetSerializeMethodString()
     {
