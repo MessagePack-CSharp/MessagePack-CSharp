@@ -34,31 +34,31 @@ internal class ReferenceSymbols
 
     public ReferenceSymbols(Compilation compilation, Action<string> logger)
     {
-        MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute")
+        this.MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute")
             ?? throw new InvalidOperationException("failed to get metadata of MessagePack.MessagePackObjectAttribute");
 
-        UnionAttribute = compilation.GetTypeByMetadataName("MessagePack.UnionAttribute")
+        this.UnionAttribute = compilation.GetTypeByMetadataName("MessagePack.UnionAttribute")
             ?? throw new InvalidOperationException("failed to get metadata of MessagePack.UnionAttribute");
 
-        SerializationConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.SerializationConstructorAttribute")
+        this.SerializationConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.SerializationConstructorAttribute")
             ?? throw new InvalidOperationException("failed to get metadata of MessagePack.SerializationConstructorAttribute");
 
-        KeyAttribute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute")
+        this.KeyAttribute = compilation.GetTypeByMetadataName("MessagePack.KeyAttribute")
             ?? throw new InvalidOperationException("failed to get metadata of MessagePack.KeyAttribute");
 
-        IgnoreAttribute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute")
+        this.IgnoreAttribute = compilation.GetTypeByMetadataName("MessagePack.IgnoreMemberAttribute")
             ?? throw new InvalidOperationException("failed to get metadata of MessagePack.IgnoreMemberAttribute");
 
-        IgnoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
-        if (IgnoreDataMemberAttribute == null)
+        this.IgnoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
+        if (this.IgnoreDataMemberAttribute == null)
         {
             logger("failed to get metadata of System.Runtime.Serialization.IgnoreDataMemberAttribute");
         }
 
-        IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver")
+        this.IMessagePackSerializationCallbackReceiver = compilation.GetTypeByMetadataName("MessagePack.IMessagePackSerializationCallbackReceiver")
             ?? throw new InvalidOperationException("failed to get metadata of MessagePack.IMessagePackSerializationCallbackReceiver");
 
-        MessagePackFormatterAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackFormatterAttribute")
+        this.MessagePackFormatterAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackFormatterAttribute")
             ?? throw new InvalidOperationException("failed to get metadata of MessagePack.MessagePackFormatterAttribute");
     }
 }
@@ -73,10 +73,7 @@ public class TypeCollector
     private static readonly SymbolDisplayFormat ShortTypeNameFormat = new SymbolDisplayFormat(
             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypes);
 
-    private readonly bool isForceUseMap;
-    private readonly ReferenceSymbols typeReferences;
-    private readonly ITypeSymbol[] targetTypes;
-    private readonly HashSet<string> embeddedTypes = new(new[]
+    private static readonly HashSet<string> EmbeddedTypes = new(new[]
     {
         "short",
         "int",
@@ -147,7 +144,7 @@ public class TypeCollector
         "System.Reactive.Unit",
     });
 
-    private readonly Dictionary<string, string> knownGenericTypes = new()
+    private static readonly Dictionary<string, string> KnownGenericTypes = new()
     {
 #pragma warning disable SA1509 // Opening braces should not be preceded by blank line
         { "System.Collections.Generic.List<>", "global::MessagePack.Formatters.ListFormatter<TREPLACE>" },
@@ -223,10 +220,12 @@ public class TypeCollector
 #pragma warning restore SA1509 // Opening braces should not be preceded by blank line
     };
 
+    private readonly bool isForceUseMap;
+    private readonly IGeneratorContext context;
+    private readonly ReferenceSymbols typeReferences;
+    private readonly ITypeSymbol? targetType;
     private readonly bool disallowInternal;
-
     private readonly bool excludeArrayElement;
-
     private readonly HashSet<string> externalIgnoreTypeNames;
 
     // visitor workspace:
@@ -240,67 +239,40 @@ public class TypeCollector
 
     private readonly Compilation compilation;
 
-    public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, Action<string> logger)
-    {
-        this.typeReferences = new ReferenceSymbols(compilation, logger);
-        this.disallowInternal = disallowInternal;
-        this.isForceUseMap = isForceUseMap;
-        this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
-        this.compilation = compilation;
-
-        targetTypes = compilation.GetNamedTypeSymbols()
-            .Where(x =>
-            {
-                if (x.DeclaredAccessibility == Accessibility.Public)
-                {
-                    return true;
-                }
-
-                if (!disallowInternal)
-                {
-                    return x.DeclaredAccessibility == Accessibility.Friend;
-                }
-
-                return false;
-            })
-            .Where(x =>
-                   ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
-                || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
-                || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))
-                || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute))))
-            .ToArray();
-    }
-
-    public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, ITypeSymbol targetType)
+    private TypeCollector(Compilation compilation, bool disallowInternal, AnalyzerOptions options, string[]? ignoreTypeNames, ITypeSymbol targetType, IGeneratorContext context)
     {
         this.typeReferences = new ReferenceSymbols(compilation, _ => { });
         this.disallowInternal = disallowInternal;
-        this.isForceUseMap = isForceUseMap;
+        this.isForceUseMap = options.UsesMapMode;
+        this.context = context;
         this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
         this.compilation = compilation;
         this.excludeArrayElement = true;
+        this.context = context;
 
-        targetTypes = new[] { targetType }
-            .Where(x =>
+        if (targetType.DeclaredAccessibility == Accessibility.Public ||
+            (!disallowInternal && targetType.DeclaredAccessibility == Accessibility.Friend))
+        {
+            if (((targetType.TypeKind == TypeKind.Interface) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)))
+                || ((targetType.TypeKind == TypeKind.Class && targetType.IsAbstract) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)))
+                || ((targetType.TypeKind == TypeKind.Class) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute)))
+                || ((targetType.TypeKind == TypeKind.Struct) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.MessagePackObjectAttribute))))
             {
-                if (x.DeclaredAccessibility == Accessibility.Public)
-                {
-                    return true;
-                }
+                this.targetType = targetType;
+            }
+        }
+    }
 
-                if (!disallowInternal)
-                {
-                    return x.DeclaredAccessibility == Accessibility.Friend;
-                }
+    public static FullModel? Collect(Compilation compilation, bool disallowInternal, AnalyzerOptions options, string[]? ignoreTypeNames, ITypeSymbol targetType, IGeneratorContext context)
+    {
+        TypeCollector collector = new(compilation, true, options, ignoreTypeNames: null, targetType, context);
+        if (collector.targetType is null)
+        {
+            return null;
+        }
 
-                return false;
-            })
-            .Where(x =>
-                   ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
-                || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
-                || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))
-                || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute))))
-            .ToArray();
+        FullModel model = collector.Collect();
+        return model;
     }
 
     private void ResetWorkspace()
@@ -317,9 +289,9 @@ public class TypeCollector
     {
         this.ResetWorkspace();
 
-        foreach (var item in this.targetTypes)
+        if (this.targetType is not null)
         {
-            this.CollectCore(item);
+            this.CollectCore(this.targetType);
         }
 
         return new FullModel(
@@ -338,7 +310,7 @@ public class TypeCollector
         }
 
         var typeSymbolString = typeSymbol.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToString() ?? throw new InvalidOperationException();
-        if (this.embeddedTypes.Contains(typeSymbolString))
+        if (EmbeddedTypes.Contains(typeSymbolString))
         {
             return;
         }
@@ -350,7 +322,7 @@ public class TypeCollector
 
         if (typeSymbol is IArrayTypeSymbol arrayTypeSymbol)
         {
-            this.CollectArray((IArrayTypeSymbol)ToTupleUnderlyingType(arrayTypeSymbol));
+            this.CollectArray((IArrayTypeSymbol)this.ToTupleUnderlyingType(arrayTypeSymbol));
             return;
         }
 
@@ -378,7 +350,7 @@ public class TypeCollector
 
         if (type.IsGenericType)
         {
-            this.CollectGeneric((INamedTypeSymbol)ToTupleUnderlyingType(type));
+            this.CollectGeneric((INamedTypeSymbol)this.ToTupleUnderlyingType(type));
             return;
         }
 
@@ -439,9 +411,9 @@ public class TypeCollector
         do
         {
             var x = enumerator.Current;
-            if (x[1] is { Value: INamedTypeSymbol unionType } && alreadyCollected.Contains(unionType) == false)
+            if (x[1] is { Value: INamedTypeSymbol unionType } && this.alreadyCollected.Contains(unionType) == false)
             {
-                CollectCore(unionType);
+                this.CollectCore(unionType);
             }
         }
         while (enumerator.MoveNext());
@@ -450,7 +422,7 @@ public class TypeCollector
     private void CollectArray(IArrayTypeSymbol array)
     {
         ITypeSymbol elemType = array.ElementType;
-        if (!excludeArrayElement)
+        if (!this.excludeArrayElement)
         {
             this.CollectCore(elemType);
         }
@@ -481,7 +453,7 @@ public class TypeCollector
     {
         if (typeSymbol is IArrayTypeSymbol array)
         {
-            return compilation.CreateArrayTypeSymbol(ToTupleUnderlyingType(array.ElementType), array.Rank);
+            return this.compilation.CreateArrayTypeSymbol(this.ToTupleUnderlyingType(array.ElementType), array.Rank);
         }
 
         if (typeSymbol is not INamedTypeSymbol namedType || !namedType.IsGenericType)
@@ -490,7 +462,7 @@ public class TypeCollector
         }
 
         namedType = namedType.TupleUnderlyingType ?? namedType;
-        var newTypeArguments = namedType.TypeArguments.Select(ToTupleUnderlyingType).ToArray();
+        var newTypeArguments = namedType.TypeArguments.Select(this.ToTupleUnderlyingType).ToArray();
         if (!namedType.TypeArguments.SequenceEqual(newTypeArguments))
         {
             return namedType.ConstructedFrom.Construct(newTypeArguments);
@@ -504,7 +476,7 @@ public class TypeCollector
         INamedTypeSymbol genericType = type.ConstructUnboundGenericType();
         var genericTypeString = genericType.ToDisplayString();
         var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var isOpenGenericType = IsOpenGenericTypeRecursively(type);
+        var isOpenGenericType = this.IsOpenGenericTypeRecursively(type);
 
         // special case
         if (fullName == "global::System.ArraySegment<byte>" || fullName == "global::System.ArraySegment<byte>?")
@@ -518,7 +490,7 @@ public class TypeCollector
             var firstTypeArgument = type.TypeArguments[0];
             this.CollectCore(firstTypeArgument);
 
-            if (this.embeddedTypes.Contains(firstTypeArgument.ToString()!))
+            if (EmbeddedTypes.Contains(firstTypeArgument.ToString()!))
             {
                 return;
             }
@@ -529,7 +501,7 @@ public class TypeCollector
         }
 
         // collection
-        if (this.knownGenericTypes.TryGetValue(genericTypeString, out var formatter))
+        if (KnownGenericTypes.TryGetValue(genericTypeString, out var formatter))
         {
             foreach (ITypeSymbol item in type.TypeArguments)
             {
@@ -548,13 +520,13 @@ public class TypeCollector
                 return;
             }
 
-            formatter = this.knownGenericTypes["System.Linq.IGrouping<,>"];
+            formatter = KnownGenericTypes["System.Linq.IGrouping<,>"];
             f = formatter.Replace("TREPLACE", typeArgs);
 
             var groupingInfo = new GenericSerializationInfo("global::System.Linq.IGrouping<" + typeArgs + ">", f, isOpenGenericType);
             this.collectedGenericInfo.Add(groupingInfo);
 
-            formatter = this.knownGenericTypes["System.Collections.Generic.IEnumerable<>"];
+            formatter = KnownGenericTypes["System.Collections.Generic.IEnumerable<>"];
             typeArgs = type.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             f = formatter.Replace("TREPLACE", typeArgs);
 
@@ -575,10 +547,10 @@ public class TypeCollector
             // Collect substituted types for the properties and fields.
             // NOTE: It is used to register formatters from nested generic type.
             //       However, closed generic types such as `Foo<string>` are not registered as a formatter.
-            GetObjectInfo(type);
+            this.GetObjectInfo(type);
 
             // Collect generic type definition, that is not collected when it is defined outside target project.
-            CollectCore(type.OriginalDefinition);
+            this.CollectCore(type.OriginalDefinition);
         }
 
         // Collect substituted types for the type parameters (e.g. Bar in Foo<Bar>)
@@ -617,8 +589,8 @@ public class TypeCollector
 
     private void CollectObject(INamedTypeSymbol type)
     {
-        ObjectSerializationInfo info = GetObjectInfo(type);
-        collectedObjectInfo.Add(info);
+        ObjectSerializationInfo info = this.GetObjectInfo(type);
+        this.collectedObjectInfo.Add(info);
     }
 
     private ObjectSerializationInfo GetObjectInfo(INamedTypeSymbol type)
@@ -1071,6 +1043,6 @@ public class TypeCollector
 
     private bool IsOpenGenericTypeRecursively(INamedTypeSymbol type)
     {
-        return type.IsGenericType && type.TypeArguments.Any(x => x is ITypeParameterSymbol || (x is INamedTypeSymbol symbol && IsOpenGenericTypeRecursively(symbol)));
+        return type.IsGenericType && type.TypeArguments.Any(x => x is ITypeParameterSymbol || (x is INamedTypeSymbol symbol && this.IsOpenGenericTypeRecursively(symbol)));
     }
 }

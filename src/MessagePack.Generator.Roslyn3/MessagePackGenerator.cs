@@ -80,5 +80,7 @@ public partial class MessagePackGenerator : ISourceGenerator
         public CancellationToken CancellationToken => context.CancellationToken;
 
         public void AddSource(string hintName, string source) => context.AddSource(hintName, source);
+
+        public void ReportDiagnostic(Diagnostic diagnostic) => context.ReportDiagnostic(diagnostic);
     }
 }

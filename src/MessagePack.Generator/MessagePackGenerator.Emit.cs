@@ -27,11 +27,11 @@ public partial class MessagePackGenerator
             return;
         }
 
-        TypeCollector collector = new(compilation, true, isForceUseMap: false, ignoreTypeNames: null, typeSymbol);
-
-        FullModel model = collector.Collect();
-
-        Generate(context, analyzerOptions, model);
+        FullModel? model = TypeCollector.Collect(compilation, true, analyzerOptions, ignoreTypeNames: null, typeSymbol, context);
+        if (model is not null)
+        {
+            Generate(context, analyzerOptions, model);
+        }
     }
 
     /// <summary>
