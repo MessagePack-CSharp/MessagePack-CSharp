@@ -9,5 +9,5 @@ public record UnionSerializationInfo(
     string FullName,
     UnionSubTypeInfo[] SubTypes) : IResolverRegisterInfo
 {
-    public string FormatterName => (this.Namespace == null ? this.Name : this.Namespace + "." + this.Name) + "Formatter";
+    public string FormatterName => CodeAnalysisUtilities.NamespaceAndType(this.Name + "Formatter", this.Namespace);
 }

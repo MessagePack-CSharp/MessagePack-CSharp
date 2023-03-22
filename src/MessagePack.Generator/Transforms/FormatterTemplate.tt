@@ -7,7 +7,7 @@
 namespace <#= Namespace #>
 {
 <#  bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);#>
-    public sealed class <#= Info.FormatterNameWithoutNameSpace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+    public sealed class <#= Info.FormatterNameWithoutNamespace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# } #>

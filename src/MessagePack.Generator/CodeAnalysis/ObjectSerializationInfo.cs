@@ -22,9 +22,9 @@ public record ObjectSerializationInfo(
         get { return !this.IsIntKey; }
     }
 
-    public string FormatterName => this.Namespace == null ? FormatterNameWithoutNameSpace : this.Namespace + "." + FormatterNameWithoutNameSpace;
+    public string FormatterName => CodeAnalysisUtilities.NamespaceAndType(this.FormatterNameWithoutNamespace, this.Namespace);
 
-    public string FormatterNameWithoutNameSpace => this.Name + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(", ", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
+    public string FormatterNameWithoutNamespace => this.Name + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(", ", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
 
     public int WriteCount
     {

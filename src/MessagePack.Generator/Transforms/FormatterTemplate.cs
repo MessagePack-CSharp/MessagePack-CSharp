@@ -30,7 +30,7 @@ namespace MessagePack.Generator.Transforms
             this.Write("\r\n{\r\n");
   bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);
             this.Write("    public sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterNameWithoutNameSpace));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterNameWithoutNamespace));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
             this.Write(">\r\n");
