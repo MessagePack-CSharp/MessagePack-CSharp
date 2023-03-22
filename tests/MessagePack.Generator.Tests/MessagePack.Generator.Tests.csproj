@@ -37,8 +37,4 @@
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Resources\" />
-  </ItemGroup>
-
 </Project>
