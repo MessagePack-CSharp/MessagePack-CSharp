@@ -27,16 +27,11 @@ public partial class MessagePackGenerator
             return;
         }
 
-        var fullType = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-            .Replace("global::", string.Empty)
-            .Replace("<", "_")
-            .Replace(">", "_");
-
         TypeCollector collector = new(compilation, true, isForceUseMap: false, ignoreTypeNames: null, typeSymbol);
 
-        var (objectInfo, enumInfo, genericInfo, unionInfo) = collector.Collect();
+        FullModel model = collector.Collect();
 
-        Generate(context, analyzerOptions, objectInfo, enumInfo, unionInfo, genericInfo);
+        Generate(context, analyzerOptions, model);
     }
 
     /// <summary>
@@ -44,11 +39,8 @@ public partial class MessagePackGenerator
     /// </summary>
     /// <param name="context">Generator context.</param>
     /// <param name="options">The analyzer options.</param>
-    /// <param name="objectInfos">The ObjectSerializationInfo array which TypeCollector.Collect returns.</param>
-    /// <param name="enumInfos">The EnumSerializationInfo array which TypeCollector.Collect returns.</param>
-    /// <param name="unionInfos">The UnionSerializationInfo array which TypeCollector.Collect returns.</param>
-    /// <param name="genericInfos">The GenericSerializationInfo array which TypeCollector.Collect returns.</param>
-    private static void Generate(IGeneratorContext context, AnalyzerOptions options, ObjectSerializationInfo[] objectInfos, EnumSerializationInfo[] enumInfos, UnionSerializationInfo[] unionInfos, GenericSerializationInfo[] genericInfos)
+    /// <param name="model">The full messagepack object model.</param>
+    private static void Generate(IGeneratorContext context, AnalyzerOptions options, FullModel model)
     {
         StringBuilder sb = new();
 
@@ -56,28 +48,28 @@ public partial class MessagePackGenerator
             options.ResolverNamespace,
             options.FormatterNamespace,
             options.ResolverName,
-            genericInfos
+            model.GenericInfos
                 .Where(x => !x.IsOpenGenericType)
                 .Cast<IResolverRegisterInfo>()
-                .Concat(enumInfos)
-                .Concat(unionInfos)
-                .Concat(objectInfos.Where(x => !x.IsOpenGenericType))
+                .Concat(model.EnumInfos)
+                .Concat(model.UnionInfos)
+                .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
                 .ToArray());
         AddTransform(resolverTemplate.TransformText(), "GeneratedResolver");
 
-        foreach (EnumSerializationInfo info in enumInfos)
+        foreach (EnumSerializationInfo info in model.EnumInfos)
         {
             EnumTemplate transform = new($"{options.FormatterNamespace}.{info.Namespace}", info);
             AddTransform(transform.TransformText(), $"{info.Namespace}.{info.Name}");
         }
 
-        foreach (UnionSerializationInfo info in unionInfos)
+        foreach (UnionSerializationInfo info in model.UnionInfos)
         {
             UnionTemplate transform = new(options.FormatterNamespace, info);
             AddTransform(transform.TransformText(), $"Union.{info.Name}");
         }
 
-        foreach (ObjectSerializationInfo info in objectInfos)
+        foreach (ObjectSerializationInfo info in model.ObjectInfos)
         {
             string formatterNamespace = $"{options.FormatterNamespace}.{info.Namespace}";
             IFormatterTemplate transform = info.IsStringKey

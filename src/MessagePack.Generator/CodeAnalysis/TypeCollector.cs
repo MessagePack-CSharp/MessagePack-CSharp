@@ -313,7 +313,7 @@ public class TypeCollector
     }
 
     // EntryPoint
-    public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo) Collect()
+    public FullModel Collect()
     {
         this.ResetWorkspace();
 
@@ -322,7 +322,7 @@ public class TypeCollector
             this.CollectCore(item);
         }
 
-        return (
+        return new FullModel(
             this.collectedObjectInfo.OrderBy(x => x.FullName).ToArray(),
             this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
             this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
