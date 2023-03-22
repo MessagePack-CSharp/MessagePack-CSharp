@@ -3,7 +3,7 @@
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-public class UnionSerializationInfo : IResolverRegisterInfo, INamespaceInfo
+public class UnionSerializationInfo : IResolverRegisterInfo
 {
     public string? Namespace { get; }
 

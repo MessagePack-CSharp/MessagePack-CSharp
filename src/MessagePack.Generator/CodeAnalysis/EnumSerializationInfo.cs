@@ -3,7 +3,7 @@
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-public class EnumSerializationInfo : IResolverRegisterInfo, INamespaceInfo
+public class EnumSerializationInfo : IResolverRegisterInfo
 {
     public EnumSerializationInfo(string? @namespace, string name, string fullName, string underlyingType)
     {
