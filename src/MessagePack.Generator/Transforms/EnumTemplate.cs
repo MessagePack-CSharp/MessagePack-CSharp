@@ -9,9 +9,6 @@
 // ------------------------------------------------------------------------------
 namespace MessagePack.Generator.Transforms
 {
-    using System.Linq;
-    using System.Text;
-    using System.Collections.Generic;
     using System;
     
     /// <summary>
@@ -27,28 +24,23 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n");
- foreach(var info in EnumSerializationInfos) { 
-            this.Write("\r\n    public sealed class ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(info.Name));
-            this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
-            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
-            this.Write(">\r\n    {\r\n        public void Serialize(ref global::MessagePack.MessagePackWriter" +
-                    " writer, ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
-            this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n   " +
-                    "         writer.Write((global::System.");
-            this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
+            this.Write("\r\n{\r\n    using MsgPack = global::MessagePack;\r\n\r\n    public sealed class ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
+            this.Write("Formatter : MsgPack::Formatters.IMessagePackFormatter<");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(">\r\n    {\r\n        public void Serialize(ref MsgPack::MessagePackWriter writer, ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(" value, MsgPack::MessagePackSerializerOptions options)\r\n        {\r\n            wr" +
+                    "iter.Write((global::System.");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.UnderlyingType));
             this.Write(")value);\r\n        }\r\n\r\n        public ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
-            this.Write(" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePac" +
-                    "k.MessagePackSerializerOptions options)\r\n        {\r\n            return (");
-            this.Write(this.ToStringHelper.ToStringWithCulture(info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(" Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerialize" +
+                    "rOptions options)\r\n        {\r\n            return (");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
             this.Write(")reader.Read");
-            this.Write(this.ToStringHelper.ToStringWithCulture(info.UnderlyingType));
-            this.Write("();\r\n        }\r\n    }\r\n");
- } 
-            this.Write("}\r\n");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.UnderlyingType));
+            this.Write("();\r\n        }\r\n    }\r\n}\r\n");
             return this.GenerationEnvironment.ToString();
         }
     }

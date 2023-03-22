@@ -6,22 +6,21 @@
 
 namespace <#= Namespace #>
 {
-<# foreach (var objInfo in ObjectSerializationInfos) {
-    bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(objInfo.Members);#>
-    public sealed class <#= objInfo.FormatterNameWithoutNameSpace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= objInfo.FullName #>>
-<# foreach (var typeArg in objInfo.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
+<#  bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);#>
+    public sealed class <#= Info.FormatterNameWithoutNameSpace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+<# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# } #>
     {
-<# foreach (var item in objInfo.Members) { #>
+<# foreach (var item in Info.Members) { #>
 <# if (item.CustomFormatterTypeName != null) { #>
         private readonly <#= item.CustomFormatterTypeName #> __<#= item.Name #>CustomFormatter__ = new <#= item.CustomFormatterTypeName #>();
 <# } #>
 <# } #>
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= objInfo.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= Info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
         {
-<# if (objInfo.IsClass) { #>
+<# if (Info.IsClass) { #>
             if (value == null)
             {
                 writer.WriteNil();
@@ -34,16 +33,16 @@ namespace <#= Namespace #>
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
 <# }
 
- if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
-  if (objInfo.NeedsCastOnBefore) { #>
+ if (Info.HasIMessagePackSerializationCallbackReceiver) {
+  if (Info.NeedsCastOnBefore) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
 <# } else { #>
             value.OnBeforeSerialize();
 <# } #>
 <# } #>
-            writer.WriteArrayHeader(<#= objInfo.MaxKey + 1 #>);
-<# for (var i = 0; i <= objInfo.MaxKey; i++) {
-  var member = objInfo.GetMember(i);
+            writer.WriteArrayHeader(<#= Info.MaxKey + 1 #>);
+<# for (var i = 0; i <= Info.MaxKey; i++) {
+  var member = Info.GetMember(i);
   if (member == null) { #>
             writer.WriteNil();
 <# } else { #>
@@ -52,30 +51,30 @@ namespace <#= Namespace #>
 <# } #>
         }
 
-        public <#= objInfo.FullName #> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public <#= Info.FullName #> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
-<# if (objInfo.IsClass) { #>
+<# if (Info.IsClass) { #>
                 return null;
 <# } else { #>
                 throw new global::System.InvalidOperationException("typecode is null, struct not supported");
 <# } #>
             }
 
-<# if (objInfo.MaxKey == -1 && !objInfo.HasIMessagePackSerializationCallbackReceiver) { #>
+<# if (Info.MaxKey == -1 && !Info.HasIMessagePackSerializationCallbackReceiver) { #>
             reader.Skip();
-            return new <#= objInfo.GetConstructorString()  #>;
+            return new <#= Info.GetConstructorString()  #>;
 <# } else { #>
             options.Security.DepthStep(ref reader);
 <# if (isFormatterResolverNecessary) { #>
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
 <# } #>
             var length = reader.ReadArrayHeader();
-<# var canOverwrite = objInfo.ConstructorParameters.Length == 0;
+<# var canOverwrite = Info.ConstructorParameters.Length == 0;
  if (canOverwrite) { #>
-            var ____result = new <#= objInfo.GetConstructorString()  #>;
-<# } else { foreach (var member in objInfo.Members) { #>
+            var ____result = new <#= Info.GetConstructorString()  #>;
+<# } else { foreach (var member in Info.Members) { #>
             var __<#= member.Name #>__ = default(<#= member.Type #>);
 <# } #>
 <# } #>
@@ -84,8 +83,8 @@ namespace <#= Namespace #>
             {
                 switch (i)
                 {
-<# for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
-  var member = objInfo.GetMember(memberIndex);
+<# for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
+  var member = Info.GetMember(memberIndex);
   if (member == null) { continue; } #>
                     case <#= member.IntKey #>:
 <# if (canOverwrite) {
@@ -106,11 +105,11 @@ namespace <#= Namespace #>
             }
 
 <# if (!canOverwrite) { #>
-            var ____result = new <#= objInfo.GetConstructorString()  #>;
+            var ____result = new <#= Info.GetConstructorString()  #>;
 <# bool memberAssignExists = false;
-  for (var memberIndex = 0; memberIndex <= objInfo.MaxKey; memberIndex++) {
-  var member = objInfo.GetMember(memberIndex);
-  if (member == null || !member.IsWritable || objInfo.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
+  for (var memberIndex = 0; memberIndex <= Info.MaxKey; memberIndex++) {
+  var member = Info.GetMember(memberIndex);
+  if (member == null || !member.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(member))) { continue; }
   memberAssignExists = true;#>
             if (length <= <#= memberIndex #>)
             {
@@ -125,8 +124,8 @@ namespace <#= Namespace #>
 <# }
  }
 
- if (objInfo.HasIMessagePackSerializationCallbackReceiver) {
-  if (objInfo.NeedsCastOnAfter) { #>
+ if (Info.HasIMessagePackSerializationCallbackReceiver) {
+  if (Info.NeedsCastOnAfter) { #>
             ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
 <# } else { #>
             ____result.OnAfterDeserialize();
@@ -137,5 +136,4 @@ namespace <#= Namespace #>
 <# } #>
         }
     }
-
-<# } #>}
+}

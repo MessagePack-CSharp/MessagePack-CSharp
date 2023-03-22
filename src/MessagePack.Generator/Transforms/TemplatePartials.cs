@@ -9,28 +9,28 @@ namespace MessagePack.Generator.Transforms;
 
 public partial class FormatterTemplate : IFormatterTemplate
 {
-    public FormatterTemplate(string @namespace, ObjectSerializationInfo[] objectSerializationInfos)
+    public FormatterTemplate(string @namespace, ObjectSerializationInfo info)
     {
         Namespace = @namespace;
-        ObjectSerializationInfos = objectSerializationInfos;
+        Info = info;
     }
 
     public string Namespace { get; }
 
-    public ObjectSerializationInfo[] ObjectSerializationInfos { get; }
+    public ObjectSerializationInfo Info { get; }
 }
 
 public partial class StringKeyFormatterTemplate : IFormatterTemplate
 {
-    public StringKeyFormatterTemplate(string @namespace, ObjectSerializationInfo[] objectSerializationInfos)
+    public StringKeyFormatterTemplate(string @namespace, ObjectSerializationInfo info)
     {
         Namespace = @namespace;
-        ObjectSerializationInfos = objectSerializationInfos;
+        Info = info;
     }
 
     public string Namespace { get; }
 
-    public ObjectSerializationInfo[] ObjectSerializationInfos { get; }
+    public ObjectSerializationInfo Info { get; }
 }
 
 public partial class ResolverTemplate
@@ -54,26 +54,26 @@ public partial class ResolverTemplate
 
 public partial class EnumTemplate
 {
-    public EnumTemplate(string @namespace, EnumSerializationInfo[] enumSerializationInfos)
+    public EnumTemplate(string @namespace, EnumSerializationInfo info)
     {
         Namespace = @namespace;
-        EnumSerializationInfos = enumSerializationInfos;
+        Info = info;
     }
 
     public string Namespace { get; }
 
-    public EnumSerializationInfo[] EnumSerializationInfos { get; }
+    public EnumSerializationInfo Info { get; }
 }
 
 public partial class UnionTemplate
 {
-    public UnionTemplate(string @namespace, UnionSerializationInfo[] unionSerializationInfos)
+    public UnionTemplate(string @namespace, UnionSerializationInfo info)
     {
         Namespace = @namespace;
-        UnionSerializationInfos = unionSerializationInfos;
+        Info = info;
     }
 
     public string Namespace { get; }
 
-    public UnionSerializationInfo[] UnionSerializationInfos { get; }
+    public UnionSerializationInfo Info { get; }
 }

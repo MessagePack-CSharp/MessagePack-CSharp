@@ -1,24 +1,20 @@
 ﻿<#@ template debug="false" hostspecific="false" linePragmas="false" language="C#" #>
 <#@ assembly name="System.Core" #>
-<#@ import namespace="System.Linq" #>
-<#@ import namespace="System.Text" #>
-<#@ import namespace="System.Collections.Generic" #>
 
 namespace <#= Namespace #>
 {
-<# foreach(var info in EnumSerializationInfos) { #>
+    using MsgPack = global::MessagePack;
 
-    public sealed class <#= info.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= info.FullName #>>
+    public sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
     {
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
         {
-            writer.Write((global::System.<#= info.UnderlyingType #>)value);
+            writer.Write((global::System.<#= Info.UnderlyingType #>)value);
         }
 
-        public <#= info.FullName #> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public <#= Info.FullName #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
         {
-            return (<#= info.FullName #>)reader.Read<#= info.UnderlyingType #>();
+            return (<#= Info.FullName #>)reader.Read<#= Info.UnderlyingType #>();
         }
     }
-<# } #>
 }

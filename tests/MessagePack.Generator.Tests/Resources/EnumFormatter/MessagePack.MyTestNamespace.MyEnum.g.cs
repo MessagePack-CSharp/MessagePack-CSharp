@@ -15,15 +15,16 @@
 
 namespace MessagePack.Formatters.MyTestNamespace
 {
+    using MsgPack = global::MessagePack;
 
-    public sealed class MyEnumFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyTestNamespace.MyEnum>
+    public sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.MyEnum>
     {
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::MyTestNamespace.MyEnum value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyTestNamespace.MyEnum value, MsgPack::MessagePackSerializerOptions options)
         {
             writer.Write((global::System.Int32)value);
         }
 
-        public global::MyTestNamespace.MyEnum Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::MyTestNamespace.MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
         {
             return (global::MyTestNamespace.MyEnum)reader.ReadInt32();
         }

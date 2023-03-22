@@ -9,7 +9,7 @@ public interface IFormatterTemplate
 {
     string Namespace { get; }
 
-    ObjectSerializationInfo[] ObjectSerializationInfos { get; }
+    ObjectSerializationInfo Info { get; }
 
     string TransformText();
 }

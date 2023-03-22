@@ -60,5 +60,4 @@ namespace MessagePack.Formatters.MyTestNamespace
             return ____result;
         }
     }
-
 }
