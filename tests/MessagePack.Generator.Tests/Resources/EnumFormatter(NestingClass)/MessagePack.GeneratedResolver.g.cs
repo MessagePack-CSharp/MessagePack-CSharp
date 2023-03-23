@@ -40,8 +40,8 @@ namespace MessagePack.Resolvers
         {
             lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
             {
-                { typeof(global::Outer.MyEnum), 0 },
-                { typeof(global::Outer.MyMessagePackObject), 1 },
+                { typeof(global::ContainingClass.MyEnum), 0 },
+                { typeof(global::ContainingClass.MyMessagePackObject), 1 },
             };
         }
 
@@ -55,8 +55,8 @@ namespace MessagePack.Resolvers
 
             switch (key)
             {
-                case 0: return new MessagePack.Formatters.Outer_MyEnumFormatter();
-                case 1: return new MessagePack.Formatters.Outer_MyMessagePackObjectFormatter();
+                case 0: return new MessagePack.Formatters.ContainingClass_MyEnumFormatter();
+                case 1: return new MessagePack.Formatters.ContainingClass_MyMessagePackObjectFormatter();
                 default: return null;
             }
         }
