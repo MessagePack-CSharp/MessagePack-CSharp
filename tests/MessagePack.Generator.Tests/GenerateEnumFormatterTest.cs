@@ -14,8 +14,6 @@ public class GenerateEnumFormatterTest
     public async Task EnumFormatter_InNamespace()
     {
         string testSource = """
-using System;
-using System.Collections.Generic;
 using MessagePack;
 
 namespace MyTestNamespace;
@@ -39,8 +37,6 @@ public enum MyEnum
     public async Task EnumFormatter_Nested()
     {
         string testSource = """
-using System;
-using System.Collections.Generic;
 using MessagePack;
 
 public class Outer
@@ -65,8 +61,6 @@ public class Outer
     public async Task EnumFormatter_NoNamespace()
     {
         string testSource = """
-using System;
-using System.Collections.Generic;
 using MessagePack;
 
 [MessagePackObject]

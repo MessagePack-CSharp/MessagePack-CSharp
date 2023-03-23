@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <Compile Remove="GenerateGenericsFormatterTest.cs" />
-    <Compile Remove="GenerateKeyedFormatterTest.cs" />
     <Compile Remove="GenerateMessagePackFormatterAttrTest.cs" />
     <Compile Remove="GenerateStringKeyedFormatterTest.cs" />
   </ItemGroup>

@@ -19,6 +19,18 @@ public class ExecutionTests
         this.AssertRoundtrip(new MyMessagePackObject { EnumValue = MyEnum.B });
     }
 
+    [Fact]
+    public void ClassWithPropertiesWithGetterAndSetter()
+    {
+        this.AssertRoundtrip(new HasPropertiesWithGetterAndSetter { A = 1, B = "hi" });
+    }
+
+    [Fact]
+    public void ClassWithPropertiesWithGetterAndCtor()
+    {
+        this.AssertRoundtrip(new HasPropertiesWithGetterAndCtor(1, "hi"));
+    }
+
     private T AssertRoundtrip<T>(T value)
     {
         byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);
@@ -33,6 +45,32 @@ public class ExecutionTests
     {
         [Key(0)]
         public MyEnum EnumValue { get; set; }
+    }
+
+    [MessagePackObject(false)]
+    public record HasPropertiesWithGetterAndSetter
+    {
+        [Key(0)]
+        public int A { get; set; }
+
+        [Key(1)]
+        public string? B { get; set; }
+    }
+
+    [MessagePackObject(false)]
+    public record HasPropertiesWithGetterAndCtor
+    {
+        [Key(0)]
+        public int A { get; }
+
+        [Key(1)]
+        public string B { get; }
+
+        public HasPropertiesWithGetterAndCtor(int a, string b)
+        {
+            A = a;
+            B = b;
+        }
     }
 
     public enum MyEnum
