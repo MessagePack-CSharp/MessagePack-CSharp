@@ -42,7 +42,7 @@ public partial class MessagePackGenerator
 
         foreach (EnumSerializationInfo info in model.EnumInfos)
         {
-            EnumTemplate transform = new($"{options.FormatterNamespace}.{info.Namespace}", info);
+            EnumTemplate transform = new(CodeAnalysisUtilities.QualifyNames(options.FormatterNamespace, info.Namespace), info);
             AddTransform(transform.TransformText(), $"{info.Namespace}.{info.Name}");
         }
 
@@ -54,7 +54,7 @@ public partial class MessagePackGenerator
 
         foreach (ObjectSerializationInfo info in model.ObjectInfos)
         {
-            string formatterNamespace = $"{options.FormatterNamespace}.{info.Namespace}";
+            string formatterNamespace = CodeAnalysisUtilities.QualifyNames(options.FormatterNamespace, info.Namespace);
             IFormatterTemplate transform = info.IsStringKey
                 ? new StringKeyFormatterTemplate(formatterNamespace, info)
                 : new FormatterTemplate(formatterNamespace, info);

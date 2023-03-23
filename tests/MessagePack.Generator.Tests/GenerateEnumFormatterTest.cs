@@ -11,7 +11,7 @@ public class GenerateEnumFormatterTest
     }
 
     [Fact]
-    public async Task EnumFormatter()
+    public async Task EnumFormatter_InNamespace()
     {
         string testSource = """
 using System;
@@ -19,6 +19,55 @@ using System.Collections.Generic;
 using MessagePack;
 
 namespace MyTestNamespace;
+
+[MessagePackObject]
+public class MyMessagePackObject
+{
+    [Key(0)]
+    public MyEnum EnumValue { get; set; }
+}
+
+public enum MyEnum
+{
+    A, B, C
+}
+""";
+        await VerifyCS.Test.RunDefaultAsync(testSource);
+    }
+
+    [Fact]
+    public async Task EnumFormatter_Nested()
+    {
+        string testSource = """
+using System;
+using System.Collections.Generic;
+using MessagePack;
+
+public class Outer
+{
+    [MessagePackObject]
+    public class MyMessagePackObject
+    {
+        [Key(0)]
+        public MyEnum EnumValue { get; set; }
+    }
+
+    public enum MyEnum
+    {
+        A, B, C
+    }
+}
+""";
+        await VerifyCS.Test.RunDefaultAsync(testSource);
+    }
+
+    [Fact]
+    public async Task EnumFormatter_NoNamespace()
+    {
+        string testSource = """
+using System;
+using System.Collections.Generic;
+using MessagePack;
 
 [MessagePackObject]
 public class MyMessagePackObject

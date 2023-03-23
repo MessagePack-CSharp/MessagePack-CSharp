@@ -67,9 +67,9 @@ internal class ReferenceSymbols
 public class TypeCollector
 {
     private static readonly SymbolDisplayFormat BinaryWriteFormat = new SymbolDisplayFormat(
-            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-            miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable,
-            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly);
+        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable,
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly);
 
     private static readonly SymbolDisplayFormat ShortTypeNameFormat = new SymbolDisplayFormat(
             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypes);
@@ -388,7 +388,11 @@ public class TypeCollector
 
     private void CollectEnum(INamedTypeSymbol type, ISymbol enumUnderlyingType)
     {
-        var info = new EnumSerializationInfo(type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(), type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), enumUnderlyingType.ToDisplayString(BinaryWriteFormat));
+        EnumSerializationInfo info = new(
+            type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
+            type.ToDisplayString(ShortTypeNameFormat).Replace(".", "_"),
+            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            enumUnderlyingType.ToDisplayString(BinaryWriteFormat));
         this.collectedEnumInfo.Add(info);
     }
 

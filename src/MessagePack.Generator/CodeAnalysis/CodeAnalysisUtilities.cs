@@ -9,4 +9,9 @@ internal static class CodeAnalysisUtilities
     {
         return string.IsNullOrEmpty(@namespace) ? typeName : $"{@namespace}.{typeName}";
     }
+
+    internal static string QualifyNames(string left, string? right)
+    {
+        return string.IsNullOrEmpty(right) ? left : $"{left}.{right}";
+    }
 }
