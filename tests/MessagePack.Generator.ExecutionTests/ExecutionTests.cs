@@ -16,7 +16,7 @@ public class ExecutionTests
     }
 
     [MessagePackObject]
-    public class MyMessagePackObject
+    public record MyMessagePackObject
     {
         [Key(0)]
         public MyEnum EnumValue { get; set; }
