@@ -4,3 +4,4 @@
 global using MessagePack;
 global using MessagePack.Resolvers;
 global using Xunit;
+global using Xunit.Abstractions;

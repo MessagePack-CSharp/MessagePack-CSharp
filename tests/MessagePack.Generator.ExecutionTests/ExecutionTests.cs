@@ -6,13 +6,26 @@ public class ExecutionTests
     private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard
         .WithResolver(GeneratedResolver.Instance);
 
+    private readonly ITestOutputHelper logger;
+
+    public ExecutionTests(ITestOutputHelper logger)
+    {
+        this.logger = logger;
+    }
+
     [Fact]
     public void ClassWithEnumProperty()
     {
-        MyMessagePackObject before = new() { EnumValue = MyEnum.B };
-        byte[] serialized = MessagePackSerializer.Serialize(before, SerializerOptions);
-        MyMessagePackObject after = MessagePackSerializer.Deserialize<MyMessagePackObject>(serialized, SerializerOptions);
-        Assert.Equal(before, after);
+        this.AssertRoundtrip(new MyMessagePackObject { EnumValue = MyEnum.B });
+    }
+
+    private T AssertRoundtrip<T>(T value)
+    {
+        byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);
+        this.logger.WriteLine(MessagePackSerializer.ConvertToJson(serialized, SerializerOptions));
+        T after = MessagePackSerializer.Deserialize<T>(serialized, SerializerOptions);
+        Assert.Equal(value, after);
+        return after;
     }
 
     [MessagePackObject]
