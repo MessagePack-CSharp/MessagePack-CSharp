@@ -33,12 +33,16 @@ public partial class MessagePackGenerator : IIncrementalGenerator
         {
             var source = typeDeclarations
                 .Combine(context.CompilationProvider)
-                .Combine(options);
+                .Combine(options)
+                .Select(static (s, ct) =>
+                {
+                    return TypeCollector.Collect(s.Left.Right, s.Right, s.Left.Left, null, ct);
+                })
+                .Where(fm => fm is not null);
 
             context.RegisterSourceOutput(source, static (context, source) =>
             {
-                var ((typeDeclaration, compilation), options) = source;
-                Generate(typeDeclaration, options, compilation, new GeneratorContext(context));
+                Generate(new GeneratorContext(context), source!);
             });
         }
     }

@@ -30,7 +30,11 @@ public partial class MessagePackGenerator : ISourceGenerator
 
         foreach (var syntax in receiver.ClassDeclarations)
         {
-            Generate(syntax, options, compilation, generateContext);
+            FullModel? model = TypeCollector.Collect(compilation, options, syntax, generateContext, context.CancellationToken);
+            if (model is not null)
+            {
+                Generate(generateContext, model);
+            }
         }
     }
 

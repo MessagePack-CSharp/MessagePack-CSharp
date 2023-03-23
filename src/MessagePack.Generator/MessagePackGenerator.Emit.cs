@@ -17,31 +17,14 @@ public partial class MessagePackGenerator
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 """;
 
-    private static void Generate(TypeDeclarationSyntax syntax, AnalyzerOptions analyzerOptions, Compilation compilation, IGeneratorContext context)
-    {
-        var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
-
-        var typeSymbol = semanticModel.GetDeclaredSymbol(syntax, context.CancellationToken) as ITypeSymbol;
-        if (typeSymbol == null)
-        {
-            return;
-        }
-
-        FullModel? model = TypeCollector.Collect(compilation, true, analyzerOptions, ignoreTypeNames: null, typeSymbol, context);
-        if (model is not null)
-        {
-            Generate(context, analyzerOptions, model);
-        }
-    }
-
     /// <summary>
     /// Generates the specialized resolver and formatters for the types that require serialization in a given compilation.
     /// </summary>
     /// <param name="context">Generator context.</param>
-    /// <param name="options">The analyzer options.</param>
     /// <param name="model">The full messagepack object model.</param>
-    private static void Generate(IGeneratorContext context, AnalyzerOptions options, FullModel model)
+    private static void Generate(IGeneratorContext context, FullModel model)
     {
+        AnalyzerOptions options = model.Options;
         StringBuilder sb = new();
 
         ResolverTemplate resolverTemplate = new(

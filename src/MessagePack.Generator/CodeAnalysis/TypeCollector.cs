@@ -8,6 +8,7 @@ using System.Collections.Immutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.Generator.CodeAnalysis;
 
@@ -221,7 +222,8 @@ public class TypeCollector
     };
 
     private readonly bool isForceUseMap;
-    private readonly IGeneratorContext context;
+    private readonly IGeneratorContext? context;
+    private readonly AnalyzerOptions options;
     private readonly ReferenceSymbols typeReferences;
     private readonly ITypeSymbol? targetType;
     private readonly bool disallowInternal;
@@ -239,13 +241,14 @@ public class TypeCollector
 
     private readonly Compilation compilation;
 
-    private TypeCollector(Compilation compilation, bool disallowInternal, AnalyzerOptions options, string[]? ignoreTypeNames, ITypeSymbol targetType, IGeneratorContext context)
+    private TypeCollector(Compilation compilation, AnalyzerOptions options, ITypeSymbol targetType, IGeneratorContext? context)
     {
         this.typeReferences = new ReferenceSymbols(compilation, _ => { });
-        this.disallowInternal = disallowInternal;
+        this.disallowInternal = options.DisallowInternal;
         this.isForceUseMap = options.UsesMapMode;
         this.context = context;
-        this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
+        this.options = options;
+        this.externalIgnoreTypeNames = new HashSet<string>(options.IgnoreTypeNames ?? Array.Empty<string>());
         this.compilation = compilation;
         this.excludeArrayElement = true;
         this.context = context;
@@ -263,9 +266,23 @@ public class TypeCollector
         }
     }
 
-    public static FullModel? Collect(Compilation compilation, bool disallowInternal, AnalyzerOptions options, string[]? ignoreTypeNames, ITypeSymbol targetType, IGeneratorContext context)
+    public static FullModel? Collect(Compilation compilation, AnalyzerOptions options, TypeDeclarationSyntax typeDeclaration, IGeneratorContext? generatorContext, CancellationToken cancellationToken)
     {
-        TypeCollector collector = new(compilation, true, options, ignoreTypeNames: null, targetType, context);
+        SemanticModel semanticModel = compilation.GetSemanticModel(typeDeclaration.SyntaxTree);
+        if (semanticModel.GetDeclaredSymbol(typeDeclaration, cancellationToken) is ITypeSymbol typeSymbol)
+        {
+            if (Collect(compilation, options, typeSymbol, generatorContext) is FullModel model)
+            {
+                return model;
+            }
+        }
+
+        return null;
+    }
+
+    public static FullModel? Collect(Compilation compilation, AnalyzerOptions options, ITypeSymbol targetType, IGeneratorContext? context)
+    {
+        TypeCollector collector = new(compilation, options, targetType, context);
         if (collector.targetType is null)
         {
             return null;
@@ -298,7 +315,8 @@ public class TypeCollector
             this.collectedObjectInfo.OrderBy(x => x.FullName).ToArray(),
             this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
             this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
-            this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray());
+            this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray(),
+            this.options);
     }
 
     // Gate of recursive collect

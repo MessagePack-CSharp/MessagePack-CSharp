@@ -1,11 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-public record AnalyzerOptions(string Namespace = "MessagePack", string ResolverName = "GeneratedResolver", bool UsesMapMode = false)
+public record AnalyzerOptions(
+    string Namespace = "MessagePack",
+    string ResolverName = "GeneratedResolver",
+    bool UsesMapMode = false,
+    bool DisallowInternal = false,
+    IReadOnlyCollection<string>? IgnoreTypeNames = null)
 {
     public const string MessagePackGeneratedResolverNamespace = "build_property.MessagePackGeneratedResolverNamespace";
     public const string MessagePackGeneratedResolverName = "build_property.MessagePackGeneratedResolverName";

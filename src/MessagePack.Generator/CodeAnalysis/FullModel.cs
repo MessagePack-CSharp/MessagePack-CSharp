@@ -7,6 +7,7 @@ public record FullModel(
     ObjectSerializationInfo[] ObjectInfos,
     EnumSerializationInfo[] EnumInfos,
     GenericSerializationInfo[] GenericInfos,
-    UnionSerializationInfo[] UnionInfos)
+    UnionSerializationInfo[] UnionInfos,
+    AnalyzerOptions Options)
 {
 }
