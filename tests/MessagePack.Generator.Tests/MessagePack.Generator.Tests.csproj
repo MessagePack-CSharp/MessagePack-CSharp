@@ -12,8 +12,6 @@
     <Compile Remove="GenerateKeyedFormatterTest.cs" />
     <Compile Remove="GenerateMessagePackFormatterAttrTest.cs" />
     <Compile Remove="GenerateStringKeyedFormatterTest.cs" />
-    <Compile Remove="TemporaryProjectWorkarea.cs" />
-    <Compile Remove="TestUtilities.cs" />
   </ItemGroup>
 
   <ItemGroup>
