@@ -78,7 +78,10 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
 
         public Test AddGeneratedSources([CallerMemberName] string? testMethod = null)
         {
-            var expectedPrefix = $"{ThisAssembly.AssemblyName}.Resources.{testMethod}.";
+            string expectedPrefix = $"{ThisAssembly.AssemblyName}.Resources.{testMethod}."
+                .Replace('(', '_')
+                .Replace(')', '_');
+
             foreach (var resourceName in typeof(Test).Assembly.GetManifestResourceNames())
             {
                 if (!resourceName.StartsWith(expectedPrefix))
