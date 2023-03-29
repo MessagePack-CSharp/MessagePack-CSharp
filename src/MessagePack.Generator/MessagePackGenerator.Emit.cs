@@ -45,7 +45,7 @@ public partial class MessagePackGenerator
             IFormatterTemplate transform = info.IsStringKey
                 ? new StringKeyFormatterTemplate(formatterNamespace, info)
                 : new FormatterTemplate(formatterNamespace, info);
-            AddTransform(transform.TransformText(), $"{info.Namespace}.{info.Name}");
+            AddTransform(transform.TransformText(), CodeAnalysisUtilities.NamespaceAndType(info.Name, info.Namespace));
         }
 
         void AddTransform(string transformOutput, string uniqueFileName)
@@ -53,7 +53,7 @@ public partial class MessagePackGenerator
             sb.Clear();
             sb.AppendLine(FileHeader);
             sb.Append(transformOutput);
-            context.AddSource($"MessagePack.{uniqueFileName}.g.cs", sb.ToString());
+            context.AddSource($"MessagePack.Formatter.{uniqueFileName}.g.cs", sb.ToString());
             sb.Clear();
         }
     }
