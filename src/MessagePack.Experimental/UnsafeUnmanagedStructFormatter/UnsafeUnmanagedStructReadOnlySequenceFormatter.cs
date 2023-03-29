@@ -42,12 +42,18 @@ namespace MessagePack.Formatters
                 }
                 else
                 {
+                    var destinationIterator = (byte*)destination;
+                    var destinationCapacity = byteCount;
                     foreach (var sourceMemory in value)
                     {
-                        fixed (void* source = &sourceMemory.Span[0])
+                        var sourceSpan = sourceMemory.Span;
+                        fixed (void* source = &sourceSpan[0])
                         {
-                            Buffer.MemoryCopy(source, destination, byteCount, byteCount);
+                            Buffer.MemoryCopy(source, destinationIterator, destinationCapacity, sourceSpan.Length);
                         }
+
+                        destinationCapacity -= sourceSpan.Length;
+                        destinationIterator += sourceSpan.Length;
                     }
                 }
             }
