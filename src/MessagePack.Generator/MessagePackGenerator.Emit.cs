@@ -27,19 +27,6 @@ public partial class MessagePackGenerator
         AnalyzerOptions options = model.Options;
         StringBuilder sb = new();
 
-        ResolverTemplate resolverTemplate = new(
-            options.ResolverNamespace,
-            options.FormatterNamespace,
-            options.ResolverName,
-            model.GenericInfos
-                .Where(x => !x.IsOpenGenericType)
-                .Cast<IResolverRegisterInfo>()
-                .Concat(model.EnumInfos)
-                .Concat(model.UnionInfos)
-                .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
-                .ToArray());
-        AddTransform(resolverTemplate.TransformText(), "GeneratedResolver");
-
         foreach (EnumSerializationInfo info in model.EnumInfos)
         {
             EnumTemplate transform = new(CodeAnalysisUtilities.QualifyNames(options.FormatterNamespace, info.Namespace), info);
@@ -69,5 +56,26 @@ public partial class MessagePackGenerator
             context.AddSource($"MessagePack.{uniqueFileName}.g.cs", sb.ToString());
             sb.Clear();
         }
+    }
+
+    private static void GenerateResolver(IGeneratorContext context, FullModel model)
+    {
+        AnalyzerOptions options = model.Options;
+        StringBuilder sb = new();
+
+        ResolverTemplate resolverTemplate = new(
+            options.ResolverNamespace,
+            options.FormatterNamespace,
+            options.ResolverName,
+            model.GenericInfos
+                .Where(x => !x.IsOpenGenericType)
+                .Cast<IResolverRegisterInfo>()
+                .Concat(model.EnumInfos)
+                .Concat(model.UnionInfos)
+                .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
+                .ToArray());
+        sb.AppendLine(FileHeader);
+        sb.Append(resolverTemplate.TransformText());
+        context.AddSource($"MessagePack.GeneratedResolver.g.cs", sb.ToString());
     }
 }

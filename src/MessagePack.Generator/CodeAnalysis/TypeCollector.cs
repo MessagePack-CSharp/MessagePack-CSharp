@@ -234,10 +234,10 @@ public class TypeCollector
 #pragma warning disable RS1024 // Compare symbols correctly (https://github.com/dotnet/roslyn-analyzers/issues/5246)
     private readonly HashSet<ITypeSymbol> alreadyCollected = new(SymbolEqualityComparer.Default);
 #pragma warning restore RS1024 // Compare symbols correctly
-    private readonly List<ObjectSerializationInfo> collectedObjectInfo = new();
-    private readonly List<EnumSerializationInfo> collectedEnumInfo = new();
-    private readonly List<GenericSerializationInfo> collectedGenericInfo = new();
-    private readonly List<UnionSerializationInfo> collectedUnionInfo = new();
+    private readonly ImmutableSortedSet<ObjectSerializationInfo>.Builder collectedObjectInfo = ImmutableSortedSet.CreateBuilder<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default);
+    private readonly ImmutableSortedSet<EnumSerializationInfo>.Builder collectedEnumInfo = ImmutableSortedSet.CreateBuilder<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default);
+    private readonly ImmutableSortedSet<GenericSerializationInfo>.Builder collectedGenericInfo = ImmutableSortedSet.CreateBuilder<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default);
+    private readonly ImmutableSortedSet<UnionSerializationInfo>.Builder collectedUnionInfo = ImmutableSortedSet.CreateBuilder<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default);
 
     private readonly Compilation compilation;
 
@@ -312,10 +312,10 @@ public class TypeCollector
         }
 
         return new FullModel(
-            this.collectedObjectInfo.OrderBy(x => x.FullName).ToArray(),
-            this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
-            this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
-            this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray(),
+            this.collectedObjectInfo.ToImmutable(),
+            this.collectedEnumInfo.ToImmutable(),
+            this.collectedGenericInfo.ToImmutable(),
+            this.collectedUnionInfo.ToImmutable(),
             this.options);
     }
 

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using MessagePack.Generator.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -21,30 +22,51 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             MessagePackObjectAttributeFullName,
             predicate: static (node, _) => node is TypeDeclarationSyntax,
             transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
-        Register(messagePackObjectTypes);
 
         var unionTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             MessagePackUnionAttributeFullName,
             predicate: static (node, _) => node is InterfaceDeclarationSyntax,
             transform: static (context, _) => (TypeDeclarationSyntax)context.TargetNode);
-        Register(unionTypes);
 
-        void Register(IncrementalValuesProvider<TypeDeclarationSyntax> typeDeclarations)
-        {
-            var source = typeDeclarations
-                .Combine(context.CompilationProvider)
-                .Combine(options)
-                .Select(static (s, ct) =>
-                {
-                    return TypeCollector.Collect(s.Left.Right, s.Right, s.Left.Left, null, ct);
-                })
-                .Where(fm => fm is not null);
+        var combined =
+            messagePackObjectTypes.Collect().Combine(unionTypes.Collect());
 
-            context.RegisterSourceOutput(source, static (context, source) =>
+        var source = combined
+            .Combine(context.CompilationProvider)
+            .Combine(options)
+            .Select(static (s, ct) =>
             {
-                Generate(new GeneratorContext(context), source!);
+                List<FullModel> modelPerType = new();
+                void Collect(TypeDeclarationSyntax typeDecl)
+                {
+                    if (TypeCollector.Collect(s.Left.Right, s.Right, typeDecl, null, ct) is FullModel model)
+                    {
+                        modelPerType.Add(model);
+                    }
+                }
+
+                foreach (TypeDeclarationSyntax typeDecl in s.Left.Left.Left)
+                {
+                    Collect(typeDecl);
+                }
+
+                foreach (TypeDeclarationSyntax typeDecl in s.Left.Left.Right)
+                {
+                    Collect(typeDecl);
+                }
+
+                return FullModel.Combine(modelPerType.ToImmutableArray());
             });
-        }
+
+        context.RegisterSourceOutput(source, static (context, source) =>
+        {
+            Generate(new GeneratorContext(context), source!);
+        });
+
+        context.RegisterSourceOutput(source, static (context, source) =>
+        {
+            GenerateResolver(new GeneratorContext(context), source!);
+        });
     }
 
     private class Comparer : IEqualityComparer<(TypeDeclarationSyntax, Compilation)>

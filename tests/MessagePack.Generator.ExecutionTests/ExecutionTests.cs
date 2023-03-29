@@ -22,13 +22,13 @@ public class ExecutionTests
     [Fact]
     public void ClassWithPropertiesWithGetterAndSetter()
     {
-        this.AssertRoundtrip(new HasPropertiesWithGetterAndSetter { A = 1, B = "hi" });
+        this.AssertRoundtrip(new HasPropertiesWithGetterAndSetter { A = 1, B = 4 });
     }
 
     [Fact]
     public void ClassWithPropertiesWithGetterAndCtor()
     {
-        this.AssertRoundtrip(new HasPropertiesWithGetterAndCtor(1, "hi"));
+        this.AssertRoundtrip(new HasPropertiesWithGetterAndCtor(1, 4));
     }
 
     private T AssertRoundtrip<T>(T value)
@@ -54,7 +54,7 @@ public class ExecutionTests
         public int A { get; set; }
 
         [Key(1)]
-        public string? B { get; set; }
+        public int B { get; set; }
     }
 
     [MessagePackObject(false)]
@@ -64,9 +64,9 @@ public class ExecutionTests
         public int A { get; }
 
         [Key(1)]
-        public string B { get; }
+        public int B { get; }
 
-        public HasPropertiesWithGetterAndCtor(int a, string b)
+        public HasPropertiesWithGetterAndCtor(int a, int b)
         {
             A = a;
             B = b;
