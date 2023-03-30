@@ -12,6 +12,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack", "src\MessagePack\MessagePack.csproj", "{7ABB33EE-A2F1-492B-8DAF-5DF89F0F0B79}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{19FE674A-AC94-4E7E-B24C-2285D1D04CDE}"
+	ProjectSection(SolutionItems) = preProject
+		tests\SourceGeneratorConsumer.props = tests\SourceGeneratorConsumer.props
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Tests", "tests\MessagePack.Tests\MessagePack.Tests.csproj", "{9E1A55CA-711D-4F58-A332-735960E3434C}"
 EndProject
@@ -91,7 +94,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.GeneratedCode.T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Roslyn3", "src\MessagePack.Generator.Roslyn3\MessagePack.Generator.Roslyn3.csproj", "{45A72780-93EF-4CD1-9FCD-D56A42A3B966}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Generator.ExecutionTests", "tests\MessagePack.Generator.ExecutionTests\MessagePack.Generator.ExecutionTests.csproj", "{7908D954-15D4-4D67-B49A-4484809DA2C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.ExecutionTests", "tests\MessagePack.Generator.ExecutionTests\MessagePack.Generator.ExecutionTests.csproj", "{7908D954-15D4-4D67-B49A-4484809DA2C4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.MapModeExecutionTests", "tests\MessagePack.Generator.MapModeExecutionTests\MessagePack.Generator.MapModeExecutionTests.csproj", "{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -207,6 +212,10 @@ Global
 		{7908D954-15D4-4D67-B49A-4484809DA2C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7908D954-15D4-4D67-B49A-4484809DA2C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7908D954-15D4-4D67-B49A-4484809DA2C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -239,6 +248,7 @@ Global
 		{D4CE7347-CEBE-46E5-BD12-1319573B6C5E} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 		{45A72780-93EF-4CD1-9FCD-D56A42A3B966} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{7908D954-15D4-4D67-B49A-4484809DA2C4} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
+		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}
