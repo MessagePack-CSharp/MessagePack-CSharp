@@ -5,7 +5,6 @@ using System.Text;
 using MessagePack.Generator.CodeAnalysis;
 using MessagePack.Generator.Transforms;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.Generator;
 
@@ -29,22 +28,21 @@ public partial class MessagePackGenerator
 
         foreach (EnumSerializationInfo info in model.EnumInfos)
         {
-            EnumTemplate transform = new(CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace), info);
+            EnumTemplate transform = new(options, info);
             AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
         }
 
         foreach (UnionSerializationInfo info in model.UnionInfos)
         {
-            UnionTemplate transform = new(options.FormatterNamespace, info);
+            UnionTemplate transform = new(options, info);
             AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
         }
 
         foreach (ObjectSerializationInfo info in model.ObjectInfos)
         {
-            string formatterNamespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
             IFormatterTemplate transform = info.IsStringKey
-                ? new StringKeyFormatterTemplate(formatterNamespace, info)
-                : new FormatterTemplate(formatterNamespace, info);
+                ? new StringKeyFormatterTemplate(options, info)
+                : new FormatterTemplate(options, info);
             AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
         }
 
@@ -68,17 +66,14 @@ public partial class MessagePackGenerator
         AnalyzerOptions options = model.Options;
         StringBuilder sb = new();
 
-        ResolverTemplate resolverTemplate = new()
-        {
-            Options = options,
-            RegisterInfos = model.GenericInfos
-                .Where(x => !x.IsOpenGenericType)
-                .Cast<IResolverRegisterInfo>()
-                .Concat(model.EnumInfos)
-                .Concat(model.UnionInfos)
-                .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
-                .ToArray(),
-        };
+        IResolverRegisterInfo[] registerInfos = model.GenericInfos
+            .Where(x => !x.IsOpenGenericType)
+            .Cast<IResolverRegisterInfo>()
+            .Concat(model.EnumInfos)
+            .Concat(model.UnionInfos)
+            .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
+            .ToArray();
+        ResolverTemplate resolverTemplate = new(options, registerInfos);
         sb.AppendLine(FileHeader);
         sb.Append(resolverTemplate.TransformText());
         context.AddSource($"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(options.ResolverName, options.ResolverNamespace)}.g.cs", sb.ToString());

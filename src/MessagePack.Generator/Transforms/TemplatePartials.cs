@@ -9,10 +9,10 @@ namespace MessagePack.Generator.Transforms;
 
 public partial class FormatterTemplate : IFormatterTemplate
 {
-    public FormatterTemplate(string @namespace, ObjectSerializationInfo info)
+    public FormatterTemplate(AnalyzerOptions options, ObjectSerializationInfo info)
     {
-        Namespace = @namespace;
-        Info = info;
+        this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
+        this.Info = info;
     }
 
     public string Namespace { get; }
@@ -22,10 +22,10 @@ public partial class FormatterTemplate : IFormatterTemplate
 
 public partial class StringKeyFormatterTemplate : IFormatterTemplate
 {
-    public StringKeyFormatterTemplate(string @namespace, ObjectSerializationInfo info)
+    public StringKeyFormatterTemplate(AnalyzerOptions options, ObjectSerializationInfo info)
     {
-        Namespace = @namespace;
-        Info = info;
+        this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
+        this.Info = info;
     }
 
     public string Namespace { get; }
@@ -35,7 +35,13 @@ public partial class StringKeyFormatterTemplate : IFormatterTemplate
 
 public partial class ResolverTemplate
 {
-    required public AnalyzerOptions Options { get; init; }
+    public ResolverTemplate(AnalyzerOptions options, IReadOnlyList<IResolverRegisterInfo> registerInfos)
+    {
+        this.Options = options;
+        this.RegisterInfos = registerInfos;
+    }
+
+    public AnalyzerOptions Options { get; init; }
 
     public string ResolverNamespace => this.Options.ResolverNamespace;
 
@@ -45,15 +51,15 @@ public partial class ResolverTemplate
 
     public bool PublicResolver => this.Options.PublicResolver;
 
-    required public IReadOnlyList<IResolverRegisterInfo> RegisterInfos { get; init; }
+    public IReadOnlyList<IResolverRegisterInfo> RegisterInfos { get; }
 }
 
 public partial class EnumTemplate
 {
-    public EnumTemplate(string @namespace, EnumSerializationInfo info)
+    public EnumTemplate(AnalyzerOptions options, EnumSerializationInfo info)
     {
-        Namespace = @namespace;
-        Info = info;
+        this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
+        this.Info = info;
     }
 
     public string Namespace { get; }
@@ -63,10 +69,10 @@ public partial class EnumTemplate
 
 public partial class UnionTemplate
 {
-    public UnionTemplate(string @namespace, UnionSerializationInfo info)
+    public UnionTemplate(AnalyzerOptions options, UnionSerializationInfo info)
     {
-        Namespace = @namespace;
-        Info = info;
+        this.Namespace = options.FormatterNamespace;
+        this.Info = info;
     }
 
     public string Namespace { get; }
