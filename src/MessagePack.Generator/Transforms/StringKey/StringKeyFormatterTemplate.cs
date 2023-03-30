@@ -35,7 +35,7 @@ namespace MessagePack.Generator.Transforms
 	}
 
 	bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members); 
-            this.Write("\tpublic sealed class ");
+            this.Write("\tinternal sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterNameWithoutNamespace));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));

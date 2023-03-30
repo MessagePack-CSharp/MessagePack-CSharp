@@ -7,7 +7,7 @@ namespace MessagePack.Formatters
 	using MsgPack = global::MessagePack;
 	using ContainingClass_MyEnum = global::ContainingClass.MyEnum;
 
-	public sealed class ContainingClass_MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<ContainingClass_MyEnum>
+	internal sealed class ContainingClass_MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<ContainingClass_MyEnum>
 	{
 		public void Serialize(ref MsgPack::MessagePackWriter writer, ContainingClass_MyEnum value, MsgPack::MessagePackSerializerOptions options)
 		{

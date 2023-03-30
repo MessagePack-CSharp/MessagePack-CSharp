@@ -1,9 +1,6 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.ComponentModel;
-using MessagePack.Generator.Tests;
-
 public class MultipleTypesTests
 {
     private readonly ITestOutputHelper testOutputHelper;
@@ -20,12 +17,12 @@ public class MultipleTypesTests
 using MessagePack;
 
 [MessagePackObject]
-public class Object1
+class Object1
 {
 }
 
 [MessagePackObject]
-public class Object2
+class Object2
 {
 }
 """;

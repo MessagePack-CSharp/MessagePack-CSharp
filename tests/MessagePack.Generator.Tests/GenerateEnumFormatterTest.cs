@@ -17,13 +17,13 @@ public class GenerateEnumFormatterTest
     {
         string testSource = """
 [MessagePackObject]
-public class MyMessagePackObject
+internal class MyMessagePackObject
 {
     [Key(0)]
-    public MyEnum EnumValue { get; set; }
+    internal MyEnum EnumValue { get; set; }
 }
 
-public enum MyEnum
+internal enum MyEnum
 {
     A, B, C
 }

@@ -10,7 +10,6 @@ public record AnalyzerOptions(
     string Namespace = "MessagePack",
     string ResolverName = "GeneratedResolver",
     bool UsesMapMode = false,
-    bool DisallowInternal = false,
     IReadOnlyCollection<string>? IgnoreTypeNames = null)
 {
     public const string MessagePackGeneratedResolverNamespace = "build_property.MessagePackGeneratedResolverNamespace";

@@ -8,7 +8,7 @@ namespace <#= Namespace #>
 {
 	using MsgPack = global::MessagePack;
 
-	public sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+	internal sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 	{
 		private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
 		private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;

@@ -7,7 +7,7 @@ namespace MessagePack.Formatters.MyTestNamespace
 	using MsgPack = global::MessagePack;
 	using MyEnum = global::MyTestNamespace.MyEnum;
 
-	public sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<MyEnum>
+	internal sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<MyEnum>
 	{
 		public void Serialize(ref MsgPack::MessagePackWriter writer, MyEnum value, MsgPack::MessagePackSerializerOptions options)
 		{

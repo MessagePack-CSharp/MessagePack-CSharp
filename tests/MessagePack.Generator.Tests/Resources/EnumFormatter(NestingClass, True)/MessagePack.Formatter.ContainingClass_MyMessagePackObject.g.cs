@@ -6,7 +6,7 @@ namespace MessagePack.Formatters
 {
 	using MsgPack = global::MessagePack;
 
-	public sealed class ContainingClass_MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ContainingClass.MyMessagePackObject>
+	internal sealed class ContainingClass_MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::ContainingClass.MyMessagePackObject>
 	{
 		// EnumValue
 		private static global::System.ReadOnlySpan<byte> GetSpan_EnumValue() => new byte[1 + 9] { 169, 69, 110, 117, 109, 86, 97, 108, 117, 101 };

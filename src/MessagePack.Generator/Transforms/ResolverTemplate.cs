@@ -27,14 +27,20 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n\tpublic class ");
+            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n\t/// <summary>A MessagePack resolve" +
+                    "r that uses generated formatters for types in this assembly.</summary>\r\n\tinterna" +
+                    "l class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(" : MsgPack::IFormatterResolver\r\n\t{\r\n\t\tpublic static readonly MsgPack::IFormatterR" +
-                    "esolver Instance = new ");
+            this.Write(" : MsgPack::IFormatterResolver\r\n\t{\r\n\t\t/// <summary>An instance of this resolver t" +
+                    "hat only returns formatters specifically generated for types in this assembly.</" +
+                    "summary>\r\n\t\tpublic static readonly MsgPack::IFormatterResolver Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("();\r\n\r\n\t\tpublic static readonly MsgPack::IFormatterResolver InstanceWithStandardA" +
-                    "otResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Reso" +
-                    "lvers.StandardAotResolver.Instance);\r\n\r\n\t\tprivate ");
+            this.Write(@"();
+
+		/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
+		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
+
+		private ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(@"()
 		{

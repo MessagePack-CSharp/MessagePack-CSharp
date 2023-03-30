@@ -29,7 +29,7 @@ namespace MessagePack.Generator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
             this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n");
   bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);
-            this.Write("\tpublic sealed class ");
+            this.Write("\tinternal sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterNameWithoutNamespace));
             this.Write(" : MsgPack::Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));

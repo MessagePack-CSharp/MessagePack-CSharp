@@ -6,10 +6,13 @@ namespace MessagePack.Resolvers
 {
 	using MsgPack = global::MessagePack;
 
-	public class GeneratedResolver : MsgPack::IFormatterResolver
+	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
+	internal class GeneratedResolver : MsgPack::IFormatterResolver
 	{
+		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
 		public static readonly MsgPack::IFormatterResolver Instance = new GeneratedResolver();
 
+		/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
 		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
 
 		private GeneratedResolver()

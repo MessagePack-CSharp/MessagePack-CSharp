@@ -226,7 +226,6 @@ public class TypeCollector
     private readonly AnalyzerOptions options;
     private readonly ReferenceSymbols typeReferences;
     private readonly ITypeSymbol? targetType;
-    private readonly bool disallowInternal;
     private readonly bool excludeArrayElement;
     private readonly HashSet<string> externalIgnoreTypeNames;
 
@@ -244,7 +243,6 @@ public class TypeCollector
     private TypeCollector(Compilation compilation, AnalyzerOptions options, ITypeSymbol targetType, IGeneratorContext? context)
     {
         this.typeReferences = new ReferenceSymbols(compilation, _ => { });
-        this.disallowInternal = options.DisallowInternal;
         this.isForceUseMap = options.UsesMapMode;
         this.context = context;
         this.options = options;
@@ -253,8 +251,7 @@ public class TypeCollector
         this.excludeArrayElement = true;
         this.context = context;
 
-        if (targetType.DeclaredAccessibility == Accessibility.Public ||
-            (!disallowInternal && targetType.DeclaredAccessibility == Accessibility.Friend))
+        if (IsAllowedAccessibility(targetType.DeclaredAccessibility))
         {
             if (((targetType.TypeKind == TypeKind.Interface) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)))
                 || ((targetType.TypeKind == TypeKind.Class && targetType.IsAbstract) && targetType.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)))
@@ -641,8 +638,8 @@ public class TypeCollector
                     continue;
                 }
 
-                var isReadable = item.GetMethod != null && item.GetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
-                var isWritable = item.SetMethod != null && item.SetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
+                var isReadable = item.GetMethod != null && IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility) && !item.IsStatic;
+                var isWritable = item.SetMethod != null && IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility) && !item.IsStatic;
                 if (!isReadable && !isWritable)
                 {
                     continue;
@@ -667,8 +664,8 @@ public class TypeCollector
                     continue;
                 }
 
-                var isReadable = item.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
-                var isWritable = item.DeclaredAccessibility == Accessibility.Public && !item.IsReadOnly && !item.IsStatic;
+                var isReadable = IsAllowedAccessibility(item.DeclaredAccessibility) && !item.IsStatic;
+                var isWritable = IsAllowedAccessibility(item.DeclaredAccessibility) && !item.IsReadOnly && !item.IsStatic;
                 if (!isReadable && !isWritable)
                 {
                     continue;
@@ -702,8 +699,8 @@ public class TypeCollector
                     continue;
                 }
 
-                var isReadable = item.GetMethod != null && item.GetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
-                var isWritable = item.SetMethod != null && item.SetMethod.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
+                var isReadable = item.GetMethod != null && IsAllowedAccessibility(item.GetMethod.DeclaredAccessibility) && !item.IsStatic;
+                var isWritable = item.SetMethod != null && IsAllowedAccessibility(item.SetMethod.DeclaredAccessibility) && !item.IsStatic;
                 if (!isReadable && !isWritable)
                 {
                     continue;
@@ -774,8 +771,8 @@ public class TypeCollector
                     continue;
                 }
 
-                var isReadable = item.DeclaredAccessibility == Accessibility.Public && !item.IsStatic;
-                var isWritable = item.DeclaredAccessibility == Accessibility.Public && !item.IsReadOnly && !item.IsStatic;
+                var isReadable = IsAllowedAccessibility(item.DeclaredAccessibility) && !item.IsStatic;
+                var isWritable = IsAllowedAccessibility(item.DeclaredAccessibility) && !item.IsReadOnly && !item.IsStatic;
                 if (!isReadable && !isWritable)
                 {
                     continue;
@@ -832,10 +829,10 @@ public class TypeCollector
 
         // GetConstructor
         var ctorEnumerator = default(IEnumerator<IMethodSymbol>);
-        var ctor = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
+        var ctor = type.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).SingleOrDefault(x => x.GetAttributes().Any(y => y.AttributeClass != null && y.AttributeClass.ApproximatelyEqual(this.typeReferences.SerializationConstructorAttribute)));
         if (ctor == null)
         {
-            ctorEnumerator = type.Constructors.Where(x => x.DeclaredAccessibility == Accessibility.Public).OrderByDescending(x => x.Parameters.Length).GetEnumerator();
+            ctorEnumerator = type.Constructors.Where(x => IsAllowedAccessibility(x.DeclaredAccessibility)).OrderByDescending(x => x.Parameters.Length).GetEnumerator();
 
             if (ctorEnumerator.MoveNext())
             {
@@ -1039,26 +1036,20 @@ public class TypeCollector
         }
     }
 
+    private static bool IsAllowedAccessibility(Accessibility accessibility) => accessibility is Accessibility.Public or Accessibility.Internal;
+
     private bool IsAllowAccessibility(ITypeSymbol symbol)
     {
         do
         {
-            if (symbol.DeclaredAccessibility != Accessibility.Public)
+            if (!IsAllowedAccessibility(symbol.DeclaredAccessibility))
             {
-                if (this.disallowInternal)
-                {
-                    return false;
-                }
-
-                if (symbol.DeclaredAccessibility != Accessibility.Internal)
-                {
-                    return true;
-                }
+                return false;
             }
 
             symbol = symbol.ContainingType;
         }
-        while (symbol != null);
+        while (symbol is not null);
 
         return true;
     }

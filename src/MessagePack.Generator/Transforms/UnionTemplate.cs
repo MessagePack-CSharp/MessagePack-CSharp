@@ -27,7 +27,7 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n\tpublic sealed class ");
+            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n\tinternal sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
             this.Write("Formatter : MsgPack::Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));

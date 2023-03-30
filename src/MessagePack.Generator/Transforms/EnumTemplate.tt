@@ -6,7 +6,7 @@ namespace <#= Namespace #>
 	using MsgPack = global::MessagePack;
 	using <#= Info.Name #> = <#= Info.FullName #>;
 
-	public sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.Name #>>
+	internal sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.Name #>>
 	{
 		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.Name #> value, MsgPack::MessagePackSerializerOptions options)
 		{

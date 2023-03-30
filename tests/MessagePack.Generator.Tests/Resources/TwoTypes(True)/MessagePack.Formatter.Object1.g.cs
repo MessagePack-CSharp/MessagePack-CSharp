@@ -6,7 +6,7 @@ namespace MessagePack.Formatters
 {
 	using MsgPack = global::MessagePack;
 
-	public sealed class Object1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Object1>
+	internal sealed class Object1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Object1>
 	{
 		public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Object1 value, global::MessagePack.MessagePackSerializerOptions options)
 		{
