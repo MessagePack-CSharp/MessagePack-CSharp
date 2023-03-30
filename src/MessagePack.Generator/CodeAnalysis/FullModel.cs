@@ -12,6 +12,8 @@ public record FullModel(
     ImmutableSortedSet<UnionSerializationInfo> UnionInfos,
     AnalyzerOptions Options)
 {
+    public bool IsEmpty => this.ObjectInfos.IsEmpty && this.EnumInfos.IsEmpty && this.GenericInfos.IsEmpty && this.UnionInfos.IsEmpty;
+
     /// <summary>
     /// Returns a new model that contains all the content of a collection of models.
     /// </summary>
@@ -20,6 +22,16 @@ public record FullModel(
     /// <exception cref="NotSupportedException">Thrown if <see cref="Options"/> is not equal between any two models.</exception>
     public static FullModel Combine(ImmutableArray<FullModel> models)
     {
+        if (models.Length == 0)
+        {
+            return new FullModel(
+                ImmutableSortedSet.Create<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default),
+                ImmutableSortedSet.Create<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default),
+                ImmutableSortedSet.Create<GenericSerializationInfo>(ResolverRegisterInfoComparer.Default),
+                ImmutableSortedSet.Create<UnionSerializationInfo>(ResolverRegisterInfoComparer.Default),
+                AnalyzerOptions.Default);
+        }
+
         AnalyzerOptions options = models[0].Options;
         var objectInfos = ImmutableSortedSet.CreateBuilder<ObjectSerializationInfo>(ResolverRegisterInfoComparer.Default);
         var enumInfos = ImmutableSortedSet.CreateBuilder<EnumSerializationInfo>(ResolverRegisterInfoComparer.Default);

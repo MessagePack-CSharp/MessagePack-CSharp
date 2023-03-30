@@ -60,6 +60,11 @@ public partial class MessagePackGenerator
 
     private static void GenerateResolver(IGeneratorContext context, FullModel model)
     {
+        if (model.IsEmpty)
+        {
+            return;
+        }
+
         AnalyzerOptions options = model.Options;
         StringBuilder sb = new();
 

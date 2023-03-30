@@ -28,4 +28,13 @@ class Object2
 """;
         await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { UsesMapMode = usesMapMode }, testMethod: $"{nameof(TwoTypes)}({usesMapMode})");
     }
+
+    [Fact]
+    public async Task ZeroTypes()
+    {
+        string testSource = """
+using MessagePack;
+""";
+        await VerifyCS.Test.RunDefaultAsync(testSource);
+    }
 }
