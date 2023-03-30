@@ -39,6 +39,18 @@ public class ExecutionTests
         this.AssertRoundtrip(new UnionContainer { Value = new Derived2() });
     }
 
+    [Fact]
+    public void ClassWithPropertyWithTypeWithCustomFormatter()
+    {
+        this.AssertRoundtrip(new HasPropertyWithTypeWithCustomFormatter { CustomValue = new() { Value = 3 } });
+    }
+
+    [Fact]
+    public void ClassWithPropertyWithCustomFormatterAttribute()
+    {
+        this.AssertRoundtrip(new HasPropertyWithCustomFormatterAttribute { CustomValue = new() { Value = 3 } });
+    }
+
     private T AssertRoundtrip<T>(T value)
     {
         byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);

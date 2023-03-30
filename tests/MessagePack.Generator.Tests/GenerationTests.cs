@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.ComponentModel;
 using MessagePack.Generator.Tests;
 
 public class GenerationTests
@@ -31,6 +32,41 @@ internal enum MyEnum
         testSource = TestUtilities.WrapTestSource(testSource, container);
 
         await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { UsesMapMode = usesMapMode }, testMethod: $"{nameof(EnumFormatter)}({container}, {usesMapMode})");
+    }
+
+    [Theory, PairwiseData]
+    public async Task CustomFormatterViaAttributeOnProperty(bool usesMapMode)
+    {
+        string testSource = """
+using MessagePack;
+using MessagePack.Formatters;
+
+[MessagePackObject]
+internal record HasPropertyWithCustomFormatterAttribute
+{
+    [Key(0), MessagePackFormatter(typeof(UnserializableRecordFormatter))]
+    internal UnserializableRecord CustomValue { get; set; }
+}
+
+record UnserializableRecord
+{
+    internal int Value { get; set; }
+}
+
+class UnserializableRecordFormatter : IMessagePackFormatter<UnserializableRecord>
+{
+    public void Serialize(ref MessagePackWriter writer, UnserializableRecord value, MessagePackSerializerOptions options)
+    {
+        writer.WriteInt32(value.Value);
+    }
+
+    public UnserializableRecord Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    {
+        return new UnserializableRecord { Value = reader.ReadInt32() };
+    }
+}
+""";
+        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { UsesMapMode = usesMapMode }, testMethod: $"{nameof(CustomFormatterViaAttributeOnProperty)}({usesMapMode})");
     }
 
     [Theory, PairwiseData]
