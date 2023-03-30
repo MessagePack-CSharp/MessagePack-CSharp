@@ -6,67 +6,67 @@
 
 namespace <#= ResolverNamespace #>
 {
-    using MsgPack = global::MessagePack;
+	using MsgPack = global::MessagePack;
 
-    public class <#= ResolverName #> : MsgPack::IFormatterResolver
-    {
-        public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName #>();
+	public class <#= ResolverName #> : MsgPack::IFormatterResolver
+	{
+		public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName #>();
 
-        public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
+		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
 
-        private <#= ResolverName #>()
-        {
-        }
+		private <#= ResolverName #>()
+		{
+		}
 
-        public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.Formatter;
-        }
+		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+		{
+			return FormatterCache<T>.Formatter;
+		}
 
-        private static class FormatterCache<T>
-        {
-            internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+		private static class FormatterCache<T>
+		{
+			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
 
-            static FormatterCache()
-            {
-                var f = <#= ResolverName #>GetFormatterHelper.GetFormatter(typeof(T));
-                if (f != null)
-                {
-                    Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
-                }
-            }
-        }
-    }
+			static FormatterCache()
+			{
+				var f = <#= ResolverName #>GetFormatterHelper.GetFormatter(typeof(T));
+				if (f != null)
+				{
+					Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
+				}
+			}
+		}
+	}
 
-    internal static class <#= ResolverName #>GetFormatterHelper
-    {
-        private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
+	internal static class <#= ResolverName #>GetFormatterHelper
+	{
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
-        static <#= ResolverName #>GetFormatterHelper()
-        {
-            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= RegisterInfos.Count #>)
-            {
+		static <#= ResolverName #>GetFormatterHelper()
+		{
+			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= RegisterInfos.Count #>)
+			{
 <# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
-                { typeof(<#= x.FullName #>), <#= i #> },
+				{ typeof(<#= x.FullName #>), <#= i #> },
 <# } #>
-            };
-        }
+			};
+		}
 
-        internal static object GetFormatter(global::System.Type t)
-        {
-            int key;
-            if (!lookup.TryGetValue(t, out key))
-            {
-                return null;
-            }
+		internal static object GetFormatter(global::System.Type t)
+		{
+			int key;
+			if (!lookup.TryGetValue(t, out key))
+			{
+				return null;
+			}
 
-            switch (key)
-            {
+			switch (key)
+			{
 <# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
-                case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName : (FormatterNamespace + "." + x.FormatterName) #>();
+				case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName : (FormatterNamespace + "." + x.FormatterName) #>();
 <# } #>
-                default: return null;
-            }
-        }
-    }
+				default: return null;
+			}
+		}
+	}
 }

@@ -27,79 +27,61 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write("\r\n{\r\n    using MsgPack = global::MessagePack;\r\n\r\n    public class ");
+            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n\tpublic class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(" : MsgPack::IFormatterResolver\r\n    {\r\n        public static readonly MsgPack::IF" +
-                    "ormatterResolver Instance = new ");
+            this.Write(" : MsgPack::IFormatterResolver\r\n\t{\r\n\t\tpublic static readonly MsgPack::IFormatterR" +
+                    "esolver Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("();\r\n\r\n        public static readonly MsgPack::IFormatterResolver InstanceWithSta" +
-                    "ndardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack" +
-                    "::Resolvers.StandardAotResolver.Instance);\r\n\r\n        private ");
+            this.Write("();\r\n\r\n\t\tpublic static readonly MsgPack::IFormatterResolver InstanceWithStandardA" +
+                    "otResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Reso" +
+                    "lvers.StandardAotResolver.Instance);\r\n\r\n\t\tprivate ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(@"()
-        {
-        }
+		{
+		}
 
-        public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.Formatter;
-        }
+		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+		{
+			return FormatterCache<T>.Formatter;
+		}
 
-        private static class FormatterCache<T>
-        {
-            internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+		private static class FormatterCache<T>
+		{
+			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
 
-            static FormatterCache()
-            {
-                var f = ");
+			static FormatterCache()
+			{
+				var f = ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(@"GetFormatterHelper.GetFormatter(typeof(T));
-                if (f != null)
-                {
-                    Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
-                }
-            }
-        }
-    }
-
-    internal static class ");
+            this.Write("GetFormatterHelper.GetFormatter(typeof(T));\r\n\t\t\t\tif (f != null)\r\n\t\t\t\t{\r\n\t\t\t\t\tForm" +
+                    "atter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n" +
+                    "\r\n\tinternal static class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("GetFormatterHelper\r\n    {\r\n        private static readonly global::System.Collect" +
-                    "ions.Generic.Dictionary<global::System.Type, int> lookup;\r\n\r\n        static ");
+            this.Write("GetFormatterHelper\r\n\t{\r\n\t\tprivate static readonly global::System.Collections.Gene" +
+                    "ric.Dictionary<global::System.Type, int> lookup;\r\n\r\n\t\tstatic ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("GetFormatterHelper()\r\n        {\r\n            lookup = new global::System.Collecti" +
-                    "ons.Generic.Dictionary<global::System.Type, int>(");
+            this.Write("GetFormatterHelper()\r\n\t\t{\r\n\t\t\tlookup = new global::System.Collections.Generic.Dic" +
+                    "tionary<global::System.Type, int>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(RegisterInfos.Count));
-            this.Write(")\r\n            {\r\n");
+            this.Write(")\r\n\t\t\t{\r\n");
  for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
-            this.Write("                { typeof(");
+            this.Write("\t\t\t\t{ typeof(");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FullName));
             this.Write("), ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(" },\r\n");
  } 
-            this.Write(@"            };
-        }
-
-        internal static object GetFormatter(global::System.Type t)
-        {
-            int key;
-            if (!lookup.TryGetValue(t, out key))
-            {
-                return null;
-            }
-
-            switch (key)
-            {
-");
+            this.Write("\t\t\t};\r\n\t\t}\r\n\r\n\t\tinternal static object GetFormatter(global::System.Type t)\r\n\t\t{\r\n" +
+                    "\t\t\tint key;\r\n\t\t\tif (!lookup.TryGetValue(t, out key))\r\n\t\t\t{\r\n\t\t\t\treturn null;\r\n\t\t" +
+                    "\t}\r\n\r\n\t\t\tswitch (key)\r\n\t\t\t{\r\n");
  for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
-            this.Write("                case ");
+            this.Write("\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(": return new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName : (FormatterNamespace + "." + x.FormatterName)));
             this.Write("();\r\n");
  } 
-            this.Write("                default: return null;\r\n            }\r\n        }\r\n    }\r\n}\r\n");
+            this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n");
             return this.GenerationEnvironment.ToString();
         }
     }

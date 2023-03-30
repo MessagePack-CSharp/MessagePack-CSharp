@@ -3,18 +3,18 @@
 
 namespace <#= Namespace #>
 {
-    using MsgPack = global::MessagePack;
+	using MsgPack = global::MessagePack;
 
-    public sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
-    {
-        public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
-        {
-            writer.Write((global::System.<#= Info.UnderlyingType #>)value);
-        }
+	public sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+	{
+		public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
+		{
+			writer.Write((<#= Info.UnderlyingTypeKeyword #>)value);
+		}
 
-        public <#= Info.FullName #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
-        {
-            return (<#= Info.FullName #>)reader.Read<#= Info.UnderlyingType #>();
-        }
-    }
+		public <#= Info.FullName #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		{
+			return (<#= Info.FullName #>)reader.Read<#= Info.UnderlyingTypeName #>();
+		}
+	}
 }

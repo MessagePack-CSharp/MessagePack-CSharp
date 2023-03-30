@@ -4,65 +4,65 @@
 
 namespace MessagePack.Resolvers
 {
-    using MsgPack = global::MessagePack;
+	using MsgPack = global::MessagePack;
 
-    public class GeneratedResolver : MsgPack::IFormatterResolver
-    {
-        public static readonly MsgPack::IFormatterResolver Instance = new GeneratedResolver();
+	public class GeneratedResolver : MsgPack::IFormatterResolver
+	{
+		public static readonly MsgPack::IFormatterResolver Instance = new GeneratedResolver();
 
-        public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
+		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
 
-        private GeneratedResolver()
-        {
-        }
+		private GeneratedResolver()
+		{
+		}
 
-        public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
-        {
-            return FormatterCache<T>.Formatter;
-        }
+		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+		{
+			return FormatterCache<T>.Formatter;
+		}
 
-        private static class FormatterCache<T>
-        {
-            internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+		private static class FormatterCache<T>
+		{
+			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
 
-            static FormatterCache()
-            {
-                var f = GeneratedResolverGetFormatterHelper.GetFormatter(typeof(T));
-                if (f != null)
-                {
-                    Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
-                }
-            }
-        }
-    }
+			static FormatterCache()
+			{
+				var f = GeneratedResolverGetFormatterHelper.GetFormatter(typeof(T));
+				if (f != null)
+				{
+					Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
+				}
+			}
+		}
+	}
 
-    internal static class GeneratedResolverGetFormatterHelper
-    {
-        private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
+	internal static class GeneratedResolverGetFormatterHelper
+	{
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
-        static GeneratedResolverGetFormatterHelper()
-        {
-            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
-            {
-                { typeof(global::MyTestNamespace.MyEnum), 0 },
-                { typeof(global::MyTestNamespace.MyMessagePackObject), 1 },
-            };
-        }
+		static GeneratedResolverGetFormatterHelper()
+		{
+			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
+			{
+				{ typeof(global::MyTestNamespace.MyEnum), 0 },
+				{ typeof(global::MyTestNamespace.MyMessagePackObject), 1 },
+			};
+		}
 
-        internal static object GetFormatter(global::System.Type t)
-        {
-            int key;
-            if (!lookup.TryGetValue(t, out key))
-            {
-                return null;
-            }
+		internal static object GetFormatter(global::System.Type t)
+		{
+			int key;
+			if (!lookup.TryGetValue(t, out key))
+			{
+				return null;
+			}
 
-            switch (key)
-            {
-                case 0: return new MessagePack.Formatters.MyTestNamespace.MyEnumFormatter();
-                case 1: return new MessagePack.Formatters.MyTestNamespace.MyMessagePackObjectFormatter();
-                default: return null;
-            }
-        }
-    }
+			switch (key)
+			{
+				case 0: return new MessagePack.Formatters.MyTestNamespace.MyEnumFormatter();
+				case 1: return new MessagePack.Formatters.MyTestNamespace.MyMessagePackObjectFormatter();
+				default: return null;
+			}
+		}
+	}
 }

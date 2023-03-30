@@ -4,31 +4,31 @@
 
 namespace MessagePack.Formatters
 {
-    using MsgPack = global::MessagePack;
+	using MsgPack = global::MessagePack;
 
-    public sealed class Object1Formatter : MsgPack::Formatters.IMessagePackFormatter<global::Object1>
-    {
+	public sealed class Object1Formatter : MsgPack::Formatters.IMessagePackFormatter<global::Object1>
+	{
 
-        public void Serialize(ref MsgPack::MessagePackWriter writer, global::Object1 value, MsgPack::MessagePackSerializerOptions options)
-        {
-            if (value == null)
-            {
-                writer.WriteNil();
-                return;
-            }
+		public void Serialize(ref MsgPack::MessagePackWriter writer, global::Object1 value, MsgPack::MessagePackSerializerOptions options)
+		{
+			if (value == null)
+			{
+				writer.WriteNil();
+				return;
+			}
 
-            writer.WriteArrayHeader(0);
-        }
+			writer.WriteArrayHeader(0);
+		}
 
-        public global::Object1 Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
+		public global::Object1 Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		{
+			if (reader.TryReadNil())
+			{
+				return null;
+			}
 
-            reader.Skip();
-            return new global::Object1();
-        }
-    }
+			reader.Skip();
+			return new global::Object1();
+		}
+	}
 }
