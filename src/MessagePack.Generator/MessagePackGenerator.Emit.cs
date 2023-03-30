@@ -51,7 +51,7 @@ public partial class MessagePackGenerator
             sb.Clear();
             sb.AppendLine(FileHeader);
             sb.Append(transformOutput);
-            context.AddSource(uniqueFileName, sb.ToString());
+            context.AddSource(CodeAnalysisUtilities.GetSanitizedFileName(uniqueFileName), sb.ToString());
             sb.Clear();
         }
     }

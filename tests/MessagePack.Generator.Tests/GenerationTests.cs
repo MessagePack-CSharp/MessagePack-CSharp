@@ -117,4 +117,28 @@ internal class SubObject
 """;
         await VerifyCS.Test.RunDefaultAsync(testSource);
     }
+
+    [Fact]
+    public async Task GenericType()
+    {
+        string testSource = """
+using MessagePack;
+using System;
+
+[MessagePackObject]
+internal class ContainerObject
+{
+    [Key(0)]
+    internal MyGenericType<int> TupleProperty { get; set; }
+}
+
+[MessagePackObject]
+internal class MyGenericType<T>
+{
+    [Key(0)]
+    internal T Value { get; set; }
+}
+""";
+        await VerifyCS.Test.RunDefaultAsync(testSource);
+    }
 }

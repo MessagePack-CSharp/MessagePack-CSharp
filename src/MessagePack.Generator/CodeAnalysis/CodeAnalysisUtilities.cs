@@ -14,4 +14,15 @@ internal static class CodeAnalysisUtilities
     {
         return string.IsNullOrEmpty(right) ? left : $"{left}.{right}";
     }
+
+    internal static string GetSanitizedFileName(string fileName)
+    {
+        char[] invalidChars = Path.GetInvalidFileNameChars();
+        foreach (char c in invalidChars)
+        {
+            fileName = fileName.Replace(c, '_');
+        }
+
+        return fileName;
+    }
 }
