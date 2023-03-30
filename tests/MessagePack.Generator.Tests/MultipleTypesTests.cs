@@ -1,6 +1,7 @@
 // Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.ComponentModel;
 using MessagePack.Generator.Tests;
 
 public class MultipleTypesTests
@@ -12,8 +13,8 @@ public class MultipleTypesTests
         this.testOutputHelper = testOutputHelper;
     }
 
-    [Fact]
-    public async Task TwoTypes()
+    [Theory, PairwiseData]
+    public async Task TwoTypes(bool usesMapMode)
     {
         string testSource = """
 using MessagePack;
@@ -28,6 +29,6 @@ public class Object2
 {
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource);
+        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { UsesMapMode = usesMapMode }, testMethod: $"{nameof(TwoTypes)}({usesMapMode})");
     }
 }

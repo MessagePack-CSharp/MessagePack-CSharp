@@ -65,7 +65,7 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             }
         }
 
-        public static async Task RunDefaultAsync(string testSource, [CallerFilePath] string? testFile = null, [CallerMemberName] string? testMethod = null)
+        public static async Task RunDefaultAsync(string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string? testMethod = null)
         {
             await new Test(testFile, testMethod)
             {
@@ -73,12 +73,15 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                 {
                     Sources = { testSource },
                 },
+                Options = options ?? AnalyzerOptions.Default,
             }.RunAsync();
         }
 
         public Test AddGeneratedSources([CallerMemberName] string? testMethod = null)
         {
             string expectedPrefix = $"{ThisAssembly.AssemblyName}.Resources.{testMethod}."
+                .Replace(' ', '_')
+                .Replace(',', '_')
                 .Replace('(', '_')
                 .Replace(')', '_');
 

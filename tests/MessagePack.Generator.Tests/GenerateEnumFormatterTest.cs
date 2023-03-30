@@ -12,8 +12,8 @@ public class GenerateEnumFormatterTest
         this.testOutputHelper = testOutputHelper;
     }
 
-    [Theory, CombinatorialData]
-    public async Task EnumFormatter(ContainerKind container)
+    [Theory, PairwiseData]
+    public async Task EnumFormatter(ContainerKind container, bool usesMapMode)
     {
         string testSource = """
 [MessagePackObject]
@@ -30,6 +30,6 @@ public enum MyEnum
 """;
         testSource = TestUtilities.WrapTestSource(testSource, container);
 
-        await VerifyCS.Test.RunDefaultAsync(testSource, testMethod: $"{nameof(EnumFormatter)}({container})");
+        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { UsesMapMode = usesMapMode }, testMethod: $"{nameof(EnumFormatter)}({container}, {usesMapMode})");
     }
 }

@@ -27,30 +27,30 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n");
+            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n");
  var list = new List<ValueTuple<MemberSerializationInfo, byte[]>>();
-    foreach (var member in Info.Members) {
-        var binary = EmbedStringHelper.Utf8.GetBytes(member.StringKey);
-        list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
-    }
+	foreach (var member in Info.Members) {
+		var binary = EmbedStringHelper.Utf8.GetBytes(member.StringKey);
+		list.Add(new ValueTuple<MemberSerializationInfo, byte[]>(member, binary));
+	}
 
-    bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members); 
-            this.Write("    public sealed class ");
+	bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members); 
+            this.Write("\tpublic sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterNameWithoutNamespace));
             this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
             this.Write(">\r\n");
  foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) {
-            this.Write("        where ");
+            this.Write("\t\twhere ");
             this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Name));
             this.Write(" : ");
             this.Write(this.ToStringHelper.ToStringWithCulture(typeArg.Constraints));
             this.Write("\r\n");
  }
-            this.Write("    {\r\n");
+            this.Write("\t{\r\n");
  foreach (var item in Info.Members) { 
  if (item.CustomFormatterTypeName != null) { 
-            this.Write("        private readonly ");
+            this.Write("\t\tprivate readonly ");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.CustomFormatterTypeName));
             this.Write(" __");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Name));
@@ -60,11 +60,11 @@ namespace MessagePack.Generator.Transforms
  } 
  } 
  for (var i = 0; i < list.Count; i++) {
-        var member = list[i].Item1;
-        var binary = list[i].Item2; 
-            this.Write("        // ");
+		var member = list[i].Item1;
+		var binary = list[i].Item2; 
+            this.Write("\t\t// ");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.StringKey));
-            this.Write("\r\n        private static global::System.ReadOnlySpan<byte> GetSpan_");
+            this.Write("\r\n\t\tprivate static global::System.ReadOnlySpan<byte> GetSpan_");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("() => ");
             this.Write(this.ToStringHelper.ToStringWithCulture(EmbedStringHelper.ToByteArrayString(binary)));
@@ -73,118 +73,110 @@ namespace MessagePack.Generator.Transforms
  if (list.Count != 0) { 
             this.Write("\r\n");
  } 
-            this.Write("        public void Serialize(ref global::MessagePack.MessagePackWriter writer, ");
+            this.Write("\t\tpublic void Serialize(ref global::MessagePack.MessagePackWriter writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
-            this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n");
+            this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n\t\t{\r\n");
  if (Info.IsClass) { 
-            this.Write("            if (value is null)\r\n            {\r\n                writer.WriteNil();" +
-                    "\r\n                return;\r\n            }\r\n\r\n");
+            this.Write("\t\t\tif (value is null)\r\n\t\t\t{\r\n\t\t\t\twriter.WriteNil();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\r\n");
  }
 
-    if (isFormatterResolverNecessary) { 
-            this.Write("            var formatterResolver = options.Resolver;\r\n");
+	if (isFormatterResolverNecessary) { 
+            this.Write("\t\t\tvar formatterResolver = options.Resolver;\r\n");
  }
 
-    if (Info.HasIMessagePackSerializationCallbackReceiver) {
-        if (Info.NeedsCastOnBefore) { 
-            this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value" +
-                    ").OnBeforeSerialize();\r\n");
+	if (Info.HasIMessagePackSerializationCallbackReceiver) {
+		if (Info.NeedsCastOnBefore) { 
+            this.Write("\t\t\t((global::MessagePack.IMessagePackSerializationCallbackReceiver)value).OnBefor" +
+                    "eSerialize();\r\n");
  } else { 
-            this.Write("            value.OnBeforeSerialize();\r\n");
+            this.Write("\t\t\tvalue.OnBeforeSerialize();\r\n");
  } 
  } 
-            this.Write("            writer.WriteMapHeader(");
+            this.Write("\t\t\twriter.WriteMapHeader(");
             this.Write(this.ToStringHelper.ToStringWithCulture(list.Count));
             this.Write(");\r\n");
  foreach (var memberAndBinary in list) {
-        var member = memberAndBinary.Item1; 
-            this.Write("            writer.WriteRaw(GetSpan_");
+		var member = memberAndBinary.Item1; 
+            this.Write("\t\t\twriter.WriteRaw(GetSpan_");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("());\r\n            ");
+            this.Write("());\r\n\t\t\t");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.GetSerializeMethodString()));
             this.Write(";\r\n");
  } 
-            this.Write("        }\r\n\r\n        public ");
+            this.Write("\t\t}\r\n\r\n\t\tpublic ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
             this.Write(" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePac" +
-                    "k.MessagePackSerializerOptions options)\r\n        {\r\n            if (reader.TryRe" +
-                    "adNil())\r\n            {\r\n");
+                    "k.MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\tif (reader.TryReadNil())\r\n\t\t\t{\r" +
+                    "\n");
  if (Info.IsClass) { 
-            this.Write("                return null;\r\n");
+            this.Write("\t\t\t\treturn null;\r\n");
  } else { 
-            this.Write("                throw new global::System.InvalidOperationException(\"typecode is n" +
-                    "ull, struct not supported\");\r\n");
+            this.Write("\t\t\t\tthrow new global::System.InvalidOperationException(\"typecode is null, struct " +
+                    "not supported\");\r\n");
  } 
-            this.Write("            }\r\n\r\n");
+            this.Write("\t\t\t}\r\n\r\n");
  if (Info.Members.Length == 0) { 
-            this.Write("            reader.Skip();\r\n            var ____result = new ");
+            this.Write("\t\t\treader.Skip();\r\n\t\t\tvar ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.GetConstructorString()));
             this.Write(";\r\n");
  } else { 
-            this.Write("            options.Security.DepthStep(ref reader);\r\n");
+            this.Write("\t\t\toptions.Security.DepthStep(ref reader);\r\n");
  if (isFormatterResolverNecessary) { 
-            this.Write("            var formatterResolver = options.Resolver;\r\n");
+            this.Write("\t\t\tvar formatterResolver = options.Resolver;\r\n");
  } 
-            this.Write("            var length = reader.ReadMapHeader();\r\n");
+            this.Write("\t\t\tvar length = reader.ReadMapHeader();\r\n");
  var canOverwrite = Info.ConstructorParameters.Length == 0;
-        if (canOverwrite) { 
-            this.Write("            var ____result = new ");
+		if (canOverwrite) { 
+            this.Write("\t\t\tvar ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.GetConstructorString()));
             this.Write(";\r\n");
  } else {
-            foreach (var member in Info.Members.Where(x => x.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
+			foreach (var member in Info.Members.Where(x => x.IsWritable || Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
  if (Info.ConstructorParameters.All(p => !p.Equals(member))) { 
-            this.Write("            var __");
+            this.Write("\t\t\tvar __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__IsInitialized = false;\r\n");
  } 
-            this.Write("            var __");
+            this.Write("\t\t\tvar __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write("__ = default(");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Type));
             this.Write(");\r\n");
  } 
  } 
-            this.Write(@"
-            for (int i = 0; i < length; i++)
-            {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                    FAIL:
-                      reader.Skip();
-                      continue;
-");
-            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(Info, "                    ", canOverwrite)));
-            this.Write("\r\n                }\r\n            }\r\n\r\n");
+            this.Write("\r\n\t\t\tfor (int i = 0; i < length; i++)\r\n\t\t\t{\r\n\t\t\t\tvar stringKey = global::MessageP" +
+                    "ack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);\r\n\t\t\t\tswitch (stringKey.L" +
+                    "ength)\r\n\t\t\t\t{\r\n\t\t\t\t\tdefault:\r\n\t\t\t\t\tFAIL:\r\n\t\t\t\t\t  reader.Skip();\r\n\t\t\t\t\t  continue" +
+                    ";\r\n");
+            this.Write(this.ToStringHelper.ToStringWithCulture(StringKeyFormatterDeserializeHelper.Classify(Info, "					", canOverwrite)));
+            this.Write("\r\n\t\t\t\t}\r\n\t\t\t}\r\n\r\n");
  if (!canOverwrite) { 
-            this.Write("            var ____result = new ");
+            this.Write("\t\t\tvar ____result = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.GetConstructorString()));
             this.Write(";\r\n");
  foreach (var member in Info.Members.Where(x => x.IsWritable && !Info.ConstructorParameters.Any(p => p.Equals(x)))) { 
-            this.Write("            if (__");
+            this.Write("\t\t\tif (__");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__IsInitialized)\r\n            {\r\n                ____result.");
+            this.Write("__IsInitialized)\r\n\t\t\t{\r\n\t\t\t\t____result.");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
             this.Write(" = __");
             this.Write(this.ToStringHelper.ToStringWithCulture(member.Name));
-            this.Write("__;\r\n            }\r\n\r\n");
+            this.Write("__;\r\n\t\t\t}\r\n\r\n");
  } 
  } 
  } 
  if (Info.HasIMessagePackSerializationCallbackReceiver) {
-        if (Info.NeedsCastOnAfter) { 
-            this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____r" +
-                    "esult).OnAfterDeserialize();\r\n");
+		if (Info.NeedsCastOnAfter) { 
+            this.Write("\t\t\t((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).On" +
+                    "AfterDeserialize();\r\n");
  } else { 
-            this.Write("            ____result.OnAfterDeserialize();\r\n");
+            this.Write("\t\t\t____result.OnAfterDeserialize();\r\n");
  } 
  } 
  if (Info.Members.Length != 0) { 
-            this.Write("            reader.Depth--;\r\n");
+            this.Write("\t\t\treader.Depth--;\r\n");
  } 
-            this.Write("            return ____result;\r\n        }\r\n    }\r\n}\r\n");
+            this.Write("\t\t\treturn ____result;\r\n\t\t}\r\n\t}\r\n}\r\n");
             return this.GenerationEnvironment.ToString();
         }
     }
