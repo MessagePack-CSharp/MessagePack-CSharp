@@ -19,7 +19,7 @@ namespace MessagePack.Formatters.MyTestNamespace
 
 			MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 			writer.WriteArrayHeader(1);
-			global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Serialize(ref writer, value.EnumValue, options);
+			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Serialize(ref writer, value.EnumValue, options);
 		}
 
 		public global::MyTestNamespace.MyMessagePackObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
@@ -39,7 +39,7 @@ namespace MessagePack.Formatters.MyTestNamespace
 				switch (i)
 				{
 					case 0:
-						____result.EnumValue = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Deserialize(ref reader, options);
+						____result.EnumValue = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Deserialize(ref reader, options);
 						break;
 					default:
 						reader.Skip();

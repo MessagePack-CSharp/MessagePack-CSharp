@@ -30,7 +30,7 @@ public record MemberSerializationInfo(
         }
         else
         {
-            return $"global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Serialize(ref writer, value.{this.Name}, options)";
+            return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Serialize(ref writer, value.{this.Name}, options)";
         }
     }
 
@@ -44,7 +44,7 @@ public record MemberSerializationInfo(
         {
             if (this.Type == "byte[]")
             {
-                return "global::MessagePack.Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes())";
+                return "MsgPack::Internal.CodeGenHelpers.GetArrayFromNullableSequence(reader.ReadBytes())";
             }
             else
             {
@@ -53,7 +53,7 @@ public record MemberSerializationInfo(
         }
         else
         {
-            return $"global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Deserialize(ref reader, options)";
+            return $"MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<{this.Type}>(formatterResolver).Deserialize(ref reader, options)";
         }
     }
 }

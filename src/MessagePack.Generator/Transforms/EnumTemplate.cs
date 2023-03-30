@@ -24,19 +24,23 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n\tpublic sealed class ");
+            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\tusing ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
+            this.Write(" = ");
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(";\r\n\r\n\tpublic sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
             this.Write("Formatter : MsgPack::Formatters.IMessagePackFormatter<");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
             this.Write(">\r\n\t{\r\n\t\tpublic void Serialize(ref MsgPack::MessagePackWriter writer, ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
             this.Write(" value, MsgPack::MessagePackSerializerOptions options)\r\n\t\t{\r\n\t\t\twriter.Write((");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.UnderlyingTypeKeyword));
             this.Write(")value);\r\n\t\t}\r\n\r\n\t\tpublic ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
             this.Write(" Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerialize" +
                     "rOptions options)\r\n\t\t{\r\n\t\t\treturn (");
-            this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
+            this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
             this.Write(")reader.Read");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.UnderlyingTypeName));
             this.Write("();\r\n\t\t}\r\n\t}\r\n}\r\n");

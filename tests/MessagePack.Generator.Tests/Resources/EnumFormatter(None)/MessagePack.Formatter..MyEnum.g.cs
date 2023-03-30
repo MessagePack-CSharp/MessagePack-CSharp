@@ -5,17 +5,18 @@
 namespace MessagePack.Formatters
 {
 	using MsgPack = global::MessagePack;
+	using MyEnum = global::MyEnum;
 
-	public sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyEnum>
+	public sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<MyEnum>
 	{
-		public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyEnum value, MsgPack::MessagePackSerializerOptions options)
+		public void Serialize(ref MsgPack::MessagePackWriter writer, MyEnum value, MsgPack::MessagePackSerializerOptions options)
 		{
 			writer.Write((int)value);
 		}
 
-		public global::MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
+		public MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
 		{
-			return (global::MyEnum)reader.ReadInt32();
+			return (MyEnum)reader.ReadInt32();
 		}
 	}
 }
