@@ -32,7 +32,11 @@ namespace MessagePack.Generator.Transforms
             this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static readonly " +
                     "global::MessagePack.IFormatterResolver Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write("();\r\n\r\n        private ");
+            this.Write(@"();
+
+        public static readonly global::MessagePack.IFormatterResolver InstanceWithStandardAotResolver = global::MessagePack.Resolvers.CompositeResolver.Create(Instance, global::MessagePack.Resolvers.StandardAotResolver.Instance);
+
+        private ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(@"()
         {

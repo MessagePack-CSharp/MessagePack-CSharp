@@ -8,6 +8,8 @@ namespace MessagePack.Resolvers
     {
         public static readonly global::MessagePack.IFormatterResolver Instance = new GeneratedResolver();
 
+        public static readonly global::MessagePack.IFormatterResolver InstanceWithStandardAotResolver = global::MessagePack.Resolvers.CompositeResolver.Create(Instance, global::MessagePack.Resolvers.StandardAotResolver.Instance);
+
         private GeneratedResolver()
         {
         }

@@ -6,5 +6,7 @@ MessagePack.MessagePackSerializerOptions.CompressionMinLength.get -> int
 MessagePack.MessagePackSerializerOptions.SuggestedContiguousMemorySize.get -> int
 MessagePack.MessagePackSerializerOptions.WithCompressionMinLength(int compressionMinLength) -> MessagePack.MessagePackSerializerOptions!
 MessagePack.MessagePackSerializerOptions.WithSuggestedContiguousMemorySize(int suggestedContiguousMemorySize) -> MessagePack.MessagePackSerializerOptions!
+MessagePack.Resolvers.StandardAotResolver
 static MessagePack.MessagePackWriter.GetEncodedLength(long value) -> int
 static MessagePack.MessagePackWriter.GetEncodedLength(ulong value) -> int
+static readonly MessagePack.Resolvers.StandardAotResolver.Instance -> MessagePack.IFormatterResolver!

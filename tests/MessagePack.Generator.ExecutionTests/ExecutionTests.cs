@@ -4,7 +4,7 @@
 public class ExecutionTests
 {
     private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard
-        .WithResolver(GeneratedResolver.Instance);
+        .WithResolver(GeneratedResolver.InstanceWithStandardAotResolver);
 
     private readonly ITestOutputHelper logger;
 
@@ -28,7 +28,7 @@ public class ExecutionTests
     [Fact]
     public void ClassWithPropertiesWithGetterAndCtor()
     {
-        this.AssertRoundtrip(new HasPropertiesWithGetterAndCtor(1, 4));
+        this.AssertRoundtrip(new HasPropertiesWithGetterAndCtor(1, "four"));
     }
 
     private T AssertRoundtrip<T>(T value)
@@ -54,7 +54,7 @@ public class ExecutionTests
         public int A { get; set; }
 
         [Key(1)]
-        public int B { get; set; }
+        public int? B { get; set; }
     }
 
     [MessagePackObject(false)]
@@ -64,9 +64,9 @@ public class ExecutionTests
         public int A { get; }
 
         [Key(1)]
-        public int B { get; }
+        public string? B { get; }
 
-        public HasPropertiesWithGetterAndCtor(int a, int b)
+        public HasPropertiesWithGetterAndCtor(int a, string? b)
         {
             A = a;
             B = b;

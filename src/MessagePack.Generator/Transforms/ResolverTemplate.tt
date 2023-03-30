@@ -10,6 +10,8 @@ namespace <#= ResolverNamespace #>
     {
         public static readonly global::MessagePack.IFormatterResolver Instance = new <#= ResolverName #>();
 
+        public static readonly global::MessagePack.IFormatterResolver InstanceWithStandardAotResolver = global::MessagePack.Resolvers.CompositeResolver.Create(Instance, global::MessagePack.Resolvers.StandardAotResolver.Instance);
+
         private <#= ResolverName #>()
         {
         }
