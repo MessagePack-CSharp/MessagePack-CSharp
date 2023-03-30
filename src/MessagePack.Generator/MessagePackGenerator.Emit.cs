@@ -29,13 +29,13 @@ public partial class MessagePackGenerator
         foreach (EnumSerializationInfo info in model.EnumInfos)
         {
             EnumTemplate transform = new(options, info);
-            AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
+            AddTransform(transform.TransformText(), transform.FileName);
         }
 
         foreach (UnionSerializationInfo info in model.UnionInfos)
         {
             UnionTemplate transform = new(options, info);
-            AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
+            AddTransform(transform.TransformText(), transform.FileName);
         }
 
         foreach (ObjectSerializationInfo info in model.ObjectInfos)
@@ -43,7 +43,7 @@ public partial class MessagePackGenerator
             IFormatterTemplate transform = info.IsStringKey
                 ? new StringKeyFormatterTemplate(options, info)
                 : new FormatterTemplate(options, info);
-            AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
+            AddTransform(transform.TransformText(), transform.FileName);
         }
 
         void AddTransform(string transformOutput, string uniqueFileName)
@@ -51,7 +51,7 @@ public partial class MessagePackGenerator
             sb.Clear();
             sb.AppendLine(FileHeader);
             sb.Append(transformOutput);
-            context.AddSource($"{uniqueFileName}.g.cs", sb.ToString());
+            context.AddSource(uniqueFileName, sb.ToString());
             sb.Clear();
         }
     }
@@ -76,6 +76,6 @@ public partial class MessagePackGenerator
         ResolverTemplate resolverTemplate = new(options, registerInfos);
         sb.AppendLine(FileHeader);
         sb.Append(resolverTemplate.TransformText());
-        context.AddSource($"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(options.ResolverName, options.ResolverNamespace)}.g.cs", sb.ToString());
+        context.AddSource(resolverTemplate.FileName, sb.ToString());
     }
 }

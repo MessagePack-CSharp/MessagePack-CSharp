@@ -31,6 +31,14 @@ public class ExecutionTests
         this.AssertRoundtrip(new HasPropertiesWithGetterAndCtor(1, "four"));
     }
 
+    [Fact]
+    public void ClassWithUnionProperty()
+    {
+        this.AssertRoundtrip(new UnionContainer { Value = null });
+        this.AssertRoundtrip(new UnionContainer { Value = new Derived1() });
+        this.AssertRoundtrip(new UnionContainer { Value = new Derived2() });
+    }
+
     private T AssertRoundtrip<T>(T value)
     {
         byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);
@@ -41,39 +49,62 @@ public class ExecutionTests
     }
 
     [MessagePackObject]
-    public record MyMessagePackObject
+    internal record MyMessagePackObject
     {
         [Key(0)]
-        public MyEnum EnumValue { get; set; }
+        internal MyEnum EnumValue { get; set; }
     }
 
     [MessagePackObject(false)]
-    public record HasPropertiesWithGetterAndSetter
+    internal record HasPropertiesWithGetterAndSetter
     {
         [Key(0)]
-        public int A { get; set; }
+        internal int A { get; set; }
 
         [Key(1)]
-        public int? B { get; set; }
+        internal int? B { get; set; }
     }
 
     [MessagePackObject(false)]
-    public record HasPropertiesWithGetterAndCtor
+    internal record HasPropertiesWithGetterAndCtor
     {
         [Key(0)]
-        public int A { get; }
+        internal int A { get; }
 
         [Key(1)]
-        public string? B { get; }
+        internal string? B { get; }
 
-        public HasPropertiesWithGetterAndCtor(int a, string? b)
+        internal HasPropertiesWithGetterAndCtor(int a, string? b)
         {
             A = a;
             B = b;
         }
     }
 
-    public enum MyEnum
+    [Union(0, typeof(Derived1))]
+    [Union(1, typeof(Derived2))]
+    internal interface IMyType
+    {
+    }
+
+    [MessagePackObject]
+    internal record Derived1 : IMyType
+    {
+    }
+
+    [MessagePackObject]
+    internal record Derived2 : IMyType
+    {
+    }
+
+    [MessagePackObject]
+    internal record UnionContainer
+    {
+        [Key(0)]
+        internal IMyType? Value { get; set; }
+    }
+
+    internal enum MyEnum
     {
         A,
         B,

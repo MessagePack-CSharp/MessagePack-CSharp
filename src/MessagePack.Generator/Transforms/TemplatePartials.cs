@@ -12,12 +12,17 @@ public partial class FormatterTemplate : IFormatterTemplate
     public FormatterTemplate(AnalyzerOptions options, ObjectSerializationInfo info)
     {
         this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
+        this.Options = options;
         this.Info = info;
     }
 
     public string Namespace { get; }
 
+    public AnalyzerOptions Options { get; }
+
     public ObjectSerializationInfo Info { get; }
+
+    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Info.FormatterName, this.Options.FormatterNamespace)}.g.cs";
 }
 
 public partial class StringKeyFormatterTemplate : IFormatterTemplate
@@ -25,12 +30,17 @@ public partial class StringKeyFormatterTemplate : IFormatterTemplate
     public StringKeyFormatterTemplate(AnalyzerOptions options, ObjectSerializationInfo info)
     {
         this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
+        this.Options = options;
         this.Info = info;
     }
 
     public string Namespace { get; }
 
+    public AnalyzerOptions Options { get; }
+
     public ObjectSerializationInfo Info { get; }
+
+    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Info.FormatterName, this.Options.FormatterNamespace)}.g.cs";
 }
 
 public partial class ResolverTemplate
@@ -52,6 +62,8 @@ public partial class ResolverTemplate
     public bool PublicResolver => this.Options.PublicResolver;
 
     public IReadOnlyList<IResolverRegisterInfo> RegisterInfos { get; }
+
+    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Options.ResolverName, this.Options.ResolverNamespace)}.g.cs";
 }
 
 public partial class EnumTemplate
@@ -59,23 +71,33 @@ public partial class EnumTemplate
     public EnumTemplate(AnalyzerOptions options, EnumSerializationInfo info)
     {
         this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
+        this.Options = options;
         this.Info = info;
     }
 
     public string Namespace { get; }
 
+    public AnalyzerOptions Options { get; }
+
     public EnumSerializationInfo Info { get; }
+
+    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Info.FormatterName, this.Options.FormatterNamespace)}.g.cs";
 }
 
 public partial class UnionTemplate
 {
     public UnionTemplate(AnalyzerOptions options, UnionSerializationInfo info)
     {
-        this.Namespace = options.FormatterNamespace;
+        this.Namespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
+        this.Options = options;
         this.Info = info;
     }
 
     public string Namespace { get; }
 
+    public AnalyzerOptions Options { get; }
+
     public UnionSerializationInfo Info { get; }
+
+    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Info.FormatterName, this.Options.FormatterNamespace)}.g.cs";
 }

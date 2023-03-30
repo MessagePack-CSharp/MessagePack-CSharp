@@ -7,6 +7,8 @@ namespace MessagePack.Generator.Transforms;
 
 public interface IFormatterTemplate
 {
+    string FileName { get; }
+
     string Namespace { get; }
 
     ObjectSerializationInfo Info { get; }
