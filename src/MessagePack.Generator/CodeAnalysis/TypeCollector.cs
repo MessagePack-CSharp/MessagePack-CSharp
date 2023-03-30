@@ -148,76 +148,76 @@ public class TypeCollector
     private static readonly Dictionary<string, string> KnownGenericTypes = new()
     {
 #pragma warning disable SA1509 // Opening braces should not be preceded by blank line
-        { "System.Collections.Generic.List<>", "global::MessagePack.Formatters.ListFormatter<TREPLACE>" },
-        { "System.Collections.Generic.LinkedList<>", "global::MessagePack.Formatters.LinkedListFormatter<TREPLACE>" },
-        { "System.Collections.Generic.Queue<>", "global::MessagePack.Formatters.QueueFormatter<TREPLACE>" },
-        { "System.Collections.Generic.Stack<>", "global::MessagePack.Formatters.StackFormatter<TREPLACE>" },
-        { "System.Collections.Generic.HashSet<>", "global::MessagePack.Formatters.HashSetFormatter<TREPLACE>" },
-        { "System.Collections.ObjectModel.ReadOnlyCollection<>", "global::MessagePack.Formatters.ReadOnlyCollectionFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IList<>", "global::MessagePack.Formatters.InterfaceListFormatter2<TREPLACE>" },
-        { "System.Collections.Generic.ICollection<>", "global::MessagePack.Formatters.InterfaceCollectionFormatter2<TREPLACE>" },
-        { "System.Collections.Generic.IEnumerable<>", "global::MessagePack.Formatters.InterfaceEnumerableFormatter<TREPLACE>" },
-        { "System.Collections.Generic.Dictionary<,>", "global::MessagePack.Formatters.DictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IDictionary<,>", "global::MessagePack.Formatters.InterfaceDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Generic.SortedDictionary<,>", "global::MessagePack.Formatters.SortedDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Generic.SortedList<,>", "global::MessagePack.Formatters.SortedListFormatter<TREPLACE>" },
-        { "System.Linq.ILookup<,>", "global::MessagePack.Formatters.InterfaceLookupFormatter<TREPLACE>" },
-        { "System.Linq.IGrouping<,>", "global::MessagePack.Formatters.InterfaceGroupingFormatter<TREPLACE>" },
-        { "System.Collections.ObjectModel.ObservableCollection<>", "global::MessagePack.Formatters.ObservableCollectionFormatter<TREPLACE>" },
-        { "System.Collections.ObjectModel.ReadOnlyObservableCollection<>", "global::MessagePack.Formatters.ReadOnlyObservableCollectionFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IReadOnlyList<>", "global::MessagePack.Formatters.InterfaceReadOnlyListFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IReadOnlyCollection<>", "global::MessagePack.Formatters.InterfaceReadOnlyCollectionFormatter<TREPLACE>" },
-        { "System.Collections.Generic.ISet<>", "global::MessagePack.Formatters.InterfaceSetFormatter<TREPLACE>" },
-        { "System.Collections.Concurrent.ConcurrentBag<>", "global::MessagePack.Formatters.ConcurrentBagFormatter<TREPLACE>" },
-        { "System.Collections.Concurrent.ConcurrentQueue<>", "global::MessagePack.Formatters.ConcurrentQueueFormatter<TREPLACE>" },
-        { "System.Collections.Concurrent.ConcurrentStack<>", "global::MessagePack.Formatters.ConcurrentStackFormatter<TREPLACE>" },
-        { "System.Collections.ObjectModel.ReadOnlyDictionary<,>", "global::MessagePack.Formatters.ReadOnlyDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Generic.IReadOnlyDictionary<,>", "global::MessagePack.Formatters.InterfaceReadOnlyDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Concurrent.ConcurrentDictionary<,>", "global::MessagePack.Formatters.ConcurrentDictionaryFormatter<TREPLACE>" },
-        { "System.Lazy<>", "global::MessagePack.Formatters.LazyFormatter<TREPLACE>" },
-        { "System.Threading.Tasks<>", "global::MessagePack.Formatters.TaskValueFormatter<TREPLACE>" },
+        { "System.Collections.Generic.List<>", "MsgPack::Formatters.ListFormatter<TREPLACE>" },
+        { "System.Collections.Generic.LinkedList<>", "MsgPack::Formatters.LinkedListFormatter<TREPLACE>" },
+        { "System.Collections.Generic.Queue<>", "MsgPack::Formatters.QueueFormatter<TREPLACE>" },
+        { "System.Collections.Generic.Stack<>", "MsgPack::Formatters.StackFormatter<TREPLACE>" },
+        { "System.Collections.Generic.HashSet<>", "MsgPack::Formatters.HashSetFormatter<TREPLACE>" },
+        { "System.Collections.ObjectModel.ReadOnlyCollection<>", "MsgPack::Formatters.ReadOnlyCollectionFormatter<TREPLACE>" },
+        { "System.Collections.Generic.IList<>", "MsgPack::Formatters.InterfaceListFormatter2<TREPLACE>" },
+        { "System.Collections.Generic.ICollection<>", "MsgPack::Formatters.InterfaceCollectionFormatter2<TREPLACE>" },
+        { "System.Collections.Generic.IEnumerable<>", "MsgPack::Formatters.InterfaceEnumerableFormatter<TREPLACE>" },
+        { "System.Collections.Generic.Dictionary<,>", "MsgPack::Formatters.DictionaryFormatter<TREPLACE>" },
+        { "System.Collections.Generic.IDictionary<,>", "MsgPack::Formatters.InterfaceDictionaryFormatter<TREPLACE>" },
+        { "System.Collections.Generic.SortedDictionary<,>", "MsgPack::Formatters.SortedDictionaryFormatter<TREPLACE>" },
+        { "System.Collections.Generic.SortedList<,>", "MsgPack::Formatters.SortedListFormatter<TREPLACE>" },
+        { "System.Linq.ILookup<,>", "MsgPack::Formatters.InterfaceLookupFormatter<TREPLACE>" },
+        { "System.Linq.IGrouping<,>", "MsgPack::Formatters.InterfaceGroupingFormatter<TREPLACE>" },
+        { "System.Collections.ObjectModel.ObservableCollection<>", "MsgPack::Formatters.ObservableCollectionFormatter<TREPLACE>" },
+        { "System.Collections.ObjectModel.ReadOnlyObservableCollection<>", "MsgPack::Formatters.ReadOnlyObservableCollectionFormatter<TREPLACE>" },
+        { "System.Collections.Generic.IReadOnlyList<>", "MsgPack::Formatters.InterfaceReadOnlyListFormatter<TREPLACE>" },
+        { "System.Collections.Generic.IReadOnlyCollection<>", "MsgPack::Formatters.InterfaceReadOnlyCollectionFormatter<TREPLACE>" },
+        { "System.Collections.Generic.ISet<>", "MsgPack::Formatters.InterfaceSetFormatter<TREPLACE>" },
+        { "System.Collections.Concurrent.ConcurrentBag<>", "MsgPack::Formatters.ConcurrentBagFormatter<TREPLACE>" },
+        { "System.Collections.Concurrent.ConcurrentQueue<>", "MsgPack::Formatters.ConcurrentQueueFormatter<TREPLACE>" },
+        { "System.Collections.Concurrent.ConcurrentStack<>", "MsgPack::Formatters.ConcurrentStackFormatter<TREPLACE>" },
+        { "System.Collections.ObjectModel.ReadOnlyDictionary<,>", "MsgPack::Formatters.ReadOnlyDictionaryFormatter<TREPLACE>" },
+        { "System.Collections.Generic.IReadOnlyDictionary<,>", "MsgPack::Formatters.InterfaceReadOnlyDictionaryFormatter<TREPLACE>" },
+        { "System.Collections.Concurrent.ConcurrentDictionary<,>", "MsgPack::Formatters.ConcurrentDictionaryFormatter<TREPLACE>" },
+        { "System.Lazy<>", "MsgPack::Formatters.LazyFormatter<TREPLACE>" },
+        { "System.Threading.Tasks<>", "MsgPack::Formatters.TaskValueFormatter<TREPLACE>" },
 
-        { "System.Tuple<>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,,,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,,,,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
-        { "System.Tuple<,,,,,,,>", "global::MessagePack.Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<,,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<,,,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<,,,,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
+        { "System.Tuple<,,,,,,,>", "MsgPack::Formatters.TupleFormatter<TREPLACE>" },
 
-        { "System.ValueTuple<>", "global::MessagePack.Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,>", "global::MessagePack.Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,>", "global::MessagePack.Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,>", "global::MessagePack.Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,,>", "global::MessagePack.Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,,,>", "global::MessagePack.Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,,,,>", "global::MessagePack.Formatters.ValueTupleFormatter<TREPLACE>" },
-        { "System.ValueTuple<,,,,,,,>", "global::MessagePack.Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<,,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<,,,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<,,,,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
+        { "System.ValueTuple<,,,,,,,>", "MsgPack::Formatters.ValueTupleFormatter<TREPLACE>" },
 
-        { "System.Collections.Generic.KeyValuePair<,>", "global::MessagePack.Formatters.KeyValuePairFormatter<TREPLACE>" },
-        { "System.Threading.Tasks.ValueTask<>", "global::MessagePack.Formatters.KeyValuePairFormatter<TREPLACE>" },
-        { "System.ArraySegment<>", "global::MessagePack.Formatters.ArraySegmentFormatter<TREPLACE>" },
+        { "System.Collections.Generic.KeyValuePair<,>", "MsgPack::Formatters.KeyValuePairFormatter<TREPLACE>" },
+        { "System.Threading.Tasks.ValueTask<>", "MsgPack::Formatters.KeyValuePairFormatter<TREPLACE>" },
+        { "System.ArraySegment<>", "MsgPack::Formatters.ArraySegmentFormatter<TREPLACE>" },
 
         // extensions
-        { "System.Collections.Immutable.ImmutableArray<>", "global::MessagePack.ImmutableCollection.ImmutableArrayFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableList<>", "global::MessagePack.ImmutableCollection.ImmutableListFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableDictionary<,>", "global::MessagePack.ImmutableCollection.ImmutableDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableHashSet<>", "global::MessagePack.ImmutableCollection.ImmutableHashSetFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableSortedDictionary<,>", "global::MessagePack.ImmutableCollection.ImmutableSortedDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableSortedSet<>", "global::MessagePack.ImmutableCollection.ImmutableSortedSetFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableQueue<>", "global::MessagePack.ImmutableCollection.ImmutableQueueFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.ImmutableStack<>", "global::MessagePack.ImmutableCollection.ImmutableStackFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableList<>", "global::MessagePack.ImmutableCollection.InterfaceImmutableListFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableDictionary<,>", "global::MessagePack.ImmutableCollection.InterfaceImmutableDictionaryFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableQueue<>", "global::MessagePack.ImmutableCollection.InterfaceImmutableQueueFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableSet<>", "global::MessagePack.ImmutableCollection.InterfaceImmutableSetFormatter<TREPLACE>" },
-        { "System.Collections.Immutable.IImmutableStack<>", "global::MessagePack.ImmutableCollection.InterfaceImmutableStackFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableArray<>", "MsgPack::ImmutableCollection.ImmutableArrayFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableList<>", "MsgPack::ImmutableCollection.ImmutableListFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableDictionary<,>", "MsgPack::ImmutableCollection.ImmutableDictionaryFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableHashSet<>", "MsgPack::ImmutableCollection.ImmutableHashSetFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableSortedDictionary<,>", "MsgPack::ImmutableCollection.ImmutableSortedDictionaryFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableSortedSet<>", "MsgPack::ImmutableCollection.ImmutableSortedSetFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableQueue<>", "MsgPack::ImmutableCollection.ImmutableQueueFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.ImmutableStack<>", "MsgPack::ImmutableCollection.ImmutableStackFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.IImmutableList<>", "MsgPack::ImmutableCollection.InterfaceImmutableListFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.IImmutableDictionary<,>", "MsgPack::ImmutableCollection.InterfaceImmutableDictionaryFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.IImmutableQueue<>", "MsgPack::ImmutableCollection.InterfaceImmutableQueueFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.IImmutableSet<>", "MsgPack::ImmutableCollection.InterfaceImmutableSetFormatter<TREPLACE>" },
+        { "System.Collections.Immutable.IImmutableStack<>", "MsgPack::ImmutableCollection.InterfaceImmutableStackFormatter<TREPLACE>" },
 
-        { "Reactive.Bindings.ReactiveProperty<>", "global::MessagePack.ReactivePropertyExtension.ReactivePropertyFormatter<TREPLACE>" },
-        { "Reactive.Bindings.IReactiveProperty<>", "global::MessagePack.ReactivePropertyExtension.InterfaceReactivePropertyFormatter<TREPLACE>" },
-        { "Reactive.Bindings.IReadOnlyReactiveProperty<>", "global::MessagePack.ReactivePropertyExtension.InterfaceReadOnlyReactivePropertyFormatter<TREPLACE>" },
-        { "Reactive.Bindings.ReactiveCollection<>", "global::MessagePack.ReactivePropertyExtension.ReactiveCollectionFormatter<TREPLACE>" },
+        { "Reactive.Bindings.ReactiveProperty<>", "MsgPack::ReactivePropertyExtension.ReactivePropertyFormatter<TREPLACE>" },
+        { "Reactive.Bindings.IReactiveProperty<>", "MsgPack::ReactivePropertyExtension.InterfaceReactivePropertyFormatter<TREPLACE>" },
+        { "Reactive.Bindings.IReadOnlyReactiveProperty<>", "MsgPack::ReactivePropertyExtension.InterfaceReadOnlyReactivePropertyFormatter<TREPLACE>" },
+        { "Reactive.Bindings.ReactiveCollection<>", "MsgPack::ReactivePropertyExtension.ReactiveCollectionFormatter<TREPLACE>" },
 #pragma warning restore SA1509 // Opening braces should not be preceded by blank line
     };
 
@@ -413,7 +413,11 @@ public class TypeCollector
             return new UnionSubTypeInfo(key, typeName);
         }
 
-        var info = new UnionSerializationInfo(type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(), type.Name, type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), unionAttrs.Select(UnionSubTypeInfoSelector).OrderBy(x => x.Key).ToArray());
+        var info = new UnionSerializationInfo(
+            type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
+            type.Name,
+            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            unionAttrs.Select(UnionSubTypeInfoSelector).OrderBy(x => x.Key).ToArray());
 
         this.collectedUnionInfo.Add(info);
     }
@@ -451,15 +455,15 @@ public class TypeCollector
         string formatterName;
         if (array.IsSZArray)
         {
-            formatterName = "global::MessagePack.Formatters.ArrayFormatter<" + elementTypeDisplayName + ">";
+            formatterName = "MsgPack::Formatters.ArrayFormatter<" + elementTypeDisplayName + ">";
         }
         else
         {
             formatterName = array.Rank switch
             {
-                2 => "global::MessagePack.Formatters.TwoDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
-                3 => "global::MessagePack.Formatters.ThreeDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
-                4 => "global::MessagePack.Formatters.FourDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
+                2 => "MsgPack::Formatters.TwoDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
+                3 => "MsgPack::Formatters.ThreeDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
+                4 => "MsgPack::Formatters.FourDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
                 _ => throw new InvalidOperationException("does not supports array dimension, " + fullName),
             };
         }
@@ -514,7 +518,7 @@ public class TypeCollector
                 return;
             }
 
-            var info = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), "global::MessagePack.Formatters.NullableFormatter<" + firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ">", isOpenGenericType);
+            var info = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), "MsgPack::Formatters.NullableFormatter<" + firstTypeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + ">", isOpenGenericType);
             this.collectedGenericInfo.Add(info);
             return;
         }
@@ -602,7 +606,7 @@ public class TypeCollector
 
         formatterBuilder.Append('>');
 
-        var genericSerializationInfo = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), formatterBuilder.ToString(), isOpenGenericType);
+        var genericSerializationInfo = new GenericSerializationInfo(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), $"Formatters::{formatterBuilder}", isOpenGenericType);
         this.collectedGenericInfo.Add(genericSerializationInfo);
     }
 

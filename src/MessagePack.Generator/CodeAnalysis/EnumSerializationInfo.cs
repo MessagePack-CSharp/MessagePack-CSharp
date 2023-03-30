@@ -5,7 +5,11 @@ namespace MessagePack.Generator.CodeAnalysis;
 
 public sealed record EnumSerializationInfo(string? Namespace, string Name, string FullName, string UnderlyingTypeName) : IResolverRegisterInfo
 {
-    public string FormatterName => CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Name + "Formatter", this.Namespace);
+    public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterNameWithoutNamespace}";
+
+    public string FormatterName => CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.FormatterNameWithoutNamespace, $"Formatters::{this.Namespace}");
+
+    public string FormatterNameWithoutNamespace => this.Name + "Formatter";
 
     public string UnderlyingTypeKeyword => this.UnderlyingTypeName switch
     {

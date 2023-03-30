@@ -109,9 +109,6 @@ namespace MessagePack.Resolvers
                 MessagePack.Unity.UnityResolver.Instance,
 #endif
                 ImmutableCollection.ImmutableCollectionResolver.Instance,
-#if !ENABLE_IL2CPP
-                DynamicGenericResolver.Instance, // Try Array, Tuple, Collection, Enum(Generic Fallback)
-#endif
             });
     }
 

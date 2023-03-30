@@ -96,4 +96,25 @@ internal class MyMessagePackObject
 
         await VerifyCS.Test.RunDefaultAsync(testSource, testMethod: $"{nameof(UnionFormatter)}({container})");
     }
+
+    [Fact]
+    public async Task ArrayTypedProperty()
+    {
+        string testSource = """
+using MessagePack;
+
+[MessagePackObject]
+internal class ContainerObject
+{
+    [Key(0)]
+    internal SubObject[] ArrayOfCustomObjects { get; set; }
+}
+
+[MessagePackObject]
+internal class SubObject
+{
+}
+""";
+        await VerifyCS.Test.RunDefaultAsync(testSource);
+    }
 }

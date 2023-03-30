@@ -21,7 +21,7 @@ public record AnalyzerOptions(
 
     public static readonly AnalyzerOptions Default = new AnalyzerOptions();
 
-    public string FormatterNamespace => CodeAnalysisUtilities.QualifyWithOptionalNamespace("Formatters", this.ProjectRootNamespace);
+    public string FormatterNamespace => "Formatters";
 
     public static AnalyzerOptions Parse(AnalyzerConfigOptions options)
     {

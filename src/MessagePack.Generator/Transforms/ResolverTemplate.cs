@@ -86,7 +86,7 @@ namespace MessagePack.Generator.Transforms
  for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
             this.Write("\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(": return new Formatters::");
+            this.Write(": return new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName));
             this.Write("();\r\n");
  } 

@@ -7,7 +7,7 @@ internal static class CodeAnalysisUtilities
 {
     internal static string QualifyWithOptionalNamespace(string leafTypeOrNamespace, string? baseNamespace)
     {
-        return string.IsNullOrEmpty(baseNamespace) ? leafTypeOrNamespace : $"{baseNamespace}.{leafTypeOrNamespace}";
+        return string.IsNullOrEmpty(baseNamespace) ? leafTypeOrNamespace : (baseNamespace!.EndsWith("::") ? $"{baseNamespace}{leafTypeOrNamespace}" : $"{baseNamespace}.{leafTypeOrNamespace}");
     }
 
     internal static string AppendNameToNamespace(string left, string? right)

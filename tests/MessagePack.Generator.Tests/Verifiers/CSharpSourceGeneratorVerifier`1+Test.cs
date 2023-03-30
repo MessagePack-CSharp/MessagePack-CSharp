@@ -73,7 +73,7 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                 {
                     Sources = { testSource },
                 },
-                Options = options ?? AnalyzerOptions.Default,
+                Options = options ?? AnalyzerOptions.Default with { ProjectRootNamespace = "TestRootNamespace" },
             }.RunAsync();
         }
 

@@ -22,7 +22,7 @@ public partial class FormatterTemplate : IFormatterTemplate
 
     public ObjectSerializationInfo Info { get; }
 
-    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Info.FormatterName, this.Options.FormatterNamespace)}.g.cs";
+    public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
 
 public partial class StringKeyFormatterTemplate : IFormatterTemplate
@@ -40,7 +40,7 @@ public partial class StringKeyFormatterTemplate : IFormatterTemplate
 
     public ObjectSerializationInfo Info { get; }
 
-    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Info.FormatterName, this.Options.FormatterNamespace)}.g.cs";
+    public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
 
 public partial class ResolverTemplate
@@ -81,7 +81,7 @@ public partial class EnumTemplate
 
     public EnumSerializationInfo Info { get; }
 
-    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Info.FormatterName, this.Options.FormatterNamespace)}.g.cs";
+    public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
 
 public partial class UnionTemplate
@@ -99,5 +99,5 @@ public partial class UnionTemplate
 
     public UnionSerializationInfo Info { get; }
 
-    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Info.FormatterName, this.Options.FormatterNamespace)}.g.cs";
+    public string FileName => $"{this.Info.FileNameHint}.g.cs";
 }
