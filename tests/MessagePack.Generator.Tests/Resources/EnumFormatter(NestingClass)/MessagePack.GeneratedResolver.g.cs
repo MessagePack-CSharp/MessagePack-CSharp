@@ -4,31 +4,33 @@
 
 namespace MessagePack.Resolvers
 {
-    public class GeneratedResolver : global::MessagePack.IFormatterResolver
-    {
-        public static readonly global::MessagePack.IFormatterResolver Instance = new GeneratedResolver();
+    using MsgPack = global::MessagePack;
 
-        public static readonly global::MessagePack.IFormatterResolver InstanceWithStandardAotResolver = global::MessagePack.Resolvers.CompositeResolver.Create(Instance, global::MessagePack.Resolvers.StandardAotResolver.Instance);
+    public class GeneratedResolver : MsgPack::IFormatterResolver
+    {
+        public static readonly MsgPack::IFormatterResolver Instance = new GeneratedResolver();
+
+        public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
 
         private GeneratedResolver()
         {
         }
 
-        public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+        public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            internal static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> Formatter;
+            internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
                 var f = GeneratedResolverGetFormatterHelper.GetFormatter(typeof(T));
                 if (f != null)
                 {
-                    Formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
+                    Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
                 }
             }
         }

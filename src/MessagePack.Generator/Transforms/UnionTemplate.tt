@@ -6,14 +6,16 @@
 
 namespace <#= Namespace #>
 {
-    public sealed class <#= Info.Name #>Formatter : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+    using MsgPack = global::MessagePack;
+
+    public sealed class <#= Info.Name #>Formatter : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
     {
         private readonly global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>> typeToKeyAndJumpMap;
         private readonly global::System.Collections.Generic.Dictionary<int, int> keyToJumpMap;
 
         public <#= Info.Name #>Formatter()
         {
-            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(<#= Info.SubTypes.Length #>, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(<#= Info.SubTypes.Length #>, MsgPack::Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
 <# for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; #>
                 { typeof(<#= item.Type #>).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(<#= item.Key #>, <#= i #>) },
@@ -27,7 +29,7 @@ namespace <#= Namespace #>
             };
         }
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= Info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
         {
             global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
@@ -38,7 +40,7 @@ namespace <#= Namespace #>
                 {
 <# for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; #>
                     case <#= i #>:
-                        global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<<#= item.Type #>>(options.Resolver).Serialize(ref writer, (<#= item.Type #>)value, options);
+                        MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<<#= item.Type #>>(options.Resolver).Serialize(ref writer, (<#= item.Type #>)value, options);
                         break;
 <# } #>
                     default:
@@ -51,7 +53,7 @@ namespace <#= Namespace #>
             writer.WriteNil();
         }
 
-        public <#= Info.FullName #> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public <#= Info.FullName #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -76,7 +78,7 @@ namespace <#= Namespace #>
             {
 <# for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; #>
                 case <#= i #>:
-                    result = (<#= Info.FullName #>)global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<<#= item.Type #>>(options.Resolver).Deserialize(ref reader, options);
+                    result = (<#= Info.FullName #>)MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<<#= item.Type #>>(options.Resolver).Deserialize(ref reader, options);
                     break;
 <# } #>
                 default:

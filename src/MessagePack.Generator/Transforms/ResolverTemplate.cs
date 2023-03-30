@@ -27,29 +27,27 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write("\r\n{\r\n    public class ");
+            this.Write("\r\n{\r\n    using MsgPack = global::MessagePack;\r\n\r\n    public class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(" : global::MessagePack.IFormatterResolver\r\n    {\r\n        public static readonly " +
-                    "global::MessagePack.IFormatterResolver Instance = new ");
+            this.Write(" : MsgPack::IFormatterResolver\r\n    {\r\n        public static readonly MsgPack::IF" +
+                    "ormatterResolver Instance = new ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
-            this.Write(@"();
-
-        public static readonly global::MessagePack.IFormatterResolver InstanceWithStandardAotResolver = global::MessagePack.Resolvers.CompositeResolver.Create(Instance, global::MessagePack.Resolvers.StandardAotResolver.Instance);
-
-        private ");
+            this.Write("();\r\n\r\n        public static readonly MsgPack::IFormatterResolver InstanceWithSta" +
+                    "ndardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack" +
+                    "::Resolvers.StandardAotResolver.Instance);\r\n\r\n        private ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(@"()
         {
         }
 
-        public global::MessagePack.Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+        public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
         {
             return FormatterCache<T>.Formatter;
         }
 
         private static class FormatterCache<T>
         {
-            internal static readonly global::MessagePack.Formatters.IMessagePackFormatter<T> Formatter;
+            internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
 
             static FormatterCache()
             {
@@ -58,7 +56,7 @@ namespace MessagePack.Generator.Transforms
             this.Write(@"GetFormatterHelper.GetFormatter(typeof(T));
                 if (f != null)
                 {
-                    Formatter = (global::MessagePack.Formatters.IMessagePackFormatter<T>)f;
+                    Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
                 }
             }
         }

@@ -4,10 +4,12 @@
 
 namespace MessagePack.Formatters
 {
-    public sealed class Object1Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Object1>
+    using MsgPack = global::MessagePack;
+
+    public sealed class Object1Formatter : MsgPack::Formatters.IMessagePackFormatter<global::Object1>
     {
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Object1 value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MsgPack::MessagePackWriter writer, global::Object1 value, MsgPack::MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -18,7 +20,7 @@ namespace MessagePack.Formatters
             writer.WriteArrayHeader(0);
         }
 
-        public global::Object1 Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::Object1 Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {

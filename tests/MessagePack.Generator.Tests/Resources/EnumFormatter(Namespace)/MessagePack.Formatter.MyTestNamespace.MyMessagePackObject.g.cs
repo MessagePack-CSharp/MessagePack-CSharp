@@ -4,10 +4,12 @@
 
 namespace MessagePack.Formatters.MyTestNamespace
 {
-    public sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>
+    using MsgPack = global::MessagePack;
+
+    public sealed class MyMessagePackObjectFormatter : MsgPack::Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>
     {
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::MyTestNamespace.MyMessagePackObject value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyTestNamespace.MyMessagePackObject value, MsgPack::MessagePackSerializerOptions options)
         {
             if (value == null)
             {
@@ -15,12 +17,12 @@ namespace MessagePack.Formatters.MyTestNamespace
                 return;
             }
 
-            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            MsgPack::IFormatterResolver formatterResolver = options.Resolver;
             writer.WriteArrayHeader(1);
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Serialize(ref writer, value.EnumValue, options);
         }
 
-        public global::MyTestNamespace.MyMessagePackObject Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::MyTestNamespace.MyMessagePackObject Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -28,7 +30,7 @@ namespace MessagePack.Formatters.MyTestNamespace
             }
 
             options.Security.DepthStep(ref reader);
-            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            MsgPack::IFormatterResolver formatterResolver = options.Resolver;
             var length = reader.ReadArrayHeader();
             var ____result = new global::MyTestNamespace.MyMessagePackObject();
 

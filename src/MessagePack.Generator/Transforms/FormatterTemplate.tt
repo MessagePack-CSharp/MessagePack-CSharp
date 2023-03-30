@@ -6,8 +6,10 @@
 
 namespace <#= Namespace #>
 {
+    using MsgPack = global::MessagePack;
+
 <#  bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);#>
-    public sealed class <#= Info.FormatterNameWithoutNamespace #> : global::MessagePack.Formatters.IMessagePackFormatter<<#= Info.FullName #>>
+    public sealed class <#= Info.FormatterNameWithoutNamespace #> : MsgPack::Formatters.IMessagePackFormatter<<#= Info.FullName #>>
 <# foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { #>
         where <#= typeArg.Name #> : <#= typeArg.Constraints #>
 <# } #>
@@ -18,7 +20,7 @@ namespace <#= Namespace #>
 <# } #>
 <# } #>
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, <#= Info.FullName #> value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref MsgPack::MessagePackWriter writer, <#= Info.FullName #> value, MsgPack::MessagePackSerializerOptions options)
         {
 <# if (Info.IsClass) { #>
             if (value == null)
@@ -30,12 +32,12 @@ namespace <#= Namespace #>
 <# }
 
   if (isFormatterResolverNecessary) { #>
-            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 <# }
 
  if (Info.HasIMessagePackSerializationCallbackReceiver) {
   if (Info.NeedsCastOnBefore) { #>
-            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
+            ((MsgPack::IMessagePackSerializationCallbackReceiver)value).OnBeforeSerialize();
 <# } else { #>
             value.OnBeforeSerialize();
 <# } #>
@@ -51,7 +53,7 @@ namespace <#= Namespace #>
 <# } #>
         }
 
-        public <#= Info.FullName #> Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public <#= Info.FullName #> Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -68,7 +70,7 @@ namespace <#= Namespace #>
 <# } else { #>
             options.Security.DepthStep(ref reader);
 <# if (isFormatterResolverNecessary) { #>
-            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            MsgPack::IFormatterResolver formatterResolver = options.Resolver;
 <# } #>
             var length = reader.ReadArrayHeader();
 <# var canOverwrite = Info.ConstructorParameters.Length == 0;
@@ -126,7 +128,7 @@ namespace <#= Namespace #>
 
  if (Info.HasIMessagePackSerializationCallbackReceiver) {
   if (Info.NeedsCastOnAfter) { #>
-            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
+            ((MsgPack::IMessagePackSerializationCallbackReceiver)____result).OnAfterDeserialize();
 <# } else { #>
             ____result.OnAfterDeserialize();
 <# } #>

@@ -27,11 +27,11 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n");
+            this.Write("\r\n{\r\n    using MsgPack = global::MessagePack;\r\n\r\n");
   bool isFormatterResolverNecessary = ShouldUseFormatterResolverHelper.ShouldUseFormatterResolver(Info.Members);
             this.Write("    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FormatterNameWithoutNamespace));
-            this.Write(" : global::MessagePack.Formatters.IMessagePackFormatter<");
+            this.Write(" : MsgPack::Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
             this.Write(">\r\n");
  foreach (var typeArg in Info.GenericTypeParameters.Where(x => x.HasConstraints)) { 
@@ -53,24 +53,22 @@ namespace MessagePack.Generator.Transforms
             this.Write("();\r\n");
  } 
  } 
-            this.Write("\r\n        public void Serialize(ref global::MessagePack.MessagePackWriter writer," +
-                    " ");
+            this.Write("\r\n        public void Serialize(ref MsgPack::MessagePackWriter writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
-            this.Write(" value, global::MessagePack.MessagePackSerializerOptions options)\r\n        {\r\n");
+            this.Write(" value, MsgPack::MessagePackSerializerOptions options)\r\n        {\r\n");
  if (Info.IsClass) { 
             this.Write("            if (value == null)\r\n            {\r\n                writer.WriteNil();" +
                     "\r\n                return;\r\n            }\r\n\r\n");
  }
 
   if (isFormatterResolverNecessary) { 
-            this.Write("            global::MessagePack.IFormatterResolver formatterResolver = options.Re" +
-                    "solver;\r\n");
+            this.Write("            MsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n");
  }
 
  if (Info.HasIMessagePackSerializationCallbackReceiver) {
   if (Info.NeedsCastOnBefore) { 
-            this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)value" +
-                    ").OnBeforeSerialize();\r\n");
+            this.Write("            ((MsgPack::IMessagePackSerializationCallbackReceiver)value).OnBeforeS" +
+                    "erialize();\r\n");
  } else { 
             this.Write("            value.OnBeforeSerialize();\r\n");
  } 
@@ -90,9 +88,9 @@ namespace MessagePack.Generator.Transforms
  } 
             this.Write("        }\r\n\r\n        public ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
-            this.Write(" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePac" +
-                    "k.MessagePackSerializerOptions options)\r\n        {\r\n            if (reader.TryRe" +
-                    "adNil())\r\n            {\r\n");
+            this.Write(" Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerialize" +
+                    "rOptions options)\r\n        {\r\n            if (reader.TryReadNil())\r\n            " +
+                    "{\r\n");
  if (Info.IsClass) { 
             this.Write("                return null;\r\n");
  } else { 
@@ -107,8 +105,7 @@ namespace MessagePack.Generator.Transforms
  } else { 
             this.Write("            options.Security.DepthStep(ref reader);\r\n");
  if (isFormatterResolverNecessary) { 
-            this.Write("            global::MessagePack.IFormatterResolver formatterResolver = options.Re" +
-                    "solver;\r\n");
+            this.Write("            MsgPack::IFormatterResolver formatterResolver = options.Resolver;\r\n");
  } 
             this.Write("            var length = reader.ReadArrayHeader();\r\n");
  var canOverwrite = Info.ConstructorParameters.Length == 0;
@@ -180,8 +177,8 @@ namespace MessagePack.Generator.Transforms
 
  if (Info.HasIMessagePackSerializationCallbackReceiver) {
   if (Info.NeedsCastOnAfter) { 
-            this.Write("            ((global::MessagePack.IMessagePackSerializationCallbackReceiver)____r" +
-                    "esult).OnAfterDeserialize();\r\n");
+            this.Write("            ((MsgPack::IMessagePackSerializationCallbackReceiver)____result).OnAf" +
+                    "terDeserialize();\r\n");
  } else { 
             this.Write("            ____result.OnAfterDeserialize();\r\n");
  } 

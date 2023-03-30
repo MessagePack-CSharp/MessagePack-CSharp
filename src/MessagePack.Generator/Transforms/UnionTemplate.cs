@@ -27,9 +27,9 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
-            this.Write("\r\n{\r\n    public sealed class ");
+            this.Write("\r\n{\r\n    using MsgPack = global::MessagePack;\r\n\r\n    public sealed class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.Name));
-            this.Write("Formatter : global::MessagePack.Formatters.IMessagePackFormatter<");
+            this.Write("Formatter : MsgPack::Formatters.IMessagePackFormatter<");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
             this.Write(@">
     {
@@ -42,8 +42,7 @@ namespace MessagePack.Generator.Transforms
                     ".Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System" +
                     ".Collections.Generic.KeyValuePair<int, int>>(");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.SubTypes.Length));
-            this.Write(", global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)\r\n      " +
-                    "      {\r\n");
+            this.Write(", MsgPack::Internal.RuntimeTypeHandleEqualityComparer.Default)\r\n            {\r\n");
  for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; 
             this.Write("                { typeof(");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
@@ -64,10 +63,10 @@ namespace MessagePack.Generator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(" },\r\n");
  } 
-            this.Write("            };\r\n        }\r\n\r\n        public void Serialize(ref global::MessagePac" +
-                    "k.MessagePackWriter writer, ");
+            this.Write("            };\r\n        }\r\n\r\n        public void Serialize(ref MsgPack::MessagePa" +
+                    "ckWriter writer, ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
-            this.Write(@" value, global::MessagePack.MessagePackSerializerOptions options)
+            this.Write(@" value, MsgPack::MessagePackSerializerOptions options)
         {
             global::System.Collections.Generic.KeyValuePair<int, int> keyValuePair;
             if (value != null && this.typeToKeyAndJumpMap.TryGetValue(value.GetType().TypeHandle, out keyValuePair))
@@ -80,8 +79,8 @@ namespace MessagePack.Generator.Transforms
  for(var i = 0; i < Info.SubTypes.Length; i++) { var item = Info.SubTypes[i]; 
             this.Write("                    case ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(":\r\n                        global::MessagePack.FormatterResolverExtensions.GetFor" +
-                    "matterWithVerify<");
+            this.Write(":\r\n                        MsgPack::FormatterResolverExtensions.GetFormatterWithV" +
+                    "erify<");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
             this.Write(">(options.Resolver).Serialize(ref writer, (");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
@@ -91,7 +90,7 @@ namespace MessagePack.Generator.Transforms
                     "\r\n                return;\r\n            }\r\n\r\n            writer.WriteNil();\r\n    " +
                     "    }\r\n\r\n        public ");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
-            this.Write(@" Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+            this.Write(@" Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -113,7 +112,7 @@ namespace MessagePack.Generator.Transforms
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
             this.Write(":\r\n                    result = (");
             this.Write(this.ToStringHelper.ToStringWithCulture(Info.FullName));
-            this.Write(")global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<");
+            this.Write(")MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<");
             this.Write(this.ToStringHelper.ToStringWithCulture(item.Type));
             this.Write(">(options.Resolver).Deserialize(ref reader, options);\r\n                    break;" +
                     "\r\n");
