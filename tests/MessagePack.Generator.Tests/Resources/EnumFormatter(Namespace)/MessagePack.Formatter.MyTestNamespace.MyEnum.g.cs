@@ -10,7 +10,7 @@ namespace MessagePack.Formatters.MyTestNamespace
     {
         public void Serialize(ref MsgPack::MessagePackWriter writer, global::MyTestNamespace.MyEnum value, MsgPack::MessagePackSerializerOptions options)
         {
-            writer.Write((global::System.Int32)value);
+            writer.Write((int)value);
         }
 
         public global::MyTestNamespace.MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)

@@ -10,7 +10,7 @@ namespace MessagePack.Formatters
     {
         public void Serialize(ref MsgPack::MessagePackWriter writer, global::ContainingClass.MyEnum value, MsgPack::MessagePackSerializerOptions options)
         {
-            writer.Write((global::System.Int32)value);
+            writer.Write((int)value);
         }
 
         public global::ContainingClass.MyEnum Deserialize(ref MsgPack::MessagePackReader reader, MsgPack::MessagePackSerializerOptions options)
