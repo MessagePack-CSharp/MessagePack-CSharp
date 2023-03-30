@@ -5,12 +5,12 @@ namespace MessagePack.Generator.CodeAnalysis;
 
 internal static class CodeAnalysisUtilities
 {
-    internal static string NamespaceAndType(string typeName, string? @namespace)
+    internal static string QualifyWithOptionalNamespace(string leafTypeOrNamespace, string? baseNamespace)
     {
-        return string.IsNullOrEmpty(@namespace) ? typeName : $"{@namespace}.{typeName}";
+        return string.IsNullOrEmpty(baseNamespace) ? leafTypeOrNamespace : $"{baseNamespace}.{leafTypeOrNamespace}";
     }
 
-    internal static string QualifyNames(string left, string? right)
+    internal static string AppendNameToNamespace(string left, string? right)
     {
         return string.IsNullOrEmpty(right) ? left : $"{left}.{right}";
     }

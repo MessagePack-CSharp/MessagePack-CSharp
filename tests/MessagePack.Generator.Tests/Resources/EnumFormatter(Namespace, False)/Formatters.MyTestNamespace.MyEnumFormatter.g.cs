@@ -2,10 +2,10 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace MessagePack.Formatters
+namespace Formatters.MyTestNamespace
 {
 	using MsgPack = global::MessagePack;
-	using MyEnum = global::MyEnum;
+	using MyEnum = global::MyTestNamespace.MyEnum;
 
 	internal sealed class MyEnumFormatter : MsgPack::Formatters.IMessagePackFormatter<MyEnum>
 	{

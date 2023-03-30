@@ -2,20 +2,21 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace MessagePack.Resolvers
+namespace MessagePack
 {
 	using MsgPack = global::MessagePack;
+	using Formatters = global::Formatters;
 
 	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-	internal class GeneratedResolver : MsgPack::IFormatterResolver
+	internal class GeneratedMessagePackResolver : MsgPack::IFormatterResolver
 	{
 		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
-		public static readonly MsgPack::IFormatterResolver Instance = new GeneratedResolver();
+		public static readonly MsgPack::IFormatterResolver Instance = new GeneratedMessagePackResolver();
 
 		/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
 		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
 
-		private GeneratedResolver()
+		private GeneratedMessagePackResolver()
 		{
 		}
 
@@ -30,7 +31,7 @@ namespace MessagePack.Resolvers
 
 			static FormatterCache()
 			{
-				var f = GeneratedResolverGetFormatterHelper.GetFormatter(typeof(T));
+				var f = GeneratedMessagePackResolverGetFormatterHelper.GetFormatter(typeof(T));
 				if (f != null)
 				{
 					Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
@@ -39,16 +40,16 @@ namespace MessagePack.Resolvers
 		}
 	}
 
-	internal static class GeneratedResolverGetFormatterHelper
+	internal static class GeneratedMessagePackResolverGetFormatterHelper
 	{
 		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
 
-		static GeneratedResolverGetFormatterHelper()
+		static GeneratedMessagePackResolverGetFormatterHelper()
 		{
 			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(2)
 			{
-				{ typeof(global::ContainingClass.MyEnum), 0 },
-				{ typeof(global::ContainingClass.MyMessagePackObject), 1 },
+				{ typeof(global::MyEnum), 0 },
+				{ typeof(global::MyMessagePackObject), 1 },
 			};
 		}
 
@@ -62,8 +63,8 @@ namespace MessagePack.Resolvers
 
 			switch (key)
 			{
-				case 0: return new MessagePack.Formatters.ContainingClass_MyEnumFormatter();
-				case 1: return new MessagePack.Formatters.ContainingClass_MyMessagePackObjectFormatter();
+				case 0: return new Formatters::MyEnumFormatter();
+				case 1: return new Formatters::MyMessagePackObjectFormatter();
 				default: return null;
 			}
 		}

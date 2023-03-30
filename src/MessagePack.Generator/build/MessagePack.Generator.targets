@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <MessagePackGeneratedResolverNamespace Condition="'$(MessagePackGeneratedResolverNamespace)'==''">$(RootNamespace)</MessagePackGeneratedResolverNamespace>
+    <MessagePackGeneratedResolverNamespace Condition="'$(MessagePackGeneratedResolverNamespace)'==''">MessagePack</MessagePackGeneratedResolverNamespace>
+  </PropertyGroup>
+</Project>

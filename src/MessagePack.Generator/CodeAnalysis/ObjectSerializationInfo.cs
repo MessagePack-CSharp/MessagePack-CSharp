@@ -22,7 +22,7 @@ public record ObjectSerializationInfo(
         get { return !this.IsIntKey; }
     }
 
-    public string FormatterName => CodeAnalysisUtilities.NamespaceAndType(this.FormatterNameWithoutNamespace, this.Namespace);
+    public string FormatterName => CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.FormatterNameWithoutNamespace, this.Namespace);
 
     public string FormatterNameWithoutNamespace => this.Name + "Formatter" + (this.IsOpenGenericType ? $"<{string.Join(", ", this.GenericTypeParameters.Select(x => x.Name))}>" : string.Empty);
 

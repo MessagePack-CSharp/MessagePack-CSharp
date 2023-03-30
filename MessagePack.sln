@@ -14,6 +14,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{19FE674A-AC94-4E7E-B24C-2285D1D04CDE}"
 	ProjectSection(SolutionItems) = preProject
 		tests\SourceGeneratorConsumer.props = tests\SourceGeneratorConsumer.props
+		tests\SourceGeneratorConsumer.targets = tests\SourceGeneratorConsumer.targets
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Tests", "tests\MessagePack.Tests\MessagePack.Tests.csproj", "{9E1A55CA-711D-4F58-A332-735960E3434C}"

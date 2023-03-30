@@ -2,16 +2,16 @@
 
 #pragma warning disable 618, 612, 414, 168, CS1591, SA1129, SA1309, SA1312, SA1403, SA1649
 
-namespace MessagePack.Formatters.MyTestNamespace
+namespace Formatters
 {
 	using MsgPack = global::MessagePack;
 
-	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyTestNamespace.MyMessagePackObject>
+	internal sealed class MyMessagePackObjectFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::MyMessagePackObject>
 	{
 		// EnumValue
 		private static global::System.ReadOnlySpan<byte> GetSpan_EnumValue() => new byte[1 + 9] { 169, 69, 110, 117, 109, 86, 97, 108, 117, 101 };
 
-		public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::MyTestNamespace.MyMessagePackObject value, global::MessagePack.MessagePackSerializerOptions options)
+		public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::MyMessagePackObject value, global::MessagePack.MessagePackSerializerOptions options)
 		{
 			if (value is null)
 			{
@@ -22,10 +22,10 @@ namespace MessagePack.Formatters.MyTestNamespace
 			var formatterResolver = options.Resolver;
 			writer.WriteMapHeader(1);
 			writer.WriteRaw(GetSpan_EnumValue());
-			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Serialize(ref writer, value.EnumValue, options);
+			MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyEnum>(formatterResolver).Serialize(ref writer, value.EnumValue, options);
 		}
 
-		public global::MyTestNamespace.MyMessagePackObject Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+		public global::MyMessagePackObject Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
 		{
 			if (reader.TryReadNil())
 			{
@@ -35,7 +35,7 @@ namespace MessagePack.Formatters.MyTestNamespace
 			options.Security.DepthStep(ref reader);
 			var formatterResolver = options.Resolver;
 			var length = reader.ReadMapHeader();
-			var ____result = new global::MyTestNamespace.MyMessagePackObject();
+			var ____result = new global::MyMessagePackObject();
 
 			for (int i = 0; i < length; i++)
 			{
@@ -49,7 +49,7 @@ namespace MessagePack.Formatters.MyTestNamespace
 					case 9:
 					    if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_EnumValue().Slice(1))) { goto FAIL; }
 
-					    ____result.EnumValue = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyTestNamespace.MyEnum>(formatterResolver).Deserialize(ref reader, options);
+					    ____result.EnumValue = MsgPack::FormatterResolverExtensions.GetFormatterWithVerify<global::MyEnum>(formatterResolver).Deserialize(ref reader, options);
 					    continue;
 
 				}

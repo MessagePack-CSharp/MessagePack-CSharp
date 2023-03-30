@@ -173,9 +173,11 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             StringBuilder globalConfigBuilder = new();
             globalConfigBuilder.AppendLine("is_global = true");
             globalConfigBuilder.AppendLine();
-            globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedResolverNamespace} = {options.Namespace}");
-            globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedUsesMapMode} = {options.UsesMapMode}");
+            globalConfigBuilder.AppendLine($"{AnalyzerOptions.RootNamespace} = {options.ProjectRootNamespace}");
+            globalConfigBuilder.AppendLine($"{AnalyzerOptions.PublicMessagePackGeneratedResolver} = {options.PublicResolver}");
+            globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedResolverNamespace} = {options.ResolverNamespace}");
             globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedResolverName} = {options.ResolverName}");
+            globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedUsesMapMode} = {options.UsesMapMode}");
 
             return globalConfigBuilder.ToString();
         }

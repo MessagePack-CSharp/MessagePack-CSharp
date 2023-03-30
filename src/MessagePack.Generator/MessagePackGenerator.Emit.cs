@@ -29,23 +29,23 @@ public partial class MessagePackGenerator
 
         foreach (EnumSerializationInfo info in model.EnumInfos)
         {
-            EnumTemplate transform = new(CodeAnalysisUtilities.QualifyNames(options.FormatterNamespace, info.Namespace), info);
-            AddTransform(transform.TransformText(), $"{info.Namespace}.{info.Name}");
+            EnumTemplate transform = new(CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace), info);
+            AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
         }
 
         foreach (UnionSerializationInfo info in model.UnionInfos)
         {
             UnionTemplate transform = new(options.FormatterNamespace, info);
-            AddTransform(transform.TransformText(), $"Union.{info.Name}");
+            AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
         }
 
         foreach (ObjectSerializationInfo info in model.ObjectInfos)
         {
-            string formatterNamespace = CodeAnalysisUtilities.QualifyNames(options.FormatterNamespace, info.Namespace);
+            string formatterNamespace = CodeAnalysisUtilities.AppendNameToNamespace(options.FormatterNamespace, info.Namespace);
             IFormatterTemplate transform = info.IsStringKey
                 ? new StringKeyFormatterTemplate(formatterNamespace, info)
                 : new FormatterTemplate(formatterNamespace, info);
-            AddTransform(transform.TransformText(), CodeAnalysisUtilities.NamespaceAndType(info.Name, info.Namespace));
+            AddTransform(transform.TransformText(), CodeAnalysisUtilities.QualifyWithOptionalNamespace(info.FormatterName, options.FormatterNamespace));
         }
 
         void AddTransform(string transformOutput, string uniqueFileName)
@@ -53,7 +53,7 @@ public partial class MessagePackGenerator
             sb.Clear();
             sb.AppendLine(FileHeader);
             sb.Append(transformOutput);
-            context.AddSource($"MessagePack.Formatter.{uniqueFileName}.g.cs", sb.ToString());
+            context.AddSource($"{uniqueFileName}.g.cs", sb.ToString());
             sb.Clear();
         }
     }
@@ -68,19 +68,19 @@ public partial class MessagePackGenerator
         AnalyzerOptions options = model.Options;
         StringBuilder sb = new();
 
-        ResolverTemplate resolverTemplate = new(
-            options.ResolverNamespace,
-            options.FormatterNamespace,
-            options.ResolverName,
-            model.GenericInfos
+        ResolverTemplate resolverTemplate = new()
+        {
+            Options = options,
+            RegisterInfos = model.GenericInfos
                 .Where(x => !x.IsOpenGenericType)
                 .Cast<IResolverRegisterInfo>()
                 .Concat(model.EnumInfos)
                 .Concat(model.UnionInfos)
                 .Concat(model.ObjectInfos.Where(x => !x.IsOpenGenericType))
-                .ToArray());
+                .ToArray(),
+        };
         sb.AppendLine(FileHeader);
         sb.Append(resolverTemplate.TransformText());
-        context.AddSource($"MessagePack.GeneratedResolver.g.cs", sb.ToString());
+        context.AddSource($"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(options.ResolverName, options.ResolverNamespace)}.g.cs", sb.ToString());
     }
 }

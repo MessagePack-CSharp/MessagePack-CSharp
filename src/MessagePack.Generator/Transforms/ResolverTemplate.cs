@@ -27,9 +27,12 @@ namespace MessagePack.Generator.Transforms
         {
             this.Write("\r\nnamespace ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverNamespace));
-            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\r\n\t/// <summary>A MessagePack resolve" +
-                    "r that uses generated formatters for types in this assembly.</summary>\r\n\tinterna" +
-                    "l class ");
+            this.Write("\r\n{\r\n\tusing MsgPack = global::MessagePack;\r\n\tusing Formatters = global::");
+            this.Write(this.ToStringHelper.ToStringWithCulture(FormatterNamespace));
+            this.Write(";\r\n\r\n\t/// <summary>A MessagePack resolver that uses generated formatters for type" +
+                    "s in this assembly.</summary>\r\n\t");
+            this.Write(this.ToStringHelper.ToStringWithCulture(PublicResolver ? "public" : "internal"));
+            this.Write(" class ");
             this.Write(this.ToStringHelper.ToStringWithCulture(ResolverName));
             this.Write(" : MsgPack::IFormatterResolver\r\n\t{\r\n\t\t/// <summary>An instance of this resolver t" +
                     "hat only returns formatters specifically generated for types in this assembly.</" +
@@ -83,8 +86,8 @@ namespace MessagePack.Generator.Transforms
  for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; 
             this.Write("\t\t\t\tcase ");
             this.Write(this.ToStringHelper.ToStringWithCulture(i));
-            this.Write(": return new ");
-            this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName.StartsWith("global::") ? x.FormatterName : (FormatterNamespace + "." + x.FormatterName)));
+            this.Write(": return new Formatters::");
+            this.Write(this.ToStringHelper.ToStringWithCulture(x.FormatterName));
             this.Write("();\r\n");
  } 
             this.Write("\t\t\t\tdefault: return null;\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n}\r\n");

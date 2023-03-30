@@ -7,9 +7,10 @@
 namespace <#= ResolverNamespace #>
 {
 	using MsgPack = global::MessagePack;
+	using Formatters = global::<#= FormatterNamespace #>;
 
 	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
-	internal class <#= ResolverName #> : MsgPack::IFormatterResolver
+	<#= PublicResolver ? "public" : "internal" #> class <#= ResolverName #> : MsgPack::IFormatterResolver
 	{
 		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
 		public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName #>();
@@ -66,7 +67,7 @@ namespace <#= ResolverNamespace #>
 			switch (key)
 			{
 <# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
-				case <#= i #>: return new <#= x.FormatterName.StartsWith("global::") ? x.FormatterName : (FormatterNamespace + "." + x.FormatterName) #>();
+				case <#= i #>: return new Formatters::<#= x.FormatterName #>();
 <# } #>
 				default: return null;
 			}

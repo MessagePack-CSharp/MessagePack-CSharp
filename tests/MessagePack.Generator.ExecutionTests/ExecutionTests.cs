@@ -4,7 +4,7 @@
 public class ExecutionTests
 {
     private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard
-        .WithResolver(GeneratedResolver.InstanceWithStandardAotResolver);
+        .WithResolver(GeneratedMessagePackResolver.InstanceWithStandardAotResolver);
 
     private readonly ITestOutputHelper logger;
 

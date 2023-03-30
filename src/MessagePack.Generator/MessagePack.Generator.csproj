@@ -26,6 +26,7 @@
   <ItemGroup>
     <PackageReference Include="IsExternalInit" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Required" />
     <PackageReference Include="System.CodeDom" />
   </ItemGroup>
 
