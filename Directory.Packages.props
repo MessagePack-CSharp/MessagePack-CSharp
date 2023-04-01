@@ -33,7 +33,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic.CodeFix.Testing.XUnit" Version="1.1.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(MicrosoftCodeAnalysisVersion)" />
-    <PackageVersion Include="Microsoft.NET.StringTools" Version="17.4.0" />
+    <PackageVersion Include="Microsoft.NET.StringTools" Version="17.5.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageVersion Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
     <PackageVersion Include="Moq" Version="4.18.4" />
