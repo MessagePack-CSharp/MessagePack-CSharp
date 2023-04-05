@@ -8,19 +8,7 @@ namespace MessagePack.Generator;
 // Utility and Extension methods for Roslyn
 internal static class RoslynExtensions
 {
-    public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
-    {
-        return compilation.SyntaxTrees.SelectMany(syntaxTree =>
-        {
-            var semModel = compilation.GetSemanticModel(syntaxTree);
-            return syntaxTree.GetRoot()
-                .DescendantNodes()
-                .Select(x => semModel.GetDeclaredSymbol(x))
-                .OfType<INamedTypeSymbol>();
-        });
-    }
-
-    public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol symbol)
+    internal static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol symbol)
     {
         var t = symbol;
         while (t != null)
@@ -34,7 +22,7 @@ internal static class RoslynExtensions
         }
     }
 
-    public static bool ApproximatelyEqual(this INamedTypeSymbol? left, INamedTypeSymbol? right)
+    internal static bool ApproximatelyEqual(this INamedTypeSymbol? left, INamedTypeSymbol? right)
     {
         if (left is IErrorTypeSymbol || right is IErrorTypeSymbol)
         {

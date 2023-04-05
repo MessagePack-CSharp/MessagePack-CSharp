@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using MessagePack.Formatters;
 
@@ -16,7 +15,6 @@ namespace MessagePack.Resolvers
         public static readonly StaticCompositeResolver Instance = new StaticCompositeResolver();
 
         private bool frozen;
-        private ConcurrentBag<IMessagePackFormatter> generatedFormatters = new ConcurrentBag<IMessagePackFormatter>();
         private IReadOnlyList<IMessagePackFormatter> formatters;
         private IReadOnlyList<IFormatterResolver> resolvers;
 
@@ -127,15 +125,6 @@ namespace MessagePack.Resolvers
             static Cache()
             {
                 Instance.frozen = true;
-                foreach (var item in Instance.generatedFormatters)
-                {
-                    if (item is IMessagePackFormatter<T> f)
-                    {
-                        Formatter = f;
-                        return;
-                    }
-                }
-
                 foreach (var item in Instance.formatters)
                 {
                     if (item is IMessagePackFormatter<T> f)

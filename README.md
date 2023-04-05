@@ -1576,7 +1576,8 @@ If you want to share a class between Unity and a server, you can use `SharedProj
 
 ## <a name="aot"></a>AOT Code Generation (support for Unity/Xamarin)
 
-By default, MessagePack for C# serializes custom objects by [generating IL](https://msdn.microsoft.com/en-us/library/system.reflection.emit.ilgenerator.aspx) on the fly at runtime to create custom, highly tuned formatters for each type. This code generation has a minor upfront performance cost.
+By default, MessagePack for C# serializes custom objects by [generating IL](https://learn.microsoft.com/dotnet/api/system.reflection.emit.ilgenerator) on the fly at runtime to create custom, highly tuned formatters for each type.
+This code generation has a minor upfront performance cost.
 Because strict-AOT environments such as Xamarin and Unity IL2CPP forbid runtime code generation, MessagePack provides a way for you to run a code generator ahead of time as well.
 
 > Note: When using Unity, dynamic code generation only works when targeting .NET Framework 4.x + mono runtime.
@@ -1584,11 +1585,62 @@ For all other Unity targets, AOT is required.
 
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation.
 
-```
+```ps1
 dotnet add package MessagePack.Generator
 ```
 
-The source generator generates the resolver as `MessagePack.Resolvers.GeneratedResolver` and formatters as`MessagePack.Formatters.*`.
+This package adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
+
+These formatters are aggregated into a generated `IMessagePackResolver` class named `GeneratedMessagePackResolver`.
+This class will be generated into the `$(RootNamespace)` of your project, or the `MessagePack` namespace if `RootNamespace` is empty or undefined.
+
+Leveraging these formatters at runtime requires that you opt-in, which typically looks like this:
+
+```cs
+/// <summary>Options to use MessagePack with AOT-generated formatters.</summary>
+private static readonly MessagePackSerializerOptions SerializerOptions = MessagePackSerializerOptions.Standard
+    .WithResolver(GeneratedMessagePackResolver.InstanceWithStandardAotResolver);
+
+// Serialize and deserialize using the AOT option.
+byte[] serialized = MessagePackSerializer.Serialize(value, SerializerOptions);
+T after = MessagePackSerializer.Deserialize<T>(serialized, SerializerOptions);
+```
+
+Alternatively if you run in a highly-focused process, you can set the default options, and then use the simpler overloads to serialize.
+Do NOT do this if you're in a shared process where other code may be using MessagePack with their own options.
+
+```cs
+MessagePackSerializer.DefaultOptions = SerializerOptions; // WARNING: mutates a static shared by all MessagePack users in the process
+byte[] serialized = MessagePackSerializer.Serialize(value);
+T after = MessagePackSerializer.Deserialize<T>(serialized);
+```
+
+### Customizations
+
+A few MSBuild properties can be set in your project to customize source generation:
+
+Property | Purpose | Default value
+--|--|--
+`PublicMessagePackGeneratedResolver` | A boolean value indicating whether the generated resolver should be `public`. This is useful for shared libraries so their consumers can leverage the AOT formatters (which are always `internal`) in the library. | `false`
+`MessagePackGeneratedResolverNamespace` | The namespace to use for the generated resolver class. | The `$(RootNamespace)` of the project, or `MessagePack` if the root namespace is empty.
+`MessagePackGeneratedResolverName` | The name of the generated resolver type. | `GeneratedMessagePackResolver`
+`MessagePackGeneratedUsesMapMode` | A boolean value that indicates whether all formatters should use property maps instead of more compact arrays. | `false`
+
+For example you could add this xml to your project file to set each of the above properties (in this example, to their default values):
+
+```xml
+<PropertyGroup>
+  <PublicMessagePackGeneratedResolver>false</PublicMessagePackGeneratedResolver>
+  <MessagePackGeneratedResolverNamespace>$(RootNamespace)</MessagePackGeneratedResolverNamespace>
+  <MessagePackGeneratedResolverName>GeneratedMessagePackResolver</MessagePackGeneratedResolverName>
+  <MessagePackGeneratedUsesMapMode>false</MessagePackGeneratedUsesMapMode>
+</PropertyGroup>
+```
+
+When exposing the generated resolver publicly, consumers outside the library should aggregate the resolver using its `Instance` property, which contains *only* the generated formatters.
+The `InstanceWithStandardAotResolver` property is a convenience for callers that will not be aggregating the resolver with those from other libraries, since it aggregates built-in AOT friendly resolvers from the MessagePack library itself.
+
+### Unity-specific AOT concerns
 
 Here is the full sample code to register a generated resolver in Unity.
 
@@ -1599,7 +1651,7 @@ using UnityEngine;
 
 public class Startup
 {
-    static bool serializerRegistered = false;
+    static bool serializerRegistered;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Initialize()
@@ -1607,7 +1659,7 @@ public class Startup
         if (!serializerRegistered)
         {
             StaticCompositeResolver.Instance.Register(
-                 MessagePack.Resolvers.GeneratedResolver.Instance,
+                 GeneratedMessagePackResolver.Instance,
                  MessagePack.Resolvers.StandardResolver.Instance
             );
 
@@ -1620,7 +1672,6 @@ public class Startup
 
 #if UNITY_EDITOR
 
-
     [UnityEditor.InitializeOnLoadMethod]
     static void EditorInitialize()
     {
@@ -1630,18 +1681,6 @@ public class Startup
 #endif
 }
 ```
-
-In Unity, you can use MessagePack CodeGen windows at `Windows -> MessagePack -> CodeGenerator`.
-
-![](https://user-images.githubusercontent.com/46207/69414381-f14da400-0d55-11ea-9f8d-9af448d347dc.png)
-
-Install the .NET Core runtime, install mpc (as a .NET Core Tool as described above), and execute `dotnet mpc`. Currently this tool is experimental so please tell me your opinion.
-
-In Xamarin, you can install the [the `MessagePack.MSBuild.Tasks` NuGet package](doc/msbuildtask.md) into your projects to pre-compile fast serialization code and run in environments where JIT compilation is not allowed.
-
-## RPC
-
-MessagePack advocated [MessagePack RPC](https://github.com/msgpack-rpc/msgpack-rpc), but work on it has stopped and it is not widely used.
 
 ### MagicOnion
 

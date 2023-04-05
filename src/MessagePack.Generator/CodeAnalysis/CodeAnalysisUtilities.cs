@@ -10,6 +10,7 @@ internal static class CodeAnalysisUtilities
     static CodeAnalysisUtilities()
     {
         // Roslyn really doesn't like angle brackets in file names, even on operating systems that allow them (e.g. linux).
+        // See https://github.com/dotnet/roslyn/issues/67653
         InvalidFileNameChars.Add('<');
         InvalidFileNameChars.Add('>');
     }

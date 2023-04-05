@@ -17,24 +17,6 @@ namespace MessagePackAnalyzer
     // Utility and Extension methods for Roslyn
     internal static class RoslynAnalyzerExtensions
     {
-        public static IEnumerable<INamedTypeSymbol> GetNamedTypeSymbols(this Compilation compilation)
-        {
-            foreach (SyntaxTree syntaxTree in compilation.SyntaxTrees)
-            {
-                SemanticModel semModel = compilation.GetSemanticModel(syntaxTree);
-
-                foreach (ISymbol? item in syntaxTree.GetRoot()
-                    .DescendantNodes()
-                    .Select(x => semModel.GetDeclaredSymbol(x)))
-                {
-                    if (item is INamedTypeSymbol namedType)
-                    {
-                        yield return namedType;
-                    }
-                }
-            }
-        }
-
         public static IEnumerable<INamedTypeSymbol> EnumerateBaseType(this ITypeSymbol symbol)
         {
             INamedTypeSymbol? t = symbol.BaseType;
