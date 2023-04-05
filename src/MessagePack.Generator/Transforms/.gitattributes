@@ -1,0 +1,3 @@
+# Always check out .tt files with CRLF line endings so the code-behind file, which captures these, remains consistent with the .tt file.
+# LF line endings don't trigger T4's automatic empty line removal, so CRLF is preferable.
+*.tt eol=crlf
