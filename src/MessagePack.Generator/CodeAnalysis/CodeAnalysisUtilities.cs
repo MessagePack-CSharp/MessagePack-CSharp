@@ -5,6 +5,15 @@ namespace MessagePack.Generator.CodeAnalysis;
 
 internal static class CodeAnalysisUtilities
 {
+    private static readonly HashSet<char> InvalidFileNameChars = new(Path.GetInvalidFileNameChars());
+
+    static CodeAnalysisUtilities()
+    {
+        // Roslyn really doesn't like angle brackets in file names, even on operating systems that allow them (e.g. linux).
+        InvalidFileNameChars.Add('<');
+        InvalidFileNameChars.Add('>');
+    }
+
     internal static string QualifyWithOptionalNamespace(string leafTypeOrNamespace, string? baseNamespace)
     {
         return string.IsNullOrEmpty(baseNamespace) ? leafTypeOrNamespace : (baseNamespace!.EndsWith("::") ? $"{baseNamespace}{leafTypeOrNamespace}" : $"{baseNamespace}.{leafTypeOrNamespace}");
@@ -17,8 +26,7 @@ internal static class CodeAnalysisUtilities
 
     internal static string GetSanitizedFileName(string fileName)
     {
-        char[] invalidChars = Path.GetInvalidFileNameChars();
-        foreach (char c in invalidChars)
+        foreach (char c in InvalidFileNameChars)
         {
             fileName = fileName.Replace(c, '_');
         }
