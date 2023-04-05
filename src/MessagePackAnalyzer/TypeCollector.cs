@@ -220,7 +220,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
+                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || (this.typeReferences.IgnoreDataMemberAttribute is not null && SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute))))
                     {
                         continue;
                     }
@@ -239,7 +239,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
+                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || (this.typeReferences.IgnoreDataMemberAttribute is not null && SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute))))
                     {
                         continue;
                     }
@@ -268,7 +268,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IPropertySymbol item in type.GetAllMembers().OfType<IPropertySymbol>())
                 {
-                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
+                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || (this.typeReferences.IgnoreDataMemberAttribute is not null && SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute))))
                     {
                         continue;
                     }
@@ -337,7 +337,7 @@ namespace MessagePackAnalyzer
 
                 foreach (IFieldSymbol item in type.GetAllMembers().OfType<IFieldSymbol>())
                 {
-                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute)))
+                    if (item.GetAttributes().Any(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreAttribute) || (this.typeReferences.IgnoreDataMemberAttribute is not null && SymbolEqualityComparer.Default.Equals(x.AttributeClass, this.typeReferences.IgnoreDataMemberAttribute))))
                     {
                         continue;
                     }

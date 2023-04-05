@@ -15,7 +15,7 @@ namespace MessagePackAnalyzer
             INamedTypeSymbol ignoreAttribute,
             INamedTypeSymbol formatterAttribute,
             INamedTypeSymbol messagePackFormatter,
-            INamedTypeSymbol ignoreDataMemberAttribute)
+            INamedTypeSymbol? ignoreDataMemberAttribute)
         {
             this.MessagePackObjectAttribute = messagePackObjectAttribute;
             this.UnionAttribute = unionAttribute;
@@ -38,7 +38,7 @@ namespace MessagePackAnalyzer
 
         internal INamedTypeSymbol MessagePackFormatter { get; }
 
-        internal INamedTypeSymbol IgnoreDataMemberAttribute { get; }
+        internal INamedTypeSymbol? IgnoreDataMemberAttribute { get; }
 
         public static bool TryCreate(Compilation compilation, [NotNullWhen(true)] out ReferenceSymbols? instance)
         {
@@ -81,10 +81,6 @@ namespace MessagePackAnalyzer
             }
 
             var ignoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
-            if (ignoreDataMemberAttribute is null)
-            {
-                return false;
-            }
 
             instance = new ReferenceSymbols(
                 messagePackObjectAttribute,

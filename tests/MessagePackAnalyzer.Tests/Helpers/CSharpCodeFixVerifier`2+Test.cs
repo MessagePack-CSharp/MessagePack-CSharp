@@ -19,16 +19,7 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
         public Test()
         {
             this.ReferenceAssemblies = ReferencesHelper.DefaultReferences;
-            this.TestBehaviors |= Microsoft.CodeAnalysis.Testing.TestBehaviors.SkipGeneratedCodeCheck;
-
-            this.SolutionTransforms.Add((solution, projectId) =>
-            {
-                var parseOptions = (CSharpParseOptions?)solution.GetProject(projectId)?.ParseOptions;
-                Assert.NotNull(parseOptions);
-                solution = solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(LanguageVersion.CSharp7_3));
-
-                return solution;
-            });
+            this.CompilerDiagnostics = Microsoft.CodeAnalysis.Testing.CompilerDiagnostics.Warnings;
 
             this.TestState.AdditionalFilesFactories.Add(() =>
             {
@@ -38,6 +29,19 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
                        let content = ReadManifestResource(Assembly.GetExecutingAssembly(), resourceName)
                        select (filename: resourceName.Substring(additionalFilePrefix.Length), SourceText.From(content));
             });
+        }
+
+        protected override ParseOptions CreateParseOptions()
+        {
+            return ((CSharpParseOptions)base.CreateParseOptions()).WithLanguageVersion(LanguageVersion.CSharp10);
+        }
+
+        protected override CompilationOptions CreateCompilationOptions()
+        {
+            var compilationOptions = (CSharpCompilationOptions)base.CreateCompilationOptions();
+            return compilationOptions
+                .WithWarningLevel(99)
+                .WithSpecificDiagnosticOptions(compilationOptions.SpecificDiagnosticOptions.SetItem("CS1591", ReportDiagnostic.Suppress));
         }
 
         private static string ReadManifestResource(Assembly assembly, string resourceName)

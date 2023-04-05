@@ -155,33 +155,30 @@ public class Bar
     [Fact]
     public async Task CodeFixAppliesAcrossFiles()
     {
-        var inputs = new string[]
-        {
-            @"
+        string source1 = @"
 public class Foo
 {
     public int {|MsgPack004:Member1|} { get; set; }
 }
-",
-            @"using MessagePack;
+";
+
+        string source2 = @"using MessagePack;
 
 [MessagePackObject]
 public class Bar : Foo
 {
     public int {|MsgPack004:Member2|} { get; set; }
 }
-",
-        };
-        var outputs = new string[]
-        {
-            @"
+";
+
+        string output1 = @"
 public class Foo
 {
     [MessagePack.Key(1)]
     public int Member1 { get; set; }
 }
-",
-            @"using MessagePack;
+";
+        string output2 = @"using MessagePack;
 
 [MessagePackObject]
 public class Bar : Foo
@@ -189,9 +186,19 @@ public class Bar : Foo
     [Key(0)]
     public int Member2 { get; set; }
 }
-",
-        };
+";
 
-        await VerifyCS.VerifyCodeFixAsync(inputs, outputs);
+        await new VerifyCS.Test
+        {
+            CodeFixTestBehaviors = CodeFixTestBehaviors.SkipLocalDiagnosticCheck, // BUGBUG: move diagnostic to `Foo` reference in Bar's base type list.
+            TestState =
+            {
+                Sources = { source1, source2 },
+            },
+            FixedState =
+            {
+                Sources = { output1, output2 },
+            },
+        }.RunAsync();
     }
 }

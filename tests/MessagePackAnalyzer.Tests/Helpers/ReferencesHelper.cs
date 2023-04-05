@@ -7,6 +7,6 @@ using Microsoft.CodeAnalysis.Testing;
 internal static class ReferencesHelper
 {
     internal static ReferenceAssemblies DefaultReferences = ReferenceAssemblies.NetFramework.Net472.Default
-        .WithPackages(ImmutableArray.Create(
+        .AddPackages(ImmutableArray.Create(
             new PackageIdentity("MessagePack", "2.0.335")));
 }
