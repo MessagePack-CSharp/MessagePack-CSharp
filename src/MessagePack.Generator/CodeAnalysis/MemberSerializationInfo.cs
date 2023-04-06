@@ -16,7 +16,7 @@ public record MemberSerializationInfo(
     string ShortTypeName,
     string? CustomFormatterTypeName)
 {
-    private readonly HashSet<string> primitiveTypes = new(ShouldUseFormatterResolverHelper.PrimitiveTypes);
+    private static readonly IReadOnlyCollection<string> PrimitiveTypes = new HashSet<string>(ShouldUseFormatterResolverHelper.PrimitiveTypes);
 
     public string GetSerializeMethodString()
     {
@@ -24,7 +24,7 @@ public record MemberSerializationInfo(
         {
             return $"this.__{this.Name}CustomFormatter__.Serialize(ref writer, value.{this.Name}, options)";
         }
-        else if (this.primitiveTypes.Contains(this.Type))
+        else if (PrimitiveTypes.Contains(this.Type))
         {
             return "writer.Write(value." + this.Name + ")";
         }
@@ -40,7 +40,7 @@ public record MemberSerializationInfo(
         {
             return $"this.__{this.Name}CustomFormatter__.Deserialize(ref reader, options)";
         }
-        else if (this.primitiveTypes.Contains(this.Type))
+        else if (PrimitiveTypes.Contains(this.Type))
         {
             if (this.Type == "byte[]")
             {

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Xml.Linq;
+
 namespace MessagePack.Generator.CodeAnalysis;
 
 public record UnionSerializationInfo(
@@ -14,4 +16,24 @@ public record UnionSerializationInfo(
     public string FormatterName => CodeAnalysisUtilities.QualifyWithOptionalNamespace(FormatterNameWithoutNamespace, $"Formatters::{this.Namespace}");
 
     public string FormatterNameWithoutNamespace => this.Name + "Formatter";
+
+    public virtual bool Equals(UnionSerializationInfo? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        return FullName == other.FullName
+            && Name == other.Name
+            && Namespace == other.Namespace
+            && SubTypes.SequenceEqual(other.SubTypes);
+    }
+
+    public override int GetHashCode() => throw new NotImplementedException();
 }

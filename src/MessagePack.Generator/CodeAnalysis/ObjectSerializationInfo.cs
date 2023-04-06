@@ -61,4 +61,38 @@ public record ObjectSerializationInfo(
         var args = string.Join(", ", this.ConstructorParameters.Select(x => "__" + x.Name + "__"));
         return $"{this.FullName}({args})";
     }
+
+    public virtual bool Equals(ObjectSerializationInfo? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (this.GetType() != other.GetType())
+        {
+            return false;
+        }
+
+        // Compare all the properties by value
+        return IsClass == other.IsClass &&
+               IsOpenGenericType == other.IsOpenGenericType &&
+               GenericTypeParameters.SequenceEqual(other.GenericTypeParameters) &&
+               ConstructorParameters.SequenceEqual(other.ConstructorParameters) &&
+               IsIntKey == other.IsIntKey &&
+               Members.SequenceEqual(other.Members) &&
+               Name == other.Name &&
+               FullName == other.FullName &&
+               Namespace == other.Namespace &&
+               HasIMessagePackSerializationCallbackReceiver == other.HasIMessagePackSerializationCallbackReceiver &&
+               NeedsCastOnAfter == other.NeedsCastOnAfter &&
+               NeedsCastOnBefore == other.NeedsCastOnBefore;
+    }
+
+    public override int GetHashCode() => throw new NotImplementedException();
 }

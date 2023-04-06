@@ -58,4 +58,30 @@ public record FullModel(
             unionInfos.ToImmutable(),
             options);
     }
+
+    public virtual bool Equals(FullModel? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (this.GetType() != other.GetType())
+        {
+            return false;
+        }
+
+        return ObjectInfos.SequenceEqual(other.ObjectInfos)
+            && EnumInfos.SequenceEqual(other.EnumInfos)
+            && GenericInfos.SequenceEqual(other.GenericInfos)
+            && UnionInfos.SequenceEqual(other.UnionInfos)
+            && Options.Equals(other.Options);
+    }
+
+    public override int GetHashCode() => throw new NotImplementedException();
 }

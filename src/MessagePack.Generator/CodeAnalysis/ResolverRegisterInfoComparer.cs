@@ -3,9 +3,9 @@
 
 namespace MessagePack.Generator.CodeAnalysis;
 
-internal class ResolverRegisterInfoComparer : IComparer<IResolverRegisterInfo>
+public class ResolverRegisterInfoComparer : IComparer<IResolverRegisterInfo>
 {
-    internal static readonly ResolverRegisterInfoComparer Default = new();
+    public static readonly ResolverRegisterInfoComparer Default = new();
 
     private ResolverRegisterInfoComparer()
     {
