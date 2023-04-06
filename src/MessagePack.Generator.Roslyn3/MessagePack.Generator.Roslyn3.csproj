@@ -37,4 +37,9 @@
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Include="..\MessagePack.Generator\AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="..\MessagePack.Generator\AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
 </Project>

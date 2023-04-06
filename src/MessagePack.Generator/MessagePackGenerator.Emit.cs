@@ -31,12 +31,14 @@ public partial class MessagePackGenerator
         {
             EnumTemplate transform = new(options, info);
             AddTransform(transform.TransformText(), transform.FileName);
+            TransferDiagnostics(info);
         }
 
         foreach (UnionSerializationInfo info in model.UnionInfos)
         {
             UnionTemplate transform = new(options, info);
             AddTransform(transform.TransformText(), transform.FileName);
+            TransferDiagnostics(info);
         }
 
         foreach (ObjectSerializationInfo info in model.ObjectInfos)
@@ -45,6 +47,15 @@ public partial class MessagePackGenerator
                 ? new StringKeyFormatterTemplate(options, info)
                 : new FormatterTemplate(options, info);
             AddTransform(transform.TransformText(), transform.FileName);
+            TransferDiagnostics(info);
+        }
+
+        void TransferDiagnostics(IResolverRegisterInfo info)
+        {
+            foreach (Diagnostic diagnostic in info.Diagnostics)
+            {
+                context.ReportDiagnostic(diagnostic);
+            }
         }
 
         void AddTransform(string transformOutput, string uniqueFileName)

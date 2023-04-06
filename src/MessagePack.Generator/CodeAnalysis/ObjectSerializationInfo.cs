@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis;
+
 namespace MessagePack.Generator.CodeAnalysis;
 
 public record ObjectSerializationInfo(
@@ -50,6 +52,8 @@ public record ObjectSerializationInfo(
             return this.Members.Where(x => x.IsReadable).Select(x => x.IntKey).DefaultIfEmpty(-1).Max();
         }
     }
+
+    public IReadOnlyCollection<Diagnostic> Diagnostics { get; init; } = Array.Empty<Diagnostic>();
 
     public MemberSerializationInfo? GetMember(int index)
     {

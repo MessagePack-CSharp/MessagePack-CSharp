@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
 
 namespace MessagePack.Generator.CodeAnalysis;
 
@@ -11,6 +12,8 @@ public record UnionSerializationInfo(
     string FullName,
     UnionSubTypeInfo[] SubTypes) : IResolverRegisterInfo
 {
+    public IReadOnlyCollection<Diagnostic> Diagnostics { get; init; } = Array.Empty<Diagnostic>();
+
     public string FileNameHint => $"{CodeAnalysisUtilities.AppendNameToNamespace("Formatters", this.Namespace)}.{this.FormatterNameWithoutNamespace}";
 
     public string FormatterName => CodeAnalysisUtilities.QualifyWithOptionalNamespace(FormatterNameWithoutNamespace, $"Formatters::{this.Namespace}");

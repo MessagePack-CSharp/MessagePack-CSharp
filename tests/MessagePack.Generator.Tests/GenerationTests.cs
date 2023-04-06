@@ -6,6 +6,10 @@ using MessagePack.Generator.Tests;
 
 public class GenerationTests
 {
+    private const string Preamble = @"
+using MessagePack;
+";
+
     private readonly ITestOutputHelper testOutputHelper;
 
     public GenerationTests(ITestOutputHelper testOutputHelper)
@@ -139,6 +143,57 @@ internal class MyGenericType<T>
     internal T Value { get; set; }
 }
 """;
+        await VerifyCS.Test.RunDefaultAsync(testSource);
+    }
+
+    [Fact]
+    public async Task NullStringKey()
+    {
+        string testSource = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    [Key(null)]
+    public string {|MsgPack005:Member|} { get; set; }
+}
+";
+
+        await VerifyCS.Test.RunDefaultAsync(testSource);
+    }
+
+    [Fact]
+    public async Task MembersNeedAttributes()
+    {
+        string testSource = Preamble + @"
+[MessagePackObject]
+public class Foo
+{
+    public string {|MsgPack004:Member1|} { get; set; }
+    public string {|MsgPack004:Member2|} { get; set; }
+}
+";
+
+        await VerifyCS.Test.RunDefaultAsync(testSource);
+    }
+
+    [Fact]
+    public async Task AddAttributeToType()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string testSource = @"
+public class {|MsgPack003:Foo|}
+{
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public class Bar
+{
+    [MessagePack.Key(0)]
+    public Foo Member { get; set; }
+}
+";
+
         await VerifyCS.Test.RunDefaultAsync(testSource);
     }
 }
