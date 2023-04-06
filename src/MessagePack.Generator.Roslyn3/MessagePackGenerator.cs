@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MessagePack.Generator;
 
-[Generator(LanguageNames.CSharp)]
+[Generator]
 public partial class MessagePackGenerator : ISourceGenerator
 {
     public const string MessagePackObjectAttributeFullName = "MessagePack.MessagePackObjectAttribute";
@@ -20,7 +20,7 @@ public partial class MessagePackGenerator : ISourceGenerator
 
     public void Execute(GeneratorExecutionContext context)
     {
-        if (context.SyntaxContextReceiver is not SyntaxContextReceiver receiver || receiver.ClassDeclarations.Count == 0)
+        if (context.SyntaxReceiver is not SyntaxContextReceiver receiver || receiver.ClassDeclarations.Count == 0)
         {
             return;
         }
@@ -43,18 +43,18 @@ public partial class MessagePackGenerator : ISourceGenerator
         GenerateResolver(generateContext, fullModel);
     }
 
-    private class SyntaxContextReceiver : ISyntaxContextReceiver
+    private class SyntaxContextReceiver : ISyntaxReceiver
     {
-        internal static ISyntaxContextReceiver Create()
+        internal static ISyntaxReceiver Create()
         {
             return new SyntaxContextReceiver();
         }
 
         public HashSet<TypeDeclarationSyntax> ClassDeclarations { get; } = new();
 
-        public void OnVisitSyntaxNode(GeneratorSyntaxContext context)
+        public void OnVisitSyntaxNode(SyntaxNode context)
         {
-            if (context.Node is TypeDeclarationSyntax typeSyntax)
+            if (context is TypeDeclarationSyntax typeSyntax)
             {
                 if (typeSyntax.AttributeLists.Count > 0)
                 {
