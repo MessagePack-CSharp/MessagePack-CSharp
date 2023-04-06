@@ -1,28 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\SourceGenerator.props"/>
+
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>11</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <DefineConstants>ROSLYN3</DefineConstants>
-    <AnalyzerLanguage>cs</AnalyzerLanguage>
     
     <!-- Mainly used for Unity, Unity 2021.3 has Roslyn 3.8.0 (https://docs.unity3d.com/Manual/roslyn-analyzers.html) -->
     <MicrosoftCodeAnalysisVersion>3.9.0</MicrosoftCodeAnalysisVersion>
 
     <!-- NuGet Info -->
-    <PackageId>MessagePack.Generator</PackageId>
     <Title>MessagePack Code Generator</Title>
     <Description>MessagePack standalone code generator.</Description>
-    <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer;Unity;Xamarin</PackageTags>
+    <PackageTags>$(PackageTags);Unity;Xamarin</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IsExternalInit" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-    <PackageReference Include="Required" />
-    <PackageReference Include="System.CodeDom" />
+    <None Include="..\MessagePack.Generator\build\**">
+      <Pack>true</Pack>
+      <PackagePath>build\</PackagePath>
+    </None>
+    <None Update="..\MessagePack.Generator\build\MessagePack.Generator.props">
+      <PackagePath>build\$(PackageId).props</PackagePath>
+    </None>
+    <None Update="..\MessagePack.Generator\build\MessagePack.Generator.targets">
+      <PackagePath>build\$(PackageId).targets</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" />
   </ItemGroup>
     
