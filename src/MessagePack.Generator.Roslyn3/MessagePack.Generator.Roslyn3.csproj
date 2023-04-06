@@ -9,8 +9,7 @@
     <MicrosoftCodeAnalysisVersion>3.9.0</MicrosoftCodeAnalysisVersion>
 
     <!-- NuGet Info -->
-    <Title>MessagePack Code Generator</Title>
-    <Description>MessagePack standalone code generator.</Description>
+    <Title>MessagePack Source Generator for Unity</Title>
     <PackageTags>$(PackageTags);Unity;Xamarin</PackageTags>
   </PropertyGroup>
 
@@ -27,10 +26,6 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Reflection.Emit" />
-  </ItemGroup>
-    
   <ItemGroup>
     <Compile Include="..\MessagePack.Generator\Transforms\**\*.cs" LinkBase="Transforms" />
     <Compile Include="..\MessagePack.Generator\CodeAnalysis\**\*.cs" LinkBase="CodeAnalysis" />

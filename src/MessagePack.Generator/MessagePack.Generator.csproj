@@ -3,10 +3,7 @@
   <Import Project="..\SourceGenerator.props"/>
   
   <PropertyGroup>
-
-    <!-- NuGet Info -->
-    <Title>MessagePack Code Generator</Title>
-    <Description>MessagePack C# source generator.</Description>
+    <Title>MessagePack Source Generator</Title>
   </PropertyGroup>
 
   <ItemGroup>

@@ -16,6 +16,7 @@
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackBuildOutputs</TargetsForTfmSpecificContentInPackage>
 
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Serializer</PackageTags>
+    <Description>A roslyn source generator for AOT or faster startup of applications that use the MessagePack nuget package.</Description>
 
   </PropertyGroup>
 
