@@ -1589,6 +1589,12 @@ If you want to avoid the upfront dynamic generation cost or you need to run on X
 dotnet add package MessagePack.Generator
 ```
 
+Or for Unity, use the source generator that targets the older Roslyn compiler:
+
+```ps1
+dotnet add package MessagePack.Generator.Roslyn3
+```
+
 This package adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
 
 These formatters are aggregated into a generated `IMessagePackResolver` class named `GeneratedMessagePackResolver`.

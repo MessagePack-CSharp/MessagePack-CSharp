@@ -100,6 +100,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Execu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.MapModeExecutionTests", "tests\MessagePack.Generator.MapModeExecutionTests\MessagePack.Generator.MapModeExecutionTests.csproj", "{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Roslyn3.Tests", "tests\MessagePack.Generator.Roslyn3.Tests\MessagePack.Generator.Roslyn3.Tests.csproj", "{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -218,6 +220,10 @@ Global
 		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -251,6 +257,7 @@ Global
 		{45A72780-93EF-4CD1-9FCD-D56A42A3B966} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 		{7908D954-15D4-4D67-B49A-4484809DA2C4} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
+		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}

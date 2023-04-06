@@ -21,7 +21,11 @@ using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 
 public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
+#if Roslyn3
+    where TSourceGenerator : ISourceGenerator, new()
+#else
     where TSourceGenerator : IIncrementalGenerator, new()
+#endif
 {
     public class Test : CSharpSourceGeneratorTest<EmptySourceGeneratorProvider, XUnitVerifier>
     {
