@@ -3,7 +3,7 @@
   <Import Project="..\SourceGenerator.props"/>
 
   <PropertyGroup>
-    <DefineConstants>ROSLYN3</DefineConstants>
+    <DefineConstants>$(DefineConstants);ROSLYN3</DefineConstants>
     
     <!-- Mainly used for Unity, Unity 2021.3 has Roslyn 3.8.0 (https://docs.unity3d.com/Manual/roslyn-analyzers.html) -->
     <MicrosoftCodeAnalysisVersion>3.8.0</MicrosoftCodeAnalysisVersion>

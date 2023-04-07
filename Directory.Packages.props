@@ -70,6 +70,10 @@
     <PackageVersion Include="xunit" Version="2.4.2" />
     <PackageVersion Include="ZeroFormatter" Version="1.6.4" />
   </ItemGroup>
+  <ItemGroup Condition="'$(MicrosoftCodeAnalysisVersion)'=='3.8.0'">
+    <PackageVersion Update="System.CodeDom" Version="5.0.0" />
+    <PackageVersion Update="System.Collections.Immutable" Version="5.0.0" />
+  </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="CSharpIsNullAnalyzer" Version="0.1.329" />
     <GlobalPackageReference Include="DotNetAnalyzers.DocumentationAnalyzers" Version="1.0.0-beta.59" />
