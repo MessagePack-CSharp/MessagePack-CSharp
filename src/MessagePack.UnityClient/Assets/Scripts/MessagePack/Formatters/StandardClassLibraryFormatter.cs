@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 using MessagePack.Internal;
 
@@ -488,15 +489,15 @@ namespace MessagePack.Formatters
         }
     }
 
-    public sealed class BigIntegerFormatter : IMessagePackFormatter<System.Numerics.BigInteger>
+    public sealed class BigIntegerFormatter : IMessagePackFormatter<BigInteger>
     {
-        public static readonly IMessagePackFormatter<System.Numerics.BigInteger> Instance = new BigIntegerFormatter();
+        public static readonly IMessagePackFormatter<BigInteger> Instance = new BigIntegerFormatter();
 
         private BigIntegerFormatter()
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, System.Numerics.BigInteger value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, BigInteger value, MessagePackSerializerOptions options)
         {
 #if NETCOREAPP
             if (!writer.OldSpec)
@@ -523,13 +524,13 @@ namespace MessagePack.Formatters
             return;
         }
 
-        public System.Numerics.BigInteger Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public BigInteger Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
-            ReadOnlySequence<byte> bytes = reader.ReadBytes() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<System.Numerics.BigInteger>();
+            ReadOnlySequence<byte> bytes = reader.ReadBytes() ?? throw MessagePackSerializationException.ThrowUnexpectedNilWhileDeserializing<BigInteger>();
 #if NETCOREAPP
             if (bytes.IsSingleSegment)
             {
-                return new System.Numerics.BigInteger(bytes.First.Span);
+                return new BigInteger(bytes.First.Span);
             }
             else
             {
@@ -537,7 +538,7 @@ namespace MessagePack.Formatters
                 try
                 {
                     bytes.CopyTo(bytesArray);
-                    return new System.Numerics.BigInteger(bytesArray.AsSpan(0, (int)bytes.Length));
+                    return new BigInteger(bytesArray.AsSpan(0, (int)bytes.Length));
                 }
                 finally
                 {
@@ -545,20 +546,20 @@ namespace MessagePack.Formatters
                 }
             }
 #else
-            return new System.Numerics.BigInteger(bytes.ToArray());
+            return new BigInteger(bytes.ToArray());
 #endif
         }
     }
 
-    public sealed class ComplexFormatter : IMessagePackFormatter<System.Numerics.Complex>
+    public sealed class ComplexFormatter : IMessagePackFormatter<Complex>
     {
-        public static readonly IMessagePackFormatter<System.Numerics.Complex> Instance = new ComplexFormatter();
+        public static readonly IMessagePackFormatter<Complex> Instance = new ComplexFormatter();
 
         private ComplexFormatter()
         {
         }
 
-        public void Serialize(ref MessagePackWriter writer, System.Numerics.Complex value, MessagePackSerializerOptions options)
+        public void Serialize(ref MessagePackWriter writer, Complex value, MessagePackSerializerOptions options)
         {
             writer.WriteArrayHeader(2);
             writer.Write(value.Real);
@@ -566,7 +567,7 @@ namespace MessagePack.Formatters
             return;
         }
 
-        public System.Numerics.Complex Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        public Complex Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
             var count = reader.ReadArrayHeader();
 
@@ -579,7 +580,186 @@ namespace MessagePack.Formatters
 
             var imaginary = reader.ReadDouble();
 
-            return new System.Numerics.Complex(real, imaginary);
+            return new Complex(real, imaginary);
+        }
+    }
+
+    public sealed class Vector2Formatter : IMessagePackFormatter<Vector2>
+    {
+        public static readonly IMessagePackFormatter<Vector2> Instance = new Vector2Formatter();
+
+        private Vector2Formatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Vector2 value, MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(2);
+            writer.Write(value.X);
+            writer.Write(value.Y);
+        }
+
+        public Vector2 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.ReadArrayHeader() != 2)
+            {
+                throw new MessagePackSerializationException("Invalid Vector2 data.");
+            }
+
+            return new Vector2(reader.ReadSingle(), reader.ReadSingle());
+        }
+    }
+
+    public sealed class Vector3Formatter : IMessagePackFormatter<Vector3>
+    {
+        public static readonly IMessagePackFormatter<Vector3> Instance = new Vector3Formatter();
+
+        private Vector3Formatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Vector3 value, MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(3);
+            writer.Write(value.X);
+            writer.Write(value.Y);
+            writer.Write(value.Z);
+        }
+
+        public Vector3 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.ReadArrayHeader() != 3)
+            {
+                throw new MessagePackSerializationException("Invalid Vector3 data.");
+            }
+
+            return new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+        }
+    }
+
+    public sealed class Vector4Formatter : IMessagePackFormatter<Vector4>
+    {
+        public static readonly IMessagePackFormatter<Vector4> Instance = new Vector4Formatter();
+
+        private Vector4Formatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Vector4 value, MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(4);
+            writer.Write(value.X);
+            writer.Write(value.Y);
+            writer.Write(value.Z);
+            writer.Write(value.W);
+        }
+
+        public Vector4 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.ReadArrayHeader() != 4)
+            {
+                throw new MessagePackSerializationException("Invalid Vector4 data.");
+            }
+
+            return new Vector4(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+        }
+    }
+
+    public sealed class QuaternionFormatter : IMessagePackFormatter<Quaternion>
+    {
+        public static readonly IMessagePackFormatter<Quaternion> Instance = new QuaternionFormatter();
+
+        private QuaternionFormatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Quaternion value, MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(4);
+            writer.Write(value.X);
+            writer.Write(value.Y);
+            writer.Write(value.Z);
+            writer.Write(value.W);
+        }
+
+        public Quaternion Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.ReadArrayHeader() != 4)
+            {
+                throw new MessagePackSerializationException("Invalid Quaternion data.");
+            }
+
+            return new Quaternion(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+        }
+    }
+
+    public sealed class Matrix3x2Formatter : IMessagePackFormatter<Matrix3x2>
+    {
+        public static readonly IMessagePackFormatter<Matrix3x2> Instance = new Matrix3x2Formatter();
+
+        private Matrix3x2Formatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Matrix3x2 value, MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(6);
+            writer.Write(value.M11);
+            writer.Write(value.M12);
+            writer.Write(value.M21);
+            writer.Write(value.M22);
+            writer.Write(value.M31);
+            writer.Write(value.M32);
+        }
+
+        public Matrix3x2 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.ReadArrayHeader() != 6)
+            {
+                throw new MessagePackSerializationException("Invalid Matrix3x2 data.");
+            }
+
+            return new Matrix3x2(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+        }
+    }
+
+    public sealed class Matrix4x4Formatter : IMessagePackFormatter<Matrix4x4>
+    {
+        public static readonly IMessagePackFormatter<Matrix4x4> Instance = new Matrix4x4Formatter();
+
+        private Matrix4x4Formatter()
+        {
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Matrix4x4 value, MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(16);
+            writer.Write(value.M11);
+            writer.Write(value.M12);
+            writer.Write(value.M13);
+            writer.Write(value.M14);
+            writer.Write(value.M21);
+            writer.Write(value.M22);
+            writer.Write(value.M23);
+            writer.Write(value.M24);
+            writer.Write(value.M31);
+            writer.Write(value.M32);
+            writer.Write(value.M33);
+            writer.Write(value.M34);
+            writer.Write(value.M41);
+            writer.Write(value.M42);
+            writer.Write(value.M43);
+            writer.Write(value.M44);
+        }
+
+        public Matrix4x4 Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+        {
+            if (reader.ReadArrayHeader() != 16)
+            {
+                throw new MessagePackSerializationException("Invalid Matrix4x4 data.");
+            }
+
+            return new Matrix4x4(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
         }
     }
 

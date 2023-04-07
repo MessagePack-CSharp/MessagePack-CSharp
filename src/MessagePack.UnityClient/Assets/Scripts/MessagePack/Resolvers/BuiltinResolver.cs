@@ -156,6 +156,18 @@ namespace MessagePack.Internal
             { typeof(System.Numerics.BigInteger?), new StaticNullableFormatter<System.Numerics.BigInteger>(BigIntegerFormatter.Instance) },
             { typeof(System.Numerics.Complex), ComplexFormatter.Instance },
             { typeof(System.Numerics.Complex?), new StaticNullableFormatter<System.Numerics.Complex>(ComplexFormatter.Instance) },
+            { typeof(System.Numerics.Vector2), Vector2Formatter.Instance },
+            { typeof(System.Numerics.Vector2?), new StaticNullableFormatter<System.Numerics.Vector2>(Vector2Formatter.Instance) },
+            { typeof(System.Numerics.Vector3), Vector3Formatter.Instance },
+            { typeof(System.Numerics.Vector3?), new StaticNullableFormatter<System.Numerics.Vector3>(Vector3Formatter.Instance) },
+            { typeof(System.Numerics.Vector4), Vector4Formatter.Instance },
+            { typeof(System.Numerics.Vector4?), new StaticNullableFormatter<System.Numerics.Vector4>(Vector4Formatter.Instance) },
+            { typeof(System.Numerics.Quaternion), QuaternionFormatter.Instance },
+            { typeof(System.Numerics.Quaternion?), new StaticNullableFormatter<System.Numerics.Quaternion>(QuaternionFormatter.Instance) },
+            { typeof(System.Numerics.Matrix3x2), Matrix3x2Formatter.Instance },
+            { typeof(System.Numerics.Matrix3x2?), new StaticNullableFormatter<System.Numerics.Matrix3x2>(Matrix3x2Formatter.Instance) },
+            { typeof(System.Numerics.Matrix4x4), Matrix4x4Formatter.Instance },
+            { typeof(System.Numerics.Matrix4x4?), new StaticNullableFormatter<System.Numerics.Matrix4x4>(Matrix4x4Formatter.Instance) },
 
 #if NET5_0_OR_GREATER
             { typeof(System.Half), HalfFormatter.Instance },
