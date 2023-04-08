@@ -26,7 +26,7 @@
     <AdditionalFiles Include="..\MessagePack.Generator\AnalyzerReleases.Unshipped.md" />
   </ItemGroup>
 
-  <Target Name="PackZip" BeforeTargets="Pack">
+  <Target Name="PackZip" BeforeTargets="Pack" DependsOnTargets="Build">
     <ItemGroup>
       <ZipFileContent Include="$(TargetPath)" />
     </ItemGroup>
