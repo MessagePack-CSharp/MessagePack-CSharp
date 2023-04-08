@@ -4,13 +4,10 @@
 
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);ROSLYN3</DefineConstants>
-    
+    <IsPackable>false</IsPackable>
+
     <!-- Mainly used for Unity, Unity 2021.3 has Roslyn 3.8.0 (https://docs.unity3d.com/Manual/roslyn-analyzers.html) -->
     <MicrosoftCodeAnalysisVersion>3.8.0</MicrosoftCodeAnalysisVersion>
-
-    <!-- NuGet Info -->
-    <Title>MessagePack Source Generator for Unity</Title>
-    <PackageTags>$(PackageTags);Unity;Xamarin</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -42,4 +39,17 @@
     <AdditionalFiles Include="..\MessagePack.Generator\AnalyzerReleases.Unshipped.md" />
   </ItemGroup>
 
+  <Target Name="PackZip" BeforeTargets="Pack">
+    <ItemGroup>
+      <ZipFileContent Include="$(TargetPath)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ZipStagingDirectory>$(IntermediateOutputPath)zip</ZipStagingDirectory>
+    </PropertyGroup>
+    <Copy SourceFiles="@(ZipFileContent)" DestinationFolder="$(ZipStagingDirectory)" />
+    <ZipDirectory
+      SourceDirectory="$(ZipStagingDirectory)"
+      DestinationFile="$(PackageOutputPath)MessagePack.SourceGenerator.Unity.zip"
+      Overwrite="true"/>
+  </Target>
 </Project>

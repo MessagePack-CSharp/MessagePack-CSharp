@@ -1589,11 +1589,10 @@ If you want to avoid the upfront dynamic generation cost or you need to run on X
 dotnet add package MessagePack.Generator
 ```
 
-Or for Unity, use the source generator that targets the older Roslyn compiler:
-
-```ps1
-dotnet add package MessagePack.Generator.Roslyn3
-```
+Or for Unity, use the source generator that targets the older Roslyn compiler.
+[Setting up a source generator for unity](https://docs.unity3d.com/Manual/roslyn-analyzers.html) is a bit more involved.
+The unity instructions describe copying the analyzer .dll into your unity project.
+You should get the analyzer .dll from the the unity source generator .zip file uploaded on our GitHub releases page.
 
 This package adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
 
