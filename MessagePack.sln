@@ -95,13 +95,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Experimental.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.GeneratedCode.Tests", "tests\MessagePack.GeneratedCode.Tests\MessagePack.GeneratedCode.Tests.csproj", "{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Roslyn3", "src\MessagePack.Generator.Roslyn3\MessagePack.Generator.Roslyn3.csproj", "{45A72780-93EF-4CD1-9FCD-D56A42A3B966}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Unity", "src\MessagePack.Generator.Unity\MessagePack.Generator.Unity.csproj", "{45A72780-93EF-4CD1-9FCD-D56A42A3B966}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.ExecutionTests", "tests\MessagePack.Generator.ExecutionTests\MessagePack.Generator.ExecutionTests.csproj", "{7908D954-15D4-4D67-B49A-4484809DA2C4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.MapModeExecutionTests", "tests\MessagePack.Generator.MapModeExecutionTests\MessagePack.Generator.MapModeExecutionTests.csproj", "{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Roslyn3.Tests", "tests\MessagePack.Generator.Roslyn3.Tests\MessagePack.Generator.Roslyn3.Tests.csproj", "{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Unity.Tests", "tests\MessagePack.Generator.Unity.Tests\MessagePack.Generator.Unity.Tests.csproj", "{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

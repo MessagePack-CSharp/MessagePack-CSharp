@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>11</LangVersion>
-    <DefineConstants>$(DefineConstants);Roslyn3</DefineConstants>
+    <DefineConstants>$(DefineConstants);UNITY</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MessagePack.Generator.Roslyn3\MessagePack.Generator.Roslyn3.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Generator.Unity\MessagePack.Generator.Unity.csproj" />
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 

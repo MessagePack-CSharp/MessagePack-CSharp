@@ -3,25 +3,12 @@
   <Import Project="..\SourceGenerator.props"/>
 
   <PropertyGroup>
-    <DefineConstants>$(DefineConstants);ROSLYN3</DefineConstants>
+    <DefineConstants>$(DefineConstants);UNITY</DefineConstants>
     <IsPackable>false</IsPackable>
 
     <!-- Mainly used for Unity, Unity 2021.3 has Roslyn 3.8.0 (https://docs.unity3d.com/Manual/roslyn-analyzers.html) -->
     <MicrosoftCodeAnalysisVersion>3.8.0</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\MessagePack.Generator\build\**">
-      <Pack>true</Pack>
-      <PackagePath>build\</PackagePath>
-    </None>
-    <None Update="..\MessagePack.Generator\build\MessagePack.Generator.props">
-      <PackagePath>build\$(PackageId).props</PackagePath>
-    </None>
-    <None Update="..\MessagePack.Generator\build\MessagePack.Generator.targets">
-      <PackagePath>build\$(PackageId).targets</PackagePath>
-    </None>
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\MessagePack.Generator\Transforms\**\*.cs" LinkBase="Transforms" />
