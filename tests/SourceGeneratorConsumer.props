@@ -1,8 +1,8 @@
 <Project>
-  <Import Project="..\src\MessagePack.Generator\build\MessagePack.Generator.props" />
+  <Import Project="..\src\MessagePack.SourceGenerator\build\MessagePack.SourceGenerator.props" />
 
   <ItemGroup>
-    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.Generator\MessagePack.Generator.csproj">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj">
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

@@ -81,11 +81,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Internal", "san
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Internal.Tests", "tests\MessagePack.Internal.Tests\MessagePack.Internal.Tests.csproj", "{8D9FD130-7905-47D8-A25C-7FDEE28EA0E8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator", "src\MessagePack.Generator\MessagePack.Generator.csproj", "{32C91908-5CAD-4C95-B240-ACBBACAC9476}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator", "src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj", "{32C91908-5CAD-4C95-B240-ACBBACAC9476}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePackAnalyzer.Tests", "tests\MessagePackAnalyzer.Tests\MessagePackAnalyzer.Tests.csproj", "{7E5FB4B9-A0F5-4B10-A1F3-03AC0BC8265A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Tests", "tests\MessagePack.Generator.Tests\MessagePack.Generator.Tests.csproj", "{6AC51E68-4681-463A-B4B6-BD53517244B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator.Tests", "tests\MessagePack.SourceGenerator.Tests\MessagePack.SourceGenerator.Tests.csproj", "{6AC51E68-4681-463A-B4B6-BD53517244B2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExperimentalBenchmark", "benchmark\ExperimentalBenchmark\ExperimentalBenchmark.csproj", "{4C9BB260-62D8-49CD-9F9C-9AA6A8BFC637}"
 EndProject
@@ -95,13 +95,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Experimental.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.GeneratedCode.Tests", "tests\MessagePack.GeneratedCode.Tests\MessagePack.GeneratedCode.Tests.csproj", "{D4CE7347-CEBE-46E5-BD12-1319573B6C5E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Unity", "src\MessagePack.Generator.Unity\MessagePack.Generator.Unity.csproj", "{45A72780-93EF-4CD1-9FCD-D56A42A3B966}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator.Unity", "src\MessagePack.SourceGenerator.Unity\MessagePack.SourceGenerator.Unity.csproj", "{45A72780-93EF-4CD1-9FCD-D56A42A3B966}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.ExecutionTests", "tests\MessagePack.Generator.ExecutionTests\MessagePack.Generator.ExecutionTests.csproj", "{7908D954-15D4-4D67-B49A-4484809DA2C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator.ExecutionTests", "tests\MessagePack.SourceGenerator.ExecutionTests\MessagePack.SourceGenerator.ExecutionTests.csproj", "{7908D954-15D4-4D67-B49A-4484809DA2C4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.MapModeExecutionTests", "tests\MessagePack.Generator.MapModeExecutionTests\MessagePack.Generator.MapModeExecutionTests.csproj", "{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator.MapModeExecutionTests", "tests\MessagePack.SourceGenerator.MapModeExecutionTests\MessagePack.SourceGenerator.MapModeExecutionTests.csproj", "{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Generator.Unity.Tests", "tests\MessagePack.Generator.Unity.Tests\MessagePack.Generator.Unity.Tests.csproj", "{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator.Unity.Tests", "tests\MessagePack.SourceGenerator.Unity.Tests\MessagePack.SourceGenerator.Unity.Tests.csproj", "{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

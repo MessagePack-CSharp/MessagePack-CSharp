@@ -1,3 +1,3 @@
 <Project>
-  <Import Project="..\src\MessagePack.Generator\build\MessagePack.Generator.targets" />
+  <Import Project="..\src\MessagePack.SourceGenerator\build\MessagePack.SourceGenerator.targets" />
 </Project>
