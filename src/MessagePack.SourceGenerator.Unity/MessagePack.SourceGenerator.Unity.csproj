@@ -34,6 +34,7 @@
       <ZipStagingDirectory>$(IntermediateOutputPath)zip</ZipStagingDirectory>
     </PropertyGroup>
     <Copy SourceFiles="@(ZipFileContent)" DestinationFolder="$(ZipStagingDirectory)" />
+    <MakeDir Directories="$(PackageOutputPath)" />
     <ZipDirectory
       SourceDirectory="$(ZipStagingDirectory)"
       DestinationFile="$(PackageOutputPath)$(TargetName).zip"
