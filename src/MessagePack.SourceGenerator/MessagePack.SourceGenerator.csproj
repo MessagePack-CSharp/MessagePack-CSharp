@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\SourceGenerator.props"/>
+  <Import Project="..\SourceGenerator.props" />
   
   <PropertyGroup>
     <!-- Special properties for analyzer packages. -->
@@ -9,8 +9,8 @@
     <DebugType>embedded</DebugType>
     <IncludeSymbols>false</IncludeSymbols>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackBuildOutputs</TargetsForTfmSpecificContentInPackage>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
 
     <Title>MessagePack Source Generator</Title>
     <Description>A roslyn source generator for AOT or faster startup of applications that use the MessagePack nuget package.</Description>
@@ -22,16 +22,6 @@
       <Pack>true</Pack>
       <PackagePath>build\</PackagePath>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="AnalyzerReleases.Shipped.md" />
-    <None Remove="AnalyzerReleases.Unshipped.md" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
-    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
   </ItemGroup>
 
   <ItemGroup>
@@ -86,7 +76,7 @@
     <None Update="Transforms\StringKey\StringKeyFormatterTemplate.tt">
       <LastGenOutput>StringKeyFormatterTemplate.cs</LastGenOutput>
       <Generator>TextTemplatingFilePreprocessor</Generator>
-      <CustomToolNamespace>MessagePack.Generator.Transforms</CustomToolNamespace>
+      <CustomToolNamespace>MessagePack.SourceGenerator.Transforms</CustomToolNamespace>
     </None>
     <None Update="Transforms\UnionTemplate.tt">
       <LastGenOutput>UnionTemplate.cs</LastGenOutput>
@@ -98,12 +88,5 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
-  <Target Name="PackBuildOutputs" DependsOnTargets="ResolveProjectReferences;SatelliteDllsProjectOutputGroup;SatelliteDllsProjectOutputGroupDependencies">
-    <ItemGroup>
-      <TfmSpecificPackageFile Include="$(TargetPath)" PackagePath="analyzers\cs\" />
-      <TfmSpecificPackageFile Include="@(SatelliteDllsProjectOutputGroupDependency)" PackagePath="analyzers\cs\%(SatelliteDllsProjectOutputGroupDependency.DestinationSubDirectory)" Condition=" '%(SatelliteDllsProjectOutputGroupDependency.DestinationSubDirectory)' != '' " />
-      <TfmSpecificPackageFile Include="@(SatelliteDllsProjectOutputGroupOutput->'%(FinalOutputPath)')" PackagePath="analyzers\cs\%(SatelliteDllsProjectOutputGroupOutput.Culture)\" />
-      <TfmSpecificPackageFile Include="%(_ResolvedProjectReferencePaths.Identity)" PackagePath="analyzers\cs\" />
-    </ItemGroup>
-  </Target>
+  <Import Project="$(MSBuildProjectName).targets"/>
 </Project>

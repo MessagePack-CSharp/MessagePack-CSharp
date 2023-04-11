@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using MessagePack.SourceGenerator.CodeAnalysis;
+using MessagePackAnalyzer.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -26,19 +26,24 @@ public partial class MessagePackGenerator : ISourceGenerator
         }
 
         Compilation compilation = context.Compilation;
-        GeneratorContext generateContext = new(context);
-        AnalyzerOptions options = AnalyzerOptions.Parse(context.AnalyzerConfigOptions.GlobalOptions);
+        if (!ReferenceSymbols.TryCreate(compilation, out ReferenceSymbols? referenceSymbols))
+        {
+            return;
+        }
+
+        AnalyzerOptions options = AnalyzerOptions.Parse(context.AnalyzerConfigOptions.GlobalOptions, context.AdditionalFiles);
 
         List<FullModel> modelPerType = new();
         foreach (var syntax in receiver.ClassDeclarations)
         {
-            if (TypeCollector.Collect(compilation, options, syntax, generateContext, context.CancellationToken) is FullModel model)
+            if (TypeCollector.Collect(compilation, options, referenceSymbols, null, syntax, context.CancellationToken) is FullModel model)
             {
                 modelPerType.Add(model);
             }
         }
 
         FullModel fullModel = FullModel.Combine(modelPerType.ToImmutableArray());
+        GeneratorContext generateContext = new(context);
         Generate(generateContext, fullModel);
         GenerateResolver(generateContext, fullModel);
     }

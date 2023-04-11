@@ -9,15 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MessagePack.Generator.Tests\**\*.cs" />
-    <Compile Remove="..\MessagePack.Generator.Tests\GenerateGenericsFormatterTest.cs" />
-    <Compile Remove="..\MessagePack.Generator.Tests\GenerateMessagePackFormatterAttrTest.cs" />
-    <Compile Remove="..\MessagePack.Generator.Tests\GenerateStringKeyedFormatterTest.cs" />
+    <Compile Include="..\MessagePack.SourceGenerator.Tests\**\*.cs" />
+    <Compile Remove="..\MessagePack.SourceGenerator.Tests\GenerateGenericsFormatterTest.cs" />
+    <Compile Remove="..\MessagePack.SourceGenerator.Tests\GenerateMessagePackFormatterAttrTest.cs" />
+    <Compile Remove="..\MessagePack.SourceGenerator.Tests\GenerateStringKeyedFormatterTest.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="..\MessagePack.Generator.Tests\Resources\**\*.cs" />
-    <EmbeddedResource Include="..\MessagePack.Generator.Tests\Resources\**\*.cs" LinkBase="Resources" />
+    <Compile Remove="..\MessagePack.SourceGenerator.Tests\Resources\**\*.cs" />
+    <EmbeddedResource Include="..\MessagePack.SourceGenerator.Tests\Resources\**\*.cs" LinkBase="Resources" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator.Unity\MessagePack.SourceGenerator.Unity.csproj" />
+    <ProjectReference Include="..\..\src\MessagePackAnalyzer\MessagePackAnalyzer.csproj" />
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 

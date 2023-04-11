@@ -147,53 +147,22 @@ internal class MyGenericType<T>
     }
 
     [Fact]
-    public async Task NullStringKey()
+    public async Task GenericTypeArg()
     {
-        string testSource = Preamble + @"
+        string testSource = """
+using MessagePack;
+using System;
+
 [MessagePackObject]
-public class Foo
+public class GenericClass<T1, T2>
 {
-    [Key(null)]
-    public string {|MsgPack005:Member|} { get; set; }
+    [Key(0)]
+    public T1 MyProperty0 { get; set; }
+
+    [Key(1)]
+    public T2 MyProperty1 { get; set; }
 }
-";
-
-        await VerifyCS.Test.RunDefaultAsync(testSource);
-    }
-
-    [Fact]
-    public async Task MembersNeedAttributes()
-    {
-        string testSource = Preamble + @"
-[MessagePackObject]
-public class Foo
-{
-    public string {|MsgPack004:Member1|} { get; set; }
-    public string {|MsgPack004:Member2|} { get; set; }
-}
-";
-
-        await VerifyCS.Test.RunDefaultAsync(testSource);
-    }
-
-    [Fact]
-    public async Task AddAttributeToType()
-    {
-        // Don't use Preamble because we want to test that it works without a using statement at the top.
-        string testSource = @"
-public class {|MsgPack003:Foo|}
-{
-    public string Member { get; set; }
-}
-
-[MessagePack.MessagePackObject]
-public class Bar
-{
-    [MessagePack.Key(0)]
-    public Foo Member { get; set; }
-}
-";
-
+""";
         await VerifyCS.Test.RunDefaultAsync(testSource);
     }
 }

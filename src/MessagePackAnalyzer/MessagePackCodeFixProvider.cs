@@ -24,8 +24,8 @@ namespace MessagePackAnalyzer
             get
             {
                 return ImmutableArray.Create(
-                    MessagePackAnalyzer.PublicMemberNeedsKey.Id,
-                    MessagePackAnalyzer.TypeMustBeMessagePackObject.Id);
+                    MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey.Id,
+                    MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject.Id);
             }
         }
 
@@ -43,18 +43,25 @@ namespace MessagePackAnalyzer
             }
 
             SemanticModel? model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
+            if (model is null)
+            {
+                return;
+            }
 
-            var typeInfo = context.Diagnostics[0]?.Properties.GetValueOrDefault("type", null);
-            INamedTypeSymbol? namedSymbol = typeInfo is not null
-                ? model?.Compilation.GetTypeByMetadataName(typeInfo.Replace("global::", string.Empty))
-                : null;
+            SyntaxNode targetNode = root.FindNode(context.Span);
+            TypeInfo myTypeInfo = model.GetTypeInfo(targetNode, context.CancellationToken);
+
+            string? typeName = context.Diagnostics[0]?.Properties.GetValueOrDefault("type", null);
+            INamedTypeSymbol? namedSymbol =
+                myTypeInfo.Type as INamedTypeSymbol ??
+                (typeName is not null ? model.Compilation.GetTypeByMetadataName(typeName.Replace("global::", string.Empty)) : null);
 
             if (namedSymbol is null)
             {
-                SyntaxNode targetNode = root.FindNode(context.Span);
                 var property = targetNode as PropertyDeclarationSyntax;
                 var field = targetNode as FieldDeclarationSyntax;
                 var dec = targetNode as VariableDeclaratorSyntax;
+                IdentifierNameSyntax? identifierName = targetNode as IdentifierNameSyntax;
 
                 ITypeSymbol? targetType = null;
                 if (property == null && field == null)
@@ -67,7 +74,7 @@ namespace MessagePackAnalyzer
                     else if (dec != null)
                     {
                         var fieldOrProperty = model.GetDeclaredSymbol(dec) as ISymbol;
-                        if (context.Diagnostics[0].Id == MessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
+                        if (context.Diagnostics[0].Id == MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
                         {
                             targetType = (fieldOrProperty as IPropertySymbol)?.Type;
                             if (targetType == null)
@@ -87,7 +94,7 @@ namespace MessagePackAnalyzer
                 }
                 else
                 {
-                    if (context.Diagnostics[0].Id == MessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
+                    if (context.Diagnostics[0].Id == MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject.Id)
                     {
                         targetType = (property != null)
                             ? (model.GetDeclaredSymbol(property) as IPropertySymbol)?.Type
@@ -129,7 +136,7 @@ namespace MessagePackAnalyzer
 
             ISymbol[] targets = type.GetAllMembers()
                 .Where(x => x.Kind == SymbolKind.Property || x.Kind == SymbolKind.Field)
-                .Where(x => x.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.IgnoreShortName) == null && x.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.IgnoreDataMemberShortName) == null)
+                .Where(x => x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreShortName) == null && x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.IgnoreDataMemberShortName) == null)
                 .Where(x => !x.IsStatic)
                 .Where(x =>
                 {
@@ -143,7 +150,7 @@ namespace MessagePackAnalyzer
                 .ToArray();
 
             var startOrder = targets
-                .Select(x => x.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName))
+                .Select(x => x.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.KeyAttributeShortName))
                 .Where(x => x != null)
                 .Select(x => x.ConstructorArguments[0])
                 .Where(x => !x.IsNull)
@@ -154,7 +161,7 @@ namespace MessagePackAnalyzer
 
             foreach (ISymbol member in targets)
             {
-                if (member.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.KeyAttributeShortName) is null)
+                if (member.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.KeyAttributeShortName) is null)
                 {
                     SyntaxNode node = await member.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
                     var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);
@@ -163,7 +170,7 @@ namespace MessagePackAnalyzer
                 }
             }
 
-            if (type.GetAttributes().FindAttributeShortName(MessagePackAnalyzer.MessagePackObjectAttributeShortName) == null)
+            if (type.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.MessagePackObjectAttributeShortName) == null)
             {
                 SyntaxNode node = await type.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
                 var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);

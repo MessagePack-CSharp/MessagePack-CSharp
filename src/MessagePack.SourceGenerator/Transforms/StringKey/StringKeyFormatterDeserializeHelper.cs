@@ -3,7 +3,7 @@
 
 using System.Text;
 using MessagePack.Internal;
-using MessagePack.SourceGenerator.CodeAnalysis;
+using MessagePackAnalyzer.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.Transforms;
 

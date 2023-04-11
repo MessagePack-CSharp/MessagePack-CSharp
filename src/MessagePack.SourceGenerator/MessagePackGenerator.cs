@@ -2,9 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using MessagePack.SourceGenerator.CodeAnalysis;
+using MessagePackAnalyzer.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
+using AnalyzerOptions = MessagePackAnalyzer.CodeAnalysis.AnalyzerOptions;
 
 namespace MessagePack.SourceGenerator;
 
@@ -16,7 +18,8 @@ public partial class MessagePackGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        IncrementalValueProvider<AnalyzerOptions> options = context.AnalyzerConfigOptionsProvider.Select((provider, ct) => AnalyzerOptions.Parse(provider.GlobalOptions));
+        var options = context.AdditionalTextsProvider.Collect().Combine(context.AnalyzerConfigOptionsProvider).Select(
+            ((ImmutableArray<AdditionalText> AdditionalFiles, AnalyzerConfigOptionsProvider Options) t, CancellationToken ct) => AnalyzerOptions.Parse(t.Options.GlobalOptions, t.AdditionalFiles));
 
         var messagePackObjectTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             MessagePackObjectAttributeFullName,
@@ -36,10 +39,15 @@ public partial class MessagePackGenerator : IIncrementalGenerator
             .Combine(options)
             .Select(static (s, ct) =>
             {
+                if (!ReferenceSymbols.TryCreate(s.Left.Right, out ReferenceSymbols? referenceSymbols))
+                {
+                    return null;
+                }
+
                 List<FullModel> modelPerType = new();
                 void Collect(TypeDeclarationSyntax typeDecl)
                 {
-                    if (TypeCollector.Collect(s.Left.Right, s.Right, typeDecl, null, ct) is FullModel model)
+                    if (TypeCollector.Collect(s.Left.Right, s.Right, referenceSymbols, reportDiagnostic: null, typeDecl, ct) is FullModel model)
                     {
                         modelPerType.Add(model);
                     }

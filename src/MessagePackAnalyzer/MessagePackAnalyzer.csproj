@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
 
     <Description>Analyzer of MessagePack for C#, verify rule for [MessagePackObject] and code fix for [Key].</Description>
     <PackageTags>MsgPack;MessagePack;Serialization;Formatter;Analyzer</PackageTags>
@@ -9,6 +10,8 @@
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <IncludeSymbols>false</IncludeSymbols>
     <DevelopmentDependency>true</DevelopmentDependency>
+
+    <MicrosoftCodeAnalysisVersion>$(CodeAnalysisVersionForUnity)</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="tools\*.ps1" Pack="true" PackagePath="tools\" />
@@ -19,8 +22,10 @@
     </PackageReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <PackageReference Include="IsExternalInit" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Strings.Designer.cs">

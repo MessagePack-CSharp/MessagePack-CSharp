@@ -3,7 +3,7 @@
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-using MessagePack.SourceGenerator.CodeAnalysis;
+using MessagePackAnalyzer.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator.Transforms;
 

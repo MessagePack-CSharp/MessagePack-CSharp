@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj" />
+    <ProjectReference Include="..\..\src\MessagePackAnalyzer\MessagePackAnalyzer.csproj" />
     <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
   </ItemGroup>
 

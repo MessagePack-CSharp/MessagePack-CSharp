@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Testing;
 using Xunit;
 using VerifyCS =
-    CSharpCodeFixVerifier<MessagePackAnalyzer.MessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider>;
+    CSharpCodeFixVerifier<MessagePackAnalyzer.MsgPack00xMessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider>;
 
 public class MessagePackAnalyzerTests
 {
@@ -59,7 +59,7 @@ public class SomeClass {
 
 public class InvalidMessageFormatter { }
 
-[{|MsgPack006:MessagePackFormatter(typeof(InvalidMessageFormatter))|}]
+[MessagePackFormatter({|MsgPack006:typeof(InvalidMessageFormatter)|})]
 public struct Foo
 {
 }
@@ -129,7 +129,7 @@ public class Foo
 public class Bar
 {
     [MessagePack.Key(0)]
-    public Foo {|MsgPack003:Member|} { get; set; }
+    public {|MsgPack003:Foo|} Member { get; set; }
 }
 ";
 
@@ -158,14 +158,14 @@ public class Bar
         string source1 = @"
 public class Foo
 {
-    public int {|MsgPack004:Member1|} { get; set; }
+    public int Member1 { get; set; }
 }
 ";
 
         string source2 = @"using MessagePack;
 
 [MessagePackObject]
-public class Bar : Foo
+public class Bar : {|MsgPack004:Foo|}
 {
     public int {|MsgPack004:Member2|} { get; set; }
 }

@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace MessagePack.SourceGenerator.CodeAnalysis;
+namespace MessagePackAnalyzer.CodeAnalysis;
 
-internal static class CodeAnalysisUtilities
+public static class CodeAnalysisUtilities
 {
     private static readonly HashSet<char> InvalidFileNameChars = new(Path.GetInvalidFileNameChars());
 
@@ -15,17 +15,17 @@ internal static class CodeAnalysisUtilities
         InvalidFileNameChars.Add('>');
     }
 
-    internal static string QualifyWithOptionalNamespace(string leafTypeOrNamespace, string? baseNamespace)
+    public static string QualifyWithOptionalNamespace(string leafTypeOrNamespace, string? baseNamespace)
     {
         return string.IsNullOrEmpty(baseNamespace) ? leafTypeOrNamespace : (baseNamespace!.EndsWith("::") ? $"{baseNamespace}{leafTypeOrNamespace}" : $"{baseNamespace}.{leafTypeOrNamespace}");
     }
 
-    internal static string AppendNameToNamespace(string left, string? right)
+    public static string AppendNameToNamespace(string left, string? right)
     {
         return string.IsNullOrEmpty(right) ? left : $"{left}.{right}";
     }
 
-    internal static string GetSanitizedFileName(string fileName)
+    public static string GetSanitizedFileName(string fileName)
     {
         foreach (char c in InvalidFileNameChars)
         {

@@ -8,9 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IsExternalInit" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-    <PackageReference Include="Required" />
-    <PackageReference Include="System.CodeDom" />
+    <PackageReference Include="IsExternalInit" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <PackageReference Include="Required" PrivateAssets="all" />
+    <PackageReference Include="System.CodeDom" PrivateAssets="all" />
+    <PackageReference Include="System.Text.Json" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePackAnalyzer\MessagePackAnalyzer.csproj" PrivateAssets="none" IncludeAssets="analyzers" />
   </ItemGroup>
 </Project>

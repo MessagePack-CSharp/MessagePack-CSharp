@@ -3,7 +3,8 @@
 <#@ import namespace="System" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ import namespace="MessagePack.Generator.CodeAnalysis" #>
+<#@ import namespace="MessagePackAnalyzer.CodeAnalysis" #>
+<#@ import namespace="MessagePackAnalyzer.Transforms" #>
 
 namespace <#= Namespace #>
 {
