@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <!-- This property can be overridden in order to expose the resolver outside the assembly, perhaps so it can be aggregated with others. -->
+    <PublicMessagePackGeneratedResolver>false</PublicMessagePackGeneratedResolver>
+    <MessagePackGeneratedResolverName>GeneratedMessagePackResolver</MessagePackGeneratedResolverName>
+    <MessagePackGeneratedUsesMapMode>false</MessagePackGeneratedUsesMapMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="RootNamespace" />
+    <CompilerVisibleProperty Include="PublicMessagePackGeneratedResolver" />
+    <CompilerVisibleProperty Include="MessagePackGeneratedResolverNamespace" />
+    <CompilerVisibleProperty Include="MessagePackGeneratedResolverName" />
+    <CompilerVisibleProperty Include="MessagePackGeneratedUsesMapMode" />
+  </ItemGroup>
+</Project>

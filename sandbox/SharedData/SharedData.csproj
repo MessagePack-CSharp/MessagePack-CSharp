@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\tests\SourceGeneratorConsumer.props" />
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PublicMessagePackGeneratedResolver>true</PublicMessagePackGeneratedResolver>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\Tests\Class1.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
-  </ItemGroup>
+  <Import Project="..\..\tests\SourceGeneratorConsumer.targets" />
 </Project>

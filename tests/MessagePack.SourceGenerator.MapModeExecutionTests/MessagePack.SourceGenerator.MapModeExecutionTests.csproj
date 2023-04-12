@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\SourceGeneratorConsumer.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <MessagePackGeneratedUsesMapMode>true</MessagePackGeneratedUsesMapMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack.SourceGenerator.ExecutionTests\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="$(RootNamespace)"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <Import Project="..\SourceGeneratorConsumer.targets" />
+</Project>

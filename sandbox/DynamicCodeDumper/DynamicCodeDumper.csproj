@@ -31,6 +31,9 @@
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataDictionary.cs">
       <Link>Code\AutomataDictionary.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataKeyGen.cs">
+      <Link>Code\AutomataKeyGen.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\ThreadsafeTypeKeyHashTable.cs">
       <Link>Code\ThreadsafeTypeKeyHashTable.cs</Link>
     </Compile>

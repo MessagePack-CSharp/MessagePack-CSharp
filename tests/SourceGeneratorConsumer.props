@@ -1,0 +1,24 @@
+<Project>
+  <Import Project="..\src\MessagePack.SourceGenerator\build\MessagePack.SourceGenerator.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.SourceGenerator\MessagePack.SourceGenerator.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.Analyzers\MessagePack.Analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Analyzer Include="$(PkgSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll"/>
+  </ItemGroup>
+
+</Project>

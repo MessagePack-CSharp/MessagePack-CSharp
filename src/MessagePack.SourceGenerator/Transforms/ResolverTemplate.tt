@@ -1,0 +1,76 @@
+﻿<#@ template debug="false" hostspecific="false" linePragmas="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+namespace <#= ResolverNamespace #>
+{
+	using MsgPack = global::MessagePack;
+	using Formatters = global::<#= FormatterNamespace #>;
+
+	/// <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
+	<#= PublicResolver ? "public" : "internal" #> class <#= ResolverName #> : MsgPack::IFormatterResolver
+	{
+		/// <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
+		public static readonly MsgPack::IFormatterResolver Instance = new <#= ResolverName #>();
+
+		/// <summary>An instance of this resolver that returns standard AOT-compatible formatters as well as formatters specifically generated for types in this assembly.</summary>
+		public static readonly MsgPack::IFormatterResolver InstanceWithStandardAotResolver = MsgPack::Resolvers.CompositeResolver.Create(Instance, MsgPack::Resolvers.StandardAotResolver.Instance);
+
+		private <#= ResolverName #>()
+		{
+		}
+
+		public MsgPack::Formatters.IMessagePackFormatter<T> GetFormatter<T>()
+		{
+			return FormatterCache<T>.Formatter;
+		}
+
+		private static class FormatterCache<T>
+		{
+			internal static readonly MsgPack::Formatters.IMessagePackFormatter<T> Formatter;
+
+			static FormatterCache()
+			{
+				var f = <#= ResolverName #>GetFormatterHelper.GetFormatter(typeof(T));
+				if (f != null)
+				{
+					Formatter = (MsgPack::Formatters.IMessagePackFormatter<T>)f;
+				}
+			}
+		}
+	}
+
+	internal static class <#= ResolverName #>GetFormatterHelper
+	{
+		private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, int> lookup;
+
+		static <#= ResolverName #>GetFormatterHelper()
+		{
+			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(<#= RegisterInfos.Count #>)
+			{
+<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
+				{ typeof(<#= x.FullName #>), <#= i #> },
+<# } #>
+			};
+		}
+
+		internal static object GetFormatter(global::System.Type t)
+		{
+			int key;
+			if (!lookup.TryGetValue(t, out key))
+			{
+				return null;
+			}
+
+			switch (key)
+			{
+<# for(var i = 0; i < RegisterInfos.Count; i++) { var x = RegisterInfos[i]; #>
+				case <#= i #>: return new <#= x.FormatterName #>();
+<# } #>
+				default: return null;
+			}
+		}
+	}
+}

@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <PackageId>MessagePack.Analyzers.Only</PackageId>
+
+    <MicrosoftCodeAnalysisVersion>$(CodeAnalysisVersionForUnity)</MicrosoftCodeAnalysisVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="IsExternalInit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

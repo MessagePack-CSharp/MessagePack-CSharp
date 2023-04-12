@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>11</LangVersion>
+    <DefineConstants>$(DefineConstants);UNITY</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack.SourceGenerator.Tests\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="..\MessagePack.SourceGenerator.Tests\Resources\**\*.cs" />
+    <EmbeddedResource Include="..\MessagePack.SourceGenerator.Tests\Resources\**\*.cs" LinkBase="Resources" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Nerdbank.Streams" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.Combinatorial" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MessagePack.SourceGenerator.Unity\MessagePack.SourceGenerator.Unity.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack.Analyzers\MessagePack.Analyzers.csproj" />
+    <ProjectReference Include="..\..\src\MessagePack\MessagePack.csproj" />
+  </ItemGroup>
+
+</Project>

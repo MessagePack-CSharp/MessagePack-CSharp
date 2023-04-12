@@ -14,8 +14,11 @@ namespace MessagePack.GeneratedCode.Tests
 
         public MissingPropertiesTest()
         {
-            var resolver = CompositeResolver.Create(GeneratedResolver.Instance, StandardResolver.Instance);
-            options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+            options = MessagePackSerializerOptions.Standard.WithResolver(
+                CompositeResolver.Create(
+                    Sandbox.GeneratedMessagePackResolver.Instance,
+                    SharedData.GeneratedMessagePackResolver.Instance,
+                    StandardAotResolver.Instance));
         }
 
         [Fact]

@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\SourceGenerator.props" />
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);UNITY</DefineConstants>
+    <IsPackable>false</IsPackable>
+    <MicrosoftCodeAnalysisVersion>$(CodeAnalysisVersionForUnity)</MicrosoftCodeAnalysisVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\MessagePack.SourceGenerator\Transforms\**\*.cs" LinkBase="Transforms" />
+    <Compile Include="..\MessagePack.SourceGenerator\CodeAnalysis\**\*.cs" LinkBase="CodeAnalysis" />
+    <Compile Include="..\MessagePack.SourceGenerator\IGeneratorContext.cs" />
+    <Compile Include="..\MessagePack.SourceGenerator\MessagePackGenerator.Emit.cs" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
+    <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
+  </ItemGroup>
+
+  <Target Name="PackZip" BeforeTargets="Pack" DependsOnTargets="Build">
+    <PropertyGroup>
+      <ZipStagingDirectory>$(IntermediateOutputPath)zip\</ZipStagingDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <ZipFileContent Include="$(TargetPath)" />
+      <ZipFileContent Include="@(_ResolvedProjectReferencePaths)" />
+      <ZipFileContent>
+        <TargetPath>$(ZipStagingDirectory)%(FileName)%(Extension)</TargetPath>
+      </ZipFileContent>
+      <UnwantedZipFileContent Include="$(ZipStagingDirectory)**" Exclude="@(ZipFileContent->'%(TargetPath)')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ZipFileContent)" DestinationFiles="@(ZipFileContent->'%(TargetPath)')" />
+    <Delete Files="@(UnwantedZipFileContent)" />
+    <MakeDir Directories="$(PackageOutputPath)" />
+    <ZipDirectory SourceDirectory="$(ZipStagingDirectory)" DestinationFile="$(PackageOutputPath)$(TargetName).zip" Overwrite="true" />
+  </Target>
+</Project>
