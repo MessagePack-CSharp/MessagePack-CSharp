@@ -107,8 +107,9 @@ namespace MessagePack.Resolvers
                 AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
 #if UNITY_2018_3_OR_NEWER
                 MessagePack.Unity.UnityResolver.Instance,
-#endif
+#else
                 ImmutableCollection.ImmutableCollectionResolver.Instance,
+#endif
             });
     }
 
