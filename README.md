@@ -1598,7 +1598,7 @@ Be sure to add _all_ the .dlls in that .zip as analyzers.
 The package (or unity .zip file) adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
 
 These formatters are aggregated into a generated `IMessagePackResolver` class named `GeneratedMessagePackResolver`.
-This class will be generated into the `$(RootNamespace)` of your project, or the `MessagePack` namespace if `RootNamespace` is empty or undefined.
+This class will be generated into the `$(RootNamespace)` of your project, or the `MessagePack` namespace if `RootNamespace` is empty or undefined (as in Unity).
 
 Leveraging these formatters at runtime requires that you opt-in, which typically looks like this:
 

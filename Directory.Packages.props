@@ -77,7 +77,7 @@
   <ItemGroup Condition="'$(MicrosoftCodeAnalysisVersion)'=='$(CodeAnalysisVersionForUnity)'">
     <PackageVersion Update="System.CodeDom" Version="5.0.0" />
     <PackageVersion Update="System.Collections.Immutable" Version="5.0.0" />
-    <PackageVersion Update="System.Text.Json" Version="6.0.0" />
+    <PackageVersion Update="System.Text.Json" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="CSharpIsNullAnalyzer" Version="0.1.329" />
