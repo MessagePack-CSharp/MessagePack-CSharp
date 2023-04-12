@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <Compile Include="..\MessagePack.SourceGenerator.Tests\**\*.cs" />
-    <Compile Remove="..\MessagePack.SourceGenerator.Tests\GenerateStringKeyedFormatterTest.cs" />
   </ItemGroup>
 
   <ItemGroup>
