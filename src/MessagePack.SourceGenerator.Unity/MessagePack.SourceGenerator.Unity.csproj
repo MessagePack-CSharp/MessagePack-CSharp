@@ -19,14 +19,19 @@
   </ItemGroup>
 
   <Target Name="PackZip" BeforeTargets="Pack" DependsOnTargets="Build">
+    <PropertyGroup>
+      <ZipStagingDirectory>$(IntermediateOutputPath)zip\</ZipStagingDirectory>
+    </PropertyGroup>
     <ItemGroup>
       <ZipFileContent Include="$(TargetPath)" />
       <ZipFileContent Include="@(_ResolvedProjectReferencePaths)" />
+      <ZipFileContent>
+        <TargetPath>$(ZipStagingDirectory)%(FileName)%(Extension)</TargetPath>
+      </ZipFileContent>
+      <UnwantedZipFileContent Include="$(ZipStagingDirectory)**" Exclude="@(ZipFileContent->'%(TargetPath)')" />
     </ItemGroup>
-    <PropertyGroup>
-      <ZipStagingDirectory>$(IntermediateOutputPath)zip</ZipStagingDirectory>
-    </PropertyGroup>
-    <Copy SourceFiles="@(ZipFileContent)" DestinationFolder="$(ZipStagingDirectory)" />
+    <Copy SourceFiles="@(ZipFileContent)" DestinationFiles="@(ZipFileContent->'%(TargetPath)')" />
+    <Delete Files="@(UnwantedZipFileContent)" />
     <MakeDir Directories="$(PackageOutputPath)" />
     <ZipDirectory SourceDirectory="$(ZipStagingDirectory)" DestinationFile="$(PackageOutputPath)$(TargetName).zip" Overwrite="true" />
   </Target>
