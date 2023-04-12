@@ -188,7 +188,6 @@ public class TypeCollector
     private readonly Action<Diagnostic>? reportDiagnostic;
     private readonly ITypeSymbol? targetType;
     private readonly bool excludeArrayElement;
-    private readonly HashSet<string> externalIgnoreTypeNames;
 
     // visitor workspace:
 #pragma warning disable RS1024 // Compare symbols correctly (https://github.com/dotnet/roslyn-analyzers/issues/5246)
@@ -207,7 +206,6 @@ public class TypeCollector
         this.reportDiagnostic = reportDiagnostic;
         this.isForceUseMap = options.UsesMapMode;
         this.options = options;
-        this.externalIgnoreTypeNames = new HashSet<string>(options.IgnoreTypeNames ?? Array.Empty<string>());
         this.compilation = compilation;
         this.excludeArrayElement = true;
 
@@ -292,7 +290,7 @@ public class TypeCollector
             return result;
         }
 
-        if (this.externalIgnoreTypeNames.Contains(typeSymbolString))
+        if (this.options.AdditionalAllowTypes?.Contains(typeSymbolString) is true)
         {
             result = true;
             this.alreadyCollected.Add(typeSymbol, result);

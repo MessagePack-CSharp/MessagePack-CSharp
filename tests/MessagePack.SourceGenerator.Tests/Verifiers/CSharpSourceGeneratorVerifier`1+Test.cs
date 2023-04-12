@@ -12,20 +12,19 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using MessagePack;
+using MessagePack.Analyzers;
 using MessagePack.SourceGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
+using AnalyzerOptions = MessagePack.Analyzers.CodeAnalysis.AnalyzerOptions;
 
-public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
-#if UNITY
-    where TSourceGenerator : ISourceGenerator, new()
-#else
-    where TSourceGenerator : IIncrementalGenerator, new()
-#endif
+public static partial class CSharpSourceGeneratorVerifier
 {
     public class Test : CSharpSourceGeneratorTest<EmptySourceGeneratorProvider, XUnitVerifier>
     {
@@ -66,6 +65,7 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
                 }
 
                 this.TestState.AnalyzerConfigFiles.Add((filename, ConstructGlobalConfigString(value)));
+                this.TestState.AdditionalFiles.Add(($"./{AnalyzerOptions.JsonOptionsFileName}", ConstructConfigJsonString(value)));
             }
         }
 
@@ -112,7 +112,15 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
 
         protected override IEnumerable<Type> GetSourceGenerators()
         {
-            yield return typeof(TSourceGenerator);
+            yield return typeof(MessagePackGenerator);
+        }
+
+        protected override IEnumerable<DiagnosticAnalyzer> GetDiagnosticAnalyzers()
+        {
+            foreach (Type analyzer in typeof(MsgPack001SpecifyOptionsAnalyzer).Assembly.GetTypes().Where(t => typeof(DiagnosticAnalyzer).IsAssignableFrom(t)))
+            {
+                yield return (DiagnosticAnalyzer)Activator.CreateInstance(analyzer)!;
+            }
         }
 
         protected override CompilationOptions CreateCompilationOptions()
@@ -170,6 +178,12 @@ public static partial class CSharpSourceGeneratorVerifier<TSourceGenerator>
             var filePath = Path.Combine(resourceDirectory, name);
             Directory.CreateDirectory(resourceDirectory);
             File.WriteAllText(filePath, tree.GetText().ToString(), tree.Encoding);
+        }
+
+        private static string ConstructConfigJsonString(AnalyzerOptions options)
+        {
+            string json = JsonSerializer.Serialize(options.AdditionalAllowTypes, new JsonSerializerOptions { WriteIndented = true });
+            return json;
         }
 
         private static string ConstructGlobalConfigString(AnalyzerOptions options)

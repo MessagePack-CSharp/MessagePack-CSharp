@@ -5,4 +5,4 @@ global using System.Collections.Immutable;
 global using MessagePack.Analyzers.CodeAnalysis;
 global using Xunit;
 global using Xunit.Abstractions;
-global using VerifyCS = CSharpSourceGeneratorVerifier<MessagePack.SourceGenerator.MessagePackGenerator>;
+global using VerifyCS = CSharpSourceGeneratorVerifier;
