@@ -16,6 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MessagePackAnalyzer\MessagePackAnalyzer.csproj" PrivateAssets="none" IncludeAssets="analyzers" />
+    <ProjectReference Include="..\MessagePack.Analyzers\MessagePack.Analyzers.csproj" PrivateAssets="none" IncludeAssets="analyzers" />
   </ItemGroup>
 </Project>

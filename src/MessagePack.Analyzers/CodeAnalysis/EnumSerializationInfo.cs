@@ -3,7 +3,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace MessagePackAnalyzer.CodeAnalysis;
+namespace MessagePack.Analyzers.CodeAnalysis;
 
 public sealed record EnumSerializationInfo(string? Namespace, string Name, string FullName, string UnderlyingTypeName) : IResolverRegisterInfo
 {

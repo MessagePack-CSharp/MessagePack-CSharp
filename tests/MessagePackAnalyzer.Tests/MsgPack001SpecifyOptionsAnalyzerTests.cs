@@ -3,11 +3,11 @@
 
 using System;
 using System.Threading.Tasks;
-using MessagePackAnalyzer;
+using MessagePack.Analyzers;
 using Microsoft.CodeAnalysis;
 using Xunit;
-using VerifyCS = CSharpCodeFixVerifier<MessagePackAnalyzer.MsgPack001SpecifyOptionsAnalyzer, Microsoft.CodeAnalysis.Testing.EmptyCodeFixProvider>;
-using VerifyVB = VisualBasicCodeFixVerifier<MessagePackAnalyzer.MsgPack001SpecifyOptionsAnalyzer, Microsoft.CodeAnalysis.Testing.EmptyCodeFixProvider>;
+using VerifyCS = CSharpCodeFixVerifier<MessagePack.Analyzers.MsgPack001SpecifyOptionsAnalyzer, Microsoft.CodeAnalysis.Testing.EmptyCodeFixProvider>;
+using VerifyVB = VisualBasicCodeFixVerifier<MessagePack.Analyzers.MsgPack001SpecifyOptionsAnalyzer, Microsoft.CodeAnalysis.Testing.EmptyCodeFixProvider>;
 
 public class MsgPack001SpecifyOptionsAnalyzerTests
 {

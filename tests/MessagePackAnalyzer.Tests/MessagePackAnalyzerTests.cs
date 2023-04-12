@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Testing;
 using Xunit;
 using VerifyCS =
-    CSharpCodeFixVerifier<MessagePackAnalyzer.MsgPack00xMessagePackAnalyzer, MessagePackAnalyzer.MessagePackCodeFixProvider>;
+    CSharpCodeFixVerifier<MessagePack.Analyzers.MsgPack00xMessagePackAnalyzer, MessagePack.Analyzers.MessagePackCodeFixProvider>;
 
 public class MessagePackAnalyzerTests
 {

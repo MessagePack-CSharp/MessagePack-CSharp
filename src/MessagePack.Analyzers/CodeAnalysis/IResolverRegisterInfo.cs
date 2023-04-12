@@ -3,7 +3,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace MessagePackAnalyzer.CodeAnalysis;
+namespace MessagePack.Analyzers.CodeAnalysis;
 
 public interface IResolverRegisterInfo
 {

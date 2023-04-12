@@ -6,7 +6,7 @@
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePackAnalyzer\MessagePackAnalyzer.csproj">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\MessagePack.Analyzers\MessagePack.Analyzers.csproj">
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

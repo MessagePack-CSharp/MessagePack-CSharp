@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using MessagePack.Analyzers.CodeAnalysis;
 using MessagePack.SourceGenerator.Transforms;
-using MessagePackAnalyzer.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
 namespace MessagePack.SourceGenerator;

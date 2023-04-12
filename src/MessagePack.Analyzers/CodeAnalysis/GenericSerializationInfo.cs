@@ -3,7 +3,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace MessagePackAnalyzer.CodeAnalysis;
+namespace MessagePack.Analyzers.CodeAnalysis;
 
 public sealed record GenericSerializationInfo(string FullName, string FormatterName, bool IsOpenGenericType) : IResolverRegisterInfo
 {

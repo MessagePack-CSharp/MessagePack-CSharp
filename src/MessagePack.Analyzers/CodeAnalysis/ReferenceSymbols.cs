@@ -4,7 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
-namespace MessagePackAnalyzer.CodeAnalysis;
+namespace MessagePack.Analyzers.CodeAnalysis;
 
 public record ReferenceSymbols(
     INamedTypeSymbol MessagePackObjectAttribute,

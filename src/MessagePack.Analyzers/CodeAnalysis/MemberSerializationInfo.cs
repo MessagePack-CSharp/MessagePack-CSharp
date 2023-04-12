@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using MessagePackAnalyzer.Transforms;
+using MessagePack.Analyzers.Transforms;
 
-namespace MessagePackAnalyzer.CodeAnalysis;
+namespace MessagePack.Analyzers.CodeAnalysis;
 
 public record MemberSerializationInfo(
     bool IsProperty,

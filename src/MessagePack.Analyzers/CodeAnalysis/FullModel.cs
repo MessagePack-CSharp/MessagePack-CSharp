@@ -3,7 +3,7 @@
 
 using System.Collections.Immutable;
 
-namespace MessagePackAnalyzer.CodeAnalysis;
+namespace MessagePack.Analyzers.CodeAnalysis;
 
 public record FullModel(
     ImmutableSortedSet<ObjectSerializationInfo> ObjectInfos,

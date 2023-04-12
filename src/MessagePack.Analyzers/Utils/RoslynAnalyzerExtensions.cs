@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace MessagePackAnalyzer;
+namespace MessagePack.Analyzers;
 
 public static class RoslynAnalyzerExtensions
 {

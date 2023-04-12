@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace MessagePackAnalyzer;
+namespace MessagePack.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer

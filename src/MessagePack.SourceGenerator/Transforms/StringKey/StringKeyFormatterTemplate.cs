@@ -12,8 +12,8 @@ namespace MessagePack.SourceGenerator.Transforms
     using System;
     using System.Linq;
     using System.Collections.Generic;
-    using MessagePackAnalyzer.CodeAnalysis;
-    using MessagePackAnalyzer.Transforms;
+    using MessagePack.Analyzers.CodeAnalysis;
+    using MessagePack.Analyzers.Transforms;
     
     /// <summary>
     /// Class to produce the template output

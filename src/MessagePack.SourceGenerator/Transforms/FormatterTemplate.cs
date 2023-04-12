@@ -12,7 +12,7 @@ namespace MessagePack.SourceGenerator.Transforms
     using System.Linq;
     using System.Text;
     using System.Collections.Generic;
-    using MessagePackAnalyzer.Transforms;
+    using MessagePack.Analyzers.Transforms;
     using System;
     
     /// <summary>

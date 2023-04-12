@@ -41,7 +41,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.ReactivePropert
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.ImmutableCollection", "src\MessagePack.ImmutableCollection\MessagePack.ImmutableCollection.csproj", "{E066F547-7261-4561-AEFC-E64DBFD874F8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePackAnalyzer", "src\MessagePackAnalyzer\MessagePackAnalyzer.csproj", "{2F9A6E0C-DE95-4460-96B7-EB72BBEAEE9E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Analyzers", "src\MessagePack.Analyzers\MessagePack.Analyzers.csproj", "{2F9A6E0C-DE95-4460-96B7-EB72BBEAEE9E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerfNetFramework", "sandbox\PerfNetFramework\PerfNetFramework.csproj", "{014A3DCE-50A6-4774-A4C1-C66EEAB67133}"
 EndProject
@@ -102,6 +102,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator.MapModeExecutionTests", "tests\MessagePack.SourceGenerator.MapModeExecutionTests\MessagePack.SourceGenerator.MapModeExecutionTests.csproj", "{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator.Unity.Tests", "tests\MessagePack.SourceGenerator.Unity.Tests\MessagePack.SourceGenerator.Unity.Tests.csproj", "{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Analyzers.CodeFixes", "src\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj", "{7A6CB600-2393-468F-9952-84EC624D57BD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -225,6 +227,10 @@ Global
 		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A6CB600-2393-468F-9952-84EC624D57BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A6CB600-2393-468F-9952-84EC624D57BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A6CB600-2393-468F-9952-84EC624D57BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A6CB600-2393-468F-9952-84EC624D57BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -259,6 +265,7 @@ Global
 		{7908D954-15D4-4D67-B49A-4484809DA2C4} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 		{EDBA7DDC-69AF-4D5B-A8F6-3B508F8CC0FC} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
 		{EAC1B79C-F77D-4DEF-BF53-75E700A301A4} = {19FE674A-AC94-4E7E-B24C-2285D1D04CDE}
+		{7A6CB600-2393-468F-9952-84EC624D57BD} = {86309CF6-0054-4CE3-BFD3-CA0AA7DB17BC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B3911209-2DBF-47F8-98F6-BBC0EDFE63DE}
