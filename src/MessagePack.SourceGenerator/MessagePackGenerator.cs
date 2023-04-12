@@ -68,12 +68,18 @@ public partial class MessagePackGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(source, static (context, source) =>
         {
-            Generate(new GeneratorContext(context), source!);
+            if (source is not null)
+            {
+                Generate(new GeneratorContext(context), source);
+            }
         });
 
         context.RegisterSourceOutput(source, static (context, source) =>
         {
-            GenerateResolver(new GeneratorContext(context), source!);
+            if (source is not null)
+            {
+                GenerateResolver(new GeneratorContext(context), source);
+            }
         });
     }
 

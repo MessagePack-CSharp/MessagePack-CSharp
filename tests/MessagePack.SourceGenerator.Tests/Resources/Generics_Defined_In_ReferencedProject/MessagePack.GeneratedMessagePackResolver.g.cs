@@ -46,12 +46,8 @@ namespace MessagePack
 
 		static GeneratedMessagePackResolverGetFormatterHelper()
 		{
-			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(4)
+			lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(0)
 			{
-				{ typeof(global::TempProject.MyGenericObject<global::TempProject.MyGenericObject<int>>), 0 },
-				{ typeof(global::TempProject.MyGenericObject<int>), 1 },
-				{ typeof(global::TempProject.MyObject), 2 },
-				{ typeof(global::TempProject.MyObjectNested), 3 },
 			};
 		}
 
@@ -65,10 +61,6 @@ namespace MessagePack
 
 			switch (key)
 			{
-				case 0: return new Formatters::TempProject.MyGenericObjectFormatter<global::TempProject.MyGenericObject<int>>();
-				case 1: return new Formatters::TempProject.MyGenericObjectFormatter<int>();
-				case 2: return new Formatters::TempProject.MyObjectFormatter();
-				case 3: return new Formatters::TempProject.MyObjectNestedFormatter();
 				default: return null;
 			}
 		}
