@@ -301,9 +301,7 @@ public class TypeCollector
 
         if (typeSymbol is IArrayTypeSymbol arrayTypeSymbol)
         {
-            result = this.CollectArray((IArrayTypeSymbol)this.ToTupleUnderlyingType(arrayTypeSymbol));
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return RecursiveProtection(() => this.CollectArray((IArrayTypeSymbol)this.ToTupleUnderlyingType(arrayTypeSymbol)));
         }
 
         if (typeSymbol is ITypeParameterSymbol)
@@ -338,16 +336,12 @@ public class TypeCollector
 
         if (type.EnumUnderlyingType != null)
         {
-            result = this.CollectEnum(type, type.EnumUnderlyingType);
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return RecursiveProtection(() => this.CollectEnum(type, type.EnumUnderlyingType));
         }
 
         if (type.IsGenericType)
         {
-            result = this.CollectGeneric((INamedTypeSymbol)this.ToTupleUnderlyingType(type));
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return RecursiveProtection(() => this.CollectGeneric((INamedTypeSymbol)this.ToTupleUnderlyingType(type)));
         }
 
         if (type.Locations[0].IsInMetadata)
@@ -359,14 +353,18 @@ public class TypeCollector
 
         if (type.TypeKind == TypeKind.Interface || (type.TypeKind == TypeKind.Class && type.IsAbstract))
         {
-            result = this.CollectUnion(type);
-            this.alreadyCollected.Add(typeSymbol, result);
-            return result;
+            return RecursiveProtection(() => this.CollectUnion(type));
         }
 
-        result = this.CollectObject(type);
-        this.alreadyCollected.Add(typeSymbol, result);
-        return result;
+        return RecursiveProtection(() => this.CollectObject(type));
+
+        bool RecursiveProtection(Func<bool> func)
+        {
+            this.alreadyCollected.Add(typeSymbol, true);
+            bool result = func();
+            this.alreadyCollected[typeSymbol] = result;
+            return result;
+        }
     }
 
     private bool CollectEnum(INamedTypeSymbol type, ISymbol enumUnderlyingType)
