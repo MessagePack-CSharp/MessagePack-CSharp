@@ -1586,15 +1586,16 @@ For all other Unity targets, AOT is required.
 If you want to avoid the upfront dynamic generation cost or you need to run on Xamarin or Unity, you need AOT code generation.
 
 ```ps1
-dotnet add package MessagePack.Generator
+dotnet add package MessagePack.SourceGenerator
 ```
 
 Or for Unity, use the source generator that targets the older Roslyn compiler.
 [Setting up a source generator for unity](https://docs.unity3d.com/Manual/roslyn-analyzers.html) is a bit more involved.
 The unity instructions describe copying the analyzer .dll into your unity project.
-You should get the analyzer .dll from the the unity source generator .zip file uploaded on our GitHub releases page.
+You should get the analyzer/source generator .dll's from the the `MessagePack.SourceGenerator.Unity.zip` file uploaded on our GitHub releases page.
+Be sure to add _all_ the .dlls in that .zip as analyzers.
 
-This package adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
+The package (or unity .zip file) adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
 
 These formatters are aggregated into a generated `IMessagePackResolver` class named `GeneratedMessagePackResolver`.
 This class will be generated into the `$(RootNamespace)` of your project, or the `MessagePack` namespace if `RootNamespace` is empty or undefined.
