@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using MessagePack;
 using Microsoft.CodeAnalysis;
 
 public class GenericsFormatterTests
@@ -428,7 +429,7 @@ namespace TempProject
         await VerifyCS.Test.RunDefaultAsync(testSource);
     }
 
-    [Fact(Skip = "Does not pass yet because the project reference isn't set up correctly.")]
+    [Fact]
     public async Task Generics_Defined_In_ReferencedProject()
     {
         string defineSource = """
@@ -469,13 +470,6 @@ namespace TempProject
     }
 }
 """;
-        var definingProject = new Microsoft.CodeAnalysis.Testing.ProjectState("DefiningProject", LanguageNames.CSharp, string.Empty, ".cs")
-        {
-            Sources = { defineSource },
-            ReferenceAssemblies = new VerifyCS.Test().ReferenceAssemblies,
-        };
-        definingProject.AdditionalReferences.AddRange(new VerifyCS.Test().TestState.AdditionalReferences);
-
         await new VerifyCS.Test
         {
             TestState =
@@ -483,7 +477,7 @@ namespace TempProject
                 Sources = { usageSource },
                 AdditionalProjects =
                 {
-                    { "DefiningProject", definingProject },
+                    ["DefiningProject"] = { Sources = { defineSource } },
                 },
                 AdditionalProjectReferences = { "DefiningProject" },
             },
