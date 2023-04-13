@@ -19,7 +19,7 @@ public partial class MessagePackGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var options = context.AdditionalTextsProvider.Collect().Combine(context.AnalyzerConfigOptionsProvider).Select(
-            ((ImmutableArray<AdditionalText> AdditionalFiles, AnalyzerConfigOptionsProvider Options) t, CancellationToken ct) => AnalyzerOptions.Parse(t.Options.GlobalOptions, t.AdditionalFiles));
+            ((ImmutableArray<AdditionalText> AdditionalFiles, AnalyzerConfigOptionsProvider Options) t, CancellationToken ct) => AnalyzerOptions.Parse(t.Options.GlobalOptions, t.AdditionalFiles) with { IsGeneratingSource = true });
 
         var messagePackObjectTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             MessagePackObjectAttributeFullName,

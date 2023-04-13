@@ -27,6 +27,11 @@ public record AnalyzerOptions(
 
     public string FormatterNamespace => "Formatters";
 
+    /// <summary>
+    /// Gets a value indicating whether the analyzer is generating source code.
+    /// </summary>
+    public bool IsGeneratingSource { get; init; }
+
     public static AnalyzerOptions Parse(AnalyzerConfigOptions options, ImmutableArray<AdditionalText> additionalTexts)
     {
         if (!options.TryGetValue(RootNamespace, out string? projectRootNamespace))

@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace MessagePack.Analyzers.CodeAnalysis;
 
@@ -378,18 +379,25 @@ public class TypeCollector
 
     private bool CollectUnion(INamedTypeSymbol type)
     {
+        if (!options.IsGeneratingSource)
+        {
+            // In analyzer-only mode, this method doesn't work.
+            return true;
+        }
+
         ImmutableArray<TypedConstant>[] unionAttrs = type.GetAttributes().Where(x => x.AttributeClass.ApproximatelyEqual(this.typeReferences.UnionAttribute)).Select(x => x.ConstructorArguments).ToArray();
         if (unionAttrs.Length == 0)
         {
-            throw new MessagePackGeneratorResolveFailedException("Serialization Type must mark UnionAttribute." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.UnionAttributeRequired, type.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
         }
 
         // 0, Int  1, SubType
-        UnionSubTypeInfo UnionSubTypeInfoSelector(ImmutableArray<TypedConstant> x)
+        UnionSubTypeInfo? UnionSubTypeInfoSelector(ImmutableArray<TypedConstant> x)
         {
             if (!(x[0] is { Value: int key }) || !(x[1] is { Value: ITypeSymbol typeSymbol }))
             {
-                throw new NotSupportedException("AOT code generation only supports UnionAttribute that uses a Type parameter, but the " + type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) + " type uses an unsupported parameter.");
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotUnionAttributeRequiresTypeArg, GetIdentifierLocation(type)));
+                return null;
             }
 
             var typeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -400,7 +408,7 @@ public class TypeCollector
             type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
             type.Name,
             type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-            unionAttrs.Select(UnionSubTypeInfoSelector).OrderBy(x => x.Key).ToArray());
+            unionAttrs.Select(UnionSubTypeInfoSelector).Where(i => i is not null).OrderBy(x => x!.Key).ToArray()!);
 
         this.collectedUnionInfo.Add(info);
         return true;
@@ -439,7 +447,7 @@ public class TypeCollector
 
         var fullName = array.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var elementTypeDisplayName = elemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        string formatterName;
+        string? formatterName;
         if (array.IsSZArray)
         {
             formatterName = "MsgPack::Formatters.ArrayFormatter<" + elementTypeDisplayName + ">";
@@ -451,8 +459,13 @@ public class TypeCollector
                 2 => "MsgPack::Formatters.TwoDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
                 3 => "MsgPack::Formatters.ThreeDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
                 4 => "MsgPack::Formatters.FourDimensionalArrayFormatter<" + elementTypeDisplayName + ">",
-                _ => throw new InvalidOperationException("does not supports array dimension, " + fullName),
+                _ => null,
             };
+            if (formatterName is null)
+            {
+                ////this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.AotArrayRankTooHigh));
+                return false;
+            }
         }
 
         var info = new GenericSerializationInfo(fullName, formatterName, elemType is ITypeParameterSymbol);
@@ -782,7 +795,7 @@ public class TypeCollector
                     {
                         if ((isIntKey && intKey == null) || (!isIntKey && stringKey == null))
                         {
-                            throw new MessagePackGeneratorResolveFailedException("all members key type must be same." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DoNotMixStringAndIntKeys, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
                     }
 
@@ -790,7 +803,7 @@ public class TypeCollector
                     {
                         if (intMembers.ContainsKey(intKey!.Value))
                         {
-                            throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -800,7 +813,7 @@ public class TypeCollector
                     {
                         if (stringMembers.ContainsKey(stringKey!))
                         {
-                            throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -855,7 +868,7 @@ public class TypeCollector
                     var stringKey = key is { Value: string stringKeyValue } ? stringKeyValue : default;
                     if (intKey == null && stringKey == null)
                     {
-                        throw new MessagePackGeneratorResolveFailedException("both IntKey and StringKey are null." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.BothStringAndIntKeyAreNull, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                     }
 
                     if (searchFirst)
@@ -867,7 +880,7 @@ public class TypeCollector
                     {
                         if ((isIntKey && intKey == null) || (!isIntKey && stringKey == null))
                         {
-                            throw new MessagePackGeneratorResolveFailedException("all members key type must be same." + " type: " + type.Name + " member:" + item.Name);
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DoNotMixStringAndIntKeys, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
                     }
 
@@ -875,7 +888,7 @@ public class TypeCollector
                     {
                         if (intMembers.ContainsKey(intKey!.Value))
                         {
-                            throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, intKey!.Value, item.Name, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -885,7 +898,7 @@ public class TypeCollector
                     {
                         if (stringMembers.ContainsKey(stringKey!))
                         {
-                            throw new MessagePackGeneratorResolveFailedException("key is duplicated, all members key must be unique." + " type: " + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " member:" + item.Name);
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.KeysMustBeUnique, item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation()));
                         }
 
                         var member = new MemberSerializationInfo(true, isWritable, isReadable, hiddenIntKey++, stringKey!, item.Name, item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Type.ToDisplayString(BinaryWriteFormat), customFormatterAttr?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
@@ -913,7 +926,7 @@ public class TypeCollector
         // struct allows null ctor
         if (ctor == null && isClass)
         {
-            throw new MessagePackGeneratorResolveFailedException("can't find public constructor. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(type)));
         }
 
         var constructorParameters = new List<MemberSerializationInfo>();
@@ -944,7 +957,7 @@ public class TypeCollector
                                 }
                                 else
                                 {
-                                    throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterIndex:" + ctorParamIndex + " parameterType:" + item.Type.Name);
+                                    this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterTypeMismatch, GetLocation(item)));
                                 }
                             }
                         }
@@ -957,7 +970,7 @@ public class TypeCollector
                             }
                             else
                             {
-                                throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterIndex:" + ctorParamIndex);
+                                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterIndexMissing, GetParameterListLocation(ctor)));
                             }
                         }
                     }
@@ -971,7 +984,7 @@ public class TypeCollector
                         {
                             if (ctorEnumerator == null)
                             {
-                                throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, index not found. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name);
+                                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterNameMissing, GetParameterListLocation(ctor)));
                             }
 
                             ctor = null;
@@ -985,7 +998,7 @@ public class TypeCollector
                         {
                             if (ctorEnumerator == null)
                             {
-                                throw new MessagePackGeneratorResolveFailedException("duplicate matched constructor parameter name:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name + " parameterType:" + item.Type.Name);
+                                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterNameDuplicate, GetLocation(item)));
                             }
 
                             ctor = null;
@@ -1001,7 +1014,7 @@ public class TypeCollector
                         {
                             if (ctorEnumerator == null)
                             {
-                                throw new MessagePackGeneratorResolveFailedException("can't find matched constructor parameter, parameterType mismatch. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " parameterName:" + item.Name + " parameterType:" + item.Type.Name);
+                                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.DeserializingConstructorParameterTypeMismatch, GetLocation(item)));
                             }
 
                             ctor = null;
@@ -1016,7 +1029,7 @@ public class TypeCollector
 
             if (ctor == null)
             {
-                throw new MessagePackGeneratorResolveFailedException("can't find matched constructor. type:" + type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.NoDeserializingConstructor, GetIdentifierLocation(type)));
             }
         }
 
@@ -1077,6 +1090,12 @@ public class TypeCollector
 
         return new GenericTypeParameterInfo(typeParameter.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), string.Join(", ", constraints));
     }
+
+    private static Location? GetIdentifierLocation(INamedTypeSymbol type) => ((BaseTypeDeclarationSyntax?)type.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax())?.Identifier.GetLocation();
+
+    private static Location? GetLocation(IParameterSymbol parameter) => parameter.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation();
+
+    private static Location? GetParameterListLocation(IMethodSymbol? method) => ((BaseMethodDeclarationSyntax?)method?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax())?.ParameterList.GetLocation();
 
     private static string GetGenericFormatterClassName(INamedTypeSymbol type)
     {

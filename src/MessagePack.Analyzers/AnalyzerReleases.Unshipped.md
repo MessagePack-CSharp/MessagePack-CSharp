@@ -7,7 +7,9 @@ Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
 MsgPack001 | Reliability | Disabled | MsgPack001SpecifyOptionsAnalyzer
 MsgPack002 | Reliability | Disabled | MsgPack002UseConstantOptionsAnalyzer
-MsgPack003 | Usage | Error | MessagePackAnalyzer
-MsgPack004 | Usage | Error | MessagePackAnalyzer
-MsgPack005 | Usage | Error | MessagePackAnalyzer
-MsgPack006 | Usage | Error | MessagePackAnalyzer
+MsgPack003 | Usage | Error | MsgPack00xMessagePackAnalyzer
+MsgPack004 | Usage | Error | MsgPack00xMessagePackAnalyzer
+MsgPack005 | Usage | Error | MsgPack00xMessagePackAnalyzer
+MsgPack006 | Usage | Error | MsgPack00xMessagePackAnalyzer
+MsgPack007 | Usage | Error | MsgPack00xMessagePackAnalyzer
+MsgPack008 | Usage | Error | MsgPack00xMessagePackAnalyzer

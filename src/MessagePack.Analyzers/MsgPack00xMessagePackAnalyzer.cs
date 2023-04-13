@@ -16,6 +16,8 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
     public const string AttributeMessagePackObjectMembersId = "MsgPack004";
     public const string InvalidMessagePackObjectId = "MsgPack005";
     public const string MessagePackFormatterMustBeMessagePackFormatterId = "MsgPack006";
+    public const string DeserializingConstructorId = "MsgPack007";
+    public const string AOTLimitationsId = "MsgPack008";
 
     internal const string Category = "Usage";
 
@@ -84,6 +86,106 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
+
+    internal static readonly DiagnosticDescriptor DoNotMixStringAndIntKeys = new DiagnosticDescriptor(
+        id: InvalidMessagePackObjectId,
+        title: "Attribute public members of MessagePack objects",
+        category: Category,
+        messageFormat: "All KeyAttribute arguments must be of the same type (either string or int)",
+        description: "Use string or int keys consistently.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
+
+    internal static readonly DiagnosticDescriptor KeysMustBeUnique = new DiagnosticDescriptor(
+        id: InvalidMessagePackObjectId,
+        title: "Attribute public members of MessagePack objects",
+        category: Category,
+        messageFormat: "All KeyAttribute arguments must be unique",
+        description: "Each key must be unique.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
+
+    internal static readonly DiagnosticDescriptor UnionAttributeRequired = new DiagnosticDescriptor(
+        id: InvalidMessagePackObjectId,
+        title: "Attribute public members of MessagePack objects",
+        category: Category,
+        messageFormat: "This type must carry a UnionAttribute",
+        description: "A UnionAttribute is required on interfaces and abstract base classes used as serialized types.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(InvalidMessagePackObjectId));
+
+    internal static readonly DiagnosticDescriptor NoDeserializingConstructor = new DiagnosticDescriptor(
+        id: DeserializingConstructorId,
+        title: "Deserializing constructors",
+        category: Category,
+        messageFormat: "Cannot find a public constructor",
+        description: "A deserializable type must carry a public constructor.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
+
+    internal static readonly DiagnosticDescriptor DeserializingConstructorParameterTypeMismatch = new DiagnosticDescriptor(
+        id: DeserializingConstructorId,
+        title: "Deserializing constructors",
+        category: Category,
+        messageFormat: "Deserializing constructor parameter type mismatch",
+        description: "Constructor parameter types must match the serializable members.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
+
+    internal static readonly DiagnosticDescriptor DeserializingConstructorParameterIndexMissing = new DiagnosticDescriptor(
+        id: DeserializingConstructorId,
+        title: "Deserializing constructors",
+        category: Category,
+        messageFormat: "Deserializing constructor parameter count mismatch",
+        description: "Constructor parameter count must meet or exceed the number of serialized members or the highest key index.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
+
+    internal static readonly DiagnosticDescriptor DeserializingConstructorParameterNameMissing = new DiagnosticDescriptor(
+        id: DeserializingConstructorId,
+        title: "Deserializing constructors",
+        category: Category,
+        messageFormat: "Deserializing constructor parameter name mismatch",
+        description: "Parameter names must match the serialized members' named keys.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
+
+    internal static readonly DiagnosticDescriptor DeserializingConstructorParameterNameDuplicate = new DiagnosticDescriptor(
+        id: DeserializingConstructorId,
+        title: "Deserializing constructors",
+        category: Category,
+        messageFormat: "Duplicate matched constructor parameter name",
+        description: "Parameter names must match the serialized members' named keys.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(DeserializingConstructorId));
+
+    internal static readonly DiagnosticDescriptor AotUnionAttributeRequiresTypeArg = new DiagnosticDescriptor(
+        id: AOTLimitationsId,
+        title: "AOT limitations",
+        category: Category,
+        messageFormat: "The source generator only supports UnionAttribute with a Type argument",
+        description: "Use a type argument with UnionAttribute.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
+
+    internal static readonly DiagnosticDescriptor AotArrayRankTooHigh = new DiagnosticDescriptor(
+        id: AOTLimitationsId,
+        title: "AOT limitations",
+        category: Category,
+        messageFormat: "Array rank too high for built-in array formatters",
+        description: "Avoid excessively high array ranks, or write a custom formatter.",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: AnalyzerUtilities.GetHelpLink(AOTLimitationsId));
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         TypeMustBeMessagePackObject,
