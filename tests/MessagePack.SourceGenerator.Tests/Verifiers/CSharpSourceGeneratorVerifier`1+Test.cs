@@ -29,10 +29,10 @@ public static partial class CSharpSourceGeneratorVerifier
     public class Test : CSharpSourceGeneratorTest<EmptySourceGeneratorProvider, XUnitVerifier>
     {
         private readonly string? testFile;
-        private readonly string? testMethod;
+        private readonly string testMethod;
         private AnalyzerOptions options = AnalyzerOptions.Default;
 
-        public Test([CallerFilePath] string? testFile = null, [CallerMemberName] string? testMethod = null)
+        public Test([CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             this.CompilerDiagnostics = CompilerDiagnostics.Warnings;
 
@@ -46,8 +46,6 @@ public static partial class CSharpSourceGeneratorVerifier
 #if WRITE_EXPECTED
             TestBehaviors |= TestBehaviors.SkipGeneratedSourcesCheck;
 #endif
-
-            this.AddGeneratedSources(testMethod);
         }
 
         public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.Latest;
@@ -69,7 +67,7 @@ public static partial class CSharpSourceGeneratorVerifier
             }
         }
 
-        public static async Task RunDefaultAsync(string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string? testMethod = null)
+        public static async Task RunDefaultAsync(string testSource, AnalyzerOptions? options = null, [CallerFilePath] string? testFile = null, [CallerMemberName] string testMethod = null!)
         {
             await new Test(testFile, testMethod)
             {
@@ -81,33 +79,56 @@ public static partial class CSharpSourceGeneratorVerifier
             }.RunAsync();
         }
 
-        public Test AddGeneratedSources([CallerMemberName] string? testMethod = null)
+        public Test AddGeneratedSources()
         {
-            string expectedPrefix = $"{ThisAssembly.AssemblyName}.Resources.{testMethod}."
-                .Replace(' ', '_')
-                .Replace(',', '_')
-                .Replace('(', '_')
-                .Replace(')', '_');
-
-            foreach (var resourceName in typeof(Test).Assembly.GetManifestResourceNames())
+            static void AddGeneratedSources(ProjectState project, string testMethod, bool withPrefix)
             {
-                if (!resourceName.StartsWith(expectedPrefix))
-                {
-                    continue;
-                }
+                string prefix = withPrefix ? $"{project.Name}." : string.Empty;
+                string expectedPrefix = $"{ThisAssembly.AssemblyName}.Resources.{testMethod}.{prefix}"
+                    .Replace(' ', '_')
+                    .Replace(',', '_')
+                    .Replace('(', '_')
+                    .Replace(')', '_');
 
-                using var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
-                if (resourceStream is null)
+                foreach (var resourceName in typeof(Test).Assembly.GetManifestResourceNames())
                 {
-                    throw new InvalidOperationException();
-                }
+                    if (!resourceName.StartsWith(expectedPrefix))
+                    {
+                        continue;
+                    }
 
-                using var reader = new StreamReader(resourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
-                var name = resourceName.Substring(expectedPrefix.Length);
-                this.TestState.GeneratedSources.Add((typeof(MessagePackGenerator), name, reader.ReadToEnd()));
+                    using var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
+                    if (resourceStream is null)
+                    {
+                        throw new InvalidOperationException();
+                    }
+
+                    using var reader = new StreamReader(resourceStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
+                    var name = resourceName.Substring(expectedPrefix.Length);
+                    project.GeneratedSources.Add((typeof(MessagePackGenerator), name, reader.ReadToEnd()));
+                }
+            }
+
+            AddGeneratedSources(this.TestState, this.testMethod, this.TestState.AdditionalProjects.Count > 0);
+            foreach (ProjectState addlProject in this.TestState.AdditionalProjects.Values)
+            {
+                AddGeneratedSources(addlProject, this.testMethod, true);
             }
 
             return this;
+        }
+
+        protected override Task RunImplAsync(CancellationToken cancellationToken)
+        {
+            this.AddGeneratedSources();
+
+            foreach (ProjectState addlProject in this.TestState.AdditionalProjects.Values)
+            {
+                addlProject.AdditionalReferences.AddRange(this.TestState.AdditionalReferences);
+                addlProject.DocumentationMode = DocumentationMode.Parse;
+            }
+
+            return base.RunImplAsync(cancellationToken);
         }
 
         protected override IEnumerable<Type> GetSourceGenerators()
@@ -139,17 +160,18 @@ public static partial class CSharpSourceGeneratorVerifier
 
         protected override async Task<(Compilation, ImmutableArray<Diagnostic>)> GetProjectCompilationAsync(Project project, IVerifier verifier, CancellationToken cancellationToken)
         {
-            var resourceDirectory = Path.Combine(Path.GetDirectoryName(this.testFile)!, "Resources", this.testMethod!);
+            string fileNamePrefix = this.TestState.AdditionalProjects.Count > 0 ? $"{project.Name}." : string.Empty;
+            var resourceDirectory = Path.Combine(Path.GetDirectoryName(this.testFile)!, "Resources", this.testMethod);
 
             var (compilation, diagnostics) = await base.GetProjectCompilationAsync(project, verifier, cancellationToken);
             var expectedNames = new HashSet<string>();
             foreach (var tree in compilation.SyntaxTrees.Skip(project.DocumentIds.Count))
             {
-                WriteTreeToDiskIfNecessary(tree, resourceDirectory);
+                WriteTreeToDiskIfNecessary(tree, resourceDirectory, fileNamePrefix);
                 expectedNames.Add(Path.GetFileName(tree.FilePath));
             }
 
-            var currentTestPrefix = $"{ThisAssembly.AssemblyName}.Resources.{this.testMethod}.";
+            var currentTestPrefix = $"{ThisAssembly.AssemblyName}.Resources.{this.testMethod}.{fileNamePrefix}";
             foreach (var name in this.GetType().Assembly.GetManifestResourceNames())
             {
                 if (!name.StartsWith(currentTestPrefix))
@@ -167,15 +189,15 @@ public static partial class CSharpSourceGeneratorVerifier
         }
 
         [Conditional("WRITE_EXPECTED")]
-        private static void WriteTreeToDiskIfNecessary(SyntaxTree tree, string resourceDirectory)
+        private static void WriteTreeToDiskIfNecessary(SyntaxTree tree, string resourceDirectory, string fileNamePrefix)
         {
             if (tree.Encoding is null)
             {
                 throw new ArgumentException("Syntax tree encoding was not specified");
             }
 
-            var name = Path.GetFileName(tree.FilePath);
-            var filePath = Path.Combine(resourceDirectory, name);
+            string name = fileNamePrefix + Path.GetFileName(tree.FilePath);
+            string filePath = Path.Combine(resourceDirectory, name);
             Directory.CreateDirectory(resourceDirectory);
             File.WriteAllText(filePath, tree.GetText().ToString(), tree.Encoding);
         }
