@@ -10,7 +10,7 @@ namespace MessagePack
     {
         internal static unsafe long ToInt64(ReadOnlySpan<byte> value)
         {
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
             if (sizeof(int*) == 4)
             {
                 uint i1 = (uint)(value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24));
@@ -25,7 +25,7 @@ namespace MessagePack
 
         internal static unsafe ushort ToUInt16(ReadOnlySpan<byte> value)
         {
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
             if (sizeof(int*) == 4)
             {
                 return (ushort)(value[0] | (value[1] << 8));
@@ -36,7 +36,7 @@ namespace MessagePack
 
         internal static unsafe uint ToUInt32(ReadOnlySpan<byte> value)
         {
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
             if (sizeof(int*) == 4)
             {
                 return (uint)(value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24));
