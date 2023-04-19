@@ -1338,7 +1338,9 @@ namespace MessagePack
 #if UNITY_2018_3_OR_NEWER
             if (sourceBytesToCopy > destinationSizeInBytes)
             {
-                throw new ArgumentOutOfRangeException(nameof(sourceBytesToCopy));
+                static void Throw(string paramName) => throw new ArgumentOutOfRangeException(paramName);
+
+                Throw(nameof(sourceBytesToCopy));
             }
 
             global::Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemMove(destination, source, sourceBytesToCopy);
