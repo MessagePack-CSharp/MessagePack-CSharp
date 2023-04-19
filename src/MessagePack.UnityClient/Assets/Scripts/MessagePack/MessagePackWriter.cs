@@ -1335,6 +1335,14 @@ namespace MessagePack
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
         {
+#if UNITY_2018_3_OR_NEWER
+            if (sourceBytesToCopy > destinationSizeInBytes)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceBytesToCopy));
+            }
+
+            global::Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemMove(destination, source, sourceBytesToCopy);
+#else
 #pragma warning disable 0162
 
             if (Utilities.IsMono)
@@ -1361,6 +1369,7 @@ namespace MessagePack
             }
 
 #pragma warning restore 0162
+#endif
         }
     }
 }
