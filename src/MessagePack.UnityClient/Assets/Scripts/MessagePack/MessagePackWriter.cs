@@ -32,6 +32,11 @@ namespace MessagePack
         private BufferWriter writer;
 
         /// <summary>
+        /// Gets the total number of bytes written with this writer.
+        /// </summary>
+        public long WrittenBytes => writer.BytesCommitted + writer.BytesBuffered;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MessagePackWriter"/> struct.
         /// </summary>
         /// <param name="writer">The writer to use.</param>

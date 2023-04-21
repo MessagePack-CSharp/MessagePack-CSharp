@@ -34,6 +34,7 @@ namespace MessagePack
 
         /// <summary>
         /// The number of uncommitted bytes (all the calls to <see cref="Advance(int)"/> since the last call to <see cref="Commit"/>).
+        /// Backing field for the <see cref="BytesBuffered"/> property.
         /// </summary>
         private int _buffered;
 
@@ -93,6 +94,11 @@ namespace MessagePack
         /// Gets the total number of bytes written with this writer.
         /// </summary>
         public long BytesCommitted => _bytesCommitted;
+
+        /// <summary>
+        /// The number of uncommitted bytes (all the calls to <see cref="Advance(int)"/> since the last call to <see cref="Commit"/>).
+        /// </summary>
+        public int BytesBuffered => _buffered;
 
         /// <summary>
         /// Gets the <see cref="IBufferWriter{T}"/> underlying this instance.
