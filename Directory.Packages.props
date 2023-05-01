@@ -23,7 +23,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
     <PackageVersion Include="Microsoft.Build.Framework" Version="16.5.0" ExcludeAssets="runtime" />
-    <PackageVersion Include="Microsoft.Build.Locator" Version="1.4.1" />
+    <PackageVersion Include="Microsoft.Build.Locator" Version="1.5.5" />
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="16.5.0" />
     <PackageVersion Include="Microsoft.Build" Version="16.5.0" ExcludeAssets="runtime" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.3.3" />
