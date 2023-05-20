@@ -19,6 +19,14 @@
     <Content Include="tools\*.ps1" Pack="true" PackagePath="tools\" />
     <None Remove="tools\*.ps1" />
   </ItemGroup>
+  <ItemDefinitionGroup>
+    <PackageReference>
+      <!-- We need this, even with SuppressDependenciesWhenPacking=true because the
+           dependencies will otherwise show up as dependencies in packages built by projects
+           that reference this one. Probably due to transitive pinning. -->
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
   </ItemGroup>
