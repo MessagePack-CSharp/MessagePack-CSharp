@@ -229,7 +229,10 @@ namespace MessagePack
 #endif
     static class ReservedMessagePackExtensionTypeCode
     {
+        // https://github.com/msgpack/msgpack/blob/master/spec.md#timestamp-extension-type
         public const sbyte DateTime = -1;
+        // https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format
+        public const sbyte DateTimeFluentForward = 0;
     }
 
 #if MESSAGEPACK_INTERNAL

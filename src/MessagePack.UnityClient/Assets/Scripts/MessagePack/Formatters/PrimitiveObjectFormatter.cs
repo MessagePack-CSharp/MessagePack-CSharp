@@ -266,12 +266,15 @@ namespace MessagePack.Formatters
                     return reader.ReadBytes()?.ToArray();
                 case MessagePackType.Extension:
                     ExtensionHeader ext = reader.ReadExtensionFormatHeader();
-                    switch (ext.TypeCode)
-                    {
-                        case ReservedMessagePackExtensionTypeCode.DateTime: return reader.ReadDateTime(ext);
-                        default: throw new MessagePackSerializationException(string.Format(CultureInfo.CurrentCulture, "Extension type code 0x{0:x2} is not supported by the {1}.", ext.TypeCode, nameof(PrimitiveObjectFormatter)));
+					
+					switch (ext.TypeCode)
+					{
+						case ReservedMessagePackExtensionTypeCode.DateTimeFluentForward:
+                        case ReservedMessagePackExtensionTypeCode.DateTime:
+							return reader.ReadDateTime(ext);
+                        default:
+							throw new MessagePackSerializationException(string.Format(CultureInfo.CurrentCulture, "Extension type code 0x{0:x2} is not supported by the {1}.", ext.TypeCode, nameof(PrimitiveObjectFormatter)));
                     }
-
                 case MessagePackType.Array:
                     {
                         var length = reader.ReadArrayHeader();
@@ -301,7 +304,7 @@ namespace MessagePack.Formatters
                 case MessagePackType.Map:
                     {
                         var length = reader.ReadMapHeader();
-
+						
                         options.Security.DepthStep(ref reader);
                         try
                         {
