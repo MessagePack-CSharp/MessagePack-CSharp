@@ -400,6 +400,8 @@ public class TypeCollector
                 return null;
             }
 
+            CollectCore(typeSymbol);
+
             var typeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             return new UnionSubTypeInfo(key, typeName);
         }
