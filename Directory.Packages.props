@@ -59,7 +59,7 @@
     <PackageVersion Include="Sigil" version="5.0.0" />
     <PackageVersion Include="SpanJson" Version="4.0.0" />
     <PackageVersion Include="System.CodeDom" Version="7.0.0" />
-    <PackageVersion Include="System.Collections.Immutable" Version="7.0.0" />
+    <PackageVersion Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <PackageVersion Include="System.Reflection.Emit" Version="4.7.0" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
