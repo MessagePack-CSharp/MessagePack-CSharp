@@ -10,7 +10,7 @@ When collecting ETL traces, use these settings in the Collect->Run dialog:
 
 | Setting     | Value |
 |-------------|-------|
-| Command     | `dotnet run -c release -p .\sandbox\PerfNetFramework\ -f net461 --no-build`
+| Command     | `dotnet run -c release -p .\sandbox\PerfNetFramework\ -f net472 --no-build`
 | Current Dir | `d:\git\messagepack-csharp` (or wherever your enlistment is)
 | Additional Providers | `*MessagePack-Benchmark`
 | No V3.X NGen | Checked

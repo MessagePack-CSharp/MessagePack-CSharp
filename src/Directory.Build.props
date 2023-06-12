@@ -3,6 +3,7 @@
     <Nullable>enable</Nullable>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\opensource.snk</AssemblyOriginatorKeyFile>
+    <EnforceExtendedAnalyzerRules Condition="'$(IsAnalyzerProject)'=='true'">true</EnforceExtendedAnalyzerRules>
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetPathOfFileAbove($(MSBuildThisFile), $(MSBuildThisFileDirectory)..))" />
 </Project>
