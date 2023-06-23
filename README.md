@@ -1593,7 +1593,10 @@ Or for Unity, use the source generator that targets the older Roslyn compiler.
 [Setting up a source generator for unity](https://docs.unity3d.com/Manual/roslyn-analyzers.html) is a bit more involved.
 The unity instructions describe copying the analyzer .dll into your unity project.
 You should get the analyzer/source generator .dll's from the the `MessagePack.SourceGenerator.Unity.zip` file uploaded on our GitHub releases page.
-Be sure to add _all_ the .dlls in that .zip as analyzers.
+For each and every .dll in the .zip, be sure to:
+
+1. Windows only: Unblock each .dll for use by [removing the "Mark of the Web"](doc/mark_of_the_web.png). If the "Unblock" checkbox does not appear, the mark of the web is not present and you may proceed.
+1. Add to the unity project as an analyzer.
 
 The package (or unity .zip file) adds a roslyn Source Generator that produces `IMessagePackFormatter<T>` implementing classes for each of your `[MessagePackObject]` classes.
 
