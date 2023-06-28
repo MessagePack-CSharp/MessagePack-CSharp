@@ -19,7 +19,7 @@
     <PackageVersion Include="Hyperion" Version="0.12.2" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
     <PackageVersion Include="Jil" version="2.17.0" />
-    <PackageVersion Include="MessagePack" Version="2.1.90" />
+    <PackageVersion Include="MessagePack" Version="2.5.124" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
     <PackageVersion Include="Microsoft.Build.Framework" Version="16.5.0" ExcludeAssets="runtime" />
