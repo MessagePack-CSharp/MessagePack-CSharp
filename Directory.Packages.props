@@ -6,7 +6,7 @@
 
     <BenchmarkDotNetVersion>0.13.5</BenchmarkDotNetVersion>
 
-    <MicrosoftCodeAnalysisVersion>3.11.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion>4.6.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftCodeAnalysisVersion Condition="'$(IsTestProject)'=='true'">4.4.0</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
   <ItemGroup>
