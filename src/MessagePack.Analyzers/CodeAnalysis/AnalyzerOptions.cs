@@ -21,7 +21,8 @@ public record AnalyzerOptions(
     public const string MessagePackGeneratedResolverNamespace = "build_property.MessagePackGeneratedResolverNamespace";
     public const string MessagePackGeneratedResolverName = "build_property.MessagePackGeneratedResolverName";
     public const string MessagePackGeneratedUsesMapMode = "build_property.MessagePackGeneratedUsesMapMode";
-    public const string JsonOptionsFileName = "MessagePackAnalyzer.json";
+    public const string JsonOptionsFileName = "MessagePack.json";
+    public const string JsonAdditionalAllowTypesOptionsFileName = "MessagePackAnalyzer.json";
 
     public static readonly AnalyzerOptions Default = new AnalyzerOptions();
 
@@ -34,27 +35,29 @@ public record AnalyzerOptions(
 
     public static AnalyzerOptions Parse(AnalyzerConfigOptions options, ImmutableArray<AdditionalText> additionalTexts)
     {
-        if (!options.TryGetValue(RootNamespace, out string? projectRootNamespace))
+        var additionalOptions = ParseAdditionalTexts(additionalTexts);
+
+        if (!options.TryGetValue(RootNamespace, out var projectRootNamespace) && !additionalOptions.TryGetValue(nameof(RootNamespace), out projectRootNamespace))
         {
             projectRootNamespace = Default.ProjectRootNamespace;
         }
 
-        if (!options.TryGetValue(MessagePackGeneratedResolverNamespace, out string? resolverNamespace))
+        if (!options.TryGetValue(MessagePackGeneratedResolverNamespace, out var resolverNamespace) && !additionalOptions.TryGetValue(nameof(MessagePackGeneratedResolverNamespace), out resolverNamespace))
         {
             resolverNamespace = Default.ResolverNamespace;
         }
 
-        if (!options.TryGetValue(MessagePackGeneratedResolverName, out string? resolverName))
+        if (!options.TryGetValue(MessagePackGeneratedResolverName, out var resolverName) && !additionalOptions.TryGetValue(nameof(MessagePackGeneratedResolverName), out resolverName))
         {
             resolverName = Default.ResolverName;
         }
 
-        if (!options.TryGetValue(MessagePackGeneratedUsesMapMode, out string? usesMapMode))
+        if (!options.TryGetValue(MessagePackGeneratedUsesMapMode, out var usesMapMode) && !additionalOptions.TryGetValue(nameof(MessagePackGeneratedUsesMapMode), out usesMapMode))
         {
             usesMapMode = Default.UsesMapMode ? "true" : "false";
         }
 
-        if (!options.TryGetValue(PublicMessagePackGeneratedResolver, out string? publicResolver))
+        if (!options.TryGetValue(PublicMessagePackGeneratedResolver, out var publicResolver) && !additionalOptions.TryGetValue(nameof(PublicMessagePackGeneratedResolver), out publicResolver))
         {
             publicResolver = Default.PublicResolver ? "true" : "false";
         }
@@ -68,9 +71,41 @@ public record AnalyzerOptions(
             AdditionalAllowTypes: GetAdditionalAllowTypes(additionalTexts));
     }
 
+    private static ImmutableDictionary<string, string> ParseAdditionalTexts(ImmutableArray<AdditionalText> additionalTexts)
+    {
+        var config = additionalTexts.FirstOrDefault(x => string.Equals(Path.GetFileName(x.Path), JsonOptionsFileName, StringComparison.OrdinalIgnoreCase));
+        if (config is null)
+        {
+            return ImmutableDictionary<string, string>.Empty;
+        }
+
+        try
+        {
+            var json = JsonDocument.Parse(config.GetText()?.ToString() ?? string.Empty, new JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip, MaxDepth = 5 });
+            var options = ImmutableDictionary.CreateBuilder<string, string>();
+            if (json.RootElement.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var element in json.RootElement.EnumerateObject())
+                {
+                    if (element.Name.Length > 0 && element.Value.ToString() is var value && value?.Length > 0)
+                    {
+                        options.Add(element.Name, value);
+                    }
+                }
+            }
+
+            return options.ToImmutable();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("Can't load MessagePackAnalyzer.json: " + ex);
+            return ImmutableDictionary<string, string>.Empty;
+        }
+    }
+
     private static ImmutableHashSet<string> GetAdditionalAllowTypes(ImmutableArray<AdditionalText> additionalTexts)
     {
-        Microsoft.CodeAnalysis.AdditionalText? config = additionalTexts.FirstOrDefault(x => string.Equals(Path.GetFileName(x.Path), JsonOptionsFileName, StringComparison.OrdinalIgnoreCase));
+        AdditionalText? config = additionalTexts.FirstOrDefault(x => string.Equals(Path.GetFileName(x.Path), JsonAdditionalAllowTypesOptionsFileName, StringComparison.OrdinalIgnoreCase));
         if (config is null)
         {
             return ImmutableHashSet<string>.Empty;
