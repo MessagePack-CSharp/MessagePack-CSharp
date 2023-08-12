@@ -11,12 +11,10 @@ namespace MessagePack.Analyzers.CodeAnalysis;
 public record AnalyzerOptions(
     string ResolverNamespace = "MessagePack",
     string ResolverName = "GeneratedMessagePackResolver",
-    string ProjectRootNamespace = "",
     bool PublicResolver = false,
     bool UsesMapMode = false,
     ImmutableHashSet<string>? AdditionalAllowTypes = null)
 {
-    public const string RootNamespace = "build_property.RootNamespace";
     public const string PublicMessagePackGeneratedResolver = "build_property.PublicMessagePackGeneratedResolver";
     public const string MessagePackGeneratedResolverNamespace = "build_property.MessagePackGeneratedResolverNamespace";
     public const string MessagePackGeneratedResolverName = "build_property.MessagePackGeneratedResolverName";
@@ -34,11 +32,6 @@ public record AnalyzerOptions(
 
     public static AnalyzerOptions Parse(AnalyzerConfigOptions options, ImmutableArray<AdditionalText> additionalTexts)
     {
-        if (!options.TryGetValue(RootNamespace, out string? projectRootNamespace))
-        {
-            projectRootNamespace = Default.ProjectRootNamespace;
-        }
-
         if (!options.TryGetValue(MessagePackGeneratedResolverNamespace, out string? resolverNamespace))
         {
             resolverNamespace = Default.ResolverNamespace;
@@ -62,7 +55,6 @@ public record AnalyzerOptions(
         return new AnalyzerOptions(
             ResolverNamespace: resolverNamespace,
             ResolverName: resolverName,
-            ProjectRootNamespace: projectRootNamespace,
             PublicResolver: string.Equals(publicResolver, "true", StringComparison.OrdinalIgnoreCase),
             UsesMapMode: string.Equals(usesMapMode, "true", StringComparison.OrdinalIgnoreCase),
             AdditionalAllowTypes: GetAdditionalAllowTypes(additionalTexts));
@@ -70,7 +62,7 @@ public record AnalyzerOptions(
 
     private static ImmutableHashSet<string> GetAdditionalAllowTypes(ImmutableArray<AdditionalText> additionalTexts)
     {
-        Microsoft.CodeAnalysis.AdditionalText? config = additionalTexts.FirstOrDefault(x => string.Equals(Path.GetFileName(x.Path), JsonOptionsFileName, StringComparison.OrdinalIgnoreCase));
+        AdditionalText? config = additionalTexts.FirstOrDefault(x => string.Equals(Path.GetFileName(x.Path), JsonOptionsFileName, StringComparison.OrdinalIgnoreCase));
         if (config is null)
         {
             return ImmutableHashSet<string>.Empty;

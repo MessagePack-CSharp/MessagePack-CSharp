@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <CompilerVisibleProperty Include="RootNamespace" />
     <CompilerVisibleProperty Include="PublicMessagePackGeneratedResolver" />
     <CompilerVisibleProperty Include="MessagePackGeneratedResolverNamespace" />
     <CompilerVisibleProperty Include="MessagePackGeneratedResolverName" />

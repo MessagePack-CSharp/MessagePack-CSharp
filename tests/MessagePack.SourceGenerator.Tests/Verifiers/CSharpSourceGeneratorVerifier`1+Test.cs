@@ -75,7 +75,7 @@ public static partial class CSharpSourceGeneratorVerifier
                 {
                     Sources = { testSource },
                 },
-                Options = options ?? AnalyzerOptions.Default with { ProjectRootNamespace = "TestRootNamespace" },
+                Options = options ?? AnalyzerOptions.Default,
             }.RunAsync();
         }
 
@@ -213,7 +213,6 @@ public static partial class CSharpSourceGeneratorVerifier
             StringBuilder globalConfigBuilder = new();
             globalConfigBuilder.AppendLine("is_global = true");
             globalConfigBuilder.AppendLine();
-            globalConfigBuilder.AppendLine($"{AnalyzerOptions.RootNamespace} = {options.ProjectRootNamespace}");
             globalConfigBuilder.AppendLine($"{AnalyzerOptions.PublicMessagePackGeneratedResolver} = {options.PublicResolver}");
             globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedResolverNamespace} = {options.ResolverNamespace}");
             globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedResolverName} = {options.ResolverName}");
