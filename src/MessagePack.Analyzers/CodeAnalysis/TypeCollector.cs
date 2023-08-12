@@ -183,7 +183,6 @@ public class TypeCollector
 #pragma warning restore SA1509 // Opening braces should not be preceded by blank line
     };
 
-    private readonly bool isForceUseMap;
     private readonly AnalyzerOptions options;
     private readonly ReferenceSymbols typeReferences;
     private readonly Action<Diagnostic>? reportDiagnostic;
@@ -205,7 +204,6 @@ public class TypeCollector
     {
         this.typeReferences = referenceSymbols;
         this.reportDiagnostic = reportDiagnostic;
-        this.isForceUseMap = options.UsesMapMode;
         this.options = options;
         this.compilation = compilation;
         this.excludeArrayElement = true;
@@ -291,7 +289,7 @@ public class TypeCollector
             return result;
         }
 
-        if (this.options.AdditionalAllowTypes?.Contains(typeSymbolString) is true)
+        if (this.options.CustomFormattedTypes.Contains(typeSymbolString) is true)
         {
             result = true;
             this.alreadyCollected.Add(typeSymbol, result);
@@ -663,7 +661,7 @@ public class TypeCollector
         var intMembers = new Dictionary<int, MemberSerializationInfo>();
         var stringMembers = new Dictionary<string, MemberSerializationInfo>();
 
-        if (this.isForceUseMap || (contractAttr?.ConstructorArguments[0] is { Value: bool firstConstructorArgument } && firstConstructorArgument))
+        if (this.options.Generator.UsesMapMode || (contractAttr?.ConstructorArguments[0] is { Value: bool firstConstructorArgument } && firstConstructorArgument))
         {
             // All public members are serialize target except [Ignore] member.
             isIntKey = false;

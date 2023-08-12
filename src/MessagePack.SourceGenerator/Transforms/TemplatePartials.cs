@@ -53,17 +53,17 @@ public partial class ResolverTemplate
 
     public AnalyzerOptions Options { get; init; }
 
-    public string ResolverNamespace => this.Options.ResolverNamespace;
+    public string ResolverNamespace => this.Options.Generator.Resolver.Namespace ?? string.Empty;
 
     public string FormatterNamespace => this.Options.FormatterNamespace;
 
-    public string ResolverName => this.Options.ResolverName;
+    public string ResolverName => this.Options.Generator.Resolver.Name;
 
-    public bool PublicResolver => this.Options.PublicResolver;
+    public bool PublicResolver => this.Options.Generator.Resolver.Public;
 
     public IReadOnlyList<IResolverRegisterInfo> RegisterInfos { get; }
 
-    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.Options.ResolverName, this.Options.ResolverNamespace)}.g.cs";
+    public string FileName => $"{CodeAnalysisUtilities.QualifyWithOptionalNamespace(this.ResolverName, this.ResolverNamespace)}.g.cs";
 }
 
 public partial class EnumTemplate

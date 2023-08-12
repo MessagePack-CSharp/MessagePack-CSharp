@@ -26,7 +26,7 @@ class Object2
 {
 }
 """;
-        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { UsesMapMode = usesMapMode }, testMethod: $"{nameof(TwoTypes)}({usesMapMode})");
+        await VerifyCS.Test.RunDefaultAsync(testSource, options: AnalyzerOptions.Default with { Generator = GeneratorOptions.Default with { UsesMapMode = usesMapMode } }, testMethod: $"{nameof(TwoTypes)}({usesMapMode})");
     }
 
     [Fact]

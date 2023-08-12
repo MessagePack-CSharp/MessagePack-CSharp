@@ -18,13 +18,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="build\**">
-      <Pack>true</Pack>
-      <PackagePath>build\</PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\Internal\AutomataKeyGen.cs" LinkBase="MessagePack\Internal" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\SafeBitConverter.cs" LinkBase="MessagePack" />
     <Compile Include="..\MessagePack.UnityClient\Assets\Scripts\MessagePack\MessagePackSerializationException.cs" LinkBase="MessagePack" />
@@ -88,5 +81,5 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
-  <Import Project="$(MSBuildProjectName).targets"/>
+  <Import Project="$(MSBuildProjectName).targets" />
 </Project>

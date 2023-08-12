@@ -31,7 +31,7 @@ public partial class MessagePackGenerator : ISourceGenerator
             return;
         }
 
-        AnalyzerOptions options = AnalyzerOptions.Parse(context.AnalyzerConfigOptions.GlobalOptions, context.AdditionalFiles) with { IsGeneratingSource = true };
+        AnalyzerOptions options = AnalyzerOptions.Parse(context.AnalyzerConfigOptions.GlobalOptions, context.AdditionalFiles, context.CancellationToken) with { IsGeneratingSource = true };
 
         List<FullModel> modelPerType = new();
         foreach (var syntax in receiver.ClassDeclarations)

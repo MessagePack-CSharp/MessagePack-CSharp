@@ -8,6 +8,15 @@
     <MicrosoftCodeAnalysisVersion>$(CodeAnalysisVersionForUnity)</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="build\**">
+      <Pack>true</Pack>
+      <PackagePath>build\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\MessagePackAnalyzer.schema.json" Link="MessagePackAnalyzer.schema.json" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="IsExternalInit" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
