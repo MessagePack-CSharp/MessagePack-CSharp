@@ -199,7 +199,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
         context.RegisterCompilationStartAction(ctxt =>
         {
-            CodeAnalysis.AnalyzerOptions options = CodeAnalysis.AnalyzerOptions.Parse(ctxt.Options.AnalyzerConfigOptionsProvider.GlobalOptions, ctxt.Options.AdditionalFiles);
+            CodeAnalysis.AnalyzerOptions options = CodeAnalysis.AnalyzerOptions.Parse(ctxt.Options.AnalyzerConfigOptionsProvider.GlobalOptions, ctxt.Options.AdditionalFiles, ctxt.CancellationToken);
             if (ReferenceSymbols.TryCreate(ctxt.Compilation, out ReferenceSymbols? typeReferences))
             {
                 ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences, options), SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration);

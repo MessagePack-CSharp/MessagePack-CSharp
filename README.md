@@ -168,14 +168,19 @@ The MessagePackAnalyzer package aids with:
 
 ![analyzergif](https://cloud.githubusercontent.com/assets/46207/23837445/ce734eae-07cb-11e7-9758-d69f0f095bc1.gif)
 
-If you want to allow a specific custom type (for example, when registering a custom type), put `MessagePackAnalyzer.json` at the project root and change the Build Action to `AdditionalFiles`.
-
-![image](https://cloud.githubusercontent.com/assets/46207/23837427/8a8d507c-07cb-11e7-9277-5a566eb0bfde.png)
+If you want to allow a specific custom type (for example, when registering a custom type), put `MessagePackAnalyzer.json` at the project root.
+If using Unity, you should configure Unity to treat this as an `AdditionalFiles` in the C# compiler.
 
 An example `MessagePackAnalyzer.json`:
 
 ```json
-[ "MyNamespace.FooClass", "MyNameSpace.BarStruct" ]
+{
+  "$schema": "https://raw.githubusercontent.com/MessagePack-CSharp/MessagePack-CSharp/develop/MessagePackAnalyzer.schema.json",
+  "customFormattedTypes": [
+    "MyNamespace.MyClass",
+    "MyNamespace.AnotherClass"
+  ]
+}
 ```
 
 ## Built-in supported types
@@ -1626,25 +1631,34 @@ T after = MessagePackSerializer.Deserialize<T>(serialized);
 
 ### Customizations
 
-A few MSBuild properties can be set in your project to customize source generation:
+You can customize the generated source through a `MessagePackAnalyzer.json` file added to the project root directory.
+If using Unity, you should configure Unity to treat this as an `AdditionalFiles` in the C# compiler.
 
-Property | Purpose | Default value
---|--|--
-`PublicMessagePackGeneratedResolver` | A boolean value indicating whether the generated resolver should be `public`. This is useful for shared libraries so their consumers can leverage the AOT formatters (which are always `internal`) in the library. | `false`
-`MessagePackGeneratedResolverNamespace` | The namespace to use for the generated resolver class. | The `$(RootNamespace)` of the project, or `MessagePack` if the root namespace is empty.
-`MessagePackGeneratedResolverName` | The name of the generated resolver type. | `GeneratedMessagePackResolver`
-`MessagePackGeneratedUsesMapMode` | A boolean value that indicates whether all formatters should use property maps instead of more compact arrays. | `false`
+An example `MessagePackAnalyzer.json`:
 
-For example you could add this xml to your project file to set each of the above properties (in this example, to their default values):
-
-```xml
-<PropertyGroup>
-  <PublicMessagePackGeneratedResolver>false</PublicMessagePackGeneratedResolver>
-  <MessagePackGeneratedResolverNamespace>$(RootNamespace)</MessagePackGeneratedResolverNamespace>
-  <MessagePackGeneratedResolverName>GeneratedMessagePackResolver</MessagePackGeneratedResolverName>
-  <MessagePackGeneratedUsesMapMode>false</MessagePackGeneratedUsesMapMode>
-</PropertyGroup>
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/MessagePack-CSharp/MessagePack-CSharp/develop/MessagePackAnalyzer.schema.json",
+  "generator": {
+    "resolver": {
+      "public": false,
+      "name": "GeneratedMessagePackResolver",
+      "namespace": "<your project root namespace>"
+    },
+    "formatters": {
+      "namespace": "Formatters"
+    },
+    "usesMapMode": false
+  },
+  "customFormattedTypes": [
+    "MyNamespace.MyClass",
+    "MyNamespace.AnotherClass"
+  ]
+}
 ```
+
+The above example mostly sets defaults.
+You can discover all the available settings, their defaults and meanings in a JSON editor that supports JSON schema, or by reviewing [the JSON schema][AnalyzerJsonSchema] yourself.
 
 When exposing the generated resolver publicly, consumers outside the library should aggregate the resolver using its `Instance` property, which contains *only* the generated formatters.
 The `InstanceWithStandardAotResolver` property is a convenience for callers that will not be aggregating the resolver with those from other libraries, since it aggregates built-in AOT friendly resolvers from the MessagePack library itself.
@@ -1702,3 +1716,5 @@ The StreamJsonRpc library is based on [JSON-RPC](https://www.jsonrpc.org/) and i
 ## How to build
 
 See our [contributor's guide](CONTRIBUTING.md).
+
+[AnalyzerJsonSchema]: https://github.com/MessagePack-CSharp/MessagePack-CSharp/blob/develop/MessagePackAnalyzer.schema.json

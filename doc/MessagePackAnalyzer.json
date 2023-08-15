@@ -1,0 +1,18 @@
+{
+  "$schema": "../MessagePackAnalyzer.schema.json",
+  "generator": {
+    "resolver": {
+      "public": false,
+      "name": "GeneratedMessagePackResolver",
+      "namespace": "MessagePack"
+    },
+    "formatters": {
+      "namespace": "Formatters"
+    },
+    "usesMapMode": false
+  },
+  "customFormattedTypes": [
+    "MyNamespace.MyClass",
+    "MyNamespace.AnotherClass"
+  ]
+}

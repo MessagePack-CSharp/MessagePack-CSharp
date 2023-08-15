@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{344DC89D-8
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		LICENSE = LICENSE
+		doc\MessagePackAnalyzer.json = doc\MessagePackAnalyzer.json
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -103,7 +104,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.SourceGenerator.Unity.Tests", "tests\MessagePack.SourceGenerator.Unity.Tests\MessagePack.SourceGenerator.Unity.Tests.csproj", "{EAC1B79C-F77D-4DEF-BF53-75E700A301A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePack.Analyzers.CodeFixes", "src\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj", "{7A6CB600-2393-468F-9952-84EC624D57BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePack.Analyzers.CodeFixes", "src\MessagePack.Analyzers.CodeFixes\MessagePack.Analyzers.CodeFixes.csproj", "{7A6CB600-2393-468F-9952-84EC624D57BD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

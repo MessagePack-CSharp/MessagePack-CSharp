@@ -75,7 +75,7 @@ public static partial class CSharpSourceGeneratorVerifier
                 {
                     Sources = { testSource },
                 },
-                Options = options ?? AnalyzerOptions.Default with { ProjectRootNamespace = "TestRootNamespace" },
+                Options = options ?? AnalyzerOptions.Default,
             }.RunAsync();
         }
 
@@ -204,7 +204,13 @@ public static partial class CSharpSourceGeneratorVerifier
 
         private static string ConstructConfigJsonString(AnalyzerOptions options)
         {
-            string json = JsonSerializer.Serialize(options.AdditionalAllowTypes, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize(
+                options,
+                new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                });
             return json;
         }
 
@@ -213,11 +219,6 @@ public static partial class CSharpSourceGeneratorVerifier
             StringBuilder globalConfigBuilder = new();
             globalConfigBuilder.AppendLine("is_global = true");
             globalConfigBuilder.AppendLine();
-            globalConfigBuilder.AppendLine($"{AnalyzerOptions.RootNamespace} = {options.ProjectRootNamespace}");
-            globalConfigBuilder.AppendLine($"{AnalyzerOptions.PublicMessagePackGeneratedResolver} = {options.PublicResolver}");
-            globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedResolverNamespace} = {options.ResolverNamespace}");
-            globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedResolverName} = {options.ResolverName}");
-            globalConfigBuilder.AppendLine($"{AnalyzerOptions.MessagePackGeneratedUsesMapMode} = {options.UsesMapMode}");
 
             return globalConfigBuilder.ToString();
         }
