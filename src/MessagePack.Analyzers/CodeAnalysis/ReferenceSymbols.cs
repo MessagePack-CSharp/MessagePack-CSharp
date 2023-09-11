@@ -13,7 +13,7 @@ public record ReferenceSymbols(
     INamedTypeSymbol KeyAttribute,
     INamedTypeSymbol IgnoreAttribute,
     INamedTypeSymbol FormatterAttribute,
-    INamedTypeSymbol MessagePackFormatter,
+    INamedTypeSymbol? MessagePackFormatter,
     INamedTypeSymbol? IgnoreDataMemberAttribute,
     INamedTypeSymbol IMessagePackSerializationCallbackReceiver)
 {
@@ -58,10 +58,6 @@ public record ReferenceSymbols(
         }
 
         INamedTypeSymbol? messageFormatter = compilation.GetTypeByMetadataName("MessagePack.Formatters.IMessagePackFormatter");
-        if (messageFormatter is null)
-        {
-            return false;
-        }
 
         INamedTypeSymbol? ignoreDataMemberAttribute = compilation.GetTypeByMetadataName("System.Runtime.Serialization.IgnoreDataMemberAttribute");
 

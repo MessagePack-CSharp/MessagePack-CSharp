@@ -190,6 +190,7 @@ public class Bar : Foo
 
         await new VerifyCS.Test
         {
+            ReferenceAssemblies = ReferencesHelper.AnnotationsOnly,
             CodeFixTestBehaviors = CodeFixTestBehaviors.SkipLocalDiagnosticCheck, // BUGBUG: move diagnostic to `Foo` reference in Bar's base type list.
             TestState =
             {

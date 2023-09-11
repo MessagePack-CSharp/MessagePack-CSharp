@@ -9,4 +9,8 @@ internal static class ReferencesHelper
     internal static ReferenceAssemblies DefaultReferences = ReferenceAssemblies.NetFramework.Net472.Default
         .AddPackages(ImmutableArray.Create(
             new PackageIdentity("MessagePack", "2.0.335")));
+
+    internal static ReferenceAssemblies AnnotationsOnly = ReferenceAssemblies.NetFramework.Net472.Default
+        .AddPackages(ImmutableArray.Create(
+            new PackageIdentity("MessagePack.Annotations", "2.0.335")));
 }
