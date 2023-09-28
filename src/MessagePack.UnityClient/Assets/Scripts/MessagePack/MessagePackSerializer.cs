@@ -440,7 +440,7 @@ namespace MessagePack
             if (streamToRewind.CanSeek && !reader.End)
             {
                 // Reverse the stream as many bytes as we left unread.
-                int bytesNotRead = checked((int)reader.Sequence.Slice(reader.Position).Length);
+                long bytesNotRead = reader.Sequence.Slice(reader.Position).Length;
                 streamToRewind.Seek(-bytesNotRead, SeekOrigin.Current);
             }
 
