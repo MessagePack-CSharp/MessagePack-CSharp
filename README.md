@@ -95,7 +95,7 @@ Install-Package MessagePack.AspNetCoreMvcFormatter
 
 ### Unity
 
-For Unity projects, the [releases][Releases] page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
+For Unity projects, the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page provides downloadable `.unitypackage` files. When using in Unity IL2CPP or Xamarin AOT environments, please carefully read the [pre-code generation section](#aot).
 
 ### Migration notes from v1.x
 
@@ -1531,7 +1531,7 @@ Within the *reserved* ranges, this library defines or implements extensions that
 
 Unity lowest supported version is `2018.3`, API Compatibility Level supports both `.NET 4.x` and `.NET Standard 2.0`.
 
-You can install the `unitypackage` from the [releases][Releases] page.
+You can install the `unitypackage` from the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page.
 If your build targets .NET Framework 4.x and runs on mono, you can use it as is.
 But if your build targets IL2CPP, you can not use `Dynamic***Resolver`, so it is required to use pre-code generation. Please see [pre-code generation section](#aot).
 
@@ -1605,7 +1605,7 @@ Once you have the tool installed, simply invoke using `dotnet mpc` within your r
 dotnet mpc --help
 ```
 
-Alternatively, you can download mpc from the [releases][Releases] page, that includes platform native binaries (that don't require a separate dotnet runtime).
+Alternatively, you can download mpc from the [Releases](https://github.com/MessagePack-CSharp/MessagePack-CSharp/releases) page, that includes platform native binaries (that don't require a separate dotnet runtime).
 
 ```
 Usage: mpc [options...]
