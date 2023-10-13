@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace MessagePack.Unity
@@ -186,6 +187,9 @@ namespace MessagePack.Unity
             {typeof(List<BoundsInt?>),       new ListFormatter<BoundsInt?>()},
 
 #endif
+
+            // Unity Mathematics
+            { typeof(int2), new Int2Formatter() },
         };
 
         internal static object? GetFormatter(Type t)

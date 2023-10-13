@@ -514,3 +514,22 @@ namespace UnityEngine
         }
     }
 }
+
+namespace Unity.Mathematics
+{
+    [MessagePackObject]
+    public struct int2
+    {
+        [Key(0)]
+        public int x;
+        [Key(1)]
+        public int y;
+
+        [SerializationConstructor]
+        public int2(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+}
