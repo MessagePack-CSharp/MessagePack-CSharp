@@ -519,6 +519,111 @@ namespace UnityEngine
 namespace Unity.Mathematics
 {
     [MessagePackObject]
+    public struct bool2
+    {
+        [Key(0)]
+        public bool x;
+        [Key(1)]
+        public bool y;
+
+        [SerializationConstructor]
+        public bool2(bool x, bool y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    [MessagePackObject]
+    public struct bool3
+    {
+        [Key(0)]
+        public bool x;
+        [Key(1)]
+        public bool y;
+        [Key(2)]
+        public bool z;
+
+        [SerializationConstructor]
+        public bool3(bool x, bool y, bool z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
+
+    [MessagePackObject]
+    public struct double2
+    {
+        [Key(0)]
+        public double x;
+        [Key(1)]
+        public double y;
+
+        [SerializationConstructor]
+        public double2(double x, double y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    [MessagePackObject]
+    public struct double3
+    {
+        [Key(0)]
+        public double x;
+        [Key(1)]
+        public double y;
+        [Key(2)]
+        public double z;
+
+        [SerializationConstructor]
+        public double3(double x, double y, double z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
+
+    [MessagePackObject]
+    public struct float2
+    {
+        [Key(0)]
+        public float x;
+        [Key(1)]
+        public float y;
+
+        [SerializationConstructor]
+        public float2(float x, float y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    [MessagePackObject]
+    public struct float3
+    {
+        [Key(0)]
+        public float x;
+        [Key(1)]
+        public float y;
+        [Key(2)]
+        public float z;
+
+        [SerializationConstructor]
+        public float3(float x, float y, float z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
+
+    [MessagePackObject]
     public struct int2
     {
         [Key(0)]
@@ -531,6 +636,25 @@ namespace Unity.Mathematics
         {
             this.x = x;
             this.y = y;
+        }
+    }
+
+    [MessagePackObject]
+    public struct int3
+    {
+        [Key(0)]
+        public int x;
+        [Key(1)]
+        public int y;
+        [Key(2)]
+        public int z;
+
+        [SerializationConstructor]
+        public int3(int x, int y, int z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
         }
     }
 }
