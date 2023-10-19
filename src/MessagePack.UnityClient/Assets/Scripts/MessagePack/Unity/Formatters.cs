@@ -12,49 +12,6 @@ using MessagePack.Formatters;
 
 namespace MessagePack.Unity
 {
-#if UNITY_MATHEMATICS_SUPPORT
-    public sealed class Int2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Unity.Mathematics.int2>
-    {
-        public void Serialize(ref MessagePackWriter writer, global::Unity.Mathematics.int2 value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            writer.WriteArrayHeader(2);
-            writer.Write(value.x);
-            writer.Write(value.y);
-        }
-
-        public global::Unity.Mathematics.int2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (reader.IsNil)
-            {
-                throw new InvalidOperationException("typecode is null, struct not supported");
-            }
-
-            var length = reader.ReadArrayHeader();
-            var x = default(int);
-            var y = default(int);
-            for (int i = 0; i < length; i++)
-            {
-                var key = i;
-                switch (key)
-                {
-                    case 0:
-                        x = reader.ReadInt32();
-                        break;
-                    case 1:
-                        y = reader.ReadInt32();
-                        break;
-                    default:
-                        reader.Skip();
-                        break;
-                }
-            }
-
-            var result = new global::Unity.Mathematics.int2(x, y);
-            return result;
-        }
-    }
-#endif
-
     public sealed class Vector2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.Vector2>
     {
         public void Serialize(ref MessagePackWriter writer, global::UnityEngine.Vector2 value, global::MessagePack.MessagePackSerializerOptions options)
@@ -1172,6 +1129,49 @@ namespace MessagePack.Unity
             ____result.position = __position__;
             ____result.size = __size__;
             return ____result;
+        }
+    }
+#endif
+
+#if UNITY_MATHEMATICS_SUPPORT
+    public sealed class Int2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Unity.Mathematics.int2>
+    {
+        public void Serialize(ref MessagePackWriter writer, global::Unity.Mathematics.int2 value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            writer.WriteArrayHeader(2);
+            writer.Write(value.x);
+            writer.Write(value.y);
+        }
+
+        public global::Unity.Mathematics.int2 Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.IsNil)
+            {
+                throw new InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            var length = reader.ReadArrayHeader();
+            var x = default(int);
+            var y = default(int);
+            for (int i = 0; i < length; i++)
+            {
+                var key = i;
+                switch (key)
+                {
+                    case 0:
+                        x = reader.ReadInt32();
+                        break;
+                    case 1:
+                        y = reader.ReadInt32();
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var result = new global::Unity.Mathematics.int2(x, y);
+            return result;
         }
     }
 #endif
