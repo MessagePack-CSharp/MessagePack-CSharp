@@ -6,8 +6,11 @@
 using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
-using Unity.Mathematics;
 using UnityEngine;
+
+#if UNITY_MATHEMATICS_SUPPORT
+using Unity.Mathematics;
+#endif
 
 namespace MessagePack.Unity
 {
@@ -188,8 +191,9 @@ namespace MessagePack.Unity
 
 #endif
 
-            // Unity Mathematics
+#if UNITY_MATHEMATICS_SUPPORT
             { typeof(int2), new Int2Formatter() },
+#endif
         };
 
         internal static object? GetFormatter(Type t)

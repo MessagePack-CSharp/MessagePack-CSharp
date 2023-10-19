@@ -12,6 +12,7 @@ using MessagePack.Formatters;
 
 namespace MessagePack.Unity
 {
+#if UNITY_MATHEMATICS_SUPPORT
     public sealed class Int2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Unity.Mathematics.int2>
     {
         public void Serialize(ref MessagePackWriter writer, global::Unity.Mathematics.int2 value, global::MessagePack.MessagePackSerializerOptions options)
@@ -52,6 +53,7 @@ namespace MessagePack.Unity
             return result;
         }
     }
+#endif
 
     public sealed class Vector2Formatter : global::MessagePack.Formatters.IMessagePackFormatter<global::UnityEngine.Vector2>
     {
