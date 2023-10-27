@@ -153,6 +153,80 @@ public class Bar
     }
 
     [Fact]
+    public async Task AddAttributeToTypeForRecord()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = @"
+public class Foo
+{
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar
+{
+    [MessagePack.Key(0)]
+    public Foo {|MsgPack003:Member|} { get; set; }
+}
+";
+
+        string output = @"
+[MessagePack.MessagePackObject]
+public class Foo
+{
+    [MessagePack.Key(0)]
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar
+{
+    [MessagePack.Key(0)]
+    public Foo Member { get; set; }
+}
+";
+
+        await VerifyCS.VerifyCodeFixAsync(input, output);
+    }
+
+    [Fact]
+    public async Task AddAttributeToTypeForRecordStruct()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = @"
+public class Foo
+{
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record struct Bar
+{
+    [MessagePack.Key(0)]
+    public Foo {|MsgPack003:Member|} { get; set; }
+}
+";
+
+        string output = @"
+[MessagePack.MessagePackObject]
+public class Foo
+{
+    [MessagePack.Key(0)]
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record struct Bar
+{
+    [MessagePack.Key(0)]
+    public Foo Member { get; set; }
+}
+";
+
+        await VerifyCS.VerifyCodeFixAsync(input, output);
+    }
+
+    [Fact]
     public async Task CodeFixAppliesAcrossFiles()
     {
         var inputs = new string[]

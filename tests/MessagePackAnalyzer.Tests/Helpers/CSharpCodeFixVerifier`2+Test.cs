@@ -25,7 +25,7 @@ public static partial class CSharpCodeFixVerifier<TAnalyzer, TCodeFix>
             {
                 var parseOptions = (CSharpParseOptions?)solution.GetProject(projectId)?.ParseOptions;
                 Assert.NotNull(parseOptions);
-                solution = solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(LanguageVersion.CSharp7_3));
+                solution = solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(LanguageVersion.CSharp10));
 
                 return solution;
             });
