@@ -153,7 +153,7 @@ public class Bar
     }
 
     [Fact]
-    public async Task AddAttributeToTypeForRecord()
+    public async Task AddAttributeToTypeForRecord1()
     {
         // Don't use Preamble because we want to test that it works without a using statement at the top.
         string input = @"
@@ -173,6 +173,43 @@ public record Bar
         string output = @"
 [MessagePack.MessagePackObject]
 public class Foo
+{
+    [MessagePack.Key(0)]
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar
+{
+    [MessagePack.Key(0)]
+    public Foo Member { get; set; }
+}
+";
+
+        await VerifyCS.VerifyCodeFixAsync(input, output);
+    }
+
+    [Fact]
+    public async Task AddAttributeToTypeForRecord2()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = @"
+public record Foo
+{
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar
+{
+    [MessagePack.Key(0)]
+    public {|MsgPack003:Foo|} Member { get; set; }
+}
+";
+
+        string output = @"
+[MessagePack.MessagePackObject]
+public record Foo
 {
     [MessagePack.Key(0)]
     public string Member { get; set; }
