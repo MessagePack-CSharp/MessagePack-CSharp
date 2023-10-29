@@ -323,6 +323,44 @@ namespace MessagePack.Tests
             Assert.Equal(-98, instance.Prop2);
         }
 
+        [Fact]
+        public void OrdinalOrderingWithInheritance()
+        {
+            var seq = new Sequence<byte>();
+            var writer = new MessagePackWriter(seq);
+            writer.WriteArrayHeader(4);
+            writer.Write("One");
+            writer.Write("Two");
+            writer.Write("Three");
+            writer.Write("Four");
+            writer.Flush();
+
+            var instance = MessagePackSerializer.Deserialize<InheritanceOrdinalKeyOrdering>(seq);
+            Assert.Equal("One", instance.Prop1);
+            Assert.Equal("Two", instance.Prop2);
+            Assert.Equal("Three", instance.ChildProp1);
+            Assert.Equal("Four", instance.ChildProp2);
+        }
+
+        [Fact]
+        public void OrdinalOrderingWithInheritance_RoundTrip()
+        {
+            var initialInstance = new InheritanceOrdinalKeyOrdering()
+            {
+                Prop1 = "1",
+                Prop2 = "2",
+                ChildProp1 = "3",
+                ChildProp2 = "4",
+            };
+            var options = StandardResolver.Options;
+            byte[] msgpack = MessagePackSerializer.Serialize(initialInstance, options);
+            var deserialized = MessagePackSerializer.Deserialize<InheritanceOrdinalKeyOrdering>(msgpack, options);
+            Assert.Equal(initialInstance.Prop1, deserialized.Prop1);
+            Assert.Equal(initialInstance.Prop2, deserialized.Prop2);
+            Assert.Equal(initialInstance.ChildProp1, deserialized.ChildProp1);
+            Assert.Equal(initialInstance.ChildProp2, deserialized.ChildProp2);
+        }
+
 #if !UNITY_2018_3_OR_NEWER
 
         [Fact]
@@ -581,6 +619,16 @@ namespace MessagePack.Tests
 
             [DataMember(Order = 1)]
             public string Prop2 { get; set; } = "Uninitialized";
+        }
+
+        [DataContract]
+        public class InheritanceOrdinalKeyOrdering : TwoPropertiesOrdinalKey
+        {
+            [DataMember(Order = 0)]
+            public string ChildProp1 { get; set; } = "Uninitialized";
+
+            [DataMember(Order = 1)]
+            public string ChildProp2 { get; set; } = "Uninitialized";
         }
 
         [MessagePackObject]

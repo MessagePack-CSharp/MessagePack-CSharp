@@ -1860,71 +1860,85 @@ namespace MessagePack.Internal
                 // Public members with KeyAttribute except [Ignore] member.
                 var searchFirst = true;
                 var hiddenIntKey = 0;
-
-                var memberInfos = GetAllProperties(type).Cast<MemberInfo>().Concat(GetAllFields(type));
-                foreach (var member in memberInfos.Select(CreateEmittableMember))
+                var memberInfoGroups = GetAllFieldsAndProperties(type)
+                    .OrderByDescending(group => group.Key);
+                var level = (offset: 0, max: -1);
+                foreach (var memberInfos in memberInfoGroups)
                 {
-                    if (member is null)
-                    {
-                        continue;
-                    }
+                    level.offset = level.max + 1;
 
-                    MemberInfo memberInfo = (MemberInfo?)member.PropertyInfo ?? member.FieldInfo!;
-
-                    KeyAttribute key;
-                    if (contractAttr != null)
+                    foreach (var member in memberInfos.Select(CreateEmittableMember))
                     {
-                        // MessagePackObjectAttribute. KeyAttribute must be marked, and IntKey or StringKey must be set.
-                        key = memberInfo.GetCustomAttribute<KeyAttribute>(true) ??
-                            throw new MessagePackDynamicObjectResolverException($"all public members must mark KeyAttribute or IgnoreMemberAttribute. type:{type.FullName} member:{memberInfo.Name}");
-                        if (key.IntKey == null && key.StringKey == null)
-                        {
-                            throw new MessagePackDynamicObjectResolverException($"both IntKey and StringKey are null. type: {type.FullName} member:{memberInfo.Name}");
-                        }
-                    }
-                    else
-                    {
-                        // DataContractAttribute. Try to use the DataMemberAttribute to fake KeyAttribute.
-                        // This member has no DataMemberAttribute nor IgnoreMemberAttribute.
-                        // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
-                        var pseudokey = memberInfo.GetCustomAttribute<DataMemberAttribute>(true);
-                        if (pseudokey == null)
+                        if (member is null)
                         {
                             continue;
                         }
 
-                        key =
-                            pseudokey.Order != -1 ? new KeyAttribute(pseudokey.Order) :
-                            pseudokey.Name != null ? new KeyAttribute(pseudokey.Name) :
-                            new KeyAttribute(memberInfo.Name);
-                    }
+                        MemberInfo memberInfo = (MemberInfo?)member.PropertyInfo ?? member.FieldInfo!;
 
-                    member.IsExplicitContract = true;
+                        KeyAttribute key;
+                        if (contractAttr != null)
+                        {
+                            // MessagePackObjectAttribute. KeyAttribute must be marked, and IntKey or StringKey must be set.
+                            key = memberInfo.GetCustomAttribute<KeyAttribute>(true) ??
+                                throw new MessagePackDynamicObjectResolverException($"all public members must mark KeyAttribute or IgnoreMemberAttribute. type:{type.FullName} member:{memberInfo.Name}");
+                            if (key.IntKey == null && key.StringKey == null)
+                            {
+                                throw new MessagePackDynamicObjectResolverException($"both IntKey and StringKey are null. type: {type.FullName} member:{memberInfo.Name}");
+                            }
+                        }
+                        else
+                        {
+                            // DataContractAttribute. Try to use the DataMemberAttribute to fake KeyAttribute.
+                            // This member has no DataMemberAttribute nor IgnoreMemberAttribute.
+                            // But the type *did* have a DataContractAttribute on it, so no attribute implies the member should not be serialized.
+                            var pseudokey = memberInfo.GetCustomAttribute<DataMemberAttribute>(true);
+                            if (pseudokey == null)
+                            {
+                                continue;
+                            }
 
-                    // Cannot assign StringKey and IntKey at the same time.
-                    if (searchFirst)
-                    {
-                        searchFirst = false;
-                        isIntKey = key.IntKey != null;
-                    }
-                    else if ((isIntKey && key.IntKey == null) || (!isIntKey && key.StringKey == null))
-                    {
-                        throw new MessagePackDynamicObjectResolverException($"all members key type must be same. type: {type.FullName} member:{memberInfo.Name}");
-                    }
+                            if (pseudokey.Order != -1)
+                            {
+                                var calculatedOrder = pseudokey.Order + level.offset;
+                                level.max = Math.Max(level.max, calculatedOrder);
+                                key = new KeyAttribute(calculatedOrder);
+                            }
+                            else
+                            {
+                                key =
+                                    pseudokey.Name != null ? new KeyAttribute(pseudokey.Name) :
+                                    new KeyAttribute(memberInfo.Name);
+                            }
+                        }
 
-                    if (isIntKey)
-                    {
-                        member.IntKey = key.IntKey!.Value;
-                    }
-                    else
-                    {
-                        member.StringKey = key.StringKey;
-                        member.IntKey = hiddenIntKey++;
-                    }
+                        member.IsExplicitContract = true;
 
-                    if (!AddEmittableMemberOrIgnore(isIntKey, member, true))
-                    {
-                        continue;
+                        // Cannot assign StringKey and IntKey at the same time.
+                        if (searchFirst)
+                        {
+                            searchFirst = false;
+                            isIntKey = key.IntKey != null;
+                        }
+                        else if ((isIntKey && key.IntKey == null) || (!isIntKey && key.StringKey == null))
+                        {
+                            throw new MessagePackDynamicObjectResolverException($"all members key type must be same. type: {type.FullName} member:{memberInfo.Name}");
+                        }
+
+                        if (isIntKey)
+                        {
+                            member.IntKey = key.IntKey!.Value;
+                        }
+                        else
+                        {
+                            member.StringKey = key.StringKey;
+                            member.IntKey = hiddenIntKey++;
+                        }
+
+                        if (!AddEmittableMemberOrIgnore(isIntKey, member, true))
+                        {
+                            continue;
+                        }
                     }
                 }
             }
@@ -2162,37 +2176,28 @@ namespace MessagePack.Internal
                 ;
         }
 
-        private static IEnumerable<FieldInfo> GetAllFields(Type type)
+        private static IEnumerable<IGrouping<int, MemberInfo>> GetAllFieldsAndProperties(Type type, int level = 0)
         {
             if (type.BaseType is object)
             {
-                foreach (var item in GetAllFields(type.BaseType))
+                foreach (var item in GetAllFieldsAndProperties(type.BaseType, level + 1))
                 {
                     yield return item;
                 }
             }
 
             // with declared only
-            foreach (var item in type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-            {
-                yield return item;
-            }
-        }
+            var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var properties = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-        private static IEnumerable<PropertyInfo> GetAllProperties(Type type)
-        {
-            if (type.BaseType is object)
-            {
-                foreach (var item in GetAllProperties(type.BaseType))
-                {
-                    yield return item;
-                }
-            }
+            var grouping = (properties.Any() ? properties : Enumerable.Empty<MemberInfo>())
+                .Concat(fields.Any() ? fields.Cast<MemberInfo>() : Enumerable.Empty<MemberInfo>())
+                .GroupBy(_ => level)
+                .FirstOrDefault();
 
-            // with declared only
-            foreach (var item in type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            if (grouping != null)
             {
-                yield return item;
+                yield return grouping;
             }
         }
 
