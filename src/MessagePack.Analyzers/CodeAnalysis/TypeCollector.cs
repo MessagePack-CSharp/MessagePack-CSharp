@@ -833,13 +833,13 @@ public class TypeCollector
                     {
                         var syntax = item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
 
-                        var location = (syntax as PropertyDeclarationSyntax)?.Type
+                        var typeSyntax = (syntax as PropertyDeclarationSyntax)?.Type
                             ?? (syntax as ParameterSyntax)?.Type; // for primary constructor
 
                         // TODO: add the declaration of the referenced type as an additional location.
                         this.reportDiagnostic?.Invoke(Diagnostic.Create(
                             MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject,
-                            location?.GetLocation(),
+                            typeSyntax?.GetLocation(),
                             item.Type.ToDisplayString(ShortTypeNameFormat)));
                     }
                 }
