@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -759,7 +759,10 @@ public class TypeCollector
                     {
                         if (SymbolEqualityComparer.Default.Equals(item.ContainingType, type))
                         {
-                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, ((PropertyDeclarationSyntax)item.DeclaringSyntaxReferences[0].GetSyntax()).Identifier.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
+                            var syntax = item.DeclaringSyntaxReferences[0].GetSyntax();
+                            var identifier = (syntax as PropertyDeclarationSyntax)?.Identifier ?? (syntax as ParameterSyntax)?.Identifier;
+
+                            this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.PublicMemberNeedsKey, identifier?.GetLocation(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), item.Name));
                         }
                         else if (type.BaseType is not null)
                         {
@@ -828,8 +831,16 @@ public class TypeCollector
                     // recursive collect
                     if (!this.CollectCore(item.Type))
                     {
+                        var syntax = item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+
+                        var location = (syntax as PropertyDeclarationSyntax)?.Type
+                            ?? (syntax as ParameterSyntax)?.Type; // for primary constructor
+
                         // TODO: add the declaration of the referenced type as an additional location.
-                        this.reportDiagnostic?.Invoke(Diagnostic.Create(MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject, (item.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax)?.Type.GetLocation(), item.Type.ToDisplayString(ShortTypeNameFormat)));
+                        this.reportDiagnostic?.Invoke(Diagnostic.Create(
+                            MsgPack00xMessagePackAnalyzer.TypeMustBeMessagePackObject,
+                            location?.GetLocation(),
+                            item.Type.ToDisplayString(ShortTypeNameFormat)));
                     }
                 }
             }
