@@ -49,7 +49,7 @@ namespace MessagePack.Tests
             Assert.Null(deserializedBytes);
         }
 
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
 
         [Theory]
         [InlineData(10)] // fixstr
@@ -95,7 +95,7 @@ namespace MessagePack.Tests
             Assert.Null(deserializedObj);
         }
 
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
 
         [Theory]
         [InlineData(10)] // fixstr

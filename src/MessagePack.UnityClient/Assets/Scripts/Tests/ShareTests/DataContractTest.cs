@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
     public class DataContractTest
     {
         private readonly ITestOutputHelper logger;

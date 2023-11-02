@@ -252,7 +252,7 @@ namespace MessagePack.Tests
             }
         }
 
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
 
         [Fact]
         public void GenericClassTest()
@@ -326,7 +326,7 @@ namespace MessagePack.Tests
             v.IsStructuralEqual(o);
         }
 
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
 
         [Fact]
         public void Contractless()

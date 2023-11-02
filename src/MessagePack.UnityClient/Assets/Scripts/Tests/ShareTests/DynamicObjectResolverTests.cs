@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
 
 using System;
 using System.Runtime.Serialization;

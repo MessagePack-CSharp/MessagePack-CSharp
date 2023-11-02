@@ -11,7 +11,7 @@ using Xunit;
 
 namespace MessagePack.Tests
 {
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
 
     public class GenericFormatters
     {

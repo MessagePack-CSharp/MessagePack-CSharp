@@ -324,7 +324,7 @@ namespace MessagePack.Tests
         [Theory]
         [InlineData(long.MinValue, 9)]
         [InlineData((long)-3372036854775807, 9)]
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
         [InlineData((long)-2147483648, 5)]
 #endif
         [InlineData((long)-50000, 5)]
@@ -660,7 +660,7 @@ namespace MessagePack.Tests
         [InlineData('a')]
         [InlineData('あ')]
         [InlineData('c')]
-#if !ENABLE_IL2CPP
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
         [InlineData(char.MinValue)]
         [InlineData(char.MaxValue)]
 #endif
