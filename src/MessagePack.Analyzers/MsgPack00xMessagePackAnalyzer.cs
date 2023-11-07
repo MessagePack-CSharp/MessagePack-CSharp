@@ -202,7 +202,7 @@ public class MsgPack00xMessagePackAnalyzer : DiagnosticAnalyzer
             CodeAnalysis.AnalyzerOptions options = CodeAnalysis.AnalyzerOptions.Parse(ctxt.Options.AnalyzerConfigOptionsProvider.GlobalOptions, ctxt.Options.AdditionalFiles, ctxt.CancellationToken);
             if (ReferenceSymbols.TryCreate(ctxt.Compilation, out ReferenceSymbols? typeReferences))
             {
-                ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences, options), SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration);
+                ctxt.RegisterSyntaxNodeAction(c => Analyze(c, typeReferences, options), SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.InterfaceDeclaration, SyntaxKind.RecordDeclaration);
             }
         });
     }

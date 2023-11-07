@@ -32,8 +32,8 @@ public class Foo
         string input = Preamble + @"using MessagePack.Formatters;
 
 public class FooFormatter : IMessagePackFormatter<Foo> {
-	public void Serialize(ref MessagePackWriter writer, Foo value, MessagePackSerializerOptions options) {}
-	public Foo Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => default;
+    public void Serialize(ref MessagePackWriter writer, Foo value, MessagePackSerializerOptions options) {}
+    public Foo Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) => default;
 }
 
 
@@ -146,6 +146,123 @@ public class Bar
 {
     [MessagePack.Key(0)]
     public Foo Member { get; set; }
+}
+";
+
+        await VerifyCS.VerifyCodeFixAsync(input, output);
+    }
+
+    [Fact]
+    public async Task AddAttributeToTypeForRecord1()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = @"
+public class Foo
+{
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar
+{
+    [MessagePack.Key(0)]
+    public {|MsgPack003:Foo|} Member { get; set; }
+}
+";
+
+        string output = @"
+[MessagePack.MessagePackObject]
+public class Foo
+{
+    [MessagePack.Key(0)]
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar
+{
+    [MessagePack.Key(0)]
+    public Foo Member { get; set; }
+}
+";
+
+        await VerifyCS.VerifyCodeFixAsync(input, output);
+    }
+
+    [Fact]
+    public async Task AddAttributeToTypeForRecord2()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = @"
+public record Foo
+{
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar
+{
+    [MessagePack.Key(0)]
+    public {|MsgPack003:Foo|} Member { get; set; }
+}
+";
+
+        string output = @"
+[MessagePack.MessagePackObject]
+public record Foo
+{
+    [MessagePack.Key(0)]
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar
+{
+    [MessagePack.Key(0)]
+    public Foo Member { get; set; }
+}
+";
+
+        await VerifyCS.VerifyCodeFixAsync(input, output);
+    }
+
+    [Fact]
+    public async Task AddAttributeToTypeForRecordPrimaryConstructor()
+    {
+        // Don't use Preamble because we want to test that it works without a using statement at the top.
+        string input = @"
+public class Foo
+{
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar([property: MessagePack.Key(0)] {|MsgPack003:Foo|} Member);
+
+namespace System.Runtime.CompilerServices
+{
+    internal static class IsExternalInit
+    {
+    }
+}
+";
+
+        string output = @"
+[MessagePack.MessagePackObject]
+public class Foo
+{
+    [MessagePack.Key(0)]
+    public string Member { get; set; }
+}
+
+[MessagePack.MessagePackObject]
+public record Bar([property: MessagePack.Key(0)] Foo Member);
+
+namespace System.Runtime.CompilerServices
+{
+    internal static class IsExternalInit
+    {
+    }
 }
 ";
 

@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved.
+// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -161,7 +161,7 @@ public class MessagePackCodeFixProvider : CodeFixProvider
 
         foreach (ISymbol member in targets)
         {
-            if (member.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.KeyAttributeShortName) is null)
+            if (!member.IsImplicitlyDeclared && member.GetAttributes().FindAttributeShortName(MsgPack00xMessagePackAnalyzer.KeyAttributeShortName) is null)
             {
                 SyntaxNode node = await member.DeclaringSyntaxReferences[0].GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
                 var documentEditor = await solutionEditor.GetDocumentEditorAsync(document.Project.Solution.GetDocumentId(node.SyntaxTree), cancellationToken).ConfigureAwait(false);
