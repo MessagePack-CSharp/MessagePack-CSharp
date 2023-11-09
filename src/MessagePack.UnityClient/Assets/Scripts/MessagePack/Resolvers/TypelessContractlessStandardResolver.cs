@@ -3,6 +3,10 @@
 
 #if !UNITY_2018_3_OR_NEWER
 
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#define DYNAMIC_GENERATION
+#endif
+
 using System;
 using System.Collections.Generic;
 using MessagePack.Formatters;
@@ -36,7 +40,7 @@ namespace MessagePack.Resolvers
             ForceSizePrimitiveObjectResolver.Instance, // Preserve particular integer types
             BuiltinResolver.Instance, // Try Builtin
             AttributeFormatterResolver.Instance, // Try use [MessagePackFormatter]
-#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#if DYNAMIC_GENERATION
             DynamicEnumResolver.Instance, // Try Enum
             DynamicGenericResolver.Instance, // Try Array, Tuple, Collection
             DynamicUnionResolver.Instance, // Try Union(Interface)

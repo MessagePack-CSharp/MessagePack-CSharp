@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#define DYNAMIC_GENERATION
+#endif
+
+#if DYNAMIC_GENERATION
 
 using System;
 using System.Collections.Generic;
@@ -179,7 +183,7 @@ namespace MessagePack.Tests
             public string Field => field;
         }
 
-#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#if DYNAMIC_GENERATION
 
         [MessagePackObject]
         public class ImmutablePrivateClass
@@ -360,7 +364,7 @@ namespace MessagePack.Tests
             Assert.Equal("not null", deserialized.Field);
         }
 
-#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#if DYNAMIC_GENERATION
 
         [Fact]
         public void PrivateConstructor()

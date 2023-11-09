@@ -2,7 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#define DYNAMIC_GENERATION
+#endif
 
+#if DYNAMIC_GENERATION
 using System;
 using System.Collections;
 using System.Collections.Generic;

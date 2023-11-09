@@ -1,6 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#define DYNAMIC_GENERATION
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +18,7 @@ using Xunit.Abstractions;
 
 namespace MessagePack.Tests
 {
-#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#if DYNAMIC_GENERATION
     public class DataContractTest
     {
         private readonly ITestOutputHelper logger;

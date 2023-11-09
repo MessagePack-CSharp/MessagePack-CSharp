@@ -1,6 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#define DYNAMIC_GENERATION
+#endif
+
 using System;
 using System.Buffers;
 using System.IO;
@@ -324,7 +328,7 @@ namespace MessagePack.Tests
         [Theory]
         [InlineData(long.MinValue, 9)]
         [InlineData((long)-3372036854775807, 9)]
-#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#if DYNAMIC_GENERATION
         [InlineData((long)-2147483648, 5)]
 #endif
         [InlineData((long)-50000, 5)]
@@ -660,7 +664,7 @@ namespace MessagePack.Tests
         [InlineData('a')]
         [InlineData('あ')]
         [InlineData('c')]
-#if !(MESSAGEPACK_FORCE_AOT || ENABLE_IL2CPP)
+#if DYNAMIC_GENERATION
         [InlineData(char.MinValue)]
         [InlineData(char.MaxValue)]
 #endif
