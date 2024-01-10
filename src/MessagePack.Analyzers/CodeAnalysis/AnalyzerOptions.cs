@@ -9,6 +9,8 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MessagePack.Analyzers.CodeAnalysis;
 
+#pragma warning disable SA1402 // File may only contain a single type
+
 /// <summary>
 /// Options for the analyzer and source generator, which may be deserialized from a MessagePackAnalyzer.json file.
 /// </summary>
@@ -143,3 +145,4 @@ public record GeneratorOptions
     /// </summary>
     public FormattersOptions Formatters { get; init; } = new();
 }
+#pragma warning restore SA1402 // File may only contain a single type
