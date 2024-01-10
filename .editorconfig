@@ -171,6 +171,9 @@ csharp_prefer_braces = true:silent
 
 dotnet_diagnostic.RS0041.severity = suggestion
 
+# RS1035: Do not use APIs banned for analyzers(such as Environment.NewLine)
+dotnet_diagnostic.RS1035.severity = suggestion
+
 # SA1130: Use lambda syntax
 dotnet_diagnostic.SA1130.severity = silent
 

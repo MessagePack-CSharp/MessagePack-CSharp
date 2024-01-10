@@ -31,7 +31,7 @@
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.5.5" />
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="16.5.0" />
     <PackageVersion Include="Microsoft.Build" Version="16.5.0" ExcludeAssets="runtime" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.3.3" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" version="3.3.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="$(MicrosoftCodeAnalysisTestingVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" version="$(MicrosoftCodeAnalysisVersion)" />
